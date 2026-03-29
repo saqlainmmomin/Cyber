@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPDPA Gap Assessment &mdash; Prestige Estates</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --black: #0e0e0e;
+    --dark: #1a1a1a;
+    --dark-2: #252525;
+    --dark-3: #333333;
+    --cream: #e8e3d9;
+    --cream-light: #f0ece4;
+    --cream-dark: #d5d0c6;
+    --warm-gray: #9e9a90;
+    --mid-gray: #6b675e;
+    --text-dark: #1a1a1a;
+    --text-light: #e8e3d9;
+    --text-muted: #8a867c;
+    --critical: #c43e2e;
+    --critical-muted: #3d2020;
+    --high: #c47a2e;
+    --high-muted: #3d3020;
+    --medium: #a09460;
+    --compliant: #5a8a5c;
+    --compliant-muted: #203d22;
+    --m0: #c43e2e;
+    --m1: #c47a2e;
+    --m2: #a09460;
+    --m3: #6a9a6c;
+    --m4: #3a7a3c;
+    --m5: #888;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--black);
+    color: var(--text-light);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  @media print {
+    body { background: white; color: var(--text-dark); }
+    body::before { display: none; }
+    .page-break { page-break-before: always; }
+  }
+
+  .container { max-width: 1140px; margin: 0 auto; padding: 0 40px; }
+
+  /* ── UTILITY ── */
+  .label-caps {
+    font-size: 10px; font-weight: 600; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--warm-gray);
+  }
+  .bracket { color: var(--warm-gray); font-weight: 300; }
+  .accent-marks { color: var(--warm-gray); font-size: 12px; letter-spacing: 3px; user-select: none; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border: 1px solid var(--dark-3); border-radius: 100px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-light);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .divider { width: 100%; height: 1px; background: var(--dark-3); }
+  .divider--cream { background: var(--cream-dark); }
+
+  /* ═══════════════════════════════════════════════
+     HERO / HEADER
+     ═══════════════════════════════════════════════ */
+  .hero { padding: 48px 0 0; position: relative; }
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px;
+  }
+  .hero-brand { display: flex; align-items: center; }
+  .hero-brand .logo-mark {
+    color: var(--cream); font-family: 'Instrument Serif', serif;
+    font-size: 28px; font-style: italic; line-height: 1; letter-spacing: -0.5px;
+  }
+  .hero-brand .logo-mark span {
+    display: block; font-size: 11px; font-family: 'DM Sans', sans-serif;
+    font-style: normal; font-weight: 500; letter-spacing: 4px;
+    text-transform: uppercase; color: var(--warm-gray); margin-top: 4px;
+  }
+  .hero-nav { display: flex; gap: 24px; align-items: center; }
+  .hero-nav .pill { background: transparent; }
+  .hero-meta { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--warm-gray); }
+
+  .hero-title-block { position: relative; margin-bottom: 40px; }
+  .hero-title-block .bracket-deco {
+    position: absolute; top: 8px; left: -4px; font-size: 14px;
+    color: var(--warm-gray); letter-spacing: 28px; font-weight: 300;
+  }
+  .hero-title {
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: clamp(52px, 7vw, 88px); line-height: 0.95;
+    letter-spacing: -2px; color: var(--cream); text-transform: uppercase;
+  }
+  .hero-title .line-2 { color: var(--warm-gray); }
+
+  .hero-score-section {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+    padding: 48px 0; border-top: 1px solid var(--dark-3);
+  }
+  .score-display { display: flex; align-items: baseline; gap: 16px; }
+  .score-number {
+    font-family: 'Instrument Serif', serif; font-size: 120px; font-weight: 400;
+    line-height: 1; color: var(--high); letter-spacing: -4px;
+  }
+  .score-number sup { font-size: 48px; letter-spacing: 0; vertical-align: super; }
+  .score-rating {
+    font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--high); border: 1px solid var(--high);
+    padding: 6px 16px; border-radius: 100px; margin-top: 8px; display: inline-block;
+  }
+  .score-context { padding-top: 12px; }
+  .score-context p { font-size: 15px; line-height: 1.8; color: var(--warm-gray); font-weight: 400; }
+  .score-context p strong { color: var(--cream); font-weight: 600; }
+  .stat-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* ═══════════════════════════════════════════════
+     CREAM / DARK SECTIONS
+     ═══════════════════════════════════════════════ */
+  .section-cream {
+    background: var(--cream); color: var(--text-dark); padding: 64px 0; position: relative;
+  }
+  .section-cream .divider { background: var(--cream-dark); }
+  .section-dark { background: var(--black); color: var(--text-light); padding: 64px 0; }
+
+  .section-header-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--warm-gray); margin-bottom: 12px;
+  }
+  .section-cream .section-label { color: var(--mid-gray); }
+  .section-title {
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 32px; letter-spacing: -0.5px; line-height: 1.2;
+  }
+  .section-cream .section-title { color: var(--dark); }
+  .section-count { font-family: 'Instrument Serif', serif; font-size: 48px; color: var(--warm-gray); line-height: 1; }
+  .section-cream .section-count { color: var(--cream-dark); }
+
+  /* ── CHAPTER BARS ── */
+  .chapter-grid { display: flex; flex-direction: column; gap: 0; }
+  .chapter-row {
+    display: grid; grid-template-columns: 220px 1fr 80px;
+    align-items: center; gap: 24px; padding: 18px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .chapter-row:last-child { border-bottom: none; }
+  .chapter-row .ch-label { font-size: 13px; font-weight: 500; color: var(--dark); }
+  .bar-track { height: 8px; background: var(--cream-dark); border-radius: 100px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 100px; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  .bar-fill.good { background: var(--compliant); }
+  .bar-fill.warn { background: var(--high); }
+  .bar-fill.bad { background: var(--critical); }
+  .bar-fill.na { background: var(--compliant); }
+  .chapter-row .ch-score { font-family: 'Instrument Serif', serif; font-size: 28px; text-align: right; line-height: 1; }
+  .ch-score.good { color: var(--compliant); }
+  .ch-score.warn { color: var(--high); }
+  .ch-score.bad { color: var(--critical); }
+  .ch-score.na { color: var(--compliant); }
+
+  /* ── DONUT ── */
+  .status-viz {
+    display: flex; align-items: center; gap: 32px;
+    margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--cream-dark);
+  }
+  .donut-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+  .donut-wrap svg { transform: rotate(-90deg); }
+  .donut-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .donut-center .donut-num { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--dark); }
+  .donut-center .donut-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-gray); }
+  .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--dark); }
+  .legend-row .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-row .leg-count { font-family: 'Instrument Serif', serif; font-size: 20px; color: var(--dark); min-width: 24px; }
+
+  /* ── IMPACT CARDS ── */
+  .impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .impact-card {
+    background: var(--dark-2); padding: 40px 32px; position: relative; overflow: hidden;
+  }
+  .impact-card:first-child { border-radius: 8px 0 0 8px; }
+  .impact-card:last-child { border-radius: 0 8px 8px 0; }
+  .impact-card .impact-num {
+    font-family: 'Instrument Serif', serif; font-size: 48px;
+    color: var(--cream); line-height: 1; margin-bottom: 8px;
+  }
+  .impact-card h3 {
+    font-size: 14px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--cream); margin-bottom: 16px;
+  }
+  .impact-card p { font-size: 13px; line-height: 1.7; color: var(--warm-gray); }
+  .impact-card p strong { color: var(--cream); }
+  .impact-card .accent-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; }
+  .accent-line.red { background: var(--critical); }
+  .accent-line.orange { background: var(--high); }
+  .accent-line.gold { background: var(--medium); }
+
+  /* ── MATURITY SECTION ── */
+  .maturity-stacked {
+    display: flex; height: 12px; border-radius: 100px; overflow: hidden; margin-bottom: 20px;
+  }
+  .maturity-stacked .ms-seg { height: 100%; transition: width 1s ease; }
+  .ms-0 { background: var(--m0); }
+  .ms-1 { background: var(--m1); }
+  .ms-2 { background: var(--m2); }
+  .ms-3 { background: var(--m3); }
+  .ms-4 { background: var(--m4); }
+  .ms-5 { background: var(--m5); }
+
+  .maturity-legend-row {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-top: 20px;
+  }
+  .maturity-tile {
+    padding: 16px 20px; border-radius: 6px; position: relative;
+  }
+  .maturity-tile .mt-badge {
+    font-size: 22px; font-family: 'Instrument Serif', serif; font-weight: 400;
+    line-height: 1; color: white; margin-bottom: 6px;
+  }
+  .maturity-tile .mt-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(255,255,255,0.7);
+    margin-bottom: 2px;
+  }
+  .maturity-tile .mt-count {
+    font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;
+  }
+  .mt-0 { background: var(--m0); }
+  .mt-1 { background: var(--m1); }
+  .mt-2 { background: var(--m2); }
+  .mt-3 { background: var(--m3); }
+  .mt-4 { background: var(--m4); }
+  .mt-5 { background: var(--dark-3); }
+
+  /* ── RISK LIST (critical) ── */
+  .risk-list { display: flex; flex-direction: column; gap: 0; }
+  .risk-item {
+    display: grid; grid-template-columns: 4px 1fr auto;
+    border-bottom: 1px solid var(--cream-dark); transition: background 0.2s;
+  }
+  .risk-item:last-child { border-bottom: none; }
+  .risk-item:hover { background: rgba(0,0,0,0.02); }
+  .risk-item .risk-bar { border-radius: 4px 0 0 4px; }
+  .risk-bar.critical { background: var(--critical); }
+  .risk-bar.high { background: var(--high); }
+  .risk-item .risk-content { padding: 24px 28px; }
+  .risk-item .risk-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .risk-item .risk-id { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-gray); }
+  .risk-item .risk-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 100px; border: 1px solid;
+  }
+  .risk-badge.critical { color: var(--critical); border-color: var(--critical); }
+  .risk-badge.high { color: var(--high); border-color: var(--high); }
+  .risk-item h3 { font-size: 16px; font-weight: 600; color: var(--dark); margin-bottom: 8px; line-height: 1.4; }
+  .risk-item .risk-desc { font-size: 13px; color: var(--mid-gray); line-height: 1.7; }
+  .risk-item .risk-meta {
+    padding: 24px 28px; display: flex; flex-direction: column;
+    align-items: flex-end; justify-content: center; gap: 8px; min-width: 160px;
+  }
+  .risk-meta .meta-timeline { font-family: 'Instrument Serif', serif; font-size: 24px; color: var(--dark); line-height: 1; }
+  .risk-meta .meta-effort { font-size: 11px; color: var(--mid-gray); letter-spacing: 0.5px; }
+  .risk-meta .maturity-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 4px; color: white;
+  }
+
+  /* ── HIGH RISK COMPACT ── */
+  .risk-compact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
+  .risk-compact { background: var(--dark-2); padding: 28px; position: relative; }
+  .risk-compact:nth-child(1) { border-radius: 8px 0 0 0; }
+  .risk-compact:nth-child(2) { border-radius: 0 8px 0 0; }
+  .risk-compact:nth-child(odd):last-child { border-radius: 0 0 0 8px; }
+  .risk-compact:nth-child(even):last-child { border-radius: 0 0 8px 0; }
+  .risk-compact .rc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .risk-compact .rc-id { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--warm-gray); }
+  .risk-compact .rc-badge {
+    font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 100px; border: 1px solid var(--high); color: var(--high);
+  }
+  .risk-compact h3 { font-size: 15px; font-weight: 600; color: var(--cream); margin-bottom: 8px; line-height: 1.4; }
+  .risk-compact p { font-size: 12px; color: var(--warm-gray); line-height: 1.6; }
+  .risk-compact .rc-timeline {
+    margin-top: 14px; font-family: 'Instrument Serif', serif; font-size: 18px;
+    color: var(--cream-dark); display: flex; align-items: baseline; gap: 8px;
+  }
+  .risk-compact .rc-timeline span { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--warm-gray); letter-spacing: 0.5px; }
+
+  /* ── INITIATIVES ── */
+  .initiative-grid { display: flex; flex-direction: column; gap: 2px; }
+  .initiative-card {
+    display: grid; grid-template-columns: 8px 1fr auto;
+    background: var(--dark-2); border-radius: 0; overflow: hidden;
+  }
+  .initiative-card:first-child { border-radius: 8px 8px 0 0; }
+  .initiative-card:last-child { border-radius: 0 0 8px 8px; }
+  .initiative-stripe { border-radius: 0; }
+  .stripe-process { background: #4a72c4; }
+  .stripe-policy { background: #7c5cbf; }
+  .stripe-technology { background: #c47a2e; }
+  .stripe-governance { background: #3a8a6c; }
+  .stripe-people { background: #9a6040; }
+  .initiative-body { padding: 28px 32px; }
+  .initiative-top {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+  }
+  .initiative-cluster {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 100px; color: white;
+  }
+  .cluster-process { background: #4a72c4; }
+  .cluster-policy { background: #7c5cbf; }
+  .cluster-technology { background: #c47a2e; }
+  .cluster-governance { background: #3a8a6c; }
+  .cluster-people { background: #9a6040; }
+  .initiative-id { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--warm-gray); }
+  .initiative-body h3 { font-size: 18px; font-weight: 600; color: var(--cream); margin-bottom: 8px; line-height: 1.3; }
+  .initiative-body .initiative-desc { font-size: 13px; color: var(--warm-gray); line-height: 1.6; max-width: 680px; }
+  .initiative-body .initiative-reqs {
+    margin-top: 12px; font-size: 11px; color: var(--dark-3); letter-spacing: 0.5px;
+    font-family: 'DM Sans', monospace;
+  }
+  .initiative-meta {
+    padding: 28px 32px; display: flex; flex-direction: column;
+    align-items: flex-end; justify-content: center; gap: 10px; min-width: 180px;
+    border-left: 1px solid var(--dark-3);
+  }
+  .initiative-meta .im-timeline {
+    font-family: 'Instrument Serif', serif; font-size: 32px; color: var(--cream); line-height: 1;
+  }
+  .initiative-meta .im-timeline span { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--warm-gray); }
+  .initiative-meta .im-budget {
+    font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--warm-gray); border: 1px solid var(--dark-3); padding: 4px 12px; border-radius: 100px;
+  }
+  .initiative-meta .im-effort {
+    font-size: 10px; color: var(--dark-3); letter-spacing: 0.5px;
+  }
+
+  /* ── QUICK WINS ── */
+  .wins-list { display: flex; flex-direction: column; gap: 0; }
+  .win-item {
+    display: grid; grid-template-columns: 40px 1fr auto auto;
+    align-items: center; gap: 20px; padding: 20px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .win-item:last-child { border-bottom: none; }
+  .win-item .win-num { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--cream-dark); text-align: center; }
+  .win-item .win-id { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--mid-gray); margin-bottom: 2px; }
+  .win-item .win-title { font-size: 14px; font-weight: 500; color: var(--dark); line-height: 1.4; }
+  .win-item .win-timeline { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--compliant); white-space: nowrap; }
+  .win-item .win-risk-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px; border: 1px solid;
+  }
+  .win-risk-tag.critical { color: var(--critical); border-color: var(--critical); }
+  .win-risk-tag.high { color: var(--high); border-color: var(--high); }
+  .win-risk-tag.medium { color: var(--mid-gray); border-color: var(--cream-dark); }
+
+  /* ── FOOTER ── */
+  .footer { background: var(--dark); padding: 32px 0; border-top: 1px solid var(--dark-3); }
+  .footer-inner { display: flex; justify-content: space-between; align-items: center; }
+  .footer .label-caps { color: var(--dark-3); }
+  .footer-right { font-size: 11px; color: var(--dark-3); text-align: right; line-height: 1.6; }
+
+  /* ── VERSION TAG ── */
+  .version-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px;
+    background: rgba(74, 114, 196, 0.15); border: 1px solid rgba(74, 114, 196, 0.4);
+    color: #6a94e8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-top">
+      <div class="hero-brand">
+        <div class="logo-mark">DPDPA Assess.<span>Gap Assessment Tool</span></div>
+      </div>
+      <div class="hero-nav">
+        <span class="hero-meta">March 29, 2026</span>
+        <span class="version-tag">v2 &middot; New Pipeline</span>
+        <span class="pill">CONFIDENTIAL</span>
+      </div>
+    </div>
+
+    <div class="hero-title-block">
+      <div class="bracket-deco">{ }</div>
+      <div class="hero-title">
+        COMPLIANCE<br>
+        <span class="line-2">GAP ASSESSMENT</span>
+      </div>
+      <div style="margin-top: 16px; font-size: 13px; color: var(--warm-gray); letter-spacing: 0.5px;">
+        Prestige Estates Projects Limited &nbsp;&middot;&nbsp; DPDPA 2023
+      </div>
+    </div>
+
+    <div class="hero-score-section">
+      <div>
+        <div class="section-label">Overall Score</div>
+        <div class="score-display">
+          <div class="score-number" style="color:var(--high)">43<sup>%</sup></div>
+        </div>
+        <div class="score-rating" style="color:var(--high);border-color:var(--high)">Needs Significant Improvement</div>
+      </div>
+
+      <div class="score-context">
+        <div class="section-label">Prestige Estates &mdash; Executive Summary</div>
+        <p>Of <strong>41 requirements</strong> assessed, 10 are fully compliant, 15 partially compliant, and 16 non-compliant. Critical exposures include <strong>no DPO appointed</strong> despite near-certain SDF designation, <strong>CRM permission leaks</strong> enabling unauthorized access to Aadhaar and financial records, <strong>consent bundling</strong> across all collection points, and <strong>zero children's data protections</strong> despite digital marketing reach.</p>
+        <div class="stat-row">
+          <span class="pill"><span class="dot" style="background:var(--compliant)"></span> 10 Compliant</span>
+          <span class="pill"><span class="dot" style="background:var(--medium)"></span> 15 Partial</span>
+          <span class="pill"><span class="dot" style="background:var(--critical)"></span> 16 Non-Compliant</span>
+          <span class="pill"><span class="dot" style="background:var(--critical)"></span> 11 Critical Gaps</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ COMPLIANCE BY AREA ═══════════════════ -->
+<div class="section-cream">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 01 <span class="bracket">)</span> &nbsp; Assessment Areas</div>
+        <div class="section-title">Compliance by Chapter</div>
+      </div>
+      <div class="section-count">\</div>
+    </div>
+
+    <div class="chapter-grid">
+      <div class="chapter-row">
+        <div class="ch-label">Breach Notification</div>
+        <div class="bar-track"><div class="bar-fill good" style="width:87.5%"></div></div>
+        <div class="ch-score good">88%</div>
+      </div>
+      <div class="chapter-row">
+        <div class="ch-label">Cross-Border Transfer</div>
+        <div class="bar-track"><div class="bar-fill na" style="width:100%"></div></div>
+        <div class="ch-score na">N/A</div>
+      </div>
+      <div class="chapter-row">
+        <div class="ch-label">Rights of Data Principal</div>
+        <div class="bar-track"><div class="bar-fill warn" style="width:57.5%"></div></div>
+        <div class="ch-score warn">58%</div>
+      </div>
+      <div class="chapter-row">
+        <div class="ch-label">Obligations of Data Fiduciary</div>
+        <div class="bar-track"><div class="bar-fill warn" style="width:41.2%"></div></div>
+        <div class="ch-score warn">41%</div>
+      </div>
+      <div class="chapter-row">
+        <div class="ch-label">Consent Management (Detailed)</div>
+        <div class="bar-track"><div class="bar-fill bad" style="width:12.5%"></div></div>
+        <div class="ch-score bad">13%</div>
+      </div>
+      <div class="chapter-row">
+        <div class="ch-label">Special Provisions</div>
+        <div class="bar-track"><div class="bar-fill bad" style="width:1%"></div></div>
+        <div class="ch-score bad">0%</div>
+      </div>
+    </div>
+
+    <!-- Donut + Legend -->
+    <!--
+      Circumference = 2π × 50 = 314.16
+      Compliant 10/41 = 24.4% → arc = 76.7 → dashoffset = 314 - 76.7 = 237.5
+      Partial 15/41 = 36.6% → arc = 114.9 → rotate 87.8deg
+      Non-compliant 16/41 = 39% → arc = 122.5 → rotate 219.5deg
+    -->
+    <div class="status-viz">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--cream-dark)" stroke-width="12"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--compliant)" stroke-width="12"
+            stroke-dasharray="314" stroke-dashoffset="237.5"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--medium)" stroke-width="12"
+            stroke-dasharray="314" stroke-dashoffset="199.3"
+            transform="rotate(87.8 60 60)"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--critical)" stroke-width="12"
+            stroke-dasharray="314" stroke-dashoffset="192"
+            transform="rotate(219.5 60 60)"/>
+        </svg>
+        <div class="donut-center">
+          <div class="donut-num">41</div>
+          <div class="donut-label">Total</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="legend-row"><span class="leg-dot" style="background:var(--compliant)"></span><span class="leg-count">10</span> Compliant</div>
+        <div class="legend-row"><span class="leg-dot" style="background:var(--medium)"></span><span class="leg-count">15</span> Partially Compliant</div>
+        <div class="legend-row"><span class="leg-dot" style="background:var(--critical)"></span><span class="leg-count">16</span> Non-Compliant</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ BUSINESS IMPACT ═══════════════════ -->
+<div class="section-dark">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 02 <span class="bracket">)</span> &nbsp; Business Impact</div>
+        <div class="section-title" style="color:var(--cream)">What This Means for Prestige</div>
+      </div>
+      <div class="accent-marks">\</div>
+    </div>
+
+    <div class="impact-grid">
+      <div class="impact-card">
+        <div class="impact-num">&curren;250Cr</div>
+        <h3>Financial Exposure</h3>
+        <p>DPDPA penalties up to <strong>INR 250 crore per violation</strong>. With 16 non-compliant areas across consent, children's data, and governance, cumulative Board exposure is substantial.</p>
+        <div class="accent-line red"></div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-num">4 / 4</div>
+        <h3>SDF Obligations Unmet</h3>
+        <p>No DPO appointed, no DPIA conducted, no data auditor, no periodic audit. <strong>All four</strong> Significant Data Fiduciary obligations are unfulfilled at an organization that almost certainly qualifies.</p>
+        <div class="accent-line orange"></div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-num">M1.8</div>
+        <h3>Average Maturity</h3>
+        <p>Across 41 requirements, Prestige Estates averages <strong>Maturity Level 1.8</strong> — ad-hoc, not systematic. 16 requirements are at M0 (no process exists). Remediation requires structural programs, not point fixes.</p>
+        <div class="accent-line gold"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MATURITY PROFILE ═══════════════════ -->
+<div class="section-cream">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 03 <span class="bracket">)</span> &nbsp; CMMI Maturity Profile</div>
+        <div class="section-title">Where Controls Stand Today</div>
+      </div>
+      <div class="section-count">\</div>
+    </div>
+
+    <!-- Stacked bar: 16 M0 + 4 M1 + 11 M2 + 6 M3 + 1 M4 + 3 M5 = 41 -->
+    <div class="maturity-stacked">
+      <div class="ms-seg ms-0" style="width:39%"></div>
+      <div class="ms-seg ms-1" style="width:9.8%"></div>
+      <div class="ms-seg ms-2" style="width:26.8%"></div>
+      <div class="ms-seg ms-3" style="width:14.6%"></div>
+      <div class="ms-seg ms-4" style="width:2.4%"></div>
+      <div class="ms-seg ms-5" style="width:7.3%"></div>
+    </div>
+
+    <div style="font-size:12px; color:var(--mid-gray); margin-bottom:28px; line-height:1.6;">
+      Prestige Estates' compliance posture is concentrated in the <strong style="color:var(--dark)">M0–M2 range</strong>. Of 41 requirements,
+      <strong style="color:var(--dark)">16 have no process at all</strong> (M0) and 11 are partially defined but insufficient (M2).
+      Only breach notification and data principal rights show meaningful maturity.
+    </div>
+
+    <div class="maturity-legend-row">
+      <div class="maturity-tile mt-0">
+        <div class="mt-badge">M0</div>
+        <div class="mt-label">Initial</div>
+        <div class="mt-count">16 requirements</div>
+      </div>
+      <div class="maturity-tile mt-1">
+        <div class="mt-badge">M1</div>
+        <div class="mt-label">Ad-hoc</div>
+        <div class="mt-count">4 requirements</div>
+      </div>
+      <div class="maturity-tile mt-2">
+        <div class="mt-badge">M2</div>
+        <div class="mt-label">Defined</div>
+        <div class="mt-count">11 requirements</div>
+      </div>
+      <div class="maturity-tile mt-3">
+        <div class="mt-badge">M3</div>
+        <div class="mt-label">Managed</div>
+        <div class="mt-count">6 requirements</div>
+      </div>
+      <div class="maturity-tile mt-4">
+        <div class="mt-badge">M4</div>
+        <div class="mt-label">Optimized</div>
+        <div class="mt-count">1 requirement</div>
+      </div>
+      <div class="maturity-tile mt-5">
+        <div class="mt-badge">M5</div>
+        <div class="mt-label">Not Applicable</div>
+        <div class="mt-count">3 requirements</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CRITICAL GAPS ═══════════════════ -->
+<div class="section-cream page-break" style="padding-top: 64px;">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 04 <span class="bracket">)</span> &nbsp; Critical Risk</div>
+        <div class="section-title">Requires Immediate Action</div>
+      </div>
+      <div class="section-count">11</div>
+    </div>
+
+    <div class="risk-list">
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH4.SDF.1</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>No Data Protection Officer Appointed</h3>
+          <p class="risk-desc">Prestige Estates almost certainly qualifies as an SDF (1,000+ employees, large-scale sensitive data including Aadhaar and PAN). Section 10(2)(a) mandates a DPO based in India. Without a DPO, the four SDF obligations cannot be systematically met and Board proceedings can be initiated suo motu.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">12w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m0)">M0 &mdash; No process</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CM.GRANULAR.2</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>Consent Bundling — Service Access Tied to Marketing</h3>
+          <p class="risk-desc">Property enquiry and booking flows appear to bundle service-essential processing with marketing consent. Section 6(1) explicitly prohibits conditioning service access on consent that is not necessary for the service. This is a potential dark-pattern violation — the highest-scrutiny category for regulators.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">10w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m0)">M0 &mdash; No process</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH2.SECURITY.1 &amp; CH2.SECURITY.2</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>CRM Permission Leaks &amp; No Least-Privilege Access</h3>
+          <p class="risk-desc">Pre-sales, sales, and marketing teams have overlapping, over-broad access to customer PII in the internal CRM. Permission leaks mean unauthorized personnel can view Aadhaar numbers, PAN, banking details, and financial records. Section 8(4) requires reasonable safeguards — this gap is a direct violation.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">6&ndash;8w</div>
+          <div class="meta-effort">Medium effort</div>
+          <span class="maturity-badge" style="background:var(--m2)">M2 &mdash; Defined</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH2.CONSENT.3</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>Consent Withdrawal Requires Email or Phone Call</h3>
+          <p class="risk-desc">Section 6(6) mandates withdrawal be "as easy as giving consent." Consent is given via online form or checkbox. Withdrawal requires contacting the company by email or phone. This asymmetry is a direct Section 6(6) breach and likely to be one of the first enforcement priorities for the Data Protection Board.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">8w</div>
+          <div class="meta-effort">Medium effort</div>
+          <span class="maturity-badge" style="background:var(--m2)">M2 &mdash; Defined</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH4.CHILD.1 &amp; CH4.CHILD.2</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>No Children's Data Protections — Zero Documentation</h3>
+          <p class="risk-desc">Section 9 prohibitions on tracking and behavioral monitoring of under-18 users are absolute. Prestige Estates' website analytics, digital marketing, and lead nurturing pipelines have no child suppression logic. Neither restriction is documented in policy. Children's data is the highest-scrutiny category under DPDPA.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">6w</div>
+          <div class="meta-effort">Medium effort</div>
+          <span class="maturity-badge" style="background:var(--m0)">M0 &mdash; No process</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH2.CONSENT.1</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>Consent Not Demonstrably Free, Specific &amp; Unconditional</h3>
+          <p class="risk-desc">Checkboxes and forms exist online, but physical collection points (site visits, head office) use ad-hoc paper forms with no standardised, purpose-specific consent capture. Section 6(1) requires consent to be free, specific, informed, unconditional, and with a clear affirmative action at every collection point.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">12w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m2)">M2 &mdash; Defined</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH2.CONSENT.5</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>Wrong Age Threshold — Under-13 Instead of Under-18</h3>
+          <p class="risk-desc">Privacy policy applies parental consent requirements to children under 13, but DPDPA Section 9(1) requires verifiable parental consent for all persons under 18. The policy is materially incorrect. No age verification exists at any digital touchpoint to identify and protect minor users.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">10w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m1)">M1 &mdash; Ad-hoc</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH2.PURPOSE.1</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>Processing Purposes Are Overly Broad</h3>
+          <p class="risk-desc">Stated purposes — "enhancing experience", "lead generation", "marketing campaigns" — are too generic to constitute "specified purposes" under Section 4(1). Data principals cannot meaningfully understand or consent to what they are agreeing to. Especially acute for Aadhaar, PAN, and financial data collected at enquiry stage.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">6w</div>
+          <div class="meta-effort">Medium effort</div>
+          <span class="maturity-badge" style="background:var(--m2)">M2 &mdash; Defined</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CH3.GRIEVANCE.1</span>
+            <span class="risk-badge critical">Critical</span>
+          </div>
+          <h3>No Designated Grievance Officer</h3>
+          <p class="risk-desc">Section 13(1) requires a designated officer to handle data principal grievances. Only a generic corporate address and phone number are provided. No named person is assigned, no formal grievance intake exists, and no acknowledgment process is in place. Data principals have no meaningful redress pathway.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">4w</div>
+          <div class="meta-effort">Low effort</div>
+          <span class="maturity-badge" style="background:var(--m2)">M2 &mdash; Defined</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CM.GRANULAR.1</span>
+            <span class="risk-badge critical" style="color:var(--high);border-color:var(--high)">High</span>
+          </div>
+          <h3>No Per-Purpose Consent Options</h3>
+          <p class="risk-desc">Section 6(3) requires separate consent for each processing purpose. All digital and physical collection points use a single all-or-nothing consent covering service delivery, marketing, analytics, and third-party sharing. Data principals cannot accept some purposes and decline others.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">10w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m0)">M0 &mdash; No process</span>
+        </div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-bar critical"></div>
+        <div class="risk-content">
+          <div class="risk-top">
+            <span class="risk-id">CM.RECORDS.1</span>
+            <span class="risk-badge critical" style="color:var(--high);border-color:var(--high)">High</span>
+          </div>
+          <h3>No Auditable Consent Records Across Channels</h3>
+          <p class="risk-desc">Consent data is fragmented across CRM, website, phone, site visit forms, and head office. No centralized system captures timestamp, purpose scope, consent text version, or withdrawal history. In any Board inquiry, Prestige Estates could not demonstrate that consent was validly obtained for any specific data subject.</p>
+        </div>
+        <div class="risk-meta">
+          <div class="meta-timeline">12w</div>
+          <div class="meta-effort">High effort</div>
+          <span class="maturity-badge" style="background:var(--m1)">M1 &mdash; Ad-hoc</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ HIGH RISK ═══════════════════ -->
+<div class="section-dark page-break">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 05 <span class="bracket">)</span> &nbsp; High Risk</div>
+        <div class="section-title" style="color:var(--cream)">Additional High-Priority Gaps</div>
+      </div>
+      <div class="section-count" style="color:var(--dark-3)">13</div>
+    </div>
+
+    <div class="risk-compact-grid">
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH4.SDF.2 / SDF.3 / SDF.4</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Auditor, DPIA Program, or Compliance Audit</h3>
+        <p>All three remaining SDF obligations unmet. No independent data auditor, no DPIA despite high-risk processing of Aadhaar and financial data, no DPDPA compliance audit ever performed.</p>
+        <div class="rc-timeline">10&ndash;16w <span>Medium&ndash;High effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH4.CHILD.3</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Age Verification on Any Digital Platform</h3>
+        <p>No mechanism to identify users under 18 at registration, enquiry, or callback. Without age verification, all under-18 protections mandated by Section 9 cannot be enforced.</p>
+        <div class="rc-timeline">12w <span>High effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.MINIMIZE.1 &amp; MINIMIZE.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>Over-Collection &amp; Undefined Retention Periods</h3>
+        <p>Aadhaar and PAN collected at lead/enquiry stage — excessive for marketing purposes. No defined retention periods for any data category. Physical documents held indefinitely.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.NOTICE.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Retrospective Notice for Pre-DPDPA Data</h3>
+        <p>Section 5(2) requires notice to all existing data subjects about data held and processing purposes. Prestige's large historical CRM database has received no such communication.</p>
+        <div class="rc-timeline">6w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.PURPOSE.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>Section 7 Legitimate Use Basis Undocumented</h3>
+        <p>Employee data, KYC for property transactions, and regulatory compliance processing likely falls under Section 7. No legitimate use basis has been documented or reviewed by legal counsel.</p>
+        <div class="rc-timeline">6w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.SECURITY.3</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>Processor Contracts Lack DPDPA-Specific Obligations</h3>
+        <p>Third-party vendor agreements cover general confidentiality but do not specifically mandate DPDPA security obligations, processing restrictions, or breach notification to Prestige per Section 8(2).</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.CONSENT.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Itemised Consent Per Purpose</h3>
+        <p>Section 6(3) requires separate consent for each distinct processing purpose. One bundled consent covers all purposes. Data principals cannot selectively accept marketing while declining analytics.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH3.GRIEVANCE.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Grievance SLA or DPB Escalation Reference</h3>
+        <p>No committed response timeline for grievances. Privacy policy does not mention the right to escalate to the Data Protection Board. Section 13(2) requires both.</p>
+        <div class="rc-timeline">4w <span>Low effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.MINIMIZE.3</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Retention Schedules or Deletion Procedures</h3>
+        <p>Physical documents containing Aadhaar and PAN copies are stored indefinitely. No documented schedules or automated deletion procedures exist for any data category.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.MINIMIZE.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>Retention Policy Is Non-Specific (&ldquo;As Long as Necessary&rdquo;)</h3>
+        <p>Privacy policy states data is retained "as long as necessary" with no timeframes defined. This is insufficient under Section 8(7), which requires erasure when purpose is no longer served.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CM.RECORDS.2</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>No Consent Refresh or Re-Validation Process</h3>
+        <p>Pre-DPDPA consents are relied upon without refresh. No mechanism to re-obtain consent when processing purposes change or a defined period elapses.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.MINIMIZE.1</span>
+          <span class="rc-badge">High</span>
+        </div>
+        <h3>Sensitive Data Collected Beyond Purpose Necessity</h3>
+        <p>Aadhaar, PAN, and banking details are collected during lead generation and pre-sales stages. Data minimization under Section 4(1) requires collection limited strictly to what is necessary.</p>
+        <div class="rc-timeline">8w <span>Medium effort</span></div>
+      </div>
+
+      <div class="risk-compact">
+        <div class="rc-top">
+          <span class="rc-id">CH2.NOTICE.3</span>
+          <span class="rc-badge" style="border-color:var(--medium);color:var(--medium)">Medium</span>
+        </div>
+        <h3>No Named Privacy Contact in Notice</h3>
+        <p>Section 5(1) requires notice to identify the responsible person for Data Principal queries. A generic corporate address and phone number are insufficient — a named officer or contact is required.</p>
+        <div class="rc-timeline">4w <span>Low effort</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ STRATEGIC INITIATIVES ═══════════════════ -->
+<div class="section-dark page-break">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 06 <span class="bracket">)</span> &nbsp; Remediation Roadmap</div>
+        <div class="section-title" style="color:var(--cream)">5 Strategic Initiatives</div>
+      </div>
+      <div class="section-count" style="color:var(--dark-3)">5</div>
+    </div>
+
+    <div style="font-size:13px; color:var(--warm-gray); margin-bottom:32px; line-height:1.6; max-width:680px;">
+      Non-compliant requirements have been clustered by root cause into five named programs.
+      Execute in priority order — Initiatives 1&ndash;3 run in parallel from Day 1. Initiative 5 (people) unblocks
+      policy work across all clusters.
+    </div>
+
+    <div class="initiative-grid">
+
+      <div class="initiative-card">
+        <div class="initiative-stripe stripe-process"></div>
+        <div class="initiative-body">
+          <div class="initiative-top">
+            <span class="initiative-cluster cluster-process">Process</span>
+            <span class="initiative-id">INIT-001 &nbsp;&middot;&nbsp; Priority 1</span>
+          </div>
+          <h3>Consent Management Platform Implementation</h3>
+          <p class="initiative-desc">Redesign all consent capture flows (digital and physical) to be purpose-specific, granular, and withdrawable with equal ease. Centralise consent records across CRM and offline channels. Implement consent withdrawal dashboard. Addresses the single largest cluster of non-compliant requirements.</p>
+          <p class="initiative-reqs" style="color:var(--dark-3); margin-top:12px;">
+            Addresses: CH2.CONSENT.1 &middot; CH2.CONSENT.2 &middot; CH2.CONSENT.3 &middot; CH2.CONSENT.4 &middot; CH2.CONSENT.5 &middot; CH2.PURPOSE.1 &middot; CH2.MINIMIZE.2 &middot; CH2.MINIMIZE.3 &middot; CH3.NOMINATE.1 &middot; CM.RECORDS.1 &middot; CM.RECORDS.2 &middot; CM.GRANULAR.1 &middot; CM.GRANULAR.2
+          </p>
+        </div>
+        <div class="initiative-meta">
+          <div class="im-timeline">16<span>wks</span></div>
+          <div class="im-budget">Budget: &gt; &#8377;1 Cr</div>
+          <div class="im-effort">High effort</div>
+        </div>
+      </div>
+
+      <div class="initiative-card">
+        <div class="initiative-stripe stripe-governance"></div>
+        <div class="initiative-body">
+          <div class="initiative-top">
+            <span class="initiative-cluster cluster-governance">Governance</span>
+            <span class="initiative-id">INIT-002 &nbsp;&middot;&nbsp; Priority 1</span>
+          </div>
+          <h3>SDF Governance &amp; Compliance Program</h3>
+          <p class="initiative-desc">Appoint India-based DPO and register with the Board. Establish privacy governance committee with board-level reporting. Appoint independent Data Auditor. Conduct initial DPIA for high-risk processing activities. Define annual audit cadence. Update all data processor contracts with DPDPA-specific clauses.</p>
+          <p class="initiative-reqs" style="color:var(--dark-3); margin-top:12px;">
+            Addresses: CH4.SDF.1 &middot; CH4.SDF.2 &middot; CH4.SDF.3 &middot; CH4.SDF.4 &middot; CH2.SECURITY.3
+          </p>
+        </div>
+        <div class="initiative-meta">
+          <div class="im-timeline">16<span>wks</span></div>
+          <div class="im-budget">Budget: &gt; &#8377;1 Cr</div>
+          <div class="im-effort">High effort</div>
+        </div>
+      </div>
+
+      <div class="initiative-card">
+        <div class="initiative-stripe stripe-technology"></div>
+        <div class="initiative-body">
+          <div class="initiative-top">
+            <span class="initiative-cluster cluster-technology">Technology</span>
+            <span class="initiative-id">INIT-003 &nbsp;&middot;&nbsp; Priority 1</span>
+          </div>
+          <h3>Security Controls &amp; Access Remediation</h3>
+          <p class="initiative-desc">Immediate remediation of CRM permission leaks. Implement role-based access control (RBAC) with least-privilege across all systems processing personal data. Implement age verification on digital platforms. Conduct penetration test post-implementation. Secure physical document storage and access logging.</p>
+          <p class="initiative-reqs" style="color:var(--dark-3); margin-top:12px;">
+            Addresses: CH2.SECURITY.1 &middot; CH2.SECURITY.2 &middot; CH2.ACCURACY.1 &middot; CH4.CHILD.3
+          </p>
+        </div>
+        <div class="initiative-meta">
+          <div class="im-timeline">12<span>wks</span></div>
+          <div class="im-budget">Budget: &gt; &#8377;1 Cr</div>
+          <div class="im-effort">High effort</div>
+        </div>
+      </div>
+
+      <div class="initiative-card">
+        <div class="initiative-stripe stripe-policy"></div>
+        <div class="initiative-body">
+          <div class="initiative-top">
+            <span class="initiative-cluster cluster-policy">Policy</span>
+            <span class="initiative-id">INIT-004 &nbsp;&middot;&nbsp; Priority 1</span>
+          </div>
+          <h3>Children's Data Protection Program</h3>
+          <p class="initiative-desc">Update privacy policy with correct under-18 age threshold and explicit prohibition on tracking/behavioural monitoring of children. Conduct risk assessment for all processing activities involving potential child data. Add wellbeing-impact review to DPIA template. Implement CRM suppression flags for identified minor data subjects.</p>
+          <p class="initiative-reqs" style="color:var(--dark-3); margin-top:12px;">
+            Addresses: CH4.CHILD.1 &middot; CH4.CHILD.2 &middot; CH2.MINIMIZE.1 &middot; CH2.NOTICE.2 &middot; CH2.PURPOSE.2 &middot; CH2.NOTICE.3
+          </p>
+        </div>
+        <div class="initiative-meta">
+          <div class="im-timeline">8<span>wks</span></div>
+          <div class="im-budget">Budget: &#8377;25L&ndash;1Cr</div>
+          <div class="im-effort">Medium effort</div>
+        </div>
+      </div>
+
+      <div class="initiative-card">
+        <div class="initiative-stripe stripe-people"></div>
+        <div class="initiative-body">
+          <div class="initiative-top">
+            <span class="initiative-cluster cluster-people">People</span>
+            <span class="initiative-id">INIT-005 &nbsp;&middot;&nbsp; Priority 2</span>
+          </div>
+          <h3>Privacy Rights &amp; Grievance Enablement</h3>
+          <p class="initiative-desc">Designate and publish a named Grievance Officer with dedicated contact details. Define and publish a 30-day grievance response SLA. Add DPB escalation information to all grievance communications. Conduct targeted privacy training for customer-facing and data-handling staff. Establish role-based privacy awareness program.</p>
+          <p class="initiative-reqs" style="color:var(--dark-3); margin-top:12px;">
+            Addresses: CH3.GRIEVANCE.1 &middot; CH3.GRIEVANCE.2 &middot; BN.NOTIFY.4
+          </p>
+        </div>
+        <div class="initiative-meta">
+          <div class="im-timeline">4<span>wks</span></div>
+          <div class="im-budget">Budget: &lt; &#8377;5L</div>
+          <div class="im-effort">Low effort</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ QUICK WINS ═══════════════════ -->
+<div class="section-cream">
+  <div class="container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-label"><span class="bracket">(</span> 07 <span class="bracket">)</span> &nbsp; Quick Wins</div>
+        <div class="section-title">Low Effort, High Impact — Start Now</div>
+      </div>
+      <div class="accent-marks">\</div>
+    </div>
+
+    <div class="wins-list">
+      <div class="win-item">
+        <div class="win-num">01</div>
+        <div class="win-content">
+          <div class="win-id">CH3.GRIEVANCE.1</div>
+          <div class="win-title">Designate a Grievance Officer &amp; publish name and contact in privacy policy</div>
+        </div>
+        <div class="win-timeline">4w</div>
+        <span class="win-risk-tag critical">Critical</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">02</div>
+        <div class="win-content">
+          <div class="win-id">CH3.GRIEVANCE.2</div>
+          <div class="win-title">Define and publish 30-day grievance SLA; add DPB escalation reference</div>
+        </div>
+        <div class="win-timeline">4w</div>
+        <span class="win-risk-tag high">High</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">03</div>
+        <div class="win-content">
+          <div class="win-id">CH4.CHILD.1 &amp; CH4.CHILD.2</div>
+          <div class="win-title">Add explicit children's data protection clauses to privacy policy (correct age threshold to 18)</div>
+        </div>
+        <div class="win-timeline">2w</div>
+        <span class="win-risk-tag critical">Critical</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">04</div>
+        <div class="win-content">
+          <div class="win-id">BN.NOTIFY.4</div>
+          <div class="win-title">Create a formal breach register (spreadsheet with defined fields is sufficient initially)</div>
+        </div>
+        <div class="win-timeline">4w</div>
+        <span class="win-risk-tag medium">Medium</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">05</div>
+        <div class="win-content">
+          <div class="win-id">CH2.NOTICE.3</div>
+          <div class="win-title">Name a Privacy Contact and add to privacy policy and all notice templates</div>
+        </div>
+        <div class="win-timeline">4w</div>
+        <span class="win-risk-tag medium">Medium</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">06</div>
+        <div class="win-content">
+          <div class="win-id">CH2.PURPOSE.1</div>
+          <div class="win-title">Rewrite privacy policy purpose descriptions to be specific and per data element</div>
+        </div>
+        <div class="win-timeline">6w</div>
+        <span class="win-risk-tag critical">Critical</span>
+      </div>
+      <div class="win-item">
+        <div class="win-num">07</div>
+        <div class="win-content">
+          <div class="win-id">CH2.NOTICE.2</div>
+          <div class="win-title">Draft and send retrospective privacy notice to all pre-DPDPA data subjects via CRM</div>
+        </div>
+        <div class="win-timeline">6w</div>
+        <span class="win-risk-tag high">High</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<div class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <span class="label-caps">DPDPA Gap Assessment Tool &nbsp;&middot;&nbsp; Confidential</span>
+      <div class="footer-right">
+        41 requirements &middot; 6 DPDPA chapters &middot; Weighted scoring &middot; CMMI maturity<br>
+        Prepared for Prestige Estates &middot; March 2026 &middot; v2 Pipeline
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
