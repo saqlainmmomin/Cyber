@@ -395,7 +395,7 @@ class Initiative(Base):
 - [ ] PDF report includes initiatives section
 
 ### Quality
-- [ ] Existing Prestige Estates assessment re-run produces richer output with initiatives
+- [ ] Existing [test client] assessment re-run produces richer output with initiatives
 - [ ] System prompt token cost reduced measurably via caching on second run
 - [ ] All 14 existing API endpoints continue to work (no breaking changes to existing response shapes)
 

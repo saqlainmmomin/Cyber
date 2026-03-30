@@ -69,10 +69,7 @@ app/
   routers/                FastAPI routers (assessments, questionnaire, analysis, reports)
   utils/
     pdf_export.py         Board-level PDF with maturity badges + initiatives section
-data/
-  prestige_estates_dashboard_v2.html   Live example output — Prestige Estates DPDPA assessment
 scripts/
-  seed_prestige_analysis.py            Seeder to inject analysis without API call (demo/dev)
 ```
 
 ## Running
@@ -93,15 +90,13 @@ docker-compose up
 
 ## Example Output
 
-Live assessment: **Prestige Estates Projects Limited** — DPDPA gap assessment using real privacy policy.
+Sample assessment results:
 
 - Overall score: **43.9% — Needs Significant Improvement**
 - 10 compliant / 15 partially compliant / 16 non-compliant
 - 11 critical gaps · 13 high gaps
 - Average maturity: **M1.8** across 41 requirements
 - 5 strategic initiatives generated with budget bands (₹5L to >₹1Cr)
-
-Dashboard: `data/prestige_estates_dashboard_v2.html`
 
 ## Extending to a New Framework
 
