@@ -1,7 +1,7 @@
 ---
 title: "feat: Intelligent Audit Assistant"
 type: feat
-status: active
+status: in_progress
 date: 2026-04-04
 origin: docs/brainstorms/2026-04-04-intelligent-audit-assistant-requirements.md
 ---
@@ -131,8 +131,8 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
 **Deliverables:**
 
 #### 1a. Project Setup & Base Layout
-- [ ] Add dependencies: `jinja2`, `itsdangerous` to `requirements.txt`
-- [ ] Create template directory structure:
+- [x] Add dependencies: `jinja2`, `itsdangerous` to `requirements.txt`
+- [x] Create template directory structure:
   ```
   app/
     templates/
@@ -157,51 +157,51 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
       css/style.css        # Minimal custom CSS (Tailwind does most work)
       js/app.js            # HTMX config, upload progress handler
   ```
-- [ ] Configure `Jinja2Templates` in `app/main.py`
-- [ ] Mount static files: `app.mount("/static", StaticFiles(...))`
-- [ ] Add `SessionMiddleware` with env-configurable secret key
-- [ ] Create `app/routers/web.py` — HTML-serving routes (separate from API routes)
-- [ ] Base template: dark professional theme (navy/gray palette matching existing PDF brand), HTMX 2.0.4 via CDN, Tailwind CSS via CDN
+- [x] Configure `Jinja2Templates` in `app/main.py`
+- [x] Mount static files: `app.mount("/static", StaticFiles(...))`
+- [x] Add `SessionMiddleware` with env-configurable secret key
+- [x] Create `app/routers/web.py` — HTML-serving routes (separate from API routes)
+- [x] Base template: dark professional theme (navy/gray palette matching existing PDF brand), HTMX 2.0.4 via CDN, Tailwind CSS via CDN
 
 #### 1b. Authentication
-- [ ] Simple login page (`/login`)
-- [ ] Hardcoded auditor credentials from env vars (`AUDITOR_USERNAME`, `AUDITOR_PASSWORD`)
-- [ ] Session-based auth via `SessionMiddleware`
-- [ ] `require_auth` dependency for web routes
-- [ ] HTMX-aware auth: `HX-Redirect` header on 401 for HTMX requests
-- [ ] Logout endpoint (`POST /logout`)
+- [x] Simple login page (`/login`)
+- [x] Hardcoded auditor credentials from env vars (`AUDITOR_USERNAME`, `AUDITOR_PASSWORD`)
+- [x] Session-based auth via `SessionMiddleware`
+- [x] `require_auth` dependency for web routes
+- [x] HTMX-aware auth: `HX-Redirect` header on 401 for HTMX requests
+- [x] Logout endpoint (`POST /logout`)
 
 #### 1c. Dashboard & Assessment CRUD
-- [ ] Dashboard page (`GET /`) — list assessments with status badges, creation date, company name
-- [ ] New assessment form (`GET /assessments/new`, `POST /assessments/new`)
-- [ ] Assessment detail page (`GET /assessments/{id}`) — tabbed layout:
+- [x] Dashboard page (`GET /`) — list assessments with status badges, creation date, company name
+- [x] New assessment form (`GET /assessments/new`, `POST /assessments/new`)
+- [x] Assessment detail page (`GET /assessments/{id}`) — tabbed layout:
   - **Documents** tab — upload area, document list with categories
   - **Questionnaire** tab — context gathering + compliance questions
   - **Report** tab — gap report summary, PDF download link
-- [ ] Delete assessment (HTMX confirm + remove row)
+- [x] Delete assessment (HTMX confirm + remove row)
 
 #### 1d. Document Upload
-- [ ] Drag-and-drop upload zone with HTMX `multipart/form-data`
-- [ ] Upload progress bar via `htmx:xhr:progress` event
-- [ ] Document list with category badges and delete buttons
-- [ ] Category selection dropdown (privacy_policy, consent_form, etc.)
-- [ ] Poll for extraction status after upload (`hx-trigger="every 2s"` until complete)
+- [x] Drag-and-drop upload zone with HTMX `multipart/form-data`
+- [x] Upload progress bar via `htmx:xhr:progress` event
+- [x] Document list with category badges and delete buttons
+- [x] Category selection dropdown (privacy_policy, consent_form, etc.)
+- [x] Poll for extraction status after upload (`hx-trigger="every 2s"` until complete)
 
 #### 1e. Questionnaire Flow
-- [ ] Context gathering (Phase 1): multi-step wizard via HTMX
+- [x] Context gathering (Phase 1): multi-step wizard via HTMX
   - Render 4 blocks as sequential steps
   - `hx-post` submits answers, returns next step
   - Conditional questions (e.g., `CTX.DATA.4a` depends on `CTX.DATA.4`) via `hx-get` on change
   - Progress bar showing block/total
-- [ ] Compliance questionnaire (Phase 2): section-by-section flow
+- [x] Compliance questionnaire (Phase 2): section-by-section flow
   - Section selector sidebar
   - 5-option GRC scale radio buttons per question
   - Notes/evidence fields (expandable)
   - Section completion indicators
-- [ ] "Run Analysis" button → triggers `/api/assessments/{id}/analyze`
+- [x] "Run Analysis" button → triggers `/api/assessments/{id}/analyze`
   - Show loading state (15-30s Claude call)
   - Poll for completion or use HTMX `hx-trigger="every 3s"` on status endpoint
-- [ ] Report view: summary cards + link to PDF download
+- [x] Report view: summary cards + link to PDF download
 
 **Success criteria:** An auditor can create an assessment, upload documents, complete the full questionnaire, run analysis, and download the PDF report — all through the web portal with no API/curl calls needed.
 
@@ -218,7 +218,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
 **Deliverables:**
 
 #### 2a. Desk Review Analysis Engine
-- [ ] New service: `app/services/desk_review.py`
+- [x] New service: `app/services/desk_review.py`
   - `run_desk_review(assessment_id) -> DeskReviewResult`
   - Orchestrates Call 0 to Claude with all uploaded documents
   - Returns structured result:
@@ -232,7 +232,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
         coverage_summary: dict[str, str]          # requirement_id -> coverage level
     ```
 
-- [ ] New prompt builder: `app/dpdpa/prompts.py` — `build_desk_review_prompt()`
+- [x] New prompt builder: `app/dpdpa/prompts.py` — `build_desk_review_prompt()`
   - System prompt: "You are a compliance document analyst specializing in India's DPDPA 2023..."
   - Includes full DPDPA requirements framework (with prompt cache)
   - Instructions for each analysis level:
@@ -242,10 +242,10 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
     - **Signal detection (L3)**: catch red flags — GDPR copy-paste, buried consent, missing DPDPA-specific timelines, inconsistent terminology
   - Output format: structured JSON matching `DeskReviewResult`
 
-- [ ] Prompt cache strategy: reuse the same cached system prompt block (DPDPA requirements) across Call 0, Call 1, and Call 2. All three calls share the same requirements text, so one cache entry serves all.
+- [x] Prompt cache strategy: reuse the same cached system prompt block (DPDPA requirements) across Call 0, Call 1, and Call 2. All three calls share the same requirements text, so one cache entry serves all.
 
 #### 2b. Database Changes
-- [ ] New model: `DeskReviewFinding` table
+- [x] New model: `DeskReviewFinding` table
   ```
   id, assessment_id, finding_type (evidence|absence|signal),
   requirement_id (nullable — signals may be cross-cutting),
@@ -256,7 +256,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   source_location (page/section reference),
   created_at
   ```
-- [ ] New model: `DeskReviewSummary` table
+- [x] New model: `DeskReviewSummary` table
   ```
   id, assessment_id (unique),
   document_catalog (JSON text),
@@ -265,31 +265,31 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   status (pending|analyzing|completed|error),
   started_at, completed_at
   ```
-- [ ] Add `desk_review_status` field to `Assessment` model
-- [ ] Add SQLAlchemy `relationship()` declarations to existing models (overdue cleanup — enables cascade deletes and eager loading)
+- [x] Add `desk_review_status` field to `Assessment` model
+- [x] Add SQLAlchemy `relationship()` declarations to existing models (overdue cleanup — enables cascade deletes and eager loading)
 
 #### 2c. API & Trigger
-- [ ] New endpoint: `POST /api/assessments/{id}/desk-review` — triggers desk review analysis
-- [ ] New endpoint: `GET /api/assessments/{id}/desk-review` — returns findings + status
-- [ ] New endpoint: `GET /api/assessments/{id}/desk-review/status` — lightweight status check for polling
-- [ ] Auto-trigger: option to run desk review automatically when documents are uploaded (configurable)
-- [ ] Update analysis endpoint to incorporate desk review findings into Call 1 + Call 2
+- [x] New endpoint: `POST /api/assessments/{id}/desk-review` — triggers desk review analysis
+- [x] New endpoint: `GET /api/assessments/{id}/desk-review` — returns findings + status
+- [x] New endpoint: `GET /api/assessments/{id}/desk-review/status` — lightweight status check for polling
+- [x] Auto-trigger: option to run desk review automatically when documents are uploaded (configurable)
+- [x] Update analysis endpoint to incorporate desk review findings into Call 1 + Call 2
 
 #### 2d. Web Portal Integration
-- [ ] After document upload, show "Run Desk Review" button (or auto-trigger)
-- [ ] Desk review progress indicator (analyzing -> complete)
-- [ ] Findings display panel on the Documents tab:
+- [x] After document upload, show "Run Desk Review" button (or auto-trigger)
+- [x] Desk review progress indicator (analyzing -> complete)
+- [x] Findings display panel on the Documents tab:
   - Evidence map: requirement -> evidence items with source quotes
   - Absence findings: what's missing, grouped by chapter
   - Signal flags: red flag cards with severity badges
   - Coverage heatmap: which requirements have document evidence, which don't
-- [ ] Transition prompt: "Desk review complete. X findings across Y documents. Proceed to questionnaire?"
+- [x] Transition prompt: "Desk review complete. X findings across Y documents. Proceed to questionnaire?"
 
 #### 2e. Pipeline Integration
-- [ ] Modify `build_evidence_extraction_prompt()` (Call 1) to include desk review findings as context
-- [ ] Modify `build_user_prompt()` (Call 2) to include desk review coverage summary
-- [ ] Desk review findings feed into the gap report's `evidence_quote` field
-- [ ] Update PDF report to include a "Document Analysis Summary" section (appendix)
+- [x] Modify `build_evidence_extraction_prompt()` (Call 1) to include desk review findings as context
+- [x] Modify `build_user_prompt()` (Call 2) to include desk review coverage summary
+- [x] Desk review findings feed into the gap report's `evidence_quote` field
+- [x] Update PDF report to include a "Document Analysis Summary" section (appendix)
 
 **Success criteria:** Upload a privacy policy -> desk review identifies specific DPDPA gaps (e.g., "no mention of consent withdrawal mechanism", "references GDPR legitimate interest") -> these findings appear in the UI before the questionnaire begins.
 
@@ -306,7 +306,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
 **Deliverables:**
 
 #### 3a. Industry-Specific Question Banks
-- [ ] New module: `app/dpdpa/industry_questions.py`
+- [x] New module: `app/dpdpa/industry_questions.py`
   - Data structure (Python dicts, same pattern as `framework.py`):
     ```python
     INDUSTRY_QUESTIONS = {
@@ -334,7 +334,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   - Generic bank: core DPDPA questions that apply regardless of industry
   - Each question maps to 1+ requirement IDs (for scoring/reporting)
 
-- [ ] Question selection logic: `app/services/question_engine.py`
+- [x] Question selection logic: `app/services/question_engine.py`
   - `build_adaptive_questionnaire(assessment_id) -> list[QuestionSet]`
   - Inputs: desk review findings, context profile (risk tier, industry), org profile
   - Logic:
@@ -345,7 +345,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
     5. Ensure every DPDPA requirement is covered by at least one question (no gaps in coverage)
 
 #### 3b. Conversational Follow-ups
-- [ ] Follow-up generation service: `app/services/followup_engine.py`
+- [x] Follow-up generation service: `app/services/followup_engine.py`
   - When an answer triggers a probe (based on `follow_up_triggers` or inconsistency with desk review):
     1. Send to Claude: the question, the answer, the desk review context for mapped requirements
     2. Claude returns 1-2 targeted follow-up questions
@@ -353,24 +353,24 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   - Rate limit: max 2 follow-ups per base question (prevent infinite drilling)
   - Follow-up answers stored with parent question reference
 
-- [ ] Inconsistency detection (real-time, during questionnaire):
+- [x] Inconsistency detection (real-time, during questionnaire):
   - Compare answer to desk review evidence for the same requirement
   - If contradiction detected: auto-trigger follow-up
   - Example: Q asks about breach notification, answer says "yes we have it", desk review found no breach notification in any document -> follow-up: "Your uploaded documents don't mention breach notification procedures. Can you point us to the specific document or describe your current process?"
 
 #### 3c. Web Portal — Adaptive Questionnaire UI
-- [ ] Update `question_step.html` partial:
+- [x] Update `question_step.html` partial:
   - Show desk review context per question ("Based on your privacy policy, we found...")
   - Inline follow-up questions (HTMX append)
   - Skip indicators ("Skipped — covered by document evidence")
   - Evidence links (click to see source quote from desk review)
-- [ ] Questionnaire progress now reflects adaptive length (not fixed 41 questions)
-- [ ] "AI is thinking..." indicator for follow-up generation (1-3s Claude call)
+- [x] Questionnaire progress now reflects adaptive length (not fixed 41 questions)
+- [x] "AI is thinking..." indicator for follow-up generation (1-3s Claude call)
 
 #### 3d. Integration with Analysis Pipeline
-- [ ] Adaptive questionnaire responses feed into Call 2 (gap analysis) alongside desk review findings
-- [ ] Follow-up Q&A pairs included in the prompt as additional context
-- [ ] Answer confidence signals ("strong evidence" vs "self-reported") passed to Claude
+- [x] Adaptive questionnaire responses feed into Call 2 (gap analysis) alongside desk review findings
+- [x] Follow-up Q&A pairs included in the prompt as additional context
+- [x] Answer confidence signals ("strong evidence" vs "self-reported") passed to Claude
 
 **Success criteria:** An IT/SaaS company assessment asks fundamentally different questions than a generic assessment. Questions about areas with strong document evidence are skipped. When an answer contradicts document findings, a targeted follow-up appears.
 
@@ -385,7 +385,7 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
 **Deliverables:**
 
 #### 4a. RFI Document Generation
-- [ ] New service: `app/services/rfi_generator.py`
+- [x] New service: `app/services/rfi_generator.py`
   - `generate_rfi(assessment_id) -> RFIDocument`
   - Inputs: desk review findings (absences + gaps), questionnaire responses (weak areas), gap report
   - Output structure:
@@ -404,16 +404,16 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   - Claude call: takes gap items + desk review absences, generates professional RFI prose
   - Template enforcement: mandatory sections ensured by code, not just prompt
 
-- [ ] PDF export: extend `pdf_export.py` with RFI-specific layout
+- [x] PDF export: extend `pdf_export.py` with RFI-specific layout
   - Professional letterhead style (different from gap report)
   - Table format for evidence items
   - All text through `S()` sanitizer
-- [ ] DOCX export: new `app/utils/docx_export.py`
+- [x] DOCX export: new `app/utils/docx_export.py`
   - Uses `python-docx` (already a dependency)
   - Same content as PDF but in editable format
   - Professional styling (heading styles, table formatting)
 
-- [ ] API endpoints:
+- [x] API endpoints:
   - `POST /api/assessments/{id}/rfi/generate`
   - `GET /api/assessments/{id}/rfi` (JSON)
   - `GET /api/assessments/{id}/rfi/pdf`
@@ -473,23 +473,23 @@ PDF is already supported via fpdf2. DOCX adds `python-docx` (already a dependenc
   - `GET /api/assessments/{id}/policies/{policy_id}/docx`
 
 #### 4c. Enhanced Gap Report
-- [ ] Enrich gap report with evidence intelligence:
+- [x] Enrich gap report with evidence intelligence:
   - Each gap item now includes: desk review evidence (supporting/contradicting), absence findings, signal flags
   - "Evidence Confidence" indicator per gap: strong (document evidence), moderate (self-reported + partial docs), weak (self-reported only)
-- [ ] Update PDF report:
+- [x] Update PDF report:
   - New section: "Document Analysis Summary" (after executive dashboard)
   - Evidence confidence badges on gap cards
   - Signal flags highlighted in gap descriptions
-- [ ] Enhanced executive summary prompt: include desk review findings so Claude produces more specific, evidence-backed narrative
+- [x] Enhanced executive summary prompt: include desk review findings so Claude produces more specific, evidence-backed narrative
 
 #### 4d. Web Portal — Outputs UI
-- [ ] Report tab redesign:
+- [x] Report tab redesign:
   - Summary dashboard (existing)
   - Gap report section with evidence confidence indicators
   - RFI section: preview + PDF/DOCX download buttons
   - Policies section: list of generated policies with status badges, preview, download
-- [ ] "Generate All Outputs" button — runs gap analysis + RFI + policies in sequence
-- [ ] Individual regeneration buttons per output type
+- [x] "Generate All Outputs" button — runs gap analysis + RFI + policies in sequence
+- [x] Individual regeneration buttons per output type
 
 **Success criteria:**
 - RFI document is professional enough to send to a client without editing (see origin: Success Criteria)
@@ -607,24 +607,24 @@ erDiagram
 
 ### Functional Requirements
 
-- [ ] (R1) Documents uploaded trigger desk review analysis producing evidence map, absence findings, and signal flags
-- [ ] (R2) Cross-referencing detects contradictions between questionnaire answers and document content
-- [ ] (R3) Absence detection identifies missing DPDPA provisions in uploaded documents
-- [ ] (R4) Signal detection catches red flags (GDPR copy-paste, buried consent, missing DPDPA timelines)
-- [ ] (R5) Documents automatically cataloged by type and mapped to DPDPA requirements
-- [ ] (R6) Desk review findings shape the questionnaire (skip covered areas, deepen flagged areas)
-- [ ] (R7) IT/SaaS companies receive industry-specific questions distinct from generic assessments
-- [ ] (R8) Conversational follow-ups appear when answers are inconsistent or reveal gaps
-- [ ] (R9) RFI document generated as standalone, client-ready PDF/DOCX
+- [x] (R1) Documents uploaded trigger desk review analysis producing evidence map, absence findings, and signal flags
+- [x] (R2) Cross-referencing detects contradictions between questionnaire answers and document content
+- [x] (R3) Absence detection identifies missing DPDPA provisions in uploaded documents
+- [x] (R4) Signal detection catches red flags (GDPR copy-paste, buried consent, missing DPDPA timelines)
+- [x] (R5) Documents automatically cataloged by type and mapped to DPDPA requirements
+- [x] (R6) Desk review findings shape the questionnaire (skip covered areas, deepen flagged areas)
+- [x] (R7) IT/SaaS companies receive industry-specific questions distinct from generic assessments
+- [x] (R8) Conversational follow-ups appear when answers are inconsistent or reveal gaps
+- [x] (R9) RFI document generated as standalone, client-ready PDF/DOCX
 - [ ] (R10-R11) Core + role-specific DPDPA policies generated with correct structure
 - [ ] (R12) Policies use template structure with AI-generated org-specific content
 - [ ] (R13-R15) Three-phase flow (desk review -> adaptive assessment -> outputs) works end-to-end
-- [ ] (R16) Full assessment completable through web portal with no API/curl calls
+- [x] (R16) Full assessment completable through web portal with no API/curl calls
 
 ### Non-Functional Requirements
 
-- [ ] Desk review completes within 30 seconds for typical document sets (1-5 documents, <50 pages total)
-- [ ] Follow-up generation responds within 5 seconds
+- [x] Desk review completes within 30 seconds for typical document sets (1-5 documents, <50 pages total)
+- [x] Follow-up generation responds within 5 seconds
 - [ ] Web portal loads within 2 seconds on first visit
 - [ ] No JavaScript framework dependencies (HTMX + vanilla JS only)
 - [ ] All text output through `S()` sanitizer for PDF generation
