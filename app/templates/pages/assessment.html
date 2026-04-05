@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ assessment.company_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <a href="/" class="text-sm text-gray-500 hover:text-brand transition-colors">&larr; Dashboard</a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ assessment.company_name }}</h1>
+    <p class="text-sm text-gray-500 mt-0.5">
+      {{ assessment.industry | replace("_", " ") | title }} &middot;
+      {{ assessment.company_size | title }} &middot;
+      {% include "components/status_badge.html" with context %}
+    </p>
+  </div>
+  {% if assessment.status == 'completed' %}
+  <a href="/api/assessments/{{ assessment.id }}/report/pdf"
+     class="inline-flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+    Download PDF
+  </a>
+  {% endif %}
+</div>
+
+<!-- Tabs -->
+<div class="border-b border-gray-200 mb-6">
+  <nav class="flex gap-6" aria-label="Tabs">
+    <a href="/assessments/{{ assessment.id }}?tab=documents"
+       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
+              {% if tab == 'documents' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+      Documents
+      <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ documents | length }}</span>
+    </a>
+    <a href="/assessments/{{ assessment.id }}?tab=questionnaire"
+       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
+              {% if tab == 'questionnaire' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+      Questionnaire
+      {% if response_count > 0 %}
+      <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{{ response_count }}</span>
+      {% endif %}
+    </a>
+    <a href="/assessments/{{ assessment.id }}?tab=report"
+       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
+              {% if tab == 'report' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+      Report
+      {% if report %}
+      <span class="ml-1 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{{ report.overall_score | round(1) }}%</span>
+      {% endif %}
+    </a>
+  </nav>
+</div>
+
+<!-- Tab content -->
+{% if tab == 'documents' %}
+  {% include "partials/documents_tab.html" %}
+{% elif tab == 'questionnaire' %}
+  {% include "partials/questionnaire_tab.html" %}
+{% elif tab == 'report' %}
+  {% include "partials/report_tab.html" %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,87 @@
+{% if context_error %}
+<div class="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
+  <div class="flex items-start gap-3">
+    <svg class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+    <div>
+      <p class="text-sm font-medium text-red-900">Context profiling failed</p>
+      <p class="text-xs text-red-700 mt-1">{{ context_error }}</p>
+      <p class="text-xs text-gray-500 mt-1">The questionnaire will proceed without adaptive weighting. You can re-submit context from the questionnaire tab later.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if not context_done %}
+<!-- Phase 1: Context Gathering -->
+<div class="bg-white rounded-xl border border-gray-200 p-6">
+  <h2 class="text-lg font-semibold text-gray-900 mb-2">Context Gathering</h2>
+  <p class="text-sm text-gray-500 mb-6">Tell us about your organization's data landscape, existing posture, and risk exposure. This shapes the compliance questionnaire.</p>
+
+  <div id="context-wizard"
+       hx-get="/assessments/{{ assessment.id }}/context/block/0"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div class="flex items-center justify-center py-8">
+      <svg class="animate-spin h-6 w-6 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="ml-2 text-sm text-gray-500">Loading questions...</span>
+    </div>
+  </div>
+</div>
+{% else %}
+<!-- Phase 2: Compliance Questionnaire -->
+<div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900">Compliance Questionnaire</h2>
+      <p class="text-sm text-gray-500">Assess your organization against DPDPA requirements. Complete each section.</p>
+    </div>
+    {% if response_count > 0 %}
+    <span class="text-sm text-green-600 font-medium">{{ response_count }} responses saved</span>
+    {% endif %}
+  </div>
+
+  <div id="questionnaire-content"
+       hx-get="/assessments/{{ assessment.id }}/questionnaire/sections"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div class="flex items-center justify-center py-8">
+      <svg class="animate-spin h-6 w-6 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="ml-2 text-sm text-gray-500">Loading questionnaire...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Analysis trigger -->
+<div class="bg-white rounded-xl border border-gray-200 p-6">
+  <h2 class="text-lg font-semibold text-gray-900 mb-2">Run Analysis</h2>
+  <p class="text-sm text-gray-500 mb-4">Once you've completed the questionnaire and uploaded relevant documents, run the AI-powered gap analysis.</p>
+
+  <div id="analysis-area">
+    {% if assessment.status == 'completed' and report %}
+      {% include "partials/analysis_complete.html" %}
+    {% elif assessment.status == 'analyzing' %}
+      {% include "partials/analysis_running.html" %}
+    {% elif assessment.status == 'error' %}
+      {% include "partials/analysis_error.html" %}
+    {% else %}
+    <button hx-post="/assessments/{{ assessment.id }}/run-analysis"
+            hx-target="#analysis-area"
+            hx-swap="innerHTML"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+      </svg>
+      Run Gap Analysis
+    </button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

@@ -73,6 +73,36 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     if assessment.context_profile:
         context_profile = json.loads(assessment.context_profile)
 
+    # Load desk review findings if available
+    desk_review_data = None
+    from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+    dr_summary = (
+        db.query(DeskReviewSummary)
+        .filter(DeskReviewSummary.assessment_id == assessment_id, DeskReviewSummary.status == "completed")
+        .first()
+    )
+    if dr_summary:
+        dr_findings = (
+            db.query(DeskReviewFinding)
+            .filter(DeskReviewFinding.assessment_id == assessment_id)
+            .all()
+        )
+        desk_review_data = {
+            "coverage_summary": json.loads(dr_summary.coverage_summary) if dr_summary.coverage_summary else {},
+            "findings": [
+                {"type": f.finding_type, "requirement_id": f.requirement_id, "content": f.content}
+                for f in dr_findings
+            ],
+            "signal_flags": [
+                {"content": f.content, "severity": f.severity, "requirement_id": f.requirement_id}
+                for f in dr_findings if f.finding_type == "signal"
+            ],
+            "absence_findings": [
+                {"content": f.content, "requirement_id": f.requirement_id}
+                for f in dr_findings if f.finding_type == "absence"
+            ],
+        }
+
     # Run Claude analysis
     try:
         result = run_gap_analysis(
@@ -83,6 +113,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             responses=responses,
             documents=documents,
             context_profile=context_profile,
+            desk_review_data=desk_review_data,
         )
     except Exception as e:
         assessment.status = "error"

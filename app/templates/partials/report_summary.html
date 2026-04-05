@@ -1,0 +1,121 @@
+<!-- Overall score card -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-sm text-gray-500 mb-1">Overall Score</p>
+    <p class="text-3xl font-bold {% if report.overall_score >= 80 %}text-green-600{% elif report.overall_score >= 60 %}text-yellow-600{% elif report.overall_score >= 40 %}text-orange-600{% else %}text-red-600{% endif %}">
+      {{ report.overall_score | round(1) }}%
+    </p>
+    <p class="text-xs text-gray-400 mt-1">
+      {% if report.overall_score >= 80 %}Compliant
+      {% elif report.overall_score >= 60 %}Partially Compliant
+      {% elif report.overall_score >= 40 %}Needs Significant Improvement
+      {% else %}Non-Compliant{% endif %}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-sm text-gray-500 mb-1">Requirements Assessed</p>
+    <p class="text-3xl font-bold text-gray-900">{{ gap_items | length }}</p>
+    <p class="text-xs text-gray-400 mt-1">of 41 DPDPA requirements</p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-sm text-gray-500 mb-2">Compliance Status</p>
+    <div class="space-y-1.5">
+      {% for status, count in status_counts.items() %}
+      <div class="flex items-center justify-between text-xs">
+        <span class="{% if status == 'compliant' %}text-green-600{% elif status == 'partially_compliant' %}text-yellow-600{% elif status == 'non_compliant' %}text-red-600{% else %}text-gray-500{% endif %}">
+          {{ status | replace("_", " ") | title }}
+        </span>
+        <span class="font-medium text-gray-700">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Chapter scores -->
+{% if chapter_scores %}
+<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+  <h3 class="text-sm font-semibold text-gray-900 mb-4">Chapter Scores</h3>
+  <div class="space-y-3">
+    {% for chapter, data in chapter_scores.items() %}
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-sm text-gray-700">{{ chapter | replace("_", " ") | title }}</span>
+        <span class="text-sm font-medium {% if data.score is defined %}{% if data.score >= 80 %}text-green-600{% elif data.score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}{% else %}{% if data >= 80 %}text-green-600{% elif data >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}{% endif %}">
+          {{ (data.score if data.score is defined else data) | round(1) }}%
+        </span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        {% set score_val = data.score if data.score is defined else data %}
+        <div class="h-2 rounded-full transition-all {% if score_val >= 80 %}bg-green-500{% elif score_val >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+             style="width: {{ score_val }}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Executive Summary -->
+{% if report.executive_summary %}
+<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+  <h3 class="text-sm font-semibold text-gray-900 mb-3">Executive Summary</h3>
+  <div class="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none">
+    {{ report.executive_summary }}
+  </div>
+</div>
+{% endif %}
+
+<!-- Gap items table -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+  <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-gray-900">Gap Analysis Details</h3>
+    <a href="/api/assessments/{{ assessment_id }}/report/pdf"
+       class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Download PDF</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requirement</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Risk</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gap</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for item in gap_items %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <p class="text-sm font-medium text-gray-900">{{ item.requirement_title }}</p>
+            <p class="text-xs text-gray-400">{{ item.requirement_id }}</p>
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                   {% if item.compliance_status == 'compliant' %}bg-green-100 text-green-700
+                   {% elif item.compliance_status == 'partially_compliant' %}bg-yellow-100 text-yellow-700
+                   {% elif item.compliance_status == 'non_compliant' %}bg-red-100 text-red-700
+                   {% else %}bg-gray-100 text-gray-700{% endif %}">
+              {{ item.compliance_status | replace("_", " ") | title }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-xs font-medium
+                   {% if item.risk_level == 'critical' %}text-red-600
+                   {% elif item.risk_level == 'high' %}text-orange-600
+                   {% elif item.risk_level == 'medium' %}text-yellow-600
+                   {% else %}text-green-600{% endif %}">
+              {{ item.risk_level | title }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-xs text-gray-600 max-w-md">
+            {{ item.gap_description[:150] }}{% if item.gap_description | length > 150 %}...{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

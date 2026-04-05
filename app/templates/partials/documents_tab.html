@@ -1,0 +1,88 @@
+<!-- Document upload zone -->
+<div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+  <h2 class="text-lg font-semibold text-gray-900 mb-4">Upload Documents</h2>
+
+  <form hx-post="/assessments/{{ assessment.id }}/upload"
+        hx-target="#document-list"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        class="space-y-4">
+
+    <div id="drop-zone"
+         class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-400 transition-colors"
+         onclick="document.getElementById('file-input').click()">
+      <svg class="mx-auto h-10 w-10 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+      </svg>
+      <p class="text-sm text-gray-600">Drag & drop files here, or <span class="text-indigo-600 font-medium">click to browse</span></p>
+      <p class="text-xs text-gray-400 mt-1">PDF, DOCX, PNG, JPG, WEBP</p>
+      <input type="file" name="file" id="file-input" class="hidden" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+             onchange="document.getElementById('file-name-display').textContent = this.files[0]?.name || ''">
+    </div>
+
+    <p id="file-name-display" class="text-sm text-indigo-600 font-medium"></p>
+
+    <div class="flex items-center gap-4">
+      <select name="category" required
+              class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none bg-white">
+        <option value="">Select category</option>
+        {% for cat in doc_categories %}
+        <option value="{{ cat }}">{{ cat | replace("_", " ") | title }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit"
+              class="bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        Upload
+      </button>
+      <div class="htmx-indicator">
+        <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="w-full bg-gray-200 rounded-full h-2 hidden" id="upload-progress">
+      <div id="upload-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all text-xs text-white text-center leading-none" style="width: 0%"></div>
+    </div>
+  </form>
+</div>
+
+<!-- Document list -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h2 class="text-lg font-semibold text-gray-900">Uploaded Documents</h2>
+  </div>
+  <div id="document-list">
+    {% include "partials/document_list.html" %}
+  </div>
+</div>
+
+<!-- Desk Review Section -->
+{% if documents %}
+<div class="bg-white rounded-xl border border-gray-200 p-6">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900">Desk Review</h2>
+      <p class="text-sm text-gray-500">AI-powered analysis of uploaded documents against DPDPA requirements. Identifies evidence, gaps, and red flags before the questionnaire.</p>
+    </div>
+  </div>
+
+  <div id="desk-review-area"
+       hx-get="/assessments/{{ assessment.id }}/desk-review-status"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div class="flex items-center justify-center py-4">
+      <svg class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => initDropZone('drop-zone'));
+</script>

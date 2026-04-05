@@ -1,0 +1,22 @@
+<div class="text-center py-4">
+  <p class="text-sm text-gray-600 mb-4">Documents are ready for analysis. Run the desk review to identify evidence, gaps, and red flags before starting the questionnaire.</p>
+  <button hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+          hx-target="#desk-review-area"
+          hx-swap="innerHTML"
+          hx-indicator="#dr-spinner"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    </svg>
+    Run Desk Review
+  </button>
+  <div id="dr-spinner" class="htmx-indicator mt-3">
+    <div class="flex items-center justify-center gap-2">
+      <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="text-sm text-indigo-600">Analyzing documents... this may take 15-30 seconds</span>
+    </div>
+  </div>
+</div>

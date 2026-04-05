@@ -1,0 +1,163 @@
+<!-- Desk Review Complete — Findings Display -->
+<div>
+  <!-- Summary bar -->
+  <div class="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-200 mb-5">
+    <svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <div class="flex-1">
+      <p class="text-sm font-medium text-green-900">
+        Desk review complete &mdash; {{ total_findings }} findings across {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}
+      </p>
+      <p class="text-xs text-green-700 mt-0.5">
+        {{ evidence | length }} evidence items, {{ absences | length }} gaps identified, {{ signals | length }} red flags detected
+      </p>
+    </div>
+    <a href="/assessments/{{ assessment_id }}?tab=questionnaire"
+       class="inline-flex items-center gap-1 bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+      Proceed to Questionnaire &rarr;
+    </a>
+  </div>
+
+  <!-- Signal Flags (most important — show first) -->
+  {% if signals %}
+  <div class="mb-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+      <svg class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      Red Flags ({{ signals | length }})
+    </h3>
+    <div class="space-y-2">
+      {% for flag in signals %}
+      <div class="p-3 rounded-lg border
+                  {% if flag.severity == 'critical' %}border-red-300 bg-red-50
+                  {% elif flag.severity == 'high' %}border-orange-300 bg-orange-50
+                  {% else %}border-yellow-300 bg-yellow-50{% endif %}">
+        <div class="flex items-start justify-between">
+          <p class="text-sm text-gray-900">{{ flag.content }}</p>
+          <span class="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                 {% if flag.severity == 'critical' %}bg-red-100 text-red-700
+                 {% elif flag.severity == 'high' %}bg-orange-100 text-orange-700
+                 {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+            {{ flag.severity | title }}
+          </span>
+        </div>
+        {% if flag.source_quote %}
+        <blockquote class="mt-2 pl-3 border-l-2 border-gray-300 text-xs text-gray-600 italic">
+          "{{ flag.source_quote[:200] }}{% if flag.source_quote | length > 200 %}...{% endif %}"
+        </blockquote>
+        {% endif %}
+        {% if flag.requirement_id %}
+        <p class="mt-1 text-xs text-gray-400">Related: {{ flag.requirement_id }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Absence Findings -->
+  {% if absences %}
+  <div class="mb-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+      <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.5a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+      </svg>
+      Missing Provisions ({{ absences | length }})
+    </h3>
+    <div class="overflow-hidden rounded-lg border border-gray-200">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Requirement</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">What's Missing</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for absence in absences %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 text-xs font-medium text-gray-700 whitespace-nowrap">{{ absence.requirement_id }}</td>
+            <td class="px-4 py-2 text-xs text-gray-600">{{ absence.content }}</td>
+            <td class="px-4 py-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                     {% if absence.severity == 'critical' %}bg-red-100 text-red-700
+                     {% elif absence.severity == 'high' %}bg-orange-100 text-orange-700
+                     {% elif absence.severity == 'medium' %}bg-yellow-100 text-yellow-700
+                     {% else %}bg-gray-100 text-gray-700{% endif %}">
+                {{ absence.severity | title }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Coverage Heatmap -->
+  {% if coverage %}
+  <div class="mb-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Requirement Coverage</h3>
+    <div class="flex flex-wrap gap-1.5">
+      {% set color_map = {
+        'adequate': 'bg-green-100 text-green-800 border-green-200',
+        'partial': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        'absent': 'bg-red-100 text-red-800 border-red-200',
+        'not_covered': 'bg-gray-100 text-gray-500 border-gray-200',
+      } %}
+      {% for req_id, level in coverage.items() | sort %}
+      <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-mono {{ color_map.get(level, 'bg-gray-100 text-gray-500 border-gray-200') }}"
+            title="{{ req_id }}: {{ level }}">
+        {{ req_id.split('.')[-1][:8] }}
+      </span>
+      {% endfor %}
+    </div>
+    <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-green-100 border border-green-200"></span> Adequate</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></span> Partial</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-red-100 border border-red-200"></span> Absent</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-100 border border-gray-200"></span> Not Covered</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Evidence Map (collapsible) -->
+  {% if evidence %}
+  <details class="mb-5">
+    <summary class="text-sm font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 mb-3">
+      Evidence Found ({{ evidence | length }} items) &mdash; click to expand
+    </summary>
+    <div class="space-y-2 mt-3">
+      {% for e in evidence %}
+      <div class="p-3 rounded-lg bg-blue-50 border border-blue-200">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-medium text-blue-800">{{ e.requirement_id }}</span>
+          {% if e.source_location %}
+          <span class="text-xs text-blue-500">{{ e.source_location }}</span>
+          {% endif %}
+        </div>
+        {% if e.source_quote %}
+        <blockquote class="pl-3 border-l-2 border-blue-300 text-xs text-gray-700 italic">
+          "{{ e.source_quote[:300] }}{% if e.source_quote | length > 300 %}...{% endif %}"
+        </blockquote>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+
+  <!-- Re-run option -->
+  <div class="pt-3 border-t border-gray-100">
+    <button hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+            hx-target="#desk-review-area"
+            hx-swap="innerHTML"
+            hx-confirm="Re-run desk review? This will replace the current findings."
+            class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+      Re-run desk review
+    </button>
+  </div>
+</div>

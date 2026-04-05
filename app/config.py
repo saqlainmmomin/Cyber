@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     max_document_words: int = 5000
     max_total_document_words: int = 20000
     claude_model: str = "claude-sonnet-4-20250514"
+    session_secret: str = "change-me-in-production"
+    auditor_username: str = "admin"
+    auditor_password: str = "admin"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

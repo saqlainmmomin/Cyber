@@ -26,6 +26,7 @@ class Assessment(Base):
     status: Mapped[str] = mapped_column(String(50), default="created")
     context_answers: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_profile: Mapped[str | None] = mapped_column(Text, nullable=True)
+    desk_review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # pending|analyzing|completed|error
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow

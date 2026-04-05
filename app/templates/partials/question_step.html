@@ -1,0 +1,147 @@
+<!-- Single context block in the wizard -->
+<form id="context-form-{{ block_index }}"
+      {% if block_index < total_blocks - 1 %}
+      hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index + 1 }}"
+      hx-target="#context-wizard"
+      hx-swap="innerHTML"
+      {% else %}
+      hx-post="/assessments/{{ assessment_id }}/context/save"
+      {% endif %}>
+
+  <!-- Progress -->
+  <div class="flex items-center gap-2 mb-6">
+    {% for i in range(total_blocks) %}
+    <div class="flex-1 h-1.5 rounded-full {% if i <= block_index %}bg-indigo-500{% else %}bg-gray-200{% endif %} transition-colors"></div>
+    {% endfor %}
+    <span class="text-xs text-gray-500 ml-2">{{ block_index + 1 }}/{{ total_blocks }}</span>
+  </div>
+
+  <h3 class="text-base font-semibold text-gray-900 mb-1">{{ block.title }}</h3>
+  <p class="text-sm text-gray-500 mb-5">{{ block.description }}</p>
+
+  <div class="space-y-5">
+    {% for q in block.questions %}
+    <div class="question-group"
+         {% if q.get('depends_on') %}
+         {% set dep_key = q.depends_on.keys() | list | first %}
+         {% set dep_val = q.depends_on[dep_key] %}
+         x-show="false"
+         data-depends-on="{{ dep_key }}"
+         data-depends-value="{{ dep_val }}"
+         style="display: none;"
+         {% endif %}>
+      <label class="block text-sm font-medium text-gray-700 mb-2">{{ q.question }}</label>
+
+      {% if q.type == 'single_select' %}
+      <div class="flex flex-wrap gap-2">
+        {% for opt in q.options %}
+        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+          <input type="radio" name="{{ q.id }}" value="{{ opt }}"
+                 class="text-indigo-600 focus:ring-indigo-500"
+                 onchange="handleDependency(this)">
+          <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      {% elif q.type == 'multi_select' %}
+      <div class="flex flex-wrap gap-2">
+        {% for opt in q.options %}
+        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+          <input type="checkbox" name="{{ q.id }}" value="{{ opt }}"
+                 class="rounded text-indigo-600 focus:ring-indigo-500">
+          <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      {% elif q.type == 'text' %}
+      <textarea name="{{ q.id }}" rows="2"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                placeholder="Enter your answer..."></textarea>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Include answers from previous blocks as hidden fields -->
+  <div id="previous-answers"></div>
+
+  <div class="flex justify-between mt-6 pt-4 border-t border-gray-100">
+    {% if block_index > 0 %}
+    <button type="button"
+            hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index - 1 }}"
+            hx-target="#context-wizard"
+            hx-swap="innerHTML"
+            class="text-sm text-gray-600 hover:text-brand transition-colors">
+      &larr; Previous
+    </button>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+    <button type="submit"
+            class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors">
+      {% if block_index < total_blocks - 1 %}
+      Next &rarr;
+      {% else %}
+      Submit Context &amp; Continue
+      {% endif %}
+    </button>
+  </div>
+</form>
+
+<script>
+// Carry forward answers from previous blocks
+document.addEventListener('htmx:afterSettle', function(e) {
+  if (e.target.id === 'context-wizard') {
+    const prev = document.getElementById('previous-answers');
+    if (prev && window._contextAnswers) {
+      for (const [k, v] of Object.entries(window._contextAnswers)) {
+        if (Array.isArray(v)) {
+          v.forEach(val => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = k; input.value = val;
+            prev.appendChild(input);
+          });
+        } else {
+          const input = document.createElement('input');
+          input.type = 'hidden'; input.name = k; input.value = v;
+          prev.appendChild(input);
+        }
+      }
+    }
+  }
+});
+
+// Save current block's answers before navigating
+if (!window._contextAnswers) window._contextAnswers = {};
+document.addEventListener('htmx:configRequest', function(e) {
+  const form = e.target.closest?.('form');
+  if (form && form.id?.startsWith('context-form-')) {
+    const fd = new FormData(form);
+    for (const [k, v] of fd.entries()) {
+      if (k.startsWith('CTX.')) {
+        if (window._contextAnswers[k]) {
+          if (!Array.isArray(window._contextAnswers[k])) {
+            window._contextAnswers[k] = [window._contextAnswers[k]];
+          }
+          window._contextAnswers[k].push(v);
+        } else {
+          window._contextAnswers[k] = v;
+        }
+      }
+    }
+  }
+});
+
+function handleDependency(input) {
+  const groups = document.querySelectorAll('[data-depends-on]');
+  groups.forEach(g => {
+    const depOn = g.dataset.dependsOn;
+    const depVal = g.dataset.dependsValue;
+    const checked = document.querySelector(`input[name="${depOn}"]:checked`);
+    g.style.display = (checked && checked.value === depVal) ? 'block' : 'none';
+  });
+}
+</script>

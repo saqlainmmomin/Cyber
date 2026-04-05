@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CyberAssess{% endblock %} — DPDPA Gap Assessment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50: '#f0f1f8', 100: '#d9dbed', 200: '#b3b7db', 300: '#8d93c9', 400: '#676fb7', 500: '#4a5296', 600: '#3a4178', 700: '#2b315a', 800: '#1e1e50', 900: '#1a1a40' },
+            brand: { DEFAULT: '#1e1e50', light: '#2b315a', dark: '#141438' },
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50 text-gray-900" hx-boost="true">
+  {% block body %}
+  <div class="min-h-full">
+    <!-- Navigation -->
+    <nav class="bg-brand shadow-lg">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+          <div class="flex items-center">
+            <a href="/" class="flex items-center gap-3">
+              <div class="h-8 w-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <span class="text-white font-semibold text-lg">CyberAssess</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-navy-200 text-sm">DPDPA Compliance</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% endblock %}
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

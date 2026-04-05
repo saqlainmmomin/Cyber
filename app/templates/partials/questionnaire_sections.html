@@ -1,0 +1,57 @@
+<!-- Adaptive stats bar -->
+{% if stats %}
+<div class="mb-4 flex items-center gap-4 text-xs text-gray-500">
+  <span>{{ stats.total_questions }} questions</span>
+  {% if stats.skipped_questions > 0 %}
+  <span class="text-green-600">{{ stats.skipped_questions }} skipped (covered by documents)</span>
+  {% endif %}
+  {% if stats.deepened_questions > 0 %}
+  <span class="text-amber-600">{{ stats.deepened_questions }} deepened (needs attention)</span>
+  {% endif %}
+  {% if stats.industry_questions > 0 %}
+  <span class="text-indigo-600">{{ stats.industry_questions }} industry-specific</span>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Section sidebar + active section content -->
+<div class="flex gap-6">
+  <!-- Section list -->
+  <div class="w-64 flex-shrink-0">
+    <nav class="space-y-1">
+      {% for section in sections %}
+      {% set active_count = section.questions | selectattr('status', 'ne', 'skipped') | list | length if section.questions[0].get('status') is defined else section.questions | length %}
+      {% set skipped_count = section.questions | length - active_count %}
+      <button hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
+              hx-target="#section-content"
+              hx-swap="innerHTML"
+              class="section-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-100
+                     {% if loop.first %}bg-indigo-50 text-brand font-medium{% else %}text-gray-600{% endif %}"
+              data-section="{{ section.section_id }}"
+              onclick="document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('bg-indigo-50','text-brand','font-medium')); this.classList.add('bg-indigo-50','text-brand','font-medium');">
+        <span class="block truncate">{{ section.section_title }}</span>
+        <span class="block text-xs mt-0.5
+               {% if section.get('source') == 'industry' %}text-indigo-400{% else %}text-gray-400{% endif %}">
+          {{ section.chapter_title }} &middot; {{ active_count }} questions
+          {% if skipped_count > 0 %}<span class="text-green-500">({{ skipped_count }} skipped)</span>{% endif %}
+        </span>
+      </button>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <!-- Section content -->
+  <div class="flex-1" id="section-content"
+       {% if sections %}
+       hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ sections[0].section_id }}"
+       hx-trigger="load"
+       hx-swap="innerHTML"
+       {% endif %}>
+    <div class="flex items-center justify-center py-8">
+      <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  </div>
+</div>
