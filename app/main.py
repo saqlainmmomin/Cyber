@@ -35,6 +35,7 @@ def _run_migrations(engine):
             ("maturity_level", "INTEGER"),
             ("root_cause_category", "TEXT"),
             ("evidence_quote", "TEXT"),
+            ("evidence_confidence", "TEXT"),
         ],
     }
     with engine.begin() as conn:

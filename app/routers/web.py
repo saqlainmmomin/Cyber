@@ -13,6 +13,7 @@ from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.questionnaire import build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.questionnaire import QuestionnaireResponse
+from app.models.rfi import RFIDocument
 from app.services.followup_engine import generate_followups
 from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
@@ -693,6 +694,9 @@ def report_summary(
     for item in gap_items:
         status_counts[item.compliance_status] = status_counts.get(item.compliance_status, 0) + 1
 
+    # Check if RFI exists
+    rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
+
     return templates.TemplateResponse(
         "partials/report_summary.html",
         {
@@ -702,7 +706,163 @@ def report_summary(
             "gap_items": gap_items,
             "chapter_scores": chapter_scores,
             "status_counts": status_counts,
+            "rfi": rfi,
         },
+    )
+
+
+# --- RFI Generation + Download ---
+
+
+@router.post("/assessments/{assessment_id}/generate-rfi", response_class=HTMLResponse)
+def generate_rfi_web(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Generate RFI document from gap analysis results."""
+    from app.models.desk_review import DeskReviewFinding
+    from app.services.rfi_generator import generate_rfi
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+    if not report:
+        raise HTTPException(400, "Run gap analysis first")
+
+    gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
+    gap_dicts = [
+        {
+            "requirement_id": g.requirement_id,
+            "requirement_title": g.requirement_title,
+            "chapter": g.chapter,
+            "compliance_status": g.compliance_status,
+            "current_state": g.current_state,
+            "gap_description": g.gap_description,
+            "risk_level": g.risk_level,
+            "remediation_action": g.remediation_action,
+            "remediation_priority": g.remediation_priority,
+            "evidence_quote": g.evidence_quote,
+        }
+        for g in gap_items
+    ]
+
+    # Desk review absences and signals
+    absences = [
+        {"requirement_id": f.requirement_id, "content": f.content}
+        for f in db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id,
+            DeskReviewFinding.finding_type == "absence",
+        ).all()
+    ]
+    signals = [
+        {"content": f.content, "severity": f.severity, "requirement_id": f.requirement_id}
+        for f in db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id,
+            DeskReviewFinding.finding_type == "signal",
+        ).all()
+    ]
+
+    try:
+        result = generate_rfi(
+            assessment_id=assessment_id,
+            company_name=assessment.company_name,
+            industry=assessment.industry or "other",
+            gap_items=gap_dicts,
+            desk_review_absences=absences or None,
+            desk_review_signals=signals or None,
+        )
+    except Exception as e:
+        return HTMLResponse(f'<div class="text-sm text-red-600">RFI generation failed: {e}</div>')
+
+    # Delete existing RFI for this assessment
+    existing_rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
+    if existing_rfi:
+        db.delete(existing_rfi)
+
+    rfi = RFIDocument(
+        assessment_id=assessment_id,
+        title=result["title"],
+        introduction=result["introduction"],
+        evidence_items=json.dumps(result["evidence_items"]),
+        response_instructions=result["response_instructions"],
+        appendix=result.get("appendix", ""),
+        total_items=result["total_items"],
+        critical_items=result["critical_items"],
+        raw_ai_response=result.get("raw_ai_response"),
+    )
+    db.add(rfi)
+    db.commit()
+
+    return templates.TemplateResponse(
+        "partials/rfi_generated.html",
+        {"request": request, "assessment_id": assessment_id, "rfi": rfi},
+    )
+
+
+@router.get("/assessments/{assessment_id}/rfi/pdf")
+def download_rfi_pdf(assessment_id: str, db: Session = Depends(get_db)):
+    """Download RFI as PDF."""
+    from fastapi.responses import Response
+    from app.utils.rfi_export import generate_rfi_pdf
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
+    if not rfi:
+        raise HTTPException(404, "RFI not generated yet")
+
+    evidence_items = json.loads(rfi.evidence_items)
+    pdf_bytes = generate_rfi_pdf(
+        title=rfi.title,
+        company_name=assessment.company_name,
+        introduction=rfi.introduction,
+        evidence_items=evidence_items,
+        response_instructions=rfi.response_instructions,
+        generated_at=rfi.generated_at,
+    )
+
+    filename = f"RFI-{assessment.company_name.replace(' ', '-')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/assessments/{assessment_id}/rfi/docx")
+def download_rfi_docx(assessment_id: str, db: Session = Depends(get_db)):
+    """Download RFI as DOCX."""
+    from fastapi.responses import Response
+    from app.utils.rfi_export import generate_rfi_docx
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
+    if not rfi:
+        raise HTTPException(404, "RFI not generated yet")
+
+    evidence_items = json.loads(rfi.evidence_items)
+    docx_bytes = generate_rfi_docx(
+        title=rfi.title,
+        company_name=assessment.company_name,
+        introduction=rfi.introduction,
+        evidence_items=evidence_items,
+        response_instructions=rfi.response_instructions,
+        generated_at=rfi.generated_at,
+    )
+
+    filename = f"RFI-{assessment.company_name.replace(' ', '-')}.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

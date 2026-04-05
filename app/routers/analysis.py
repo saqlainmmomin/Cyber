@@ -148,13 +148,38 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     db.add(report)
     db.flush()
 
-    # Create gap items (with new Phase 4 fields)
+    # Build evidence confidence lookup from desk review + documents
+    _dr_evidence_reqs = set()
+    _dr_coverage = {}
+    if desk_review_data:
+        _dr_coverage = desk_review_data.get("coverage_summary", {})
+        for f in desk_review_data.get("findings", []):
+            if f.get("type") == "evidence" and f.get("requirement_id"):
+                _dr_evidence_reqs.add(f["requirement_id"])
+
+    has_documents = bool(documents)
+    _response_ids = {r["question_id"] for r in responses}
+
+    def _compute_evidence_confidence(req_id: str) -> str:
+        """strong = document evidence, moderate = self-reported + partial docs, weak = self-reported only."""
+        has_dr_evidence = req_id in _dr_evidence_reqs or _dr_coverage.get(req_id) == "adequate"
+        has_response = req_id in _response_ids
+        if has_dr_evidence and has_response:
+            return "strong"
+        if has_dr_evidence or (has_response and has_documents):
+            return "moderate"
+        if has_response:
+            return "weak"
+        return "weak"
+
+    # Create gap items
     for a in parsed["assessments"]:
+        req_id = a["requirement_id"]
         item = GapItem(
             report_id=report.id,
-            requirement_id=a["requirement_id"],
-            chapter=_REQ_CHAPTERS.get(a["requirement_id"], "unknown"),
-            requirement_title=_REQ_TITLES.get(a["requirement_id"], a["requirement_id"]),
+            requirement_id=req_id,
+            chapter=_REQ_CHAPTERS.get(req_id, "unknown"),
+            requirement_title=_REQ_TITLES.get(req_id, req_id),
             compliance_status=a["compliance_status"],
             current_state=a.get("current_state", ""),
             gap_description=a.get("gap_description", ""),
@@ -166,6 +191,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             maturity_level=a.get("maturity_level"),
             root_cause_category=a.get("root_cause_category"),
             evidence_quote=a.get("evidence_quote"),
+            evidence_confidence=_compute_evidence_confidence(req_id),
         )
         db.add(item)
 
