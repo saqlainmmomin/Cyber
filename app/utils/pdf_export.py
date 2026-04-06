@@ -265,7 +265,8 @@ def _draw_timeline_block(pdf: FPDF, x: float, y: float, w: float,
     return item_y + 4
 
 
-def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float) -> float:
+def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float,
+                   show_evidence: bool = False) -> float:
     """Draw a compact card for a gap item. Returns height consumed."""
     r, g, b = RISK_COLORS.get(item.risk_level, NAVY)
 
@@ -341,6 +342,21 @@ def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float) -> fl
         pdf.set_text_color(*MID_TEXT)
         pdf.set_xy(inner_x + 8, cur_y + 0.5)
         pdf.multi_cell(inner_w - 8, 3.5, text=fix_text[:180], new_x="LMARGIN")
+        cur_y = pdf.get_y()
+
+    # Evidence quote (appendix only)
+    if show_evidence:
+        evidence = S(item.evidence_quote or "No relevant language found")
+        is_verbatim = item.evidence_quote and item.evidence_quote != "No relevant language found"
+        label = "EVIDENCE:" if is_verbatim else "EVIDENCE:"
+        label_color = (52, 152, 219) if is_verbatim else LIGHT_TEXT
+        pdf.set_font("Helvetica", "B", 7)
+        pdf.set_text_color(*label_color)
+        pdf.text(inner_x, cur_y + 3.5, label)
+        pdf.set_font("Helvetica", "I" if is_verbatim else "", 7)
+        pdf.set_text_color(*MID_TEXT if is_verbatim else LIGHT_TEXT)
+        pdf.set_xy(inner_x + 18, cur_y + 0.5)
+        pdf.multi_cell(inner_w - 18, 3.5, text=evidence[:240], new_x="LMARGIN")
         cur_y = pdf.get_y()
 
     # Adjust card height to actual content
@@ -818,11 +834,45 @@ def generate_pdf(
                 pdf.text(PM + 4, cur_y + 3.8, S(f"N/A  {item.requirement_id}: {item.requirement_title[:70]}"))
                 pdf.set_y(cur_y + 7)
             else:
-                # Full card for gaps
-                h = _draw_gap_card(pdf, item, PM, cur_y, CW)
+                # Full card for gaps (with evidence in appendix)
+                h = _draw_gap_card(pdf, item, PM, cur_y, CW, show_evidence=True)
                 pdf.set_y(cur_y + h + 4)
 
         _page_footer(pdf, company_name)
+
+    # ===================================================================
+    # APPENDIX: SCOPE & LIMITATIONS
+    # ===================================================================
+    pdf.add_page()
+    _page_header(pdf, "Scope & Limitations")
+    _section_title(pdf, "Scope & Limitations")
+
+    assessment_date = datetime.now(timezone.utc).strftime("%B %d, %Y")
+    scope_text = f"""Assessment Date: {assessment_date}
+
+Nature of Assessment:
+This document constitutes a questionnaire-based DPDPA gap assessment. It is not a formal compliance audit and does not constitute legal advice. Findings are based solely on information disclosed by the organization's representatives during the structured assessment interview and from documents voluntarily submitted for review.
+
+Scope of Coverage:
+The assessment evaluates the organization's compliance posture against 41 requirements derived from the Digital Personal Data Protection Act, 2023 (DPDPA). These requirements span six domains: (1) Obligations of Data Fiduciary, (2) Rights of Data Principal, (3) Special Provisions for Children and Significant Data Fiduciaries, (4) Consent Management, (5) Cross-Border Data Transfer, and (6) Breach Notification.
+
+What Is Not Covered:
+This assessment does not include technical penetration testing, source code review, network security assessment, physical security review, or any form of independent technical verification. Findings in areas where the organization provided limited or no evidence are based on stated intent and disclosed posture only.
+
+Reliance on Disclosed Information:
+All findings reflect the information provided to the assessor at the time of the assessment. The assessor has not independently verified the accuracy or completeness of information provided. Material omissions or inaccuracies in disclosed information would affect the reliability of findings.
+
+Recommended Follow-On Actions:
+For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by a qualified legal counsel or certified privacy professional is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.
+
+Confidentiality:
+This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. CyberAssess and the named organization are the intended recipients of this report."""
+
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.set_x(PM)
+    pdf.multi_cell(CW, 4.5, text=S(scope_text), new_x="LMARGIN")
+    _page_footer(pdf, company_name)
 
     # ===================================================================
     # FINAL PAGE: METHODOLOGY
@@ -836,14 +886,25 @@ def generate_pdf(
 
     methodology = """This assessment evaluates compliance against India's Digital Personal Data Protection Act, 2023 (DPDPA) across 41 requirements organized in 6 chapters. The assessment combines questionnaire responses from organizational stakeholders with analysis of uploaded policy documents.
 
-Scoring Methodology:
-Each requirement is assessed as Compliant (100), Partially Compliant (50), or Non-Compliant (0). Section scores are computed as the average of constituent requirements. Chapter scores are weighted averages of section scores. The overall score is a weighted average of chapter scores.
+Framework Overview:
+The 41 requirements are derived directly from DPDPA statutory text and cover all obligations applicable to a Data Fiduciary operating in India. Requirements are organized into chapters aligned with the Act's chapter structure, with each chapter weighted to reflect regulatory emphasis and penalty exposure.
+
+GRC Response Scale:
+Questionnaire responses use a five-option scale:
+- Fully Implemented: Control exists, is documented, consistently applied, and evidence is available (maps to Compliant - 100 points)
+- Partially Implemented: Control exists in some form but is inconsistent, undocumented, or not fully operational (maps to Partially Compliant - 50 points)
+- Planned: Control is not yet in place but there is a documented plan or budget commitment (maps to Non-Compliant - 0 points; recognized in remediation priority)
+- Not Implemented: No control exists and none is planned (maps to Non-Compliant - 0 points)
+- Not Applicable: Requirement does not apply to this organization's processing activities (excluded from scoring denominator)
+
+Scoring Formula:
+Each requirement is scored based on its GRC response. Section scores are the unweighted average of constituent requirement scores. Chapter scores are weighted averages of section scores using published section weights. The overall score is the weighted average of chapter scores using the chapter weights below. Not Applicable responses are excluded from the denominator, so scores reflect the applicable compliance universe only.
 
 Chapter Weights:
-- Obligations of Data Fiduciary: 30%
-- Rights of Data Principal: 20%
-- Special Provisions (Children, SDF): 20%
-- Consent Management: 10%
+- Obligations of Data Fiduciary (Ch. 2): 30%
+- Rights of Data Principal (Ch. 3): 20%
+- Special Provisions - Children & SDF (Ch. 4): 20%
+- Consent Management (detailed): 10%
 - Cross-Border Data Transfer: 10%
 - Breach Notification: 10%
 
@@ -854,13 +915,20 @@ Rating Thresholds:
 - 0-39%: Non-Compliant
 
 Risk Classification:
-Gaps are classified by risk level (Critical, High, Medium, Low) based on regulatory exposure, potential penalties, and impact on data principals. Remediation priorities are assigned based on risk severity and implementation dependencies.
+Gaps are classified by risk level (Critical, High, Medium, Low) based on regulatory exposure, potential penalties under Schedule to the DPDPA, and impact on data principals. Remediation priorities (P1-P4) are assigned based on risk severity and implementation dependencies between requirements.
 
-Maturity Model:
-Each requirement is assigned a CMMI-aligned maturity level (0-5): 0=Non-existent, 1=Initial/Ad-hoc, 2=Managed (inconsistent), 3=Defined (consistent, auditable), 4=Quantitative (KPI-driven), 5=Optimizing (continuous improvement). The maturity badge (M0-M5) appears on each gap card. The gap between current maturity and level 3 represents the minimum remediation target.
+Maturity Model (CMMI-Aligned):
+Each gap is assigned a current maturity rating on a 0-5 scale:
+M0 - Non-existent: No awareness or capability; requirement is entirely unaddressed
+M1 - Initial: Ad-hoc or reactive; no repeatable process; relies on individual knowledge
+M2 - Managed: Some process exists but applied inconsistently; not documented or auditable
+M3 - Defined: Consistent, documented, and auditable process; meets minimum regulatory bar
+M4 - Quantitative: Process is measured with KPIs; performance tracked and reported
+M5 - Optimizing: Continuous improvement cycle in place; best-in-class privacy practice
+The minimum remediation target for regulatory compliance is M3 (Defined). The gap between current maturity and M3 drives the remediation effort estimate.
 
 Strategic Initiatives:
-Gaps are clustered by root cause (Policy, People, Process, Technology, Governance) into named remediation initiatives. Each initiative groups related requirements that share a common fix pattern, enabling efficient resource allocation. Initiatives are sequenced considering prerequisite dependencies between requirements.
+Gaps are clustered by root cause (Policy, People, Process, Technology, Governance) into named remediation initiatives. Each initiative groups related requirements that share a common fix pattern, enabling efficient resource and budget allocation. Initiatives are sequenced considering prerequisite dependencies between requirements.
 
 Disclaimer:
 This assessment provides guidance based on the information provided and should not be considered legal advice. Organizations should consult qualified legal counsel for definitive compliance determinations."""

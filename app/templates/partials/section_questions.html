@@ -1,0 +1,176 @@
+<div class="mb-4">
+  <h3 class="text-base font-semibold text-gray-900">{{ section_title }}</h3>
+  <p class="text-xs text-gray-500">{{ chapter_title }}</p>
+</div>
+
+<form hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
+      hx-target="#section-content"
+      hx-swap="innerHTML">
+  <input type="hidden" name="section_id" value="{{ section_id }}">
+
+  <div class="space-y-6">
+    {% for q in questions %}
+    {% if q.get('status') == 'skipped' %}
+    <!-- Skipped question -->
+    <div class="p-4 rounded-lg border border-gray-100 bg-gray-50 opacity-75">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <p class="text-sm text-gray-500 line-through">{{ q.question }}</p>
+          <div class="flex items-center gap-2 mt-2">
+            <svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs text-green-700">{{ q.get('skip_reason', 'Skipped') }}</span>
+          </div>
+          {% if q.get('desk_review_evidence') %}
+          <details class="mt-2">
+            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">View document evidence</summary>
+            <div class="mt-1 space-y-1">
+              {% for ev in q.desk_review_evidence %}
+              <div class="text-xs text-gray-500 pl-3 border-l-2 border-green-200">
+                {{ ev.content }}
+                {% if ev.source_quote %}
+                <span class="block text-gray-400 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</span>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <!-- Active / Deepened question -->
+    <div class="p-4 rounded-lg border transition-colors
+                {% if q.get('status') == 'deepened' %}border-amber-200 bg-amber-50/30{% else %}border-gray-200 hover:border-gray-300{% endif %}"
+         id="question-{{ q.id }}">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex-1">
+          <p class="text-sm font-medium text-gray-900">{{ q.question }}</p>
+          {% if q.guidance %}
+          <p class="text-xs text-gray-400 mt-1">{{ q.guidance }}</p>
+          {% endif %}
+        </div>
+        <div class="ml-3 flex items-center gap-2">
+          {% if q.get('source') == 'industry' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">Industry</span>
+          {% endif %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                 {% if q.criticality == 'critical' %}bg-red-50 text-red-700
+                 {% elif q.criticality == 'high' %}bg-orange-50 text-orange-700
+                 {% else %}bg-gray-50 text-gray-600{% endif %}">
+            {{ q.criticality | title }}
+          </span>
+        </div>
+      </div>
+
+      {% if q.get('desk_review_note') %}
+      <div class="mb-3 p-2.5 rounded-md bg-blue-50 border border-blue-100">
+        <div class="flex items-start gap-2">
+          <svg class="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p class="text-xs text-blue-800">{{ q.desk_review_note }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if q.get('desk_review_evidence') and q.get('status') != 'skipped' %}
+      <details class="mb-3">
+        <summary class="text-xs text-blue-600 cursor-pointer hover:text-blue-800">Document evidence found</summary>
+        <div class="mt-1 space-y-1 ml-2">
+          {% for ev in q.desk_review_evidence %}
+          <div class="text-xs text-gray-600 pl-3 border-l-2 border-blue-200">
+            {{ ev.content }}
+            {% if ev.source_quote %}
+            <span class="block text-gray-400 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+
+      {% if q.get('skip_if') and q.get('status') != 'skipped' %}
+      <p class="text-xs text-amber-600 mb-2">Note: {{ q.skip_if }}</p>
+      {% endif %}
+
+      <!-- GRC 5-option scale -->
+      <div class="flex flex-wrap gap-2 mb-3">
+        {% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
+        {% set option_labels = {
+          'fully_implemented': 'Fully Implemented',
+          'partially_implemented': 'Partially Implemented',
+          'planned': 'Planned',
+          'not_implemented': 'Not Implemented',
+          'not_applicable': 'N/A'
+        } %}
+        {% set option_colors = {
+          'fully_implemented': 'has-[:checked]:border-green-500 has-[:checked]:bg-green-50',
+          'partially_implemented': 'has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50',
+          'planned': 'has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50',
+          'not_implemented': 'has-[:checked]:border-red-500 has-[:checked]:bg-red-50',
+          'not_applicable': 'has-[:checked]:border-gray-500 has-[:checked]:bg-gray-50',
+        } %}
+        {% for opt in options %}
+        <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 cursor-pointer transition-colors {{ option_colors[opt] }}">
+          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
+                 class="sr-only"
+                 {% if existing.get(q.id, {}).get('answer') == opt %}checked{% endif %}
+                 {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
+                 hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
+                 hx-target="#followup-{{ q.id }}"
+                 hx-swap="innerHTML"
+                 hx-vals='{"question_id": "{{ q.id }}", "answer": "{{ opt }}"}'
+                 hx-trigger="change"
+                 hx-indicator="#followup-indicator-{{ q.id }}"
+                 {% endif %}>
+          <span class="text-xs text-gray-700">{{ option_labels[opt] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <!-- Follow-up loading indicator -->
+      <div id="followup-indicator-{{ q.id }}" class="htmx-indicator mt-2">
+        <div class="flex items-center gap-2 text-xs text-gray-400">
+          <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          AI is analyzing your response...
+        </div>
+      </div>
+
+      <!-- Follow-up container (populated via HTMX when answer triggers follow-up) -->
+      <div id="followup-{{ q.id }}"></div>
+
+      <!-- Notes (collapsible) -->
+      <details class="mt-2">
+        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Add notes / evidence</summary>
+        <div class="mt-2 space-y-2">
+          <textarea name="notes_{{ q.id }}" rows="2" placeholder="Additional notes..."
+                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
+          <input type="text" name="evidence_{{ q.id }}" placeholder="Evidence reference (document, URL, etc.)"
+                 value="{{ existing.get(q.id, {}).get('evidence_reference', '') }}"
+                 class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition">
+        </div>
+      </details>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="mt-6 flex justify-end">
+    <button type="submit"
+            class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+      Save Section
+      <span class="htmx-indicator">
+        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </span>
+    </button>
+  </div>
+</form>

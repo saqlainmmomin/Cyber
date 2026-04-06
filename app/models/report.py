@@ -38,3 +38,4 @@ class GapItem(Base):
     maturity_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     root_cause_category: Mapped[str | None] = mapped_column(String(30), nullable=True)
     evidence_quote: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_confidence: Mapped[str | None] = mapped_column(String(20), nullable=True)  # strong|moderate|weak

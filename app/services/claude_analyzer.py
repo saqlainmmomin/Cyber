@@ -31,6 +31,7 @@ def run_gap_analysis(
     responses: list[dict],
     documents: list[dict],
     context_profile: dict | None = None,
+    desk_review_data: dict | None = None,
 ) -> dict:
     """
     Run full DPDPA gap analysis using Claude.
@@ -46,10 +47,15 @@ def run_gap_analysis(
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     truncated_docs = _truncate_documents(documents)
 
+    # Prepare desk review findings for Call 1 context
+    desk_review_findings = None
+    if desk_review_data and desk_review_data.get("findings"):
+        desk_review_findings = desk_review_data["findings"]
+
     # Call 1: Evidence extraction (only if documents exist)
     evidence = None
     if truncated_docs:
-        evidence = _run_evidence_extraction(client, truncated_docs)
+        evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
 
     # Call 2: Gap analysis with cached system prompt
     system_blocks = build_system_prompt()
@@ -62,6 +68,7 @@ def run_gap_analysis(
         documents=truncated_docs,
         context_profile=context_profile,
         evidence=evidence,
+        desk_review_summary=desk_review_data,
     )
 
     message = client.messages.create(
@@ -97,13 +104,17 @@ def run_gap_analysis(
     }
 
 
-def _run_evidence_extraction(client: anthropic.Anthropic, documents: list[dict]) -> dict | None:
+def _run_evidence_extraction(
+    client: anthropic.Anthropic,
+    documents: list[dict],
+    desk_review_findings: list[dict] | None = None,
+) -> dict | None:
     """
     Call 1: Extract evidence quotes from documents for each requirement.
 
     Returns a dict mapping requirement_id → list of quoted text.
     """
-    prompt = build_evidence_extraction_prompt(documents)
+    prompt = build_evidence_extraction_prompt(documents, desk_review_findings)
 
     try:
         message = client.messages.create(

@@ -1,15 +1,21 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.config import settings
 from app.database import Base, engine
 import app.models  # noqa: F401 — ensure all models registered before create_all
-from app.routers import analysis, assessments, documents, questionnaire, reports
+from app.routers import analysis, assessments, desk_review, documents, questionnaire, reports, web
 
 logger = logging.getLogger(__name__)
+
+APP_DIR = Path(__file__).resolve().parent
 
 
 def _run_migrations(engine):
@@ -19,6 +25,7 @@ def _run_migrations(engine):
         "assessments": [
             ("context_answers", "TEXT"),
             ("context_profile", "TEXT"),
+            ("desk_review_status", "TEXT"),
         ],
         "questionnaire_responses": [
             ("na_reason", "TEXT"),
@@ -28,6 +35,7 @@ def _run_migrations(engine):
             ("maturity_level", "INTEGER"),
             ("root_cause_category", "TEXT"),
             ("evidence_quote", "TEXT"),
+            ("evidence_confidence", "TEXT"),
         ],
     }
     with engine.begin() as conn:
@@ -55,6 +63,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -63,12 +72,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
 
+# API routes
 app.include_router(assessments.router)
 app.include_router(questionnaire.router)
 app.include_router(documents.router)
 app.include_router(analysis.router)
 app.include_router(reports.router)
+app.include_router(desk_review.router)
+
+# Web portal routes
+app.include_router(web.router)
 
 
 @app.get("/health")

@@ -22,7 +22,10 @@ async def upload_document(
 
     file_type = detect_file_type(file.filename or "")
     if not file_type:
-        raise HTTPException(400, "Unsupported file type. Upload PDF or DOCX files.")
+        raise HTTPException(
+            400,
+            "Unsupported file type. Upload PDF, DOCX, PNG, JPG, JPEG, or WEBP files.",
+        )
 
     content = await file.read()
     file_path = save_upload(assessment_id, file.filename or "document", content)
@@ -31,7 +34,8 @@ async def upload_document(
     if not extracted_text.strip():
         raise HTTPException(
             422,
-            "Could not extract text from this document. It may be a scanned image — OCR is not supported yet.",
+            "Could not extract text from this document. If it is a scanned PDF, "
+            "try uploading it as a PNG or JPEG screenshot instead.",
         )
 
     doc = AssessmentDocument(

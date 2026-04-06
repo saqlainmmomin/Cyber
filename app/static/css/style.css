@@ -1,0 +1,36 @@
+/* CyberAssess — minimal custom styles (Tailwind does most work) */
+
+/* HTMX loading indicator */
+.htmx-indicator {
+  display: none;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline-block;
+}
+
+/* Smooth transitions for HTMX swaps */
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.htmx-settling {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+/* Upload drop zone */
+.drop-zone {
+  transition: all 200ms ease;
+}
+.drop-zone.drag-over {
+  border-color: #6366f1;
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* Tab active state */
+.tab-active {
+  border-bottom: 2px solid #6366f1;
+  color: #1e1e50;
+  font-weight: 600;
+}

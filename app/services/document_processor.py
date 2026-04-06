@@ -1,15 +1,30 @@
 """
-Document text extraction for PDF and DOCX files.
+Document text extraction for PDF, DOCX, and image files.
+
+Supported:
+- PDF: text extraction via pdfplumber
+- DOCX: text extraction via python-docx
+- PNG / JPG / JPEG / WEBP: content description via Claude vision API
 """
 
+import base64
 import os
 import re
 import uuid
 
+import anthropic
 import pdfplumber
 from docx import Document
 
 from app.config import settings
+
+# Media type map for Claude vision
+_IMAGE_MEDIA_TYPES = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "webp": "image/webp",
+}
 
 
 def save_upload(assessment_id: str, filename: str, content: bytes) -> str:
@@ -24,11 +39,13 @@ def save_upload(assessment_id: str, filename: str, content: bytes) -> str:
 
 
 def extract_text(file_path: str, file_type: str) -> str:
-    """Extract text from a PDF or DOCX file."""
+    """Extract text from a PDF, DOCX, or image file."""
     if file_type == "pdf":
         return _extract_pdf(file_path)
     elif file_type == "docx":
         return _extract_docx(file_path)
+    elif file_type in _IMAGE_MEDIA_TYPES:
+        return _extract_image(file_path, file_type)
     else:
         raise ValueError(f"Unsupported file type: {file_type}")
 
@@ -150,11 +167,66 @@ def _truncate_to_words(text: str, max_words: int) -> str:
     return truncated + "\n\n[... truncated ...]"
 
 
+def _extract_image(file_path: str, file_type: str) -> str:
+    """
+    Extract compliance-relevant content from an image using Claude vision.
+
+    Returns a structured text description of what is visible in the screenshot
+    so it can be fed into the evidence extraction pipeline.
+    """
+    media_type = _IMAGE_MEDIA_TYPES[file_type]
+    with open(file_path, "rb") as f:
+        image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    message = client.messages.create(
+        model=settings.claude_model,
+        max_tokens=1500,
+        system=(
+            "You are a compliance document analyst. When shown a screenshot or image, "
+            "extract and transcribe all visible text exactly as it appears. Then add a "
+            "brief structured summary of what the image shows in the context of data "
+            "protection compliance (e.g. consent screen, privacy policy excerpt, cookie "
+            "banner, breach log, data flow diagram). Format: first transcribe the text "
+            "verbatim under 'VISIBLE TEXT:', then add 'SUMMARY:' with 2-3 sentences "
+            "describing what compliance-relevant controls or gaps the image reveals."
+        ),
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            "Please transcribe all visible text from this image and provide "
+                            "a compliance-focused summary of what it shows."
+                        ),
+                    },
+                ],
+            }
+        ],
+    )
+
+    description = message.content[0].text
+    filename = os.path.basename(file_path)
+    return f"[Screenshot: {filename}]\n\n{description}"
+
+
 def detect_file_type(filename: str) -> str | None:
     """Detect file type from extension."""
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext == "pdf":
         return "pdf"
-    elif ext in ("docx",):
+    elif ext == "docx":
         return "docx"
+    elif ext in _IMAGE_MEDIA_TYPES:
+        return ext
     return None

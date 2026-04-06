@@ -132,8 +132,15 @@ def build_system_prompt_text() -> str:
 
 # ─── Evidence Extraction Prompt (Call 1) ────────────────────────────────────
 
-def build_evidence_extraction_prompt(documents: list[dict]) -> str:
-    """Build prompt for Call 1: extracting evidence quotes from documents."""
+def build_evidence_extraction_prompt(
+    documents: list[dict],
+    desk_review_findings: list[dict] | None = None,
+) -> str:
+    """Build prompt for Call 1: extracting evidence quotes from documents.
+
+    If desk_review_findings are provided, includes them as context to focus
+    the evidence extraction on areas where the desk review found gaps or signals.
+    """
     requirements_text = _build_requirements_text()
 
     docs_text = ""
@@ -144,10 +151,19 @@ def build_evidence_extraction_prompt(documents: list[dict]) -> str:
     else:
         docs_text = "\n_No supporting documents provided._\n"
 
+    desk_review_context = ""
+    if desk_review_findings:
+        desk_review_context = "\n## Desk Review Context (from prior document analysis)\n\n"
+        desk_review_context += "The following findings were identified during desk review. Pay special attention to these areas:\n\n"
+        for f in desk_review_findings:
+            prefix = {"evidence": "Evidence", "absence": "Gap", "signal": "Red Flag"}.get(f["type"], "Finding")
+            desk_review_context += f"- **{prefix}** ({f.get('requirement_id', 'general')}): {f['content']}\n"
+        desk_review_context += "\n"
+
     return f"""## Task: Evidence Extraction
 
 For each DPDPA requirement below, find and quote the EXACT language from the organization's documents that is relevant to that requirement. If no relevant language exists, state "No relevant language found."
-
+{desk_review_context}
 ## Requirements
 {requirements_text}
 
@@ -170,6 +186,134 @@ Include ALL requirement IDs. Quote verbatim — do not paraphrase."""
 
 # ─── Risk Profile Prompt (for context_profiler.py) ─────────────────────────
 
+# ─── Desk Review Prompt (Call 0) ──────────────────────────────────────────
+
+def build_desk_review_system_prompt() -> list[dict]:
+    """
+    Build the system prompt for Call 0: desk review analysis.
+
+    Shares the same requirements framework text (and prompt cache) as Calls 1+2.
+    """
+    requirements_text = _build_requirements_text()
+    req_count = len(get_all_requirements())
+
+    instructions = f"""You are a compliance document analyst specializing in India's Digital Personal Data Protection Act (DPDPA), 2023.
+
+## Your Task
+
+Analyze the uploaded documents BEFORE the questionnaire begins. You are performing a desk review — the first step of a professional compliance audit. Your goal is to catalog what exists, map evidence to requirements, identify what's missing, and flag red flags.
+
+## DPDPA Requirements Framework
+
+{requirements_text}
+
+## Analysis Levels
+
+Perform ALL four analysis levels for each document:
+
+### Level 1 — Document Catalog
+For each document, identify:
+- Document type (privacy policy, consent form, breach procedure, etc.)
+- Which DPDPA chapters/requirements it covers
+- A 1-2 sentence summary of what it contains
+
+### Level 2 — Evidence Mapping
+For each DPDPA requirement ({req_count} total), extract EXACT quotes from the documents that address that requirement. Include the document filename and approximate location (section heading, page, paragraph).
+
+### Level 3 — Absence Detection
+For each DPDPA requirement, identify what is MISSING from the documents. Be specific:
+- NOT "lacks consent mechanism" but "no mention of consent withdrawal process per Section 6(6)"
+- NOT "missing breach notification" but "no 72-hour notification timeline specified per Section 8(6)"
+
+### Level 4 — Signal Detection
+Catch red flags that reveal deeper compliance issues:
+- **GDPR copy-paste**: References to "legitimate interest", "right to be forgotten", "DPO" (DPDPA uses "Data Protection Officer" but different scope), EU-specific terminology
+- **Buried consent**: Consent language hidden in lengthy T&C instead of being "clear, specific, and informed"
+- **Missing DPDPA-specific timelines**: No 72-hour breach notification, no reasonable timeframe for data principal rights
+- **Template artifacts**: Generic/boilerplate language not customized to the organization
+- **Inconsistent terminology**: Mixing "data subject" (GDPR) with "data principal" (DPDPA), or "data controller" with "data fiduciary"
+- **Scope gaps**: Policy covers some data types but ignores others the organization likely processes
+
+## Output Format
+
+Respond ONLY with valid JSON. No markdown fences, no commentary.
+
+{{{{
+  "document_catalog": [
+    {{{{
+      "filename": "privacy_policy.pdf",
+      "document_type": "Privacy Policy",
+      "coverage_areas": ["CH2.CONSENT", "CH3.ACCESS"],
+      "summary": "Corporate privacy policy covering..."
+    }}}}
+  ],
+  "evidence_map": {{{{
+    "CH2.CONSENT.1": [
+      {{{{
+        "quote": "Exact quoted text from document...",
+        "document": "privacy_policy.pdf",
+        "location": "Section 3, paragraph 2"
+      }}}}
+    ]
+  }}}},
+  "absence_findings": [
+    {{{{
+      "requirement_id": "CH2.CONSENT.3",
+      "description": "No consent withdrawal mechanism described. Section 6(6) requires...",
+      "severity": "high",
+      "affected_documents": ["privacy_policy.pdf"]
+    }}}}
+  ],
+  "signal_flags": [
+    {{{{
+      "flag_type": "gdpr_copy_paste",
+      "description": "Privacy policy references 'legitimate interest' — a GDPR concept not present in DPDPA",
+      "severity": "high",
+      "source_quote": "We process data based on legitimate interest...",
+      "document": "privacy_policy.pdf",
+      "location": "Section 2",
+      "requirement_ids": ["CH2.CONSENT.1"]
+    }}}}
+  ],
+  "coverage_summary": {{{{
+    "CH2.CONSENT.1": "adequate",
+    "CH2.CONSENT.2": "partial",
+    "CH2.CONSENT.3": "absent",
+    "CH3.ACCESS.1": "not_covered"
+  }}}}
+}}}}
+
+Coverage levels: "adequate" (requirement well-addressed), "partial" (some mention but gaps), "absent" (explicitly missing despite relevant document), "not_covered" (no relevant document uploaded).
+
+Include ALL {req_count} requirement IDs in coverage_summary. Be thorough and precise."""
+
+    return [
+        {"type": "text", "text": "You are a compliance document analyst specializing in India's DPDPA 2023."},
+        {
+            "type": "text",
+            "text": instructions,
+            "cache_control": {"type": "ephemeral"},
+        },
+    ]
+
+
+def build_desk_review_user_prompt(documents: list[dict], company_name: str, industry: str) -> str:
+    """Build the user prompt for Call 0 with document content."""
+    prompt = f"""## Organization
+- **Company:** {company_name}
+- **Industry:** {industry}
+
+## Documents for Review
+
+"""
+    for doc in documents:
+        prompt += f"### {doc['filename']} (Category: {doc['category']})\n\n"
+        prompt += doc["text"] + "\n\n---\n\n"
+
+    prompt += "Analyze these documents and provide the structured desk review output."
+    return prompt
+
+
 def build_risk_profile_system_prompt() -> str:
     """System prompt for the lightweight risk profiling call."""
     return (
@@ -190,6 +334,7 @@ def build_user_prompt(
     documents: list[dict],
     context_profile: dict | None = None,
     evidence: dict | None = None,
+    desk_review_summary: dict | None = None,
 ) -> str:
     """
     Build the user prompt with organization context, responses, and documents.
@@ -227,15 +372,62 @@ def build_user_prompt(
 
 """
 
-    # Questionnaire responses (grouped by chapter if context available)
+    # Desk review findings (from Call 0)
+    if desk_review_summary:
+        prompt += "## Desk Review Findings (pre-questionnaire document analysis)\n\n"
+        if desk_review_summary.get("coverage_summary"):
+            prompt += "### Coverage Summary\n"
+            for req_id, level in desk_review_summary["coverage_summary"].items():
+                prompt += f"- **{req_id}**: {level}\n"
+            prompt += "\n"
+        if desk_review_summary.get("signal_flags"):
+            prompt += "### Red Flags Detected\n"
+            for flag in desk_review_summary["signal_flags"]:
+                prompt += f"- **{flag.get('severity', 'medium').upper()}**: {flag['content']}"
+                if flag.get("requirement_id"):
+                    prompt += f" (affects {flag['requirement_id']})"
+                prompt += "\n"
+            prompt += "\n"
+        if desk_review_summary.get("absence_findings"):
+            prompt += "### Missing Provisions\n"
+            for absence in desk_review_summary["absence_findings"]:
+                prompt += f"- **{absence.get('requirement_id', 'general')}**: {absence['content']}\n"
+            prompt += "\n"
+
+    # Questionnaire responses — separated into base, industry, and follow-up
+    base_responses = []
+    industry_responses = []
+    followup_responses = []
+    for r in responses:
+        qid = r["question_id"]
+        if qid.startswith("FU."):
+            followup_responses.append(r)
+        elif qid.startswith("IND."):
+            industry_responses.append(r)
+        else:
+            base_responses.append(r)
+
     prompt += "## Questionnaire Responses\n\n"
-    if responses:
-        for r in responses:
+    if base_responses:
+        for r in base_responses:
             notes_str = f" — Notes: {r['notes']}" if r.get("notes") else ""
             confidence_str = f" [Confidence: {r['confidence']}]" if r.get("confidence") else ""
             prompt += f"- **{r['question_id']}**: {r['answer']}{notes_str}{confidence_str}\n"
     else:
-        prompt += "_No questionnaire responses submitted._\n"
+        prompt += "_No base questionnaire responses submitted._\n"
+
+    if industry_responses:
+        prompt += "\n### Industry-Specific Responses\n"
+        for r in industry_responses:
+            notes_str = f" — Notes: {r['notes']}" if r.get("notes") else ""
+            prompt += f"- **{r['question_id']}**: {r['answer']}{notes_str}\n"
+
+    if followup_responses:
+        prompt += "\n### Follow-up Clarifications\n"
+        prompt += "_These are auditor follow-up responses probing deeper into specific answers:_\n"
+        for r in followup_responses:
+            parent_note = f" (follow-up to {r['notes'].replace('Follow-up to ', '')})" if r.get("notes", "").startswith("Follow-up to") else ""
+            prompt += f"- **{r['question_id']}**{parent_note}: {r['answer']}\n"
 
     prompt += "\n"
 
