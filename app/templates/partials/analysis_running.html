@@ -1,13 +1,13 @@
-<div class="flex items-center gap-4 p-4 rounded-lg bg-indigo-50 border border-indigo-200"
+<div class="flex items-center gap-4 p-4 rounded-lg bg-navy-50 border border-navy-200"
      hx-get="/assessments/{{ assessment_id }}/analysis-status"
      hx-trigger="every 3s"
      hx-swap="outerHTML">
-  <svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg class="animate-spin h-6 w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
   </svg>
   <div>
-    <p class="text-sm font-medium text-indigo-900">Analysis in progress...</p>
-    <p class="text-xs text-indigo-600">Claude is analyzing your documents and questionnaire responses. This typically takes 15-30 seconds.</p>
+    <p class="text-sm font-medium text-gray-900">Analysis in progress...</p>
+    <p class="text-xs text-gray-500">Claude is analyzing your documents and questionnaire responses. This typically takes 15-30 seconds.</p>
   </div>
 </div>

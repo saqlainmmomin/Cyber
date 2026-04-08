@@ -46,10 +46,10 @@ def build_system_prompt() -> list[dict]:
 For EACH requirement above, you must assess the organization and provide:
 
 1. **compliance_status**: One of "compliant", "partially_compliant", "non_compliant", or "not_assessed"
-   - "compliant": Clear evidence of full implementation
-   - "partially_compliant": Some evidence but gaps remain
-   - "non_compliant": No evidence or explicitly not implemented
-   - "not_assessed": Insufficient information to determine (use sparingly)
+   - "compliant": Clear, specific, verifiable evidence of full implementation with documented processes — not just a policy statement. Requires proof of OPERATIONAL implementation (procedures, system configs, training records, audit logs).
+   - "partially_compliant": Substantial evidence of active implementation WITH specific bounded gaps. Requires BOTH: (a) concrete evidence of operational implementation beyond just a policy document, AND (b) gaps that are clearly bounded and remediable. If the only evidence is a policy document with no proof of operational follow-through, this is non_compliant.
+   - "non_compliant": Any of: no evidence, only boilerplate/template policy language, GDPR/CCPA copy-paste without DPDPA adaptation, evidence of intent without implementation, or practices that contradict compliance (e.g., "retain everything" data practices, coerced consent).
+   - "not_assessed": Insufficient information to determine — use ONLY when the requirement genuinely cannot be evaluated from available data. Do NOT use as a soft alternative to non_compliant.
 
 2. **current_state**: What the organization currently does regarding this requirement (1-2 sentences). Base this on their questionnaire answers and document evidence.
 
@@ -112,7 +112,29 @@ The "assessments" array must contain exactly one entry for every requirement ID 
 - Consider the organization's industry context when assessing risk levels
 - Remediation actions should be implementable, not generic compliance advice
 - Assign maturity_level based on observed practices, not aspirational state
-- Assign exactly one root_cause_category per gap — this drives initiative clustering"""
+- Assign exactly one root_cause_category per gap — this drives initiative clustering
+
+## Skepticism Guidelines — READ BEFORE ASSESSING
+
+1. **Policy != Implementation.** A written policy is necessary but NOT sufficient for "compliant" or "partially_compliant". Look for evidence of OPERATIONAL implementation: procedures actually followed, system configurations, training records, audit logs, or specific operational details that go beyond policy statements. A generic policy with no proof of follow-through is non_compliant.
+
+2. **Template detection.** If a policy uses generic boilerplate language, references GDPR concepts (legitimate interest, right to be forgotten, data subject, DPO with EU scope), CCPA concepts (Do Not Sell, California-specific rights), or contains copy-paste from another framework without DPDPA-specific adaptation, this is a RED FLAG. Score as non_compliant unless there is ALSO strong DPDPA-specific operational evidence alongside the template language.
+
+3. **Data minimization rigor.** "We collect only necessary data" without a documented data inventory, per-category retention schedules with specific timeframes, and active deletion procedures is non_compliant. "Retain everything" or indefinite retention defaults are explicitly non_compliant for all CH2.MINIMIZE requirements. A single blanket retention period for all data categories (suggesting no purpose-based analysis) is non_compliant.
+
+4. **Burden of proof is on the organization.** Absence of evidence is evidence of absence. Do not infer compliance from silence or vague statements. If a requirement is not addressed in documents or questionnaire responses, it is non_compliant, not partially_compliant. "We plan to implement" or "this is in progress" without evidence of concrete steps taken is non_compliant.
+
+5. **Cross-reference desk review signals.** If the desk review found a red flag (GDPR copy-paste, template artifacts, buried consent) for a requirement, that requirement starts with a presumption of non_compliant. This presumption can only be overcome by strong, specific countervailing evidence of DPDPA-compliant implementation.
+
+6. **Questionnaire answer skepticism.** Self-reported "fully_implemented" answers with no supporting document evidence should be treated as partially_compliant at best. Look for corroboration between what the organization claims (questionnaire) and what their documents actually show.
+
+## Data Minimization Assessment (CH2.MINIMIZE requirements)
+
+When assessing data minimization requirements, explicitly check for:
+- Does the organization have a documented data inventory/map listing what data is collected and for what purpose? If not, CH2.MINIMIZE.1 is non_compliant.
+- Are retention periods specified PER DATA CATEGORY with legal justification for each? If a single blanket period or no periods documented, CH2.MINIMIZE.3 is non_compliant.
+- Is there an active, documented deletion mechanism (automated or procedural) — not just a policy statement about deletion? If not, CH2.MINIMIZE.2 is non_compliant.
+- "Retain data as long as necessary" or "as required by law" without specific timeframes per data category = non_compliant."""
 
     return [
         {"type": "text", "text": ANALYST_PERSONA},
@@ -225,14 +247,73 @@ For each DPDPA requirement, identify what is MISSING from the documents. Be spec
 - NOT "lacks consent mechanism" but "no mention of consent withdrawal process per Section 6(6)"
 - NOT "missing breach notification" but "no 72-hour notification timeline specified per Section 8(6)"
 
-### Level 4 — Signal Detection
-Catch red flags that reveal deeper compliance issues:
-- **GDPR copy-paste**: References to "legitimate interest", "right to be forgotten", "DPO" (DPDPA uses "Data Protection Officer" but different scope), EU-specific terminology
-- **Buried consent**: Consent language hidden in lengthy T&C instead of being "clear, specific, and informed"
-- **Missing DPDPA-specific timelines**: No 72-hour breach notification, no reasonable timeframe for data principal rights
-- **Template artifacts**: Generic/boilerplate language not customized to the organization
-- **Inconsistent terminology**: Mixing "data subject" (GDPR) with "data principal" (DPDPA), or "data controller" with "data fiduciary"
-- **Scope gaps**: Policy covers some data types but ignores others the organization likely processes
+### Level 4 — Signal Detection (CRITICAL — be aggressive, flag EVERY instance)
+
+Flag every instance of the following. Do not give benefit of the doubt:
+
+**GDPR copy-paste indicators** (flag_type: "gdpr_copy_paste"):
+- "legitimate interest" or "legitimate interests" — DPDPA has NO legitimate interest basis for processing
+- "right to be forgotten" — DPDPA uses "right to erasure" with different scope and conditions
+- "data subject" instead of "data principal"
+- "data controller" instead of "data fiduciary"
+- "data processor" used in GDPR context rather than DPDPA "data processor" context
+- "supervisory authority" instead of "Data Protection Board of India"
+- Any references to EU GDPR, CCPA, LGPD, PIPEDA, or other non-Indian privacy laws as the governing framework
+- "DPO" with references to EU establishment, EU data subject scope, or Article 37-39 GDPR
+
+**Template/boilerplate artifacts** (flag_type: "template_artifact"):
+- Placeholder text: "[Company Name]", "[Insert Date]", "[Your Company]", "XYZ Corp", "[Organization]"
+- Generic industry references that don't match the actual organization's industry
+- Identical language appearing in multiple unrelated sections (copy-paste within document)
+- Policy effective dates that are suspiciously recent relative to organization age or in the future
+- References to compliance frameworks the organization is unlikely to follow given their size/industry
+- Boilerplate privacy policy language found verbatim on template websites
+
+**CCPA-specific artifacts** (flag_type: "ccpa_copy_paste"):
+- "Do Not Sell My Personal Information" or "Do Not Sell or Share"
+- "California Consumer Privacy Act" or "CCPA" or "CPRA"
+- "Shine the Light law"
+- "Categories of personal information collected" in CCPA's specific format/categorization
+- Opt-out language specific to sale of data (DPDPA uses consent-based model, not opt-out)
+
+**Buried consent** (flag_type: "buried_consent"):
+- Consent language hidden in lengthy Terms & Conditions instead of clear, specific, informed notice
+- Bundled consent where data processing consent is mixed with service T&C acceptance
+- Pre-checked consent boxes or consent-by-default patterns
+
+**Missing DPDPA-specific timelines** (flag_type: "missing_timeline"):
+- No 72-hour breach notification timeline per Section 8(6)
+- No reasonable timeframe for data principal rights responses
+- Vague language like "as soon as possible" or "without undue delay" without specific timeframes
+
+**Scope gaps** (flag_type: "scope_gap"):
+- Policy covers some data types but ignores others the organization likely processes given their industry
+- Employee data processing not addressed despite organization having employees
+- Children's data processing not addressed for organizations in relevant sectors (ed-tech, gaming, social media)
+
+## Special Focus: Data Minimization (CH2.MINIMIZE.1, CH2.MINIMIZE.2, CH2.MINIMIZE.3)
+
+These requirements are frequently under-detected. Apply heightened scrutiny:
+
+**CH2.MINIMIZE.1 (Collection Limitation):**
+- Look for: specific data elements listed per purpose, data mapping/inventory, explicit justification for each data category collected
+- Red flag if: only general statements like "we collect only necessary data" without specifics, or no data inventory at all
+
+**CH2.MINIMIZE.2 (Purpose-Based Erasure):**
+- Look for: automatic deletion triggers, purpose expiry tracking, active erasure processes with documented procedures
+- Red flag if: no deletion mechanism described, or "data may be retained for legal purposes" without specifying WHICH data or WHICH legal requirement, or no documented erasure procedure
+
+**CH2.MINIMIZE.3 (Retention Schedules):**
+- Look for: per-category retention periods with specific legal justification, systematic deletion procedures, retention review cadence
+- Red flag if: single blanket retention period for all data categories (suggests no purpose-based analysis), indefinite retention, no documented deletion procedure, retention period > 7 years without specific legal mandate
+
+**Data minimization red flags** (flag_type: "data_minimization_concern"):
+- "Retain everything" or "retain all data" language
+- Indefinite retention periods or no stated end date
+- Absence of data inventory or data mapping
+- No documented deletion procedures
+- Retention schedules that retain ALL data categories for the SAME duration (no purpose-based differentiation)
+- "As long as necessary" or "as required by applicable law" without specific timeframes per data category
 
 ## Output Format
 
@@ -335,6 +416,7 @@ def build_user_prompt(
     context_profile: dict | None = None,
     evidence: dict | None = None,
     desk_review_summary: dict | None = None,
+    applicable_requirements: list[str] | None = None,
 ) -> str:
     """
     Build the user prompt with organization context, responses, and documents.
@@ -357,6 +439,19 @@ def build_user_prompt(
 - **Description:** {description or 'Not provided'}
 
 """
+
+    # Scope filter — tell Claude which requirements are not applicable
+    if applicable_requirements is not None:
+        from app.dpdpa.framework import get_all_requirements
+        all_ids = {r["id"] for r in get_all_requirements()}
+        excluded_ids = sorted(all_ids - set(applicable_requirements))
+        if excluded_ids:
+            prompt += "## Scope — Requirements Excluded from This Assessment\n"
+            prompt += "The following requirements are NOT applicable to this organisation based on their scope answers. "
+            prompt += "Set compliance_status to 'not_applicable' for all of these — do not assess them:\n"
+            for rid in excluded_ids:
+                prompt += f"- {rid}\n"
+            prompt += "\n"
 
     # Context profile header (from Phase 1)
     if context_profile:

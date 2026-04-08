@@ -6,14 +6,20 @@ Also handles root cause clustering and initiative generation (post-analysis).
 """
 
 import json
+import logging
 
 from app.dpdpa.framework import DPDPA_FRAMEWORK, ROOT_CAUSE_CLUSTERS, get_all_requirements
+
+logger = logging.getLogger(__name__)
 
 STATUS_SCORES = {
     "compliant": 100,
     "partially_compliant": 50,
     "non_compliant": 0,
 }
+
+# All statuses Claude is allowed to return. Anything outside this set is unexpected.
+KNOWN_STATUSES = frozenset(STATUS_SCORES) | {"not_assessed", "not_applicable"}
 
 RATING_THRESHOLDS = [
     (80, "Compliant"),
@@ -61,6 +67,12 @@ def compute_scores(assessments: list[dict]) -> dict:
             scored_values = []
             for req in section["requirements"]:
                 status = status_map.get(req["id"], "not_assessed")
+                if status not in KNOWN_STATUSES:
+                    logger.warning(
+                        "Unexpected compliance_status %r for %s — treating as not_assessed",
+                        status, req["id"],
+                    )
+                    status = "not_assessed"
                 if status in STATUS_SCORES:
                     scored_values.append(STATUS_SCORES[status])
 
@@ -82,13 +94,14 @@ def compute_scores(assessments: list[dict]) -> dict:
             "score": round(chapter_score, 1),
             "rating": get_rating(chapter_score),
             "title": chapter["title"],
+            "applicable": bool(section_scores),
         }
 
     # Overall score: weighted average of chapters
     overall_numerator = 0.0
     overall_denominator = 0.0
     for chapter_key, chapter in DPDPA_FRAMEWORK.items():
-        if chapter_key in chapter_scores:
+        if chapter_key in chapter_scores and chapter_scores[chapter_key]["applicable"]:
             overall_numerator += chapter_scores[chapter_key]["score"] * chapter["weight"]
             overall_denominator += chapter["weight"]
 
@@ -110,6 +123,7 @@ def compute_summary_stats(assessments: list[dict]) -> dict:
         "partially_compliant": 0,
         "non_compliant": 0,
         "not_assessed": 0,
+        "not_applicable": 0,
     }
     critical_gaps = 0
     high_gaps = 0
@@ -262,7 +276,7 @@ def _build_approach(cluster: str, req_ids: list[str]) -> str:
         ),
         "people": (
             f"Define DPO/privacy roles and responsibilities. "
-            "Run a targeted privacy awareness training program covering {len(req_ids)} requirement areas. "
+            f"Run a targeted privacy awareness training program covering {len(req_ids)} requirement areas. "
             "Conduct role-based training for data handlers."
         ),
         "process": (
@@ -277,7 +291,7 @@ def _build_approach(cluster: str, req_ids: list[str]) -> str:
         ),
         "governance": (
             f"Establish privacy governance committee. "
-            "Implement DPIA process and annual audit cadence covering {len(req_ids)} governance requirements. "
+            f"Implement DPIA process and annual audit cadence covering {len(req_ids)} governance requirements. "
             "Develop board-level privacy reporting dashboard."
         ),
     }

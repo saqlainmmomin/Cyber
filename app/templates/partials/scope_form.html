@@ -1,0 +1,76 @@
+<!-- Scope Form — 5 questions to determine applicable DPDPA requirements -->
+<div class="bg-white rounded-xl border border-gray-200 p-6">
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-900">Assessment Scope</h2>
+    <p class="text-sm text-gray-500 mt-1">
+      Answer 5 questions to filter the DPDPA requirements applicable to your organisation.
+      This determines what evidence to collect and which compliance obligations to assess.
+    </p>
+  </div>
+
+  <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="space-y-6">
+
+    {% for q in scope_questions %}
+    <div class="border border-gray-100 rounded-lg p-4 bg-gray-50">
+      <fieldset>
+        <legend class="text-sm font-semibold text-gray-800 mb-1">
+          <span class="text-gray-400 mr-1">{{ loop.index }}.</span>{{ q.question }}
+        </legend>
+        {% if q.help_text %}
+        <p class="text-xs text-gray-500 mb-3">{{ q.help_text }}</p>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-3" data-scope-group="{{ q.id }}">
+          {% for opt in q.options %}
+          <label class="scope-option flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-gray-200 bg-white hover:border-navy-400 transition-colors text-sm
+                        {% if existing.get(q.id) == opt.value %}border-brand bg-navy-50{% endif %}">
+            <input type="radio"
+                   name="{{ q.id }}"
+                   value="{{ opt.value }}"
+                   class="sr-only"
+                   {% if existing.get(q.id) == opt.value %}checked{% endif %}>
+            <span class="font-medium text-gray-700">{{ opt.label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+    {% endfor %}
+
+    <div class="flex items-center justify-between pt-2">
+      <p class="text-xs text-gray-400">Answers can be updated later if your situation changes.</p>
+      <button type="submit"
+              class="inline-flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Save Scope &amp; Generate Evidence Request
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  document.querySelectorAll('[data-scope-group]').forEach(group => {
+    group.querySelectorAll('label.scope-option').forEach(label => {
+      label.addEventListener('click', function (e) {
+        e.preventDefault();
+        const radio = this.querySelector('input[type="radio"]');
+        const wasChecked = radio.checked;
+
+        // Clear all options in this group
+        group.querySelectorAll('label.scope-option').forEach(l => {
+          l.classList.remove('border-brand', 'bg-navy-50');
+          l.querySelector('input').checked = false;
+        });
+
+        // If it wasn't checked before, select it; otherwise leave deselected
+        if (!wasChecked) {
+          radio.checked = true;
+          this.classList.add('border-brand', 'bg-navy-50');
+        }
+      });
+    });
+  });
+</script>

@@ -1,14 +1,23 @@
-<div class="mb-4">
-  <h3 class="text-base font-semibold text-gray-900">{{ section_title }}</h3>
-  <p class="text-xs text-gray-500">{{ chapter_title }}</p>
-</div>
+<div data-section-questionnaire>
+  <div class="mb-4 flex items-start justify-between gap-4">
+    <div>
+      <h3 class="text-base font-semibold text-gray-900">{{ section_title }}</h3>
+      <p class="text-xs text-gray-500">{{ chapter_title }}</p>
+    </div>
+    <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700">
+      <span data-progress-counter>0 of 0 answered</span>
+    </div>
+  </div>
 
-<form hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
-      hx-target="#section-content"
-      hx-swap="innerHTML">
-  <input type="hidden" name="section_id" value="{{ section_id }}">
+  <div data-validation-summary class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"></div>
 
-  <div class="space-y-6">
+  <form hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
+        hx-target="#section-content"
+        hx-swap="innerHTML"
+        data-questionnaire-form>
+    <input type="hidden" name="section_id" value="{{ section_id }}">
+
+    <div class="space-y-6">
     {% for q in questions %}
     {% if q.get('status') == 'skipped' %}
     <!-- Skipped question -->
@@ -44,7 +53,10 @@
     <!-- Active / Deepened question -->
     <div class="p-4 rounded-lg border transition-colors
                 {% if q.get('status') == 'deepened' %}border-amber-200 bg-amber-50/30{% else %}border-gray-200 hover:border-gray-300{% endif %}"
-         id="question-{{ q.id }}">
+         id="question-{{ q.id }}"
+         data-question-card
+         data-required-question
+         data-question-name="answer_{{ q.id }}">
       <div class="flex items-start justify-between mb-3">
         <div class="flex-1">
           <p class="text-sm font-medium text-gray-900">{{ q.question }}</p>
@@ -54,12 +66,12 @@
         </div>
         <div class="ml-3 flex items-center gap-2">
           {% if q.get('source') == 'industry' %}
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">Industry</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-100 text-brand">Industry</span>
           {% endif %}
           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                 {% if q.criticality == 'critical' %}bg-red-50 text-red-700
-                 {% elif q.criticality == 'high' %}bg-orange-50 text-orange-700
-                 {% else %}bg-gray-50 text-gray-600{% endif %}">
+                 {% if q.criticality == 'critical' %}bg-red-100 text-red-700
+                 {% elif q.criticality == 'high' %}bg-orange-100 text-orange-700
+                 {% else %}bg-gray-100 text-gray-600{% endif %}">
             {{ q.criticality | title }}
           </span>
         </div>
@@ -150,27 +162,84 @@
         <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Add notes / evidence</summary>
         <div class="mt-2 space-y-2">
           <textarea name="notes_{{ q.id }}" rows="2" placeholder="Additional notes..."
-                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
+                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-100 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
           <input type="text" name="evidence_{{ q.id }}" placeholder="Evidence reference (document, URL, etc.)"
                  value="{{ existing.get(q.id, {}).get('evidence_reference', '') }}"
-                 class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition">
+                 class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-100 outline-none transition">
         </div>
       </details>
     </div>
     {% endif %}
     {% endfor %}
-  </div>
+    </div>
 
-  <div class="mt-6 flex justify-end">
-    <button type="submit"
-            class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
-      Save Section
-      <span class="htmx-indicator">
-        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-      </span>
-    </button>
-  </div>
-</form>
+    <div class="mt-6 flex justify-end">
+      <button type="submit"
+              class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+        Save Section
+        <span class="htmx-indicator">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </form>
+
+  <script>
+    (() => {
+      const root = document.currentScript.closest('[data-section-questionnaire]');
+      if (!root) return;
+
+      const form = root.querySelector('[data-questionnaire-form]');
+      const cards = Array.from(root.querySelectorAll('[data-required-question]'));
+      const counter = root.querySelector('[data-progress-counter]');
+      const summary = root.querySelector('[data-validation-summary]');
+
+      const checkedInputFor = (name) => form.querySelector(`input[name="${name}"]:checked`);
+
+      const updateProgress = () => {
+        const answered = cards.filter((card) => checkedInputFor(card.dataset.questionName)).length;
+        counter.textContent = `${answered} of ${cards.length} answered`;
+      };
+
+      const validateSection = () => {
+        const unanswered = [];
+
+        cards.forEach((card) => {
+          const answered = Boolean(checkedInputFor(card.dataset.questionName));
+          card.classList.toggle('border-red-400', !answered);
+          card.classList.toggle('bg-red-50/30', !answered);
+          if (!answered) unanswered.push(card);
+        });
+
+        if (unanswered.length) {
+          summary.textContent = `${unanswered.length} unanswered question${unanswered.length === 1 ? '' : 's'}. Answer every question in this section before saving.`;
+          summary.classList.remove('hidden');
+          return false;
+        }
+
+        summary.classList.add('hidden');
+        summary.textContent = '';
+        return true;
+      };
+
+      root.addEventListener('change', (event) => {
+        if (event.target.matches('input[type="radio"]')) {
+          validateSection();
+          updateProgress();
+        }
+      });
+
+      form.addEventListener('submit', (event) => {
+        updateProgress();
+        if (!validateSection()) {
+          event.preventDefault();
+        }
+      });
+
+      updateProgress();
+    })();
+  </script>
+</div>

@@ -1,4 +1,17 @@
-from pydantic import BaseModel
+import re
+from typing import Literal
+
+from pydantic import BaseModel, field_validator
+
+AnswerLiteral = Literal[
+    "fully_implemented",
+    "partially_implemented",
+    "planned",
+    "not_implemented",
+    "not_applicable",
+]
+ConfidenceLiteral = Literal["high", "medium", "low"]
+QUESTION_ID_PATTERN = re.compile(r"^(CH[234]\.\w+\.\d+|CM\.\w+\.\d+|CB\.\w+\.\d+|BN\.\w+\.\d+|IND\.\w+\.\d+|FU\..+)$")
 
 
 class QuestionSchema(BaseModel):
@@ -31,11 +44,18 @@ class QuestionnaireSection(BaseModel):
 
 class ResponseSubmit(BaseModel):
     question_id: str
-    answer: str  # Accepts both old (yes/no/partial) and new (fully_implemented/...) scales
+    answer: AnswerLiteral
     notes: str | None = None
     evidence_reference: str | None = None
     na_reason: str | None = None  # "not_applicable_confirmed" | "not_applicable_assumed" | "deferred"
-    confidence: str | None = None  # "high" | "medium" | "low"
+    confidence: ConfidenceLiteral | None = None
+
+    @field_validator("question_id")
+    @classmethod
+    def validate_question_id(cls, value: str) -> str:
+        if not QUESTION_ID_PATTERN.match(value):
+            raise ValueError("question_id must be a valid questionnaire or follow-up ID")
+        return value
 
 
 class BulkResponseSubmit(BaseModel):

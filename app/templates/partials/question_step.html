@@ -11,7 +11,7 @@
   <!-- Progress -->
   <div class="flex items-center gap-2 mb-6">
     {% for i in range(total_blocks) %}
-    <div class="flex-1 h-1.5 rounded-full {% if i <= block_index %}bg-indigo-500{% else %}bg-gray-200{% endif %} transition-colors"></div>
+    <div class="flex-1 h-1.5 rounded-full {% if i <= block_index %}bg-brand{% else %}bg-gray-200{% endif %} transition-colors"></div>
     {% endfor %}
     <span class="text-xs text-gray-500 ml-2">{{ block_index + 1 }}/{{ total_blocks }}</span>
   </div>
@@ -35,9 +35,9 @@
       {% if q.type == 'single_select' %}
       <div class="flex flex-wrap gap-2">
         {% for opt in q.options %}
-        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-navy-300 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-navy-50">
           <input type="radio" name="{{ q.id }}" value="{{ opt }}"
-                 class="text-indigo-600 focus:ring-indigo-500"
+                 class="text-brand focus:ring-navy-500"
                  onchange="handleDependency(this)">
           <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
         </label>
@@ -47,9 +47,9 @@
       {% elif q.type == 'multi_select' %}
       <div class="flex flex-wrap gap-2">
         {% for opt in q.options %}
-        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-navy-300 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-navy-50">
           <input type="checkbox" name="{{ q.id }}" value="{{ opt }}"
-                 class="rounded text-indigo-600 focus:ring-indigo-500">
+                 class="rounded text-brand focus:ring-navy-500">
           <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
         </label>
         {% endfor %}
@@ -57,7 +57,7 @@
 
       {% elif q.type == 'text' %}
       <textarea name="{{ q.id }}" rows="2"
-                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition"
                 placeholder="Enter your answer..."></textarea>
       {% endif %}
     </div>

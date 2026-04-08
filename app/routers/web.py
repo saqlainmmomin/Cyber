@@ -1,6 +1,7 @@
 """Web portal routes — HTML-serving endpoints for the assessment UI."""
 
 import json
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
@@ -10,7 +11,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
-from app.dpdpa.questionnaire import build_questionnaire
+from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
+from app.dpdpa.scope_questions import SCOPE_QUESTIONS
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.rfi import RFIDocument
@@ -21,6 +23,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services.document_processor import detect_file_type, extract_text, save_upload
 
 router = APIRouter(tags=["web"])
+logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
@@ -76,7 +79,7 @@ def create_assessment(
 def assessment_detail(
     request: Request,
     assessment_id: str,
-    tab: str = "documents",
+    tab: str | None = None,
     context_error: str | None = None,
     db: Session = Depends(get_db),
 ):
@@ -113,20 +116,51 @@ def assessment_detail(
     )
 
     context_done = assessment.context_answers is not None
+    scope_done = assessment.scope_answers is not None
+
+    # Default tab: scope if not yet scoped, else documents
+    if tab is None:
+        tab = "scope" if not scope_done else "documents"
+
+    # Build scope context for the scope tab
+    scope_context: dict = {}
+    if tab == "scope":
+        if scope_done:
+            from app.services.scope_profiler import compute_scope
+            scope_data = json.loads(assessment.scope_answers)
+            result = compute_scope(scope_data, assessment.industry or "", assessment.company_size or "")
+            applicable_ids = result["applicable_requirements"]
+            from app.dpdpa.framework import get_all_requirements
+            total_count = len(get_all_requirements())
+            scope_context = {
+                "checklist": result["evidence_checklist"],
+                "excluded": result["excluded_requirements"],
+                "flags": result["flags"],
+                "applicable_count": len(applicable_ids),
+                "total_count": total_count,
+            }
+        else:
+            existing_scope = {}
+            scope_context = {
+                "scope_questions": SCOPE_QUESTIONS,
+                "existing": existing_scope,
+            }
 
     return templates.TemplateResponse(
         "pages/assessment.html",
         {
             "request": request,
-                       "assessment": assessment,
+            "assessment": assessment,
             "documents": documents,
             "report": report,
             "gap_items": gap_items,
             "tab": tab,
             "response_count": response_count,
             "context_done": context_done,
+            "scope_done": scope_done,
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
+            **scope_context,
         },
     )
 
@@ -144,6 +178,110 @@ def delete_assessment_web(
     db.delete(assessment)
     db.commit()
     return HTMLResponse("")
+
+
+# --- Scope ---
+
+
+@router.get("/assessments/{assessment_id}/scope", response_class=HTMLResponse)
+def scope_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Redirect to assessment scope tab."""
+    return RedirectResponse(f"/assessments/{assessment_id}?tab=scope", status_code=303)
+
+
+@router.post("/assessments/{assessment_id}/scope/save")
+async def save_scope(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Save scope answers, compute applicable requirements, redirect to scope complete view."""
+    from app.services.scope_profiler import compute_scope
+    from app.dpdpa.scope_questions import SCOPE_QUESTIONS
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    form = await request.form()
+    scope_answers = {}
+    for q in SCOPE_QUESTIONS:
+        value = form.get(q["id"])
+        if value:
+            scope_answers[q["id"]] = value
+
+    assessment.scope_answers = json.dumps(scope_answers)
+
+    # Compute applicable requirements and cache them
+    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    assessment.applicable_requirements = json.dumps(result["applicable_requirements"])
+
+    if assessment.status == "created":
+        assessment.status = "scoped"
+
+    db.commit()
+    return RedirectResponse(f"/assessments/{assessment_id}?tab=scope", status_code=303)
+
+
+# --- Evidence checklist export ---
+
+
+@router.get("/assessments/{assessment_id}/evidence-checklist/pdf")
+def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(get_db)):
+    """Download the evidence request checklist as PDF."""
+    from fastapi.responses import Response
+    from app.services.scope_profiler import compute_scope
+    from app.utils.evidence_checklist_export import generate_evidence_checklist_pdf
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment or not assessment.scope_answers:
+        raise HTTPException(404, "Scope not yet defined")
+
+    scope_answers = json.loads(assessment.scope_answers)
+    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+
+    pdf_bytes = generate_evidence_checklist_pdf(
+        company_name=assessment.company_name,
+        checklist=result["evidence_checklist"],
+        flags=result["flags"],
+    )
+    filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/assessments/{assessment_id}/evidence-checklist/docx")
+def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(get_db)):
+    """Download the evidence request checklist as DOCX."""
+    from fastapi.responses import Response
+    from app.services.scope_profiler import compute_scope
+    from app.utils.evidence_checklist_export import generate_evidence_checklist_docx
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment or not assessment.scope_answers:
+        raise HTTPException(404, "Scope not yet defined")
+
+    scope_answers = json.loads(assessment.scope_answers)
+    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+
+    docx_bytes = generate_evidence_checklist_docx(
+        company_name=assessment.company_name,
+        checklist=result["evidence_checklist"],
+        flags=result["flags"],
+    )
+    filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # --- Document upload (HTMX) ---
@@ -463,6 +601,12 @@ async def save_questionnaire_responses(
         answer = form.get(f"answer_{qid}")
         if not answer:
             continue
+        if answer not in ANSWER_OPTIONS:
+            logger.warning(
+                "Skipping invalid questionnaire answer during web save",
+                extra={"assessment_id": assessment_id, "question_id": qid, "answer": answer},
+            )
+            continue
         notes = form.get(f"notes_{qid}", "")
         evidence = form.get(f"evidence_{qid}", "")
 
@@ -665,6 +809,118 @@ def analysis_status(
     )
 
 
+# --- Report helpers ---
+
+# Ordered prefix → penalty (₹ Crore) under DPDPA 2023 Schedule
+_PENALTY_MAP = [
+    ("CH2.SECURITY", 250),
+    ("BN.NOTIFY",    250),
+    ("CH4.CHILD",    200),
+    ("CH4.SDF",       50),
+    ("CH2.CONSENT",   50),
+    ("CM.",           50),
+    ("CH2.NOTICE",    50),
+    ("CH2.PURPOSE",   50),
+    ("CH2.MINIMIZE",  50),
+    ("CH2.ACCURACY",  50),
+    ("CH3.",          50),
+    ("CB.TRANSFER",   50),
+]
+
+_DOMAIN_MAP = [
+    ("CH2.CONSENT", "Consent Management"),
+    ("CM.",         "Consent Management"),
+    ("CH2.NOTICE",  "Notice & Transparency"),
+    ("CH2.PURPOSE", "Purpose Limitation"),
+    ("CH2.MINIMIZE","Data Minimization"),
+    ("CH2.SECURITY","Data Security"),
+    ("BN.NOTIFY",   "Breach Response"),
+    ("CH3.",        "Data Subject Rights"),
+    ("CH4.SDF",     "Governance & Oversight"),
+    ("CH4.CHILD",   "Children's Data Protection"),
+    ("CB.TRANSFER", "Cross-Border Transfers"),
+    ("CH2.ACCURACY","Data Accuracy"),
+]
+
+_ROOT_CAUSE_LABELS = {
+    "policy":     "Policy & Documentation",
+    "people":     "People & Training",
+    "process":    "Process & Operations",
+    "technology": "Technology & Controls",
+    "governance": "Governance & Oversight",
+}
+
+
+def _compute_chapter_status_counts(gap_items) -> dict:
+    """Per-chapter breakdown of compliance statuses for stacked bar chart."""
+    counts: dict[str, dict] = {}
+    for item in gap_items:
+        ch = item.chapter or "unknown"
+        if ch not in counts:
+            counts[ch] = {
+                "compliant": 0, "partially_compliant": 0,
+                "non_compliant": 0, "not_applicable": 0,
+                "not_assessed": 0, "total": 0,
+            }
+        status = item.compliance_status or "not_assessed"
+        counts[ch][status] = counts[ch].get(status, 0) + 1
+        counts[ch]["total"] += 1
+    return counts
+
+
+def _compute_business_impact(gap_items) -> dict:
+    """Regulatory exposure tier, affected domains, and high-severity count."""
+    max_penalty = 0
+    affected_domains: set[str] = set()
+    critical_high_count = 0
+
+    for item in gap_items:
+        if item.compliance_status not in ("non_compliant", "partially_compliant"):
+            continue
+        req_id = item.requirement_id or ""
+        for prefix, penalty in _PENALTY_MAP:
+            if req_id.startswith(prefix):
+                max_penalty = max(max_penalty, penalty)
+                break
+        else:
+            max_penalty = max(max_penalty, 50)
+        for prefix, domain in _DOMAIN_MAP:
+            if req_id.startswith(prefix):
+                affected_domains.add(domain)
+                break
+        if item.risk_level in ("critical", "high"):
+            critical_high_count += 1
+
+    return {
+        "max_penalty_cr": max_penalty,
+        "affected_domains": sorted(affected_domains),
+        "critical_high_count": critical_high_count,
+        "has_gaps": max_penalty > 0,
+    }
+
+
+def _compute_root_cause_counts(gap_items) -> dict:
+    """Count non-compliant/partial gaps by root cause category, with relative bar widths."""
+    raw: dict[str, int] = {}
+    for item in gap_items:
+        if item.compliance_status not in ("non_compliant", "partially_compliant"):
+            continue
+        rc = item.root_cause_category
+        if rc:
+            raw[rc] = raw.get(rc, 0) + 1
+    if not raw:
+        return {}
+    max_count = max(raw.values())
+    return {
+        rc: {
+            "count": count,
+            "label": _ROOT_CAUSE_LABELS.get(rc, rc.title()),
+            "pct": round(count / max_count * 100),
+        }
+        for rc, count in sorted(raw.items(), key=lambda x: -x[1])
+    }
+
+
 # --- Report view ---
 
 
@@ -690,12 +946,35 @@ def report_summary(
     chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
 
     # Count by status
-    status_counts = {}
+    status_counts: dict[str, int] = {}
     for item in gap_items:
         status_counts[item.compliance_status] = status_counts.get(item.compliance_status, 0) + 1
 
     # Check if RFI exists
     rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
+
+    # Derived visualisation data
+    chapter_status_counts = _compute_chapter_status_counts(gap_items)
+    business_impact = _compute_business_impact(gap_items)
+    root_cause_counts = _compute_root_cause_counts(gap_items)
+
+    # Critical findings: non/partial, risk=critical|high, sorted by priority then severity
+    _severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    critical_findings = sorted(
+        [i for i in gap_items
+         if i.compliance_status in ("non_compliant", "partially_compliant")
+         and i.risk_level in ("critical", "high")],
+        key=lambda x: (x.remediation_priority or 3, _severity_rank.get(x.risk_level, 2)),
+    )[:5]
+
+    # Quick wins: non/partial, low effort, priority <= 2
+    quick_wins = sorted(
+        [i for i in gap_items
+         if i.compliance_status in ("non_compliant", "partially_compliant")
+         and i.remediation_effort == "low"
+         and (i.remediation_priority or 99) <= 2],
+        key=lambda x: x.remediation_priority or 3,
+    )[:4]
 
     return templates.TemplateResponse(
         "partials/report_summary.html",
@@ -706,6 +985,11 @@ def report_summary(
             "gap_items": gap_items,
             "chapter_scores": chapter_scores,
             "status_counts": status_counts,
+            "chapter_status_counts": chapter_status_counts,
+            "business_impact": business_impact,
+            "root_cause_counts": root_cause_counts,
+            "critical_findings": critical_findings,
+            "quick_wins": quick_wins,
             "rfi": rfi,
         },
     )

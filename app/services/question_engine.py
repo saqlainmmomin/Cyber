@@ -48,6 +48,11 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     context_profile = json.loads(assessment.context_profile) if assessment.context_profile else None
     industry = assessment.industry or "other"
 
+    # Applicable requirements from scope (None = all requirements)
+    applicable_req_ids: set[str] | None = None
+    if assessment.applicable_requirements:
+        applicable_req_ids = set(json.loads(assessment.applicable_requirements))
+
     # Load desk review data
     desk_data = _load_desk_review_data(assessment_id, db)
 
@@ -59,11 +64,18 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     industry_qs = industry_bank["questions"]
 
     # 3. Apply desk review modulation to base questions
+    # Also skip questions whose requirements are outside the scoped applicable set
     modulated_base = []
     skipped_count = 0
     deepened_count = 0
 
     for q in base_questions:
+        # Skip questions outside scope before desk-review modulation
+        if applicable_req_ids is not None and q["id"] not in applicable_req_ids:
+            mod = {**q, "status": "skipped", "skip_reason": "Not applicable per scope definition"}
+            skipped_count += 1
+            modulated_base.append(mod)
+            continue
         mod = _modulate_question(q, desk_data)
         if mod["status"] == "skipped":
             skipped_count += 1
@@ -81,7 +93,7 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
             deepened_count += 1
         modulated_industry.append(mod)
 
-    # 5. Ensure requirement coverage — every requirement must appear in at least one non-skipped question
+    # 5. Ensure requirement coverage — every applicable requirement must appear in at least one non-skipped question
     covered_reqs = set()
     for q in modulated_base:
         if q["status"] != "skipped":
@@ -91,11 +103,16 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
             covered_reqs.update(q.get("maps_to", []))
 
     all_req_ids = {r["id"] for r in get_all_requirements()}
-    uncovered = all_req_ids - covered_reqs
+    # Only check coverage for applicable requirements
+    required_req_ids = applicable_req_ids if applicable_req_ids is not None else all_req_ids
+    uncovered = required_req_ids - covered_reqs
 
-    # Un-skip any base question whose requirement is uncovered
+    # Un-skip any base question whose requirement is uncovered and in scope
     for q in modulated_base:
         if q["status"] == "skipped" and q["id"] in uncovered:
+            # Don't reinstate questions that were excluded by scope
+            if q.get("skip_reason") == "Not applicable per scope definition":
+                continue
             q["status"] = "active"
             q["skip_reason"] = None
             q["desk_review_note"] = "Reinstated — no other question covers this requirement."

@@ -26,15 +26,23 @@
 <!-- Tabs -->
 <div class="border-b border-gray-200 mb-6">
   <nav class="flex gap-6" aria-label="Tabs">
+    <a href="/assessments/{{ assessment.id }}?tab=scope"
+       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
+              {% if tab == 'scope' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+      Scope
+      {% if scope_done %}
+      <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">&#10003;</span>
+      {% endif %}
+    </a>
     <a href="/assessments/{{ assessment.id }}?tab=documents"
        class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'documents' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+              {% if tab == 'documents' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
       Documents
       <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ documents | length }}</span>
     </a>
     <a href="/assessments/{{ assessment.id }}?tab=questionnaire"
        class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'questionnaire' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+              {% if tab == 'questionnaire' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
       Questionnaire
       {% if response_count > 0 %}
       <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{{ response_count }}</span>
@@ -42,17 +50,19 @@
     </a>
     <a href="/assessments/{{ assessment.id }}?tab=report"
        class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'report' %}border-indigo-500 text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+              {% if tab == 'report' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
       Report
       {% if report %}
-      <span class="ml-1 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{{ report.overall_score | round(1) }}%</span>
+      <span class="ml-1 text-xs bg-navy-100 text-brand px-2 py-0.5 rounded-full">{{ report.overall_score | round(1) }}%</span>
       {% endif %}
     </a>
   </nav>
 </div>
 
 <!-- Tab content -->
-{% if tab == 'documents' %}
+{% if tab == 'scope' %}
+  {% include "partials/scope_tab.html" %}
+{% elif tab == 'documents' %}
   {% include "partials/documents_tab.html" %}
 {% elif tab == 'questionnaire' %}
   {% include "partials/questionnaire_tab.html" %}

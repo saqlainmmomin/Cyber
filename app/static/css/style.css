@@ -24,13 +24,13 @@
   transition: all 200ms ease;
 }
 .drop-zone.drag-over {
-  border-color: #6366f1;
-  background-color: rgba(99, 102, 241, 0.05);
+  border-color: #1e1e50;
+  background-color: rgba(30, 30, 80, 0.04);
 }
 
 /* Tab active state */
 .tab-active {
-  border-bottom: 2px solid #6366f1;
+  border-bottom: 2px solid #1e1e50;
   color: #1e1e50;
   font-weight: 600;
 }

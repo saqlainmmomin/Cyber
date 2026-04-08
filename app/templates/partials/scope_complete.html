@@ -1,0 +1,136 @@
+<!-- Scope complete — shows summary flags + evidence checklist -->
+<div class="space-y-6">
+
+  <!-- Scope summary -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Scope Confirmed</h2>
+        <p class="text-sm text-gray-500 mt-0.5">{{ applicable_count }} of {{ total_count }} DPDPA requirements apply to this organisation.</p>
+      </div>
+      <a href="/assessments/{{ assessment.id }}/scope"
+         class="text-xs text-brand hover:text-brand-light font-medium transition-colors">
+        Edit scope &rarr;
+      </a>
+    </div>
+
+    <!-- Scope flags -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="flex items-center gap-2 text-sm {% if flags.cross_border %}text-gray-800{% else %}text-gray-400{% endif %}">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 {% if flags.cross_border %}bg-orange-400{% else %}bg-gray-200{% endif %}"></span>
+        Cross-border transfers
+      </div>
+      <div class="flex items-center gap-2 text-sm {% if flags.children %}text-gray-800{% else %}text-gray-400{% endif %}">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 {% if flags.children %}bg-orange-400{% else %}bg-gray-200{% endif %}"></span>
+        Children's data
+      </div>
+      <div class="flex items-center gap-2 text-sm {% if flags.sdf %}text-gray-800{% else %}text-gray-400{% endif %}">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 {% if flags.sdf %}bg-orange-400{% else %}bg-gray-200{% endif %}"></span>
+        SDF obligations
+      </div>
+      <div class="flex items-center gap-2 text-sm {% if flags.processors %}text-gray-800{% else %}text-gray-400{% endif %}">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 {% if flags.processors %}bg-blue-400{% else %}bg-gray-200{% endif %}"></span>
+        Third-party processors
+      </div>
+    </div>
+
+    {% if excluded %}
+    <details class="mt-4">
+      <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+        {{ excluded | length }} requirement(s) excluded — click to view
+      </summary>
+      <ul class="mt-2 space-y-1">
+        {% for item in excluded %}
+        <li class="text-xs text-gray-400 flex items-center gap-2">
+          <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{{ item.id }}</span>
+          {{ item.reason }}
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+
+  <!-- Evidence request checklist -->
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Evidence Request</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Documents to collect before the assessment begins.</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="/assessments/{{ assessment.id }}/evidence-checklist/pdf"
+           class="inline-flex items-center gap-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          PDF
+        </a>
+        <a href="/assessments/{{ assessment.id }}/evidence-checklist/docx"
+           class="inline-flex items-center gap-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          DOCX
+        </a>
+      </div>
+    </div>
+
+    <div class="divide-y divide-gray-100">
+      {% set required_items = checklist | selectattr("required") | list %}
+      {% set recommended_items = checklist | rejectattr("required") | list %}
+
+      {% if required_items %}
+      <div class="px-6 py-3 bg-gray-50">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Required</p>
+      </div>
+      {% for item in required_items %}
+      <div class="px-6 py-3 flex items-start gap-3">
+        <div class="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 border-gray-300 bg-white flex items-center justify-center">
+          <!-- checkbox placeholder — not interactive, for visual only -->
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-gray-900">{{ item.label }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ item.reason }}</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            {% for rid in item.maps_to %}
+            <span class="font-mono text-xs bg-navy-100 text-brand px-1.5 py-0.5 rounded">{{ rid }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if recommended_items %}
+      <div class="px-6 py-3 bg-gray-50">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recommended</p>
+      </div>
+      {% for item in recommended_items %}
+      <div class="px-6 py-3 flex items-start gap-3">
+        <div class="mt-0.5 flex-shrink-0 w-5 h-5 rounded border border-dashed border-gray-300 bg-white flex items-center justify-center">
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-gray-700">{{ item.label }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ item.reason }}</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            {% for rid in item.maps_to %}
+            <span class="font-mono text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{{ rid }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="text-center py-2">
+    <a href="/assessments/{{ assessment.id }}?tab=documents"
+       class="inline-flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors">
+      Continue — Upload Documents &rarr;
+    </a>
+  </div>
+
+</div>

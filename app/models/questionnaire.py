@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import CheckConstraint, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -9,6 +9,12 @@ from app.models.assessment import _new_id, _utcnow
 
 class QuestionnaireResponse(Base):
     __tablename__ = "questionnaire_responses"
+    __table_args__ = (
+        CheckConstraint(
+            "answer IN ('fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable')",
+            name="ck_questionnaire_responses_answer_valid",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     assessment_id: Mapped[str] = mapped_column(String(36), index=True)
