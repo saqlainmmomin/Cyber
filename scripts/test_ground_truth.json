@@ -1,0 +1,217 @@
+{
+  "companies": [
+    {
+      "company_name": "NovaPay Solutions Pvt. Ltd.",
+      "assessment_id": "ccfa6ab0-c074-4a9e-b1f4-4c9d1224c676",
+      "hidden_gaps": [
+        {
+          "requirement_ids": [
+            "CH2.CONSENT.1",
+            "CH2.CONSENT.2"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Consent is collected through one bundled onboarding checkbox that covers at least seven distinct purposes rather than purpose-specific choices.",
+          "evidence_in_document": "Privacy-Policy-NovaPay-2025.pdf",
+          "evidence_quote_hint": "By using our services, you consent to the collection and processing of your data as described in this policy.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "How do you obtain separate consent for each processing purpose, and can a user continue using the payment service while declining analytics or marketing processing?"
+        },
+        {
+          "requirement_ids": [
+            "CH2.MINIMIZE.2",
+            "CH2.MINIMIZE.3"
+          ],
+          "surface_answer": "partially_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Retention standard is generic, does not define category-specific periods, and supports indefinite retention where teams think future regulatory need might arise.",
+          "evidence_in_document": "NovaPay-Data-Retention-Standard.docx",
+          "evidence_quote_hint": "Personal data and business records are retained as per applicable regulatory requirements.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "What are the exact retention periods for financial, KYC, support, and marketing data, and what automated deletion process removes data once those periods end?"
+        },
+        {
+          "requirement_ids": [
+            "CB.TRANSFER.1",
+            "CB.TRANSFER.2"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Cross-border processing is broadly disclosed but there is no documented inventory of all overseas processors and no transfer-specific safeguards for the full vendor set.",
+          "evidence_in_document": "Privacy-Policy-NovaPay-2025.pdf",
+          "evidence_quote_hint": "Your data may be transferred to and processed in countries other than India where our service providers operate.",
+          "probing_depth": 3,
+          "what_followup_should_ask": "List every processor and tool that transfers personal data outside India, identify the destination country for each, and provide the contract terms that govern those transfers."
+        },
+        {
+          "requirement_ids": [
+            "CM.GRANULAR.2"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Marketing unsubscribe controls exist, but users cannot use the core payment service without accepting analytics and other non-essential processing.",
+          "evidence_in_document": "NovaPay-Terms-of-Service-2025.pdf",
+          "evidence_quote_hint": "Use of our payment services constitutes acceptance of our data processing practices.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Which processing activities can a user refuse while still using the payment service, and where is that choice presented in the onboarding flow?"
+        },
+        {
+          "requirement_ids": [
+            "BN.NOTIFY.3",
+            "BN.NOTIFY.1",
+            "BN.NOTIFY.2"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "The incident response plan is security-centric and lacks a personal data breach classification model, Board notification workflow, and affected-individual notice procedure.",
+          "evidence_in_document": "NovaPay-Incident-Response-SOP.docx",
+          "evidence_quote_hint": "Crisis communications, external legal notifications, customer messaging, and regulator-specific obligations are handled separately as needed under executive direction.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Show the personal data breach notification workflow, the Board notice template, and the criteria used to decide when affected data principals must be informed."
+        }
+      ]
+    },
+    {
+      "company_name": "HealthBridge Analytics",
+      "assessment_id": "2b017a1b-ea88-42ab-a745-8b2464f00163",
+      "hidden_gaps": [
+        {
+          "requirement_ids": [
+            "CH2.CONSENT.5",
+            "CH4.CHILD.1",
+            "CH4.CHILD.2",
+            "CH4.CHILD.3"
+          ],
+          "surface_answer": "partially_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Children's data controls are based on a copied under-13 template, with no age verification and no parental consent mechanism under DPDPA's under-18 standard.",
+          "evidence_in_document": "HealthBridge-Privacy-Policy-2025.pdf",
+          "evidence_quote_hint": "We do not knowingly collect data from children under 13.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "How do you identify when a record relates to a child under 18, and what exact parental consent evidence do you obtain before processing pediatric patient data?"
+        },
+        {
+          "requirement_ids": [
+            "CH4.SDF.1"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "partially_compliant",
+          "gap_description": "The CEO is named as DPO on paper, but the role has no independence, no defined time allocation, and no governance reporting structure.",
+          "evidence_in_document": "HealthBridge-Board-Resolution-DPO.docx",
+          "evidence_quote_hint": "shall also discharge the functions of Data Protection Officer",
+          "probing_depth": 2,
+          "what_followup_should_ask": "What time is allocated to DPO duties, what training has the appointee completed, and how are privacy matters independently reported to the board?"
+        },
+        {
+          "requirement_ids": [
+            "CH3.ACCESS.1",
+            "CH3.CORRECT.1",
+            "CH3.CORRECT.2"
+          ],
+          "surface_answer": "partially_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Rights requests go to a mailbox, but there is no tracked workflow, no SLA, and no repeatable way to export or erase data from operational databases.",
+          "evidence_in_document": "HealthBridge-Privacy-Policy-2025.pdf",
+          "evidence_quote_hint": "you may contact us at privacy@healthbridge.in",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Who receives rights requests, how are they logged and tracked, and what technical workflow exports or deletes data from the live systems?"
+        },
+        {
+          "requirement_ids": [
+            "CH2.SECURITY.3"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Processor contracting relies on a generic MSA with a vague security sentence rather than DPA terms, instructions, audit rights, and sub-processor safeguards.",
+          "evidence_in_document": "HealthBridge-MSA-Template.docx",
+          "evidence_quote_hint": "Service Provider shall implement reasonable security measures to protect Client data.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Show a processor contract that defines security obligations, processing instructions, breach notification duties, and audit rights for a real sub-processor."
+        },
+        {
+          "requirement_ids": [
+            "CH2.NOTICE.1"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "The privacy notice is a generic web template that references GDPR and CCPA, omits health-record processing details, and is unlikely to reach patients whose data comes through hospital integrations.",
+          "evidence_in_document": "HealthBridge-Privacy-Policy-2025.pdf",
+          "evidence_quote_hint": "Where required by GDPR, the California Consumer Privacy Act",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Where do hospital patients actually receive notice about HealthBridge processing, and why does the published notice omit health records and partner-hospital data flows?"
+        }
+      ]
+    },
+    {
+      "company_name": "Dakshin Logistics Group",
+      "assessment_id": "b928e46f-f6fd-4e21-b19b-4660f6295d8f",
+      "hidden_gaps": [
+        {
+          "requirement_ids": [
+            "CH2.CONSENT.1",
+            "CM.GRANULAR.1"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Driver and employee consent is coerced through employment onboarding and does not allow separate consent choices for tracking versus performance scoring.",
+          "evidence_in_document": "Dakshin-Employment-Data-Notice.docx",
+          "evidence_quote_hint": "As a condition of your employment, you acknowledge and consent",
+          "probing_depth": 2,
+          "what_followup_should_ask": "Can a driver refuse performance scoring or GPS tracking and still remain employed, and where is that choice documented in the workforce onboarding flow?"
+        },
+        {
+          "requirement_ids": [
+            "CH2.MINIMIZE.1",
+            "CH2.MINIMIZE.2",
+            "CH2.MINIMIZE.3"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Location tracking is configured far more broadly than necessary, including long retention and likely off-duty collection, without a minimization rationale tied to specific purposes.",
+          "evidence_in_document": "Dakshin-GPS-Tracking-Policy.docx",
+          "evidence_quote_hint": "Location data is retained for a period of 36 months for operational and legal purposes.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "What is the actual GPS ping interval, when does tracking stop outside working hours, and what business purpose justifies 36 months of location retention?"
+        },
+        {
+          "requirement_ids": [
+            "CH3.GRIEVANCE.1",
+            "CH3.GRIEVANCE.2"
+          ],
+          "surface_answer": "fully_implemented",
+          "actual_status": "partially_compliant",
+          "gap_description": "A formal grievance channel exists, but it is designed for digitally connected users and is not realistically accessible to drivers and warehouse staff.",
+          "evidence_in_document": "Dakshin-Grievance-Procedure.docx",
+          "evidence_quote_hint": "through the DPO portal at privacy.dakshinlogistics.com or by emailing dpo@dakshinlogistics.com",
+          "probing_depth": 2,
+          "what_followup_should_ask": "How can a driver or warehouse worker without a corporate email account submit a grievance, and what volume of grievances has been received from that population?"
+        },
+        {
+          "requirement_ids": [
+            "CH2.NOTICE.2"
+          ],
+          "surface_answer": "planned",
+          "actual_status": "non_compliant",
+          "gap_description": "The company updated its website notice but has no evidence of retrospective notice to the large installed base whose data predates DPDPA compliance work.",
+          "evidence_in_document": "Dakshin-Privacy-Notice-2024.pdf",
+          "evidence_quote_hint": "Updates are posted on our website and become effective from the date listed above.",
+          "probing_depth": 2,
+          "what_followup_should_ask": "What individualized communication was sent to legacy employees, drivers, and customers after the updated notice was issued, and where is the evidence of that campaign?"
+        },
+        {
+          "requirement_ids": [
+            "CB.TRANSFER.2",
+            "CB.TRANSFER.3"
+          ],
+          "surface_answer": "partially_implemented",
+          "actual_status": "non_compliant",
+          "gap_description": "Cross-border arrangements are documented only through a UAE GDPR-style agreement, while Saudi transfers and DPDPA-specific safeguard analysis are missing.",
+          "evidence_in_document": "Dakshin-UAE-Transfer-Agreement.docx",
+          "evidence_quote_hint": "Regulation (EU) 2016/679 and the Standard Contractual Clauses as approved by the European Commission.",
+          "probing_depth": 3,
+          "what_followup_should_ask": "Which countries outside India receive workforce or customer data today, what transfer documents cover each country, and how have you assessed DPDPA-specific restrictions and localisation obligations?"
+        }
+      ]
+    }
+  ]
+}

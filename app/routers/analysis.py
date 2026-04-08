@@ -1,3 +1,4 @@
+import logging
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -5,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dpdpa.framework import get_all_requirements
+from app.dpdpa.questionnaire import build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
@@ -13,6 +15,7 @@ from app.services.claude_analyzer import run_gap_analysis
 from app.services.scoring import compute_scores, generate_initiatives
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}", tags=["analysis"])
+logger = logging.getLogger(__name__)
 
 # Build a requirement title lookup once
 _REQ_TITLES = {r["id"]: r["title"] for r in get_all_requirements()}
@@ -25,6 +28,14 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
+
+    # Load context profile if available
+    context_profile = None
+    if assessment.context_profile:
+        try:
+            context_profile = json.loads(assessment.context_profile)
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON in context_profile for assessment %s", assessment_id)
 
     # Gather questionnaire responses
     responses_db = (
@@ -58,6 +69,37 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         for d in docs_db
     ]
 
+    expected_question_ids = {
+        q["id"] for q in build_questionnaire(context_profile=context_profile)
+        if not q["id"].startswith(("IND.", "FU."))
+    }
+    answered_question_ids = {
+        r.question_id
+        for r in responses_db
+        if r.question_id in expected_question_ids and (r.answer or "").strip()
+    }
+    total_expected = len(expected_question_ids)
+    completion_ratio = (len(answered_question_ids) / total_expected) if total_expected else 0.0
+    has_documents = bool(documents)
+
+    if total_expected and completion_ratio < 0.8:
+        completion_pct = round(completion_ratio * 100)
+        if not has_documents:
+            raise HTTPException(
+                400,
+                f"Questionnaire is incomplete: {len(answered_question_ids)} of {total_expected} core questions answered ({completion_pct}%). "
+                "Answer at least 80% of the questionnaire or upload supporting documents before running analysis.",
+            )
+        logger.warning(
+            "Allowing analysis with incomplete questionnaire because documents are available",
+            extra={
+                "assessment_id": assessment_id,
+                "answered_questions": len(answered_question_ids),
+                "total_expected_questions": total_expected,
+                "completion_ratio": completion_ratio,
+            },
+        )
+
     if not responses and not documents:
         raise HTTPException(
             400,
@@ -67,11 +109,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     # Update status
     assessment.status = "analyzing"
     db.commit()
-
-    # Load context profile if available
-    context_profile = None
-    if assessment.context_profile:
-        context_profile = json.loads(assessment.context_profile)
 
     # Load desk review findings if available
     desk_review_data = None
@@ -90,7 +127,12 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         desk_review_data = {
             "coverage_summary": json.loads(dr_summary.coverage_summary) if dr_summary.coverage_summary else {},
             "findings": [
-                {"type": f.finding_type, "requirement_id": f.requirement_id, "content": f.content}
+                {
+                    "type": f.finding_type,
+                    "requirement_id": f.requirement_id,
+                    "content": f.content,
+                    "source_quote": f.source_quote,
+                }
                 for f in dr_findings
             ],
             "signal_flags": [
@@ -103,6 +145,14 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             ],
         }
 
+    # Load applicable requirements from scope (if defined)
+    applicable_requirements = None
+    if assessment.applicable_requirements:
+        try:
+            applicable_requirements = json.loads(assessment.applicable_requirements)
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON in applicable_requirements for assessment %s", assessment_id)
+
     # Run Claude analysis
     try:
         result = run_gap_analysis(
@@ -114,6 +164,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             documents=documents,
             context_profile=context_profile,
             desk_review_data=desk_review_data,
+            applicable_requirements=applicable_requirements,
         )
     except Exception as e:
         assessment.status = "error"
@@ -123,8 +174,22 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     parsed = result["parsed"]
     raw = result["raw"]
 
+    assessments = parsed.get("assessments")
+    if not assessments:
+        assessment.status = "error"
+        db.commit()
+        raise HTTPException(500, "Claude returned an empty or malformed assessment. Try running analysis again.")
+
+    # Server-side scope enforcement: ensure out-of-scope requirements are not_applicable
+    # regardless of what Claude returned (belt-and-suspenders over the prompt instruction).
+    if applicable_requirements:
+        applicable_set = set(applicable_requirements)
+        for a in assessments:
+            if a.get("requirement_id") and a["requirement_id"] not in applicable_set:
+                a["compliance_status"] = "not_applicable"
+
     # Compute scores
-    scores = compute_scores(parsed["assessments"])
+    scores = compute_scores(assessments)
 
     # Delete any existing report + initiatives for this assessment
     existing = (
@@ -157,7 +222,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             if f.get("type") == "evidence" and f.get("requirement_id"):
                 _dr_evidence_reqs.add(f["requirement_id"])
 
-    has_documents = bool(documents)
     _response_ids = {r["question_id"] for r in responses}
 
     def _compute_evidence_confidence(req_id: str) -> str:
@@ -173,7 +237,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         return "weak"
 
     # Create gap items
-    for a in parsed["assessments"]:
+    for a in assessments:
         req_id = a["requirement_id"]
         item = GapItem(
             report_id=report.id,
@@ -196,7 +260,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         db.add(item)
 
     # Generate and save initiatives
-    initiatives_data = generate_initiatives(parsed["assessments"])
+    initiatives_data = generate_initiatives(assessments)
     for init_data in initiatives_data:
         initiative = Initiative(
             report_id=report.id,

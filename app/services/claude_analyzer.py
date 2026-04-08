@@ -32,6 +32,7 @@ def run_gap_analysis(
     documents: list[dict],
     context_profile: dict | None = None,
     desk_review_data: dict | None = None,
+    applicable_requirements: list[str] | None = None,
 ) -> dict:
     """
     Run full DPDPA gap analysis using Claude.
@@ -47,15 +48,21 @@ def run_gap_analysis(
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     truncated_docs = _truncate_documents(documents)
 
-    # Prepare desk review findings for Call 1 context
-    desk_review_findings = None
-    if desk_review_data and desk_review_data.get("findings"):
-        desk_review_findings = desk_review_data["findings"]
-
-    # Call 1: Evidence extraction (only if documents exist)
+    # Call 1: Evidence extraction — skip if desk review already extracted evidence.
+    # Desk review (Call 0) maps document quotes to requirements. When it has run
+    # successfully, re-extracting evidence is redundant and wastes ~45-60s.
     evidence = None
     if truncated_docs:
-        evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
+        dr_evidence = _evidence_from_desk_review(desk_review_data)
+        if dr_evidence:
+            evidence = dr_evidence
+            logger.info(
+                "Skipping evidence extraction Call 1 — reusing desk review evidence "
+                f"({len(dr_evidence)} requirements covered)"
+            )
+        else:
+            desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
+            evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
 
     # Call 2: Gap analysis with cached system prompt
     system_blocks = build_system_prompt()
@@ -69,11 +76,12 @@ def run_gap_analysis(
         context_profile=context_profile,
         evidence=evidence,
         desk_review_summary=desk_review_data,
+        applicable_requirements=applicable_requirements,
     )
 
     message = client.messages.create(
         model=settings.claude_model,
-        max_tokens=8192,
+        max_tokens=16384,
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
@@ -104,6 +112,27 @@ def run_gap_analysis(
     }
 
 
+def _evidence_from_desk_review(desk_review_data: dict | None) -> dict | None:
+    """
+    Build a Call-1-compatible evidence dict from desk review findings.
+
+    Returns {requirement_id: [quote, ...]} if desk review has evidence findings,
+    otherwise None (caller should fall back to running Call 1).
+    """
+    if not desk_review_data:
+        return None
+    findings = desk_review_data.get("findings", [])
+    evidence: dict[str, list[str]] = {}
+    for f in findings:
+        if f.get("type") == "evidence" and f.get("requirement_id"):
+            rid = f["requirement_id"]
+            # Prefer source_quote if present, otherwise content
+            quote = f.get("source_quote") or f.get("content", "")
+            if quote:
+                evidence.setdefault(rid, []).append(quote)
+    return evidence if evidence else None
+
+
 def _run_evidence_extraction(
     client: anthropic.Anthropic,
     documents: list[dict],
@@ -119,7 +148,7 @@ def _run_evidence_extraction(
     try:
         message = client.messages.create(
             model=settings.claude_model,
-            max_tokens=4096,
+            max_tokens=8192,
             temperature=0,
             system="You are a document analyst. Extract exact quotes from documents that are relevant to each compliance requirement. Be precise and quote verbatim.",
             messages=[{"role": "user", "content": prompt}],

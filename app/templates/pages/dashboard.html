@@ -32,7 +32,7 @@
       {% for a in assessments %}
       <tr id="row-{{ a.id }}" class="hover:bg-gray-50 transition-colors">
         <td class="px-6 py-4">
-          <a href="/assessments/{{ a.id }}" class="text-sm font-medium text-brand hover:text-indigo-600">
+          <a href="/assessments/{{ a.id }}" class="text-sm font-medium text-brand hover:text-brand-light">
             {{ a.company_name }}
           </a>
           {% if a.description %}

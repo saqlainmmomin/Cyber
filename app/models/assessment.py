@@ -24,6 +24,10 @@ class Assessment(Base):
     company_size: Mapped[str] = mapped_column(String(50))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="created")
+    # Phase 0 — scope
+    scope_answers: Mapped[str | None] = mapped_column(Text, nullable=True)          # JSON: {SCP.1: ..., ...}
+    applicable_requirements: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: [req_id, ...]
+    # Phase 1 — context
     context_answers: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_profile: Mapped[str | None] = mapped_column(Text, nullable=True)
     desk_review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # pending|analyzing|completed|error

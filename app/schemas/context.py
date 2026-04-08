@@ -1,11 +1,32 @@
 """Schemas for Phase 1 context gathering."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class ContextAnswer(BaseModel):
     question_id: str
     answer: str | list[str]  # single_select/text → str, multi_select → list[str]
+
+    @field_validator("question_id")
+    @classmethod
+    def validate_question_id(cls, value: str) -> str:
+        if not value.startswith("CTX."):
+            raise ValueError("question_id must start with CTX.")
+        return value
+
+    @field_validator("answer")
+    @classmethod
+    def validate_answer(cls, value: str | list[str]) -> str | list[str]:
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                raise ValueError("answer must not be blank")
+            return stripped
+
+        cleaned = [item.strip() for item in value if item.strip()]
+        if not cleaned:
+            raise ValueError("answer must not be empty")
+        return cleaned
 
 
 class ContextSubmit(BaseModel):
