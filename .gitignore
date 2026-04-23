@@ -7,3 +7,6 @@ uploads/
 *.egg-info/
 dist/
 build/
+output/
+.DS_Store
+cookies.txt
