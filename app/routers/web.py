@@ -50,11 +50,25 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/assessments/new", response_class=HTMLResponse)
 def new_assessment_page(request: Request):
-    return templates.TemplateResponse("pages/new_assessment.html", {"request": request})
+    from app.frameworks.registry import FrameworkRegistry
+
+    frameworks = []
+    for fw_id in sorted(FrameworkRegistry.all_ids()):
+        fw = FrameworkRegistry.get(fw_id)
+        frameworks.append({
+            "id": fw.id,
+            "name": fw.name,
+            "version": fw.version,
+            "control_count": fw.control_count(),
+        })
+    return templates.TemplateResponse(
+        "pages/new_assessment.html",
+        {"request": request, "frameworks": frameworks},
+    )
 
 
 @router.post("/assessments/new")
-def create_assessment(
+async def create_assessment(
     request: Request,
 
     company_name: str = Form(...),
@@ -63,11 +77,16 @@ def create_assessment(
     description: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    # Extract multi-valued frameworks checkboxes from form
+    form = await request.form()
+    selected_frameworks = form.getlist("frameworks") or ["dpdpa"]
+
     assessment = Assessment(
         company_name=company_name,
         industry=industry,
         company_size=company_size,
         description=description or None,
+        selected_frameworks=json.dumps(selected_frameworks),
     )
     db.add(assessment)
     db.commit()
@@ -146,6 +165,24 @@ def assessment_detail(
                 "existing": existing_scope,
             }
 
+    # Resolve selected framework metadata for display
+    selected_frameworks_info = []
+    raw_fw_ids = ["dpdpa"]
+    if assessment.selected_frameworks:
+        try:
+            raw_fw_ids = json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+    from app.frameworks.registry import FrameworkRegistry
+    for fw_id in raw_fw_ids:
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        if fw:
+            selected_frameworks_info.append({
+                "id": fw.id,
+                "name": fw.name,
+                "version": fw.version,
+            })
+
     return templates.TemplateResponse(
         "pages/assessment.html",
         {
@@ -160,6 +197,7 @@ def assessment_detail(
             "scope_done": scope_done,
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
+            "selected_frameworks": selected_frameworks_info,
             **scope_context,
         },
     )
@@ -945,6 +983,30 @@ def report_summary(
     gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
     chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
 
+    # Determine if this is a multi-framework report
+    framework_scores = None
+    is_multi_framework = False
+    if report.framework_scores:
+        try:
+            framework_scores = json.loads(report.framework_scores)
+            is_multi_framework = len(framework_scores) > 1
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Resolve framework names for multi-framework display
+    framework_display = {}
+    if framework_scores:
+        from app.frameworks.registry import FrameworkRegistry
+        for fw_id, scores in framework_scores.items():
+            fw = FrameworkRegistry.get_or_none(fw_id)
+            framework_display[fw_id] = {
+                "name": fw.name if fw else fw_id.upper(),
+                "version": fw.version if fw else "",
+                "overall_score": scores.get("overall_score", 0),
+                "overall_rating": scores.get("overall_rating", "N/A"),
+                "domain_scores": scores.get("domain_scores", {}),
+            }
+
     # Count by status
     status_counts: dict[str, int] = {}
     for item in gap_items:
@@ -991,6 +1053,8 @@ def report_summary(
             "critical_findings": critical_findings,
             "quick_wins": quick_wins,
             "rfi": rfi,
+            "is_multi_framework": is_multi_framework,
+            "framework_display": framework_display,
         },
     )
 

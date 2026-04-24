@@ -24,4 +24,5 @@ class QuestionnaireResponse(Base):
     evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
     na_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
     confidence: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    cluster_id: Mapped[str | None] = mapped_column(String(80), nullable=True)  # UCC cluster ID for multi-framework
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

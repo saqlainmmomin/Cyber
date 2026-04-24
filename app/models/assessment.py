@@ -31,6 +31,8 @@ class Assessment(Base):
     context_answers: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_profile: Mapped[str | None] = mapped_column(Text, nullable=True)
     desk_review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # pending|analyzing|completed|error
+    # Multi-framework support
+    selected_frameworks: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: ["dpdpa", "iso27001", ...]
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow

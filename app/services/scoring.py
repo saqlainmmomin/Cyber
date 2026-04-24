@@ -296,3 +296,173 @@ def _build_approach(cluster: str, req_ids: list[str]) -> str:
         ),
     }
     return approaches.get(cluster, f"Address {len(req_ids)} identified gaps through targeted remediation.")
+
+
+# ─── Multi-Framework Scoring ─────────────────────────────────────────────
+
+
+def compute_framework_scores(assessments: list[dict], framework_id: str) -> dict:
+    """
+    Compute weighted compliance scores for any registered framework.
+
+    Same algorithm as compute_scores() but loads weights from FrameworkRegistry
+    instead of hardcoded DPDPA_FRAMEWORK.
+    """
+    from app.frameworks.registry import FrameworkRegistry
+
+    fw = FrameworkRegistry.get(framework_id)
+    framework_dict = fw.as_legacy_framework_dict()
+
+    status_map = {a["requirement_id"]: a["compliance_status"] for a in assessments}
+
+    domain_scores = {}
+    for domain_key, domain in framework_dict.items():
+        section_scores = []
+        section_weights = []
+
+        for section_key, section in domain["sections"].items():
+            scored_values = []
+            for req in section["requirements"]:
+                status = status_map.get(req["id"], "not_assessed")
+                if status not in KNOWN_STATUSES:
+                    status = "not_assessed"
+                if status in STATUS_SCORES:
+                    scored_values.append(STATUS_SCORES[status])
+
+            if scored_values:
+                section_avg = sum(scored_values) / len(scored_values)
+                section_scores.append(section_avg)
+                section_weights.append(section["weight"])
+
+        if section_scores and section_weights:
+            total_weight = sum(section_weights)
+            score = sum(s * w for s, w in zip(section_scores, section_weights)) / total_weight
+        else:
+            score = 0.0
+
+        domain_scores[domain_key] = {
+            "score": round(score, 1),
+            "rating": get_rating(score),
+            "title": domain["title"],
+            "applicable": bool(section_scores),
+        }
+
+    # Overall score: weighted average of domains
+    overall_numerator = 0.0
+    overall_denominator = 0.0
+    for domain_key, domain in framework_dict.items():
+        if domain_key in domain_scores and domain_scores[domain_key]["applicable"]:
+            overall_numerator += domain_scores[domain_key]["score"] * domain["weight"]
+            overall_denominator += domain["weight"]
+
+    overall_score = round(overall_numerator / overall_denominator, 1) if overall_denominator > 0 else 0.0
+
+    return {
+        "overall_score": overall_score,
+        "overall_rating": get_rating(overall_score),
+        "domain_scores": domain_scores,
+    }
+
+
+def compute_unified_maturity(
+    per_framework_results: dict[str, dict],
+    per_framework_scores: dict[str, dict],
+) -> dict:
+    """
+    Compute unified maturity view across multiple frameworks.
+
+    Args:
+        per_framework_results: {fw_id: {"assessments": [...]}}
+        per_framework_scores: {fw_id: compute_framework_scores() output}
+
+    Returns unified maturity dict.
+    """
+    # Compute overall across frameworks (equal weight by default)
+    fw_scores = [s["overall_score"] for s in per_framework_scores.values() if s.get("overall_score")]
+    unified_score = round(sum(fw_scores) / len(fw_scores), 1) if fw_scores else 0.0
+
+    # Compute per-topic maturity from maturity_level fields
+    topic_maturity: dict[str, dict[str, list[int]]] = {}
+
+    for fw_id, result in per_framework_results.items():
+        for assessment in result.get("assessments", []):
+            ml = assessment.get("maturity_level")
+            if ml is not None:
+                root_cause = assessment.get("root_cause_category", "other")
+                topic_maturity.setdefault(root_cause, {}).setdefault(fw_id, []).append(ml)
+
+    maturity_by_topic = {}
+    for topic, fw_levels in topic_maturity.items():
+        per_fw = {}
+        all_levels = []
+        for fw_id, levels in fw_levels.items():
+            avg = round(sum(levels) / len(levels), 1)
+            per_fw[fw_id] = avg
+            all_levels.extend(levels)
+        maturity_by_topic[topic] = {
+            "avg_maturity": round(sum(all_levels) / len(all_levels), 1) if all_levels else 0,
+            "per_framework": per_fw,
+        }
+
+    return {
+        "overall_score": unified_score,
+        "overall_rating": get_rating(unified_score),
+        "framework_scores": per_framework_scores,
+        "maturity_by_topic": maturity_by_topic,
+    }
+
+
+def generate_multi_framework_initiatives(
+    all_assessments: dict[str, list[dict]],
+) -> list[dict]:
+    """
+    Generate cross-framework initiatives by clustering gaps across all frameworks.
+
+    Args:
+        all_assessments: {fw_id: [assessment dicts]}
+    """
+    # Merge all gaps
+    all_gaps = []
+    for fw_id, assessments in all_assessments.items():
+        for a in assessments:
+            if a.get("compliance_status") in ("non_compliant", "partially_compliant"):
+                all_gaps.append({**a, "framework_id": fw_id})
+
+    if not all_gaps:
+        return []
+
+    # Group by root cause (same logic, but works across frameworks)
+    clusters: dict[str, list[dict]] = {}
+    for a in all_gaps:
+        root = a.get("root_cause_category", "process")
+        if root not in ("policy", "people", "process", "technology", "governance"):
+            root = "process"
+        clusters.setdefault(root, []).append(a)
+
+    initiatives = []
+    for idx, (cluster, items) in enumerate(clusters.items(), start=1):
+        req_ids = [a["requirement_id"] for a in items]
+        fw_ids = sorted(set(a.get("framework_id", "") for a in items))
+        max_priority = min(a.get("remediation_priority", 3) for a in items)
+        max_effort_rank = max(_EFFORT_RANK.get(a.get("remediation_effort", "medium"), 2) for a in items)
+        max_timeline = max(a.get("timeline_weeks", 8) for a in items)
+        effort = _EFFORT_FROM_RANK[max_effort_rank]
+        timeline_band = "low" if max_timeline <= 4 else "medium" if max_timeline <= 12 else "high"
+        budget = _BUDGET_BANDS.get((effort, timeline_band), "25l_to_1cr")
+
+        initiatives.append({
+            "initiative_id": f"INIT-{idx:03d}",
+            "title": f"{cluster.title()} Remediation — {', '.join(fw_ids)}",
+            "root_cause": "",
+            "root_cause_category": cluster,
+            "requirements_addressed": req_ids,
+            "frameworks_addressed": fw_ids,
+            "combined_effort": effort,
+            "combined_timeline_weeks": max_timeline,
+            "priority": max_priority,
+            "budget_estimate_band": budget,
+            "suggested_approach": _build_approach(cluster, req_ids),
+        })
+
+    initiatives.sort(key=lambda x: x["priority"])
+    return initiatives

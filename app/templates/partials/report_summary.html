@@ -138,8 +138,42 @@
 {% if report.executive_summary %}
 <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
   <h3 class="text-sm font-semibold text-gray-900 mb-3">Executive Summary</h3>
-  <div class="text-sm text-gray-700 leading-relaxed">
+  <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
     {{ report.executive_summary }}
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ── C2. Per-Framework Scores (multi-framework only) ────────────────────── -->
+{% if is_multi_framework and framework_display %}
+<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+  <h3 class="text-sm font-semibold text-gray-900 mb-4">Framework Scores</h3>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ [framework_display | length, 4] | min }} gap-4">
+    {% for fw_id, fw_data in framework_display.items() %}
+    {% set fw_score = fw_data.overall_score %}
+    {% set fw_color = "#22c55e" if fw_score >= 80 else ("#eab308" if fw_score >= 60 else ("#f97316" if fw_score >= 40 else "#ef4444")) %}
+    {% set fw_circ = 251.327 %}
+    {% set fw_offset = (fw_circ * (1 - fw_score / 100)) | round(2) %}
+    <div class="flex flex-col items-center p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+      <svg viewBox="0 0 100 100" class="w-20 h-20 mb-2" role="img" aria-label="{{ fw_data.name }} score: {{ fw_score | round(0) | int }}%">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="40" fill="none"
+                stroke="{{ fw_color }}" stroke-width="8"
+                stroke-dasharray="{{ fw_circ }}"
+                stroke-dashoffset="{{ fw_offset }}"
+                stroke-linecap="round"
+                transform="rotate(-90 50 50)"/>
+        <text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="{{ fw_color }}">{{ fw_score | round(0) | int }}%</text>
+      </svg>
+      <p class="text-sm font-semibold text-gray-800">{{ fw_data.name }}</p>
+      <p class="text-xs text-gray-400">{{ fw_data.version }}</p>
+      <p class="text-xs mt-1 font-medium
+         {% if fw_score >= 80 %}text-green-600{% elif fw_score >= 60 %}text-yellow-600{% elif fw_score >= 40 %}text-orange-500{% else %}text-red-600{% endif %}">
+        {{ fw_data.overall_rating }}
+      </p>
+    </div>
+    {% endfor %}
   </div>
 </div>
 {% endif %}
@@ -327,6 +361,9 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
+            {% if is_multi_framework %}
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Framework</th>
+            {% endif %}
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requirement</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Risk</th>
@@ -337,6 +374,13 @@
         <tbody class="divide-y divide-gray-200">
           {% for item in gap_items %}
           <tr class="hover:bg-gray-50">
+            {% if is_multi_framework %}
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                {{ (item.framework_id or 'dpdpa') | upper }}
+              </span>
+            </td>
+            {% endif %}
             <td class="px-4 py-3">
               <p class="text-sm font-medium text-gray-900">{{ item.requirement_title }}</p>
               <p class="text-xs text-gray-400">{{ item.requirement_id }}</p>

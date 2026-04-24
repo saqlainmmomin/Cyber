@@ -57,6 +57,26 @@
                   class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition"></textarea>
       </div>
 
+      <!-- Framework Selection -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Compliance Frameworks</label>
+        <p class="text-xs text-gray-500 mb-3">Select one or more frameworks to assess against. Overlapping controls will be de-duplicated.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {% for fw in frameworks %}
+          <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand/40 hover:bg-brand/5 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/5">
+            <input type="checkbox" name="frameworks" value="{{ fw.id }}"
+                   {% if fw.id == 'dpdpa' %}checked{% endif %}
+                   class="mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
+            <div>
+              <span class="text-sm font-medium text-gray-800">{{ fw.name }}</span>
+              <span class="text-xs text-gray-400 ml-1">{{ fw.version }}</span>
+              <p class="text-xs text-gray-500 mt-0.5">{{ fw.control_count }} controls</p>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
       <div class="flex gap-3 pt-2">
         <button type="submit"
                 class="bg-brand hover:bg-brand-light text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">

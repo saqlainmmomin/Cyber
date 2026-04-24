@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -147,6 +147,81 @@ def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/full")
+def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
+    """
+    Extended report endpoint with per-framework scores for multi-framework assessments.
+
+    For single-framework DPDPA assessments, returns the same data as the standard endpoint.
+    For multi-framework, includes framework_scores breakdown.
+    """
+    report = _get_report(assessment_id, db)
+    items = _get_gap_items(report.id, db)
+    initiatives = _get_initiatives(report.id, db)
+
+    assessment = db.get(Assessment, assessment_id)
+
+    chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
+    framework_scores = json.loads(report.framework_scores) if report.framework_scores else None
+
+    # Resolve framework metadata
+    frameworks_info = {}
+    if framework_scores:
+        from app.frameworks.registry import FrameworkRegistry
+        for fw_id, scores in framework_scores.items():
+            fw = FrameworkRegistry.get_or_none(fw_id)
+            frameworks_info[fw_id] = {
+                "name": fw.name if fw else fw_id,
+                "version": fw.version if fw else "",
+                "scores": scores,
+            }
+
+    # Group items by framework
+    items_by_framework: dict[str, list[dict]] = {}
+    for item in items:
+        fw_id = item.framework_id or "dpdpa"
+        items_by_framework.setdefault(fw_id, []).append({
+            "requirement_id": item.requirement_id,
+            "requirement_title": item.requirement_title,
+            "compliance_status": item.compliance_status,
+            "risk_level": item.risk_level,
+            "gap_description": item.gap_description,
+            "remediation_action": item.remediation_action,
+            "remediation_priority": item.remediation_priority,
+            "maturity_level": item.maturity_level,
+            "root_cause_category": item.root_cause_category,
+            "evidence_quote": item.evidence_quote,
+            "evidence_confidence": item.evidence_confidence,
+            "control_reference": item.control_reference,
+        })
+
+    return JSONResponse({
+        "id": report.id,
+        "assessment_id": report.assessment_id,
+        "company_name": assessment.company_name if assessment else "",
+        "overall_score": report.overall_score,
+        "overall_rating": get_rating(report.overall_score),
+        "executive_summary": report.executive_summary,
+        "chapter_scores": chapter_scores,
+        "frameworks": frameworks_info,
+        "gap_items_by_framework": items_by_framework,
+        "initiatives": [
+            {
+                "initiative_id": i.initiative_id,
+                "title": i.title,
+                "root_cause_category": i.root_cause_category,
+                "requirements_addressed": json.loads(i.requirements_addressed),
+                "combined_effort": i.combined_effort,
+                "priority": i.priority,
+                "budget_estimate_band": i.budget_estimate_band,
+                "suggested_approach": i.suggested_approach,
+            }
+            for i in initiatives
+        ],
+        "generated_at": report.generated_at.isoformat() if report.generated_at else None,
+    })
+
+
 @router.get("/pdf")
 def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
     report = _get_report(assessment_id, db)
@@ -156,9 +231,22 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
     assessment = db.get(Assessment, assessment_id)
     company_name = assessment.company_name if assessment else "Unknown"
 
+    # Determine if multi-framework for filename
+    selected_frameworks = ["dpdpa"]
+    if assessment and assessment.selected_frameworks:
+        try:
+            selected_frameworks = json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+
     pdf_bytes = generate_pdf(report, items, company_name, initiatives=initiatives)
 
-    filename = f"DPDPA_Assessment_{company_name.replace(' ', '_')}.pdf"
+    if len(selected_frameworks) > 1:
+        fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
+        filename = f"Maturity_Assessment_{fw_label}_{company_name.replace(' ', '_')}.pdf"
+    else:
+        filename = f"DPDPA_Assessment_{company_name.replace(' ', '_')}.pdf"
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

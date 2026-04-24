@@ -162,6 +162,28 @@ def get_questionnaire_sections(
     if assessment.context_profile:
         context_profile = json.loads(assessment.context_profile)
 
+    # Multi-framework: use cluster-based questionnaire builder
+    selected_frameworks = _get_selected_frameworks(assessment)
+    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+
+    if is_multi:
+        from app.frameworks.questionnaire_builder import build_multi_questionnaire
+        excluded = set()
+        if assessment.applicable_requirements:
+            try:
+                applicable = set(json.loads(assessment.applicable_requirements))
+                # excluded = all controls NOT in applicable set
+                from app.frameworks.registry import FrameworkRegistry
+                for fw_id in selected_frameworks:
+                    fw = FrameworkRegistry.get(fw_id)
+                    for ctrl in fw.all_controls():
+                        if ctrl.id not in applicable:
+                            excluded.add(ctrl.id)
+            except (json.JSONDecodeError, Exception):
+                pass
+        questions = build_multi_questionnaire(selected_frameworks, excluded, context_profile)
+        return _group_multi_into_sections(questions)
+
     questions = build_questionnaire(context_profile=context_profile)
     return _group_into_sections(questions)
 
@@ -251,6 +273,7 @@ def submit_responses(
             evidence_reference=resp.evidence_reference,
             na_reason=resp.na_reason,
             confidence=resp.confidence,
+            cluster_id=getattr(resp, "cluster_id", None),
         )
         db.add(record)
         records.append(record)
@@ -275,3 +298,67 @@ def get_responses(assessment_id: str, db: Session = Depends(get_db)):
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
         .all()
     )
+
+
+# --- Helpers ---
+
+
+def _get_selected_frameworks(assessment: Assessment) -> list[str]:
+    """Read selected_frameworks from assessment, default to ["dpdpa"]."""
+    if assessment.selected_frameworks:
+        try:
+            return json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+    return ["dpdpa"]
+
+
+def _group_multi_into_sections(questions: list[dict]) -> list[QuestionnaireSection]:
+    """Group cluster-based questions into sections by domain_group."""
+    sections_map: dict[str, list] = {}
+    section_meta: dict[str, dict] = {}
+
+    for q in questions:
+        domain = q.get("domain_group", "other")
+        section_id = domain
+
+        if section_id not in sections_map:
+            sections_map[section_id] = []
+            section_meta[section_id] = {
+                "chapter": domain,
+                "chapter_title": domain.replace("_", " ").title(),
+                "section": domain,
+                "section_title": q.get("topic", domain.replace("_", " ").title()),
+            }
+        # Adapt cluster question to the schema expected by QuestionnaireSection
+        adapted = {
+            "id": q.get("cluster_id", q.get("id", "")),
+            "question": q.get("primary_question", ""),
+            "guidance": q.get("primary_guidance", ""),
+            "chapter": domain,
+            "chapter_title": domain.replace("_", " ").title(),
+            "section": domain,
+            "section_title": q.get("topic", ""),
+            "section_ref": ", ".join(q.get("frameworks_covered", [])),
+            "criticality": q.get("criticality", "medium"),
+            "answer_options": q.get("answer_options", []),
+            "relevance_weight": q.get("relevance_weight", 1.0),
+            "context_note": q.get("context_note"),
+            "skip_if": q.get("skip_if"),
+            # Multi-framework extras
+            "cluster_id": q.get("cluster_id"),
+            "frameworks_covered": q.get("frameworks_covered", []),
+            "follow_ups": q.get("follow_ups", []),
+            "controls": q.get("controls", []),
+        }
+        sections_map[section_id].append(adapted)
+
+    return [
+        QuestionnaireSection(
+            section_id=sid,
+            **section_meta[sid],
+            question_count=len(qs),
+            questions=qs,
+        )
+        for sid, qs in sections_map.items()
+    ]

@@ -11,8 +11,14 @@ from app.models.assessment import Assessment, AssessmentDocument
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
-from app.services.claude_analyzer import run_gap_analysis
-from app.services.scoring import compute_scores, generate_initiatives
+from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
+from app.services.scoring import (
+    compute_scores,
+    compute_framework_scores,
+    compute_unified_maturity,
+    generate_initiatives,
+    generate_multi_framework_initiatives,
+)
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}", tags=["analysis"])
 logger = logging.getLogger(__name__)
@@ -153,7 +159,31 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         except json.JSONDecodeError:
             logger.warning("Invalid JSON in applicable_requirements for assessment %s", assessment_id)
 
-    # Run Claude analysis
+    # Determine frameworks for this assessment
+    selected_frameworks = ["dpdpa"]
+    if assessment.selected_frameworks:
+        try:
+            selected_frameworks = json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON in selected_frameworks for assessment %s", assessment_id)
+
+    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+
+    if is_multi:
+        return _run_multi_framework_analysis(
+            assessment=assessment,
+            assessment_id=assessment_id,
+            responses=responses,
+            documents=documents,
+            context_profile=context_profile,
+            desk_review_data=desk_review_data,
+            applicable_requirements=applicable_requirements,
+            selected_frameworks=selected_frameworks,
+            has_documents=has_documents,
+            db=db,
+        )
+
+    # --- Legacy single-framework DPDPA path ---
     try:
         result = run_gap_analysis(
             company_name=assessment.company_name,
@@ -181,14 +211,12 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         raise HTTPException(500, "Claude returned an empty or malformed assessment. Try running analysis again.")
 
     # Server-side scope enforcement: ensure out-of-scope requirements are not_applicable
-    # regardless of what Claude returned (belt-and-suspenders over the prompt instruction).
     if applicable_requirements:
         applicable_set = set(applicable_requirements)
         for a in assessments:
             if a.get("requirement_id") and a["requirement_id"] not in applicable_set:
                 a["compliance_status"] = "not_applicable"
 
-    # Compute scores
     scores = compute_scores(assessments)
 
     # Delete any existing report + initiatives for this assessment
@@ -202,7 +230,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
 
-    # Create report
     report = GapReport(
         assessment_id=assessment_id,
         overall_score=scores["overall_score"],
@@ -213,7 +240,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     db.add(report)
     db.flush()
 
-    # Build evidence confidence lookup from desk review + documents
+    # Build evidence confidence lookup
     _dr_evidence_reqs = set()
     _dr_coverage = {}
     if desk_review_data:
@@ -225,7 +252,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     _response_ids = {r["question_id"] for r in responses}
 
     def _compute_evidence_confidence(req_id: str) -> str:
-        """strong = document evidence, moderate = self-reported + partial docs, weak = self-reported only."""
         has_dr_evidence = req_id in _dr_evidence_reqs or _dr_coverage.get(req_id) == "adequate"
         has_response = req_id in _response_ids
         if has_dr_evidence and has_response:
@@ -236,7 +262,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             return "weak"
         return "weak"
 
-    # Create gap items
     for a in assessments:
         req_id = a["requirement_id"]
         item = GapItem(
@@ -259,7 +284,6 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         )
         db.add(item)
 
-    # Generate and save initiatives
     initiatives_data = generate_initiatives(assessments)
     for init_data in initiatives_data:
         initiative = Initiative(
@@ -287,4 +311,193 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         "overall_score": report.overall_score,
         "initiatives_generated": len(initiatives_data),
         "message": "Gap analysis completed successfully",
+    }
+
+
+def _run_multi_framework_analysis(
+    assessment: Assessment,
+    assessment_id: str,
+    responses: list[dict],
+    documents: list[dict],
+    context_profile: dict | None,
+    desk_review_data: dict | None,
+    applicable_requirements: list[str] | None,
+    selected_frameworks: list[str],
+    has_documents: bool,
+    db: Session,
+) -> dict:
+    """Multi-framework analysis: per-framework Claude calls + synthesis + scoring."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    try:
+        result = run_multi_framework_analysis(
+            framework_ids=selected_frameworks,
+            company_name=assessment.company_name,
+            industry=assessment.industry,
+            company_size=assessment.company_size,
+            description=assessment.description,
+            responses=responses,
+            documents=documents,
+            context_profile=context_profile,
+            desk_review_data=desk_review_data,
+            applicable_controls=applicable_requirements,
+        )
+    except Exception as e:
+        assessment.status = "error"
+        db.commit()
+        raise HTTPException(500, f"Multi-framework analysis failed: {str(e)}")
+
+    # Delete existing report + initiatives
+    existing = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+    if existing:
+        db.query(GapItem).filter(GapItem.report_id == existing.id).delete()
+        db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
+        db.delete(existing)
+
+    # Score each framework and compute unified maturity
+    per_fw_scores = {}
+    per_fw_assessments = {}
+    all_gap_items_data = []
+    combined_raw = []
+    combined_executive = []
+
+    for fw_id, fw_result in result["frameworks"].items():
+        if "error" in fw_result:
+            continue
+
+        parsed = fw_result["parsed"]
+        fw_assessments = parsed.get("assessments", [])
+        per_fw_assessments[fw_id] = fw_assessments
+
+        # Server-side scope enforcement
+        if applicable_requirements:
+            applicable_set = set(applicable_requirements)
+            for a in fw_assessments:
+                if a.get("requirement_id") and a["requirement_id"] not in applicable_set:
+                    a["compliance_status"] = "not_applicable"
+
+        # Score this framework
+        per_fw_scores[fw_id] = compute_framework_scores(fw_assessments, fw_id)
+
+        if parsed.get("executive_summary"):
+            combined_executive.append(f"**{fw_id.upper()}:** {parsed['executive_summary']}")
+
+        combined_raw.append(fw_result.get("raw", ""))
+
+        # Build control title/chapter lookups from registry
+        fw = FrameworkRegistry.get(fw_id)
+        fw_ctrl_map = {c.id: c for c in fw.all_controls()}
+
+        for a in fw_assessments:
+            req_id = a["requirement_id"]
+            ctrl = fw_ctrl_map.get(req_id)
+            all_gap_items_data.append({
+                **a,
+                "framework_id": fw_id,
+                "chapter": ctrl.reference if ctrl else "unknown",
+                "requirement_title": ctrl.title if ctrl else req_id,
+                "control_reference": ctrl.reference if ctrl else "",
+            })
+
+    # Compute unified maturity
+    unified = compute_unified_maturity(
+        {fw_id: {"assessments": assmts} for fw_id, assmts in per_fw_assessments.items()},
+        per_fw_scores,
+    )
+
+    # Synthesis executive summary
+    synthesis = result.get("synthesis")
+    executive_summary = ""
+    if synthesis and synthesis.get("parsed", {}).get("unified_executive_summary"):
+        executive_summary = synthesis["parsed"]["unified_executive_summary"]
+    elif combined_executive:
+        executive_summary = "\n\n".join(combined_executive)
+
+    # Create report
+    report = GapReport(
+        assessment_id=assessment_id,
+        overall_score=unified["overall_score"],
+        chapter_scores=json.dumps(unified.get("framework_scores", {})),
+        framework_scores=json.dumps(per_fw_scores),
+        executive_summary=executive_summary,
+        raw_ai_response="\n\n---\n\n".join(combined_raw),
+    )
+    db.add(report)
+    db.flush()
+
+    # Build evidence confidence lookup
+    _dr_evidence_reqs = set()
+    _dr_coverage = {}
+    if desk_review_data:
+        _dr_coverage = desk_review_data.get("coverage_summary", {})
+        for f in desk_review_data.get("findings", []):
+            if f.get("type") == "evidence" and f.get("requirement_id"):
+                _dr_evidence_reqs.add(f["requirement_id"])
+
+    _response_ids = {r["question_id"] for r in responses}
+
+    def _evidence_confidence(req_id: str) -> str:
+        has_dr = req_id in _dr_evidence_reqs or _dr_coverage.get(req_id) == "adequate"
+        has_resp = req_id in _response_ids
+        if has_dr and has_resp:
+            return "strong"
+        if has_dr or (has_resp and has_documents):
+            return "moderate"
+        return "weak"
+
+    # Create gap items with framework_id
+    for a in all_gap_items_data:
+        req_id = a["requirement_id"]
+        item = GapItem(
+            report_id=report.id,
+            requirement_id=req_id,
+            chapter=a.get("chapter", "unknown"),
+            requirement_title=a.get("requirement_title", req_id),
+            compliance_status=a["compliance_status"],
+            current_state=a.get("current_state", ""),
+            gap_description=a.get("gap_description", ""),
+            risk_level=a.get("risk_level", "medium"),
+            remediation_action=a.get("remediation_action", ""),
+            remediation_priority=a.get("remediation_priority", 3),
+            remediation_effort=a.get("remediation_effort", "medium"),
+            timeline_weeks=a.get("timeline_weeks", 8),
+            maturity_level=a.get("maturity_level"),
+            root_cause_category=a.get("root_cause_category"),
+            evidence_quote=a.get("evidence_quote"),
+            evidence_confidence=_evidence_confidence(req_id),
+            framework_id=a.get("framework_id"),
+            control_reference=a.get("control_reference"),
+        )
+        db.add(item)
+
+    # Generate cross-framework initiatives
+    initiatives_data = generate_multi_framework_initiatives(per_fw_assessments)
+    for init_data in initiatives_data:
+        initiative = Initiative(
+            report_id=report.id,
+            initiative_id=init_data["initiative_id"],
+            title=init_data["title"],
+            root_cause=init_data.get("root_cause", ""),
+            root_cause_category=init_data["root_cause_category"],
+            requirements_addressed=json.dumps(init_data["requirements_addressed"]),
+            combined_effort=init_data["combined_effort"],
+            combined_timeline_weeks=init_data["combined_timeline_weeks"],
+            priority=init_data["priority"],
+            budget_estimate_band=init_data.get("budget_estimate_band"),
+            suggested_approach=init_data["suggested_approach"],
+        )
+        db.add(initiative)
+
+    assessment.status = "completed"
+    db.commit()
+    db.refresh(report)
+
+    return {
+        "report_id": report.id,
+        "status": "completed",
+        "overall_score": report.overall_score,
+        "frameworks_analyzed": list(result["frameworks"].keys()),
+        "per_framework_scores": {fw_id: s["overall_score"] for fw_id, s in per_fw_scores.items()},
+        "initiatives_generated": len(initiatives_data),
+        "message": f"Multi-framework analysis completed ({len(selected_frameworks)} frameworks)",
     }

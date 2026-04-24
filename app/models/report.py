@@ -16,6 +16,7 @@ class GapReport(Base):
     chapter_scores: Mapped[str] = mapped_column(Text)  # JSON string
     executive_summary: Mapped[str] = mapped_column(Text)
     raw_ai_response: Mapped[str] = mapped_column(Text)
+    framework_scores: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: per-framework score breakdown
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -25,6 +26,9 @@ class GapItem(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     report_id: Mapped[str] = mapped_column(String(36), index=True)
     requirement_id: Mapped[str] = mapped_column(String(50))
+    framework_id: Mapped[str | None] = mapped_column(String(30), nullable=True)  # e.g. "dpdpa", "iso27001"
+    cluster_id: Mapped[str | None] = mapped_column(String(80), nullable=True)  # UCC cluster ID
+    control_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)  # framework section ref
     chapter: Mapped[str] = mapped_column(String(50))
     requirement_title: Mapped[str] = mapped_column(String(255))
     compliance_status: Mapped[str] = mapped_column(String(30))

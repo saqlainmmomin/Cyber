@@ -135,16 +135,24 @@ def _run_migrations(engine):
             ("context_answers", "TEXT"),
             ("context_profile", "TEXT"),
             ("desk_review_status", "TEXT"),
+            ("selected_frameworks", "TEXT"),
         ],
         "questionnaire_responses": [
             ("na_reason", "TEXT"),
             ("confidence", "TEXT"),
+            ("cluster_id", "TEXT"),
         ],
         "gap_items": [
             ("maturity_level", "INTEGER"),
             ("root_cause_category", "TEXT"),
             ("evidence_quote", "TEXT"),
             ("evidence_confidence", "TEXT"),
+            ("framework_id", "TEXT"),
+            ("cluster_id", "TEXT"),
+            ("control_reference", "TEXT"),
+        ],
+        "gap_reports": [
+            ("framework_scores", "TEXT"),
         ],
     }
     with engine.begin() as conn:
@@ -160,10 +168,29 @@ def _run_migrations(engine):
             _ensure_questionnaire_answer_constraint(conn)
 
 
+def _register_frameworks():
+    """Register all available compliance frameworks."""
+    from app.frameworks.definitions.dpdpa import DPDPA_DEFINITION
+    from app.frameworks.definitions.gdpr import GDPR_DEFINITION
+    from app.frameworks.definitions.hipaa import HIPAA_DEFINITION
+    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
+    from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
+    from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
+    from app.frameworks.registry import FrameworkRegistry
+
+    FrameworkRegistry.register(DPDPA_DEFINITION)
+    FrameworkRegistry.register(ISO27001_DEFINITION)
+    FrameworkRegistry.register(GDPR_DEFINITION)
+    FrameworkRegistry.register(HIPAA_DEFINITION)
+    FrameworkRegistry.register(NIST_CSF_DEFINITION)
+    FrameworkRegistry.register(PCI_DSS_DEFINITION)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _run_migrations(engine)
+    _register_frameworks()
     yield
 
 
