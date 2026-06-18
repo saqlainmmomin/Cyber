@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.database import Base, engine
 import app.models  # noqa: F401 — ensure all models registered before create_all
-from app.routers import analysis, assessments, desk_review, documents, questionnaire, reports, web
+from app.routers import analysis, assessments, desk_review, documents, questionnaire, remediation, reports, review, web
 
 logger = logging.getLogger(__name__)
 
@@ -136,11 +136,15 @@ def _run_migrations(engine):
             ("context_profile", "TEXT"),
             ("desk_review_status", "TEXT"),
             ("selected_frameworks", "TEXT"),
+            ("screening_status", "TEXT"),
+            ("screening_results", "TEXT"),
+            ("review_status", "VARCHAR(20)"),
         ],
         "questionnaire_responses": [
             ("na_reason", "TEXT"),
             ("confidence", "TEXT"),
             ("cluster_id", "TEXT"),
+            ("answer_source", "VARCHAR(20) DEFAULT 'human'"),
         ],
         "gap_items": [
             ("maturity_level", "INTEGER"),
@@ -150,6 +154,18 @@ def _run_migrations(engine):
             ("framework_id", "TEXT"),
             ("cluster_id", "TEXT"),
             ("control_reference", "TEXT"),
+            ("remediation_status", "VARCHAR(20) DEFAULT 'open'"),
+            ("remediation_owner", "VARCHAR(255)"),
+            ("remediation_target_date", "DATETIME"),
+            ("remediation_notes", "TEXT"),
+            ("remediation_closed_at", "DATETIME"),
+            ("review_status", "VARCHAR(20) DEFAULT 'draft'"),
+            ("ai_compliance_status", "TEXT"),
+            ("ai_gap_description", "TEXT"),
+            ("ai_risk_level", "VARCHAR(20)"),
+            ("reviewer_notes", "TEXT"),
+            ("reviewed_by", "VARCHAR(255)"),
+            ("reviewed_at", "DATETIME"),
         ],
         "gap_reports": [
             ("framework_scores", "TEXT"),
@@ -166,6 +182,18 @@ def _run_migrations(engine):
                     logger.info(f"Migration: added {col_name} to {table_name}")
         if inspector.has_table("questionnaire_responses"):
             _ensure_questionnaire_answer_constraint(conn)
+        if inspector.has_table("gap_items"):
+            conn.execute(
+                text(
+                    """
+                    UPDATE gap_items
+                    SET ai_compliance_status = compliance_status,
+                        ai_gap_description = gap_description,
+                        ai_risk_level = risk_level
+                    WHERE ai_compliance_status IS NULL
+                    """
+                )
+            )
 
 
 def _register_frameworks():
@@ -218,7 +246,10 @@ app.include_router(questionnaire.router)
 app.include_router(documents.router)
 app.include_router(analysis.router)
 app.include_router(reports.router)
+app.include_router(reports.comparison_router)
 app.include_router(desk_review.router)
+app.include_router(remediation.router)
+app.include_router(review.router)
 
 # Web portal routes
 app.include_router(web.router)

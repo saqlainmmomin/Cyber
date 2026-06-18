@@ -206,8 +206,16 @@ def get_questionnaire_section(
     if assessment.context_profile:
         context_profile = json.loads(assessment.context_profile)
 
-    questions = build_questionnaire(context_profile=context_profile)
-    sections = _group_into_sections(questions)
+    selected_frameworks = _get_selected_frameworks(assessment)
+    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+
+    if is_multi:
+        from app.frameworks.questionnaire_builder import build_multi_questionnaire
+        questions = build_multi_questionnaire(selected_frameworks, context_profile=context_profile)
+        sections = _group_multi_into_sections(questions)
+    else:
+        questions = build_questionnaire(context_profile=context_profile)
+        sections = _group_into_sections(questions)
 
     for section in sections:
         if section.section_id == section_id:

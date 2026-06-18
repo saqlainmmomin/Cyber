@@ -29,6 +29,89 @@ RATING_THRESHOLDS = [
 ]
 
 
+def compute_delta(current_items: list, previous_items: list) -> dict:
+    """Compare compliance status by requirement across two assessments."""
+    previous_by_requirement = {
+        item.requirement_id: item for item in previous_items
+    }
+    status_rank = {
+        "non_compliant": 0,
+        "partially_compliant": 1,
+        "planned": 2,
+        "compliant": 3,
+        "not_applicable": 3,
+    }
+    status_score = {
+        "non_compliant": 0,
+        "partially_compliant": 50,
+        "planned": 75,
+        "compliant": 100,
+        "not_applicable": 100,
+    }
+
+    deltas = []
+    improved = 0
+    regressed = 0
+    unchanged = 0
+
+    for item in current_items:
+        previous = previous_by_requirement.get(item.requirement_id)
+        if not previous:
+            deltas.append(
+                {
+                    "requirement_id": item.requirement_id,
+                    "requirement_title": item.requirement_title,
+                    "old_status": None,
+                    "new_status": item.compliance_status,
+                    "score_delta": status_score.get(item.compliance_status, 0),
+                    "status_changed": True,
+                    "is_new": True,
+                }
+            )
+            continue
+
+        old_status = previous.compliance_status
+        new_status = item.compliance_status
+        old_rank = status_rank.get(old_status, 0)
+        new_rank = status_rank.get(new_status, 0)
+        if new_rank > old_rank:
+            improved += 1
+        elif new_rank < old_rank:
+            regressed += 1
+        else:
+            unchanged += 1
+
+        deltas.append(
+            {
+                "requirement_id": item.requirement_id,
+                "requirement_title": item.requirement_title,
+                "old_status": old_status,
+                "new_status": new_status,
+                "score_delta": (
+                    status_score.get(new_status, 0)
+                    - status_score.get(old_status, 0)
+                ),
+                "status_changed": new_status != old_status,
+                "is_new": False,
+            }
+        )
+
+    return {
+        "deltas": sorted(
+            deltas,
+            key=lambda delta: (
+                not delta["status_changed"],
+                delta["requirement_id"],
+            ),
+        ),
+        "summary": {
+            "improved": improved,
+            "regressed": regressed,
+            "unchanged": unchanged,
+        },
+    }
+
+
 def get_rating(score: float) -> str:
     for threshold, rating in RATING_THRESHOLDS:
         if score >= threshold:
@@ -173,15 +256,15 @@ _EFFORT_RANK = {"low": 1, "medium": 2, "high": 3}
 _EFFORT_FROM_RANK = {1: "low", 2: "medium", 3: "high"}
 
 _BUDGET_BANDS = {
-    ("low", "low"): "under_5l",
-    ("low", "medium"): "5l_to_25l",
-    ("low", "high"): "5l_to_25l",
-    ("medium", "low"): "5l_to_25l",
-    ("medium", "medium"): "25l_to_1cr",
-    ("medium", "high"): "25l_to_1cr",
-    ("high", "low"): "25l_to_1cr",
-    ("high", "medium"): "above_1cr",
-    ("high", "high"): "above_1cr",
+    ("low", "low"): "under_10k",
+    ("low", "medium"): "10k_to_50k",
+    ("low", "high"): "10k_to_50k",
+    ("medium", "low"): "10k_to_50k",
+    ("medium", "medium"): "50k_to_150k",
+    ("medium", "high"): "50k_to_150k",
+    ("high", "low"): "50k_to_150k",
+    ("high", "medium"): "above_150k",
+    ("high", "high"): "above_150k",
 }
 
 
@@ -227,7 +310,7 @@ def generate_initiatives(assessments: list[dict]) -> list[dict]:
 
         # Determine budget band from effort + timeline
         timeline_band = "low" if max_timeline <= 4 else "medium" if max_timeline <= 12 else "high"
-        budget = _BUDGET_BANDS.get((effort, timeline_band), "25l_to_1cr")
+        budget = _BUDGET_BANDS.get((effort, timeline_band), "50k_to_150k")
 
         cluster_info = ROOT_CAUSE_CLUSTERS.get(cluster, {})
         title = _name_initiative(cluster, req_ids, cluster_info.get("title", cluster))
@@ -448,7 +531,7 @@ def generate_multi_framework_initiatives(
         max_timeline = max(a.get("timeline_weeks", 8) for a in items)
         effort = _EFFORT_FROM_RANK[max_effort_rank]
         timeline_band = "low" if max_timeline <= 4 else "medium" if max_timeline <= 12 else "high"
-        budget = _BUDGET_BANDS.get((effort, timeline_band), "25l_to_1cr")
+        budget = _BUDGET_BANDS.get((effort, timeline_band), "50k_to_150k")
 
         initiatives.append({
             "initiative_id": f"INIT-{idx:03d}",

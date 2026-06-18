@@ -43,6 +43,15 @@ RISK_COLORS = {
     "low": (39, 174, 96),
 }
 
+# Answer source display config: (label, color)
+ANSWER_SOURCE_CONFIG = {
+    "document": ("Doc Pre-fill", (120, 140, 180)),
+    "document_confirmed": ("Doc Confirmed", (100, 160, 130)),
+    "human_override": ("Doc Override", (180, 140, 100)),
+    "inferred": ("Inferred", (140, 130, 170)),
+    # "human" -> no indicator shown (default)
+}
+
 # Rating colors
 RATING_COLORS = {
     "Non-Compliant": (231, 76, 60),
@@ -266,7 +275,8 @@ def _draw_timeline_block(pdf: FPDF, x: float, y: float, w: float,
 
 
 def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float,
-                   show_evidence: bool = False) -> float:
+                   show_evidence: bool = False,
+                   answer_source: str | None = None) -> float:
     """Draw a compact card for a gap item. Returns height consumed."""
     r, g, b = RISK_COLORS.get(item.risk_level, NAVY)
 
@@ -324,8 +334,21 @@ def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float,
         bw = pdf.get_string_width(maturity_label)
         pdf.text(badge_x + 44 + (18 - bw) / 2, y + 4.8, maturity_label)
 
+    # Answer source indicator (subtle, muted pill below badges)
+    source_cfg = ANSWER_SOURCE_CONFIG.get(answer_source or "") if answer_source else None
+    if source_cfg:
+        src_label, (src_r, src_g, src_b) = source_cfg
+        # Position below the badges row
+        src_y = y + 6.5
+        pdf.set_fill_color(src_r, src_g, src_b)
+        src_w = pdf.get_string_width(src_label) + 4
+        pdf.rect(badge_x, src_y, src_w, 4, style="F", round_corners=True, corner_radius=1)
+        pdf.set_font("Helvetica", "", 5.5)
+        pdf.set_text_color(*WHITE)
+        pdf.text(badge_x + 2, src_y + 3, src_label)
+
     # Gap description (truncated)
-    cur_y = y + 9
+    cur_y = y + 9 + (4.5 if source_cfg else 0)
     if gap_text:
         pdf.set_font("Helvetica", "", 7.5)
         pdf.set_text_color(*MID_TEXT)
@@ -437,6 +460,7 @@ def generate_pdf(
     gap_items: list[GapItem],
     company_name: str,
     initiatives: list | None = None,
+    answer_source_map: dict[str, str] | None = None,
 ) -> bytes:
     """Generate a board-level PDF report."""
     chapter_scores = json.loads(report.chapter_scores)
@@ -599,7 +623,8 @@ def generate_pdf(
             _page_header(pdf, "Critical & High Risk Gaps (continued)")
             card_y = pdf.get_y()
 
-        h = _draw_gap_card(pdf, item, PM, card_y, CW)
+        src = (answer_source_map or {}).get(item.requirement_id)
+        h = _draw_gap_card(pdf, item, PM, card_y, CW, answer_source=src)
         card_y += h + 3
 
     _page_footer(pdf, company_name)
@@ -835,7 +860,8 @@ def generate_pdf(
                 pdf.set_y(cur_y + 7)
             else:
                 # Full card for gaps (with evidence in appendix)
-                h = _draw_gap_card(pdf, item, PM, cur_y, CW, show_evidence=True)
+                src = (answer_source_map or {}).get(item.requirement_id)
+                h = _draw_gap_card(pdf, item, PM, cur_y, CW, show_evidence=True, answer_source=src)
                 pdf.set_y(cur_y + h + 4)
 
         _page_footer(pdf, company_name)

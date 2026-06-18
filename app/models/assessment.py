@@ -31,8 +31,12 @@ class Assessment(Base):
     context_answers: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_profile: Mapped[str | None] = mapped_column(Text, nullable=True)
     desk_review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # pending|analyzing|completed|error
+    # Phase 3 — domain-level screening pass
+    screening_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # not_started|completed
+    screening_results: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: {req_id: {status, confidence}}
     # Multi-framework support
     selected_frameworks: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: ["dpdpa", "iso27001", ...]
+    review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow

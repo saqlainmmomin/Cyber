@@ -1,15 +1,26 @@
 <!-- Adaptive stats bar -->
 {% if stats %}
-<div class="mb-4 flex items-center gap-4 text-xs text-gray-500">
+<div class="mb-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
   <span>{{ stats.total_questions }} questions</span>
+  {% if stats.get('tier_counts') %}
+  <span class="text-amber-600 dark:text-amber-500">⚠️ {{ stats.tier_counts.get('deep', 0) }} deep review</span>
+  <span class="text-gray-600 dark:text-gray-400">{{ stats.tier_counts.get('standard', 0) }} standard</span>
+  <span class="text-slate-500 dark:text-slate-400">⚡ {{ stats.tier_counts.get('light', 0) }} quick confirm</span>
+  {% endif %}
+  {% if stats.get('pre_filled_questions', 0) > 0 %}
+  <span class="text-slate-600 dark:text-slate-400">📄 {{ stats.pre_filled_questions }} pre-filled from documents</span>
+  {% endif %}
+  {% if stats.get('inferred_questions', 0) > 0 %}
+  <span class="text-purple-600 dark:text-purple-400">✨ {{ stats.inferred_questions }} inferred from screening</span>
+  {% endif %}
   {% if stats.skipped_questions > 0 %}
-  <span class="text-green-600">{{ stats.skipped_questions }} skipped (covered by documents)</span>
+  <span class="text-green-600 dark:text-green-500">{{ stats.skipped_questions }} skipped (covered by documents)</span>
   {% endif %}
   {% if stats.deepened_questions > 0 %}
-  <span class="text-amber-600">{{ stats.deepened_questions }} deepened (needs attention)</span>
+  <span class="text-amber-600 dark:text-amber-500">{{ stats.deepened_questions }} deepened (needs attention)</span>
   {% endif %}
   {% if stats.industry_questions > 0 %}
-  <span class="text-brand">{{ stats.industry_questions }} industry-specific</span>
+  <span class="text-brand dark:text-navy-300">{{ stats.industry_questions }} industry-specific</span>
   {% endif %}
 </div>
 {% endif %}
@@ -22,18 +33,23 @@
       {% for section in sections %}
       {% set active_count = section.questions | selectattr('status', 'ne', 'skipped') | list | length if section.questions[0].get('status') is defined else section.questions | length %}
       {% set skipped_count = section.questions | length - active_count %}
+      {% set prefilled_count = section.questions | selectattr('status', 'equalto', 'pre_filled') | list | length if section.questions[0].get('status') is defined else 0 %}
+      {% set deep_count = section.questions | selectattr('tier', 'equalto', 'deep') | list | length if section.questions[0].get('tier') is defined else 0 %}
       <button hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
               hx-target="#section-content"
               hx-swap="innerHTML"
-              class="section-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-100
-                     {% if loop.first %}bg-navy-50 text-brand font-medium{% else %}text-gray-600{% endif %}"
+              class="section-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800
+                     {% if loop.first %}bg-navy-50 dark:bg-navy-900/40 text-brand dark:text-navy-300 font-medium{% else %}text-gray-600 dark:text-gray-400{% endif %}"
               data-section="{{ section.section_id }}"
-              onclick="document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('bg-navy-50','text-brand','font-medium')); this.classList.add('bg-navy-50','text-brand','font-medium');">
+              data-collapsible-section
+              onclick="document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('bg-navy-50','dark:bg-navy-900/40','text-brand','dark:text-navy-300','font-medium')); this.classList.add('bg-navy-50','dark:bg-navy-900/40','text-brand','dark:text-navy-300','font-medium');">
         <span class="block truncate">{{ section.section_title }}</span>
         <span class="block text-xs mt-0.5
-               {% if section.get('source') == 'industry' %}text-navy-400{% else %}text-gray-400{% endif %}">
+               {% if section.get('source') == 'industry' %}text-navy-400 dark:text-navy-400{% else %}text-gray-400 dark:text-gray-500{% endif %}">
           {{ section.chapter_title }} &middot; {{ active_count }} questions
-          {% if skipped_count > 0 %}<span class="text-green-500">({{ skipped_count }} skipped)</span>{% endif %}
+          {% if deep_count > 0 %}<span class="text-amber-500">( {{ deep_count }} ⚠️)</span>{% endif %}
+          {% if prefilled_count > 0 %}<span class="text-slate-500 dark:text-slate-400">({{ prefilled_count }} 📄)</span>{% endif %}
+          {% if skipped_count > 0 %}<span class="text-green-500 dark:text-green-600">({{ skipped_count }} skipped)</span>{% endif %}
         </span>
       </button>
       {% endfor %}
@@ -48,7 +64,7 @@
        hx-swap="innerHTML"
        {% endif %}>
     <div class="flex items-center justify-center py-8">
-      <svg class="animate-spin h-5 w-5 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-5 w-5 text-brand dark:text-navy-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg>

@@ -278,15 +278,18 @@ def run_multi_framework_analysis(
                 applicable_controls=applicable_controls,
             )
 
-            message = client.messages.create(
+            # Use streaming to avoid server disconnects on large responses
+            # (per-framework prompts with 90+ controls can produce ~50KB responses)
+            with client.messages.stream(
                 model=settings.claude_model,
                 max_tokens=16384,
                 temperature=0,
                 system=system_blocks,
                 messages=[{"role": "user", "content": user_prompt}],
-            )
+            ) as stream:
+                raw_text = stream.get_final_text()
+                message = stream.get_final_message()
 
-            raw_text = message.content[0].text
             parsed = _parse_json_response(raw_text)
 
             usage = message.usage
@@ -335,15 +338,16 @@ def run_multi_framework_analysis(
             synthesis_prompt = build_synthesis_prompt(per_fw_parsed, company_name, industry)
             synthesis_system = build_synthesis_system_prompt()
 
-            message = client.messages.create(
+            with client.messages.stream(
                 model=settings.claude_model,
                 max_tokens=4096,
                 temperature=0,
                 system=synthesis_system,
                 messages=[{"role": "user", "content": synthesis_prompt}],
-            )
+            ) as stream:
+                raw_text = stream.get_final_text()
+                message = stream.get_final_message()
 
-            raw_text = message.content[0].text
             synthesis = {
                 "parsed": _parse_json_response(raw_text),
                 "raw": raw_text,

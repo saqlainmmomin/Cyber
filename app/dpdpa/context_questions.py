@@ -3,6 +3,9 @@ Phase 1 Context Gathering Questions — organizational intelligence before compl
 
 Four blocks: Data Landscape, Existing Posture, Risk Exposure, Initiative Context.
 These are NOT compliance questions — they profile the organization to enable adaptive assessment.
+
+These questions are framework-agnostic. Framework-specific context (e.g., DPDPA SDF status,
+HIPAA entity type) is captured via per-framework scope questions in the framework definitions.
 """
 
 CONTEXT_BLOCKS = [
@@ -46,7 +49,7 @@ CONTEXT_BLOCKS = [
             },
             {
                 "id": "CTX.DATA.4",
-                "question": "Do you transfer personal data outside India?",
+                "question": "Do you transfer personal data across international borders?",
                 "type": "single_select",
                 "options": ["yes", "no", "unsure"],
             },
@@ -163,10 +166,10 @@ CONTEXT_BLOCKS = [
                 "question": "What is your approximate budget band for remediation?",
                 "type": "single_select",
                 "options": [
-                    "under_5l",
-                    "5l_to_25l",
-                    "25l_to_1cr",
-                    "above_1cr",
+                    "under_10k",
+                    "10k_to_50k",
+                    "50k_to_150k",
+                    "above_150k",
                     "not_yet_defined",
                 ],
             },

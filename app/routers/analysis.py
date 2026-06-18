@@ -75,10 +75,27 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         for d in docs_db
     ]
 
-    expected_question_ids = {
-        q["id"] for q in build_questionnaire(context_profile=context_profile)
-        if not q["id"].startswith(("IND.", "FU."))
-    }
+    _selected_fw = ["dpdpa"]
+    if assessment.selected_frameworks:
+        try:
+            _selected_fw = json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+
+    _is_multi = len(_selected_fw) > 1 or _selected_fw != ["dpdpa"]
+
+    if _is_multi:
+        from app.frameworks.questionnaire_builder import build_multi_questionnaire
+        _multi_qs = build_multi_questionnaire(_selected_fw, context_profile=context_profile)
+        expected_question_ids = {
+            q["cluster_id"] for q in _multi_qs
+            if not q.get("cluster_id", "").startswith("IND.")
+        }
+    else:
+        expected_question_ids = {
+            q["id"] for q in build_questionnaire(context_profile=context_profile)
+            if not q["id"].startswith(("IND.", "FU."))
+        }
     answered_question_ids = {
         r.question_id
         for r in responses_db
@@ -281,6 +298,10 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             root_cause_category=a.get("root_cause_category"),
             evidence_quote=a.get("evidence_quote"),
             evidence_confidence=_compute_evidence_confidence(req_id),
+            review_status="draft",
+            ai_compliance_status=a["compliance_status"],
+            ai_gap_description=a.get("gap_description", ""),
+            ai_risk_level=a.get("risk_level", "medium"),
         )
         db.add(item)
 
@@ -467,6 +488,10 @@ def _run_multi_framework_analysis(
             evidence_confidence=_evidence_confidence(req_id),
             framework_id=a.get("framework_id"),
             control_reference=a.get("control_reference"),
+            review_status="draft",
+            ai_compliance_status=a["compliance_status"],
+            ai_gap_description=a.get("gap_description", ""),
+            ai_risk_level=a.get("risk_level", "medium"),
         )
         db.add(item)
 

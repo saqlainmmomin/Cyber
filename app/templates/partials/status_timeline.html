@@ -1,0 +1,20 @@
+{# Assessment status timeline — rendered via {% include %} from assessment detail #}
+{# Expects: timeline_steps list of (label, completed) tuples #}
+{% if timeline_steps is defined %}
+<div class="flex items-center gap-1 text-xs mb-4">
+  {% for label, done in timeline_steps %}
+  <div class="flex items-center gap-1.5">
+    {% if done %}
+    <span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+    <span class="text-gray-700 dark:text-gray-300 font-medium">{{ label }}</span>
+    {% else %}
+    <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0"></span>
+    <span class="text-gray-400 dark:text-gray-500">{{ label }}</span>
+    {% endif %}
+  </div>
+  {% if not loop.last %}
+  <span class="w-5 h-px bg-gray-300 dark:bg-gray-700 flex-shrink-0"></span>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}

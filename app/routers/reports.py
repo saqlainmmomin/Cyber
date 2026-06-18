@@ -8,13 +8,16 @@ from app.database import get_db
 from app.dpdpa.framework import ROOT_CAUSE_CLUSTERS, get_requirement_count
 from app.models.assessment import Assessment
 from app.models.initiative import Initiative
+from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.schemas.initiative import InitiativeOut
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
 from app.services.scoring import get_rating
 from app.utils.pdf_export import generate_pdf
+from app.utils.review_gate import require_review_approval
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}/report", tags=["reports"])
+comparison_router = APIRouter(prefix="/api/assessments", tags=["reports"])
 
 
 def _get_report(assessment_id: str, db: Session) -> GapReport:
@@ -77,6 +80,7 @@ def _initiative_to_schema(init: Initiative) -> InitiativeOut:
 
 @router.get("", response_model=ReportOut)
 def get_report(assessment_id: str, db: Session = Depends(get_db)):
+    require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
     initiatives = _get_initiatives(report.id, db)
@@ -115,6 +119,7 @@ def get_report(assessment_id: str, db: Session = Depends(get_db)):
 
 @router.get("/summary", response_model=ReportSummary)
 def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
+    require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
 
@@ -155,6 +160,7 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
     For single-framework DPDPA assessments, returns the same data as the standard endpoint.
     For multi-framework, includes framework_scores breakdown.
     """
+    require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
     initiatives = _get_initiatives(report.id, db)
@@ -224,12 +230,24 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
 
 @router.get("/pdf")
 def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
+    require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
     initiatives = _get_initiatives(report.id, db)
 
     assessment = db.get(Assessment, assessment_id)
     company_name = assessment.company_name if assessment else "Unknown"
+
+    # Build answer_source lookup: requirement_id -> answer_source
+    answer_source_map: dict[str, str] = {}
+    responses = (
+        db.query(QuestionnaireResponse)
+        .filter(QuestionnaireResponse.assessment_id == assessment_id)
+        .all()
+    )
+    for resp in responses:
+        # question_id format matches requirement_id (e.g. "DPDPA-2.1.1")
+        answer_source_map[resp.question_id] = resp.answer_source or "human"
 
     # Determine if multi-framework for filename
     selected_frameworks = ["dpdpa"]
@@ -239,7 +257,11 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
         except json.JSONDecodeError:
             pass
 
-    pdf_bytes = generate_pdf(report, items, company_name, initiatives=initiatives)
+    pdf_bytes = generate_pdf(
+        report, items, company_name,
+        initiatives=initiatives,
+        answer_source_map=answer_source_map,
+    )
 
     if len(selected_frameworks) > 1:
         fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
@@ -252,3 +274,55 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@comparison_router.get("/{assessment_id}/comparable")
+def get_comparable_assessments(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404, "Assessment not found")
+
+    others = (
+        db.query(Assessment)
+        .filter(
+            Assessment.company_name == assessment.company_name,
+            Assessment.id != assessment_id,
+            Assessment.status == "completed",
+            Assessment.review_status == "approved",
+        )
+        .order_by(Assessment.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": other.id,
+            "created_at": other.created_at.isoformat(),
+            "status": other.status,
+        }
+        for other in others
+    ]
+
+
+@comparison_router.get("/{assessment_id}/compare/{other_id}")
+def compare_assessments(
+    assessment_id: str,
+    other_id: str,
+    db: Session = Depends(get_db),
+):
+    from app.services.scoring import compute_delta
+
+    current = require_review_approval(assessment_id, db)
+    previous = require_review_approval(other_id, db)
+    if current.company_name != previous.company_name:
+        raise HTTPException(400, "Assessments must belong to the same company")
+    if current.status != "completed" or previous.status != "completed":
+        raise HTTPException(400, "Both assessments must be completed")
+
+    current_report = _get_report(assessment_id, db)
+    previous_report = _get_report(other_id, db)
+    current_items = _get_gap_items(current_report.id, db)
+    previous_items = _get_gap_items(previous_report.id, db)
+    return compute_delta(current_items, previous_items)

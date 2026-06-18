@@ -1,48 +1,547 @@
 """
 Unified Control Cluster (UCC) mapping data.
 
-Maps overlapping controls across frameworks into clusters. Each cluster
-represents a single assessable topic — the assessment asks one primary
-question per cluster, with framework-specific follow-ups for deltas.
+The cluster engine expects a list of cluster definitions. Each definition uses:
+  - ``cluster_id``: stable identifier such as ``CLUSTER_001``
+  - ``topic``: short human-readable title
+  - ``primary_question`` / ``primary_guidance``: merged assessment prompt
+  - ``controls``: list of member controls with ``framework`` / ``control`` keys
+  - ``delta``: optional framework-specific nuance shown as a follow-up
 
-This file is the source of truth for cross-framework de-duplication.
-Currently contains DPDPA mappings only; other frameworks will be added
-as their definitions are generated (Codex workflow).
-
-Schema per cluster:
-    cluster_id: str         — stable identifier (e.g. "UCC.CONSENT.001")
-    topic: str              — human-readable topic
-    tags: list[str]         — semantic tags (union of member controls)
-    primary_question: str   — merged question covering the baseline
-    primary_guidance: str   — guidance for the primary question
-    controls: list[dict]    — member controls:
-        framework: str      — framework id
-        control: str        — control id within that framework
-        delta: str | None   — what this framework uniquely adds beyond the baseline
+These mappings intentionally focus first on the highest-overlap areas across
+DPDPA, ISO 27001, and GDPR so multi-framework questionnaires de-duplicate the
+largest shared control families before falling back to singletons.
 """
 
-# ── Cluster definitions ───────────────────────────────────────────────────
-#
-# V1: DPDPA-only (singleton clusters). Multi-framework clusters will be
-# added when ISO 27001, GDPR, HIPAA, NIST CSF, and PCI-DSS definitions
-# are generated. The cluster_engine handles unmatched controls as singletons,
-# so this file only needs to contain clusters where cross-framework mapping
-# actually de-duplicates something.
+from __future__ import annotations
 
-CONTROL_CLUSTERS: list[dict] = [
-    # ── Governance & Oversight ─────────────────────────────────────────
-    # (Will be populated with cross-framework mappings, e.g.:
-    #   DPDPA CH4.SDF.1 (DPO) ↔ GDPR Art.37 (DPO) ↔ HIPAA Privacy Officer)
 
-    # ── Consent & Lawful Basis ─────────────────────────────────────────
+def _control(
+    framework: str,
+    control: str,
+    delta: str | None = None,
+) -> dict[str, str]:
+    item = {"framework": framework, "control": control}
+    if delta:
+        item["delta"] = delta
+    return item
 
-    # ── Data Subject Rights ────────────────────────────────────────────
 
-    # ── Security Safeguards ────────────────────────────────────────────
+def _cluster(
+    cluster_id: str,
+    topic: str,
+    question: str,
+    guidance: str,
+    controls: list[dict[str, str]],
+    *,
+    tags: list[str],
+    criticality: str = "high",
+    domain_group: str,
+) -> dict[str, object]:
+    return {
+        "cluster_id": cluster_id,
+        "topic": topic,
+        "tags": tags,
+        "primary_question": question,
+        "primary_guidance": guidance,
+        "controls": controls,
+        "criticality": criticality,
+        "domain_group": domain_group,
+    }
 
-    # ── Breach / Incident Response ─────────────────────────────────────
 
-    # ── Cross-Border Transfers ─────────────────────────────────────────
-
-    # ── Children & Vulnerable Persons ──────────────────────────────────
+CONTROL_CLUSTERS: list[dict[str, object]] = [
+    _cluster(
+        "CLUSTER_001",
+        "Governance Framework And Policy Accountability",
+        "Does your organization maintain a documented privacy and information security governance framework, approved by leadership and reviewed on a defined cadence?",
+        "Look for board or management approval, named policy owners, review dates, implementation accountability, and evidence that the framework is communicated and enforced.",
+        [
+            _control("iso27001", "ISO.A5.1"),
+            _control("iso27001", "ISO.A5.4"),
+            _control("gdpr", "GDPR.ART24.1"),
+            _control("gdpr", "GDPR.ART24.2"),
+            _control("gdpr", "GDPR.ART5.1"),
+        ],
+        tags=["governance", "policy", "management-commitment", "accountability"],
+        criticality="critical",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_002",
+        "DPO And Assigned Privacy Responsibilities",
+        "Has the organization formally assigned privacy and security responsibilities, including an empowered DPO or equivalent role where required?",
+        "Look for an appointment record, role description, independence, reporting line, and evidence that the function is engaged in ongoing oversight rather than acting only on paper.",
+        [
+            _control("dpdpa", "CH4.SDF.1", "DPDPA focuses on DPO appointment for Significant Data Fiduciaries."),
+            _control("iso27001", "ISO.A5.2", "ISO expects defined and allocated information security roles across the organization."),
+            _control("gdpr", "GDPR.ART37.1", "GDPR requires documented criteria and designation of a DPO where Art 37 applies."),
+            _control("gdpr", "GDPR.ART38.1", "GDPR also requires independence, access to management, and no conflict of interest."),
+            _control("gdpr", "GDPR.ART39.1", "GDPR specifies advisory, monitoring, and supervisory authority liaison tasks."),
+        ],
+        tags=["governance", "dpo", "roles-responsibilities", "organizational-structure"],
+        criticality="critical",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_003",
+        "Privacy By Design And DPIA Governance",
+        "Does the organization assess privacy risk during design and delivery of new processing activities, including conducting DPIAs where high-risk processing is identified?",
+        "Look for project gates, DPIA criteria, completed assessments, risk treatment decisions, and evidence that privacy-by-design controls are embedded in delivery workflows.",
+        [
+            _control("dpdpa", "CH4.SDF.3", "DPDPA emphasizes DPIAs for Significant Data Fiduciaries."),
+            _control("iso27001", "ISO.A5.8", "ISO expects security to be integrated into project management."),
+            _control("gdpr", "GDPR.ART35.1", "GDPR requires a documented DPIA process for high-risk processing."),
+            _control("gdpr", "GDPR.ART35.2", "GDPR also expects clear criteria to determine when a DPIA is triggered."),
+            _control("gdpr", "GDPR.ART25.1", "GDPR requires data protection by design in system and process design choices."),
+            _control("gdpr", "GDPR.ART25.2", "GDPR also requires data protection by default settings and configurations."),
+        ],
+        tags=["governance", "dpia", "privacy-by-design", "risk-assessment"],
+        criticality="critical",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_004",
+        "Independent Review And Assurance",
+        "Does the organization perform independent assurance over its privacy and security control environment on a recurring basis?",
+        "Look for audit plans, external or independent review reports, remediation tracking, and evidence that findings reach accountable leadership.",
+        [
+            _control("dpdpa", "CH4.SDF.2", "DPDPA requires an Independent Data Auditor for Significant Data Fiduciaries."),
+            _control("dpdpa", "CH4.SDF.4", "DPDPA also expects periodic audits to be completed."),
+            _control("iso27001", "ISO.A5.35", "ISO requires independent review of information security."),
+            _control("gdpr", "GDPR.ART32.4", "GDPR expects testing and evaluation of security measures as part of ongoing assurance."),
+        ],
+        tags=["governance", "audit", "independent-review", "compliance-audit"],
+        criticality="high",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_005",
+        "Processing Inventory And Accountability Records",
+        "Does the organization maintain an up-to-date inventory of processing activities, systems, and data assets that supports privacy and security governance?",
+        "Look for a maintained asset or processing register, ownership assignments, system scope, and evidence that records are updated when processing changes.",
+        [
+            _control("iso27001", "ISO.A5.9"),
+            _control("gdpr", "GDPR.ART30.1", "GDPR expects a controller record of processing activities."),
+            _control("gdpr", "GDPR.ART30.2", "GDPR expects processor-side records where the organization acts as a processor."),
+        ],
+        tags=["governance", "documentation", "data-inventory", "records-of-processing"],
+        criticality="high",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_006",
+        "Access Control Baseline",
+        "Are logical access rules defined and enforced so users receive only the access needed for their role and risk profile?",
+        "Look for an access control policy, role definitions, approval workflow, least-privilege standards, and evidence that access is technically enforced.",
+        [
+            _control("dpdpa", "CH2.SECURITY.1", "DPDPA expects reasonable technical and organisational security safeguards for personal data."),
+            _control("dpdpa", "CH2.SECURITY.2", "DPDPA emphasizes encryption and access controls for personal data."),
+            _control("iso27001", "ISO.A5.15", "ISO requires access control rules based on business and security needs."),
+            _control("iso27001", "ISO.A8.3", "ISO also expects information access restriction to be implemented technically."),
+            _control("gdpr", "GDPR.ART32.1", "GDPR expects appropriate technical and organisational security measures based on risk."),
+        ],
+        tags=["security", "access-control", "least-privilege", "authorization"],
+        criticality="critical",
+        domain_group="security",
+    ),
+    _cluster(
+        "CLUSTER_007",
+        "Identity Lifecycle And Access Reviews",
+        "Does the organization manage identity lifecycle events and review access rights throughout joiner, mover, leaver, and role-change scenarios?",
+        "Look for provisioning, modification, recertification, segregation of duties, and timely removal of access when users change roles or depart.",
+        [
+            _control("iso27001", "ISO.A5.3"),
+            _control("iso27001", "ISO.A5.16"),
+            _control("iso27001", "ISO.A5.18"),
+        ],
+        tags=["security", "identity-management", "access-review", "segregation-of-duties"],
+        criticality="high",
+        domain_group="security",
+    ),
+    _cluster(
+        "CLUSTER_008",
+        "Authentication And Credential Protection",
+        "Are authentication methods and credential handling practices designed to prevent unauthorized access to systems that process personal data?",
+        "Look for password standards, MFA, secure credential storage, rotation or recovery controls, and explicit handling guidance for privileged or high-risk accounts.",
+        [
+            _control("iso27001", "ISO.A5.17"),
+            _control("iso27001", "ISO.A8.5"),
+            _control("gdpr", "GDPR.ART32.2", "GDPR specifically calls out pseudonymisation and encryption as appropriate measures."),
+        ],
+        tags=["security", "authentication", "credential-management", "encryption"],
+        criticality="high",
+        domain_group="security",
+    ),
+    _cluster(
+        "CLUSTER_009",
+        "Privileged And Administrative Access Safeguards",
+        "Are privileged, administrative, and source-code-related access pathways tightly restricted, monitored, and justified?",
+        "Look for privileged access criteria, break-glass control, approval and logging, source code restrictions, and controls over utility or administrative tooling.",
+        [
+            _control("iso27001", "ISO.A8.2"),
+            _control("iso27001", "ISO.A8.18"),
+            _control("iso27001", "ISO.A8.4"),
+        ],
+        tags=["security", "access-control", "privileged-access", "source-code"],
+        criticality="high",
+        domain_group="security",
+    ),
+    _cluster(
+        "CLUSTER_010",
+        "Processor And Supplier Due Diligence",
+        "Does the organization assess privacy and security risk before engaging processors, vendors, or suppliers that will handle personal data or support critical systems?",
+        "Look for onboarding due diligence, security questionnaires, risk tiering, approval criteria, and decision records for processors and suppliers.",
+        [
+            _control("dpdpa", "CH2.SECURITY.3", "DPDPA expects contractual safeguards with data processors."),
+            _control("iso27001", "ISO.A5.19", "ISO requires processes to manage supplier-related information security risks."),
+            _control("gdpr", "GDPR.ART28.1", "GDPR requires use of processors that provide sufficient guarantees."),
+        ],
+        tags=["third-party", "processor-management", "supplier-management", "risk-assessment"],
+        criticality="critical",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_011",
+        "Processor Contracts And Data Processing Terms",
+        "Are supplier and processor contracts documented with the privacy and security terms needed to govern personal data processing?",
+        "Look for DPAs or equivalent clauses covering instructions, confidentiality, safeguards, breach duties, audit rights, deletion or return, and subcontracting restrictions.",
+        [
+            _control("iso27001", "ISO.A5.20"),
+            _control("gdpr", "GDPR.ART28.2", "GDPR expects formal processor contract terms under Art 28."),
+        ],
+        tags=["third-party", "contracts", "data-processing-agreement", "supplier-management"],
+        criticality="critical",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_012",
+        "Supply Chain And Sub-Processor Oversight",
+        "Does the organization govern extended supply-chain risk, including sub-processors and outsourced development arrangements?",
+        "Look for approval of sub-processors, flow-down obligations, supplier chain visibility, and governance over outsourced engineering or service delivery.",
+        [
+            _control("iso27001", "ISO.A5.21"),
+            _control("iso27001", "ISO.A8.30"),
+            _control("gdpr", "GDPR.ART28.3", "GDPR expects sub-processor authorization and oversight."),
+        ],
+        tags=["third-party", "supply-chain", "sub-processor", "outsourced-development"],
+        criticality="high",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_013",
+        "Ongoing Supplier Monitoring",
+        "Are suppliers, cloud services, and externally managed network services monitored and reviewed throughout the relationship?",
+        "Look for periodic review cadence, change notifications, performance and control monitoring, cloud governance, and reassessment of third-party security posture.",
+        [
+            _control("iso27001", "ISO.A5.22"),
+            _control("iso27001", "ISO.A5.23"),
+            _control("iso27001", "ISO.A8.21"),
+        ],
+        tags=["third-party", "monitoring", "cloud-security", "service-management"],
+        criticality="high",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_014",
+        "Incident Response Planning And Workforce Reporting",
+        "Does the organization maintain an incident response plan and require personnel to escalate security events through a defined reporting path?",
+        "Look for an approved response plan, roles, reporting channels, training or awareness, and evidence that employees know how to report incidents.",
+        [
+            _control("dpdpa", "BN.NOTIFY.3", "DPDPA expects a documented incident response plan."),
+            _control("iso27001", "ISO.A5.24", "ISO expects planning and preparation for incident management."),
+            _control("iso27001", "ISO.A6.8", "ISO expects personnel to report information security events."),
+        ],
+        tags=["incident-response", "incident-response-plan", "reporting"],
+        criticality="critical",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_015",
+        "Incident Assessment And Containment",
+        "Does the organization triage security events promptly and execute documented response actions to contain and manage confirmed incidents?",
+        "Look for severity criteria, decision logs, containment playbooks, responder roles, and records showing that incidents move from detection to action without delay.",
+        [
+            _control("iso27001", "ISO.A5.25"),
+            _control("iso27001", "ISO.A5.26"),
+        ],
+        tags=["incident-response", "triage", "breach-management", "containment"],
+        criticality="high",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_016",
+        "Incident Evidence, Documentation, And Lessons Learned",
+        "Does the organization preserve incident evidence, maintain a breach register, and feed lessons learned back into control improvements?",
+        "Look for incident logs, evidence preservation guidance, post-incident reviews, corrective actions, and a maintained breach or incident register.",
+        [
+            _control("dpdpa", "BN.NOTIFY.4", "DPDPA expects a breach register to be maintained."),
+            _control("iso27001", "ISO.A5.27", "ISO expects lessons learned from incidents."),
+            _control("iso27001", "ISO.A5.28", "ISO expects collection of evidence."),
+            _control("gdpr", "GDPR.ART33.2", "GDPR requires breach documentation sufficient to demonstrate compliance."),
+        ],
+        tags=["incident-response", "breach-register", "documentation", "lessons-learned"],
+        criticality="high",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_017",
+        "Regulatory And Supervisory Breach Notification",
+        "Can the organization determine when a breach must be reported to a regulator or supervisory authority and do so within the required timeframe?",
+        "Look for notification criteria, authority contact points, decision ownership, timelines, escalation workflow, and retained evidence of notifications made or decisions not to notify.",
+        [
+            _control("dpdpa", "BN.NOTIFY.1", "DPDPA requires notification to the Data Protection Board and affected parties as prescribed."),
+            _control("iso27001", "ISO.A5.5", "ISO expects maintained contact with relevant authorities."),
+            _control("gdpr", "GDPR.ART33.1", "GDPR requires supervisory authority notification without undue delay where risk thresholds are met."),
+            _control("gdpr", "GDPR.ART31.1", "GDPR also expects cooperation with the supervisory authority."),
+        ],
+        tags=["incident_response", "breach-notification", "regulatory-notification"],
+        criticality="critical",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_018",
+        "Breach Communication To Affected Individuals",
+        "Does the organization have a process to notify affected individuals when a personal data breach creates material risk to them?",
+        "Look for risk assessment, message templates, approval path, delivery channels, and records of when individual notification is triggered or suppressed with justification.",
+        [
+            _control("dpdpa", "BN.NOTIFY.2", "DPDPA expects notice to affected Data Principals where applicable."),
+            _control("gdpr", "GDPR.ART34.1", "GDPR requires communication to data subjects when the breach is likely to result in high risk."),
+        ],
+        tags=["incident-response", "breach-notification", "data-subject-notification"],
+        criticality="critical",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_019",
+        "Incident Resilience And ICT Continuity",
+        "Are systems and processes designed to remain resilient and recoverable during security incidents or service disruptions?",
+        "Look for resilience objectives, continuity plans, failover or recovery testing, and evidence that critical services can continue or recover in a controlled manner.",
+        [
+            _control("iso27001", "ISO.A5.30"),
+            _control("gdpr", "GDPR.ART32.3", "GDPR expects resilience and availability measures appropriate to risk."),
+        ],
+        tags=["incident-response", "business-continuity", "resilience", "availability"],
+        criticality="high",
+        domain_group="incident_response",
+    ),
+    _cluster(
+        "CLUSTER_020",
+        "Transparent Privacy Notice At Collection",
+        "Does the organization provide a clear and accessible privacy notice at or before collection that explains the processing in plain language?",
+        "Look for layered notice design, intelligible language, publication points, and disclosure of identity, purposes, recipients, rights, retention, and key privacy contacts.",
+        [
+            _control("dpdpa", "CH2.NOTICE.1", "DPDPA requires notice at or before collection."),
+            _control("iso27001", "ISO.A5.34", "ISO expects privacy and protection of personal information controls around PII processing."),
+            _control("gdpr", "GDPR.ART12.1", "GDPR requires concise, transparent, intelligible communication."),
+            _control("gdpr", "GDPR.ART12.2", "GDPR encourages layered and accessible notices."),
+            _control("gdpr", "GDPR.ART13.1", "GDPR specifies the content required when data is collected directly."),
+        ],
+        tags=["data-protection", "privacy-notice", "transparency", "communication"],
+        criticality="critical",
+        domain_group="data_protection",
+    ),
+    _cluster(
+        "CLUSTER_021",
+        "Notice For Legacy And Indirect Collection",
+        "Can the organization provide privacy notice when data was collected previously or obtained indirectly from another source?",
+        "Look for retrospective notification workflows, indirect-collection notice triggers, timing rules, and evidence that notice reaches affected individuals when required.",
+        [
+            _control("dpdpa", "CH2.NOTICE.2", "DPDPA expects notice for personal data collected before the Act where applicable."),
+            _control("gdpr", "GDPR.ART14.1", "GDPR requires notice when data is obtained indirectly."),
+        ],
+        tags=["data-protection", "privacy-notice", "legacy-data", "third-party-data"],
+        criticality="high",
+        domain_group="data_protection",
+    ),
+    _cluster(
+        "CLUSTER_022",
+        "Privacy Contact Point And Complaint Intake",
+        "Does the organization publish a usable privacy contact point and intake channel for complaints or data rights requests?",
+        "Look for named contact details, channel visibility, routing, triage ownership, and evidence that privacy grievances are received and logged rather than lost in general support.",
+        [
+            _control("dpdpa", "CH2.NOTICE.3", "DPDPA notice content should include DPO or grievance officer contact details."),
+            _control("dpdpa", "CH3.GRIEVANCE.1", "DPDPA expects a grievance redressal mechanism to be available."),
+        ],
+        tags=["data-protection", "privacy-notice", "dpo", "grievance-redressal"],
+        criticality="high",
+        domain_group="data_protection",
+    ),
+    _cluster(
+        "CLUSTER_023",
+        "Access Request Fulfillment",
+        "Can individuals request access to their personal data and receive the response through a defined, timely fulfillment process?",
+        "Look for intake, identity verification, retrieval workflow, response template, SLA tracking, and evidence that the organization can actually produce the requested information.",
+        [
+            _control("dpdpa", "CH3.ACCESS.1", "DPDPA grants access to a summary of personal data and processing activities."),
+            _control("gdpr", "GDPR.ART15.1", "GDPR defines the right of access and required response content."),
+            _control("gdpr", "GDPR.ART15.2", "GDPR also expects a documented request-handling process."),
+        ],
+        tags=["consent_rights", "data-subject-rights", "right-of-access", "process"],
+        criticality="critical",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_024",
+        "Rectification And Data Quality",
+        "Does the organization maintain processes to keep personal data accurate and to correct it when an individual or business owner identifies an error?",
+        "Look for correction workflow, ownership for data quality, validation steps, downstream updates, and records showing corrections are carried through affected systems.",
+        [
+            _control("dpdpa", "CH2.ACCURACY.1", "DPDPA requires reasonable efforts to ensure accuracy."),
+            _control("dpdpa", "CH3.CORRECT.1", "DPDPA provides a correction and completion mechanism."),
+            _control("gdpr", "GDPR.ART16.1", "GDPR grants the right to rectification."),
+            _control("gdpr", "GDPR.ART5D.1", "GDPR also treats accuracy as a core processing principle."),
+        ],
+        tags=["consent_rights", "data-quality", "rectification", "accuracy"],
+        criticality="high",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_025",
+        "Erasure, Retention, And Deletion Execution",
+        "Does the organization enforce retention limits and execute deletion or erasure requests through documented workflows and technical controls?",
+        "Look for retention schedules, deletion triggers, technical execution steps, exception handling, system coverage, and evidence that data is deleted when no longer needed or when rights are exercised.",
+        [
+            _control("dpdpa", "CH2.MINIMIZE.2", "DPDPA limits retention to the period necessary for the purpose."),
+            _control("dpdpa", "CH2.MINIMIZE.3", "DPDPA expects retention schedules and deletion procedures."),
+            _control("dpdpa", "CH3.CORRECT.2", "DPDPA includes a mechanism for erasure."),
+            _control("iso27001", "ISO.A8.10", "ISO expects controlled information deletion."),
+            _control("gdpr", "GDPR.ART17.1", "GDPR grants the right to erasure."),
+            _control("gdpr", "GDPR.ART5E.1", "GDPR treats storage limitation as a core principle."),
+        ],
+        tags=["data-protection", "data-retention", "data-deletion", "right-to-erasure"],
+        criticality="critical",
+        domain_group="data_protection",
+    ),
+    _cluster(
+        "CLUSTER_026",
+        "Downstream Recipient Notification After Data Changes",
+        "When data is corrected, erased, or restricted, does the organization notify recipients or downstream parties that received the data where required?",
+        "Look for recipient inventories, downstream communication workflows, exception logging, and evidence that third parties are informed after data changes.",
+        [
+            _control("gdpr", "GDPR.ART17.2"),
+            _control("gdpr", "GDPR.ART19.1"),
+        ],
+        tags=["consent_rights", "notification", "third-party", "right-to-erasure"],
+        criticality="medium",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_027",
+        "Restriction, Objection, And Automated Decision Safeguards",
+        "Can the organization restrict processing, honor objections, and provide safeguards when automated decision-making materially affects individuals?",
+        "Look for objection channels, restriction flags, suppression of challenged processing, human review capability, and records of how profiling or automated decisions are explained and contested.",
+        [
+            _control("gdpr", "GDPR.ART18.1"),
+            _control("gdpr", "GDPR.ART21.1"),
+            _control("gdpr", "GDPR.ART22.1"),
+            _control("gdpr", "GDPR.ART22.2"),
+        ],
+        tags=["consent_rights", "data-subject-rights", "restriction", "automated-decision-making"],
+        criticality="high",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_028",
+        "Portability And Authorized Representative Requests",
+        "Can the organization respond when an individual or authorized representative seeks a portable copy of personal data or acts on the individual's behalf?",
+        "Look for representation validation, export workflow, machine-readable output capability, and evidence that the organization can differentiate portability from ordinary access responses.",
+        [
+            _control("dpdpa", "CH3.NOMINATE.1", "DPDPA includes a nomination mechanism for death or incapacity."),
+            _control("gdpr", "GDPR.ART20.1", "GDPR grants the right to portability for qualifying processing."),
+        ],
+        tags=["consent_rights", "data-subject-rights", "nomination", "data-portability"],
+        criticality="medium",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_029",
+        "Consent Governance, Records, And Granularity",
+        "Where consent is relied on, does the organization obtain it in a specific and granular way, keep records, and refresh or re-seek it when needed?",
+        "Look for lawful-basis documentation, consent evidence, granular choice capture, refresh triggers, and controls preventing bundled or stale consent from being reused indefinitely.",
+        [
+            _control("dpdpa", "CH2.CONSENT.1", "DPDPA requires free, specific, informed consent as the lawful basis."),
+            _control("dpdpa", "CM.RECORDS.1", "DPDPA add-on controls expect auditable consent records."),
+            _control("dpdpa", "CM.RECORDS.2", "DPDPA add-on controls expect consent refresh on purpose change or staleness."),
+            _control("dpdpa", "CM.GRANULAR.1", "DPDPA add-on controls expect granular consent by processing purpose."),
+            _control("dpdpa", "CM.GRANULAR.2", "DPDPA add-on controls guard against bundled or manipulative consent design."),
+            _control("gdpr", "GDPR.ART6.1", "GDPR requires identification and documentation of the lawful basis."),
+            _control("gdpr", "GDPR.ART6.2", "GDPR requires consent to be freely given, specific, informed, and easy to withdraw."),
+        ],
+        tags=["consent_rights", "consent", "consent-records", "granular-consent"],
+        criticality="critical",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_030",
+        "Consent Withdrawal And Interoperable Choice Management",
+        "Can individuals withdraw consent easily and, where used, is consent management implemented in an interoperable way across channels or processing contexts?",
+        "Look for user-facing withdrawal controls, propagation of withdrawal, suppression of further processing, and evidence that consent preferences are synchronized rather than left fragmented.",
+        [
+            _control("dpdpa", "CH2.CONSENT.3"),
+            _control("dpdpa", "CH2.CONSENT.4"),
+        ],
+        tags=["consent_rights", "consent", "consent-withdrawal", "consent-management"],
+        criticality="high",
+        domain_group="consent_rights",
+    ),
+    _cluster(
+        "CLUSTER_031",
+        "Cross-Border Transfer Governance",
+        "Does the organization know when personal data leaves the originating jurisdiction and apply documented transfer governance, safeguards, and localization controls where required?",
+        "Look for transfer inventories, destination mapping, contractual or legal safeguards, approved transfer routes, and restrictions on prohibited or unmanaged transfer patterns.",
+        [
+            _control("dpdpa", "CB.TRANSFER.1", "DPDPA expects awareness of cross-border transfer routes and destinations."),
+            _control("dpdpa", "CB.TRANSFER.2", "DPDPA expects documented transfer safeguards."),
+            _control("dpdpa", "CB.TRANSFER.3", "DPDPA may require localization or residency constraints for certain processing contexts."),
+            _control("iso27001", "ISO.A5.14", "ISO requires governed information transfer rules and agreements."),
+            _control("gdpr", "GDPR.ART44.1", "GDPR sets transfer principles and governance for international transfers."),
+        ],
+        tags=["cross_border", "data-transfer", "data-localization", "governance"],
+        criticality="high",
+        domain_group="cross_border",
+    ),
+    _cluster(
+        "CLUSTER_032",
+        "Children'S Data And Age Verification",
+        "If the organization processes children's data, does it prevent harmful processing and verify age or parental authorization as required?",
+        "Look for age-threshold rules, parental authorization controls, child-specific restrictions, and evidence that elevated protections are enforced in practice rather than stated only in policy.",
+        [
+            _control("dpdpa", "CH4.CHILD.1"),
+            _control("dpdpa", "CH4.CHILD.2"),
+            _control("dpdpa", "CH4.CHILD.3"),
+        ],
+        tags=["children_vulnerable", "children-data", "age-verification", "harm-prevention"],
+        criticality="high",
+        domain_group="children_vulnerable",
+    ),
+    _cluster(
+        "CLUSTER_033",
+        "Acceptable Use, Employment Obligations, And Confidentiality",
+        "Are personnel and contracted users bound by documented acceptable-use, employment, and confidentiality obligations relevant to protecting information?",
+        "Look for acceptable-use rules, security responsibilities in employment terms, NDAs, acknowledgement records, and evidence that obligations are communicated before access is granted.",
+        [
+            _control("iso27001", "ISO.A5.10"),
+            _control("iso27001", "ISO.A6.2"),
+            _control("iso27001", "ISO.A6.6"),
+        ],
+        tags=["governance", "policy", "responsibilities", "confidentiality"],
+        criticality="medium",
+        domain_group="governance",
+    ),
+    _cluster(
+        "CLUSTER_034",
+        "Classification, Labelling, Media Handling, And Secure Disposal",
+        "Does the organization classify and label information appropriately and handle storage media and equipment disposal in a way that prevents unauthorized disclosure?",
+        "Look for classification scheme, labelling standards, media handling procedures, secure disposal evidence, and alignment between classification and operational handling rules.",
+        [
+            _control("iso27001", "ISO.A5.12"),
+            _control("iso27001", "ISO.A5.13"),
+            _control("iso27001", "ISO.A7.10"),
+            _control("iso27001", "ISO.A7.14"),
+        ],
+        tags=["data-protection", "classification", "media-handling", "secure-disposal"],
+        criticality="medium",
+        domain_group="data_protection",
+    ),
 ]

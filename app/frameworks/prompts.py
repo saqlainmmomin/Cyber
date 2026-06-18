@@ -53,6 +53,51 @@ _DEFAULT_PERSONA = (
 )
 
 
+def _expand_cluster_responses(
+    responses: list[dict],
+    framework_id: str,
+    fw_control_ids: set[str],
+) -> list[dict]:
+    """
+    Expand cluster-ID-keyed responses to control-ID-keyed responses for a framework.
+
+    Singleton clusters ("SINGLE.<control_id>"): strip prefix, include if control belongs
+    to this framework. Real clusters ("CLUSTER_<N>"): look up in cluster mappings and
+    include controls belonging to this framework. Legacy DPDPA IDs (no prefix): pass
+    through unchanged if in fw_control_ids.
+    """
+    expanded = []
+    cluster_defs: dict[str, dict] | None = None  # lazy-loaded
+
+    for resp in responses:
+        qid = resp.get("question_id", "")
+
+        if qid.startswith("SINGLE."):
+            control_id = qid[len("SINGLE."):]
+            if control_id in fw_control_ids:
+                expanded.append({**resp, "question_id": control_id})
+
+        elif qid.startswith("CLUSTER_"):
+            if cluster_defs is None:
+                try:
+                    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
+                    cluster_defs = {c["cluster_id"]: c for c in CONTROL_CLUSTERS}
+                except (ImportError, KeyError):
+                    cluster_defs = {}
+            cdef = cluster_defs.get(qid)
+            if cdef:
+                for mc in cdef.get("controls", []):
+                    if mc.get("framework") == framework_id and mc.get("control") in fw_control_ids:
+                        expanded.append({**resp, "question_id": mc["control"]})
+
+        else:
+            # Legacy DPDPA control ID or direct control reference
+            if qid in fw_control_ids:
+                expanded.append(resp)
+
+    return expanded
+
+
 def _build_controls_text(fw: FrameworkDefinition) -> str:
     """Build the controls reference text for system prompts."""
     lines = []
@@ -182,6 +227,11 @@ def build_framework_user_prompt(
     """
     fw = FrameworkRegistry.get(framework_id)
     fw_control_ids = {c.id for c in fw.all_controls()}
+
+    # Expand cluster-ID-keyed responses to control-ID-keyed responses for this framework.
+    # Singleton clusters: "SINGLE.ISO.A5.24" → control_id "ISO.A5.24"
+    # Real clusters: "CLUSTER_001" → look up in cluster mappings
+    responses = _expand_cluster_responses(responses, framework_id, fw_control_ids)
 
     size_labels = {
         "startup": "Startup (<50 employees)",

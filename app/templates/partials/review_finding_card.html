@@ -1,0 +1,98 @@
+{# Individual finding review card #}
+{# Expects: item (GapItem with review + ai_* fields), assessment (Assessment) #}
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+     data-review-card
+     data-review-status="{{ item.review_status or 'draft' }}"
+     data-risk-level="{{ item.risk_level }}"
+     id="review-card-{{ item.id }}">
+
+  <div class="px-5 py-4">
+    {# Header: requirement + badges #}
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          {% if item.framework_id is defined and item.framework_id %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">{{ item.framework_id | upper }}</span>
+          {% endif %}
+          <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ item.requirement_id }}</span>
+        </div>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</h4>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+        {% set review_badge = {
+          'draft': 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+          'accepted': 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+          'rejected': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
+        } %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ review_badge.get(item.review_status or 'draft', review_badge['draft']) }}">
+          {{ (item.review_status or 'draft') | title }}
+        </span>
+      </div>
+    </div>
+
+    {# AI assessment (read-only) #}
+    <div class="grid grid-cols-3 gap-4 mb-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+      <div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">AI Status</p>
+        {% set status_colors = {'compliant': 'text-green-600', 'partially_compliant': 'text-yellow-600', 'non_compliant': 'text-red-600'} %}
+        <p class="text-sm font-medium {{ status_colors.get(item.ai_compliance_status or item.compliance_status, 'text-gray-600 dark:text-gray-400') }}">
+          {{ (item.ai_compliance_status or item.compliance_status) | replace('_', ' ') | title }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">AI Risk Level</p>
+        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ (item.ai_risk_level or item.risk_level) | title }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Evidence</p>
+        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ (item.evidence_confidence or 'weak') | title }}</p>
+      </div>
+    </div>
+
+    {# Gap description #}
+    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">{{ item.ai_gap_description or item.gap_description }}</p>
+
+    {% if item.evidence_quote %}
+    <div class="mb-3 pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+      <p class="text-xs text-gray-500 dark:text-gray-400 italic">"{{ item.evidence_quote[:300] }}{% if item.evidence_quote | length > 300 %}...{% endif %}"</p>
+    </div>
+    {% endif %}
+
+    {# Reviewer actions #}
+    <div class="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+      <button hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+              hx-vals='{"review_status": "accepted"}'
+              hx-target="#review-card-{{ item.id }}"
+              hx-swap="outerHTML"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                     {% if item.review_status == 'accepted' %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800
+                     {% else %}text-gray-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700{% endif %}">
+        ✓ Accept
+      </button>
+      <button hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+              hx-vals='{"review_status": "rejected"}'
+              hx-target="#review-card-{{ item.id }}"
+              hx-swap="outerHTML"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                     {% if item.review_status == 'rejected' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800
+                     {% else %}text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-gray-700{% endif %}">
+        ✕ Reject
+      </button>
+      <div class="flex-1"></div>
+      <details class="relative">
+        <summary class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors">
+          Add Notes
+        </summary>
+        <div class="absolute right-0 mt-1 w-80 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-lg p-3 z-10">
+          <form hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+                hx-target="#review-card-{{ item.id }}"
+                hx-swap="outerHTML">
+            <textarea name="reviewer_notes" rows="3" placeholder="Reviewer notes..."
+                      class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:border-navy-500 dark:focus:border-navy-400 outline-none resize-none mb-2">{{ item.reviewer_notes or '' }}</textarea>
+            <button type="submit" class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Save Notes</button>
+          </form>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>

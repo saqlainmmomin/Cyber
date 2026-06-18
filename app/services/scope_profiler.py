@@ -1,11 +1,14 @@
 """
 Scope Profiler — deterministic requirement filtering and evidence checklist generation.
 
-Given scope answers (SCP.1–SCP.5) plus industry + company_size from the Assessment,
-produces:
+Given scope answers plus industry + company_size from the Assessment, produces:
   - applicable_requirements: list of requirement IDs to include in questionnaire + analysis
   - excluded_requirements: list of requirement IDs excluded with reason
   - evidence_checklist: list of document types the client should provide, with justification
+
+Supports multi-framework assessments via compute_scope_multi().
+DPDPA has full scope profiling (SCP.1–SCP.5 → conditional requirement exclusion).
+Other frameworks pass through all controls as applicable (scope profiling TBD).
 """
 
 from app.dpdpa.framework import get_all_requirements
@@ -268,3 +271,48 @@ def _build_evidence_checklist(
         )
 
     return checklist
+
+
+def compute_scope_multi(
+    scope_answers: dict,
+    industry: str,
+    company_size: str,
+    framework_ids: list[str],
+) -> dict:
+    """
+    Compute applicable requirements across multiple frameworks.
+
+    DPDPA uses full scope profiling (conditional exclusion).
+    Other frameworks include all controls (scope profiling not yet implemented).
+    """
+    from app.frameworks.registry import FrameworkRegistry
+
+    all_applicable: list[str] = []
+    all_excluded: list[dict] = []
+    all_checklist: list[dict] = []
+    all_flags: dict = {}
+    total_count = 0
+
+    for fw_id in framework_ids:
+        if fw_id == "dpdpa":
+            result = compute_scope(scope_answers, industry, company_size)
+            all_applicable.extend(result["applicable_requirements"])
+            all_excluded.extend(result["excluded_requirements"])
+            all_checklist.extend(result["evidence_checklist"])
+            all_flags.update(result["flags"])
+            total_count += len(get_all_requirements())
+        else:
+            fw = FrameworkRegistry.get_or_none(fw_id)
+            if not fw:
+                continue
+            controls = fw.all_controls()
+            all_applicable.extend(c.id for c in controls)
+            total_count += len(controls)
+
+    return {
+        "applicable_requirements": all_applicable,
+        "excluded_requirements": all_excluded,
+        "evidence_checklist": all_checklist,
+        "flags": all_flags,
+        "total_count": total_count,
+    }

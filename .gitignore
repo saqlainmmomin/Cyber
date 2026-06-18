@@ -10,3 +10,7 @@ build/
 output/
 .DS_Store
 cookies.txt
+
+# Tailwind CLI build artifacts
+node_modules/
+app/static/css/tailwind.css

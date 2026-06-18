@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+import io
 import json
 import math
 import sys
@@ -7,6 +9,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "scripts" / "test_ground_truth.json"
@@ -16,12 +19,16 @@ if str(ROOT) not in sys.path:
 import app.models  # noqa: E402,F401
 from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.dpdpa.framework import get_all_requirements  # noqa: E402
+from docx import Document as DocxDocument  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from app.main import app as api_app  # noqa: E402
 from app.models.assessment import Assessment, AssessmentDocument  # noqa: E402
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary  # noqa: E402
 from app.models.initiative import Initiative  # noqa: E402
 from app.models.questionnaire import QuestionnaireResponse  # noqa: E402
 from app.models.report import GapItem, GapReport  # noqa: E402
 from app.models.rfi import RFIDocument  # noqa: E402
+from app.services.context_profiler import _extract_signals  # noqa: E402
 
 NOW = datetime.now(timezone.utc)
 ALL_REQUIREMENTS = get_all_requirements()
@@ -1386,7 +1393,249 @@ def verify_counts(session, company_names: list[str]) -> None:
     print(f"Verified counts: {len(assessments)} assessments, {doc_count} documents, {response_count} responses, {finding_count} findings")
 
 
-def main() -> None:
+def _build_docx_bytes(title: str, text: str) -> bytes:
+    doc = DocxDocument()
+    doc.add_heading(title, level=1)
+    for paragraph in text.split("\n\n"):
+        cleaned = paragraph.strip()
+        if cleaned:
+            doc.add_paragraph(cleaned)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()
+
+
+def _deterministic_risk_profile(context_answers: list[dict], industry: str, company_size: str) -> dict:
+    signals = _extract_signals(context_answers)
+    answer_map = {item["question_id"]: item["answer"] for item in context_answers}
+
+    timeline_answer = answer_map.get("CTX.INIT.2", "3_to_6_months")
+    timeline_pressure = {
+        "under_3_months": "HIGH",
+        "3_to_6_months": "MEDIUM",
+    }.get(timeline_answer, "LOW")
+
+    priority_chapters = ["chapter_2", "chapter_3"]
+    if signals["cross_border_transfers"]:
+        priority_chapters.append("cross_border")
+    if signals["sdf_candidate"]:
+        priority_chapters.append("chapter_4")
+    if signals["has_breach_response"] or industry in {"financial_services", "fintech"}:
+        priority_chapters.append("breach_notification")
+
+    likely_not_applicable: list[str] = []
+    if not signals["processes_children_data"]:
+        likely_not_applicable.extend(["CH4.CHILD.1", "CH4.CHILD.2", "CH4.CHILD.3"])
+    if not signals["sdf_candidate"]:
+        likely_not_applicable.extend(["CH4.SDF.2", "CH4.SDF.3", "CH4.SDF.4"])
+
+    if industry in {"technology", "it_services"}:
+        industry_context = "Technology services processing employee and customer data should emphasize access control, processor governance, and disciplined retention."
+    elif industry in {"financial_services", "fintech"}:
+        industry_context = "Financial services processing at scale should prioritize breach readiness, rights handling, vendor oversight, and cross-border transfer governance."
+    else:
+        industry_context = f"{industry.replace('_', ' ').title()} operations should align privacy controls to the sensitivity and scale of personal data processed."
+
+    risk_tier = "HIGH" if signals["sdf_candidate"] or company_size == "large" else "MEDIUM"
+    framing_notes = (
+        "Focus on whether documented controls are operational, especially for access, notices, vendor governance, and incident response. "
+        "Treat missing evidence as a real gap rather than inferring maturity from policy language."
+    )
+
+    return {
+        "risk_tier": risk_tier,
+        "priority_chapters": priority_chapters,
+        "likely_not_applicable": likely_not_applicable,
+        "sdf_candidate": signals["sdf_candidate"],
+        "processes_children_data": signals["processes_children_data"],
+        "cross_border_transfers": signals["cross_border_transfers"],
+        "has_breach_response": signals["has_breach_response"],
+        "industry_context": industry_context,
+        "timeline_pressure": timeline_pressure,
+        "framing_notes": framing_notes,
+    }
+
+
+def build_multi_framework_fixtures() -> list[dict]:
+    helix_doc = build_novapay_documents()[2]
+    vantara_doc = build_novapay_documents()[3]
+
+    return [
+        {
+            "company_name": "Helix Technologies Pvt Ltd",
+            "industry": "technology",
+            "api_industry": "it_services",
+            "company_size": "sme",
+            "description": "B2B SaaS platform processing employee and customer personal data.",
+            "selected_frameworks": ["dpdpa", "iso27001"],
+            "context_answers": [
+                {"question_id": "CTX.DATA.1", "answer": ["identity", "financial", "behavioral"]},
+                {"question_id": "CTX.DATA.2", "answer": ["web_forms", "mobile_app", "third_party_apis"]},
+                {"question_id": "CTX.DATA.3", "answer": "yes"},
+                {"question_id": "CTX.DATA.4", "answer": "no"},
+                {"question_id": "CTX.DATA.4a", "answer": "Not applicable"},
+                {"question_id": "CTX.POSTURE.1", "answer": "full_time"},
+                {"question_id": "CTX.POSTURE.2", "answer": "iso_27001_certified"},
+                {"question_id": "CTX.POSTURE.3", "answer": "external_audit"},
+                {"question_id": "CTX.POSTURE.4", "answer": "yes_recently_updated"},
+                {"question_id": "CTX.RISK.1", "answer": ["handles_sensitive_personal_data"]},
+                {"question_id": "CTX.RISK.2", "answer": "10k_to_1m"},
+                {"question_id": "CTX.RISK.3", "answer": "no"},
+                {"question_id": "CTX.INIT.1", "answer": "customer_due_diligence"},
+                {"question_id": "CTX.INIT.2", "answer": "3_to_6_months"},
+                {"question_id": "CTX.INIT.3", "answer": "25l_to_1cr"},
+            ],
+            "document": helix_doc,
+        },
+        {
+            "company_name": "Vantara Financial Services",
+            "industry": "financial_services",
+            "api_industry": "fintech",
+            "company_size": "large",
+            "description": "Digital lending and payments platform operating across India and the EU.",
+            "selected_frameworks": ["dpdpa", "iso27001", "gdpr"],
+            "context_answers": [
+                {"question_id": "CTX.DATA.1", "answer": ["identity", "financial", "behavioral"]},
+                {"question_id": "CTX.DATA.2", "answer": ["mobile_app", "web_forms", "third_party_apis"]},
+                {"question_id": "CTX.DATA.3", "answer": "yes"},
+                {"question_id": "CTX.DATA.4", "answer": "yes"},
+                {"question_id": "CTX.DATA.4a", "answer": "European Union and Singapore"},
+                {"question_id": "CTX.POSTURE.1", "answer": "full_time"},
+                {"question_id": "CTX.POSTURE.2", "answer": "iso_27001_certified"},
+                {"question_id": "CTX.POSTURE.3", "answer": "external_audit"},
+                {"question_id": "CTX.POSTURE.4", "answer": "yes_recently_updated"},
+                {"question_id": "CTX.RISK.1", "answer": ["healthcare_finance_critical_infra", "handles_sensitive_personal_data", "designated_or_likely_sdf"]},
+                {"question_id": "CTX.RISK.2", "answer": "1m_to_10m"},
+                {"question_id": "CTX.RISK.3", "answer": "yes_reported"},
+                {"question_id": "CTX.INIT.1", "answer": "regulatory_audit_prep"},
+                {"question_id": "CTX.INIT.2", "answer": "under_3_months"},
+                {"question_id": "CTX.INIT.3", "answer": "above_1cr"},
+            ],
+            "document": vantara_doc,
+        },
+    ]
+
+
+def _set_requested_industry_value(assessment_id: str, industry: str) -> None:
+    session = SessionLocal()
+    try:
+        assessment = session.get(Assessment, assessment_id)
+        if assessment:
+            assessment.industry = industry
+            session.commit()
+    finally:
+        session.close()
+
+
+def seed_multi_framework_companies() -> None:
+    fixtures = build_multi_framework_fixtures()
+    company_names = [fixture["company_name"] for fixture in fixtures]
+
+    session = SessionLocal()
+    try:
+        print("Removing any existing multi-framework seeded companies with matching names")
+        purge_existing(session, company_names)
+        session.commit()
+    finally:
+        session.close()
+
+    with patch("app.routers.questionnaire.derive_risk_profile", _deterministic_risk_profile):
+        with TestClient(api_app) as client:
+            seeded = 0
+            for fixture in fixtures:
+                print(f"Seeding multi-framework assessment for {fixture['company_name']}")
+
+                create_resp = client.post(
+                    "/api/assessments",
+                    json={
+                        "company_name": fixture["company_name"],
+                        "industry": fixture["api_industry"],
+                        "company_size": fixture["company_size"],
+                        "description": fixture["description"],
+                    },
+                )
+                create_resp.raise_for_status()
+                assessment = create_resp.json()
+                assessment_id = assessment["id"]
+                _set_requested_industry_value(assessment_id, fixture["industry"])
+                print(f"  Created assessment: {assessment_id}")
+
+                frameworks_resp = client.post(
+                    f"/api/assessments/{assessment_id}/frameworks",
+                    json={"framework_ids": fixture["selected_frameworks"]},
+                )
+                frameworks_resp.raise_for_status()
+                print(f"  Selected frameworks: {', '.join(fixture['selected_frameworks'])}")
+
+                context_resp = client.post(
+                    f"/api/assessments/{assessment_id}/context",
+                    json={"answers": fixture["context_answers"]},
+                )
+                context_resp.raise_for_status()
+                print(f"  Submitted {len(fixture['context_answers'])} context answers")
+
+                questionnaire_resp = client.get(
+                    f"/api/assessments/{assessment_id}/questionnaire/sections"
+                )
+                questionnaire_resp.raise_for_status()
+                sections = questionnaire_resp.json()
+                cluster_ids = [
+                    question["id"]
+                    for section in sections
+                    for question in section.get("questions", [])
+                ]
+                print(f"  Read {len(cluster_ids)} questionnaire cluster IDs")
+
+                responses_payload = {
+                    "responses": [
+                        {
+                            "question_id": cluster_id,
+                            "answer": "partially_implemented",
+                            "confidence": "medium",
+                            "notes": "Seeded multi-framework response",
+                        }
+                        for cluster_id in cluster_ids
+                    ]
+                }
+                responses_resp = client.post(
+                    f"/api/assessments/{assessment_id}/responses",
+                    json=responses_payload,
+                )
+                if responses_resp.status_code >= 400:
+                    try:
+                        detail = responses_resp.json()
+                    except Exception:
+                        detail = responses_resp.text
+                    print(
+                        f"  Response submission returned {responses_resp.status_code}; continuing. Detail: {detail}"
+                    )
+                else:
+                    print(f"  Submitted {len(cluster_ids)} questionnaire responses")
+
+                doc = fixture["document"]
+                upload_category = {
+                    "breach_response_plan": "breach_procedure",
+                }.get(doc.document_category, doc.document_category)
+                upload_resp = client.post(
+                    f"/api/assessments/{assessment_id}/documents",
+                    data={"category": upload_category},
+                    files={
+                        "file": (
+                            doc.filename.replace(".pdf", ".docx"),
+                            _build_docx_bytes(doc.filename, doc.text),
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        )
+                    },
+                )
+                upload_resp.raise_for_status()
+                print(f"  Uploaded document: {doc.filename.replace('.pdf', '.docx')}")
+                seeded += 1
+
+    print(f"Seeded {seeded} multi-framework companies")
+
+
+def seed_default_companies() -> None:
     Base.metadata.create_all(bind=engine)
     fixtures = build_company_fixtures()
     for fixture in fixtures:
@@ -1412,6 +1661,22 @@ def main() -> None:
         raise
     finally:
         session.close()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--multi",
+        action="store_true",
+        help="Seed only the multi-framework assessments via API flows.",
+    )
+    args = parser.parse_args()
+
+    if args.multi:
+        seed_multi_framework_companies()
+        return
+
+    seed_default_companies()
 
 
 if __name__ == "__main__":

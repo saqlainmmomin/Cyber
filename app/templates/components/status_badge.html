@@ -1,12 +1,12 @@
 {% set status = a.status if a is defined else assessment.status %}
 {% set colors = {
-  'created': 'bg-gray-100 text-gray-700',
-  'documents_uploaded': 'bg-blue-100 text-blue-700',
-  'context_gathered': 'bg-blue-100 text-blue-700',
-  'questionnaire_done': 'bg-yellow-100 text-yellow-700',
-  'analyzing': 'bg-purple-100 text-purple-700',
-  'completed': 'bg-green-100 text-green-700',
-  'error': 'bg-red-100 text-red-700',
+  'created': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  'documents_uploaded': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  'context_gathered': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  'questionnaire_done': 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400',
+  'analyzing': 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400',
+  'completed': 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+  'error': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
 } %}
 {% set labels = {
   'created': 'New',
@@ -17,7 +17,7 @@
   'completed': 'Completed',
   'error': 'Error',
 } %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ colors.get(status, 'bg-gray-100 text-gray-700') }}">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ colors.get(status, 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300') }}">
   {% if status == 'analyzing' %}
   <svg class="animate-spin -ml-0.5 mr-1.5 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
