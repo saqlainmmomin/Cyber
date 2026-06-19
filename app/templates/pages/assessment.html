@@ -21,6 +21,7 @@
       {% endfor %}
     </div>
     {% endif %}
+    {% include "partials/status_timeline.html" %}
   </div>
   {% if assessment.status == 'completed' %}
   <a href="/api/assessments/{{ assessment.id }}/report/pdf"
