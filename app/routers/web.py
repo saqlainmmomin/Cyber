@@ -5,7 +5,7 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -40,6 +40,42 @@ def _with_toast(response, message: str, toast_type: str = "success"):
 
 
 
+def _selected_framework_ids(assessment: Assessment) -> list[str]:
+    """Resolve the assessment's selected framework ids. Legacy rows without a
+    selection predate multi-framework support and default to DPDPA."""
+    if assessment.selected_frameworks:
+        try:
+            return json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+    return ["dpdpa"]
+
+
+def _selected_framework_names(assessment: Assessment) -> list[str]:
+    from app.frameworks.registry import FrameworkRegistry
+
+    names = []
+    for fw_id in _selected_framework_ids(assessment):
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        names.append(fw.name if fw else fw_id.upper())
+    return names
+
+
+def _framework_catalog() -> list[dict]:
+    from app.frameworks.registry import FrameworkRegistry
+
+    frameworks = []
+    for fw_id in sorted(FrameworkRegistry.all_ids()):
+        fw = FrameworkRegistry.get(fw_id)
+        frameworks.append({
+            "id": fw.id,
+            "name": fw.name,
+            "version": fw.version,
+            "control_count": fw.control_count(),
+        })
+    return frameworks
+
+
 # --- Dashboard ---
 
 
@@ -57,20 +93,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/assessments/new", response_class=HTMLResponse)
 def new_assessment_page(request: Request):
-    from app.frameworks.registry import FrameworkRegistry
-
-    frameworks = []
-    for fw_id in sorted(FrameworkRegistry.all_ids()):
-        fw = FrameworkRegistry.get(fw_id)
-        frameworks.append({
-            "id": fw.id,
-            "name": fw.name,
-            "version": fw.version,
-            "control_count": fw.control_count(),
-        })
     return templates.TemplateResponse(
         "pages/new_assessment.html",
-        {"request": request, "frameworks": frameworks},
+        {"request": request, "frameworks": _framework_catalog()},
     )
 
 
@@ -86,7 +111,23 @@ async def create_assessment(
 ):
     # Extract multi-valued frameworks checkboxes from form
     form = await request.form()
-    selected_frameworks = form.getlist("frameworks") or ["dpdpa"]
+    selected_frameworks = form.getlist("frameworks")
+    if not selected_frameworks:
+        return templates.TemplateResponse(
+            "pages/new_assessment.html",
+            {
+                "request": request,
+                "frameworks": _framework_catalog(),
+                "error": "Select at least one framework to assess against.",
+                "form_values": {
+                    "company_name": company_name,
+                    "industry": industry,
+                    "company_size": company_size,
+                    "description": description,
+                },
+            },
+            status_code=422,
+        )
 
     assessment = Assessment(
         company_name=company_name,
@@ -151,12 +192,7 @@ def assessment_detail(
 
     # Resolve selected frameworks early — needed by scope tab and display
     from app.frameworks.registry import FrameworkRegistry
-    raw_fw_ids = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            raw_fw_ids = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    raw_fw_ids = _selected_framework_ids(assessment)
 
     # Build scope context for the scope tab
     scope_context: dict = {}
@@ -278,12 +314,7 @@ async def save_scope(
         raise HTTPException(404)
 
     # Resolve selected frameworks
-    selected_fw_ids = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            selected_fw_ids = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    selected_fw_ids = _selected_framework_ids(assessment)
 
     # Collect all scope question IDs across selected frameworks
     all_scope_q_ids: set[str] = set()
@@ -322,7 +353,7 @@ async def save_scope(
 def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(get_db)):
     """Download the evidence request checklist as PDF."""
     from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope
+    from app.services.scope_profiler import compute_scope_multi
     from app.utils.evidence_checklist_export import generate_evidence_checklist_pdf
 
     assessment = db.get(Assessment, assessment_id)
@@ -330,7 +361,12 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
         raise HTTPException(404, "Scope not yet defined")
 
     scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    result = compute_scope_multi(
+        scope_answers,
+        assessment.industry or "",
+        assessment.company_size or "",
+        _selected_framework_ids(assessment),
+    )
 
     pdf_bytes = generate_evidence_checklist_pdf(
         company_name=assessment.company_name,
@@ -349,7 +385,7 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
 def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(get_db)):
     """Download the evidence request checklist as DOCX."""
     from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope
+    from app.services.scope_profiler import compute_scope_multi
     from app.utils.evidence_checklist_export import generate_evidence_checklist_docx
 
     assessment = db.get(Assessment, assessment_id)
@@ -357,7 +393,12 @@ def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(g
         raise HTTPException(404, "Scope not yet defined")
 
     scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    result = compute_scope_multi(
+        scope_answers,
+        assessment.industry or "",
+        assessment.company_size or "",
+        _selected_framework_ids(assessment),
+    )
 
     docx_bytes = generate_evidence_checklist_docx(
         company_name=assessment.company_name,
@@ -1426,6 +1467,7 @@ def generate_rfi_web(
             gap_items=gap_dicts,
             desk_review_absences=absences or None,
             desk_review_signals=signals or None,
+            framework_names=_selected_framework_names(assessment),
         )
     except Exception as e:
         return HTMLResponse(f'<div class="text-sm text-red-600">RFI generation failed: {e}</div>')
@@ -1476,6 +1518,7 @@ def download_rfi_pdf(assessment_id: str, db: Session = Depends(get_db)):
         evidence_items=evidence_items,
         response_instructions=rfi.response_instructions,
         generated_at=rfi.generated_at,
+        framework_label=", ".join(_selected_framework_names(assessment)),
     )
 
     filename = f"RFI-{assessment.company_name.replace(' ', '-')}.pdf"
@@ -1588,19 +1631,51 @@ def desk_review_status_web(
 def run_desk_review_web(
     request: Request,
     assessment_id: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    """Trigger desk review and show running indicator."""
+    """Trigger desk review — set analyzing state immediately, run Claude in background."""
+    from datetime import datetime, timezone
+
+    from app.database import SessionLocal
+    from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
     from app.services.desk_review import run_desk_review
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
 
-    # Run synchronously — desk review typically takes 15-30s
-    run_desk_review(assessment_id, db)
+    # Commit "analyzing" status synchronously so the polling partial never reverts to "ready"
+    summary = (
+        db.query(DeskReviewSummary)
+        .filter(DeskReviewSummary.assessment_id == assessment_id)
+        .first()
+    )
+    if summary:
+        db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id
+        ).delete()
+        summary.status = "analyzing"
+        summary.error_message = None
+        summary.started_at = datetime.now(timezone.utc)
+        summary.completed_at = None
+    else:
+        summary = DeskReviewSummary(
+            assessment_id=assessment_id,
+            status="analyzing",
+            started_at=datetime.now(timezone.utc),
+        )
+        db.add(summary)
+    assessment.desk_review_status = "analyzing"
+    db.commit()
 
-    # Return the findings (or error) — redirect to status which will show results
+    # Run the Claude call in a background task with its own session
+    def _bg_run():
+        with SessionLocal() as bg_db:
+            run_desk_review(assessment_id, bg_db)
+
+    background_tasks.add_task(_bg_run)
+
     return templates.TemplateResponse(
         "partials/desk_review_running.html",
         {"request": request, "assessment_id": assessment_id},

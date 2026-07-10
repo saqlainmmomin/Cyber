@@ -153,7 +153,7 @@ def _call_claude_desk_review(
 
     message = client.messages.create(
         model=settings.claude_model,
-        max_tokens=8192,
+        max_tokens=16000,
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],

@@ -63,22 +63,21 @@
 
 <script>
   document.querySelectorAll('[data-scope-group]').forEach(group => {
-    group.querySelectorAll('label.scope-option').forEach(label => {
-      label.addEventListener('click', function (e) {
-        e.preventDefault();
-        const radio = this.querySelector('input[type="radio"]');
-        const wasChecked = radio.checked;
-
-        group.querySelectorAll('label.scope-option').forEach(l => {
-          l.classList.remove('border-brand', 'bg-navy-50', 'dark:border-navy-500', 'dark:bg-navy-900/40');
-          l.querySelector('input').checked = false;
-        });
-
-        if (!wasChecked) {
-          radio.checked = true;
-          this.classList.add('border-brand', 'bg-navy-50');
+    function applyStyles() {
+      group.querySelectorAll('label.scope-option').forEach(label => {
+        const radio = label.querySelector('input[type="radio"]');
+        if (radio.checked) {
+          label.classList.remove('border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800');
+          label.classList.add('border-brand', 'bg-navy-50', 'dark:border-navy-500', 'dark:bg-navy-900/40');
+        } else {
+          label.classList.remove('border-brand', 'bg-navy-50', 'dark:border-navy-500', 'dark:bg-navy-900/40');
+          label.classList.add('border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800');
         }
       });
+    }
+
+    group.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', applyStyles);
     });
   });
 </script>

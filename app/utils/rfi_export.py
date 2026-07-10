@@ -37,8 +37,10 @@ def generate_rfi_pdf(
     evidence_items: list[dict],
     response_instructions: str,
     generated_at: datetime | None = None,
+    framework_label: str = "",
 ) -> bytes:
     """Generate a professional RFI PDF document."""
+    subtitle = f"{framework_label} Compliance Gap Assessment" if framework_label else "Compliance Gap Assessment"
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.alias_nb_pages()
@@ -56,7 +58,7 @@ def generate_rfi_pdf(
     pdf.cell(0, 10, text=S("Request for Information"), align="C")
     pdf.ln(10)
     pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 8, text=S("DPDPA Compliance Gap Assessment"), align="C")
+    pdf.cell(0, 8, text=S(subtitle), align="C")
 
     pdf.set_y(70)
     pdf.set_text_color(*DARK_TEXT)
@@ -101,7 +103,7 @@ def generate_rfi_pdf(
     pdf.set_font("Helvetica", "I", 8)
     pdf.set_text_color(*LIGHT_TEXT)
     pdf.multi_cell(CW, 4, text=S(
-        "CONFIDENTIAL: This document contains findings from a DPDPA compliance assessment. "
+        f"CONFIDENTIAL: This document contains findings from a {framework_label + ' ' if framework_label else ''}compliance assessment. "
         "Distribution should be limited to authorized personnel."
     ), align="C")
 
@@ -172,7 +174,9 @@ def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
 
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*LIGHT_TEXT)
-    pdf.cell(0, 5, text=S(f"{item.get('requirement_id', '')} | {item.get('dpdpa_section', '')}"))
+    # "dpdpa_section" is the pre-multi-framework key still present in stored RFIs
+    section_ref = item.get("section_ref") or item.get("dpdpa_section", "")
+    pdf.cell(0, 5, text=S(f"{item.get('requirement_id', '')} | {section_ref}"))
 
     # Requirement title
     pdf.set_xy(PM + 6, y_start + 8)

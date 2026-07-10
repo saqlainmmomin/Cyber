@@ -223,8 +223,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="DPDPA Gap Assessment Tool",
-    description="AI-powered compliance gap assessment against India's Digital Personal Data Protection Act",
+    title="CyberAssess",
+    description="AI-powered multi-framework compliance maturity assessment platform (DPDPA, ISO 27001, GDPR, HIPAA, NIST CSF, PCI-DSS)",
     version="0.1.0",
     lifespan=lifespan,
 )

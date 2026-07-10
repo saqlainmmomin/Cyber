@@ -1,5 +1,5 @@
 """
-Board-level DPDPA compliance gap assessment PDF report.
+Board-level compliance gap assessment PDF report.
 
 Design philosophy: First 5 pages are for the board (visual, no walls of text).
 Detailed findings go in the appendix for the compliance team.
@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from fpdf import FPDF
 
+from app.frameworks.registry import FrameworkRegistry
 from app.models.report import GapItem, GapReport
 from app.services.scoring import get_rating
 
@@ -429,7 +430,7 @@ def _page_footer(pdf: FPDF, company_name: str):
     pdf.set_y(-15)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(*LIGHT_TEXT)
-    pdf.cell(0, 5, text=S(f"CONFIDENTIAL  |  {company_name}  |  DPDPA Gap Assessment"), align="L")
+    pdf.cell(0, 5, text=S(f"CONFIDENTIAL  |  {company_name}  |  Compliance Gap Assessment"), align="L")
     pdf.cell(0, 5, text=f"Page {pdf.page_no()}/{{nb}}", align="R")
 
 
@@ -461,8 +462,25 @@ def generate_pdf(
     company_name: str,
     initiatives: list | None = None,
     answer_source_map: dict[str, str] | None = None,
+    selected_frameworks: list[str] | None = None,
 ) -> bytes:
     """Generate a board-level PDF report."""
+    selected_frameworks = selected_frameworks or ["dpdpa"]
+    dpdpa_only = selected_frameworks == ["dpdpa"]
+    has_dpdpa = "dpdpa" in selected_frameworks
+
+    framework_names = []
+    for fw_id in selected_frameworks:
+        fw_def = FrameworkRegistry.get_or_none(fw_id)
+        framework_names.append(fw_def.name if fw_def else fw_id.upper())
+    frameworks_label = ", ".join(framework_names) if framework_names else "the assessed framework"
+
+    if dpdpa_only:
+        cover_title = "DPDPA Compliance"
+    elif len(framework_names) == 1:
+        cover_title = f"{framework_names[0]} Compliance"
+    else:
+        cover_title = "Multi-Framework Compliance"
     chapter_scores = json.loads(report.chapter_scores)
     overall_rating = get_rating(report.overall_score)
 
@@ -508,7 +526,7 @@ def generate_pdf(
     # Title
     pdf.set_font("Helvetica", "B", 24)
     pdf.set_text_color(*WHITE)
-    pdf.text(PM, 22, "DPDPA Compliance")
+    pdf.text(PM, 22, S(cover_title))
     pdf.set_font("Helvetica", "", 24)
     pdf.text(PM, 34, "Gap Assessment Report")
 
@@ -526,6 +544,12 @@ def generate_pdf(
     # Divider line
     pdf.set_draw_color(*DIVIDER)
     pdf.line(PM, 80, PW - PM, 80)
+
+    # Frameworks assessed (only worth spelling out beyond the title for multi-framework)
+    if not dpdpa_only:
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(*MID_TEXT)
+        pdf.text(PM, 88, S(f"Frameworks assessed: {frameworks_label}"))
 
     # Score ring (centered)
     cx = PW / 2
@@ -874,13 +898,28 @@ def generate_pdf(
     _section_title(pdf, "Scope & Limitations")
 
     assessment_date = datetime.now(timezone.utc).strftime("%B %d, %Y")
+
+    if dpdpa_only:
+        scope_of_coverage = (
+            "The assessment evaluates the organization's compliance posture against 41 requirements "
+            "derived from the Digital Personal Data Protection Act, 2023 (DPDPA). These requirements span "
+            "six domains: (1) Obligations of Data Fiduciary, (2) Rights of Data Principal, (3) Special "
+            "Provisions for Children and Significant Data Fiduciaries, (4) Consent Management, (5) "
+            "Cross-Border Data Transfer, and (6) Breach Notification."
+        )
+    else:
+        scope_of_coverage = (
+            f"The assessment evaluates the organization's compliance posture against {len(gap_items)} "
+            f"requirements across the following framework(s): {frameworks_label}."
+        )
+
     scope_text = f"""Assessment Date: {assessment_date}
 
 Nature of Assessment:
-This document constitutes a questionnaire-based DPDPA gap assessment. It is not a formal compliance audit and does not constitute legal advice. Findings are based solely on information disclosed by the organization's representatives during the structured assessment interview and from documents voluntarily submitted for review.
+This document constitutes a questionnaire-based compliance gap assessment. It is not a formal compliance audit and does not constitute legal advice. Findings are based solely on information disclosed by the organization's representatives during the structured assessment interview and from documents voluntarily submitted for review.
 
 Scope of Coverage:
-The assessment evaluates the organization's compliance posture against 41 requirements derived from the Digital Personal Data Protection Act, 2023 (DPDPA). These requirements span six domains: (1) Obligations of Data Fiduciary, (2) Rights of Data Principal, (3) Special Provisions for Children and Significant Data Fiduciaries, (4) Consent Management, (5) Cross-Border Data Transfer, and (6) Breach Notification.
+{scope_of_coverage}
 
 What Is Not Covered:
 This assessment does not include technical penetration testing, source code review, network security assessment, physical security review, or any form of independent technical verification. Findings in areas where the organization provided limited or no evidence are based on stated intent and disclosed posture only.
@@ -910,12 +949,49 @@ This report is prepared solely for the use of the named organization. It should 
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*DARK_TEXT)
 
-    methodology = """This assessment evaluates compliance against India's Digital Personal Data Protection Act, 2023 (DPDPA) across 41 requirements organized in 6 chapters. The assessment combines questionnaire responses from organizational stakeholders with analysis of uploaded policy documents.
+    if dpdpa_only:
+        methodology_intro = (
+            "This assessment evaluates compliance against India's Digital Personal Data Protection "
+            "Act, 2023 (DPDPA) across 41 requirements organized in 6 chapters. The assessment combines "
+            "questionnaire responses from organizational stakeholders with analysis of uploaded policy "
+            "documents."
+        )
+        framework_overview = (
+            "Framework Overview:\n"
+            "The 41 requirements are derived directly from DPDPA statutory text and cover all "
+            "obligations applicable to a Data Fiduciary operating in India. Requirements are organized "
+            "into chapters aligned with the Act's chapter structure, with each chapter weighted to "
+            "reflect regulatory emphasis and penalty exposure.\n\n"
+        )
+        chapter_weights_block = (
+            "Chapter Weights:\n"
+            "- Obligations of Data Fiduciary (Ch. 2): 30%\n"
+            "- Rights of Data Principal (Ch. 3): 20%\n"
+            "- Special Provisions - Children & SDF (Ch. 4): 20%\n"
+            "- Consent Management (detailed): 10%\n"
+            "- Cross-Border Data Transfer: 10%\n"
+            "- Breach Notification: 10%\n\n"
+        )
+        risk_basis = "regulatory exposure, potential penalties under the Schedule to the DPDPA, and impact on data principals"
+    else:
+        methodology_intro = (
+            f"This assessment evaluates compliance against the following framework(s): {frameworks_label}, "
+            f"across {len(gap_items)} requirements. The assessment combines questionnaire responses from "
+            "organizational stakeholders with analysis of uploaded policy documents."
+        )
+        framework_overview = (
+            "Framework Overview:\n"
+            f"Requirements are drawn directly from the source standard for each selected framework "
+            f"({frameworks_label}). Each framework retains its own internal chapter/domain structure and "
+            "weighting; scores are computed and reported per framework before being combined into an "
+            "overall maturity view.\n\n"
+        )
+        chapter_weights_block = ""
+        risk_basis = "regulatory exposure, potential penalties under the applicable framework(s), and impact on affected individuals"
 
-Framework Overview:
-The 41 requirements are derived directly from DPDPA statutory text and cover all obligations applicable to a Data Fiduciary operating in India. Requirements are organized into chapters aligned with the Act's chapter structure, with each chapter weighted to reflect regulatory emphasis and penalty exposure.
+    methodology = f"""{methodology_intro}
 
-GRC Response Scale:
+{framework_overview}GRC Response Scale:
 Questionnaire responses use a five-option scale:
 - Fully Implemented: Control exists, is documented, consistently applied, and evidence is available (maps to Compliant - 100 points)
 - Partially Implemented: Control exists in some form but is inconsistent, undocumented, or not fully operational (maps to Partially Compliant - 50 points)
@@ -924,24 +1000,16 @@ Questionnaire responses use a five-option scale:
 - Not Applicable: Requirement does not apply to this organization's processing activities (excluded from scoring denominator)
 
 Scoring Formula:
-Each requirement is scored based on its GRC response. Section scores are the unweighted average of constituent requirement scores. Chapter scores are weighted averages of section scores using published section weights. The overall score is the weighted average of chapter scores using the chapter weights below. Not Applicable responses are excluded from the denominator, so scores reflect the applicable compliance universe only.
+Each requirement is scored based on its GRC response. Section scores are the unweighted average of constituent requirement scores. Chapter scores are weighted averages of section scores using published section weights. The overall score is the weighted average of chapter scores using the published chapter/domain weights. Not Applicable responses are excluded from the denominator, so scores reflect the applicable compliance universe only.
 
-Chapter Weights:
-- Obligations of Data Fiduciary (Ch. 2): 30%
-- Rights of Data Principal (Ch. 3): 20%
-- Special Provisions - Children & SDF (Ch. 4): 20%
-- Consent Management (detailed): 10%
-- Cross-Border Data Transfer: 10%
-- Breach Notification: 10%
-
-Rating Thresholds:
+{chapter_weights_block}Rating Thresholds:
 - 80-100%: Compliant
 - 60-79%: Partially Compliant
 - 40-59%: Needs Significant Improvement
 - 0-39%: Non-Compliant
 
 Risk Classification:
-Gaps are classified by risk level (Critical, High, Medium, Low) based on regulatory exposure, potential penalties under Schedule to the DPDPA, and impact on data principals. Remediation priorities (P1-P4) are assigned based on risk severity and implementation dependencies between requirements.
+Gaps are classified by risk level (Critical, High, Medium, Low) based on {risk_basis}. Remediation priorities (P1-P4) are assigned based on risk severity and implementation dependencies between requirements.
 
 Maturity Model (CMMI-Aligned):
 Each gap is assigned a current maturity rating on a 0-5 scale:

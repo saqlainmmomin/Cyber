@@ -261,13 +261,11 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
         report, items, company_name,
         initiatives=initiatives,
         answer_source_map=answer_source_map,
+        selected_frameworks=selected_frameworks,
     )
 
-    if len(selected_frameworks) > 1:
-        fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
-        filename = f"Maturity_Assessment_{fw_label}_{company_name.replace(' ', '_')}.pdf"
-    else:
-        filename = f"DPDPA_Assessment_{company_name.replace(' ', '_')}.pdf"
+    fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
+    filename = f"Compliance_Assessment_{fw_label}_{company_name.replace(' ', '_')}.pdf"
 
     return Response(
         content=pdf_bytes,

@@ -23,8 +23,120 @@ from app.services.tier_engine import assign_tiers, compute_tier_stats
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.industry_questions import get_industry_questions
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, _GUIDANCE_TEXT, _QUESTION_TEXT, build_questionnaire
+from app.frameworks.questionnaire_builder import build_multi_questionnaire
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+
+_DOMAIN_GROUP_TITLES: dict[str, str] = {
+    "data_protection": "Data Protection",
+    "consent_rights": "Consent & Individual Rights",
+    "governance": "Governance & Accountability",
+    "cross_border": "Cross-Border Transfers",
+    "incident_response": "Incident Response & Breach Notification",
+    "access_control": "Access Control",
+    "cryptography": "Cryptography & Key Management",
+    "asset_management": "Asset Management",
+    "risk_management": "Risk Management",
+    "supplier_relationships": "Supplier & Third-Party Management",
+    "business_continuity": "Business Continuity",
+    "compliance": "Compliance & Audit",
+    "physical_security": "Physical Security",
+    "network_security": "Network Security",
+    "vulnerability_management": "Vulnerability Management",
+    "identity_management": "Identity & Access Management",
+    "security_monitoring": "Security Monitoring & Logging",
+    "children_vulnerable": "Children & Vulnerable Individuals",
+    "security": "Information Security Controls",
+    "other": "Other Controls",
+}
+
+
+def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: list[str]) -> dict:
+    """
+    Build and return a questionnaire for multi-framework (non-DPDPA-only) assessments
+    using the Unified Control Cluster engine. Questions are normalised into the same
+    shape expected by section_questions.html.
+    """
+    context_profile = json.loads(assessment.context_profile) if assessment.context_profile else None
+    excluded: set[str] | None = None
+    if assessment.applicable_requirements:
+        try:
+            applicable = set(json.loads(assessment.applicable_requirements))
+            excluded = None  # UCC engine uses include-list differently — pass None for now
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    raw_questions = build_multi_questionnaire(framework_ids, excluded_controls=excluded, context_profile=context_profile)
+
+    # Normalise UCC question dicts into the template-compatible shape
+    normalised: list[dict] = []
+    for ucc_q in raw_questions:
+        normalised.append({
+            # Identity
+            "id": ucc_q["cluster_id"],
+            "cluster_id": ucc_q["cluster_id"],
+            # Display
+            "question": ucc_q["primary_question"],
+            "guidance": ucc_q.get("primary_guidance", ""),
+            "criticality": ucc_q.get("criticality", "medium"),
+            # Section grouping
+            "chapter": ucc_q.get("domain_group", "other"),
+            "chapter_title": _DOMAIN_GROUP_TITLES.get(ucc_q.get("domain_group", "other"), "Controls"),
+            "section": ucc_q.get("domain_group", "other"),
+            "section_title": _DOMAIN_GROUP_TITLES.get(ucc_q.get("domain_group", "other"), "Controls"),
+            "section_ref": "",
+            # Multi-framework metadata (shown in template if template uses them)
+            "frameworks_covered": ucc_q.get("frameworks_covered", framework_ids),
+            "follow_ups": ucc_q.get("follow_ups", []),
+            # Status fields — no desk-review modulation on multi-framework path yet
+            "status": "active",
+            "skip_reason": None,
+            "desk_review_note": ucc_q.get("context_note"),
+            "desk_review_evidence": None,
+            "tier": "standard",
+            "source": "base",
+            "follow_up_enabled": bool(ucc_q.get("follow_ups")),
+            "maps_to": [c["control_id"] for c in ucc_q.get("controls", [])],
+            # Pre-fill fields (unused on multi-framework path for now)
+            "pre_fill_answer": None,
+            "pre_fill_confidence": None,
+            "pre_fill_source": None,
+            "pre_fill_evidence_summary": None,
+            "skip_if": None,
+            "relevance_weight": ucc_q.get("relevance_weight", 1.0),
+            "context_note": ucc_q.get("context_note"),
+            "answer_options": ANSWER_OPTIONS,
+        })
+
+    # Group into sections by domain_group
+    sections: dict[str, dict] = {}
+    for q in normalised:
+        sid = q["section"]
+        if sid not in sections:
+            sections[sid] = {
+                "section_id": sid,
+                "chapter_title": q["chapter_title"],
+                "section_title": q["section_title"],
+                "source": "base",
+                "questions": [],
+            }
+        sections[sid]["questions"].append(q)
+
+    section_list = list(sections.values())
+    total = len(normalised)
+
+    return {
+        "sections": section_list,
+        "stats": {
+            "total_questions": total,
+            "skipped_questions": 0,
+            "pre_filled_questions": 0,
+            "inferred_questions": 0,
+            "deepened_questions": 0,
+            "industry_questions": 0,
+            "tier_counts": {"standard": total, "deep": 0, "light": 0},
+        },
+    }
 
 
 def _load_screening_data(assessment: Assessment) -> dict:
@@ -39,23 +151,38 @@ def _load_screening_data(assessment: Assessment) -> dict:
 
 def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     """
-    Build an adaptive questionnaire combining base DPDPA + industry questions,
-    modulated by desk review findings and context profile.
+    Build an adaptive questionnaire combining base questions, modulated by desk
+    review findings and context profile.
+
+    For DPDPA-only assessments: uses the legacy 41-requirement engine with
+    industry questions and full desk-review modulation.
+
+    For multi-framework (or non-DPDPA) assessments: uses build_multi_questionnaire
+    which resolves Unified Control Clusters across the selected frameworks.
 
     Returns:
         {
-            "sections": [...],         # Ordered list of question sections
-            "stats": {                  # Summary stats for UI
-                "total_questions": int,
-                "skipped_questions": int,
-                "deepened_questions": int,
-                "industry_questions": int,
-            }
+            "sections": [...],
+            "stats": {...}
         }
     """
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise ValueError(f"Assessment {assessment_id} not found")
+
+    # Determine selected frameworks — default to DPDPA for legacy assessments
+    selected_frameworks: list[str] = ["dpdpa"]
+    if assessment.selected_frameworks:
+        try:
+            selected_frameworks = json.loads(assessment.selected_frameworks)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Route multi-framework assessments to the UCC-based engine
+    is_dpdpa_only = selected_frameworks == ["dpdpa"] or selected_frameworks == []
+    if not is_dpdpa_only:
+        return _build_multi_framework_questionnaire(assessment, selected_frameworks)
+
 
     context_profile = json.loads(assessment.context_profile) if assessment.context_profile else None
     industry = assessment.industry or "other"
