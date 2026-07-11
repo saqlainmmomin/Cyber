@@ -26,3 +26,10 @@ pdf_export.py body/appendix already conditional on `dpdpa_only`.
 - [ ] Fix or delete untracked `tests/test_phase1_prefill.py` — 4 tests error on a
       missing `session` fixture (script-style tests, pre-existing)
 - [ ] CyberAssess portfolio screenshots — blocker cleared, portal is ready
+
+## UCC content completion (2026-07-11, shipped bbf5a2b)
+
+- [x] Content-integrity validator (`tests/test_content_integrity.py`, 10 tests) + INTENTIONAL_SINGLETONS mechanism
+- [x] Hermes handoff executed: 40 duplicate cluster memberships resolved, 69 orphan controls mapped, 32 DPDPA guidance entries — verified 25/25 tests, shipped
+- [ ] Review 4 flagged mapping decisions in `tasks/handoffs/2026-07-11-ucc-content-completion.md` Results (only ISO A8.11/A8.12 in crypto cluster is debatable)
+- [ ] Root `cyberassess.db` + `dashboard.png` untracked junk — gitignore or delete
