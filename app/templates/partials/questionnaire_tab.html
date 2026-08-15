@@ -1,13 +1,13 @@
 {% if context_error %}
-<div class="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
+<div class="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
   <div class="flex items-start gap-3">
-    <svg class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+    <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
     </svg>
     <div>
-      <p class="text-sm font-medium text-red-900">Context profiling failed</p>
-      <p class="text-xs text-red-700 mt-1">{{ context_error }}</p>
-      <p class="text-xs text-gray-500 mt-1">The questionnaire will proceed without adaptive weighting. You can re-submit context from the questionnaire tab later.</p>
+      <p class="text-sm font-medium text-red-900 dark:text-red-300">Context profiling failed</p>
+      <p class="text-xs text-red-700 dark:text-red-400 mt-1">{{ context_error }}</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">The questionnaire will proceed without adaptive weighting. You can re-submit context from the questionnaire tab later.</p>
     </div>
   </div>
 </div>
@@ -15,33 +15,75 @@
 
 {% if not context_done %}
 <!-- Phase 1: Context Gathering -->
-<div class="bg-white rounded-xl border border-gray-200 p-6">
-  <h2 class="text-lg font-semibold text-gray-900 mb-2">Context Gathering</h2>
-  <p class="text-sm text-gray-500 mb-6">Tell us about your organization's data landscape, existing posture, and risk exposure. This shapes the compliance questionnaire.</p>
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Context Gathering</h2>
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Tell us about your organization's data landscape, existing posture, and risk exposure. This shapes the compliance questionnaire.</p>
 
   <div id="context-wizard"
        hx-get="/assessments/{{ assessment.id }}/context/block/0"
        hx-trigger="load"
        hx-swap="innerHTML">
     <div class="flex items-center justify-center py-8">
-      <svg class="animate-spin h-6 w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-6 w-6 text-brand dark:text-navy-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg>
-      <span class="ml-2 text-sm text-gray-500">Loading questions...</span>
+      <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading questions...</span>
     </div>
   </div>
 </div>
 {% else %}
+<!-- Phase 3: Domain Screening (optional pre-step before detailed questionnaire) -->
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6" id="screening-section">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <svg class="h-5 w-5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      </svg>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        Domain Screening
+        {% if screening_done %}
+        <span class="ml-2 text-sm font-normal text-purple-600 dark:text-purple-400">✓ Complete</span>
+        {% else %}
+        <span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">Optional — reduces questionnaire by ~30%</span>
+        {% endif %}
+      </h2>
+    </div>
+    {% if not screening_done %}
+    <button hx-get="/assessments/{{ assessment.id }}/screening"
+            hx-target="#screening-body"
+            hx-swap="innerHTML"
+            class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 border border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 rounded-lg px-3 py-1.5 transition-colors">
+      Start screening
+    </button>
+    {% endif %}
+  </div>
+  <div id="screening-body">
+    {% if screening_done %}
+    <div class="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/40 rounded-lg px-3 py-2">
+      <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Screening complete — high-confidence controls are pre-filled in the questionnaire below with a ✨ Inferred badge.
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+      Answer domain-level questions and AI will infer preliminary compliance status for applicable controls.
+      High-confidence controls are pre-filled. You only confirm or override them in the questionnaire.
+    </p>
+    {% endif %}
+  </div>
+</div>
+
 <!-- Phase 2: Compliance Questionnaire -->
-<div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6" data-shortcut-scope="questionnaire">
   <div class="flex items-center justify-between mb-4">
     <div>
-      <h2 class="text-lg font-semibold text-gray-900">Compliance Questionnaire</h2>
-      <p class="text-sm text-gray-500">Assess your organization against DPDPA requirements. Complete each section.</p>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Compliance Questionnaire</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Assess your organization against compliance requirements. Complete each section.</p>
     </div>
     {% if response_count > 0 %}
-    <span class="text-sm text-green-600 font-medium">{{ response_count }} responses saved</span>
+    <span class="text-sm text-green-600 dark:text-green-400 font-medium">{{ response_count }} responses saved</span>
     {% endif %}
   </div>
 
@@ -50,19 +92,19 @@
        hx-trigger="load"
        hx-swap="innerHTML">
     <div class="flex items-center justify-center py-8">
-      <svg class="animate-spin h-6 w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-6 w-6 text-brand dark:text-navy-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg>
-      <span class="ml-2 text-sm text-gray-500">Loading questionnaire...</span>
+      <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading questionnaire...</span>
     </div>
   </div>
 </div>
 
 <!-- Analysis trigger -->
-<div class="bg-white rounded-xl border border-gray-200 p-6">
-  <h2 class="text-lg font-semibold text-gray-900 mb-2">Run Analysis</h2>
-  <p class="text-sm text-gray-500 mb-4">Once you've completed the questionnaire and uploaded relevant documents, run the AI-powered gap analysis.</p>
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Run Analysis</h2>
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Once you've completed the questionnaire and uploaded relevant documents, run the AI-powered gap analysis.</p>
 
   <div id="analysis-area">
     {% if assessment.status == 'completed' and report %}
@@ -75,7 +117,7 @@
     <button hx-post="/assessments/{{ assessment.id }}/run-analysis"
             hx-target="#analysis-area"
             hx-swap="innerHTML"
-            class="bg-brand hover:bg-brand-light text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+            class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
       </svg>

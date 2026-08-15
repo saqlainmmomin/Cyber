@@ -547,3 +547,231 @@ def build_user_prompt(
     prompt += "\n---\n\nPlease assess this organization against all DPDPA requirements and provide the structured JSON output."
 
     return prompt
+
+
+# ─── Domain Screening Prompts (Phase 3) ─────────────────────────────────────
+
+# 9 domain groups → maps each screening question to the requirement IDs it covers.
+SCREENING_DOMAINS = [
+    {
+        "id": "SD.CONSENT",
+        "title": "Consent Management",
+        "question": (
+            "How mature is your consent management process? Describe how users give, "
+            "withdraw, and manage consent for personal data processing. Include whether "
+            "you obtain separate consent per purpose, support easy withdrawal, and use "
+            "any consent management platform."
+        ),
+        "covers": [
+            "CH2.CONSENT.1", "CH2.CONSENT.2", "CH2.CONSENT.3", "CH2.CONSENT.4",
+            "CM.RECORD.1", "CM.RECORD.2",
+        ],
+    },
+    {
+        "id": "SD.NOTICE",
+        "title": "Notice & Transparency",
+        "question": (
+            "How and when do you inform Data Principals (individuals) about what personal "
+            "data you collect and why? Describe your privacy notice, where it appears, "
+            "what it covers, and whether existing customers have been notified."
+        ),
+        "covers": ["CH2.NOTICE.1", "CH2.NOTICE.2", "CH2.NOTICE.3"],
+    },
+    {
+        "id": "SD.PURPOSE",
+        "title": "Purpose Limitation & Data Minimization",
+        "question": (
+            "Do you enforce purpose limitation — using data only for the purpose it was "
+            "collected for? Describe your data inventory/mapping, how you ensure only "
+            "necessary data is collected, and any automated or documented deletion process "
+            "once the purpose is served."
+        ),
+        "covers": [
+            "CH2.PURPOSE.1", "CH2.PURPOSE.2",
+            "CH2.MINIMIZE.1", "CH2.MINIMIZE.2", "CH2.MINIMIZE.3",
+        ],
+    },
+    {
+        "id": "SD.ACCURACY",
+        "title": "Data Accuracy",
+        "question": (
+            "What mechanisms do you have to ensure personal data you hold is accurate and "
+            "up to date? Describe any self-service update features, periodic data "
+            "verification processes, and how you handle inaccurate data reported by users."
+        ),
+        "covers": ["CH2.ACCURACY.1"],
+    },
+    {
+        "id": "SD.SECURITY",
+        "title": "Data Security",
+        "question": (
+            "What technical and organizational security controls protect personal data? "
+            "Include encryption at rest and in transit, access controls, vendor/third-party "
+            "data processor agreements, security testing cadence, and any certifications "
+            "such as ISO 27001 or SOC 2."
+        ),
+        "covers": [
+            "CH2.SECURITY.1", "CH2.SECURITY.2", "CH2.SECURITY.3",
+            "CH2.SECURITY.4", "CH2.SECURITY.5",
+        ],
+    },
+    {
+        "id": "SD.BREACH",
+        "title": "Breach Notification",
+        "question": (
+            "Do you have a tested data breach detection and notification process? Describe "
+            "your incident response playbook, how quickly you can detect and assess a "
+            "breach, and your process for notifying the Data Protection Board of India "
+            "and affected individuals."
+        ),
+        "covers": ["BN.NOTIFY.1", "BN.NOTIFY.2", "BN.NOTIFY.3"],
+    },
+    {
+        "id": "SD.RIGHTS",
+        "title": "Data Subject Rights",
+        "question": (
+            "Can Data Principals exercise their rights? Describe how users can access "
+            "their data, correct inaccuracies, request erasure, and nominate a person to "
+            "exercise their rights. Include your current response time and whether you have "
+            "a self-service portal or manual process."
+        ),
+        "covers": [
+            "CH3.ACCESS.1", "CH3.CORRECT.1", "CH3.ERASE.1",
+            "CH3.GRIEVANCE.1", "CH3.NOMINATE.1",
+        ],
+    },
+    {
+        "id": "SD.GOVERNANCE",
+        "title": "Governance, SDF & Children's Data",
+        "question": (
+            "What governance structures are in place for data protection? Include whether "
+            "you have a Data Protection Officer or privacy lead, whether you are (or expect "
+            "to be) classified as a Significant Data Fiduciary, and how you handle "
+            "processing personal data of children (under 18) including parental consent "
+            "verification."
+        ),
+        "covers": [
+            "CH4.SDF.1", "CH4.SDF.2", "CH4.SDF.3",
+            "CH4.CHILD.1", "CH4.CHILD.2", "CH4.CHILD.3",
+            "CH2.CONSENT.5",
+        ],
+    },
+    {
+        "id": "SD.CROSSBORDER",
+        "title": "Cross-Border Data Transfers",
+        "question": (
+            "Do you transfer personal data outside India (to servers, cloud providers, or "
+            "partners in other countries)? If yes, describe which countries, what data "
+            "categories are involved, and what legal safeguards you have in place (e.g., "
+            "standard contractual clauses, adequacy decisions, data localisation measures)."
+        ),
+        "covers": ["CB.TRANSFER.1", "CB.TRANSFER.2", "CB.TRANSFER.3"],
+    },
+]
+
+
+def build_screening_system_prompt() -> list[dict]:
+    """
+    Build the system prompt for the domain-level screening call (Phase 3).
+
+    The screening pass asks 9 broad domain questions and infers preliminary
+    compliance status + confidence for all 41 DPDPA requirements.
+    """
+    requirements_text = _build_requirements_text()
+    req_count = len(get_all_requirements())
+
+    instructions = f"""You are an expert DPDPA compliance pre-assessor. Given a set of high-level domain answers from an organization, infer the preliminary compliance status and confidence level for each of the {req_count} DPDPA requirements.
+
+## DPDPA Requirements
+
+{requirements_text}
+
+## Your Task
+
+Based on the organization's domain-level screening answers below, infer a preliminary compliance status and confidence level for every DPDPA requirement listed above.
+
+### Compliance Status Values
+- "compliant": Strong indicators of full implementation across the domain
+- "partially_compliant": Partial implementation visible from domain answer
+- "non_compliant": Clear absence or inadequate implementation described
+- "not_assessed": Truly insufficient information to make any inference
+
+### Confidence Levels
+- "high": Domain answer provides specific, detailed evidence that directly maps to this requirement. Inference is reliable.
+- "medium": Domain answer implies something about this requirement but with uncertainty or ambiguity.
+- "low": Domain answer has minimal or indirect bearing on this requirement. Human review needed.
+
+### Inference Rules
+- Map each requirement to its domain question coverage
+- Use specificity of the answer as a confidence signal: vague/generic answers → medium/low; specific operational details → high
+- When a domain says "not started" or "no process exists" → non_compliant, high confidence
+- When a domain gives detailed operational description → use substance to determine status
+- Requirements not covered by any relevant domain answer → not_assessed, low confidence
+
+## Output Format
+
+Respond ONLY with valid JSON. Include ALL {req_count} requirement IDs.
+
+{{{{
+  "inferences": {{{{
+    "CH2.CONSENT.1": {{{{
+      "compliance_status": "partially_compliant",
+      "confidence": "high",
+      "reasoning": "One sentence explaining the inference."
+    }}}},
+    "CH2.CONSENT.2": {{{{
+      "compliance_status": "non_compliant",
+      "confidence": "medium",
+      "reasoning": "..."
+    }}}}
+  }}}}
+}}}}"""
+
+    return [
+        {"type": "text", "text": ANALYST_PERSONA},
+        {
+            "type": "text",
+            "text": instructions,
+            "cache_control": {"type": "ephemeral"},
+        },
+    ]
+
+
+def build_screening_user_prompt(
+    company_name: str,
+    industry: str,
+    company_size: str,
+    domain_answers: dict[str, str],
+) -> str:
+    """
+    Build the user prompt for the screening pass.
+
+    domain_answers: {domain_id: answer_text}
+    """
+    size_labels = {
+        "startup": "Startup (<50 employees)",
+        "sme": "SME (50-500 employees)",
+        "large": "Large (500-5000 employees)",
+        "enterprise": "Enterprise (5000+ employees)",
+    }
+
+    prompt = f"""## Organization
+- **Company:** {company_name}
+- **Industry:** {industry}
+- **Size:** {size_labels.get(company_size, company_size)}
+
+## Domain-Level Screening Answers
+
+"""
+    for domain in SCREENING_DOMAINS:
+        answer = domain_answers.get(domain["id"], "").strip()
+        prompt += f"### {domain['title']}\n"
+        prompt += f"**Question:** {domain['question']}\n\n"
+        prompt += f"**Answer:** {answer or '_Not answered_'}\n\n"
+        prompt += f"**Covers requirements:** {', '.join(domain['covers'])}\n\n"
+
+    prompt += (
+        "\nBased on these domain-level answers, infer preliminary compliance status "
+        "and confidence for ALL DPDPA requirements. Respond ONLY with the JSON output."
+    )
+    return prompt

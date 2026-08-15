@@ -119,6 +119,17 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
         assessment.desk_review_status = "completed"
         db.commit()
 
+        # Auto-create pre-filled questionnaire responses from document evidence
+        try:
+            from app.services.auto_answer import persist_document_answers
+            pre_fill_count = persist_document_answers(assessment_id, db)
+            if pre_fill_count:
+                db.commit()
+                logger.info(f"Desk review: pre-filled {pre_fill_count} responses from evidence")
+        except Exception as e:
+            # Pre-fill failure should not block the desk review result
+            logger.warning(f"Auto-answer pre-fill failed (non-blocking): {e}")
+
     except Exception as e:
         logger.error(f"Desk review persist failed: {e}")
         summary.status = "error"
@@ -142,7 +153,7 @@ def _call_claude_desk_review(
 
     message = client.messages.create(
         model=settings.claude_model,
-        max_tokens=8192,
+        max_tokens=16000,
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],

@@ -43,7 +43,7 @@ def generate_evidence_checklist_pdf(
     pdf.cell(0, 10, text=S("Evidence Request"), align="C")
     pdf.ln(8)
     pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 7, text=S("DPDPA Compliance Gap Assessment"), align="C")
+    pdf.cell(0, 7, text=S("Compliance Gap Assessment"), align="C")
     pdf.ln(7)
     pdf.set_font("Helvetica", "", 10)
     pdf.cell(0, 6, text=S(f"Prepared for: {company_name}  |  {date_str}"), align="C")
@@ -60,7 +60,7 @@ def generate_evidence_checklist_pdf(
     pdf.multi_cell(
         CW - 10, 6,
         text=S(
-            "Please provide the documents listed below to enable a thorough DPDPA gap assessment. "
+            "Please provide the documents listed below to enable a thorough compliance gap assessment. "
             "Required documents are essential for the assessment. Recommended documents improve "
             "coverage and may reduce the number of follow-up questions."
         ),
@@ -206,14 +206,14 @@ def generate_evidence_checklist_docx(
     # Title
     title = doc.add_heading("Evidence Request", level=1)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle = doc.add_paragraph(f"DPDPA Compliance Gap Assessment\nPrepared for: {company_name}  |  {date_str}")
+    subtitle = doc.add_paragraph(f"Compliance Gap Assessment\nPrepared for: {company_name}  |  {date_str}")
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     doc.add_paragraph()
 
     # Introduction
     intro = doc.add_paragraph(
-        "Please provide the documents listed below to enable a thorough DPDPA gap assessment. "
+        "Please provide the documents listed below to enable a thorough compliance gap assessment. "
         "Required documents are essential for the assessment. Recommended documents improve "
         "coverage and may reduce the number of follow-up questions. "
         "If a document does not exist, please note that explicitly — gaps are part of the assessment."

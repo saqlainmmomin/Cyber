@@ -1,9 +1,10 @@
 """
-Claude API integration for DPDPA gap analysis.
+Claude API integration for gap analysis.
 
 Supports:
-- Prompt caching for system prompt (~90% cost reduction on repeated calls)
-- Two-call architecture: evidence extraction → gap analysis
+- Single-framework (DPDPA legacy path) and multi-framework analysis
+- Prompt caching for system prompts (~90% cost reduction per framework)
+- Two/three-call architecture: evidence extraction → per-framework analysis → synthesis
 - Structured context assembly with risk profile
 """
 
@@ -205,6 +206,166 @@ def _truncate_documents(documents: list[dict]) -> list[dict]:
         result.append(doc)
 
     return result
+
+
+def run_multi_framework_analysis(
+    framework_ids: list[str],
+    company_name: str,
+    industry: str,
+    company_size: str,
+    description: str | None,
+    responses: list[dict],
+    documents: list[dict],
+    context_profile: dict | None = None,
+    desk_review_data: dict | None = None,
+    applicable_controls: list[str] | None = None,
+) -> dict:
+    """
+    Run multi-framework gap analysis.
+
+    Pipeline:
+      1. Evidence extraction (one call, all documents)
+      2. Per-framework gap analysis (one call each, cached system prompts)
+      3. Cross-framework synthesis (one lightweight call)
+
+    Returns:
+        {
+            "frameworks": {fw_id: {"parsed": ..., "raw": ..., "usage": ...}},
+            "synthesis": {"parsed": ..., "raw": ...},
+            "total_usage": {...},
+        }
+    """
+    from app.frameworks.prompts import (
+        build_framework_system_prompt,
+        build_framework_user_prompt,
+        build_synthesis_prompt,
+        build_synthesis_system_prompt,
+    )
+
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    truncated_docs = _truncate_documents(documents)
+
+    # Step 1: Evidence extraction (reuse desk review if available)
+    evidence = None
+    if truncated_docs:
+        dr_evidence = _evidence_from_desk_review(desk_review_data)
+        if dr_evidence:
+            evidence = dr_evidence
+            logger.info(f"Reusing desk review evidence ({len(dr_evidence)} requirements)")
+        else:
+            desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
+            evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
+
+    # Step 2: Per-framework gap analysis
+    framework_results: dict[str, dict] = {}
+    total_usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
+
+    for fw_id in framework_ids:
+        logger.info(f"Running gap analysis for framework: {fw_id}")
+        try:
+            system_blocks = build_framework_system_prompt(fw_id)
+            user_prompt = build_framework_user_prompt(
+                framework_id=fw_id,
+                company_name=company_name,
+                industry=industry,
+                company_size=company_size,
+                description=description,
+                responses=responses,
+                documents=truncated_docs,
+                context_profile=context_profile,
+                evidence=evidence,
+                desk_review_summary=desk_review_data,
+                applicable_controls=applicable_controls,
+            )
+
+            # Use streaming to avoid server disconnects on large responses
+            # (per-framework prompts with 90+ controls can produce ~50KB responses)
+            with client.messages.stream(
+                model=settings.claude_model,
+                max_tokens=16384,
+                temperature=0,
+                system=system_blocks,
+                messages=[{"role": "user", "content": user_prompt}],
+            ) as stream:
+                raw_text = stream.get_final_text()
+                message = stream.get_final_message()
+
+            parsed = _parse_json_response(raw_text)
+
+            usage = message.usage
+            cache_read = getattr(usage, "cache_read_input_tokens", 0)
+            cache_create = getattr(usage, "cache_creation_input_tokens", 0)
+
+            framework_results[fw_id] = {
+                "parsed": parsed,
+                "raw": raw_text,
+                "usage": {
+                    "input_tokens": usage.input_tokens,
+                    "output_tokens": usage.output_tokens,
+                    "cache_read_input_tokens": cache_read,
+                    "cache_creation_input_tokens": cache_create,
+                },
+            }
+
+            total_usage["input_tokens"] += usage.input_tokens
+            total_usage["output_tokens"] += usage.output_tokens
+            total_usage["cache_read_input_tokens"] += cache_read
+            total_usage["cache_creation_input_tokens"] += cache_create
+
+            logger.info(
+                f"{fw_id} analysis complete — input: {usage.input_tokens}, "
+                f"output: {usage.output_tokens}, cache_read: {cache_read}"
+            )
+
+        except Exception as e:
+            logger.error(f"Gap analysis failed for {fw_id}: {e}")
+            framework_results[fw_id] = {
+                "parsed": {"executive_summary": f"Analysis failed: {e}", "assessments": []},
+                "raw": str(e),
+                "usage": {},
+                "error": str(e),
+            }
+
+    # Step 3: Cross-framework synthesis (only for 2+ frameworks)
+    synthesis = None
+    if len(framework_ids) > 1 and any("error" not in r for r in framework_results.values()):
+        try:
+            per_fw_parsed = {
+                fw_id: r["parsed"]
+                for fw_id, r in framework_results.items()
+                if "error" not in r
+            }
+            synthesis_prompt = build_synthesis_prompt(per_fw_parsed, company_name, industry)
+            synthesis_system = build_synthesis_system_prompt()
+
+            with client.messages.stream(
+                model=settings.claude_model,
+                max_tokens=4096,
+                temperature=0,
+                system=synthesis_system,
+                messages=[{"role": "user", "content": synthesis_prompt}],
+            ) as stream:
+                raw_text = stream.get_final_text()
+                message = stream.get_final_message()
+
+            synthesis = {
+                "parsed": _parse_json_response(raw_text),
+                "raw": raw_text,
+            }
+
+            total_usage["input_tokens"] += message.usage.input_tokens
+            total_usage["output_tokens"] += message.usage.output_tokens
+            logger.info("Cross-framework synthesis complete")
+
+        except Exception as e:
+            logger.warning(f"Synthesis call failed: {e}")
+            synthesis = {"parsed": {}, "raw": str(e)}
+
+    return {
+        "frameworks": framework_results,
+        "synthesis": synthesis,
+        "total_usage": total_usage,
+    }
 
 
 def _parse_json_response(text: str) -> dict:

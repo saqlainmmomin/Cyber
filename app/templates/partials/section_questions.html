@@ -1,15 +1,18 @@
 <div data-section-questionnaire>
-  <div class="mb-4 flex items-start justify-between gap-4">
-    <div>
-      <h3 class="text-base font-semibold text-gray-900">{{ section_title }}</h3>
-      <p class="text-xs text-gray-500">{{ chapter_title }}</p>
-    </div>
-    <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700">
-      <span data-progress-counter>0 of 0 answered</span>
+  <!-- Sticky section header -->
+  <div class="sticky top-0 z-10 bg-white dark:bg-gray-900 -mx-1 px-1 pb-3 mb-4 border-b border-gray-100 dark:border-gray-800" data-section-header>
+    <div class="flex items-start justify-between gap-4 pt-1">
+      <div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ section_title }}</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ chapter_title }}</p>
+      </div>
+      <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">
+        <span data-progress-counter>0 of 0 answered</span>
+      </div>
     </div>
   </div>
 
-  <div data-validation-summary class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"></div>
+  <div data-validation-summary class="mb-4 hidden rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-400"></div>
 
   <form hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
         hx-target="#section-content"
@@ -21,25 +24,26 @@
     {% for q in questions %}
     {% if q.get('status') == 'skipped' %}
     <!-- Skipped question -->
-    <div class="p-4 rounded-lg border border-gray-100 bg-gray-50 opacity-75">
+    <div class="p-4 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 opacity-75"
+         data-question-index="{{ loop.index }}">
       <div class="flex items-start justify-between">
         <div class="flex-1">
-          <p class="text-sm text-gray-500 line-through">{{ q.question }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-500 line-through">{{ q.question }}</p>
           <div class="flex items-center gap-2 mt-2">
-            <svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <svg class="h-4 w-4 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span class="text-xs text-green-700">{{ q.get('skip_reason', 'Skipped') }}</span>
+            <span class="text-xs text-green-700 dark:text-green-400">{{ q.get('skip_reason', 'Skipped') }}</span>
           </div>
           {% if q.get('desk_review_evidence') %}
           <details class="mt-2">
-            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">View document evidence</summary>
-            <div class="mt-1 space-y-1">
+            <summary class="text-xs text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300">View document evidence</summary>
+            <div class="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 space-y-2">
               {% for ev in q.desk_review_evidence %}
-              <div class="text-xs text-gray-500 pl-3 border-l-2 border-green-200">
-                {{ ev.content }}
+              <div class="pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+                <p class="text-xs text-gray-600 dark:text-gray-400">{{ ev.content }}</p>
                 {% if ev.source_quote %}
-                <span class="block text-gray-400 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</span>
+                <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</p>
                 {% endif %}
               </div>
               {% endfor %}
@@ -49,66 +53,150 @@
         </div>
       </div>
     </div>
-    {% else %}
-    <!-- Active / Deepened question -->
-    <div class="p-4 rounded-lg border transition-colors
-                {% if q.get('status') == 'deepened' %}border-amber-200 bg-amber-50/30{% else %}border-gray-200 hover:border-gray-300{% endif %}"
+
+    {% elif q.get('status') == 'pre_filled' and q.get('tier') == 'light' %}
+    <!-- LIGHT tier: compact confirmation card -->
+    <div class="px-4 py-3 rounded-lg border-l-2 border border-gray-100 dark:border-gray-800 transition-colors
+                {% if q.get('pre_fill_source') == 'inferred' %}bg-purple-50/40 dark:bg-purple-900/10{% else %}bg-gray-50/60 dark:bg-gray-800/30{% endif %}"
+         style="border-left-color: {% if q.get('pre_fill_source') == 'inferred' %}#9333ea{% else %}#8b9dc3{% endif %};"
          id="question-{{ q.id }}"
          data-question-card
          data-required-question
-         data-question-name="answer_{{ q.id }}">
-      <div class="flex items-start justify-between mb-3">
-        <div class="flex-1">
-          <p class="text-sm font-medium text-gray-900">{{ q.question }}</p>
-          {% if q.guidance %}
-          <p class="text-xs text-gray-400 mt-1">{{ q.guidance }}</p>
+         data-question-name="answer_{{ q.id }}"
+         data-pre-filled="true"
+         data-question-index="{{ loop.index }}">
+      <div class="flex items-center justify-between gap-4">
+        <p class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ q.question }}</p>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <!-- Single source badge for light tier -->
+          {% if q.get('pre_fill_source') == 'inferred' %}
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 font-medium">✨ Inferred</span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-slate-400">📄 Confirm</span>
           {% endif %}
-        </div>
-        <div class="ml-3 flex items-center gap-2">
-          {% if q.get('source') == 'industry' %}
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-100 text-brand">Industry</span>
-          {% endif %}
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                 {% if q.criticality == 'critical' %}bg-red-100 text-red-700
-                 {% elif q.criticality == 'high' %}bg-orange-100 text-orange-700
-                 {% else %}bg-gray-100 text-gray-600{% endif %}">
-            {{ q.criticality | title }}
-          </span>
+          {% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
+          {% set option_short = {
+            'fully_implemented': 'Full',
+            'partially_implemented': 'Partial',
+            'planned': 'Planned',
+            'not_implemented': 'No',
+            'not_applicable': 'N/A'
+          } %}
+          {% set option_colors = {
+            'fully_implemented': 'has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:border-green-600 dark:has-[:checked]:bg-green-900/20',
+            'partially_implemented': 'has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 dark:has-[:checked]:border-yellow-600 dark:has-[:checked]:bg-yellow-900/20',
+            'planned': 'has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:border-blue-600 dark:has-[:checked]:bg-blue-900/20',
+            'not_implemented': 'has-[:checked]:border-red-500 has-[:checked]:bg-red-50 dark:has-[:checked]:border-red-600 dark:has-[:checked]:bg-red-900/20',
+            'not_applicable': 'has-[:checked]:border-gray-400 has-[:checked]:bg-gray-50 dark:has-[:checked]:border-gray-500 dark:has-[:checked]:bg-gray-700/50',
+          } %}
+          {% for opt in options %}
+          <label class="inline-flex items-center px-2 py-1 rounded border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors text-xs {{ option_colors[opt] }}">
+            <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}" class="sr-only"
+                   {% if existing.get(q.id, {}).get('answer') == opt %}checked
+                   {% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %}checked{% endif %}>
+            <span class="text-gray-600 dark:text-gray-400">{{ option_short[opt] }}</span>
+          </label>
+          {% endfor %}
         </div>
       </div>
-
-      {% if q.get('desk_review_note') %}
-      <div class="mb-3 p-2.5 rounded-md bg-blue-50 border border-blue-100">
-        <div class="flex items-start gap-2">
-          <svg class="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-          </svg>
-          <p class="text-xs text-blue-800">{{ q.desk_review_note }}</p>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if q.get('desk_review_evidence') and q.get('status') != 'skipped' %}
-      <details class="mb-3">
-        <summary class="text-xs text-blue-600 cursor-pointer hover:text-blue-800">Document evidence found</summary>
-        <div class="mt-1 space-y-1 ml-2">
+      {% if q.get('desk_review_evidence') %}
+      <details class="mt-1">
+        <summary class="text-xs text-slate-400 dark:text-slate-500 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300">View evidence</summary>
+        <div class="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 space-y-2">
           {% for ev in q.desk_review_evidence %}
-          <div class="text-xs text-gray-600 pl-3 border-l-2 border-blue-200">
-            {{ ev.content }}
+          <div class="pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ ev.content }}</p>
             {% if ev.source_quote %}
-            <span class="block text-gray-400 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</span>
+            <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5">"{{ ev.source_quote[:150] }}..."</p>
             {% endif %}
           </div>
           {% endfor %}
         </div>
       </details>
       {% endif %}
+    </div>
 
-      {% if q.get('skip_if') and q.get('status') != 'skipped' %}
-      <p class="text-xs text-amber-600 mb-2">Note: {{ q.skip_if }}</p>
+    {% elif q.get('status') == 'pre_filled' %}
+    <!-- STANDARD tier: full pre-fill card -->
+    <div class="p-4 rounded-lg border-l-4 border transition-colors
+                {% if q.get('pre_fill_source') == 'inferred' %}border-purple-200 dark:border-purple-800 bg-purple-50/20 dark:bg-purple-900/10{% else %}border-gray-200 dark:border-gray-700{% endif %}"
+         style="border-left-color: {% if q.get('pre_fill_source') == 'inferred' %}#9333ea{% else %}#8b9dc3{% endif %};"
+         id="question-{{ q.id }}"
+         data-question-card
+         data-required-question
+         data-question-name="answer_{{ q.id }}"
+         data-pre-filled="true"
+         data-question-index="{{ loop.index }}">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex-1">
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ q.question }}</p>
+          {% if q.guidance %}
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ q.guidance }}</p>
+          {% endif %}
+        </div>
+        <!-- Simplified: max 2 badges — criticality + ONE source badge -->
+        <div class="ml-3 flex items-center gap-2">
+          {% if q.get('pre_fill_source') == 'inferred' %}
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400"
+                data-prefill-badge>
+            ✨ Inferred
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-400"
+                data-prefill-badge>
+            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Document
+          </span>
+          {% endif %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                 {% if q.criticality == 'critical' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400
+                 {% elif q.criticality == 'high' %}bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400
+                 {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+            {{ q.criticality | title }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Evidence panel — unified style with confidence inside -->
+      {% if q.get('pre_fill_evidence_summary') or q.get('desk_review_evidence') %}
+      <div class="mb-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+        {% if q.get('pre_fill_confidence') %}
+        <div class="flex items-center gap-1.5 mb-2">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Confidence:</span>
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs
+                 {% if q.pre_fill_confidence == 'high' %}bg-green-50 dark:bg-green-900/40 text-green-600 dark:text-green-400
+                 {% elif q.pre_fill_confidence == 'medium' %}bg-yellow-50 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400
+                 {% else %}bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400{% endif %}">
+            {{ q.pre_fill_confidence | title }}
+          </span>
+        </div>
+        {% endif %}
+        {% if q.get('pre_fill_evidence_summary') %}
+        <div class="pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+          <p class="text-xs text-slate-600 dark:text-slate-400 italic">"{{ q.pre_fill_evidence_summary[:300] }}{% if q.pre_fill_evidence_summary|length > 300 %}...{% endif %}"</p>
+        </div>
+        {% endif %}
+        {% if q.get('desk_review_evidence') %}
+        <details class="mt-2">
+          <summary class="text-xs text-slate-500 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300">View full document evidence</summary>
+          <div class="mt-2 space-y-2">
+            {% for ev in q.desk_review_evidence %}
+            <div class="pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+              <p class="text-xs text-gray-600 dark:text-gray-400">{{ ev.content }}</p>
+              {% if ev.source_quote %}
+              <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+      </div>
       {% endif %}
 
-      <!-- GRC 5-option scale -->
+      <!-- GRC 5-option scale — standard size -->
       <div class="flex flex-wrap gap-2 mb-3">
         {% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
         {% set option_labels = {
@@ -119,14 +207,139 @@
           'not_applicable': 'N/A'
         } %}
         {% set option_colors = {
-          'fully_implemented': 'has-[:checked]:border-green-500 has-[:checked]:bg-green-50',
-          'partially_implemented': 'has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50',
-          'planned': 'has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50',
-          'not_implemented': 'has-[:checked]:border-red-500 has-[:checked]:bg-red-50',
-          'not_applicable': 'has-[:checked]:border-gray-500 has-[:checked]:bg-gray-50',
+          'fully_implemented': 'has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:border-green-600 dark:has-[:checked]:bg-green-900/20',
+          'partially_implemented': 'has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 dark:has-[:checked]:border-yellow-600 dark:has-[:checked]:bg-yellow-900/20',
+          'planned': 'has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:border-blue-600 dark:has-[:checked]:bg-blue-900/20',
+          'not_implemented': 'has-[:checked]:border-red-500 has-[:checked]:bg-red-50 dark:has-[:checked]:border-red-600 dark:has-[:checked]:bg-red-900/20',
+          'not_applicable': 'has-[:checked]:border-gray-500 has-[:checked]:bg-gray-50 dark:has-[:checked]:border-gray-500 dark:has-[:checked]:bg-gray-700/50',
         } %}
         {% for opt in options %}
-        <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 cursor-pointer transition-colors {{ option_colors[opt] }}">
+        <label class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors {{ option_colors[opt] }}">
+          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
+                 class="sr-only"
+                 {% if existing.get(q.id, {}).get('answer') == opt %}checked
+                 {% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %}checked{% endif %}
+                 {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
+                 hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
+                 hx-target="#followup-{{ q.id }}"
+                 hx-swap="innerHTML"
+                 hx-vals='{"question_id": "{{ q.id }}", "answer": "{{ opt }}"}'
+                 hx-trigger="change"
+                 hx-indicator="#followup-indicator-{{ q.id }}"
+                 {% endif %}>
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ option_labels[opt] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <!-- Follow-up container -->
+      <div id="followup-indicator-{{ q.id }}" class="htmx-indicator mt-2">
+        <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+          <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          AI is analyzing your response...
+        </div>
+      </div>
+      <div id="followup-{{ q.id }}"></div>
+
+      <!-- Notes -->
+      <details class="mt-2">
+        <summary class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">Add notes / evidence</summary>
+        <div class="mt-2 space-y-2">
+          <textarea name="notes_{{ q.id }}" rows="2" placeholder="Additional notes..."
+                    class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-1 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
+          <input type="text" name="evidence_{{ q.id }}" placeholder="Evidence reference (document, URL, etc.)"
+                 value="{{ existing.get(q.id, {}).get('evidence_reference', '') }}"
+                 class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-1 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">
+        </div>
+      </details>
+    </div>
+    {% else %}
+    <!-- Active / Deepened question -->
+    <div class="p-4 rounded-lg border transition-colors
+                {% if q.get('status') == 'deepened' %}border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/10{% else %}border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600{% endif %}"
+         id="question-{{ q.id }}"
+         data-question-card
+         data-required-question
+         data-question-name="answer_{{ q.id }}"
+         data-question-index="{{ loop.index }}">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex-1">
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ q.question }}</p>
+          {% if q.guidance %}
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ q.guidance }}</p>
+          {% endif %}
+        </div>
+        <!-- Simplified: max 2 badges — ONE source/tier badge + criticality -->
+        <div class="ml-3 flex items-center gap-2">
+          {% if q.get('tier') == 'deep' %}
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">⚠️ Deep Review</span>
+          {% elif q.get('source') == 'industry' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-100 dark:bg-navy-900/40 text-brand dark:text-navy-300">Industry</span>
+          {% endif %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                 {% if q.criticality == 'critical' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400
+                 {% elif q.criticality == 'high' %}bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400
+                 {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+            {{ q.criticality | title }}
+          </span>
+        </div>
+      </div>
+
+      {% if q.get('desk_review_note') or q.get('desk_review_evidence') %}
+      <!-- Evidence panel — unified style -->
+      <div class="mb-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+        {% if q.get('desk_review_note') %}
+        <div class="flex items-start gap-2 {% if q.get('desk_review_evidence') %}mb-2{% endif %}">
+          <svg class="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p class="text-xs text-blue-800 dark:text-blue-300">{{ q.desk_review_note }}</p>
+        </div>
+        {% endif %}
+        {% if q.get('desk_review_evidence') and q.get('status') != 'skipped' %}
+        <details {% if q.get('tier') == 'deep' %}open{% endif %}>
+          <summary class="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300">Document evidence found</summary>
+          <div class="mt-2 space-y-2">
+            {% for ev in q.desk_review_evidence %}
+            <div class="pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+              <p class="text-xs text-gray-600 dark:text-gray-400">{{ ev.content }}</p>
+              {% if ev.source_quote %}
+              <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5">"{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}...{% endif %}"</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if q.get('skip_if') and q.get('status') != 'skipped' %}
+      <p class="text-xs text-amber-600 dark:text-amber-500 mb-2">Note: {{ q.skip_if }}</p>
+      {% endif %}
+
+      <!-- GRC 5-option scale — standard size -->
+      <div class="flex flex-wrap gap-2 mb-3">
+        {% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
+        {% set option_labels = {
+          'fully_implemented': 'Fully Implemented',
+          'partially_implemented': 'Partially Implemented',
+          'planned': 'Planned',
+          'not_implemented': 'Not Implemented',
+          'not_applicable': 'N/A'
+        } %}
+        {% set option_colors = {
+          'fully_implemented': 'has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:border-green-600 dark:has-[:checked]:bg-green-900/20',
+          'partially_implemented': 'has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 dark:has-[:checked]:border-yellow-600 dark:has-[:checked]:bg-yellow-900/20',
+          'planned': 'has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:border-blue-600 dark:has-[:checked]:bg-blue-900/20',
+          'not_implemented': 'has-[:checked]:border-red-500 has-[:checked]:bg-red-50 dark:has-[:checked]:border-red-600 dark:has-[:checked]:bg-red-900/20',
+          'not_applicable': 'has-[:checked]:border-gray-500 has-[:checked]:bg-gray-50 dark:has-[:checked]:border-gray-500 dark:has-[:checked]:bg-gray-700/50',
+        } %}
+        {% for opt in options %}
+        <label class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors {{ option_colors[opt] }}">
           <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
                  class="sr-only"
                  {% if existing.get(q.id, {}).get('answer') == opt %}checked{% endif %}
@@ -138,14 +351,14 @@
                  hx-trigger="change"
                  hx-indicator="#followup-indicator-{{ q.id }}"
                  {% endif %}>
-          <span class="text-xs text-gray-700">{{ option_labels[opt] }}</span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ option_labels[opt] }}</span>
         </label>
         {% endfor %}
       </div>
 
       <!-- Follow-up loading indicator -->
       <div id="followup-indicator-{{ q.id }}" class="htmx-indicator mt-2">
-        <div class="flex items-center gap-2 text-xs text-gray-400">
+        <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
           <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -154,18 +367,18 @@
         </div>
       </div>
 
-      <!-- Follow-up container (populated via HTMX when answer triggers follow-up) -->
+      <!-- Follow-up container -->
       <div id="followup-{{ q.id }}"></div>
 
       <!-- Notes (collapsible) -->
       <details class="mt-2">
-        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Add notes / evidence</summary>
+        <summary class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">Add notes / evidence</summary>
         <div class="mt-2 space-y-2">
           <textarea name="notes_{{ q.id }}" rows="2" placeholder="Additional notes..."
-                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-100 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
+                    class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-1 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
           <input type="text" name="evidence_{{ q.id }}" placeholder="Evidence reference (document, URL, etc.)"
                  value="{{ existing.get(q.id, {}).get('evidence_reference', '') }}"
-                 class="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-100 outline-none transition">
+                 class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-1 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">
         </div>
       </details>
     </div>
@@ -173,9 +386,10 @@
     {% endfor %}
     </div>
 
-    <div class="mt-6 flex justify-end">
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <span class="text-xs text-gray-400 dark:text-gray-500" data-save-indicator></span>
       <button type="submit"
-              class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+              class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
         Save Section
         <span class="htmx-indicator">
           <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

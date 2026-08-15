@@ -10,11 +10,18 @@
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
     <h1 class="text-xl font-bold text-gray-900 mb-6">New Assessment</h1>
 
+    {% if error %}
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ error }}
+    </div>
+    {% endif %}
+
     <form method="post" action="/assessments/new" class="space-y-5">
       <div>
         <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
         <input type="text" name="company_name" id="company_name" required
                placeholder="e.g., Meridian Retail Ltd"
+               value="{{ form_values.company_name if form_values else '' }}"
                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
       </div>
 
@@ -23,17 +30,18 @@
           <label for="industry" class="block text-sm font-medium text-gray-700 mb-1">Industry</label>
           <select name="industry" id="industry" required
                   class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition bg-white">
+            {% set industry_value = form_values.industry if form_values else '' %}
             <option value="">Select industry</option>
-            <option value="it_services">IT Services</option>
-            <option value="fintech">Fintech</option>
-            <option value="healthcare">Healthcare</option>
-            <option value="ecommerce">E-Commerce</option>
-            <option value="manufacturing">Manufacturing</option>
-            <option value="education">Education</option>
-            <option value="real_estate">Real Estate</option>
-            <option value="legal">Legal</option>
-            <option value="accounting">Accounting</option>
-            <option value="other">Other</option>
+            <option value="it_services" {% if industry_value == 'it_services' %}selected{% endif %}>IT Services</option>
+            <option value="fintech" {% if industry_value == 'fintech' %}selected{% endif %}>Fintech</option>
+            <option value="healthcare" {% if industry_value == 'healthcare' %}selected{% endif %}>Healthcare</option>
+            <option value="ecommerce" {% if industry_value == 'ecommerce' %}selected{% endif %}>E-Commerce</option>
+            <option value="manufacturing" {% if industry_value == 'manufacturing' %}selected{% endif %}>Manufacturing</option>
+            <option value="education" {% if industry_value == 'education' %}selected{% endif %}>Education</option>
+            <option value="real_estate" {% if industry_value == 'real_estate' %}selected{% endif %}>Real Estate</option>
+            <option value="legal" {% if industry_value == 'legal' %}selected{% endif %}>Legal</option>
+            <option value="accounting" {% if industry_value == 'accounting' %}selected{% endif %}>Accounting</option>
+            <option value="other" {% if industry_value == 'other' %}selected{% endif %}>Other</option>
           </select>
         </div>
 
@@ -41,11 +49,12 @@
           <label for="company_size" class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
           <select name="company_size" id="company_size" required
                   class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition bg-white">
+            {% set size_value = form_values.company_size if form_values else '' %}
             <option value="">Select size</option>
-            <option value="startup">Startup (&lt;50 employees)</option>
-            <option value="sme">SME (50-500)</option>
-            <option value="large">Large (500-5000)</option>
-            <option value="enterprise">Enterprise (5000+)</option>
+            <option value="startup" {% if size_value == 'startup' %}selected{% endif %}>Startup (&lt;50 employees)</option>
+            <option value="sme" {% if size_value == 'sme' %}selected{% endif %}>SME (50-500)</option>
+            <option value="large" {% if size_value == 'large' %}selected{% endif %}>Large (500-5000)</option>
+            <option value="enterprise" {% if size_value == 'enterprise' %}selected{% endif %}>Enterprise (5000+)</option>
           </select>
         </div>
       </div>
@@ -54,7 +63,26 @@
         <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
         <textarea name="description" id="description" rows="3"
                   placeholder="Brief description of the organization's data processing activities..."
-                  class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition"></textarea>
+                  class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">{{ form_values.description if form_values else '' }}</textarea>
+      </div>
+
+      <!-- Framework Selection -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Compliance Frameworks</label>
+        <p class="text-xs text-gray-500 mb-3">Select one or more frameworks to assess against. Overlapping controls will be de-duplicated.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {% for fw in frameworks %}
+          <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand/40 hover:bg-brand/5 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/5">
+            <input type="checkbox" name="frameworks" value="{{ fw.id }}"
+                   class="mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
+            <div>
+              <span class="text-sm font-medium text-gray-800">{{ fw.name }}</span>
+              <span class="text-xs text-gray-400 ml-1">{{ fw.version }}</span>
+              <p class="text-xs text-gray-500 mt-0.5">{{ fw.control_count }} controls</p>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
       </div>
 
       <div class="flex gap-3 pt-2">

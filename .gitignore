@@ -7,3 +7,14 @@ uploads/
 *.egg-info/
 dist/
 build/
+output/
+.DS_Store
+cookies.txt
+*.local.md
+cyberassess.db
+dashboard.png
+.claude/worktrees/
+
+# Tailwind CLI build artifacts
+node_modules/
+app/static/css/tailwind.css

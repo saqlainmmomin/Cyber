@@ -30,8 +30,9 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
         max_tokens=1024,
         temperature=0,
         system=(
-            "You are an expert DPDPA compliance advisor. Given an organization's context, "
-            "produce a risk profile that will guide an adaptive compliance assessment. "
+            "You are an expert compliance advisor covering DPDPA, ISO 27001, GDPR, HIPAA, "
+            "NIST CSF, and PCI-DSS. Given an organization's context, produce a risk profile "
+            "that will guide an adaptive compliance assessment. "
             "Respond ONLY with valid JSON matching the requested schema. No markdown, no commentary."
         ),
         messages=[{"role": "user", "content": prompt}],

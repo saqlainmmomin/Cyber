@@ -11,7 +11,18 @@ AnswerLiteral = Literal[
     "not_applicable",
 ]
 ConfidenceLiteral = Literal["high", "medium", "low"]
-QUESTION_ID_PATTERN = re.compile(r"^(CH[234]\.\w+\.\d+|CM\.\w+\.\d+|CB\.\w+\.\d+|BN\.\w+\.\d+|IND\.\w+\.\d+|FU\..+)$")
+QUESTION_ID_PATTERN = re.compile(
+    r"^("
+    r"CH[234]\.\w+\.\d+"   # DPDPA chapter controls
+    r"|CM\.\w+\.\d+"        # Consent management
+    r"|CB\.\w+\.\d+"        # Cross-border
+    r"|BN\.\w+\.\d+"        # Breach notification
+    r"|IND\.\w+\.\d+"       # Industry-specific
+    r"|FU\..+"              # Follow-ups
+    r"|SINGLE\..+"          # Singleton cluster (any framework, e.g. SINGLE.ISO.A5.24)
+    r"|CLUSTER_\d+"         # Real UCC cluster (e.g. CLUSTER_001)
+    r")$"
+)
 
 
 class QuestionSchema(BaseModel):
@@ -70,5 +81,6 @@ class ResponseOut(BaseModel):
     evidence_reference: str | None
     na_reason: str | None = None
     confidence: str | None = None
+    answer_source: str | None = None
 
     model_config = {"from_attributes": True}

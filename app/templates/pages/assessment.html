@@ -11,6 +11,17 @@
       {{ assessment.company_size | title }} &middot;
       {% include "components/status_badge.html" with context %}
     </p>
+    {% if selected_frameworks and selected_frameworks | length > 0 %}
+    <div class="flex flex-wrap gap-1.5 mt-2">
+      {% for fw in selected_frameworks %}
+      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-50 text-brand border border-navy-100" style="background-color: #eef0f6; border-color: #c8cce0;">
+        {{ fw.name }}
+        <span class="text-gray-400 ml-0.5">{{ fw.version }}</span>
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% include "partials/status_timeline.html" %}
   </div>
   {% if assessment.status == 'completed' %}
   <a href="/api/assessments/{{ assessment.id }}/report/pdf"

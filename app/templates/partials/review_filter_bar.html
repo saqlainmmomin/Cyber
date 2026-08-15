@@ -1,0 +1,19 @@
+{# Review queue filter bar #}
+<div class="flex items-center gap-2 mb-4 text-xs">
+  <button class="px-3 py-1.5 rounded-lg font-medium transition-colors bg-navy-50 dark:bg-navy-900/40 text-brand dark:text-navy-300 border border-navy-200 dark:border-navy-700"
+          data-review-filter="all">
+    All ({{ gap_items | length }})
+  </button>
+  <button class="px-3 py-1.5 rounded-lg font-medium transition-colors text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent"
+          data-review-filter="draft">
+    Draft ({{ draft_count }})
+  </button>
+  <button class="px-3 py-1.5 rounded-lg font-medium transition-colors text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent"
+          data-review-filter="high">
+    High Severity
+  </button>
+  <button class="px-3 py-1.5 rounded-lg font-medium transition-colors text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent"
+          data-review-filter="rejected">
+    Rejected
+  </button>
+</div>

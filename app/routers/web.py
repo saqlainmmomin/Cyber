@@ -2,9 +2,10 @@
 
 import json
 import logging
+from collections import defaultdict
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -12,7 +13,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
-from app.dpdpa.scope_questions import SCOPE_QUESTIONS
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.rfi import RFIDocument
@@ -21,6 +21,7 @@ from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.schemas.assessment import DocumentCategory
 from app.services.document_processor import detect_file_type, extract_text, save_upload
+from app.utils.review_gate import require_review_approval
 
 router = APIRouter(tags=["web"])
 logger = logging.getLogger(__name__)
@@ -28,9 +29,51 @@ logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
 
+def _with_toast(response, message: str, toast_type: str = "success"):
+    response.headers["X-Toast-Message"] = message
+    response.headers["X-Toast-Type"] = toast_type
+    return response
+
+
 # --- Auth dependency ---
 
 
+
+
+def _selected_framework_ids(assessment: Assessment) -> list[str]:
+    """Resolve the assessment's selected framework ids. Legacy rows without a
+    selection predate multi-framework support and default to DPDPA."""
+    if assessment.selected_frameworks:
+        try:
+            return json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+    return ["dpdpa"]
+
+
+def _selected_framework_names(assessment: Assessment) -> list[str]:
+    from app.frameworks.registry import FrameworkRegistry
+
+    names = []
+    for fw_id in _selected_framework_ids(assessment):
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        names.append(fw.name if fw else fw_id.upper())
+    return names
+
+
+def _framework_catalog() -> list[dict]:
+    from app.frameworks.registry import FrameworkRegistry
+
+    frameworks = []
+    for fw_id in sorted(FrameworkRegistry.all_ids()):
+        fw = FrameworkRegistry.get(fw_id)
+        frameworks.append({
+            "id": fw.id,
+            "name": fw.name,
+            "version": fw.version,
+            "control_count": fw.control_count(),
+        })
+    return frameworks
 
 
 # --- Dashboard ---
@@ -50,11 +93,14 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/assessments/new", response_class=HTMLResponse)
 def new_assessment_page(request: Request):
-    return templates.TemplateResponse("pages/new_assessment.html", {"request": request})
+    return templates.TemplateResponse(
+        "pages/new_assessment.html",
+        {"request": request, "frameworks": _framework_catalog()},
+    )
 
 
 @router.post("/assessments/new")
-def create_assessment(
+async def create_assessment(
     request: Request,
 
     company_name: str = Form(...),
@@ -63,11 +109,32 @@ def create_assessment(
     description: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    # Extract multi-valued frameworks checkboxes from form
+    form = await request.form()
+    selected_frameworks = form.getlist("frameworks")
+    if not selected_frameworks:
+        return templates.TemplateResponse(
+            "pages/new_assessment.html",
+            {
+                "request": request,
+                "frameworks": _framework_catalog(),
+                "error": "Select at least one framework to assess against.",
+                "form_values": {
+                    "company_name": company_name,
+                    "industry": industry,
+                    "company_size": company_size,
+                    "description": description,
+                },
+            },
+            status_code=422,
+        )
+
     assessment = Assessment(
         company_name=company_name,
         industry=industry,
         company_size=company_size,
         description=description or None,
+        selected_frameworks=json.dumps(selected_frameworks),
     )
     db.add(assessment)
     db.commit()
@@ -117,34 +184,70 @@ def assessment_detail(
 
     context_done = assessment.context_answers is not None
     scope_done = assessment.scope_answers is not None
+    screening_done = assessment.screening_status == "completed"
 
     # Default tab: scope if not yet scoped, else documents
     if tab is None:
         tab = "scope" if not scope_done else "documents"
 
+    # Resolve selected frameworks early — needed by scope tab and display
+    from app.frameworks.registry import FrameworkRegistry
+    raw_fw_ids = _selected_framework_ids(assessment)
+
     # Build scope context for the scope tab
     scope_context: dict = {}
     if tab == "scope":
         if scope_done:
-            from app.services.scope_profiler import compute_scope
+            from app.services.scope_profiler import compute_scope_multi
             scope_data = json.loads(assessment.scope_answers)
-            result = compute_scope(scope_data, assessment.industry or "", assessment.company_size or "")
-            applicable_ids = result["applicable_requirements"]
-            from app.dpdpa.framework import get_all_requirements
-            total_count = len(get_all_requirements())
+            result = compute_scope_multi(scope_data, assessment.industry or "", assessment.company_size or "", raw_fw_ids)
             scope_context = {
                 "checklist": result["evidence_checklist"],
                 "excluded": result["excluded_requirements"],
                 "flags": result["flags"],
-                "applicable_count": len(applicable_ids),
-                "total_count": total_count,
+                "applicable_count": len(result["applicable_requirements"]),
+                "total_count": result["total_count"],
             }
         else:
-            existing_scope = {}
+            scope_questions_by_fw = []
+            for fw_id in raw_fw_ids:
+                fw = FrameworkRegistry.get_or_none(fw_id)
+                if fw and fw.scope_questions:
+                    scope_questions_by_fw.append({
+                        "framework_id": fw.id,
+                        "framework_name": fw.name,
+                        "questions": [
+                            {"id": sq.id, "question": sq.question, "help_text": sq.help_text,
+                             "type": sq.type, "options": sq.options}
+                            for sq in fw.scope_questions
+                        ],
+                    })
             scope_context = {
-                "scope_questions": SCOPE_QUESTIONS,
-                "existing": existing_scope,
+                "scope_questions_by_fw": scope_questions_by_fw,
+                "existing": {},
             }
+
+    # Resolve selected framework metadata for display
+    selected_frameworks_info = []
+    for fw_id in raw_fw_ids:
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        if fw:
+            selected_frameworks_info.append({
+                "id": fw.id,
+                "name": fw.name,
+                "version": fw.version,
+            })
+
+    timeline_steps = [
+        ("Scope", scope_done),
+        ("Documents", bool(documents)),
+        ("Desk Review", assessment.desk_review_status == "completed"),
+        (
+            "Questionnaire",
+            assessment.status in ("questionnaire_done", "analyzing", "completed"),
+        ),
+        ("Analysis", assessment.status == "completed"),
+    ]
 
     return templates.TemplateResponse(
         "pages/assessment.html",
@@ -158,8 +261,11 @@ def assessment_detail(
             "response_count": response_count,
             "context_done": context_done,
             "scope_done": scope_done,
+            "screening_done": screening_done,
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
+            "selected_frameworks": selected_frameworks_info,
+            "timeline_steps": timeline_steps,
             **scope_context,
         },
     )
@@ -200,24 +306,37 @@ async def save_scope(
     db: Session = Depends(get_db),
 ):
     """Save scope answers, compute applicable requirements, redirect to scope complete view."""
-    from app.services.scope_profiler import compute_scope
-    from app.dpdpa.scope_questions import SCOPE_QUESTIONS
+    from app.services.scope_profiler import compute_scope_multi
+    from app.frameworks.registry import FrameworkRegistry
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
 
+    # Resolve selected frameworks
+    selected_fw_ids = _selected_framework_ids(assessment)
+
+    # Collect all scope question IDs across selected frameworks
+    all_scope_q_ids: set[str] = set()
+    for fw_id in selected_fw_ids:
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        if fw:
+            for sq in fw.scope_questions:
+                all_scope_q_ids.add(sq.id)
+
     form = await request.form()
     scope_answers = {}
-    for q in SCOPE_QUESTIONS:
-        value = form.get(q["id"])
+    for qid in all_scope_q_ids:
+        value = form.get(qid)
         if value:
-            scope_answers[q["id"]] = value
+            scope_answers[qid] = value
 
     assessment.scope_answers = json.dumps(scope_answers)
 
-    # Compute applicable requirements and cache them
-    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    # Compute applicable requirements across all selected frameworks
+    result = compute_scope_multi(
+        scope_answers, assessment.industry or "", assessment.company_size or "", selected_fw_ids
+    )
     assessment.applicable_requirements = json.dumps(result["applicable_requirements"])
 
     if assessment.status == "created":
@@ -234,7 +353,7 @@ async def save_scope(
 def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(get_db)):
     """Download the evidence request checklist as PDF."""
     from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope
+    from app.services.scope_profiler import compute_scope_multi
     from app.utils.evidence_checklist_export import generate_evidence_checklist_pdf
 
     assessment = db.get(Assessment, assessment_id)
@@ -242,7 +361,12 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
         raise HTTPException(404, "Scope not yet defined")
 
     scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    result = compute_scope_multi(
+        scope_answers,
+        assessment.industry or "",
+        assessment.company_size or "",
+        _selected_framework_ids(assessment),
+    )
 
     pdf_bytes = generate_evidence_checklist_pdf(
         company_name=assessment.company_name,
@@ -261,7 +385,7 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
 def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(get_db)):
     """Download the evidence request checklist as DOCX."""
     from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope
+    from app.services.scope_profiler import compute_scope_multi
     from app.utils.evidence_checklist_export import generate_evidence_checklist_docx
 
     assessment = db.get(Assessment, assessment_id)
@@ -269,7 +393,12 @@ def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(g
         raise HTTPException(404, "Scope not yet defined")
 
     scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope(scope_answers, assessment.industry or "", assessment.company_size or "")
+    result = compute_scope_multi(
+        scope_answers,
+        assessment.industry or "",
+        assessment.company_size or "",
+        _selected_framework_ids(assessment),
+    )
 
     docx_bytes = generate_evidence_checklist_docx(
         company_name=assessment.company_name,
@@ -338,10 +467,11 @@ async def upload_document_web(
         .order_by(AssessmentDocument.uploaded_at.desc())
         .all()
     )
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "partials/document_list.html",
         {"request": request, "documents": documents, "assessment_id": assessment_id},
     )
+    return _with_toast(response, "Document uploaded")
 
 
 @router.delete("/assessments/{assessment_id}/documents/{document_id}", response_class=HTMLResponse)
@@ -508,6 +638,7 @@ def get_questionnaire_sections_web(
             "evidence_reference": r.evidence_reference,
             "na_reason": r.na_reason,
             "confidence": r.confidence,
+            "answer_source": r.answer_source,
         }
 
     return templates.TemplateResponse(
@@ -619,6 +750,15 @@ async def save_questionnaire_responses(
             .first()
         )
         if existing:
+            # Track answer source provenance for audit trail
+            if existing.answer_source == "document":
+                # Human is confirming or overriding a document pre-fill
+                existing.answer_source = (
+                    "document_confirmed" if answer == existing.answer
+                    else "human_override"
+                )
+            elif existing.answer_source not in ("human", "human_override", "document_confirmed"):
+                existing.answer_source = "human"
             existing.answer = answer
             existing.notes = notes or None
             existing.evidence_reference = evidence or None
@@ -629,6 +769,7 @@ async def save_questionnaire_responses(
                 answer=answer,
                 notes=notes or None,
                 evidence_reference=evidence or None,
+                answer_source="human",
             ))
 
     # Save follow-up responses (form fields named followup_FU.{parent_id}.{n})
@@ -663,10 +804,11 @@ async def save_questionnaire_responses(
         assessment.status = "questionnaire_done"
     db.commit()
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "partials/section_saved.html",
         {"request": request, "section_id": section_id, "assessment_id": assessment_id},
     )
+    return _with_toast(response, "Section saved")
 
 
 # --- Follow-up generation ---
@@ -739,6 +881,74 @@ async def generate_followup_questions(
     )
 
 
+# --- Screening pass (Phase 3) ---
+
+
+@router.get("/assessments/{assessment_id}/screening", response_class=HTMLResponse)
+def screening_form(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Serve the 9-question domain screening form."""
+    from app.services.screening import get_domain_coverage
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    domains = get_domain_coverage()
+    screening_done = assessment.screening_status == "completed"
+
+    return templates.TemplateResponse(
+        "partials/screening_form.html",
+        {
+            "request": request,
+            "assessment_id": assessment_id,
+            "domains": domains,
+            "screening_done": screening_done,
+        },
+    )
+
+
+@router.post("/assessments/{assessment_id}/screening/submit", response_class=HTMLResponse)
+async def submit_screening(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Process screening form submission, run Claude inference, redirect to questionnaire."""
+    from app.services.screening import run_screening_pass, get_domain_coverage
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    form = await request.form()
+    domains = get_domain_coverage()
+    domain_answers = {d["id"]: form.get(d["id"], "") for d in domains}
+
+    try:
+        run_screening_pass(assessment_id, domain_answers, db)
+    except Exception as e:
+        logger.error("Screening failed for assessment %s: %s", assessment_id, e)
+        return templates.TemplateResponse(
+            "partials/screening_form.html",
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "domains": domains,
+                "screening_done": False,
+                "error": str(e),
+            },
+        )
+
+    return RedirectResponse(
+        f"/assessments/{assessment_id}?tab=questionnaire",
+        status_code=303,
+    )
+
+
 # --- Analysis trigger ---
 
 
@@ -773,10 +983,11 @@ def run_analysis_web(
         assessment.status = "error"
         db.commit()
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "partials/analysis_running.html",
         {"request": request, "assessment_id": assessment_id},
     )
+    return _with_toast(response, "Analysis started", "info")
 
 
 @router.get("/assessments/{assessment_id}/analysis-status", response_class=HTMLResponse)
@@ -945,6 +1156,30 @@ def report_summary(
     gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
     chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
 
+    # Determine if this is a multi-framework report
+    framework_scores = None
+    is_multi_framework = False
+    if report.framework_scores:
+        try:
+            framework_scores = json.loads(report.framework_scores)
+            is_multi_framework = len(framework_scores) > 1
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Resolve framework names for multi-framework display
+    framework_display = {}
+    if framework_scores:
+        from app.frameworks.registry import FrameworkRegistry
+        for fw_id, scores in framework_scores.items():
+            fw = FrameworkRegistry.get_or_none(fw_id)
+            framework_display[fw_id] = {
+                "name": fw.name if fw else fw_id.upper(),
+                "version": fw.version if fw else "",
+                "overall_score": scores.get("overall_score", 0),
+                "overall_rating": scores.get("overall_rating", "N/A"),
+                "domain_scores": scores.get("domain_scores", {}),
+            }
+
     # Count by status
     status_counts: dict[str, int] = {}
     for item in gap_items:
@@ -976,6 +1211,72 @@ def report_summary(
         key=lambda x: x.remediation_priority or 3,
     )[:4]
 
+    # Check if DPDPA is among selected frameworks (for penalty display)
+    selected_fw_ids = ["dpdpa"]
+    if assessment.selected_frameworks:
+        try:
+            selected_fw_ids = json.loads(assessment.selected_frameworks)
+        except json.JSONDecodeError:
+            pass
+    has_dpdpa = "dpdpa" in selected_fw_ids
+
+    applicable_gap_items = [
+        item for item in gap_items if item.compliance_status != "not_applicable"
+    ]
+    remediation_counts = {
+        "open": sum(
+            1 for item in applicable_gap_items
+            if (item.remediation_status or "open") == "open"
+        ),
+        "in_progress": sum(
+            1 for item in applicable_gap_items
+            if item.remediation_status == "in_progress"
+        ),
+        "closed": sum(
+            1 for item in applicable_gap_items
+            if item.remediation_status == "closed"
+        ),
+        "accepted_risk": sum(
+            1 for item in applicable_gap_items
+            if item.remediation_status == "accepted_risk"
+        ),
+        "total": len(applicable_gap_items),
+    }
+
+    comparable_assessments = (
+        db.query(Assessment)
+        .filter(
+            Assessment.company_name == assessment.company_name,
+            Assessment.id != assessment_id,
+            Assessment.status == "completed",
+            Assessment.review_status == "approved",
+        )
+        .order_by(Assessment.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    gap_items_by_chapter = defaultdict(list)
+    for item in gap_items:
+        gap_items_by_chapter[item.chapter].append(item)
+
+    reviewed_item = next((item for item in gap_items if item.reviewed_by), None)
+    documents = (
+        db.query(AssessmentDocument)
+        .filter(AssessmentDocument.assessment_id == assessment_id)
+        .all()
+    )
+    timeline_steps = [
+        ("Scope", assessment.scope_answers is not None),
+        ("Documents", bool(documents)),
+        ("Desk Review", assessment.desk_review_status == "completed"),
+        (
+            "Questionnaire",
+            assessment.status in ("questionnaire_done", "analyzing", "completed"),
+        ),
+        ("Analysis", assessment.status == "completed"),
+    ]
+
     return templates.TemplateResponse(
         "partials/report_summary.html",
         {
@@ -991,6 +1292,115 @@ def report_summary(
             "critical_findings": critical_findings,
             "quick_wins": quick_wins,
             "rfi": rfi,
+            "is_multi_framework": is_multi_framework,
+            "framework_display": framework_display,
+            "has_dpdpa": has_dpdpa,
+            "remediation_counts": remediation_counts,
+            "comparable_assessments": comparable_assessments,
+            "gap_items_by_chapter": dict(gap_items_by_chapter),
+            "review_status": assessment.review_status,
+            "reviewed_by": reviewed_item.reviewed_by if reviewed_item else None,
+            "reviewed_at": reviewed_item.reviewed_at if reviewed_item else None,
+            "timeline_steps": timeline_steps,
+        },
+    )
+
+
+@router.get("/assessments/{assessment_id}/review", response_class=HTMLResponse)
+def review_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404, "Assessment not found")
+
+    report = (
+        db.query(GapReport)
+        .filter(GapReport.assessment_id == assessment_id)
+        .first()
+    )
+    if not report:
+        raise HTTPException(400, "No report - run analysis first")
+
+    gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
+    draft_count = sum(
+        1 for item in gap_items
+        if (item.review_status or "draft") == "draft"
+    )
+    reviewed_item = next((item for item in gap_items if item.reviewed_by), None)
+
+    return templates.TemplateResponse(
+        "pages/review.html",
+        {
+            "request": request,
+            "assessment": assessment,
+            "gap_items": gap_items,
+            "draft_count": draft_count,
+            "reviewer_name": reviewed_item.reviewed_by if reviewed_item else "",
+        },
+    )
+
+
+@router.get(
+    "/assessments/{assessment_id}/compare/{other_id}",
+    response_class=HTMLResponse,
+)
+def comparison_page(
+    request: Request,
+    assessment_id: str,
+    other_id: str,
+    db: Session = Depends(get_db),
+):
+    from app.services.scoring import compute_delta
+
+    assessment = require_review_approval(assessment_id, db)
+    previous_assessment = require_review_approval(other_id, db)
+    if assessment.company_name != previous_assessment.company_name:
+        raise HTTPException(400, "Assessments must belong to the same company")
+    if assessment.status != "completed" or previous_assessment.status != "completed":
+        raise HTTPException(400, "Both assessments must be completed")
+
+    current_report = (
+        db.query(GapReport)
+        .filter(GapReport.assessment_id == assessment_id)
+        .first()
+    )
+    previous_report = (
+        db.query(GapReport)
+        .filter(GapReport.assessment_id == other_id)
+        .first()
+    )
+    if not current_report or not previous_report:
+        raise HTTPException(404, "Reports not found")
+
+    current_items = (
+        db.query(GapItem)
+        .filter(GapItem.report_id == current_report.id)
+        .all()
+    )
+    previous_items = (
+        db.query(GapItem)
+        .filter(GapItem.report_id == previous_report.id)
+        .all()
+    )
+    result = compute_delta(current_items, previous_items)
+
+    return templates.TemplateResponse(
+        "pages/comparison.html",
+        {
+            "request": request,
+            "assessment": assessment,
+            "current_report": current_report,
+            "previous_report": previous_report,
+            "current_score": current_report.overall_score,
+            "previous_score": previous_report.overall_score,
+            "score_delta": (
+                current_report.overall_score - previous_report.overall_score
+            ),
+            "deltas": result["deltas"],
+            "delta_summary": result["summary"],
         },
     )
 
@@ -1057,6 +1467,7 @@ def generate_rfi_web(
             gap_items=gap_dicts,
             desk_review_absences=absences or None,
             desk_review_signals=signals or None,
+            framework_names=_selected_framework_names(assessment),
         )
     except Exception as e:
         return HTMLResponse(f'<div class="text-sm text-red-600">RFI generation failed: {e}</div>')
@@ -1080,10 +1491,11 @@ def generate_rfi_web(
     db.add(rfi)
     db.commit()
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "partials/rfi_generated.html",
         {"request": request, "assessment_id": assessment_id, "rfi": rfi},
     )
+    return _with_toast(response, "RFI generated")
 
 
 @router.get("/assessments/{assessment_id}/rfi/pdf")
@@ -1092,9 +1504,7 @@ def download_rfi_pdf(assessment_id: str, db: Session = Depends(get_db)):
     from fastapi.responses import Response
     from app.utils.rfi_export import generate_rfi_pdf
 
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment:
-        raise HTTPException(404)
+    assessment = require_review_approval(assessment_id, db)
 
     rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
     if not rfi:
@@ -1108,6 +1518,7 @@ def download_rfi_pdf(assessment_id: str, db: Session = Depends(get_db)):
         evidence_items=evidence_items,
         response_instructions=rfi.response_instructions,
         generated_at=rfi.generated_at,
+        framework_label=", ".join(_selected_framework_names(assessment)),
     )
 
     filename = f"RFI-{assessment.company_name.replace(' ', '-')}.pdf"
@@ -1124,9 +1535,7 @@ def download_rfi_docx(assessment_id: str, db: Session = Depends(get_db)):
     from fastapi.responses import Response
     from app.utils.rfi_export import generate_rfi_docx
 
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment:
-        raise HTTPException(404)
+    assessment = require_review_approval(assessment_id, db)
 
     rfi = db.query(RFIDocument).filter(RFIDocument.assessment_id == assessment_id).first()
     if not rfi:
@@ -1222,19 +1631,51 @@ def desk_review_status_web(
 def run_desk_review_web(
     request: Request,
     assessment_id: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    """Trigger desk review and show running indicator."""
+    """Trigger desk review — set analyzing state immediately, run Claude in background."""
+    from datetime import datetime, timezone
+
+    from app.database import SessionLocal
+    from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
     from app.services.desk_review import run_desk_review
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
 
-    # Run synchronously — desk review typically takes 15-30s
-    run_desk_review(assessment_id, db)
+    # Commit "analyzing" status synchronously so the polling partial never reverts to "ready"
+    summary = (
+        db.query(DeskReviewSummary)
+        .filter(DeskReviewSummary.assessment_id == assessment_id)
+        .first()
+    )
+    if summary:
+        db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id
+        ).delete()
+        summary.status = "analyzing"
+        summary.error_message = None
+        summary.started_at = datetime.now(timezone.utc)
+        summary.completed_at = None
+    else:
+        summary = DeskReviewSummary(
+            assessment_id=assessment_id,
+            status="analyzing",
+            started_at=datetime.now(timezone.utc),
+        )
+        db.add(summary)
+    assessment.desk_review_status = "analyzing"
+    db.commit()
 
-    # Return the findings (or error) — redirect to status which will show results
+    # Run the Claude call in a background task with its own session
+    def _bg_run():
+        with SessionLocal() as bg_db:
+            run_desk_review(assessment_id, bg_db)
+
+    background_tasks.add_task(_bg_run)
+
     return templates.TemplateResponse(
         "partials/desk_review_running.html",
         {"request": request, "assessment_id": assessment_id},

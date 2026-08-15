@@ -1,12 +1,13 @@
 /* CyberAssess — minimal custom styles (Tailwind does most work) */
 
-/* HTMX loading indicator */
+/* HTMX loading indicator — fade-in delay prevents flash on fast loads */
 .htmx-indicator {
-  display: none;
+  opacity: 0;
+  transition: opacity 150ms ease-in 200ms;
 }
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
-  display: inline-block;
+  opacity: 1;
 }
 
 /* Smooth transitions for HTMX swaps */
@@ -28,9 +29,25 @@
   background-color: rgba(30, 30, 80, 0.04);
 }
 
+/* Dark mode drag-over state */
+.dark .drag-over {
+  border-color: #676fb7 !important;
+  background-color: rgba(103, 111, 183, 0.08) !important;
+}
+
 /* Tab active state */
 .tab-active {
   border-bottom: 2px solid #1e1e50;
   color: #1e1e50;
   font-weight: 600;
 }
+
+/* Details chevron rotation */
+details[open] > summary .details-chevron {
+  transform: rotate(180deg);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar { width: 8px; }
+.dark ::-webkit-scrollbar-track { background: #1a1a2e; }
+.dark ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
