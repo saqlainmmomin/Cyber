@@ -119,6 +119,9 @@ Tracks A–F run **in parallel** where dependencies allow. See §4 timeline.
 ### WS #3 — Golden-output tests
 
 - **Goal:** Freeze the current DPDPA behaviour so #4/#5/#7 refactors can't silently regress it.
+- **Precondition:** WS #1 (white-label) merged first — branding text is captured in the PDF golden; if #1 lands after #3, the golden invalidates immediately.
+- **Comparison contract:** exact dict equality on score + analyzer output; SHA-256 of *extracted PDF text* (not byte hash) plus exact page count plus byte-length floor. Full spec in `tasks/handoffs/2026-09-08-ws3-golden-dpdpa.md`.
+- **Analyzer:** mocked in golden runs via a recorded response file. Live-analyzer testing is separate.
 - **Owner:** Claude writes fixtures + assertions; Codex parameterises.
 - **Deliverables:**
   - `tests/fixtures/canonical_dpdpa_assessment/` — one fully-populated assessment (evidence files, screening answers, questionnaire answers).
@@ -222,7 +225,7 @@ Tracks A–F run **in parallel** where dependencies allow. See §4 timeline.
 
 | Week | Track A (visible polish) | Track B (foundation) | Track C (analyzer) | Track D (content) | Notes |
 |---|---|---|---|---|---|
-| 1 | WS #1 white-label + WS #2 picker | WS #3 golden tests | WS #5 spike (2 days, end of week) | WS #6 starts (Identify + Annex A.5) | End of week: pitch-ready white-label demo. Spike verdict decides Track C shape. |
+| 1 | WS #1 Days 1–2, WS #2 Days 1–5 | WS #3 Days 3–5 (after #1 lands — branding is part of the golden) | WS #5 spike Days 4–5 | WS #6 starts (Identify + Annex A.5) | End of week: pitch-ready white-label demo. Spike verdict decides Track C shape. |
 | 2 | WS #2 polish per adversarial review | WS #4 refactor scoring + screening | (paused if spike failed → redesign) | WS #6 continues (Protect + A.6/7/8) | Refactor lands under golden test coverage. |
 | 3 | — | WS #4 finish + smoke-test ISO run | WS #7 build starts | WS #6 continues (Detect + A.9/10/11) | First ISO-only assessment runs end-to-end (may be ugly). |
 | 4 | — | — | WS #7 finish + feature flag on | WS #6 finishes | Combined DPDPA+ISO assessment demo-worthy. |
