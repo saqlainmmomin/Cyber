@@ -34,12 +34,11 @@ Codex's job is to satisfy the contract, not to re-design. If the contract is wro
 
 ### 1.3 Branch strategy
 
-- `main` — never broken.
-- `feat/web-portal` — current working branch, only merges of green workstreams.
-- `ws/<n>-<slug>` — one branch per workstream (Codex or Claude commits here).
-- `spike/<slug>` — throwaway branches for de-risking (WS #5 analyzer spike). Never merged; discoveries flow into the plan.
+- `main` — never broken. Every workstream lands on `main` via its own PR.
+- `ws/<n>-<slug>` — one branch per workstream, branched **off `main`**. Codex or Claude commits here.
+- `spike/<slug>` — throwaway branches for de-risking (WS #5 analyzer spike), also **off `main`**. Never merged; discoveries flow back into the plan.
 
-Merge into `feat/web-portal` only after adversarial review passes.
+No long-lived integration branch. Each workstream = its own branch → its own PR → merge to `main` after adversarial review passes. Rebase on `main` before every push if `main` moved during the workstream.
 
 ### 1.4 Adversarial review protocol (used at every checkpoint)
 
@@ -270,7 +269,7 @@ At three points, run a beefier adversarial pass beyond the per-workstream review
 ## 7. Rollback and merge discipline
 
 - Every workstream branch has a documented `git revert <sha>` in its handoff. Adversarial review failure that can't be fixed same-day → revert, re-plan, don't compound the mess.
-- Never merge a workstream branch into `feat/web-portal` without: (a) `pytest -q` green, (b) `uvicorn app.main:app` boots, (c) adversarial review PASS documented in the branch commit message.
+- Never merge a workstream PR into `main` without: (a) `pytest -q` green, (b) `uvicorn app.main:app` boots, (c) adversarial review PASS documented in the PR description.
 - Never touch a file that's currently checked out on another workstream branch. If two workstreams need the same file, sequence them, don't parallel.
 
 ---
