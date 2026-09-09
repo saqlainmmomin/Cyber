@@ -1,8 +1,9 @@
 import uuid
+import json
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.database import Base
 
@@ -41,6 +42,36 @@ class Assessment(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
+
+    @property
+    def frameworks(self) -> list[str]:
+        """Return the selected framework ids, including the legacy DPDPA default."""
+        if not self.selected_frameworks:
+            return ["dpdpa"]
+        try:
+            frameworks = json.loads(self.selected_frameworks)
+        except (json.JSONDecodeError, TypeError):
+            return ["dpdpa"]
+        return frameworks if isinstance(frameworks, list) and frameworks else ["dpdpa"]
+
+    @validates("selected_frameworks")
+    def validate_selected_frameworks(self, _key: str, value: str | None) -> str | None:
+        """Reject explicit empty selections while allowing historical NULL rows."""
+        if value is None:
+            return value
+        try:
+            frameworks = json.loads(value)
+        except (json.JSONDecodeError, TypeError) as exc:
+            raise ValueError("selected_frameworks must be a JSON list") from exc
+        if not isinstance(frameworks, list) or not frameworks:
+            raise ValueError("At least one framework must be selected")
+        if not all(isinstance(framework, str) and framework for framework in frameworks):
+            raise ValueError("Framework ids must be non-empty strings")
+        return value
+
+    @property
+    def is_multi_framework(self) -> bool:
+        return len(self.frameworks) > 1
 
 
 class AssessmentDocument(Base):

@@ -1,0 +1,19 @@
+<section class="mb-6" aria-label="Assessment frameworks">
+  <nav class="framework-tabs flex flex-wrap gap-2 border-b border-gray-200" role="tablist">
+    {% for framework in selected_frameworks %}
+    <a hx-get="/assessments/{{ assessment.id }}/tab/{{ framework.id }}"
+       hx-target="#framework-panel" hx-swap="innerHTML"
+       hx-push-url="/assessments/{{ assessment.id }}?tab={{ tab }}&amp;framework={{ framework.id }}" role="tab"
+       onclick="this.parentElement.querySelectorAll('[role=tab]').forEach((tab) => { tab.setAttribute('aria-selected', 'false'); tab.className = 'rounded-t-lg border border-b-0 px-4 py-2 text-sm font-medium border-transparent text-gray-500 hover:text-gray-800'; }); this.setAttribute('aria-selected', 'true'); this.className = 'rounded-t-lg border border-b-0 px-4 py-2 text-sm font-medium border-gray-300 bg-white text-brand';"
+       aria-selected="{{ 'true' if framework.id == active_framework else 'false' }}"
+       class="rounded-t-lg border border-b-0 px-4 py-2 text-sm font-medium {% if framework.id == active_framework %}border-gray-300 bg-white text-brand{% else %}border-transparent text-gray-500 hover:text-gray-800{% endif %}">
+      {{ framework.name }}
+    </a>
+    {% endfor %}
+  </nav>
+  <div id="framework-panel" role="tabpanel">
+    {% set framework = active_framework_definition %}
+    {% set finding_count = active_framework_finding_count %}
+    {% include "partials/framework_panel.html" %}
+  </div>
+</section>

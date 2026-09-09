@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 from starlette.middleware.sessions import SessionMiddleware
@@ -14,6 +15,14 @@ import app.models  # noqa: F401 — ensure all models registered before create_a
 from app.routers import analysis, assessments, desk_review, documents, questionnaire, remediation, reports, review, web
 
 logger = logging.getLogger(__name__)
+
+# Expose only branding fields to templates — never the full Settings object
+# (which contains anthropic_api_key, session_secret, auditor_password).
+web.templates.env.globals["branding"] = {
+    "firm_name": settings.firm_name,
+    "firm_primary_hex": settings.firm_primary_hex,
+    "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
+}
 
 APP_DIR = Path(__file__).resolve().parent
 VALID_QUESTIONNAIRE_ANSWERS = (
@@ -223,7 +232,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CyberAssess",
+    title=settings.firm_name,
     description="AI-powered multi-framework compliance maturity assessment platform (DPDPA, ISO 27001, GDPR, HIPAA, NIST CSF, PCI-DSS)",
     version="0.1.0",
     lifespan=lifespan,
@@ -253,6 +262,12 @@ app.include_router(review.router)
 
 # Web portal routes
 app.include_router(web.router)
+
+
+@app.get("/login", include_in_schema=False)
+def login(request: Request):
+    """Keep legacy entry links working for the current no-auth deployment."""
+    return RedirectResponse(url=request.url_for("dashboard"), status_code=307)
 
 
 @app.get("/health")

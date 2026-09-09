@@ -1,0 +1,246 @@
+{
+  "cluster_verdicts": {
+    "CLUSTER_002": {
+      "cluster_id": "CLUSTER_002",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_003": {
+      "cluster_id": "CLUSTER_003",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_004": {
+      "cluster_id": "CLUSTER_004",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_006": {
+      "cluster_id": "CLUSTER_006",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement. No material gap identified in the synthetic evidence.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_010": {
+      "cluster_id": "CLUSTER_010",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_014": {
+      "cluster_id": "CLUSTER_014",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_016": {
+      "cluster_id": "CLUSTER_016",
+      "evidence_ids": [],
+      "reasoning": "No material gap identified in the synthetic evidence.",
+      "score": 5.0,
+      "status": "implemented"
+    },
+    "CLUSTER_017": {
+      "cluster_id": "CLUSTER_017",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_018": {
+      "cluster_id": "CLUSTER_018",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_020": {
+      "cluster_id": "CLUSTER_020",
+      "evidence_ids": [],
+      "reasoning": "No material gap identified in the synthetic evidence.",
+      "score": 5.0,
+      "status": "implemented"
+    },
+    "CLUSTER_021": {
+      "cluster_id": "CLUSTER_021",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_022": {
+      "cluster_id": "CLUSTER_022",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement. No material gap identified in the synthetic evidence.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_023": {
+      "cluster_id": "CLUSTER_023",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_024": {
+      "cluster_id": "CLUSTER_024",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_025": {
+      "cluster_id": "CLUSTER_025",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_028": {
+      "cluster_id": "CLUSTER_028",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 2.5,
+      "status": "partial"
+    },
+    "CLUSTER_029": {
+      "cluster_id": "CLUSTER_029",
+      "evidence_ids": [],
+      "reasoning": "No material gap identified in the synthetic evidence. The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_030": {
+      "cluster_id": "CLUSTER_030",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_031": {
+      "cluster_id": "CLUSTER_031",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement. No material gap identified in the synthetic evidence.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_032": {
+      "cluster_id": "CLUSTER_032",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement. No material gap identified in the synthetic evidence.",
+      "score": 0.0,
+      "status": "not_implemented"
+    },
+    "CLUSTER_052": {
+      "cluster_id": "CLUSTER_052",
+      "evidence_ids": [],
+      "reasoning": "No material gap identified in the synthetic evidence.",
+      "score": 5.0,
+      "status": "implemented"
+    },
+    "CLUSTER_053": {
+      "cluster_id": "CLUSTER_053",
+      "evidence_ids": [],
+      "reasoning": "The synthetic fixture shows that this control needs documented improvement.",
+      "score": 0.0,
+      "status": "not_implemented"
+    }
+  },
+  "combined": {
+    "by_framework": {
+      "dpdpa": {
+        "by_domain": {
+          "breach_notification": 1.88,
+          "chapter_2": 0.92,
+          "chapter_3": 1.88,
+          "chapter_4": 0.38,
+          "consent_management": 0.0,
+          "cross_border": 0.0
+        },
+        "contributing_clusters": [
+          "CLUSTER_002",
+          "CLUSTER_003",
+          "CLUSTER_004",
+          "CLUSTER_006",
+          "CLUSTER_010",
+          "CLUSTER_014",
+          "CLUSTER_016",
+          "CLUSTER_017",
+          "CLUSTER_018",
+          "CLUSTER_020",
+          "CLUSTER_021",
+          "CLUSTER_022",
+          "CLUSTER_023",
+          "CLUSTER_024",
+          "CLUSTER_025",
+          "CLUSTER_028",
+          "CLUSTER_029",
+          "CLUSTER_030",
+          "CLUSTER_031",
+          "CLUSTER_032",
+          "CLUSTER_052",
+          "CLUSTER_053"
+        ],
+        "control_count": 41,
+        "covered_control_count": 41,
+        "framework_id": "dpdpa",
+        "overall_rating": "M1",
+        "overall_score": 0.91
+      }
+    },
+    "overall_rating": "M1",
+    "overall_score": 0.91,
+    "total_controls_evaluated": 41,
+    "unique_clusters": 22
+  },
+  "per_framework": {
+    "dpdpa": {
+      "by_domain": {
+        "breach_notification": 1.88,
+        "chapter_2": 0.92,
+        "chapter_3": 1.88,
+        "chapter_4": 0.38,
+        "consent_management": 0.0,
+        "cross_border": 0.0
+      },
+      "contributing_clusters": [
+        "CLUSTER_002",
+        "CLUSTER_003",
+        "CLUSTER_004",
+        "CLUSTER_006",
+        "CLUSTER_010",
+        "CLUSTER_014",
+        "CLUSTER_016",
+        "CLUSTER_017",
+        "CLUSTER_018",
+        "CLUSTER_020",
+        "CLUSTER_021",
+        "CLUSTER_022",
+        "CLUSTER_023",
+        "CLUSTER_024",
+        "CLUSTER_025",
+        "CLUSTER_028",
+        "CLUSTER_029",
+        "CLUSTER_030",
+        "CLUSTER_031",
+        "CLUSTER_032",
+        "CLUSTER_052",
+        "CLUSTER_053"
+      ],
+      "control_count": 41,
+      "covered_control_count": 41,
+      "framework_id": "dpdpa",
+      "overall_rating": "M1",
+      "overall_score": 0.91
+    }
+  }
+}

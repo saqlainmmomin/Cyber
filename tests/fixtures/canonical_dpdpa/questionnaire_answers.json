@@ -1,0 +1,210 @@
+{
+  "BN.NOTIFY.1": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "evidence_quote": "The incident lead records notification decisions in the breach register.",
+    "notes": "Synthetic response for BN.NOTIFY.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "BN.NOTIFY.2": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for BN.NOTIFY.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "BN.NOTIFY.3": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for BN.NOTIFY.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "BN.NOTIFY.4": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for BN.NOTIFY.4; retained evidence is intentionally generic and contains no client information."
+  },
+  "CB.TRANSFER.1": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CB.TRANSFER.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CB.TRANSFER.2": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CB.TRANSFER.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CB.TRANSFER.3": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CB.TRANSFER.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.ACCURACY.1": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.ACCURACY.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.CONSENT.1": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.CONSENT.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.CONSENT.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.CONSENT.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.CONSENT.3": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.CONSENT.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.CONSENT.4": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.CONSENT.4; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.CONSENT.5": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.CONSENT.5; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.MINIMIZE.1": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.MINIMIZE.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.MINIMIZE.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.MINIMIZE.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.MINIMIZE.3": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.MINIMIZE.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.NOTICE.1": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "evidence_quote": "Customers receive a concise privacy notice before account registration.",
+    "notes": "Synthetic response for CH2.NOTICE.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.NOTICE.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.NOTICE.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.NOTICE.3": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.NOTICE.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.PURPOSE.1": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.PURPOSE.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.PURPOSE.2": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.PURPOSE.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.SECURITY.1": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "evidence_quote": "Access reviews are performed quarterly and exceptions are tracked to closure.",
+    "notes": "Synthetic response for CH2.SECURITY.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.SECURITY.2": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.SECURITY.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH2.SECURITY.3": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH2.SECURITY.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.ACCESS.1": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.ACCESS.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.CORRECT.1": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.CORRECT.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.CORRECT.2": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.CORRECT.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.GRIEVANCE.1": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.GRIEVANCE.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.GRIEVANCE.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.GRIEVANCE.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH3.NOMINATE.1": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH3.NOMINATE.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.CHILD.1": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.CHILD.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.CHILD.2": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.CHILD.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.CHILD.3": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.CHILD.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.SDF.1": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.SDF.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.SDF.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.SDF.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.SDF.3": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.SDF.3; retained evidence is intentionally generic and contains no client information."
+  },
+  "CH4.SDF.4": {
+    "answer": "not_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CH4.SDF.4; retained evidence is intentionally generic and contains no client information."
+  },
+  "CM.GRANULAR.1": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CM.GRANULAR.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CM.GRANULAR.2": {
+    "answer": "planned",
+    "confidence": "high",
+    "notes": "Synthetic response for CM.GRANULAR.2; retained evidence is intentionally generic and contains no client information."
+  },
+  "CM.RECORDS.1": {
+    "answer": "fully_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CM.RECORDS.1; retained evidence is intentionally generic and contains no client information."
+  },
+  "CM.RECORDS.2": {
+    "answer": "partially_implemented",
+    "confidence": "high",
+    "notes": "Synthetic response for CM.RECORDS.2; retained evidence is intentionally generic and contains no client information."
+  }
+}

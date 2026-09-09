@@ -1,0 +1,207 @@
+{
+  "BN.NOTIFY.1": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "BN.NOTIFY.2": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "BN.NOTIFY.3": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "BN.NOTIFY.4": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CB.TRANSFER.1": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CB.TRANSFER.2": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CB.TRANSFER.3": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.ACCURACY.1": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.CONSENT.1": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.CONSENT.2": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.CONSENT.3": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.CONSENT.4": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.CONSENT.5": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.MINIMIZE.1": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.MINIMIZE.2": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.MINIMIZE.3": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.NOTICE.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.NOTICE.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.NOTICE.3": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.PURPOSE.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.PURPOSE.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.SECURITY.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.SECURITY.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH2.SECURITY.3": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.ACCESS.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.CORRECT.1": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.CORRECT.2": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.GRIEVANCE.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.GRIEVANCE.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH3.NOMINATE.1": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.CHILD.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.CHILD.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.CHILD.3": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.SDF.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.SDF.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.SDF.3": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CH4.SDF.4": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CM.GRANULAR.1": {
+    "compliance_status": "non_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CM.GRANULAR.2": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CM.RECORDS.1": {
+    "compliance_status": "compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  },
+  "CM.RECORDS.2": {
+    "compliance_status": "partially_compliant",
+    "confidence": "low",
+    "reasoning": "Synthetic screening inference for deterministic fixture coverage."
+  }
+}

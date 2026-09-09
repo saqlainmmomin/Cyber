@@ -16,7 +16,7 @@
     </div>
     {% endif %}
 
-    <form method="post" action="/assessments/new" class="space-y-5">
+    <form method="post" action="/assessments" class="space-y-5" id="new-assessment-form">
       <div>
         <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
         <input type="text" name="company_name" id="company_name" required
@@ -72,11 +72,13 @@
         <p class="text-xs text-gray-500 mb-3">Select one or more frameworks to assess against. Overlapping controls will be de-duplicated.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {% for fw in frameworks %}
-          <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand/40 hover:bg-brand/5 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/5">
-            <input type="checkbox" name="frameworks" value="{{ fw.id }}"
-                   class="mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
+          <label {% if not fw.enabled %}title="Roadmap — control data present, analysis pipeline coming"{% endif %}
+                 class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 transition-colors {% if fw.enabled %}hover:border-brand/40 hover:bg-brand/5 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand/5{% else %}bg-gray-50 opacity-60 cursor-not-allowed{% endif %}">
+            <input type="checkbox" name="selected_frameworks" value="{{ fw.id }}"{% if not fw.enabled %} disabled{% endif %}
+                   class="framework-choice mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
             <div>
               <span class="text-sm font-medium text-gray-800">{{ fw.name }}</span>
+              {% if not fw.enabled %}<span class="ml-1 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">roadmap</span>{% endif %}
               <span class="text-xs text-gray-400 ml-1">{{ fw.version }}</span>
               <p class="text-xs text-gray-500 mt-0.5">{{ fw.control_count }} controls</p>
             </div>
@@ -86,8 +88,8 @@
       </div>
 
       <div class="flex gap-3 pt-2">
-        <button type="submit"
-                class="bg-brand hover:bg-brand-light text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        <button type="submit" id="create-assessment" disabled
+                class="bg-brand hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
           Create Assessment
         </button>
         <a href="/"
@@ -96,6 +98,18 @@
         </a>
       </div>
     </form>
+    <script>
+      (() => {
+        const form = document.getElementById("new-assessment-form");
+        const submit = document.getElementById("create-assessment");
+        const choices = form.querySelectorAll(".framework-choice:not(:disabled)");
+        const updateSubmit = () => {
+          submit.disabled = !Array.from(choices).some((choice) => choice.checked);
+        };
+        choices.forEach((choice) => choice.addEventListener("change", updateSubmit));
+        updateSubmit();
+      })();
+    </script>
   </div>
 </div>
 {% endblock %}
