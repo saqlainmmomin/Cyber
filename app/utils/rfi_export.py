@@ -15,7 +15,7 @@ from app.config import settings
 # Reuse palette and helpers from main PDF export
 from app.utils.pdf_export import (
     NAVY, DARK_TEXT, MID_TEXT, LIGHT_TEXT, WHITE, CARD_BG, DIVIDER,
-    PW, PM, CW, S, _brand_rgb,
+    PW, PM, CW, S, brand_rgb,
 )
 
 # Priority colors for RFI
@@ -52,7 +52,7 @@ def generate_rfi_pdf(
     pdf.add_page()
     pdf.set_fill_color(*NAVY)
     pdf.rect(0, 0, PW, 60, style="F")
-    pdf.set_draw_color(*_brand_rgb())
+    pdf.set_draw_color(*brand_rgb())
     pdf.set_line_width(1)
     pdf.line(0, 61, PW, 61)
     pdf.set_line_width(0.2)

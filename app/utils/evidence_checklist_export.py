@@ -13,7 +13,7 @@ from fpdf import FPDF
 from app.config import settings
 from app.utils.pdf_export import (
     NAVY, DARK_TEXT, MID_TEXT, LIGHT_TEXT, WHITE, CARD_BG, DIVIDER,
-    PW, PM, CW, S, _brand_rgb,
+    PW, PM, CW, S, brand_rgb,
 )
 
 
@@ -37,7 +37,7 @@ def generate_evidence_checklist_pdf(
     pdf.add_page()
     pdf.set_fill_color(*NAVY)
     pdf.rect(0, 0, PW, 55, style="F")
-    pdf.set_draw_color(*_brand_rgb())
+    pdf.set_draw_color(*brand_rgb())
     pdf.set_line_width(1)
     pdf.line(0, 56, PW, 56)
     pdf.set_line_width(0.2)

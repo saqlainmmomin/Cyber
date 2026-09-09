@@ -130,7 +130,7 @@ def test_pdf_exports_use_configured_brand(monkeypatch):
     report_text = _pdf_text(report_pdf)
     assert "Momin & Co" in report_text
     assert "CyberAssess" not in report_text
-    assert pdf_export._brand_rgb() == (139, 0, 0)
+    assert pdf_export.brand_rgb() == (139, 0, 0)
     with pdfplumber.open(io.BytesIO(report_pdf)) as pdf:
         assert pdf.pages[0].images
 

@@ -92,13 +92,14 @@ def S(text: str) -> str:
     return text.translate(_UNICODE_MAP).encode("latin-1", errors="replace").decode("latin-1")
 
 
-def _brand_rgb() -> tuple[int, int, int]:
+def brand_rgb() -> tuple[int, int, int]:
     """Convert the configured CSS-style primary color to an fpdf RGB tuple."""
     value = settings.firm_primary_hex.removeprefix("#")
     if len(value) != 6:
         raise ValueError("FIRM_PRIMARY_HEX must be a six-digit hexadecimal color")
     try:
-        return tuple(int(value[index:index + 2], 16) for index in (0, 2, 4))
+        r, g, b = (int(value[index:index + 2], 16) for index in (0, 2, 4))
+        return (r, g, b)
     except ValueError as exc:
         raise ValueError("FIRM_PRIMARY_HEX must be a six-digit hexadecimal color") from exc
 
@@ -598,7 +599,7 @@ def generate_pdf(
     pdf.text(PM, 75, S(company_name))
 
     # Divider line
-    pdf.set_draw_color(*_brand_rgb())
+    pdf.set_draw_color(*brand_rgb())
     pdf.set_line_width(0.8)
     pdf.line(PM, 80, PW - PM, 80)
     pdf.set_line_width(0.2)
