@@ -16,8 +16,13 @@ from app.routers import analysis, assessments, desk_review, documents, questionn
 
 logger = logging.getLogger(__name__)
 
-# One shared global keeps product branding available to every web template.
-web.templates.env.globals["settings"] = settings
+# Expose only branding fields to templates — never the full Settings object
+# (which contains anthropic_api_key, session_secret, auditor_password).
+web.templates.env.globals["branding"] = {
+    "firm_name": settings.firm_name,
+    "firm_primary_hex": settings.firm_primary_hex,
+    "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
+}
 
 APP_DIR = Path(__file__).resolve().parent
 VALID_QUESTIONNAIRE_ANSWERS = (

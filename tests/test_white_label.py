@@ -69,8 +69,12 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
         with TestClient(main.app) as client:
             monkeypatch.setitem(
                 web.templates.env.globals,
-                "settings",
-                Settings(_env_file=None),
+                "branding",
+                {
+                    "firm_name": "CyberAssess",
+                    "firm_primary_hex": "#2563eb",
+                    "has_custom_nav_color": False,
+                },
             )
             default_response = client.get("/login")
             assert default_response.status_code == 200
@@ -78,12 +82,12 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
 
             monkeypatch.setitem(
                 web.templates.env.globals,
-                "settings",
-                Settings(
-                    firm_name="Momin & Co",
-                    firm_primary_hex="#8b0000",
-                    _env_file=None,
-                ),
+                "branding",
+                {
+                    "firm_name": "Momin & Co",
+                    "firm_primary_hex": "#8b0000",
+                    "has_custom_nav_color": True,
+                },
             )
             response = client.get("/login")
             new_assessment_response = client.get("/assessments/new")

@@ -334,7 +334,8 @@ def assessment_detail(
             "active_framework": active_framework,
             "report_view_mode": report_view_mode,
             "active_framework_info": next(
-                fw for fw in selected_frameworks_info if fw["id"] == active_framework
+                (fw for fw in selected_frameworks_info if fw["id"] == active_framework),
+                selected_frameworks_info[0] if selected_frameworks_info else {"id": active_framework, "name": active_framework},
             ),
             "active_framework_definition": FrameworkRegistry.get(active_framework),
             "active_framework_finding_count": sum(
@@ -1315,14 +1316,7 @@ def report_summary(
         key=lambda x: x.remediation_priority or 3,
     )[:4]
 
-    # Check if DPDPA is among selected frameworks (for penalty display)
-    selected_fw_ids = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            selected_fw_ids = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
-    has_dpdpa = "dpdpa" in selected_fw_ids
+    has_dpdpa = "dpdpa" in assessment.frameworks
 
     applicable_gap_items = [
         item for item in gap_items if item.compliance_status != "not_applicable"
