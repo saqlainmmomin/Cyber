@@ -7,6 +7,9 @@ from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_SESSION_SECRET = "change-me-in-production"
+_DEFAULT_AUDITOR_PASSWORD = "admin"
+
 
 class Settings(BaseSettings):
     anthropic_api_key: str = ""
@@ -15,9 +18,9 @@ class Settings(BaseSettings):
     max_document_words: int = 5000
     max_total_document_words: int = 20000
     claude_model: str = "claude-sonnet-4-20250514"
-    session_secret: str = "change-me-in-production"
+    session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"
-    auditor_password: str = "admin"
+    auditor_password: str = _DEFAULT_AUDITOR_PASSWORD
     firm_name: str = "CyberAssess"
     firm_logo_path: str | None = None
     firm_primary_hex: str = "#2563eb"
@@ -31,11 +34,11 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def warn_insecure_defaults(self) -> Self:
-        if self.session_secret == "change-me-in-production":
+        if self.session_secret == _DEFAULT_SESSION_SECRET:
             logger.warning(
                 "Default session_secret is active; configure a deployment-specific secret"
             )
-        if self.auditor_password == "admin":
+        if self.auditor_password == _DEFAULT_AUDITOR_PASSWORD:
             logger.warning(
                 "Default auditor_password is active; configure a deployment-specific password"
             )

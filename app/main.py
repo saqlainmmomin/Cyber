@@ -238,11 +238,12 @@ def _assert_framework_catalog_complete() -> None:
 
     catalog_ids = set(web.ENABLED_ASSESSMENT_FRAMEWORKS) | set(web.ROADMAP_FRAMEWORKS)
     registered_ids = set(FrameworkRegistry.all_ids())
-    assert catalog_ids == registered_ids, (
-        "Framework registry and UI catalog differ: "
-        f"missing_from_ui={sorted(registered_ids - catalog_ids)}, "
-        f"missing_from_registry={sorted(catalog_ids - registered_ids)}"
-    )
+    if catalog_ids != registered_ids:
+        raise RuntimeError(
+            "Framework registry and UI catalog differ: "
+            f"missing_from_ui={sorted(registered_ids - catalog_ids)}, "
+            f"missing_from_registry={sorted(catalog_ids - registered_ids)}"
+        )
 
 
 @asynccontextmanager

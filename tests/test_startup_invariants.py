@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import create_engine, text
 
 from app.main import (
@@ -16,12 +17,8 @@ def test_framework_catalog_matches_registered_frameworks(monkeypatch):
         ("gdpr", "hipaa"),
     )
 
-    try:
+    with pytest.raises(RuntimeError, match="pci_dss"):
         _assert_framework_catalog_complete()
-    except AssertionError as exc:
-        assert "pci_dss" in str(exc)
-    else:
-        raise AssertionError("registry drift should fail the startup assertion")
 
 
 def test_migration_backfills_legacy_gap_item_framework_ids():
