@@ -13,3 +13,14 @@ Working baseline: clean `docs/2026-09-08-handoffs`, commit `635291e`. Preserve t
 - [x] Obtain user approval before commit/push/opening PR. User approved with "yes" on 2026-09-09.
 
 Results: `tasks/handoffs/2026-09-09-ws1-ws2-ws3-results.md`. Final suite 53 passed; browser verified boosted report navigation. Additional full review interrupted by usage limit; bounded findings fixed and parent checked. Publication approved; feature branch `codex/ws1-ws2-ws3` was fast-forwarded to current main (1696a2e) before the implementation commit.
+
+## PR #7 review tech debt — 2026-09-09
+
+Source: `tasks/handoffs/2026-09-09-pr7-review-tech-debt.md`. Continue on `codex/ws1-ws2-ws3`; keep the fixes targeted and verify the integrated branch before handoff.
+
+- [ ] Assert the registered framework set matches the enabled and roadmap UI tuples.
+- [ ] Backfill legacy NULL gap-item framework IDs and remove presentation fallbacks.
+- [ ] Promote the PDF brand-color helper to a correctly typed public API.
+- [ ] Warn when shipped session or auditor credential defaults are active, if cleanly testable.
+- [ ] Run focused regression tests, the full suite, and a startup smoke check.
+- [ ] Complete the standalone simplify/review/handoff gates.
