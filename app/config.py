@@ -1,7 +1,11 @@
+import logging
 import re
+from typing import Self
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -24,6 +28,18 @@ class Settings(BaseSettings):
         if not re.match(r"^#[0-9a-fA-F]{6}$", v):
             raise ValueError("firm_primary_hex must be a 6-digit hex color like #2563eb")
         return v
+
+    @model_validator(mode="after")
+    def warn_insecure_defaults(self) -> Self:
+        if self.session_secret == "change-me-in-production":
+            logger.warning(
+                "Default session_secret is active; configure a deployment-specific secret"
+            )
+        if self.auditor_password == "admin":
+            logger.warning(
+                "Default auditor_password is active; configure a deployment-specific password"
+            )
+        return self
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
