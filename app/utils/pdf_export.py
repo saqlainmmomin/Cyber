@@ -8,9 +8,11 @@ Detailed findings go in the appendix for the compliance team.
 import json
 import math
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fpdf import FPDF
 
+from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.models.report import GapItem, GapReport
 from app.services.scoring import get_rating
@@ -27,6 +29,7 @@ LIGHT_TEXT = (140, 140, 140)
 CARD_BG = (248, 248, 252)
 DIVIDER = (220, 220, 220)
 WHITE = (255, 255, 255)
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Status colors
 STATUS_COLORS = {
@@ -87,6 +90,44 @@ def S(text: str) -> str:
     if not text:
         return ""
     return text.translate(_UNICODE_MAP).encode("latin-1", errors="replace").decode("latin-1")
+
+
+def _brand_rgb() -> tuple[int, int, int]:
+    """Convert the configured CSS-style primary color to an fpdf RGB tuple."""
+    value = settings.firm_primary_hex.removeprefix("#")
+    if len(value) != 6:
+        raise ValueError("FIRM_PRIMARY_HEX must be a six-digit hexadecimal color")
+    try:
+        return tuple(int(value[index:index + 2], 16) for index in (0, 2, 4))
+    except ValueError as exc:
+        raise ValueError("FIRM_PRIMARY_HEX must be a six-digit hexadecimal color") from exc
+
+
+def _firm_logo_path() -> Path | None:
+    """Resolve an operator-provisioned logo against the repository root."""
+    if not settings.firm_logo_path:
+        return None
+    logo_path = Path(settings.firm_logo_path).expanduser()
+    if not logo_path.is_absolute():
+        logo_path = REPO_ROOT / logo_path
+    return logo_path if logo_path.is_file() else None
+
+
+def _set_font_to_fit(
+    pdf: FPDF,
+    text: str,
+    max_width: float,
+    *,
+    style: str = "B",
+    start_size: int = 12,
+    min_size: int = 7,
+) -> None:
+    """Select the largest built-in font size that fits one line."""
+    for size in range(start_size, min_size - 1, -1):
+        pdf.set_font("Helvetica", style, size)
+        if pdf.get_string_width(S(text)) <= max_width:
+            return
+    pdf.set_font("Helvetica", style, min_size)
 
 
 def _rating_color(rating: str) -> tuple[int, int, int]:
@@ -430,7 +471,7 @@ def _page_footer(pdf: FPDF, company_name: str):
     pdf.set_y(-15)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(*LIGHT_TEXT)
-    pdf.cell(0, 5, text=S(f"CONFIDENTIAL  |  {company_name}  |  Compliance Gap Assessment"), align="L")
+    pdf.cell(0, 5, text=S(f"{settings.firm_name}  |  CONFIDENTIAL  |  {company_name}"), align="L")
     pdf.cell(0, 5, text=f"Page {pdf.page_no()}/{{nb}}", align="R")
 
 
@@ -440,7 +481,7 @@ def _page_header(pdf: FPDF, section_title: str):
     pdf.rect(0, 0, PW, 12, style="F")
     pdf.set_font("Helvetica", "B", 7)
     pdf.set_text_color(*WHITE)
-    pdf.text(PM, 8, S(section_title))
+    pdf.text(PM, 8, S(f"{settings.firm_name}  |  {section_title}"))
     pdf.set_y(16)
 
 
@@ -523,18 +564,33 @@ def generate_pdf(
     pdf.set_fill_color(*NAVY)
     pdf.rect(0, 0, PW, 55, style="F")
 
+    logo_path = _firm_logo_path()
+    if logo_path:
+        pdf.image(
+            logo_path,
+            x=PW - PM - 40,
+            y=7,
+            w=40,
+            h=20,
+            keep_aspect_ratio=True,
+        )
+
     # Title
+    firm_title_width = CW - 50 if logo_path else CW
+    _set_font_to_fit(pdf, settings.firm_name, firm_title_width)
+    pdf.set_text_color(*WHITE)
+    pdf.text(PM, 15, S(settings.firm_name))
     pdf.set_font("Helvetica", "B", 24)
     pdf.set_text_color(*WHITE)
-    pdf.text(PM, 22, S(cover_title))
+    pdf.text(PM, 28, S(cover_title))
     pdf.set_font("Helvetica", "", 24)
-    pdf.text(PM, 34, "Gap Assessment Report")
+    pdf.text(PM, 40, "Gap Assessment Report")
 
     # Date
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(180, 180, 210)
     date_str = datetime.now(timezone.utc).strftime("%B %d, %Y")
-    pdf.text(PM, 48, date_str)
+    pdf.text(PM, 50, date_str)
 
     # Company name
     pdf.set_font("Helvetica", "", 18)
@@ -542,8 +598,10 @@ def generate_pdf(
     pdf.text(PM, 75, S(company_name))
 
     # Divider line
-    pdf.set_draw_color(*DIVIDER)
+    pdf.set_draw_color(*_brand_rgb())
+    pdf.set_line_width(0.8)
     pdf.line(PM, 80, PW - PM, 80)
+    pdf.set_line_width(0.2)
 
     # Frameworks assessed (only worth spelling out beyond the title for multi-framework)
     if not dpdpa_only:
@@ -931,7 +989,7 @@ Recommended Follow-On Actions:
 For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by a qualified legal counsel or certified privacy professional is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.
 
 Confidentiality:
-This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. CyberAssess and the named organization are the intended recipients of this report."""
+This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. {settings.firm_name} and the named organization are the intended recipients of this report."""
 
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*DARK_TEXT)

@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
+ENABLED_ASSESSMENT_FRAMEWORKS = ("dpdpa", "iso27001", "nist_csf")
+ROADMAP_FRAMEWORKS = ("gdpr", "hipaa", "pci_dss")
+
 
 def _with_toast(response, message: str, toast_type: str = "success"):
     response.headers["X-Toast-Message"] = message
@@ -43,12 +46,7 @@ def _with_toast(response, message: str, toast_type: str = "success"):
 def _selected_framework_ids(assessment: Assessment) -> list[str]:
     """Resolve the assessment's selected framework ids. Legacy rows without a
     selection predate multi-framework support and default to DPDPA."""
-    if assessment.selected_frameworks:
-        try:
-            return json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
-    return ["dpdpa"]
+    return assessment.frameworks
 
 
 def _selected_framework_names(assessment: Assessment) -> list[str]:
@@ -65,13 +63,14 @@ def _framework_catalog() -> list[dict]:
     from app.frameworks.registry import FrameworkRegistry
 
     frameworks = []
-    for fw_id in sorted(FrameworkRegistry.all_ids()):
+    for fw_id in ENABLED_ASSESSMENT_FRAMEWORKS + ROADMAP_FRAMEWORKS:
         fw = FrameworkRegistry.get(fw_id)
         frameworks.append({
             "id": fw.id,
             "name": fw.name,
             "version": fw.version,
             "control_count": fw.control_count(),
+            "enabled": fw_id in ENABLED_ASSESSMENT_FRAMEWORKS,
         })
     return frameworks
 
@@ -99,6 +98,7 @@ def new_assessment_page(request: Request):
     )
 
 
+@router.post("/assessments", include_in_schema=False)
 @router.post("/assessments/new")
 async def create_assessment(
     request: Request,
@@ -111,7 +111,7 @@ async def create_assessment(
 ):
     # Extract multi-valued frameworks checkboxes from form
     form = await request.form()
-    selected_frameworks = form.getlist("frameworks")
+    selected_frameworks = form.getlist("selected_frameworks") or form.getlist("frameworks")
     if not selected_frameworks:
         return templates.TemplateResponse(
             "pages/new_assessment.html",
@@ -126,7 +126,25 @@ async def create_assessment(
                     "description": description,
                 },
             },
-            status_code=422,
+            status_code=400,
+        )
+
+    selected_frameworks = list(dict.fromkeys(selected_frameworks))
+    if any(fid not in ENABLED_ASSESSMENT_FRAMEWORKS for fid in selected_frameworks):
+        return templates.TemplateResponse(
+            "pages/new_assessment.html",
+            {
+                "request": request,
+                "frameworks": _framework_catalog(),
+                "error": "One or more selected frameworks are not available for assessment yet.",
+                "form_values": {
+                    "company_name": company_name,
+                    "industry": industry,
+                    "company_size": company_size,
+                    "description": description,
+                },
+            },
+            status_code=400,
         )
 
     assessment = Assessment(
@@ -140,6 +158,45 @@ async def create_assessment(
     db.commit()
     db.refresh(assessment)
     return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
+
+
+@router.get("/assessments/{assessment_id}/tab/{framework_id}", response_class=HTMLResponse)
+def framework_tab(
+    request: Request,
+    assessment_id: str,
+    framework_id: str,
+    db: Session = Depends(get_db),
+):
+    from app.frameworks.registry import FrameworkRegistry
+
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404, "Assessment not found")
+    if framework_id not in assessment.frameworks:
+        raise HTTPException(404, "Framework is not part of this assessment")
+    framework = FrameworkRegistry.get_or_none(framework_id)
+    if not framework:
+        raise HTTPException(404, "Framework not found")
+    report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+    finding_count = 0
+    if report:
+        finding_query = db.query(GapItem).filter(GapItem.report_id == report.id)
+        if framework_id == "dpdpa":
+            finding_query = finding_query.filter(
+                (GapItem.framework_id == framework_id) | (GapItem.framework_id.is_(None))
+            )
+        else:
+            finding_query = finding_query.filter(GapItem.framework_id == framework_id)
+        finding_count = finding_query.count()
+    return templates.TemplateResponse(
+        "partials/framework_panel.html",
+        {
+            "request": request,
+            "assessment": assessment,
+            "framework": framework,
+            "finding_count": finding_count,
+        },
+    )
 
 
 @router.get("/assessments/{assessment_id}", response_class=HTMLResponse)
@@ -186,13 +243,22 @@ def assessment_detail(
     scope_done = assessment.scope_answers is not None
     screening_done = assessment.screening_status == "completed"
 
-    # Default tab: scope if not yet scoped, else documents
-    if tab is None:
-        tab = "scope" if not scope_done else "documents"
-
     # Resolve selected frameworks early — needed by scope tab and display
     from app.frameworks.registry import FrameworkRegistry
     raw_fw_ids = _selected_framework_ids(assessment)
+    active_framework = request.query_params.get("framework")
+    if tab in raw_fw_ids:
+        active_framework = tab
+        tab = None
+    if active_framework not in raw_fw_ids:
+        active_framework = raw_fw_ids[0]
+    report_view_mode = request.query_params.get("view")
+    if report_view_mode not in ("combined", "per_framework"):
+        report_view_mode = "combined" if assessment.is_multi_framework else "per_framework"
+
+    # Default workflow tab: scope if not yet scoped, else documents
+    if tab is None:
+        tab = "scope" if not scope_done else "documents"
 
     # Build scope context for the scope tab
     scope_context: dict = {}
@@ -265,6 +331,17 @@ def assessment_detail(
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
             "selected_frameworks": selected_frameworks_info,
+            "active_framework": active_framework,
+            "report_view_mode": report_view_mode,
+            "active_framework_info": next(
+                fw for fw in selected_frameworks_info if fw["id"] == active_framework
+            ),
+            "active_framework_definition": FrameworkRegistry.get(active_framework),
+            "active_framework_finding_count": sum(
+                1 for item in gap_items
+                if item.framework_id == active_framework
+                or (active_framework == "dpdpa" and item.framework_id is None)
+            ),
             "timeline_steps": timeline_steps,
             **scope_context,
         },
@@ -1135,16 +1212,43 @@ def _compute_root_cause_counts(gap_items) -> dict:
 # --- Report view ---
 
 
-@router.get("/assessments/{assessment_id}/report-summary", response_class=HTMLResponse)
-def report_summary(
+@router.get("/assessments/{assessment_id}/report", response_class=HTMLResponse)
+def assessment_report_page(
     request: Request,
     assessment_id: str,
-
+    view: str | None = None,
     db: Session = Depends(get_db),
 ):
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
+    view_mode = view or ("combined" if assessment.is_multi_framework else "per_framework")
+    if view_mode not in ("combined", "per_framework"):
+        raise HTTPException(400, "view must be 'combined' or 'per_framework'")
+    is_htmx = request.headers.get("HX-Request", "").lower() == "true"
+    is_boosted = request.headers.get("HX-Boosted", "").lower() == "true"
+    if is_htmx and not is_boosted:
+        return report_summary(request, assessment_id, view_mode, db)
+    return assessment_detail(request, assessment_id, tab="report", db=db)
+
+
+@router.get("/assessments/{assessment_id}/report-summary", response_class=HTMLResponse)
+def report_summary(
+    request: Request,
+    assessment_id: str,
+    view: str | None = None,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+
+    view_mode = view or ("combined" if assessment.is_multi_framework else "per_framework")
+    if view_mode not in ("combined", "per_framework"):
+        raise HTTPException(400, "view must be 'combined' or 'per_framework'")
+    active_framework = request.query_params.get("framework")
+    if active_framework not in assessment.frameworks:
+        active_framework = assessment.frameworks[0]
 
     report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
     if not report:
@@ -1158,19 +1262,19 @@ def report_summary(
 
     # Determine if this is a multi-framework report
     framework_scores = None
-    is_multi_framework = False
+    is_multi_framework = assessment.is_multi_framework
     if report.framework_scores:
         try:
             framework_scores = json.loads(report.framework_scores)
-            is_multi_framework = len(framework_scores) > 1
         except (json.JSONDecodeError, TypeError):
             pass
 
     # Resolve framework names for multi-framework display
     framework_display = {}
-    if framework_scores:
-        from app.frameworks.registry import FrameworkRegistry
-        for fw_id, scores in framework_scores.items():
+    from app.frameworks.registry import FrameworkRegistry
+    for fw_id in assessment.frameworks:
+        scores = (framework_scores or {}).get(fw_id, {})
+        if scores or view_mode == "per_framework":
             fw = FrameworkRegistry.get_or_none(fw_id)
             framework_display[fw_id] = {
                 "name": fw.name if fw else fw_id.upper(),
@@ -1294,6 +1398,8 @@ def report_summary(
             "rfi": rfi,
             "is_multi_framework": is_multi_framework,
             "framework_display": framework_display,
+            "view_mode": view_mode,
+            "active_framework": active_framework,
             "has_dpdpa": has_dpdpa,
             "remediation_counts": remediation_counts,
             "comparable_assessments": comparable_assessments,

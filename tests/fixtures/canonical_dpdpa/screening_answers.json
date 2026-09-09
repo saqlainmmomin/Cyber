@@ -1,0 +1,11 @@
+{
+  "SD.ACCURACY": "Synthetic response for Data Accuracy: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.BREACH": "Synthetic response for Breach Notification: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.CONSENT": "Synthetic response for Consent Management: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.CROSSBORDER": "Synthetic response for Cross-Border Data Transfers: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.GOVERNANCE": "Synthetic response for Governance, SDF & Children's Data: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.NOTICE": "Synthetic response for Notice & Transparency: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.PURPOSE": "Synthetic response for Purpose Limitation & Data Minimization: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.RIGHTS": "Synthetic response for Data Subject Rights: a documented process exists but operating evidence and review cadence are incomplete.",
+  "SD.SECURITY": "Synthetic response for Data Security: a documented process exists but operating evidence and review cadence are incomplete."
+}

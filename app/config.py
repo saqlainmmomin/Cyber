@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     session_secret: str = "change-me-in-production"
     auditor_username: str = "admin"
     auditor_password: str = "admin"
+    firm_name: str = "CyberAssess"
+    firm_logo_path: str | None = None
+    firm_primary_hex: str = "#2563eb"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

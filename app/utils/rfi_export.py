@@ -11,10 +11,11 @@ from io import BytesIO
 
 from fpdf import FPDF
 
+from app.config import settings
 # Reuse palette and helpers from main PDF export
 from app.utils.pdf_export import (
     NAVY, DARK_TEXT, MID_TEXT, LIGHT_TEXT, WHITE, CARD_BG, DIVIDER,
-    PW, PM, CW, S,
+    PW, PM, CW, S, _brand_rgb,
 )
 
 # Priority colors for RFI
@@ -51,13 +52,18 @@ def generate_rfi_pdf(
     pdf.add_page()
     pdf.set_fill_color(*NAVY)
     pdf.rect(0, 0, PW, 60, style="F")
+    pdf.set_draw_color(*_brand_rgb())
+    pdf.set_line_width(1)
+    pdf.line(0, 61, PW, 61)
+    pdf.set_line_width(0.2)
 
     pdf.set_font("Helvetica", "B", 22)
     pdf.set_text_color(*WHITE)
     pdf.set_y(18)
-    pdf.cell(0, 10, text=S("Request for Information"), align="C")
-    pdf.ln(10)
+    pdf.set_x(PM)
+    pdf.multi_cell(CW, 8, text=S(f"{settings.firm_name} Request for Information"), align="C")
     pdf.set_font("Helvetica", "", 12)
+    pdf.set_x(PM)
     pdf.cell(0, 8, text=S(subtitle), align="C")
 
     pdf.set_y(70)
@@ -214,7 +220,7 @@ def _rfi_header(pdf: FPDF, section_title: str):
     pdf.rect(0, 0, PW, 12, style="F")
     pdf.set_font("Helvetica", "B", 7)
     pdf.set_text_color(*WHITE)
-    pdf.text(PM, 8, S(f"RFI | {section_title}"))
+    pdf.text(PM, 8, S(f"{settings.firm_name} | RFI | {section_title}"))
     pdf.set_y(16)
 
 
@@ -223,7 +229,7 @@ def _rfi_footer(pdf: FPDF, company_name: str):
     pdf.set_y(-15)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(*LIGHT_TEXT)
-    pdf.cell(0, 5, text=S(f"CONFIDENTIAL  |  RFI  |  {company_name}"), align="L")
+    pdf.cell(0, 5, text=S(f"{settings.firm_name}  |  CONFIDENTIAL  |  RFI  |  {company_name}"), align="L")
     pdf.cell(0, 5, text=f"Page {pdf.page_no()}/{{nb}}", align="R")
 
 
@@ -254,7 +260,7 @@ def generate_rfi_docx(
     style.font.size = Pt(10)
 
     # Title
-    title_p = doc.add_heading(title, level=0)
+    title_p = doc.add_heading(f"{settings.firm_name} — {title}", level=0)
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     # Metadata
@@ -341,6 +347,11 @@ def generate_rfi_docx(
     doc.add_paragraph(response_instructions)
 
     # Save to bytes
+    for section in doc.sections:
+        footer = section.footer.paragraphs[0]
+        footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        footer.add_run(f"{settings.firm_name}  |  CONFIDENTIAL  |  {company_name}")
+
     buffer = BytesIO()
     doc.save(buffer)
     return buffer.getvalue()

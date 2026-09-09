@@ -194,8 +194,13 @@
 {% endif %}
 
 
+<div data-view-mode="{{ view_mode }}" class="mb-4 flex justify-end gap-2 text-xs">
+  <a href="/assessments/{{ assessment_id }}/report?view=combined&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'combined' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Combined</a>
+  <a href="/assessments/{{ assessment_id }}/report?view=per_framework&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'per_framework' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Per framework</a>
+</div>
+
 <!-- ── C2. Per-Framework Scores (multi-framework only) ────────────────────── -->
-{% if is_multi_framework and framework_display %}
+{% if view_mode == 'per_framework' and framework_display %}
 <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
   <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Framework Scores</h3>
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ [framework_display | length, 4] | min }} gap-4">
