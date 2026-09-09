@@ -203,6 +203,15 @@ def _run_migrations(engine):
                     """
                 )
             )
+            conn.execute(
+                text(
+                    """
+                    UPDATE gap_items
+                    SET framework_id = 'dpdpa'
+                    WHERE framework_id IS NULL
+                    """
+                )
+            )
 
 
 def _register_frameworks():
@@ -223,11 +232,25 @@ def _register_frameworks():
     FrameworkRegistry.register(PCI_DSS_DEFINITION)
 
 
+def _assert_framework_catalog_complete() -> None:
+    """Fail startup when registered frameworks drift from the UI catalog."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    catalog_ids = set(web.ENABLED_ASSESSMENT_FRAMEWORKS) | set(web.ROADMAP_FRAMEWORKS)
+    registered_ids = set(FrameworkRegistry.all_ids())
+    assert catalog_ids == registered_ids, (
+        "Framework registry and UI catalog differ: "
+        f"missing_from_ui={sorted(registered_ids - catalog_ids)}, "
+        f"missing_from_registry={sorted(catalog_ids - registered_ids)}"
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _run_migrations(engine)
     _register_frameworks()
+    _assert_framework_catalog_complete()
     yield
 
 

@@ -180,14 +180,14 @@ def framework_tab(
     report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
     finding_count = 0
     if report:
-        finding_query = db.query(GapItem).filter(GapItem.report_id == report.id)
-        if framework_id == "dpdpa":
-            finding_query = finding_query.filter(
-                (GapItem.framework_id == framework_id) | (GapItem.framework_id.is_(None))
+        finding_count = (
+            db.query(GapItem)
+            .filter(
+                GapItem.report_id == report.id,
+                GapItem.framework_id == framework_id,
             )
-        else:
-            finding_query = finding_query.filter(GapItem.framework_id == framework_id)
-        finding_count = finding_query.count()
+            .count()
+        )
     return templates.TemplateResponse(
         "partials/framework_panel.html",
         {
@@ -341,7 +341,6 @@ def assessment_detail(
             "active_framework_finding_count": sum(
                 1 for item in gap_items
                 if item.framework_id == active_framework
-                or (active_framework == "dpdpa" and item.framework_id is None)
             ),
             "timeline_steps": timeline_steps,
             **scope_context,
