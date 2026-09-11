@@ -18,9 +18,11 @@ Results: `tasks/handoffs/2026-09-09-ws1-ws2-ws3-results.md`. Final suite 53 pass
 
 Source: `tasks/handoffs/2026-09-09-pr7-review-tech-debt.md`. Continue on `codex/ws1-ws2-ws3`; keep the fixes targeted and verify the integrated branch before handoff.
 
-- [ ] Assert the registered framework set matches the enabled and roadmap UI tuples.
-- [ ] Backfill legacy NULL gap-item framework IDs and remove presentation fallbacks.
-- [ ] Promote the PDF brand-color helper to a correctly typed public API.
-- [ ] Warn when shipped session or auditor credential defaults are active, if cleanly testable.
-- [ ] Run focused regression tests, the full suite, and a startup smoke check.
+- [x] Assert the registered framework set matches the enabled and roadmap UI tuples.
+- [x] Backfill legacy NULL gap-item framework IDs and remove presentation fallbacks.
+- [x] Promote the PDF brand-color helper to a correctly typed public API.
+- [x] Warn when shipped session or auditor credential defaults are active, if cleanly testable.
+- [x] Run focused regression tests, the full suite, and a startup smoke check.
 - [ ] Complete the standalone simplify/review/handoff gates.
+
+Verification: 57 tests passed. CyberAssess started against an isolated SQLite database, emitted both credential warnings, completed startup assertions/migrations, and returned HTTP 200 for `/assessments/new`.
