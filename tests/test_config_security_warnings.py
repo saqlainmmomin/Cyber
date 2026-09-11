@@ -3,7 +3,10 @@ import logging
 from app.config import Settings
 
 
-def test_settings_warn_when_shipped_credentials_are_active(caplog):
+def test_settings_warn_when_shipped_credentials_are_active(caplog, monkeypatch):
+    monkeypatch.delenv("SESSION_SECRET", raising=False)
+    monkeypatch.delenv("AUDITOR_PASSWORD", raising=False)
+
     with caplog.at_level(logging.WARNING, logger="app.config"):
         Settings(_env_file=None)
 

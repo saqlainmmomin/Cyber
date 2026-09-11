@@ -236,7 +236,28 @@ def _assert_framework_catalog_complete() -> None:
     """Fail startup when registered frameworks drift from the UI catalog."""
     from app.frameworks.registry import FrameworkRegistry
 
-    catalog_ids = set(web.ENABLED_ASSESSMENT_FRAMEWORKS) | set(web.ROADMAP_FRAMEWORKS)
+    enabled_ids = web.ENABLED_ASSESSMENT_FRAMEWORKS
+    roadmap_ids = web.ROADMAP_FRAMEWORKS
+    duplicate_enabled = sorted(
+        framework_id
+        for framework_id in set(enabled_ids)
+        if enabled_ids.count(framework_id) > 1
+    )
+    duplicate_roadmap = sorted(
+        framework_id
+        for framework_id in set(roadmap_ids)
+        if roadmap_ids.count(framework_id) > 1
+    )
+    catalog_overlap = sorted(set(enabled_ids) & set(roadmap_ids))
+    if duplicate_enabled or duplicate_roadmap or catalog_overlap:
+        raise RuntimeError(
+            "Framework UI catalog contains duplicate or conflicting entries: "
+            f"duplicates_in_enabled={duplicate_enabled}, "
+            f"duplicates_in_roadmap={duplicate_roadmap}, "
+            f"enabled_roadmap_overlap={catalog_overlap}"
+        )
+
+    catalog_ids = set(enabled_ids) | set(roadmap_ids)
     registered_ids = set(FrameworkRegistry.all_ids())
     if catalog_ids != registered_ids:
         raise RuntimeError(
@@ -249,9 +270,9 @@ def _assert_framework_catalog_complete() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    _run_migrations(engine)
     _register_frameworks()
     _assert_framework_catalog_complete()
+    _run_migrations(engine)
     yield
 
 

@@ -23,6 +23,6 @@ Source: `tasks/handoffs/2026-09-09-pr7-review-tech-debt.md`. Continue on `codex/
 - [x] Promote the PDF brand-color helper to a correctly typed public API.
 - [x] Warn when shipped session or auditor credential defaults are active, if cleanly testable.
 - [x] Run focused regression tests, the full suite, and a startup smoke check.
-- [ ] Complete the standalone simplify/review/handoff gates.
+- [x] Complete the standalone simplify/review/handoff gates.
 
-Verification: 57 tests passed. CyberAssess started against an isolated SQLite database, emitted both credential warnings, completed startup assertions/migrations, and returned HTTP 200 for `/assessments/new`.
+Verification: 62 tests passed after applying all three validated review findings. CyberAssess started against an isolated SQLite database with the final startup order, emitted both credential warnings, completed startup assertions/migrations, and returned HTTP 200 for `/assessments/new`.

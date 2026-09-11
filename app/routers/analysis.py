@@ -284,6 +284,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         item = GapItem(
             report_id=report.id,
             requirement_id=req_id,
+            framework_id="dpdpa",
             chapter=_REQ_CHAPTERS.get(req_id, "unknown"),
             requirement_title=_REQ_TITLES.get(req_id, req_id),
             compliance_status=a["compliance_status"],
