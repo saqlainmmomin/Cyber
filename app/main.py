@@ -206,6 +206,14 @@ def _run_migrations(engine):
             conn.execute(
                 text(
                     """
+                    CREATE INDEX IF NOT EXISTS ix_gap_items_null_framework_id
+                    ON gap_items (id) WHERE framework_id IS NULL
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
                     UPDATE gap_items
                     SET framework_id = 'dpdpa'
                     WHERE framework_id IS NULL
