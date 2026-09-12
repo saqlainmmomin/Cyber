@@ -24,6 +24,34 @@ from app.dpdpa.prompts import (
 logger = logging.getLogger(__name__)
 
 
+def _usage_dict(usage) -> dict[str, int]:
+    """Normalize Anthropic usage objects at the single call boundary."""
+    return {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+        "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+    }
+
+
+def _call_claude(*, stream: bool = False, **request) -> dict:
+    """Make one Claude request and return a recording-friendly plain dict.
+
+    Golden tests patch this boundary. Keeping SDK objects behind the boundary
+    makes recordings deterministic and guarantees an uncached replay cannot
+    accidentally reach the network.
+    """
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    if stream:
+        with client.messages.stream(**request) as response_stream:
+            text = response_stream.get_final_text()
+            message = response_stream.get_final_message()
+    else:
+        message = client.messages.create(**request)
+        text = message.content[0].text
+    return {"text": text, "usage": _usage_dict(message.usage)}
+
+
 def run_gap_analysis(
     company_name: str,
     industry: str,
@@ -46,7 +74,6 @@ def run_gap_analysis(
         Dict with "parsed" (structured assessment) and "raw" (Claude's text),
         plus "usage" with token stats including cache info.
     """
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     truncated_docs = _truncate_documents(documents)
 
     # Call 1: Evidence extraction — skip if desk review already extracted evidence.
@@ -63,7 +90,7 @@ def run_gap_analysis(
             )
         else:
             desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
-            evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
+            evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
 
     # Call 2: Gap analysis with cached system prompt
     system_blocks = build_system_prompt()
@@ -80,7 +107,7 @@ def run_gap_analysis(
         applicable_requirements=applicable_requirements,
     )
 
-    message = client.messages.create(
+    response = _call_claude(
         model=settings.claude_model,
         max_tokens=16384,
         temperature=0,
@@ -88,16 +115,16 @@ def run_gap_analysis(
         messages=[{"role": "user", "content": user_prompt}],
     )
 
-    raw_text = message.content[0].text
+    raw_text = response["text"]
     parsed = _parse_json_response(raw_text)
 
     # Log cache stats
-    usage = message.usage
-    cache_read = getattr(usage, "cache_read_input_tokens", 0)
-    cache_create = getattr(usage, "cache_creation_input_tokens", 0)
+    usage = response["usage"]
+    cache_read = usage["cache_read_input_tokens"]
+    cache_create = usage["cache_creation_input_tokens"]
     logger.info(
-        f"Gap analysis tokens — input: {usage.input_tokens}, "
-        f"output: {usage.output_tokens}, "
+        f"Gap analysis tokens — input: {usage['input_tokens']}, "
+        f"output: {usage['output_tokens']}, "
         f"cache_read: {cache_read}, cache_create: {cache_create}"
     )
 
@@ -105,8 +132,8 @@ def run_gap_analysis(
         "parsed": parsed,
         "raw": raw_text,
         "usage": {
-            "input_tokens": usage.input_tokens,
-            "output_tokens": usage.output_tokens,
+            "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"],
             "cache_read_input_tokens": cache_read,
             "cache_creation_input_tokens": cache_create,
         },
@@ -135,7 +162,6 @@ def _evidence_from_desk_review(desk_review_data: dict | None) -> dict | None:
 
 
 def _run_evidence_extraction(
-    client: anthropic.Anthropic,
     documents: list[dict],
     desk_review_findings: list[dict] | None = None,
 ) -> dict | None:
@@ -147,7 +173,7 @@ def _run_evidence_extraction(
     prompt = build_evidence_extraction_prompt(documents, desk_review_findings)
 
     try:
-        message = client.messages.create(
+        response = _call_claude(
             model=settings.claude_model,
             max_tokens=8192,
             temperature=0,
@@ -155,7 +181,7 @@ def _run_evidence_extraction(
             messages=[{"role": "user", "content": prompt}],
         )
 
-        raw = message.content[0].text
+        raw = response["text"]
         parsed = _parse_json_response(raw)
         evidence = parsed.get("evidence", {})
 
@@ -242,7 +268,6 @@ def run_multi_framework_analysis(
         build_synthesis_system_prompt,
     )
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     truncated_docs = _truncate_documents(documents)
 
     # Step 1: Evidence extraction (reuse desk review if available)
@@ -254,7 +279,7 @@ def run_multi_framework_analysis(
             logger.info(f"Reusing desk review evidence ({len(dr_evidence)} requirements)")
         else:
             desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
-            evidence = _run_evidence_extraction(client, truncated_docs, desk_review_findings)
+            evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
 
     # Step 2: Per-framework gap analysis
     framework_results: dict[str, dict] = {}
@@ -280,41 +305,41 @@ def run_multi_framework_analysis(
 
             # Use streaming to avoid server disconnects on large responses
             # (per-framework prompts with 90+ controls can produce ~50KB responses)
-            with client.messages.stream(
+            response = _call_claude(
+                stream=True,
                 model=settings.claude_model,
                 max_tokens=16384,
                 temperature=0,
                 system=system_blocks,
                 messages=[{"role": "user", "content": user_prompt}],
-            ) as stream:
-                raw_text = stream.get_final_text()
-                message = stream.get_final_message()
+            )
+            raw_text = response["text"]
 
             parsed = _parse_json_response(raw_text)
 
-            usage = message.usage
-            cache_read = getattr(usage, "cache_read_input_tokens", 0)
-            cache_create = getattr(usage, "cache_creation_input_tokens", 0)
+            usage = response["usage"]
+            cache_read = usage["cache_read_input_tokens"]
+            cache_create = usage["cache_creation_input_tokens"]
 
             framework_results[fw_id] = {
                 "parsed": parsed,
                 "raw": raw_text,
                 "usage": {
-                    "input_tokens": usage.input_tokens,
-                    "output_tokens": usage.output_tokens,
+                    "input_tokens": usage["input_tokens"],
+                    "output_tokens": usage["output_tokens"],
                     "cache_read_input_tokens": cache_read,
                     "cache_creation_input_tokens": cache_create,
                 },
             }
 
-            total_usage["input_tokens"] += usage.input_tokens
-            total_usage["output_tokens"] += usage.output_tokens
+            total_usage["input_tokens"] += usage["input_tokens"]
+            total_usage["output_tokens"] += usage["output_tokens"]
             total_usage["cache_read_input_tokens"] += cache_read
             total_usage["cache_creation_input_tokens"] += cache_create
 
             logger.info(
-                f"{fw_id} analysis complete — input: {usage.input_tokens}, "
-                f"output: {usage.output_tokens}, cache_read: {cache_read}"
+                f"{fw_id} analysis complete — input: {usage['input_tokens']}, "
+                f"output: {usage['output_tokens']}, cache_read: {cache_read}"
             )
 
         except Exception as e:
@@ -338,23 +363,23 @@ def run_multi_framework_analysis(
             synthesis_prompt = build_synthesis_prompt(per_fw_parsed, company_name, industry)
             synthesis_system = build_synthesis_system_prompt()
 
-            with client.messages.stream(
+            response = _call_claude(
+                stream=True,
                 model=settings.claude_model,
                 max_tokens=4096,
                 temperature=0,
                 system=synthesis_system,
                 messages=[{"role": "user", "content": synthesis_prompt}],
-            ) as stream:
-                raw_text = stream.get_final_text()
-                message = stream.get_final_message()
+            )
+            raw_text = response["text"]
 
             synthesis = {
                 "parsed": _parse_json_response(raw_text),
                 "raw": raw_text,
             }
 
-            total_usage["input_tokens"] += message.usage.input_tokens
-            total_usage["output_tokens"] += message.usage.output_tokens
+            total_usage["input_tokens"] += response["usage"]["input_tokens"]
+            total_usage["output_tokens"] += response["usage"]["output_tokens"]
             logger.info("Cross-framework synthesis complete")
 
         except Exception as e:

@@ -8,7 +8,9 @@ Also handles root cause clustering and initiative generation (post-analysis).
 import json
 import logging
 
+from app.database import SessionLocal
 from app.dpdpa.framework import DPDPA_FRAMEWORK, ROOT_CAUSE_CLUSTERS, get_all_requirements
+from app.schemas.scoring import ScoringResult
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,190 @@ RATING_THRESHOLDS = [
     (40, "Needs Significant Improvement"),
     (0, "Non-Compliant"),
 ]
+
+MATURITY_STATUS_SCORES = {
+    "not_implemented": 0.0,
+    "partial": 2.5,
+    "implemented": 5.0,
+    "not_applicable": 5.0,
+    "unknown": 0.0,
+}
+
+_LEGACY_TO_MATURITY_STATUS = {
+    "non_compliant": "not_implemented",
+    "partially_compliant": "partial",
+    "compliant": "implemented",
+    "not_applicable": "not_applicable",
+    "not_assessed": "unknown",
+}
+
+
+def _maturity_rating(score: float) -> str:
+    return f"M{max(0, min(5, round(score)))}"
+
+
+def _build_cluster_verdicts(items: list) -> tuple[dict, dict[str, str]]:
+    """Collapse legacy control rows to one deterministic verdict per cluster."""
+    from app.schemas.scoring import ClusterVerdict
+
+    status_rank = {
+        "unknown": 0,
+        "not_implemented": 1,
+        "partial": 2,
+        "implemented": 3,
+        "not_applicable": 4,
+    }
+    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
+
+    grouped: dict[str, list] = {}
+    control_clusters: dict[str, str] = {}
+    for cluster in CONTROL_CLUSTERS:
+        for member in cluster["controls"]:
+            if member["framework"] == "dpdpa":
+                control_clusters[member["control"]] = cluster["cluster_id"]
+    for item in items:
+        cluster_id = (
+            item.cluster_id
+            or control_clusters.get(item.requirement_id)
+            or f"SINGLE.{item.requirement_id}"
+        )
+        grouped.setdefault(cluster_id, []).append(item)
+        control_clusters[item.requirement_id] = cluster_id
+
+    verdicts = {}
+    for cluster_id, cluster_items in grouped.items():
+        statuses = [
+            _LEGACY_TO_MATURITY_STATUS.get(item.compliance_status, "unknown")
+            for item in cluster_items
+        ]
+        applicable = [
+            status for status in statuses
+            if status not in ("not_applicable", "unknown")
+        ]
+        if applicable:
+            status = min(applicable, key=status_rank.get)
+        elif statuses and all(status == "not_applicable" for status in statuses):
+            status = "not_applicable"
+        else:
+            status = "unknown"
+        reasoning_parts = []
+        for item in cluster_items:
+            reasoning = item.gap_description or item.current_state or "No reasoning recorded."
+            if reasoning not in reasoning_parts:
+                reasoning_parts.append(reasoning)
+        verdicts[cluster_id] = ClusterVerdict(
+            cluster_id=cluster_id,
+            status=status,
+            score=MATURITY_STATUS_SCORES[status],
+            reasoning=" ".join(reasoning_parts),
+            evidence_ids=[],
+        )
+    return verdicts, control_clusters
+
+
+def _derive_dpdpa_score(cluster_verdicts: dict, control_clusters: dict[str, str]):
+    from app.frameworks.registry import FrameworkRegistry
+    from app.schemas.scoring import FrameworkScore
+
+    framework = FrameworkRegistry.get("dpdpa")
+    legacy_status = {
+        "not_implemented": "non_compliant",
+        "partial": "partially_compliant",
+        "implemented": "compliant",
+    }
+    propagated = []
+    covered_controls = 0
+    contributing_clusters: set[str] = set()
+    for control in framework.all_controls():
+        cluster_id = control_clusters.get(control.id)
+        verdict = cluster_verdicts.get(cluster_id) if cluster_id else None
+        if verdict is None:
+            continue
+        covered_controls += 1
+        contributing_clusters.add(cluster_id)
+        if verdict.status not in legacy_status:
+            continue
+        propagated.append({
+            "requirement_id": control.id,
+            "compliance_status": legacy_status[verdict.status],
+        })
+
+    legacy_score = compute_scores(propagated)
+    overall_score = round(legacy_score["overall_score"] / 20, 2)
+    domain_scores = {
+        key: round(value["score"] / 20, 2)
+        for key, value in legacy_score["chapter_scores"].items()
+        if value["applicable"]
+    }
+    return FrameworkScore(
+        framework_id="dpdpa",
+        overall_score=overall_score,
+        overall_rating=_maturity_rating(overall_score),
+        by_domain=domain_scores,
+        control_count=framework.control_count(),
+        covered_control_count=covered_controls,
+        contributing_clusters=sorted(contributing_clusters),
+    )
+
+
+def score(
+    assessment_id: str | int,
+    framework_ids: list[str],
+    *,
+    _session=None,
+) -> ScoringResult:
+    """Return the cluster-first scoring contract for the legacy DPDPA path.
+
+    ISO 27001 and NIST CSF remain deliberately unsupported here until their
+    analyzer output is cluster-backed. Existing percentage scoring functions
+    below retain their public behavior for current callers.
+    """
+    from app.models.assessment import Assessment
+    from app.models.report import GapItem, GapReport
+    from app.schemas.scoring import CombinedScore
+
+    if framework_ids != ["dpdpa"]:
+        raise NotImplementedError(
+            "Cluster-backed scoring is currently available only for DPDPA-only assessments"
+        )
+
+    owns_session = _session is None
+    db = _session or SessionLocal()
+    try:
+        assessment = db.get(Assessment, str(assessment_id))
+        if assessment is None:
+            raise ValueError(f"Assessment {assessment_id!r} does not exist")
+        if assessment.frameworks != ["dpdpa"]:
+            raise ValueError("Assessment is not configured as DPDPA-only")
+        report = (
+            db.query(GapReport)
+            .filter(GapReport.assessment_id == str(assessment_id))
+            .first()
+        )
+        items = (
+            db.query(GapItem).filter(GapItem.report_id == report.id).all()
+            if report
+            else []
+        )
+    finally:
+        if owns_session:
+            db.close()
+
+    cluster_verdicts, control_clusters = _build_cluster_verdicts(items)
+    framework_score = _derive_dpdpa_score(cluster_verdicts, control_clusters)
+    per_framework = {"dpdpa": framework_score}
+    combined = CombinedScore(
+        overall_score=framework_score.overall_score,
+        overall_rating=framework_score.overall_rating,
+        by_framework=per_framework,
+        unique_clusters=len(cluster_verdicts),
+        total_controls_evaluated=framework_score.covered_control_count,
+    )
+    return ScoringResult(
+        per_framework=per_framework,
+        combined=combined,
+        cluster_verdicts=cluster_verdicts,
+    )
 
 
 def compute_delta(current_items: list, previous_items: list) -> dict:

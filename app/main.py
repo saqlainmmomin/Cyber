@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 from starlette.middleware.sessions import SessionMiddleware
@@ -14,6 +15,14 @@ import app.models  # noqa: F401 — ensure all models registered before create_a
 from app.routers import analysis, assessments, desk_review, documents, questionnaire, remediation, reports, review, web
 
 logger = logging.getLogger(__name__)
+
+# Expose only branding fields to templates — never the full Settings object
+# (which contains anthropic_api_key, session_secret, auditor_password).
+web.templates.env.globals["branding"] = {
+    "firm_name": settings.firm_name,
+    "firm_primary_hex": settings.firm_primary_hex,
+    "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
+}
 
 APP_DIR = Path(__file__).resolve().parent
 VALID_QUESTIONNAIRE_ANSWERS = (
@@ -194,6 +203,23 @@ def _run_migrations(engine):
                     """
                 )
             )
+            conn.execute(
+                text(
+                    """
+                    CREATE INDEX IF NOT EXISTS ix_gap_items_null_framework_id
+                    ON gap_items (id) WHERE framework_id IS NULL
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE gap_items
+                    SET framework_id = 'dpdpa'
+                    WHERE framework_id IS NULL
+                    """
+                )
+            )
 
 
 def _register_frameworks():
@@ -214,16 +240,52 @@ def _register_frameworks():
     FrameworkRegistry.register(PCI_DSS_DEFINITION)
 
 
+def _assert_framework_catalog_complete() -> None:
+    """Fail startup when registered frameworks drift from the UI catalog."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    enabled_ids = web.ENABLED_ASSESSMENT_FRAMEWORKS
+    roadmap_ids = web.ROADMAP_FRAMEWORKS
+    duplicate_enabled = sorted(
+        framework_id
+        for framework_id in set(enabled_ids)
+        if enabled_ids.count(framework_id) > 1
+    )
+    duplicate_roadmap = sorted(
+        framework_id
+        for framework_id in set(roadmap_ids)
+        if roadmap_ids.count(framework_id) > 1
+    )
+    catalog_overlap = sorted(set(enabled_ids) & set(roadmap_ids))
+    if duplicate_enabled or duplicate_roadmap or catalog_overlap:
+        raise RuntimeError(
+            "Framework UI catalog contains duplicate or conflicting entries: "
+            f"duplicates_in_enabled={duplicate_enabled}, "
+            f"duplicates_in_roadmap={duplicate_roadmap}, "
+            f"enabled_roadmap_overlap={catalog_overlap}"
+        )
+
+    catalog_ids = set(enabled_ids) | set(roadmap_ids)
+    registered_ids = set(FrameworkRegistry.all_ids())
+    if catalog_ids != registered_ids:
+        raise RuntimeError(
+            "Framework registry and UI catalog differ: "
+            f"missing_from_ui={sorted(registered_ids - catalog_ids)}, "
+            f"missing_from_registry={sorted(catalog_ids - registered_ids)}"
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    _run_migrations(engine)
     _register_frameworks()
+    _assert_framework_catalog_complete()
+    _run_migrations(engine)
     yield
 
 
 app = FastAPI(
-    title="CyberAssess",
+    title=settings.firm_name,
     description="AI-powered multi-framework compliance maturity assessment platform (DPDPA, ISO 27001, GDPR, HIPAA, NIST CSF, PCI-DSS)",
     version="0.1.0",
     lifespan=lifespan,
@@ -253,6 +315,12 @@ app.include_router(review.router)
 
 # Web portal routes
 app.include_router(web.router)
+
+
+@app.get("/login", include_in_schema=False)
+def login(request: Request):
+    """Keep legacy entry links working for the current no-auth deployment."""
+    return RedirectResponse(url=request.url_for("dashboard"), status_code=307)
 
 
 @app.get("/health")

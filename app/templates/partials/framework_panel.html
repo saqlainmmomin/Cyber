@@ -1,0 +1,20 @@
+<div class="rounded-b-lg border border-t-0 border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="font-semibold text-gray-900">{{ framework.name }} {{ framework.version }}</p>
+      <p>{{ framework.control_count() }} controls across {{ framework.domains | length }} domains{% if finding_count %} · {{ finding_count }} report findings{% endif %}</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="/assessments/{{ assessment.id }}?tab=questionnaire&amp;framework={{ framework.id }}" class="font-medium text-brand hover:underline">Questionnaire</a>
+      <a href="/assessments/{{ assessment.id }}?tab=report&amp;framework={{ framework.id }}" class="font-medium text-brand hover:underline">Report</a>
+    </div>
+  </div>
+  <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    {% for domain in framework.domains.values() %}
+    <div class="rounded border border-gray-200 bg-white px-3 py-2">
+      <p class="font-medium text-gray-800">{{ domain.title }}</p>
+      <p class="text-xs text-gray-500">{{ domain.sections.values() | map(attribute='controls') | map('length') | sum }} controls</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>

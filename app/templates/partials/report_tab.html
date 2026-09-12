@@ -1,6 +1,6 @@
 {% if report %}
 <div id="report-content"
-     hx-get="/assessments/{{ assessment.id }}/report-summary"
+     hx-get="/assessments/{{ assessment.id }}/report-summary?view={{ report_view_mode }}&amp;framework={{ active_framework }}"
      hx-trigger="load"
      hx-swap="innerHTML">
   <div class="flex items-center justify-center py-8">
