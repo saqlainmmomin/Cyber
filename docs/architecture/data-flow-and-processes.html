@@ -1,0 +1,1173 @@
+<title>CyberAssess Field Manual</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#F2F3EF;
+    --surface:#FFFFFF;
+    --surface-2:#EAECE7;
+    --ink:#1A1F1C;
+    --ink-muted:#5B655F;
+    --ink-faint:#8A938C;
+    --line:#D6DAD3;
+    --line-strong:#B9C0B7;
+    --accent:#2F6F5E;
+    --accent-ink:#F2F3EF;
+    --accent-soft:#DEE9E3;
+    --flag:#B5502D;
+    --flag-soft:#F2E2D8;
+    --sev-critical:#C1442B;
+    --sev-high:#CC7A2E;
+    --sev-medium:#B79424;
+    --sev-low:#3F8F6B;
+    --sev-neutral:#8A938C;
+    --code-bg:#E7E9E3;
+    --shadow:0 1px 2px rgba(20,25,20,.06),0 6px 20px -8px rgba(20,25,20,.12);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121613;
+      --surface:#181D19;
+      --surface-2:#1F2521;
+      --ink:#E8ECE6;
+      --ink-muted:#9DA79E;
+      --ink-faint:#6D766F;
+      --line:#2A3129;
+      --line-strong:#3A4339;
+      --accent:#69B79B;
+      --accent-ink:#0C130F;
+      --accent-soft:#1D2C26;
+      --flag:#E3936A;
+      --flag-soft:#2E241C;
+      --sev-critical:#E06A50;
+      --sev-high:#E3A25C;
+      --sev-medium:#D4BB55;
+      --sev-low:#5FB491;
+      --sev-neutral:#6D766F;
+      --code-bg:#1F2521;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121613;
+    --surface:#181D19;
+    --surface-2:#1F2521;
+    --ink:#E8ECE6;
+    --ink-muted:#9DA79E;
+    --ink-faint:#6D766F;
+    --line:#2A3129;
+    --line-strong:#3A4339;
+    --accent:#69B79B;
+    --accent-ink:#0C130F;
+    --accent-soft:#1D2C26;
+    --flag:#E3936A;
+    --flag-soft:#2E241C;
+    --sev-critical:#E06A50;
+    --sev-high:#E3A25C;
+    --sev-medium:#D4BB55;
+    --sev-low:#5FB491;
+    --sev-neutral:#6D766F;
+    --code-bg:#1F2521;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+  }
+  h1,h2,h3,h4{
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    font-weight:700;
+    text-wrap:balance;
+    margin:0 0 .5em 0;
+    color:var(--ink);
+  }
+  p{margin:0 0 1em 0;}
+  a{color:var(--accent);}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+
+  .cite{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem;
+    color:var(--ink-muted);
+    background:var(--code-bg);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:.05em .4em;
+    white-space:nowrap;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:.5em;
+    margin-bottom:.6em;
+  }
+  .eyebrow .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:1.6em;height:1.6em;
+    border:1px solid var(--accent);
+    border-radius:3px;
+    color:var(--accent);
+    font-size:.9em;
+  }
+
+  /* ---------- layout ---------- */
+  .frame{
+    display:grid;
+    grid-template-columns: 250px minmax(0,1fr);
+    min-height:100vh;
+  }
+  nav.rail{
+    position:sticky; top:0; align-self:start;
+    height:100vh; overflow-y:auto;
+    border-right:1px solid var(--line);
+    background:var(--surface);
+    padding:1.4rem 1.1rem 2rem;
+  }
+  nav.rail .brand{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:.95rem;
+    letter-spacing:.02em;
+    margin-bottom:.15rem;
+  }
+  nav.rail .brand span{color:var(--accent);}
+  nav.rail .sub{
+    font-size:.72rem;color:var(--ink-faint);
+    margin-bottom:1.4rem;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  nav.rail ol{list-style:none;margin:0;padding:0;}
+  nav.rail li{margin:0;}
+  nav.rail a{
+    display:flex; gap:.55em; align-items:baseline;
+    text-decoration:none;
+    color:var(--ink-muted);
+    font-size:.82rem;
+    padding:.4em .5em;
+    border-radius:4px;
+    border-left:2px solid transparent;
+  }
+  nav.rail a .n{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem;
+    color:var(--ink-faint);
+    min-width:1.4em;
+  }
+  nav.rail a:hover{background:var(--surface-2); color:var(--ink);}
+  nav.rail a.active{
+    color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft);
+  }
+  nav.rail a.active .n{color:var(--accent);}
+  nav.rail .gaps-link{
+    margin-top:1rem; padding-top:1rem; border-top:1px solid var(--line);
+  }
+  nav.rail .gaps-link a{color:var(--flag);}
+  nav.rail .gaps-link a .n{color:var(--flag);}
+
+  main{padding:2.6rem 3rem 6rem; min-width:0;}
+  .wrap{max-width:900px; margin:0 auto;}
+  .prose{max-width:66ch;}
+  .prose p, .prose li{color:var(--ink-muted);}
+
+  header.hero{margin-bottom:2.6rem;}
+  header.hero h1{font-size:2.4rem; margin-bottom:.3rem;}
+  header.hero .dek{font-size:1.05rem; color:var(--ink-muted); max-width:60ch; margin-bottom:1.6rem;}
+  header.hero .meta{
+    display:flex; gap:1.2rem; flex-wrap:wrap;
+    font-family:'IBM Plex Mono',monospace; font-size:.75rem; color:var(--ink-faint);
+    border-top:1px solid var(--line); padding-top:1rem;
+  }
+
+  .stat-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:8px;
+    overflow:hidden; margin:1.8rem 0 2.4rem;
+  }
+  .stat{
+    background:var(--surface); padding:1rem 1.1rem;
+  }
+  .stat .v{font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:600; color:var(--accent);}
+  .stat .l{font-size:.72rem; color:var(--ink-muted); margin-top:.15rem;}
+
+  section.part{
+    padding:3rem 0; border-top:1px solid var(--line);
+    scroll-margin-top:1.5rem;
+  }
+  section.part:first-of-type{border-top:none;}
+  section.part h2{font-size:1.55rem;}
+
+  figure{margin:1.6rem 0 1.8rem; padding:0;}
+  figure .frame-box{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:1.2rem 1rem; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  figure svg{display:block; margin:0 auto; max-width:100%; height:auto;}
+  figcaption{
+    font-size:.82rem; color:var(--ink-muted); margin-top:.7rem;
+    padding-left:.2rem; border-left:2px solid var(--line-strong);
+    padding-left:.7rem;
+  }
+
+  table{width:100%; border-collapse:collapse; margin:1.2rem 0; font-size:.88rem;}
+  caption{text-align:left; font-size:.78rem; color:var(--ink-faint); margin-bottom:.4rem; font-family:'IBM Plex Mono',monospace;}
+  th,td{text-align:left; padding:.55em .7em; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:'IBM Plex Mono',monospace; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); font-weight:600;}
+  td{color:var(--ink-muted);}
+  tr:last-child td{border-bottom:none;}
+  .tbl-wrap{overflow-x:auto;}
+
+  .chip{
+    display:inline-flex; align-items:center; gap:.4em;
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600;
+    padding:.15em .55em; border-radius:99px; white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .chip .dot{width:.5em;height:.5em;border-radius:50%; background:currentColor;}
+  .chip.critical{color:var(--sev-critical); background:color-mix(in srgb, var(--sev-critical) 14%, transparent); border-color:color-mix(in srgb, var(--sev-critical) 35%, transparent);}
+  .chip.high{color:var(--sev-high); background:color-mix(in srgb, var(--sev-high) 14%, transparent); border-color:color-mix(in srgb, var(--sev-high) 35%, transparent);}
+  .chip.medium{color:var(--sev-medium); background:color-mix(in srgb, var(--sev-medium) 16%, transparent); border-color:color-mix(in srgb, var(--sev-medium) 35%, transparent);}
+  .chip.low{color:var(--sev-low); background:color-mix(in srgb, var(--sev-low) 14%, transparent); border-color:color-mix(in srgb, var(--sev-low) 35%, transparent);}
+  .chip.neutral{color:var(--ink-muted); background:var(--surface-2); border-color:var(--line-strong); border-style:dashed;}
+
+  .callout{
+    display:flex; gap:.8em; padding:1rem 1.1rem; border-radius:8px;
+    background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    margin:1.3rem 0; font-size:.9rem;
+  }
+  .callout .ico{color:var(--accent); font-family:'IBM Plex Mono',monospace; font-weight:700;}
+  .callout p{margin:0; color:var(--ink);}
+  .callout.warn{background:var(--flag-soft); border-color:color-mix(in srgb, var(--flag) 40%, transparent);}
+  .callout.warn .ico{color:var(--flag);}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:1.4rem;}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:1.1rem 1.2rem; box-shadow:var(--shadow);
+  }
+  .card h4{font-size:.95rem; margin-bottom:.4rem;}
+  .card p{font-size:.85rem; margin-bottom:.5em;}
+
+  .step-list{list-style:none; margin:1.2rem 0; padding:0; counter-reset:step;}
+  .step-list li{
+    counter-increment:step;
+    position:relative; padding:0 0 1.1rem 2.4rem; font-size:.92rem; color:var(--ink-muted);
+    border-left:1px solid var(--line); margin-left:.6rem;
+  }
+  .step-list li:last-child{border-left-color:transparent; padding-bottom:0;}
+  .step-list li::before{
+    content:counter(step);
+    position:absolute; left:-.65rem; top:0;
+    width:1.3rem; height:1.3rem; border-radius:50%;
+    background:var(--surface); border:1px solid var(--accent); color:var(--accent);
+    font-family:'IBM Plex Mono',monospace; font-size:.7rem; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-list strong{color:var(--ink);}
+
+  .gap-item{
+    display:grid; grid-template-columns:2.4rem 1fr; gap:1rem;
+    padding:1.1rem 0; border-bottom:1px solid var(--line);
+  }
+  .gap-item:last-child{border-bottom:none;}
+  .gap-item .gn{
+    font-family:'IBM Plex Mono',monospace; color:var(--flag); font-weight:700; font-size:1rem;
+  }
+  .gap-item h4{font-size:.95rem; margin-bottom:.3rem;}
+  .gap-item p{font-size:.87rem; margin:0; color:var(--ink-muted);}
+
+  footer.end{
+    margin-top:3rem; padding-top:1.6rem; border-top:1px solid var(--line);
+    font-size:.78rem; color:var(--ink-faint); font-family:'IBM Plex Mono',monospace;
+  }
+
+  svg text{fill:currentColor; font-family:'IBM Plex Mono',monospace;}
+  .lbl{font-size:10.5px;}
+  .lbl-sm{font-size:9.5px;}
+  .accent-fill{fill:var(--accent);}
+  .accent-stroke{stroke:var(--accent);}
+  .flag-stroke{stroke:var(--flag);}
+  .flag-fill{fill:var(--flag);}
+  .muted-fill{fill:var(--surface-2);}
+  .dim{opacity:.55;}
+
+  @media (max-width: 880px){
+    .frame{grid-template-columns:1fr;}
+    nav.rail{
+      position:sticky; height:auto; top:0; z-index:5;
+      display:flex; overflow-x:auto; align-items:center; gap:.2rem;
+      padding:.7rem .9rem; white-space:nowrap;
+    }
+    nav.rail .brand,nav.rail .sub,.gaps-link{display:none;}
+    nav.rail ol{display:flex; gap:.2rem;}
+    nav.rail a{flex-direction:row; font-size:.72rem; padding:.35em .6em;}
+    main{padding:1.6rem 1.1rem 4rem;}
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+</style>
+
+<div class="frame">
+  <nav class="rail" aria-label="Sections">
+    <div class="brand">CyberAssess<span>.</span></div>
+    <div class="sub">field manual — rev. cc0894e</div>
+    <ol>
+      <li><a href="#overview" data-nav><span class="n">00</span>Pipeline overview</a></li>
+      <li><a href="#p1" data-nav><span class="n">01</span>Frameworks &amp; UCC</a></li>
+      <li><a href="#p2" data-nav><span class="n">02</span>Scope</a></li>
+      <li><a href="#p3" data-nav><span class="n">03</span>Desk review</a></li>
+      <li><a href="#p4" data-nav><span class="n">04</span>Context profile</a></li>
+      <li><a href="#p5" data-nav><span class="n">05</span>Domain screening</a></li>
+      <li><a href="#p6" data-nav><span class="n">06</span>Questionnaire</a></li>
+      <li><a href="#p7" data-nav><span class="n">07</span>Gap analysis</a></li>
+      <li><a href="#p8" data-nav><span class="n">08</span>Scoring</a></li>
+      <li><a href="#p9" data-nav><span class="n">09</span>Review, RFI, remediation</a></li>
+      <li><a href="#p10" data-nav><span class="n">10</span>Reports &amp; journey</a></li>
+    </ol>
+    <div class="gaps-link">
+      <a href="#gaps" data-nav><span class="n">!</span>Known gaps (11)</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="wrap">
+
+      <header class="hero" id="overview">
+        <div class="eyebrow"><span class="num">·</span>Data flow &amp; process reference</div>
+        <h1>How CyberAssess actually works</h1>
+        <p class="dek">Every feature traced to its real algorithm — thresholds, Claude-call
+        boundaries, and scoring formulas — not the marketing description. Citations like
+        <span class="cite">scoring.py:308</span> point at the exact line in the repo.</p>
+
+        <div class="stat-row">
+          <div class="stat"><div class="v">6</div><div class="l">frameworks registered</div></div>
+          <div class="stat"><div class="v">3 / 6</div><div class="l">live vs. roadmap</div></div>
+          <div class="stat"><div class="v">2→N+2</div><div class="l">Claude calls, legacy → multi-fw</div></div>
+          <div class="stat"><div class="v">80%</div><div class="l">questionnaire completion gate</div></div>
+        </div>
+
+        <div class="meta">
+          <span>commit cc0894e</span><span>·</span>
+          <span>docs/architecture/data-flow-and-processes.md</span><span>·</span>
+          <span>11 known gaps flagged</span>
+        </div>
+      </header>
+
+      <section class="part">
+        <div class="eyebrow"><span class="num">◆</span>The assessment lifecycle</div>
+        <h2>One pipeline, from picker to PDF</h2>
+        <p class="prose">Most "steps" below are tabs on a single hub page
+        (<span class="cite">web.py:202</span>), not separate screens. Dashed boxes are
+        skippable — nothing downstream hard-requires them. The only two gates that block
+        forward progress are the <strong>80% completion gate</strong> before analysis, and the
+        <strong>review-approval gate</strong> before any client-facing artifact can leave the
+        building.</p>
+
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 1180 210" role="img" aria-label="Assessment pipeline: Scope, then optional Documents and Desk Review, then Context, then optional Screening, then Questionnaire gated at 80% completion, then Analysis, then Review Gate, then Report or RFI.">
+              <defs>
+                <marker id="ovArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0,0 7,3 0,6" fill="currentColor"/></marker>
+              </defs>
+              <!-- boxes: x,w=110 gap=20 start 15 -->
+              <!-- 1 Scope -->
+              <g>
+                <rect x="15" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor"/>
+                <text x="70" y="90" text-anchor="middle" class="lbl">Scope</text>
+                <text x="70" y="104" text-anchor="middle" class="lbl-sm dim">SCP.1–5</text>
+              </g>
+              <line x1="125" y1="95" x2="143" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 2 Documents (optional) -->
+              <g class="dim">
+                <rect x="145" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+                <text x="200" y="90" text-anchor="middle" class="lbl">Documents</text>
+                <text x="200" y="104" text-anchor="middle" class="lbl-sm">optional</text>
+              </g>
+              <line x1="255" y1="95" x2="273" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 3 Desk review (optional) -->
+              <g class="dim">
+                <rect x="275" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+                <text x="330" y="86" text-anchor="middle" class="lbl">Desk</text>
+                <text x="330" y="98" text-anchor="middle" class="lbl">review</text>
+                <text x="330" y="112" text-anchor="middle" class="lbl-sm">1 Claude call</text>
+              </g>
+              <line x1="385" y1="95" x2="403" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 4 Context -->
+              <g>
+                <rect x="405" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor"/>
+                <text x="460" y="90" text-anchor="middle" class="lbl">Context</text>
+                <text x="460" y="104" text-anchor="middle" class="lbl-sm dim">risk_tier</text>
+              </g>
+              <line x1="515" y1="95" x2="533" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 5 Screening (optional) -->
+              <g class="dim">
+                <rect x="535" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+                <text x="590" y="90" text-anchor="middle" class="lbl">Screening</text>
+                <text x="590" y="104" text-anchor="middle" class="lbl-sm">optional · 9 Q</text>
+              </g>
+              <line x1="645" y1="95" x2="663" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 6 Questionnaire -->
+              <g>
+                <rect x="665" y="60" width="130" height="70" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+                <text x="730" y="86" text-anchor="middle" class="lbl" fill="var(--accent)">Adaptive</text>
+                <text x="730" y="98" text-anchor="middle" class="lbl" fill="var(--accent)">questionnaire</text>
+                <text x="730" y="112" text-anchor="middle" class="lbl-sm" fill="var(--accent)">DPDPA-only path</text>
+              </g>
+              <line x1="795" y1="95" x2="817" y2="95" stroke="var(--flag)" marker-end="url(#ovArrow)"/>
+              <text x="806" y="52" text-anchor="middle" class="lbl-sm" fill="var(--flag)">≥80% or 1 doc</text>
+              <!-- 7 Analysis -->
+              <g>
+                <rect x="819" y="60" width="110" height="70" rx="8" fill="none" stroke="currentColor"/>
+                <text x="874" y="86" text-anchor="middle" class="lbl">Analysis +</text>
+                <text x="874" y="98" text-anchor="middle" class="lbl">scoring</text>
+                <text x="874" y="112" text-anchor="middle" class="lbl-sm dim">Claude + math</text>
+              </g>
+              <line x1="929" y1="95" x2="947" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 8 Review gate -->
+              <g>
+                <rect x="949" y="55" width="110" height="80" rx="8" fill="none" stroke="var(--flag)" stroke-width="1.6"/>
+                <text x="1004" y="80" text-anchor="middle" class="lbl" fill="var(--flag)">Review</text>
+                <text x="1004" y="92" text-anchor="middle" class="lbl" fill="var(--flag)">gate</text>
+                <text x="1004" y="106" text-anchor="middle" class="lbl-sm" fill="var(--flag)">human sign-off</text>
+                <text x="1004" y="118" text-anchor="middle" class="lbl-sm" fill="var(--flag)">required</text>
+              </g>
+              <line x1="1059" y1="95" x2="1077" y2="95" stroke="currentColor" marker-end="url(#ovArrow)"/>
+              <!-- 9 report -->
+              <g>
+                <rect x="1079" y="60" width="90" height="70" rx="8" fill="var(--accent)" stroke="var(--accent)"/>
+                <text x="1124" y="90" text-anchor="middle" class="lbl" fill="var(--accent-ink)">Report /</text>
+                <text x="1124" y="102" text-anchor="middle" class="lbl" fill="var(--accent-ink)">RFI</text>
+              </g>
+              <text x="15" y="160" class="lbl-sm dim">dashed = optional, never blocks progress</text>
+              <text x="15" y="176" class="lbl-sm" fill="var(--flag)">red = hard gate</text>
+              <text x="820" y="160" class="lbl-sm dim">2+ frameworks selected → questionnaire &amp; analysis</text>
+              <text x="820" y="174" class="lbl-sm dim">route through the UCC engine instead (Part 01)</text>
+            </svg>
+          </div>
+          <figcaption>The nine stages of one assessment. Scope and Context are the only
+          "optional-looking" steps that actually change downstream behavior — they set
+          <span class="cite">applicable_requirements</span> and <span class="cite">context_profile</span>.</figcaption>
+        </figure>
+      </section>
+
+      <!-- PART 1 -->
+      <section class="part" id="p1">
+        <div class="eyebrow"><span class="num">01</span>Foundation</div>
+        <h2>FrameworkRegistry + Unified Control Clusters</h2>
+        <div class="prose">
+        <p>Two independent layers let one tool run six frameworks without duplicating
+        scoring, UI, or questionnaire logic. <strong>FrameworkRegistry</strong>
+        (<span class="cite">registry.py:20</span>) is a single in-memory catalog — every
+        framework is forced into the same <code>FrameworkDefinition</code> shape
+        (domains → sections → controls, each with a weight), so scoring code written for
+        DPDPA works unmodified for ISO 27001, GDPR, or any other registered framework.</p>
+        <p><strong>Unified Control Clusters</strong> are the second, separate layer: a
+        hand-curated mapping (<span class="cite">mappings/clusters.py</span>) that groups
+        semantically-equivalent controls <em>across</em> frameworks so one question can
+        satisfy several frameworks' requirements at once — but only when 2+ frameworks are
+        selected for the same assessment.</p>
+        </div>
+
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 820 470" role="img" aria-label="Diagram: single framework leaves each control as its own question, while multi-framework merges controls from ISO 27001, NIST CSF, and DPDPA into one cluster question, then fans the single answer back out to a per-framework Claude call each, before a worst-case verdict recombines them into one score.">
+              <defs>
+                <marker id="ucArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0,0 7,3 0,6" fill="currentColor"/></marker>
+              </defs>
+
+              <!-- LEFT: single framework -->
+              <text x="10" y="24" class="lbl" font-weight="600">Single framework selected</text>
+              <rect x="10" y="40" width="150" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="85" y="67" text-anchor="middle" class="lbl">ISO.A5.1 control</text>
+              <line x1="85" y1="86" x2="85" y2="112" stroke="currentColor" marker-end="url(#ucArrow)"/>
+              <rect x="10" y="114" width="150" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="85" y="141" text-anchor="middle" class="lbl">One question</text>
+              <line x1="85" y1="160" x2="85" y2="186" stroke="currentColor" marker-end="url(#ucArrow)"/>
+              <rect x="10" y="188" width="150" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="85" y="215" text-anchor="middle" class="lbl">One control score</text>
+              <text x="10" y="260" class="lbl-sm dim">SINGLE.{'{'}control_id{'}'} singleton</text>
+              <text x="10" y="274" class="lbl-sm dim">no cluster overhead at all</text>
+
+              <line x1="200" y1="20" x2="200" y2="450" stroke="var(--line-strong)" stroke-dasharray="2 4"/>
+
+              <!-- RIGHT: multi framework -->
+              <text x="230" y="24" class="lbl" font-weight="600">2+ frameworks selected — CLUSTER_001</text>
+
+              <rect x="230" y="40" width="150" height="40" rx="6" fill="none" stroke="currentColor"/>
+              <text x="305" y="64" text-anchor="middle" class="lbl-sm">ISO.A5.1 / A5.4</text>
+              <rect x="405" y="40" width="150" height="40" rx="6" fill="none" stroke="currentColor"/>
+              <text x="480" y="64" text-anchor="middle" class="lbl-sm">NIST.GV.PO.01</text>
+              <rect x="580" y="40" width="150" height="40" rx="6" fill="none" stroke="currentColor"/>
+              <text x="655" y="64" text-anchor="middle" class="lbl-sm">DPDPA CH4.SDF.1</text>
+
+              <line x1="305" y1="80" x2="470" y2="120" stroke="currentColor"/>
+              <line x1="480" y1="80" x2="480" y2="120" stroke="currentColor"/>
+              <line x1="655" y1="80" x2="490" y2="120" stroke="currentColor" marker-end="url(#ucArrow)"/>
+
+              <rect x="330" y="122" width="300" height="52" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="480" y="144" text-anchor="middle" class="lbl" fill="var(--accent)">"Governance framework, approved</text>
+              <text x="480" y="158" text-anchor="middle" class="lbl" fill="var(--accent)">by leadership?" — asked once</text>
+
+              <line x1="480" y1="174" x2="480" y2="196" stroke="currentColor" marker-end="url(#ucArrow)"/>
+              <text x="495" y="190" class="lbl-sm dim">_expand_cluster_responses()</text>
+
+              <rect x="230" y="198" width="150" height="42" rx="6" fill="none" stroke="currentColor"/>
+              <text x="305" y="223" text-anchor="middle" class="lbl-sm">ISO Claude call</text>
+              <rect x="405" y="198" width="150" height="42" rx="6" fill="none" stroke="currentColor"/>
+              <text x="480" y="223" text-anchor="middle" class="lbl-sm">NIST Claude call</text>
+              <rect x="580" y="198" width="150" height="42" rx="6" fill="none" stroke="currentColor"/>
+              <text x="655" y="223" text-anchor="middle" class="lbl-sm">DPDPA Claude call</text>
+
+              <line x1="305" y1="240" x2="470" y2="280" stroke="currentColor"/>
+              <line x1="480" y1="240" x2="480" y2="280" stroke="currentColor"/>
+              <line x1="655" y1="240" x2="490" y2="280" stroke="currentColor" marker-end="url(#ucArrow)"/>
+
+              <rect x="330" y="282" width="300" height="46" rx="8" fill="var(--flag-soft)" stroke="var(--flag)"/>
+              <text x="480" y="309" text-anchor="middle" class="lbl" fill="var(--flag)">Worst-case verdict wins</text>
+
+              <line x1="480" y1="328" x2="480" y2="350" stroke="currentColor" marker-end="url(#ucArrow)"/>
+              <rect x="380" y="352" width="200" height="42" rx="6" fill="none" stroke="currentColor"/>
+              <text x="480" y="377" text-anchor="middle" class="lbl">DPDPA cluster score</text>
+
+              <text x="230" y="425" class="lbl-sm dim">rank: unknown &lt; not_implemented &lt; partial</text>
+              <text x="230" y="440" class="lbl-sm dim">&lt; implemented &lt; not_applicable — min rank wins</text>
+              <text x="230" y="458" class="lbl-sm dim">scoring.py:54–110, prompts.py:56–98</text>
+            </svg>
+          </div>
+          <figcaption>One answer, collected once, is fanned back out to every member
+          framework's own Claude call, then re-converged at scoring time into the
+          most-severe applicable status. This scoring-time recombination is currently
+          wired for DPDPA only (see gap #3).</figcaption>
+        </figure>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>Adding a 7th framework</h4>
+            <p>Write one <span class="cite">definitions/xyz.py</span> assembling a
+            <code>FrameworkDefinition</code> (domains, sections, controls, weights,
+            red-flag patterns), then register it in <span class="cite">main.py:217</span>.
+            Scoring, PDF export, and the questionnaire builder need zero changes — they
+            only ever talk to the registry's generic interface.</p>
+          </div>
+          <div class="card">
+            <h4>Boot-time safety net</h4>
+            <p><span class="cite">_assert_framework_catalog_complete()</span> fails the
+            app's startup loudly if a registered framework ever drifts from the UI's
+            enabled/roadmap tuples — a framework can never silently vanish from the
+            picker.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section class="part" id="p2">
+        <div class="eyebrow"><span class="num">02</span>Phase 0</div>
+        <h2>Scope &amp; applicability</h2>
+        <div class="prose">
+        <p>Five scope answers deterministically exclude requirement IDs — pure Python, no
+        Claude call (<span class="cite">scope_profiler.py:45-119</span>). The bias runs
+        toward <em>inclusion</em>: an "unsure" answer keeps a requirement in scope; only an
+        explicit "no" excludes it.</p>
+        </div>
+        <div class="tbl-wrap">
+        <table>
+          <caption>compute_scope() — exclusion rules</caption>
+          <thead><tr><th>Scope answer</th><th>Excludes if "no"</th><th>"Unsure" treated as</th></tr></thead>
+          <tbody>
+            <tr><td>SCP.1 cross-border transfers</td><td class="mono">CB.TRANSFER.1/2/3</td><td>kept in scope</td></tr>
+            <tr><td>SCP.2 processes children's data</td><td class="mono">CH2.CONSENT.5, CH4.CHILD.1/2/3</td><td>kept in scope</td></tr>
+            <tr><td>SCP.3 Significant Data Fiduciary</td><td class="mono">CH4.SDF.1/2/3/4</td><td>"possibly" also kept</td></tr>
+            <tr><td>SCP.5 uses third-party processors</td><td class="mono">CH2.SECURITY.3</td><td>kept in scope</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="callout warn">
+          <div class="ico">!</div>
+          <p><code>company_size</code> is accepted by <span class="cite">compute_scope()</span>
+          but never read in the function body — exclusion is driven solely by the 5 SCP
+          answers. And scope exclusion is currently a <strong>no-op for multi-framework
+          assessments</strong> — every control from every selected framework appears
+          regardless of scope answers.</p>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section class="part" id="p3">
+        <div class="eyebrow"><span class="num">03</span>Evidence gathering</div>
+        <h2>Desk review &amp; document processing</h2>
+        <div class="prose">
+        <p>Upload dispatches by file extension. PDFs and DOCX go through
+        <span class="cite">pdfplumber</span> / <span class="cite">python-docx</span>
+        text+table extraction; images have <strong>no OCR library</strong> — a live Claude
+        vision call transcribes visible text and adds a short compliance summary instead.
+        A scanned PDF that extracts to nothing gets HTTP 422, asking the user to re-upload
+        as an image.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>Word budgets, two layers</h4>
+            <p><strong>Per document:</strong> first 5,000 words
+            (<span class="cite">config.py:18</span>), PDF/DOCX only.<br/>
+            <strong>Across all documents:</strong> 20,000 words total
+            (<span class="cite">config.py:19</span>) — once exhausted, remaining documents
+            are <em>dropped entirely</em>, not trimmed. Upload order decides what survives.</p>
+          </div>
+          <div class="card">
+            <h4>Two governing rules in the prompt</h4>
+            <p><strong>"Policy ≠ implementation"</strong> — a written policy alone can't
+            score above partially-compliant without evidence of follow-through.<br/>
+            <strong>"Absence of evidence is evidence of absence"</strong> — silence on a
+            requirement never becomes an assumed compliant.</p>
+          </div>
+        </div>
+
+        <div class="tbl-wrap">
+        <table>
+          <caption>one Claude call → coverage_summary, 4 levels per requirement</caption>
+          <thead><tr><th>Level</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip low"><span class="dot"></span>adequate</span></td><td>well-addressed by the documents</td></tr>
+            <tr><td><span class="chip medium"><span class="dot"></span>partial</span></td><td>mentioned, but with gaps</td></tr>
+            <tr><td><span class="chip critical"><span class="dot"></span>absent</span></td><td>explicitly missing despite a relevant document existing</td></tr>
+            <tr><td><span class="chip neutral"><span class="dot"></span>not_covered</span></td><td>no relevant document was uploaded at all</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="prose" style="font-size:.88rem">These four levels are entirely the
+        model's judgment — CyberAssess never independently computes coverage from finding
+        counts. Findings themselves persist as three types: <strong>evidence</strong>
+        (quote, severity always "info"), <strong>absence</strong> (description, model-set
+        severity), and <strong>signal</strong> (a red flag — GDPR/CCPA copy-paste, buried
+        consent, template artifacts, missing breach timelines, scope gaps). A signal tied
+        to several requirements is stored against only the first one
+        (<span class="cite">desk_review.py:218</span>) — see gap #5.</p>
+      </section>
+
+      <!-- PART 4 -->
+      <section class="part" id="p4">
+        <div class="eyebrow"><span class="num">04</span>Phase 1</div>
+        <h2>Context profiling</h2>
+        <p class="prose">A 14-question, 4-block wizard feeds one Claude call
+        (<span class="cite">context_profiler.py</span>) that derives a
+        <code>risk_tier</code> (HIGH/MEDIUM/LOW), a <code>priority_chapters</code> order,
+        and a <code>likely_not_applicable</code> list. <code>risk_tier</code> is the one
+        piece that has real downstream teeth — it drives adaptive tiering (Part 06). The
+        rest — relevance weights, context notes — is display-only metadata; nothing
+        filters or reorders questions by it today.</p>
+      </section>
+
+      <!-- PART 5 -->
+      <section class="part" id="p5">
+        <div class="eyebrow"><span class="num">05</span>Phase 3 · optional</div>
+        <h2>Domain screening</h2>
+        <p class="prose">Nine broad questions (Consent, Notice, Purpose Limitation,
+        Accuracy, Security, Breach Notification, Data Subject Rights, Governance/SDF/
+        Children, Cross-Border) feed one Claude call that infers a status + confidence for
+        <strong>all 41 DPDPA requirements</strong> — any requirement the model misses is
+        force-backfilled to <code>not_assessed / low</code>.</p>
+        <div class="tbl-wrap">
+        <table>
+          <caption>the confidence gate — same rule, applied twice</caption>
+          <thead><tr><th>Inferred</th><th>DB auto-fill (once)</th><th>Live re-modulation (every render)</th></tr></thead>
+          <tbody>
+            <tr><td>compliant / partial · <span class="chip low">high confidence</span></td><td>✓ persisted as answer</td><td>✓ pre-filled, "inferred" badge</td></tr>
+            <tr><td>any status · <span class="chip critical">low confidence</span></td><td>—</td><td>forced to "deepened"</td></tr>
+            <tr><td>non_compliant · any confidence</td><td>✗ never auto-persisted</td><td>stays active — human must answer</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="prose" style="font-size:.88rem">Negative findings are deliberately never
+        auto-filled, even at high confidence — a human has to type the "no" themselves.</p>
+      </section>
+
+      <!-- PART 6 -->
+      <section class="part" id="p6">
+        <div class="eyebrow"><span class="num">06</span>Assembly</div>
+        <h2>Adaptive questionnaire &amp; tiering</h2>
+        <p class="prose">Recomputed fresh on <strong>every page load</strong> — nothing
+        about the questionnaire's shape is persisted, only the underlying answers and
+        findings. Desk-review modulation always overrides screening modulation, and
+        within desk review, signals/absences always override a positive pre-fill:
+        "documents describe intent, not operational reality."</p>
+
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 760 300" role="img" aria-label="Decision tree: an absence finding or a signal finding forces the question to deepen, overriding everything else. Otherwise, adequate or partial coverage with at least one evidence citation pre-fills the answer. Anything else stays active.">
+              <defs>
+                <marker id="dtArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0,0 7,3 0,6" fill="currentColor"/></marker>
+              </defs>
+              <rect x="10" y="10" width="190" height="50" rx="8" fill="none" stroke="currentColor"/>
+              <text x="105" y="30" text-anchor="middle" class="lbl">Requirement has an</text>
+              <text x="105" y="44" text-anchor="middle" class="lbl">absence finding?</text>
+
+              <line x1="200" y1="35" x2="240" y2="35" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="212" y="27" class="lbl-sm">yes</text>
+              <rect x="242" y="10" width="150" height="50" rx="8" fill="var(--flag-soft)" stroke="var(--flag)"/>
+              <text x="317" y="30" text-anchor="middle" class="lbl" fill="var(--flag)">status =</text>
+              <text x="317" y="44" text-anchor="middle" class="lbl" fill="var(--flag)">deepened</text>
+
+              <line x1="105" y1="60" x2="105" y2="98" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="118" y="82" class="lbl-sm">no</text>
+              <rect x="10" y="100" width="190" height="50" rx="8" fill="none" stroke="currentColor"/>
+              <text x="105" y="120" text-anchor="middle" class="lbl">Requirement has a</text>
+              <text x="105" y="134" text-anchor="middle" class="lbl">signal finding?</text>
+
+              <line x1="200" y1="125" x2="240" y2="125" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="212" y="117" class="lbl-sm">yes</text>
+              <rect x="242" y="100" width="150" height="50" rx="8" fill="var(--flag-soft)" stroke="var(--flag)"/>
+              <text x="317" y="120" text-anchor="middle" class="lbl" fill="var(--flag)">status =</text>
+              <text x="317" y="134" text-anchor="middle" class="lbl" fill="var(--flag)">deepened</text>
+
+              <line x1="105" y1="150" x2="105" y2="188" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="118" y="172" class="lbl-sm">no</text>
+              <rect x="10" y="190" width="190" height="62" rx="8" fill="none" stroke="currentColor"/>
+              <text x="105" y="208" text-anchor="middle" class="lbl">Coverage adequate/</text>
+              <text x="105" y="222" text-anchor="middle" class="lbl">partial AND ≥1</text>
+              <text x="105" y="236" text-anchor="middle" class="lbl">evidence citation?</text>
+
+              <line x1="200" y1="215" x2="240" y2="215" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="212" y="207" class="lbl-sm">yes</text>
+              <rect x="242" y="190" width="150" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="317" y="211" text-anchor="middle" class="lbl" fill="var(--accent)">status =</text>
+              <text x="317" y="225" text-anchor="middle" class="lbl" fill="var(--accent)">pre_filled</text>
+              <text x="317" y="239" text-anchor="middle" class="lbl-sm" fill="var(--accent)">confirm-to-accept</text>
+
+              <line x1="105" y1="252" x2="105" y2="270" stroke="currentColor" marker-end="url(#dtArrow)"/>
+              <text x="118" y="266" class="lbl-sm">no</text>
+              <rect x="10" y="270" width="190" height="26" rx="6" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+              <text x="105" y="287" text-anchor="middle" class="lbl-sm">status = active</text>
+
+              <text x="420" y="30" class="lbl-sm dim" width="300">Coverage label alone, with</text>
+              <text x="420" y="44" class="lbl-sm dim">zero evidence quotes, never</text>
+              <text x="420" y="58" class="lbl-sm dim">pre-fills — evidence is required.</text>
+              <text x="420" y="90" class="lbl-sm dim">Screening applies this same</text>
+              <text x="420" y="104" class="lbl-sm dim">override order to whatever is</text>
+              <text x="420" y="118" class="lbl-sm dim">still "active" afterward (Part 05).</text>
+              <text x="420" y="150" class="lbl-sm dim">Multi-framework questionnaires</text>
+              <text x="420" y="164" class="lbl-sm dim">skip this tree entirely — every</text>
+              <text x="420" y="178" class="lbl-sm dim">question is hardcoded "active".</text>
+              <text x="420" y="210" class="lbl-sm dim">question_engine.py:370–443</text>
+            </svg>
+          </div>
+          <figcaption>Per-question modulation order — checked top to bottom, first match
+          wins. A human-touched answer is separately immune to all of this once set.</figcaption>
+        </figure>
+
+        <div class="tbl-wrap">
+        <table>
+          <caption>adaptive tiering — assign_tier(), first match wins (tier_engine.py:16-54)</caption>
+          <thead><tr><th>#</th><th>Condition</th><th>Tier</th><th>UI treatment</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>status = skipped</td><td><span class="chip neutral">skip</span></td><td>hidden / N-A</td></tr>
+            <tr><td>2</td><td>pre-filled, not critical</td><td><span class="chip low">light</span></td><td>compact confirm card, ~30s</td></tr>
+            <tr><td>3</td><td>pre-filled, critical</td><td><span class="chip medium">standard</span></td><td>still full attention, ~2 min</td></tr>
+            <tr><td>4</td><td>status = deepened</td><td><span class="chip critical">deep</span></td><td>full Q + evidence panel, ~5 min — regardless of criticality</td></tr>
+            <tr><td>5–6</td><td>critical/high AND risk_tier = HIGH</td><td><span class="chip critical">deep</span></td><td>only escalates for HIGH-risk orgs</td></tr>
+            <tr><td>—</td><td>default</td><td><span class="chip medium">standard</span></td><td></td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout">
+          <div class="ico">→</div>
+          <p><strong>The analysis gate:</strong> <span class="cite">analysis.py:99-129</span>
+          requires ≥80% of expected questions answered — <em>unless</em> at least one
+          document was uploaded, in which case it's just a logged warning and analysis
+          proceeds anyway. A single document upload can bypass the questionnaire almost
+          entirely, independent of how much that document actually covers.</p>
+        </div>
+      </section>
+
+      <!-- PART 7 -->
+      <section class="part" id="p7">
+        <div class="eyebrow"><span class="num">07</span>The engine</div>
+        <h2>Gap analysis: the Claude calls</h2>
+        <p class="prose">Scoring is <em>never</em> done by Claude (Part 08) — this stage's
+        only job is to assign a <code>compliance_status</code>, <code>risk_level</code>,
+        <code>maturity_level</code>, and remediation fields per requirement. The legacy
+        DPDPA path is a genuine two-call pipeline; the multi-framework path is really
+        N+2 calls, despite reusing the same evidence step.</p>
+
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 820 300" role="img" aria-label="Legacy path: documents feed an evidence-extraction call, skipped if desk review already produced evidence, whose output feeds a single cached gap-analysis call. Multi-framework path: the same shared evidence call feeds N per-framework calls, which feed one synthesis call only when more than one framework was selected.">
+              <defs>
+                <marker id="caArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0,0 7,3 0,6" fill="currentColor"/></marker>
+              </defs>
+
+              <text x="10" y="20" class="lbl" font-weight="600">Legacy · DPDPA only</text>
+              <rect x="10" y="34" width="120" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="70" y="61" text-anchor="middle" class="lbl-sm">Documents +</text>
+              <text x="70" y="73" text-anchor="middle" class="lbl-sm">desk review</text>
+              <line x1="130" y1="57" x2="150" y2="57" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="152" y="34" width="150" height="46" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+              <text x="227" y="53" text-anchor="middle" class="lbl-sm">Call 1 — evidence</text>
+              <text x="227" y="65" text-anchor="middle" class="lbl-sm">extraction</text>
+              <text x="227" y="97" text-anchor="middle" class="lbl-sm dim">skipped if desk review</text>
+              <text x="227" y="109" text-anchor="middle" class="lbl-sm dim">already has evidence</text>
+              <line x1="302" y1="57" x2="322" y2="57" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="324" y="34" width="190" height="46" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="419" y="53" text-anchor="middle" class="lbl-sm" fill="var(--accent)">Call 2 — gap analysis</text>
+              <text x="419" y="65" text-anchor="middle" class="lbl-sm" fill="var(--accent)">(cached system prompt)</text>
+              <line x1="514" y1="57" x2="534" y2="57" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="536" y="34" width="150" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="611" y="61" text-anchor="middle" class="lbl-sm">41 assessments</text>
+
+              <line x1="10" y1="140" x2="810" y2="140" stroke="var(--line-strong)" stroke-dasharray="2 4"/>
+
+              <text x="10" y="165" class="lbl" font-weight="600">Multi-framework · N+2 calls</text>
+              <rect x="10" y="180" width="120" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="70" y="200" text-anchor="middle" class="lbl-sm">Documents +</text>
+              <text x="70" y="212" text-anchor="middle" class="lbl-sm">desk review</text>
+              <line x1="130" y1="203" x2="150" y2="203" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="152" y="180" width="130" height="46" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+              <text x="217" y="199" text-anchor="middle" class="lbl-sm">Call 1 — evidence</text>
+              <text x="217" y="211" text-anchor="middle" class="lbl-sm">(shared, once)</text>
+              <line x1="282" y1="203" x2="302" y2="203" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="304" y="180" width="170" height="46" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="389" y="199" text-anchor="middle" class="lbl-sm" fill="var(--accent)">Calls 2..N+1 — one per</text>
+              <text x="389" y="211" text-anchor="middle" class="lbl-sm" fill="var(--accent)">framework, streamed</text>
+              <line x1="474" y1="203" x2="494" y2="203" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="496" y="180" width="160" height="46" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+              <text x="576" y="199" text-anchor="middle" class="lbl-sm">Call N+2 — synthesis</text>
+              <text x="576" y="211" text-anchor="middle" class="lbl-sm">(only if 2+ frameworks)</text>
+              <line x1="656" y1="203" x2="676" y2="203" stroke="currentColor" marker-end="url(#caArrow)"/>
+              <rect x="678" y="180" width="130" height="46" rx="6" fill="none" stroke="currentColor"/>
+              <text x="743" y="199" text-anchor="middle" class="lbl-sm">unified report</text>
+              <text x="743" y="211" text-anchor="middle" class="lbl-sm">+ per-fw scores</text>
+
+              <text x="10" y="255" class="lbl-sm dim">a failure in one framework's call is isolated — it doesn't abort the others; that framework gets a stub "Analysis failed" result</text>
+              <text x="10" y="272" class="lbl-sm dim">claude_analyzer.py:55–140 (legacy) · claude_analyzer.py:237–393 (multi)</text>
+            </svg>
+          </div>
+          <figcaption>Call 1's sole purpose is evidence grounding — quotes that anchor Call
+          2 instead of letting it paraphrase. The legacy path's Call 2 uses Anthropic
+          prompt caching on the full requirements text (~90% cost reduction per run).</figcaption>
+        </figure>
+
+        <div class="tbl-wrap">
+        <table>
+          <caption>legacy vs. multi-framework — the concrete divergences</caption>
+          <thead><tr><th></th><th>Legacy (DPDPA-only)</th><th>Multi-framework</th></tr></thead>
+          <tbody>
+            <tr><td>Scoring fn</td><td class="mono">compute_scores()</td><td class="mono">compute_framework_scores() × N</td></tr>
+            <tr><td>Overall score</td><td>DPDPA's own weighted-chapter score</td><td>equal-weight mean of each framework's own score</td></tr>
+            <tr><td><span class="mono">GapItem.framework_id</span></td><td>hardcoded literal "dpdpa"</td><td>threaded from the per-framework loop</td></tr>
+            <tr><td>Initiatives</td><td>DPDPA-only root-cause rules</td><td>merges gaps across frameworks</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <!-- PART 8 -->
+      <section class="part" id="p8">
+        <div class="eyebrow"><span class="num">08</span>Pure arithmetic</div>
+        <h2>Deterministic scoring</h2>
+        <p class="prose">Scoring is intentionally never delegated to Claude — plain
+        arithmetic over the <code>compliance_status</code> it assigned.
+        <code>risk_level</code> and Claude's own <code>maturity_level</code> field play
+        <strong>no role</strong> in this formula at all.</p>
+
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 640 300" role="img" aria-label="Scoring pyramid: requirement scores of 0, 50, or 100 average into a section score, sections combine by weight into a chapter score, and chapters combine by weight into the overall score at the top.">
+              <!-- trapezoid layers bottom to top -->
+              <polygon points="60,270 580,270 500,220 140,220" fill="none" stroke="currentColor"/>
+              <text x="320" y="250" text-anchor="middle" class="lbl">Requirement: compliant=100 / partial=50 / non-compliant=0</text>
+
+              <polygon points="140,220 500,220 440,170 200,170" fill="none" stroke="currentColor"/>
+              <text x="320" y="200" text-anchor="middle" class="lbl">Section = plain average of requirement scores</text>
+
+              <polygon points="200,170 440,170 385,120 255,120" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="320" y="150" text-anchor="middle" class="lbl" fill="var(--accent)">Chapter = Σ(section × section.weight) / Σweights</text>
+
+              <polygon points="255,120 385,120 320,70" fill="var(--accent)" stroke="var(--accent)"/>
+              <text x="320" y="55" text-anchor="middle" class="lbl" font-weight="600">Overall score</text>
+              <text x="320" y="100" text-anchor="middle" class="lbl-sm" fill="var(--accent-ink)">weighted avg</text>
+              <text x="320" y="112" text-anchor="middle" class="lbl-sm" fill="var(--accent-ink)">of chapters</text>
+
+              <text x="30" y="255" class="lbl-sm dim">not_assessed /</text>
+              <text x="30" y="267" class="lbl-sm dim">not_applicable</text>
+              <text x="30" y="279" class="lbl-sm dim">excluded, not zeroed</text>
+              <line x1="60" y1="248" x2="120" y2="248" stroke="currentColor" stroke-dasharray="2 3"/>
+
+              <text x="460" y="255" class="lbl-sm dim">rating thresholds:</text>
+              <text x="460" y="268" class="lbl-sm dim">≥80 Compliant</text>
+              <text x="460" y="280" class="lbl-sm dim">≥60 Partially Compliant</text>
+              <text x="460" y="292" class="lbl-sm dim">≥40 Needs Improvement · else Non-Compliant</text>
+            </svg>
+          </div>
+          <figcaption>Four aggregation steps, each a different kind of average. Only
+          section→chapter and chapter→overall are weighted; requirement→section is a flat
+          mean. (scoring.py:308-385)</figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <div class="ico">≠</div>
+          <p><strong>What doesn't score:</strong> <code>risk_level</code> only drives a
+          dashboard tally of critical/high gap counts. Claude's <code>maturity_level</code>
+          (0–5) only feeds a separate cross-framework maturity view
+          (<span class="cite">compute_unified_maturity()</span>) — a distinct concept from
+          the 0–100 compliance score above. A newer cluster-verdict 0–5 scoring path exists
+          in parallel but raises <code>NotImplementedError</code> for anything except
+          <code>["dpdpa"]</code> (see gap #3).</p>
+        </div>
+      </section>
+
+      <!-- PART 9 -->
+      <section class="part" id="p9">
+        <div class="eyebrow"><span class="num">09</span>Human in the loop</div>
+        <h2>Review gate, RFI, follow-ups, remediation</h2>
+
+        <h3 style="font-size:1.05rem;margin-top:1.6rem;">The release gate</h3>
+        <figure>
+          <div class="frame-box">
+            <svg viewBox="0 0 780 190" role="img" aria-label="State machine: an assessment starts with no review status, moves to under review once any item is dispositioned, then branches to approved or rejected. Only approved unlocks report, PDF, RFI, and comparison downloads.">
+              <defs>
+                <marker id="rgArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0,0 7,3 0,6" fill="currentColor"/></marker>
+              </defs>
+              <rect x="10" y="70" width="140" height="50" rx="8" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+              <text x="80" y="90" text-anchor="middle" class="lbl">draft / null</text>
+              <text x="80" y="104" text-anchor="middle" class="lbl-sm dim">every new GapItem</text>
+
+              <line x1="150" y1="95" x2="185" y2="95" stroke="currentColor" marker-end="url(#rgArrow)"/>
+              <text x="167" y="87" class="lbl-sm dim">1st item dispositioned</text>
+              <rect x="187" y="70" width="150" height="50" rx="8" fill="none" stroke="currentColor"/>
+              <text x="262" y="90" text-anchor="middle" class="lbl">under_review</text>
+              <text x="262" y="104" text-anchor="middle" class="lbl-sm dim">all items accept/reject</text>
+
+              <line x1="337" y1="85" x2="380" y2="40" stroke="currentColor" marker-end="url(#rgArrow)"/>
+              <line x1="337" y1="105" x2="380" y2="150" stroke="currentColor" marker-end="url(#rgArrow)"/>
+
+              <rect x="382" y="15" width="140" height="50" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+              <text x="452" y="35" text-anchor="middle" class="lbl" fill="var(--accent)">approved</text>
+              <text x="452" y="49" text-anchor="middle" class="lbl-sm" fill="var(--accent)">every item dispositioned</text>
+
+              <rect x="382" y="125" width="140" height="50" rx="8" fill="var(--flag-soft)" stroke="var(--flag)"/>
+              <text x="452" y="145" text-anchor="middle" class="lbl" fill="var(--flag)">rejected</text>
+              <text x="452" y="159" text-anchor="middle" class="lbl-sm" fill="var(--flag)">no precondition</text>
+
+              <line x1="522" y1="40" x2="565" y2="40" stroke="var(--accent)" marker-end="url(#rgArrow)"/>
+              <rect x="567" y="15" width="200" height="50" rx="8" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+              <text x="667" y="35" text-anchor="middle" class="lbl" fill="var(--accent)">Report / PDF / RFI /</text>
+              <text x="667" y="49" text-anchor="middle" class="lbl" fill="var(--accent)">comparison unlocked</text>
+
+              <text x="567" y="100" class="lbl-sm dim">require_review_approval() blocks every</text>
+              <text x="567" y="114" class="lbl-sm dim">download with HTTP 403 unless status is</text>
+              <text x="567" y="128" class="lbl-sm dim">exactly "approved" — under_review and</text>
+              <text x="567" y="142" class="lbl-sm dim">rejected are both blocked identically.</text>
+            </svg>
+          </div>
+          <figcaption>Approval requires every finding dispositioned (accepted <em>or</em>
+          rejected) — not that they all be accepted. review.py:106-142, review_gate.py:7-17</figcaption>
+        </figure>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>RFI generation</h4>
+            <p style="font-size:.85rem">Eligible: gap items where status isn't
+            compliant/not_assessed, plus desk-review absence findings, deduped by
+            requirement ID only. One Claude call writes only the human-facing text —
+            priority and deadline are deterministic:</p>
+            <div class="tbl-wrap">
+            <table style="margin:.6rem 0;">
+              <tbody>
+                <tr><td><span class="chip critical"><span class="dot"></span>Critical</span></td><td style="font-size:.8rem">risk=critical, or non-compliant + priority≤1</td><td class="mono" style="font-size:.78rem">1 wk</td></tr>
+                <tr><td><span class="chip high"><span class="dot"></span>High</span></td><td style="font-size:.8rem">risk=high, or non-compliant</td><td class="mono" style="font-size:.78rem">2 wk</td></tr>
+                <tr><td><span class="chip medium"><span class="dot"></span>Medium</span></td><td style="font-size:.8rem">partially-compliant</td><td class="mono" style="font-size:.78rem">3 wk</td></tr>
+                <tr><td><span class="chip low"><span class="dot"></span>Low</span></td><td style="font-size:.8rem">everything else</td><td class="mono" style="font-size:.78rem">4 wk</td></tr>
+              </tbody>
+            </table>
+            </div>
+            <p style="font-size:.8rem">Regenerating <strong>deletes and replaces</strong>
+            the prior RFI — no version history.</p>
+          </div>
+          <div class="card">
+            <h4>Follow-up questions</h4>
+            <p style="font-size:.85rem">Whether to trigger is deterministic; the question
+            <em>text</em> is Claude-generated. Strongest trigger (3 follow-ups): desk-review
+            evidence exists but the answer claims no implementation — a direct
+            contradiction. <code>not_applicable</code> is <strong>never</strong> followed
+            up, regardless of contradicting evidence. Any failure degrades to zero
+            follow-ups, never blocking the questionnaire.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1.05rem;margin-top:1.8rem;">Remediation status — no transition validation</h3>
+        <p class="prose" style="font-size:.9rem">Any status can follow any other via one
+        PATCH; there's no state-machine guard, and no cross-check against review status.</p>
+        <p style="margin:.8rem 0;">
+          <span class="chip high"><span class="dot"></span>open</span> →
+          <span class="chip medium"><span class="dot"></span>in_progress</span> →
+          <span class="chip low"><span class="dot"></span>closed</span>
+          <span class="mono" style="color:var(--ink-faint); font-size:.78rem"> or </span>
+          <span class="chip neutral"><span class="dot"></span>accepted_risk</span>
+        </p>
+        <p class="prose" style="font-size:.85rem">Only literal <code>closed</code> stamps a
+        close date (once — re-closing won't reset it). <code>accepted_risk</code> is a
+        parallel terminal state that never gets a close date, even though it's functionally
+        resolved.</p>
+      </section>
+
+      <!-- PART 10 -->
+      <section class="part" id="p10">
+        <div class="eyebrow"><span class="num">10</span>Delivery</div>
+        <h2>Reports &amp; the web portal journey</h2>
+        <p class="prose">The portal is effectively one HTMX hub page per assessment
+        (<span class="cite">web.py:202</span>) — the pipeline diagram at the top of this
+        page <em>is</em> the user's journey; each stage is a tab or an HTMX partial, not a
+        separate navigation. The board-ready PDF assembles from the same
+        <code>gap_items</code>/<code>chapter_scores</code> data used throughout, branching
+        on just two flags — <code>dpdpa_only</code> and <code>has_dpdpa</code> — everywhere
+        else it's fully generic across all six frameworks.</p>
+
+        <ol class="step-list">
+          <li><strong>Cover page</strong> — dynamic title, score ring, per-chapter bars.</li>
+          <li><strong>Executive dashboard</strong> — 4 KPI tiles, compliance distribution, chapter heatmap.</li>
+          <li><strong>Critical &amp; high-risk gaps</strong> — filtered, sorted by risk then priority.</li>
+          <li><strong>Remediation roadmap</strong> — a 4-segment priority timeline.</li>
+          <li><strong>Strategic initiatives</strong> — only rendered if any initiatives exist.</li>
+          <li><strong>Appendix: findings by chapter</strong> — full evidence quotes for every non-compliant item.</li>
+          <li><strong>Scope, limitations &amp; methodology</strong> — wording branches DPDPA-only vs. multi-framework.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="ico">🔒</div>
+          <p>Every download-producing endpoint — <span class="cite">/report</span>,
+          <span class="cite">/report/pdf</span>, <span class="cite">/rfi/pdf</span>,
+          <span class="cite">/compare/*</span> — is gated by the same
+          <span class="cite">require_review_approval()</span> from Part 09. Framework
+          availability is also a hard server-side check, not just a UI hint: submitting
+          GDPR/HIPAA/PCI-DSS (roadmap-only) is rejected even if someone bypasses the
+          disabled checkbox in the DOM.</p>
+        </div>
+      </section>
+
+      <!-- GAPS -->
+      <section class="part" id="gaps">
+        <div class="eyebrow" style="color:var(--flag)"><span class="num" style="border-color:var(--flag);color:var(--flag)">!</span>Surfaced during this trace</div>
+        <h2>Known gaps &amp; inconsistencies</h2>
+        <p class="prose">Understanding the real algorithm means understanding where it's
+        incomplete, not just where it works cleanly. None of these are hidden — they're
+        listed here on purpose.</p>
+
+        <div class="gap-item">
+          <div class="gn">01</div>
+          <div><h4>Multi-framework gets none of the adaptive machinery</h4>
+          <p>Desk-review pre-fill, screening pre-fill, and adaptive tiering are entirely
+          DPDPA-only-path features. A multi-framework questionnaire is uniformly
+          active/standard regardless of uploaded documents or screening answers.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">02</div>
+          <div><h4>Scope exclusion doesn't apply to multi-framework questionnaires</h4>
+          <p>The exclusion list is passed as <code>None</code> with a "for now" comment in
+          the multi-framework builder.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">03</div>
+          <div><h4>The cluster-verdict scoring path is DPDPA-only</h4>
+          <p>It raises <code>NotImplementedError</code> for any other framework selection —
+          built, but not wired into the multi-framework router.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">04</div>
+          <div><h4>Coverage-guarantee reinstatement targets dead code</h4>
+          <p>It un-skips desk-review-skipped questions, but <code>_modulate_question</code>
+          no longer ever produces <code>status="skipped"</code> — only scope exclusion does,
+          and that's explicitly excluded from reinstatement.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">05</div>
+          <div><h4>A multi-requirement signal is stored against only the first requirement</h4>
+          <p>The questionnaire engine has to separately re-derive signal coverage via
+          keyword matching on finding text to compensate.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">06</div>
+          <div><h4><code>company_size</code> is accepted but never used</h4>
+          <p>Scope exclusion is driven solely by the 5 scope answers.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">07</div>
+          <div><h4>Only IT/SaaS has a bespoke question bank</h4>
+          <p>Every other industry — fintech, healthcare, e-commerce, etc. — uses the same
+          5-question generic bank today.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">08</div>
+          <div><h4>One document upload can bypass the 80% completion gate entirely</h4>
+          <p>Independent of how much that document actually covers.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">09</div>
+          <div><h4>RFI regeneration has no version history</h4>
+          <p>It deletes and replaces the prior RFI document outright.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">10</div>
+          <div><h4>Remediation has no transition validation or review cross-check</h4>
+          <p>Any status can follow any other; closing remediation doesn't require the
+          underlying finding to be reviewed/approved first.</p></div>
+        </div>
+        <div class="gap-item">
+          <div class="gn">11</div>
+          <div><h4>One report endpoint still bypasses the registry shim</h4>
+          <p><span class="cite">reports.py:8</span> imports directly from
+          <span class="cite">app.dpdpa.framework</span> instead of going through
+          <span class="cite">compat.py</span> or the registry — a residual pre-multi-
+          framework seam.</p></div>
+        </div>
+      </section>
+
+      <footer class="end">
+        Source: docs/architecture/data-flow-and-processes.md · every claim cited file:line
+        against commit cc0894e · CyberAssess
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.rail a[data-nav]'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    if(!('IntersectionObserver' in window) || !sections.length) return;
+    var byId = {};
+    links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+    var current = null;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var id = entry.target.id;
+          if(current && byId[current]) byId[current].classList.remove('active');
+          current = id;
+          if(byId[id]) byId[id].classList.add('active');
+        }
+      });
+    }, {rootMargin: '-10% 0px -70% 0px', threshold: 0});
+    sections.forEach(function(s){ io.observe(s); });
+  })();
+</script>
