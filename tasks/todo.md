@@ -38,5 +38,14 @@ screening pre-fill, and adaptive tiering, none of which they get today. 11 new g
 found via a full data-flow trace (`docs/architecture/data-flow-and-processes.md`) are
 folded into WS #4/#10 or flagged for a product decision — see plan §9.2.
 
-- [ ] Write the WS #4 handoff (expanded scope per §9.2) and get sign-off before handing to Codex.
+- [x] Write the WS #4 handoff — `tasks/handoffs/2026-09-15-ws4-framework-agnostic-scoring.md`.
+      Scope narrowed from the todo-audit description above after reading the actual code:
+      `scoring.py`'s cluster-verdict engine (`score()`) generalizes cleanly to any single
+      framework (mechanical, Codex-ready), and the multi-framework scope-exclusion no-op
+      in `question_engine.py` is bundled in. `screening.py` staying DPDPA-only is now an
+      explicit Non-goal in the handoff — generalizing it needs new per-framework
+      domain-question content designed first (Claude/Saqlain judgment work, WS #6-shaped),
+      not a mechanical refactor Codex can do from a spec alone.
+- [ ] Get sign-off on the WS #4 handoff, then hand to Codex on `ws/4-framework-agnostic-scoring`.
+- [ ] Decide how/when to tackle screening.py's multi-framework gap (design session, not yet scheduled).
 - [ ] WS #10 cleanup sweep (dead code, remediation validation) — cheap, can run in parallel, no dependencies.
