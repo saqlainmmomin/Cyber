@@ -287,4 +287,101 @@ At three points, run a beefier adversarial pass beyond the per-workstream review
 
 ---
 
+## 9. Status update — 2026-09-15
+
+Reality check against §2-3 above, done by direct code inspection (not memory), plus new
+findings from a full data-flow trace of the app (`docs/architecture/data-flow-and-processes.md`,
+built 2026-09-12). Sections 1-8 above are left untouched as the historical record; this
+section is the live status and the reprioritized plan going forward.
+
+### 9.1 Workstream status
+
+| # | Workstream | Plan said | Actual |
+|---|---|---|---|
+| 1 | White-label config | — | ✅ **Shipped.** Merged via PR #7 (2026-09-12). |
+| 2 | Framework picker + tabs | — | ✅ **Shipped.** Merged via PR #7. `ClusterVerdict`/`FrameworkScore` schema landed too. |
+| 3 | Golden-output tests | — | ✅ **Shipped.** `tests/fixtures/canonical_dpdpa/`, `test_golden_dpdpa.py`, 62/62 tests green. |
+| 4 | Framework-agnostic `screening.py` + `scoring.py` | Codex, 3-4d | ❌ **Not started.** `screening.py:23` and `scoring.py:12` still hardcode `from app.dpdpa.framework import ...`; `run_screening_pass()` has no `framework_ids` param. |
+| 5 | Spike: per-cluster analyzer | Claude, 2d | ❌ Not started. No `spike/` branch found. |
+| 6 | UCC clustering, ISO 27001 + NIST CSF | You, 1-2wk | ✅ **~Done, unmarked.** 92/93 ISO controls and 94/94 NIST controls are clustered; `INTENTIONAL_SINGLETONS` documents the one holdout (`ISO.A5.32`); `tests/test_content_integrity.py` passes 10/10. This was the plan's single biggest scheduling risk (§6 risk register) and it's resolved — **this should pull WS #5/#7 forward, not wait on them.** |
+| 7 | Per-cluster analyzer, full build | Claude→Codex | ❌ Not started. No `app/services/cluster_analyzer.py`. |
+| 8 | Evidence citations | Claude→Codex | ❌ Not started. No `evidence_citations` field anywhere. |
+| 9 | RFI magic-link port | gated on signed client | ❌ Not started (as planned — still gated). |
+
+**The load-bearing consequence of #4/#7 not landing:** every multi-framework assessment
+today runs the *old* per-framework, full-questionnaire analyzer (N+2 Claude calls — one
+per framework plus synthesis), not a cluster analyzer. That path gets **none** of the
+adaptive machinery — no desk-review pre-fill, no domain-screening pre-fill, no adaptive
+tiering (traced in full in `docs/architecture/data-flow-and-processes.md`, Part 06.3). A
+combined DPDPA+ISO+NIST demo today means the client watches someone answer ~150+
+questions by hand with zero smart pre-fill, which undercuts the exact pitch this plan
+exists to win. This is why §9.2 below re-ranks WS #4 above everything except quick
+cleanup.
+
+### 9.2 New findings, folded into the plan
+
+The data-flow trace surfaced 11 gaps not in the original risk register. Mapped onto
+this plan rather than treated as a separate list:
+
+- **Fold into WS #4's scope** (same refactor, same files, same golden-test protection —
+  do these in the same PR, not separately):
+  - Scope-based exclusion (`applicable_requirements`) is currently a no-op for
+    multi-framework questionnaires (`_build_multi_framework_questionnaire` passes
+    `excluded=None` with a literal "for now" comment). Add this to WS #4's handoff spec.
+  - The cluster-verdict/maturity scoring path (`scoring.py::score()`) raises
+    `NotImplementedError` for anything but `["dpdpa"]` — this is the exact function
+    WS #4 is meant to generalize.
+- **New workstream, WS #10 — cleanup sweep** (Codex, ~1 day, no dependencies, do any
+  time in parallel — good filler between other workstreams):
+  - Dead reinstatement branch in `question_engine.py` (targets a `status="skipped"`
+    case `_modulate_question` no longer produces).
+  - `compute_scope()` accepts `company_size` but never reads it — drop the param or
+    wire it in, whichever WS #6-style content judgment prefers.
+  - `app/routers/reports.py:8` still imports `app.dpdpa.framework` directly instead of
+    going through the registry — residual pre-multi-framework seam, fix once WS #4 lands
+    (same root cause).
+  - Remediation status (`remediation.py`) has no transition validation and no
+    cross-check against `review_status` — add the minimal guard rails before checkpoint γ
+    (§5), since a client-facing remediation tracker with no validation is a credibility
+    risk in exactly the "would you stake your reputation on this" review.
+- **Flag for your judgment, not auto-fixed:**
+  - The 80% questionnaire-completion gate is bypassable by uploading a single document,
+    regardless of that document's actual coverage (`analysis.py:99-129`). Decide if this
+    is intended leniency (documents are allowed to substitute for answers) or a bug —
+    it changes what WS #4/#7 should assume about "when is an assessment ready to
+    analyze."
+  - RFI regeneration has no version history (delete-and-replace). Low priority unless a
+    pitch specifically needs "show me the RFI you sent us in March."
+  - Only the IT/SaaS industry has a real question bank; every other industry uses the
+    same 5-question generic one. This is WS #6-shaped judgment content work, not code —
+    rank it below finishing the ISO/NIST clustering follow-through (§9.1) and the
+    analyzer track.
+
+### 9.3 Reprioritized sequence
+
+1. **WS #10 cleanup sweep** — cheap, zero dependencies, Codex, do in parallel with
+   anything below. Doesn't block the demo but removes latent traps before they compound.
+2. **WS #4, expanded** — framework-agnostic `screening.py` + `scoring.py`, plus the two
+   folded-in items above. This is now the single highest-leverage workstream: it's the
+   direct unblock for the multi-framework story actually working end-to-end, and WS #6
+   being done removes the excuse to wait. Codex from a Claude-written handoff, protected
+   by the WS #3 goldens exactly as originally planned.
+3. **WS #5 spike** — re-run now that WS #6 gives it real ISO/NIST clusters to spike
+   against, not just DPDPA ones. Go/no-go decision still holds (§3, §5 checkpoint α).
+4. **WS #7 full analyzer build** — only after #5 passes. Worth revisiting whether this
+   redesign also naturally fixes the "signal tied to only the first requirement"
+   limitation (gap, `desk_review.py:218`) while the desk-review-to-analyzer interface is
+   being touched anyway.
+5. **WS #8 evidence citations** — unchanged, after #7.
+6. **WS #9 RFI magic-link port** — unchanged, still gated on a signed client.
+
+### 9.4 Next concrete step
+
+Write the WS #4 handoff (`tasks/handoffs/<date>-ws4-framework-agnostic-scoring.md`)
+following the §1.2 contract, expanded to include the two folded-in scope-exclusion and
+cluster-verdict-scoring items from §9.2. Once you sign off on the handoff, hand it to
+Codex the same way WS #1/#3 went.
+
+---
+
 Update this file as reality diverges from the plan. Keep the diffs — they're the record of what the grill missed.

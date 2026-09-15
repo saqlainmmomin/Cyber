@@ -26,3 +26,17 @@ Source: `tasks/handoffs/2026-09-09-pr7-review-tech-debt.md`. Continue on `codex/
 - [x] Complete the standalone simplify/review/handoff gates.
 
 Verification: 62 tests passed after applying all three validated review findings. CyberAssess started against an isolated SQLite database with the final startup order, emitted both credential warnings, completed startup assertions/migrations, and returned HTTP 200 for `/assessments/new`.
+
+## Plan status audit + reprioritization — 2026-09-15
+
+Full write-up: `tasks/multi-framework-demo-plan.md` §9. Short version: WS #1-3 shipped
+(PR #7), WS #6 (UCC clustering for ISO 27001 + NIST CSF) turned out to be ~99% done and
+was never marked done in the plan. WS #4/#5/#7/#8/#9 have not started. WS #4
+(framework-agnostic `screening.py`/`scoring.py`) is now the top-priority workstream —
+it's the direct unblock for multi-framework assessments getting desk-review pre-fill,
+screening pre-fill, and adaptive tiering, none of which they get today. 11 new gaps
+found via a full data-flow trace (`docs/architecture/data-flow-and-processes.md`) are
+folded into WS #4/#10 or flagged for a product decision — see plan §9.2.
+
+- [ ] Write the WS #4 handoff (expanded scope per §9.2) and get sign-off before handing to Codex.
+- [ ] WS #10 cleanup sweep (dead code, remediation validation) — cheap, can run in parallel, no dependencies.
