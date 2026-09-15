@@ -47,5 +47,10 @@ folded into WS #4/#10 or flagged for a product decision — see plan §9.2.
       domain-question content designed first (Claude/Saqlain judgment work, WS #6-shaped),
       not a mechanical refactor Codex can do from a spec alone.
 - [ ] Get sign-off on the WS #4 handoff, then hand to Codex on `ws/4-framework-agnostic-scoring`.
-- [ ] Decide how/when to tackle screening.py's multi-framework gap (design session, not yet scheduled).
+- [x] Sketch the screening.py multi-framework design brief — `tasks/handoffs/2026-09-15-multi-framework-screening-design-brief.md`.
+      Recommendation: build it as a second, independent code path (cluster/domain_group-based,
+      ~7-9 questions covering all frameworks at once), leave DPDPA's existing screening
+      untouched. Sequencing recommendation: don't schedule this until after WS #5's spike
+      reports back — it should be designed together with WS #7's per-cluster analyzer
+      contract, not before it, to avoid building the cluster-facing Claude interface twice.
 - [ ] WS #10 cleanup sweep (dead code, remediation validation) — cheap, can run in parallel, no dependencies.
