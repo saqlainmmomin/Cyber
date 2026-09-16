@@ -1,4 +1,4 @@
-"""Strict record/replay support for Claude analyzer calls."""
+"""Strict record/replay support for the analyzer's LLM calls."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def with_recorded_analyzer(fixture_dir: Path):
             )
         return copy.deepcopy(calls[key])
 
-    with patch("app.services.claude_analyzer._call_claude", side_effect=fake_call):
+    with patch("app.services.claude_analyzer._call_llm", side_effect=fake_call):
         try:
             yield recording["_meta"]
         finally:
@@ -85,7 +85,7 @@ def record_live_analyzer(fixture_dir: Path, metadata: dict):
     """Record genuine calls through the analyzer seam for an explicit live capture."""
     from app.services import claude_analyzer
 
-    original = claude_analyzer._call_claude
+    original = claude_analyzer._call_llm
     calls: dict[str, dict] = {}
 
     def passthrough(*args, **kwargs):
@@ -93,7 +93,7 @@ def record_live_analyzer(fixture_dir: Path, metadata: dict):
         calls[analyzer_request_key(args, kwargs)] = copy.deepcopy(result)
         return result
 
-    with patch("app.services.claude_analyzer._call_claude", side_effect=passthrough):
+    with patch("app.services.claude_analyzer._call_llm", side_effect=passthrough):
         yield calls
 
     payload = {"_meta": metadata, "calls": calls}

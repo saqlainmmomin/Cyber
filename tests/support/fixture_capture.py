@@ -186,7 +186,7 @@ def _write_synthetic_recording() -> None:
         calls[analyzer_request_key(args, kwargs)] = response
         return response
 
-    with patch("app.services.claude_analyzer._call_claude", side_effect=synthetic_call):
+    with patch("app.services.claude_analyzer._call_llm", side_effect=synthetic_call):
         run_gap_analysis(**analyzer_kwargs(FIXTURE))
     write_json(
         FIXTURE / "mocked_analyzer_response.json",
