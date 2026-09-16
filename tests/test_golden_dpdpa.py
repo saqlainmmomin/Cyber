@@ -181,7 +181,10 @@ def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
         SimpleNamespace(choices=[], usage=usage),
     ]
 
-    def fake_create(*, stream=False, **_kwargs):
+    captured_kwargs: list[dict] = []
+
+    def fake_create(*, stream=False, **kwargs):
+        captured_kwargs.append({"stream": stream, **kwargs})
         return iter(stream_chunks) if stream else response
 
     completions = SimpleNamespace(create=fake_create)
@@ -203,3 +206,11 @@ def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
         claude_analyzer._call_llm(tier="extract", stream=True, **request)["text"]
         == '{"streamed":true}'
     )
+
+    # Finding #1 (PR #9 remediation): every request must require zero data
+    # retention from OpenRouter's provider routing, on both the non-streaming
+    # and streaming call sites — otherwise client documents can be routed to
+    # a provider that stores or trains on them with nothing recording it.
+    assert len(captured_kwargs) == 2
+    for call_kwargs in captured_kwargs:
+        assert call_kwargs["extra_body"] == {"provider": {"data_collection": "deny", "zdr": True}}

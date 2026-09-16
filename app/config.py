@@ -24,10 +24,10 @@ class Settings(BaseSettings):
     # workstream that migrated it off the Anthropic SDK directly.
     openrouter_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    # Per-tier model selection. All three default to the same Claude model via
-    # its OpenRouter id so the transport swap is behavior-neutral; flip these
-    # independently once each tier's model choice has been validated against
-    # the golden fixture.
+    # Per-tier model selection. Defaults are DeepSeek Flash (extract),
+    # DeepSeek Pro (judge), and DeepSeek Flash (synthesize) — chosen from a
+    # single fixture comparison run, not a broad evaluation; treat as a
+    # monitored rollout and flip independently once validated further.
     llm_model_extract: str = "deepseek/deepseek-v4-flash"
     llm_model_judge: str = "deepseek/deepseek-v4-pro"
     llm_model_synthesize: str = "deepseek/deepseek-v4-flash"

@@ -78,6 +78,22 @@ class GapAnalysisResponse(BaseModel):
     assessments: list[GapAssessmentItem] = Field(default_factory=list)
 
 
+class IncompleteAssessmentError(ValueError):
+    """Raised when a validated response doesn't cover every known requirement.
+
+    The model (or the multi-framework wrapper) is expected to return exactly
+    one item per known requirement ID — including out-of-scope ones, which it
+    is separately instructed to mark `not_applicable` rather than omit (see
+    `app/dpdpa/prompts.py::build_user_prompt`'s scope-filter section). Missing
+    coverage is presented as a report over the *survivors only*: scoring
+    (`app/services/scoring.py::compute_framework_scores`) treats a domain with
+    no assessed items as not applicable and excludes it from the weighted
+    average, so a response missing 40 of 41 controls can still produce a
+    misleading 100% score built from the one item that survived. Persisting
+    that is worse than failing the request outright.
+    """
+
+
 def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
     """Validate a parsed gap-analysis response and drop unusable items.
 
@@ -89,24 +105,52 @@ def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
       and logged — today these silently become orphan GapItem rows that
       never map to a real control anywhere downstream.
 
+    A duplicate requirement_id among the survivors keeps its first occurrence
+    (logged) — the model returning the same control twice is itself a sign of
+    a malformed response, and "first wins" is at least deterministic.
+
+    After filtering and deduplication, every ID in known_requirement_ids must
+    be covered by a surviving item, or this raises IncompleteAssessmentError.
+    Rejecting the whole response is deliberate: scoring cannot distinguish
+    "not assessed because out of scope" from "not assessed because the item
+    got dropped," so a partial response must never reach persistence (see
+    IncompleteAssessmentError's docstring). Callers already treat an
+    exception from this call as a hard analysis failure
+    (`app/routers/analysis.py`'s single- and multi-framework paths both wrap
+    the analyzer call in try/except and surface it as a failed run).
+
     Returns a plain dict in the same shape callers already consume
     (`{"executive_summary": str, "assessments": [...]}`), so
-    app/routers/analysis.py needs no changes.
+    app/routers/analysis.py needs no further changes.
     """
     executive_summary = parsed.get("executive_summary")
     if not isinstance(executive_summary, str):
         executive_summary = ""
 
     valid_items: list[GapAssessmentItem] = []
+    seen_ids: set[str] = set()
     dropped_malformed = 0
     dropped_unknown_id = 0
+    dropped_duplicate = 0
 
-    for raw_item in parsed.get("assessments", []):
+    for index, raw_item in enumerate(parsed.get("assessments", [])):
         try:
             item = GapAssessmentItem.model_validate(raw_item)
         except ValidationError as exc:
             dropped_malformed += 1
-            logger.warning("Dropping malformed assessment item: %s", exc)
+            # exc.errors(include_input=False) omits the rejected field values —
+            # str(exc) would include them verbatim, which can be quoted client
+            # document text (e.g. evidence_quote), moving it into application
+            # logs with broader access/retention than the assessment itself.
+            sanitized_errors = [
+                {"loc": err["loc"], "type": err["type"], "msg": err["msg"]}
+                for err in exc.errors(include_input=False)
+            ]
+            logger.warning(
+                "Dropping malformed assessment item at index %d: %s",
+                index,
+                sanitized_errors,
+            )
             continue
         if item.requirement_id not in known_requirement_ids:
             dropped_unknown_id += 1
@@ -115,15 +159,34 @@ def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
                 item.requirement_id,
             )
             continue
+        if item.requirement_id in seen_ids:
+            dropped_duplicate += 1
+            logger.warning(
+                "Dropping duplicate assessment item for requirement_id %r "
+                "(first occurrence wins)",
+                item.requirement_id,
+            )
+            continue
+        seen_ids.add(item.requirement_id)
         valid_items.append(item)
 
-    if dropped_malformed or dropped_unknown_id:
+    if dropped_malformed or dropped_unknown_id or dropped_duplicate:
         logger.warning(
-            "Gap analysis response validation dropped %d malformed and %d "
-            "unknown-requirement-id item(s) out of %d",
+            "Gap analysis response validation dropped %d malformed, %d "
+            "unknown-requirement-id, and %d duplicate item(s) out of %d",
             dropped_malformed,
             dropped_unknown_id,
+            dropped_duplicate,
             len(parsed.get("assessments", [])),
+        )
+
+    missing_ids = known_requirement_ids - seen_ids
+    if missing_ids:
+        raise IncompleteAssessmentError(
+            f"Gap analysis response is missing {len(missing_ids)} of "
+            f"{len(known_requirement_ids)} known requirement(s) after "
+            f"validation: {sorted(missing_ids)[:10]}"
+            + ("…" if len(missing_ids) > 10 else "")
         )
 
     return GapAnalysisResponse(

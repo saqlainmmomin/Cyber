@@ -150,16 +150,32 @@ def _evidence_from_desk_review(desk_review_data: dict | None) -> dict | None:
     return evidence if evidence else None
 
 
+# Smart quotes/apostrophes a PDF extractor or the model itself can introduce
+# in text that's otherwise a verbatim match — normalized to their straight
+# equivalents so grounding doesn't reject a genuine quote over punctuation
+# style alone. This stays a substring check, not fuzzy matching: only
+# whitespace, hyphenation-across-line-breaks, quote style, and case are
+# normalized, nothing about matching approximate wording.
+_QUOTE_NORMALIZE_TABLE = str.maketrans(
+    {"‘": "'", "’": "'", "“": '"', "”": '"'}
+)
+
+
 def _ground_evidence_quotes(evidence: dict, documents: list[dict]) -> dict:
     """Drop extracted quotes that don't actually appear in the source documents.
 
-    Verbatim (whitespace-normalized) substring check, run before evidence is
-    threaded into Call 2's prompt — catches a fabricated citation
-    deterministically and for free, regardless of which model produced it.
+    Verbatim substring check (case-insensitive, whitespace/hyphenation/quote-
+    style normalized), run before evidence is threaded into Call 2's prompt —
+    catches a fabricated citation deterministically and for free, regardless
+    of which model produced it.
     """
 
     def normalize(text: str) -> str:
-        return " ".join(text.split())
+        # De-hyphenate a word wrapped across a line break (e.g.
+        # "authoriza-\ntion") before whitespace collapsing erases the break.
+        text = re.sub(r"-\s*\n\s*", "", text)
+        text = text.translate(_QUOTE_NORMALIZE_TABLE)
+        return " ".join(text.split()).lower()
 
     source_text = normalize(" ".join(doc.get("text", "") for doc in documents))
     grounded: dict[str, list[str]] = {}

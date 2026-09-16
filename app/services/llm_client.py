@@ -28,6 +28,15 @@ _TIER_MODELS: dict[Tier, str] = {
     "synthesize": "llm_model_synthesize",
 }
 
+# Every request carries these documents (compliance policies, questionnaire
+# answers) to OpenRouter. Without an explicit per-request policy, OpenRouter's
+# default is data_collection="allow" — a provider behind a tier could store or
+# train on client documents with nothing in this codebase recording it. Zero
+# data retention is a hard requirement, not a preference: a provider/model
+# combination that can't honor it should fail the request, not silently fall
+# back to one that retains data.
+_ZDR_PROVIDER_PREFS = {"provider": {"data_collection": "deny", "zdr": True}}
+
 _client: OpenAI | None = None
 
 
@@ -90,6 +99,7 @@ def call_llm(
             messages=request_messages,
             max_tokens=max_tokens,
             temperature=temperature,
+            extra_body=_ZDR_PROVIDER_PREFS,
         )
         text = response.choices[0].message.content
         return {"text": text, "usage": _usage_dict(response.usage)}
@@ -101,6 +111,7 @@ def call_llm(
         temperature=temperature,
         stream=True,
         stream_options={"include_usage": True},
+        extra_body=_ZDR_PROVIDER_PREFS,
     )
     text_parts: list[str] = []
     usage = None

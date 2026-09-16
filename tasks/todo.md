@@ -128,3 +128,10 @@ Codex implemented all 7 fixes and 8 new tests before running out of credits; the
 push, and this bookkeeping were finished by Claude in a follow-up session (2026-09-16) after
 independently rerunning the full suite (77 passed) against the uncommitted working tree.
 See `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md` Results section for the per-fix detail.
+
+## Test harness and needs_review UI — 2026-09-16
+
+- [x] Add isolated seams and characterization tests for the six remaining Claude call sites.
+- [x] Persist and render `needs_review` without changing the existing review-status workflow.
+- [x] Run focused tests, the full suite, and an app/browser smoke check for the marker.
+- [x] Append evidence and deferred work to `tasks/handoffs/2026-09-16-test-harness-and-needs-review-ui.md`.
