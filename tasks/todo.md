@@ -70,3 +70,22 @@ Next actual step in the build order is still WS #4.
 
 - [x] Adversarially verify the screening spec's factual claims before treating it as settled.
 - [ ] When WS #5 starts, build `ClusterScope`/`ClusterContext` to the shapes this spec already named.
+
+## Two handoffs to start build — 2026-09-16
+
+- [x] WS #4 handoff confirmed current and ready — `tasks/handoffs/2026-09-15-ws4-framework-agnostic-scoring.md`.
+      No changes to `scoring.py`/`question_engine.py` since it was written; 62/62 tests still green.
+      Awaiting sign-off to hand to Codex on `ws/4-framework-agnostic-scoring`.
+- [x] WS #5 spike handoff written — `tasks/handoffs/2026-09-16-ws5-per-cluster-analyzer-spike.md`.
+      5 clusters picked for real footprint variety (CLUSTER_006, 029, 017, 022, 032),
+      cross-checked against the canonical fixture's expected DPDPA statuses. Two
+      corrections against the original plan: (1) the fixture's `expected/analyzer_output.json`
+      is a synthetic recorded baseline, not a real model response — comparing against it
+      would be circular, so the spike needs one genuine live two-call run as ground truth
+      instead; (2) the cost-projection cluster count for DPDPA+ISO+NIST is 53 (52 shared
+      clusters + 1 ISO singleton), not the plan's original rough "~80" estimate. Also
+      pins down the design question the approved screening spec left implicit: the
+      per-cluster call should still return per-control assessments (reduced deterministically
+      by the existing worst-case-verdict logic), not a single Claude-decided cluster verdict
+      — keeps the "Claude never scores directly" invariant intact.
+- [ ] Get sign-off on both, then: hand WS #4 to Codex; run WS #5's spike (Claude, throwaway branch).
