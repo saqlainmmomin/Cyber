@@ -23,7 +23,10 @@ from app.services.tier_engine import assign_tiers, compute_tier_stats
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.industry_questions import get_industry_questions
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, _GUIDANCE_TEXT, _QUESTION_TEXT, build_questionnaire
-from app.frameworks.questionnaire_builder import build_multi_questionnaire
+from app.frameworks.questionnaire_builder import (
+    build_multi_questionnaire,
+    compute_excluded_controls,
+)
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 
@@ -58,13 +61,10 @@ def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: 
     shape expected by section_questions.html.
     """
     context_profile = json.loads(assessment.context_profile) if assessment.context_profile else None
-    excluded: set[str] | None = None
-    if assessment.applicable_requirements:
-        try:
-            applicable = set(json.loads(assessment.applicable_requirements))
-            excluded = None  # UCC engine uses include-list differently — pass None for now
-        except (json.JSONDecodeError, TypeError):
-            pass
+    excluded = compute_excluded_controls(
+        framework_ids,
+        assessment.applicable_requirements,
+    )
 
     raw_questions = build_multi_questionnaire(framework_ids, excluded_controls=excluded, context_profile=context_profile)
 

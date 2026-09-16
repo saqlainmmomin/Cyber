@@ -17,7 +17,11 @@ from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
 from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
+from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
+from app.routers import analysis as analysis_router
+from app.routers import assessments as assessments_router
+from app.routers import questionnaire as questionnaire_router
 from app.routers.web import router, templates
 
 
@@ -61,6 +65,9 @@ def client(db_session):
     templates.env.globals["settings"] = settings
     app = FastAPI()
     app.include_router(router)
+    app.include_router(assessments_router.router)
+    app.include_router(questionnaire_router.router)
+    app.include_router(analysis_router.router)
 
     def override_db():
         yield db_session
@@ -87,11 +94,11 @@ def _assessment(db_session, framework_ids):
     return assessment
 
 
-def _gap_item(report_id, requirement_id, status, cluster_id=None):
+def _gap_item(report_id, requirement_id, status, cluster_id=None, framework_id="dpdpa"):
     return GapItem(
         report_id=report_id,
         requirement_id=requirement_id,
-        framework_id="dpdpa",
+        framework_id=framework_id,
         cluster_id=cluster_id,
         chapter="chapter_2",
         requirement_title=requirement_id,
@@ -186,6 +193,65 @@ def test_assessment_model_rejects_explicit_empty_framework_list():
         )
 
 
+def test_assessment_model_rejects_unregistered_framework():
+    with pytest.raises(ValueError, match="Unknown framework 'not_registered'"):
+        Assessment(
+            company_name="Acme",
+            industry="other",
+            company_size="sme",
+            selected_frameworks='["dpdpa", "not_registered"]',
+        )
+
+
+def test_framework_change_invalidates_scope_and_restores_new_questions(client, db_session):
+    assessment = _assessment(db_session, ["dpdpa"])
+    assessment.scope_answers = json.dumps({"SCP.1": "yes"})
+    assessment.applicable_requirements = json.dumps(["CH2.NOTICE.1"])
+    assessment.status = "scoped"
+    db_session.commit()
+
+    response = client.post(
+        f"/api/assessments/{assessment.id}/frameworks",
+        json={"framework_ids": ["dpdpa", "iso27001"]},
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(assessment)
+    assert assessment.frameworks == ["dpdpa", "iso27001"]
+    assert assessment.scope_answers is None
+    assert assessment.applicable_requirements is None
+    assert assessment.status == "created"
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    questionnaire = build_adaptive_questionnaire(assessment.id, db_session)
+    assert any(
+        control_id.startswith("ISO.")
+        for section in questionnaire["sections"]
+        for question in section["questions"]
+        for control_id in question["maps_to"]
+    )
+
+
+def test_unchanged_framework_selection_preserves_scope(client, db_session):
+    assessment = _assessment(db_session, ["dpdpa", "iso27001"])
+    assessment.scope_answers = json.dumps({"SCP.1": "yes"})
+    assessment.applicable_requirements = json.dumps(["CH2.NOTICE.1", "ISO.A5.1"])
+    assessment.status = "scoped"
+    db_session.commit()
+
+    response = client.post(
+        f"/api/assessments/{assessment.id}/frameworks",
+        json={"framework_ids": ["dpdpa", "iso27001"]},
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(assessment)
+    assert json.loads(assessment.scope_answers) == {"SCP.1": "yes"}
+    assert json.loads(assessment.applicable_requirements) == ["CH2.NOTICE.1", "ISO.A5.1"]
+    assert assessment.status == "scoped"
+
+
 def test_framework_tab_rejects_framework_outside_assessment(client, db_session):
     assessment = _assessment(db_session, ["dpdpa", "iso27001"])
     valid = client.get(f"/assessments/{assessment.id}/tab/iso27001")
@@ -276,12 +342,101 @@ def test_scoring_contract_shape_and_single_framework_consistency(db_session):
         ClusterVerdict.model_validate(verdict.model_dump())
 
 
-def test_scoring_wrapper_does_not_fabricate_other_frameworks(db_session):
+def test_scoring_supports_iso27001_with_real_cluster_mapping(db_session):
     assessment = _assessment(db_session, ["iso27001"])
+    report = GapReport(
+        assessment_id=assessment.id,
+        overall_score=0,
+        chapter_scores="{}",
+        executive_summary="Summary",
+        raw_ai_response="{}",
+    )
+    db_session.add(report)
+    db_session.flush()
+    db_session.add(
+        _gap_item(
+            report.id,
+            "ISO.A5.35",
+            "compliant",
+            framework_id="iso27001",
+        )
+    )
+    db_session.commit()
+
+    from app.services.scoring import score
+
+    result = score(assessment.id, ["iso27001"], _session=db_session)
+
+    assert set(result.per_framework) == {"iso27001"}
+    assert set(result.cluster_verdicts) == {"CLUSTER_004"}
+    assert result.per_framework["iso27001"].covered_control_count == 3
+    assert result.combined.overall_score == result.per_framework["iso27001"].overall_score
+
+
+@pytest.mark.parametrize(
+    ("framework_id", "control_id", "cluster_id", "covered_control_count"),
+    [
+        ("gdpr", "GDPR.ART24.1", "CLUSTER_001", 3),
+        ("hipaa", "HIPAA.164.308a1iii", "CLUSTER_001", 1),
+        ("nist_csf", "NIST.GV.OC.03", "CLUSTER_001", 6),
+        ("pci_dss", "PCI.12.1", "CLUSTER_001", 1),
+    ],
+)
+def test_scoring_supports_other_cluster_backed_frameworks(
+    db_session,
+    framework_id,
+    control_id,
+    cluster_id,
+    covered_control_count,
+):
+    assessment = _assessment(db_session, [framework_id])
+    report = GapReport(
+        assessment_id=assessment.id,
+        overall_score=0,
+        chapter_scores="{}",
+        executive_summary="Summary",
+        raw_ai_response="{}",
+    )
+    db_session.add(report)
+    db_session.flush()
+    db_session.add(
+        _gap_item(
+            report.id,
+            control_id,
+            "compliant",
+            framework_id=framework_id,
+        )
+    )
+    db_session.commit()
+
+    from app.services.scoring import score
+
+    result = score(assessment.id, [framework_id], _session=db_session)
+    assert set(result.per_framework) == {framework_id}
+    assert set(result.cluster_verdicts) == {cluster_id}
+    assert result.per_framework[framework_id].covered_control_count == covered_control_count
+    assert result.combined.overall_score == result.per_framework[framework_id].overall_score
+
+
+def test_scoring_rejects_unregistered_and_sparse_framework_mappings(db_session, monkeypatch):
+    from app.frameworks.mappings import clusters
+    from app.services.scoring import score
+
+    with pytest.raises(ValueError, match="Unsupported framework 'not_registered'"):
+        score("missing", ["not_registered"], _session=db_session)
+
+    assessment = _assessment(db_session, ["iso27001"])
+    monkeypatch.setattr(clusters, "CONTROL_CLUSTERS", [])
+    with pytest.raises(NotImplementedError, match="iso27001.*0/93.*95%"):
+        score(assessment.id, ["iso27001"], _session=db_session)
+
+
+def test_scoring_does_not_combine_frameworks(db_session):
+    assessment = _assessment(db_session, ["dpdpa", "iso27001"])
     from app.services.scoring import score
 
     with pytest.raises(NotImplementedError):
-        score(assessment.id, ["iso27001"], _session=db_session)
+        score(assessment.id, ["dpdpa", "iso27001"], _session=db_session)
 
 
 def test_scoring_collapses_mapped_controls_and_matches_legacy_semantics(db_session):
@@ -322,8 +477,139 @@ def test_scoring_rejects_missing_or_mismatched_assessment(db_session):
 
     with pytest.raises(ValueError, match="does not exist"):
         score("missing", ["dpdpa"], _session=db_session)
-    with pytest.raises(ValueError, match="not configured as DPDPA-only"):
+    with pytest.raises(ValueError, match="not configured for"):
         score(assessment.id, ["dpdpa"], _session=db_session)
+
+
+def test_multi_framework_questionnaire_excludes_controls_outside_scope(db_session):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = json.dumps(["ISO.A5.1"])
+    db_session.commit()
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    result = build_adaptive_questionnaire(assessment.id, db_session)
+    rendered_controls = {
+        control_id
+        for section in result["sections"]
+        for question in section["questions"]
+        for control_id in question["maps_to"]
+    }
+    assert rendered_controls == {"ISO.A5.1"}
+    assert result["stats"]["total_questions"] == 1
+
+
+def test_questionnaire_section_api_preserves_scope_exclusions(client, db_session):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = json.dumps(["ISO.A5.1"])
+    db_session.commit()
+
+    sections_response = client.get(
+        f"/api/assessments/{assessment.id}/questionnaire/sections"
+    )
+    assert sections_response.status_code == 200
+    sections = sections_response.json()
+    assert sum(section["question_count"] for section in sections) == 1
+
+    section_response = client.get(
+        f"/api/assessments/{assessment.id}/questionnaire/sections/{sections[0]['section_id']}"
+    )
+    assert section_response.status_code == 200
+    assert section_response.json()["question_count"] == 1
+
+
+def test_analysis_completion_uses_same_scope_exclusions(client, db_session, monkeypatch):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = json.dumps(["ISO.A5.1"])
+    db_session.add(
+        QuestionnaireResponse(
+            assessment_id=assessment.id,
+            question_id="SINGLE.ISO.A5.1",
+            answer="fully_implemented",
+        )
+    )
+    db_session.commit()
+    captured = {}
+
+    def capture_builder(framework_ids, excluded_controls=None, context_profile=None):
+        captured["excluded_controls"] = excluded_controls
+        return [{"cluster_id": "UNANSWERED.1"}, {"cluster_id": "UNANSWERED.2"}]
+
+    monkeypatch.setattr(
+        "app.frameworks.questionnaire_builder.build_multi_questionnaire",
+        capture_builder,
+    )
+
+    response = client.post(f"/api/assessments/{assessment.id}/analyze")
+    assert response.status_code == 400
+    assert captured["excluded_controls"] == {
+        control.id
+        for control in ISO27001_DEFINITION.all_controls()
+        if control.id != "ISO.A5.1"
+    }
+
+
+def test_multi_framework_questionnaire_allows_empty_scope(db_session):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = "[]"
+    db_session.commit()
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    result = build_adaptive_questionnaire(assessment.id, db_session)
+    assert result["sections"] == []
+    assert result["stats"]["total_questions"] == 0
+
+
+def test_iso_scope_save_documents_current_passthrough_behavior(client, db_session, monkeypatch):
+    assessment = _assessment(db_session, ["iso27001"])
+    captured = {}
+
+    from app.frameworks.questionnaire_builder import build_multi_questionnaire as real_builder
+
+    def capture_builder(framework_ids, excluded_controls=None, context_profile=None):
+        captured["excluded_controls"] = excluded_controls
+        return real_builder(framework_ids, excluded_controls, context_profile)
+
+    monkeypatch.setattr("app.services.question_engine.build_multi_questionnaire", capture_builder)
+
+    response = client.post(
+        f"/assessments/{assessment.id}/scope/save",
+        data={
+            "ISO.SCP.1": "specific_services",
+            "ISO.SCP.2": "no",
+            "ISO.SCP.3": "no",
+            "ISO.SCP.4": "fully_remote",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    db_session.refresh(assessment)
+
+    expected_controls = {control.id for control in ISO27001_DEFINITION.all_controls()}
+    assert set(json.loads(assessment.applicable_requirements)) == expected_controls
+    assert assessment.status == "scoped"
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    result = build_adaptive_questionnaire(assessment.id, db_session)
+    rendered_controls = {
+        control_id
+        for section in result["sections"]
+        for question in section["questions"]
+        for control_id in question["maps_to"]
+    }
+    assert captured["excluded_controls"] == set()
+    assert rendered_controls == expected_controls
+
+
+def test_framework_controls_are_cached():
+    first = ISO27001_DEFINITION.all_controls()
+    second = ISO27001_DEFINITION.all_controls()
+
+    assert first is not second
+    assert [control.id for control in first] == [control.id for control in second]
+    assert isinstance(ISO27001_DEFINITION._all_controls_cache, tuple)
 
 
 def test_scoring_schema_rejects_inconsistent_single_framework_combined_view():

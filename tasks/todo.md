@@ -89,3 +89,42 @@ Next actual step in the build order is still WS #4.
       by the existing worst-case-verdict logic), not a single Claude-decided cluster verdict
       — keeps the "Claude never scores directly" invariant intact.
 - [ ] Get sign-off on both, then: hand WS #4 to Codex; run WS #5's spike (Claude, throwaway branch).
+
+## WS #4 implementation — 2026-09-16
+
+Source: `tasks/handoffs/2026-09-15-ws4-framework-agnostic-scoring.md`. Current main
+has drifted from the recorded `bbe08f8` base only in planning documents; the scoped
+implementation and test files are unchanged.
+
+- [x] Generalize cluster-backed scoring for any one registered framework while preserving DPDPA output.
+- [x] Apply multi-framework scope include-lists as UCC control exclusions, including the empty-list edge case.
+- [x] Update the scoring contract tests and add questionnaire scope-exclusion regressions.
+- [x] Run focused tests, the golden DPDPA suite, the full suite, and the startup/manual-equivalent smoke checks.
+- [ ] Complete the standalone simplify, review, and verified handoff gates.
+
+Verification: focused WS #4 regressions pass (7/7). Full suite is 61 passed, 4 failed;
+an untouched `origin/main` archive reproduces the same four golden analyzer-replay
+failures (58 passed, 4 failed) with uncached prompt hash `eb7325f8...b6315d`.
+Python 3.13 startup succeeded against a scratch SQLite database, emitted both expected
+credential warnings, and returned 200 for `/assessments/new`. A live ISO questionnaire
+with persisted scope `['ISO.A5.1']` rendered exactly one Annex A.5.1 question.
+Standalone finishing is blocked because the installed `ce-work` package is missing its
+mandatory `references/shipping-workflow.md`. Saqlain subsequently authorized committing
+the verified changes and opening a PR as a separate explicit action.
+
+## PR #8 adversarial review fixes — 2026-09-16
+
+Source: `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md`. Implement on a temporary
+local branch based exactly on PR #8, then update the existing PR branch.
+
+- [x] Reset scope-derived state when selected frameworks change and reject unregistered framework IDs at the model boundary.
+- [x] Consolidate excluded-control computation and characterize the real non-DPDPA scope flow.
+- [x] Enforce and test meaningful cluster-mapping coverage across registered scoring frameworks.
+- [x] Cache immutable framework control flattening without changing callers.
+- [x] Run focused, integration/manual, full-suite, and second-order regression checks.
+- [x] Append complete evidence and per-fix regression notes to the handoff Results section.
+
+Codex implemented all 7 fixes and 8 new tests before running out of credits; the commit,
+push, and this bookkeeping were finished by Claude in a follow-up session (2026-09-16) after
+independently rerunning the full suite (77 passed) against the uncommitted working tree.
+See `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md` Results section for the per-fix detail.

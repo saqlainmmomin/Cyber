@@ -67,6 +67,11 @@ class Assessment(Base):
             raise ValueError("At least one framework must be selected")
         if not all(isinstance(framework, str) and framework for framework in frameworks):
             raise ValueError("Framework ids must be non-empty strings")
+        from app.frameworks.registry import FrameworkRegistry
+
+        for framework in frameworks:
+            if not FrameworkRegistry.is_registered(framework):
+                raise ValueError(f"Unknown framework '{framework}'")
         return value
 
     @property

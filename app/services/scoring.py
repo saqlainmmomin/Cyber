@@ -9,7 +9,7 @@ import json
 import logging
 
 from app.database import SessionLocal
-from app.dpdpa.framework import DPDPA_FRAMEWORK, ROOT_CAUSE_CLUSTERS, get_all_requirements
+from app.dpdpa.framework import ROOT_CAUSE_CLUSTERS
 from app.schemas.scoring import ScoringResult
 
 logger = logging.getLogger(__name__)
@@ -46,12 +46,55 @@ _LEGACY_TO_MATURITY_STATUS = {
     "not_assessed": "unknown",
 }
 
+_MIN_CLUSTER_MAPPING_COVERAGE = 0.95
+_WARNED_CLUSTER_COVERAGE: set[str] = set()
+
+
+def _validated_cluster_mapping(framework_id: str) -> dict[str, str]:
+    """Reject frameworks whose controls are not meaningfully cluster-backed."""
+    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
+    from app.frameworks.registry import FrameworkRegistry
+
+    framework = FrameworkRegistry.get_or_none(framework_id)
+    if framework is None:
+        raise ValueError(f"Unsupported framework '{framework_id}'")
+
+    control_ids = {control.id for control in framework.all_controls()}
+    control_clusters = {
+        member["control"]: cluster["cluster_id"]
+        for cluster in CONTROL_CLUSTERS
+        for member in cluster["controls"]
+        if member["framework"] == framework_id and member["control"] in control_ids
+    }
+    total = len(control_ids)
+    coverage = (len(control_clusters) / total) if total else 0.0
+    if coverage < _MIN_CLUSTER_MAPPING_COVERAGE:
+        threshold = round(_MIN_CLUSTER_MAPPING_COVERAGE * 100)
+        raise NotImplementedError(
+            f"Framework '{framework_id}' has insufficient cluster mapping coverage: "
+            f"{len(control_clusters)}/{total} controls mapped; at least {threshold}% is required"
+        )
+    if coverage < 1.0 and framework_id not in _WARNED_CLUSTER_COVERAGE:
+        logger.warning(
+            "Framework '%s' cluster mapping coverage is %.1f%% (%d/%d); "
+            "unmapped controls use degraded singleton handling",
+            framework_id,
+            coverage * 100,
+            len(control_clusters),
+            total,
+        )
+        _WARNED_CLUSTER_COVERAGE.add(framework_id)
+    return control_clusters
+
 
 def _maturity_rating(score: float) -> str:
     return f"M{max(0, min(5, round(score)))}"
 
 
-def _build_cluster_verdicts(items: list) -> tuple[dict, dict[str, str]]:
+def _build_cluster_verdicts(
+    items: list,
+    control_clusters: dict[str, str],
+) -> tuple[dict, dict[str, str]]:
     """Collapse legacy control rows to one deterministic verdict per cluster."""
     from app.schemas.scoring import ClusterVerdict
 
@@ -62,14 +105,7 @@ def _build_cluster_verdicts(items: list) -> tuple[dict, dict[str, str]]:
         "implemented": 3,
         "not_applicable": 4,
     }
-    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
-
     grouped: dict[str, list] = {}
-    control_clusters: dict[str, str] = {}
-    for cluster in CONTROL_CLUSTERS:
-        for member in cluster["controls"]:
-            if member["framework"] == "dpdpa":
-                control_clusters[member["control"]] = cluster["cluster_id"]
     for item in items:
         cluster_id = (
             item.cluster_id
@@ -110,11 +146,15 @@ def _build_cluster_verdicts(items: list) -> tuple[dict, dict[str, str]]:
     return verdicts, control_clusters
 
 
-def _derive_dpdpa_score(cluster_verdicts: dict, control_clusters: dict[str, str]):
+def _derive_framework_score(
+    framework_id: str,
+    cluster_verdicts: dict,
+    control_clusters: dict[str, str],
+):
     from app.frameworks.registry import FrameworkRegistry
     from app.schemas.scoring import FrameworkScore
 
-    framework = FrameworkRegistry.get("dpdpa")
+    framework = FrameworkRegistry.get(framework_id)
     legacy_status = {
         "not_implemented": "non_compliant",
         "partial": "partially_compliant",
@@ -137,15 +177,15 @@ def _derive_dpdpa_score(cluster_verdicts: dict, control_clusters: dict[str, str]
             "compliance_status": legacy_status[verdict.status],
         })
 
-    legacy_score = compute_scores(propagated)
+    legacy_score = compute_framework_scores(propagated, framework_id)
     overall_score = round(legacy_score["overall_score"] / 20, 2)
     domain_scores = {
         key: round(value["score"] / 20, 2)
-        for key, value in legacy_score["chapter_scores"].items()
+        for key, value in legacy_score["domain_scores"].items()
         if value["applicable"]
     }
     return FrameworkScore(
-        framework_id="dpdpa",
+        framework_id=framework_id,
         overall_score=overall_score,
         overall_rating=_maturity_rating(overall_score),
         by_domain=domain_scores,
@@ -161,20 +201,18 @@ def score(
     *,
     _session=None,
 ) -> ScoringResult:
-    """Return the cluster-first scoring contract for the legacy DPDPA path.
-
-    ISO 27001 and NIST CSF remain deliberately unsupported here until their
-    analyzer output is cluster-backed. Existing percentage scoring functions
-    below retain their public behavior for current callers.
-    """
+    """Return cluster-first scoring for exactly one registered framework."""
     from app.models.assessment import Assessment
     from app.models.report import GapItem, GapReport
     from app.schemas.scoring import CombinedScore
 
-    if framework_ids != ["dpdpa"]:
+    if len(framework_ids) != 1:
         raise NotImplementedError(
-            "Cluster-backed scoring is currently available only for DPDPA-only assessments"
+            "Cluster-backed scoring supports exactly one framework at a time; "
+            "combining cluster verdicts across frameworks is WS #7's job"
         )
+    framework_id = framework_ids[0]
+    control_clusters = _validated_cluster_mapping(framework_id)
 
     owns_session = _session is None
     db = _session or SessionLocal()
@@ -182,8 +220,10 @@ def score(
         assessment = db.get(Assessment, str(assessment_id))
         if assessment is None:
             raise ValueError(f"Assessment {assessment_id!r} does not exist")
-        if assessment.frameworks != ["dpdpa"]:
-            raise ValueError("Assessment is not configured as DPDPA-only")
+        if assessment.frameworks != framework_ids:
+            raise ValueError(
+                f"Assessment is not configured for exactly {framework_ids}"
+            )
         report = (
             db.query(GapReport)
             .filter(GapReport.assessment_id == str(assessment_id))
@@ -198,9 +238,16 @@ def score(
         if owns_session:
             db.close()
 
-    cluster_verdicts, control_clusters = _build_cluster_verdicts(items)
-    framework_score = _derive_dpdpa_score(cluster_verdicts, control_clusters)
-    per_framework = {"dpdpa": framework_score}
+    cluster_verdicts, control_clusters = _build_cluster_verdicts(
+        items,
+        control_clusters,
+    )
+    framework_score = _derive_framework_score(
+        framework_id,
+        cluster_verdicts,
+        control_clusters,
+    )
+    per_framework = {framework_id: framework_score}
     combined = CombinedScore(
         overall_score=framework_score.overall_score,
         overall_rating=framework_score.overall_rating,
@@ -306,82 +353,12 @@ def get_rating(score: float) -> str:
 
 
 def compute_scores(assessments: list[dict]) -> dict:
-    """
-    Compute weighted compliance scores from Claude's assessment output.
-
-    Args:
-        assessments: list of dicts with "requirement_id" and "compliance_status"
-
-    Returns:
-        {
-            "overall_score": float,
-            "overall_rating": str,
-            "chapter_scores": {chapter_key: {"score": float, "rating": str, "title": str}}
-        }
-    """
-    # Index assessments by requirement_id
-    status_map = {a["requirement_id"]: a["compliance_status"] for a in assessments}
-
-    # Build requirement lookup
-    all_reqs = get_all_requirements()
-    req_lookup = {r["id"]: r for r in all_reqs}
-
-    chapter_scores = {}
-
-    for chapter_key, chapter in DPDPA_FRAMEWORK.items():
-        section_scores = []
-        section_weights = []
-
-        for section_key, section in chapter["sections"].items():
-            scored_values = []
-            for req in section["requirements"]:
-                status = status_map.get(req["id"], "not_assessed")
-                if status not in KNOWN_STATUSES:
-                    logger.warning(
-                        "Unexpected compliance_status %r for %s — treating as not_assessed",
-                        status, req["id"],
-                    )
-                    status = "not_assessed"
-                if status in STATUS_SCORES:
-                    scored_values.append(STATUS_SCORES[status])
-
-            if scored_values:
-                section_avg = sum(scored_values) / len(scored_values)
-                section_scores.append(section_avg)
-                section_weights.append(section["weight"])
-
-        if section_scores and section_weights:
-            # Weighted average of sections within chapter
-            total_weight = sum(section_weights)
-            chapter_score = sum(
-                s * w for s, w in zip(section_scores, section_weights)
-            ) / total_weight
-        else:
-            chapter_score = 0.0
-
-        chapter_scores[chapter_key] = {
-            "score": round(chapter_score, 1),
-            "rating": get_rating(chapter_score),
-            "title": chapter["title"],
-            "applicable": bool(section_scores),
-        }
-
-    # Overall score: weighted average of chapters
-    overall_numerator = 0.0
-    overall_denominator = 0.0
-    for chapter_key, chapter in DPDPA_FRAMEWORK.items():
-        if chapter_key in chapter_scores and chapter_scores[chapter_key]["applicable"]:
-            overall_numerator += chapter_scores[chapter_key]["score"] * chapter["weight"]
-            overall_denominator += chapter["weight"]
-
-    overall_score = (
-        round(overall_numerator / overall_denominator, 1) if overall_denominator > 0 else 0.0
-    )
-
+    """Weighted DPDPA compliance score. Thin wrapper — see compute_framework_scores()."""
+    result = compute_framework_scores(assessments, "dpdpa")
     return {
-        "overall_score": overall_score,
-        "overall_rating": get_rating(overall_score),
-        "chapter_scores": chapter_scores,
+        "overall_score": result["overall_score"],
+        "overall_rating": result["overall_rating"],
+        "chapter_scores": result["domain_scores"],
     }
 
 

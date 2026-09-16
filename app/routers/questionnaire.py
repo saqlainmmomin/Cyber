@@ -167,20 +167,14 @@ def get_questionnaire_sections(
     is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
 
     if is_multi:
-        from app.frameworks.questionnaire_builder import build_multi_questionnaire
-        excluded = set()
-        if assessment.applicable_requirements:
-            try:
-                applicable = set(json.loads(assessment.applicable_requirements))
-                # excluded = all controls NOT in applicable set
-                from app.frameworks.registry import FrameworkRegistry
-                for fw_id in selected_frameworks:
-                    fw = FrameworkRegistry.get(fw_id)
-                    for ctrl in fw.all_controls():
-                        if ctrl.id not in applicable:
-                            excluded.add(ctrl.id)
-            except (json.JSONDecodeError, Exception):
-                pass
+        from app.frameworks.questionnaire_builder import (
+            build_multi_questionnaire,
+            compute_excluded_controls,
+        )
+        excluded = compute_excluded_controls(
+            selected_frameworks,
+            assessment.applicable_requirements,
+        )
         questions = build_multi_questionnaire(selected_frameworks, excluded, context_profile)
         return _group_multi_into_sections(questions)
 
@@ -210,8 +204,19 @@ def get_questionnaire_section(
     is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
 
     if is_multi:
-        from app.frameworks.questionnaire_builder import build_multi_questionnaire
-        questions = build_multi_questionnaire(selected_frameworks, context_profile=context_profile)
+        from app.frameworks.questionnaire_builder import (
+            build_multi_questionnaire,
+            compute_excluded_controls,
+        )
+        excluded = compute_excluded_controls(
+            selected_frameworks,
+            assessment.applicable_requirements,
+        )
+        questions = build_multi_questionnaire(
+            selected_frameworks,
+            excluded_controls=excluded,
+            context_profile=context_profile,
+        )
         sections = _group_multi_into_sections(questions)
     else:
         questions = build_questionnaire(context_profile=context_profile)

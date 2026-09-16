@@ -8,6 +8,7 @@ builder. For multi-framework, merges questions across frameworks using clusters.
 
 from __future__ import annotations
 
+import json
 import logging
 
 from app.frameworks.cluster_engine import resolve_clusters
@@ -26,6 +27,28 @@ ANSWER_OPTIONS = [
 
 # Criticality rank for sorting within domain groups
 _CRITICALITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+
+def compute_excluded_controls(
+    framework_ids: list[str],
+    applicable_requirements_json: str | None,
+) -> set[str] | None:
+    """Return selected controls outside a persisted scope include-list."""
+    if not applicable_requirements_json:
+        return None
+    try:
+        applicable = json.loads(applicable_requirements_json)
+        if not isinstance(applicable, list):
+            raise TypeError("applicable_requirements must be a JSON list")
+        applicable_ids = set(applicable)
+        all_controls = {
+            control.id
+            for framework_id in framework_ids
+            for control in FrameworkRegistry.get_all_controls(framework_id)
+        }
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return all_controls - applicable_ids
 
 
 def build_multi_questionnaire(
