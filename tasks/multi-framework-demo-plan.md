@@ -382,6 +382,50 @@ following the §1.2 contract, expanded to include the two folded-in scope-exclus
 cluster-verdict-scoring items from §9.2. Once you sign off on the handoff, hand it to
 Codex the same way WS #1/#3 went.
 
+**Done — see §9.5.**
+
+### 9.5 WS #4 handoff written; multi-framework screening design approved — 2026-09-16
+
+`tasks/handoffs/2026-09-15-ws4-framework-agnostic-scoring.md` is written and ready for
+Codex, scoped to `scoring.py`'s cluster-verdict generalization + the `question_engine.py`
+scope-exclusion fix (§9.4's ask), with `screening.py` staying untouched as an explicit
+Non-goal — screening needs new content, not a mechanical refactor.
+
+That content decision was handed to Codex separately
+(`tasks/handoffs/2026-09-15-multi-framework-screening-design-brief.md` →
+`tasks/handoffs/2026-09-15-multi-framework-screening-spec.md`, **approved by Saqlain
+2026-09-15**). Verified against the actual code, not just read: the 9-question catalog's
+`covers` lists are exactly 52/52 clusters with zero gaps/duplicates/bogus IDs, the
+governance/security 2-way splits are faithful to the real `domain_group` field, and the
+spec correctly flags that `assessment.is_multi_framework` is **false** for ISO-only/
+NIST-only assessments — routing must key off `assessment.frameworks == ["dpdpa"]`
+instead, a real bug this caught before any code was written against the wrong flag.
+
+**This spec is a reference design, not a green light to implement cluster screening
+now** — its own "Implementation sequencing" section says so explicitly: no
+cluster-screening prompt/parser/persistence code before WS #5's spike and WS #7 settle
+the shared `ClusterScope`/`ClusterContext`/`ClusterScreeningSignal` contracts, to avoid
+building a second cluster-facing Claude interface that WS #7 would immediately replace.
+This independently confirms §9.2's original screening-brief recommendation (design it
+alongside WS #7, not ahead of it).
+
+**Sequence, unchanged in substance, now with a named next-next step:**
+
+1. Land WS #4 (handed to Codex, awaiting build + review).
+2. WS #5 spike — build `ClusterScope`/`ClusterContext` and the typed status vocabulary
+   the screening spec already names, so the spike and the eventual screening
+   implementation share one contract instead of two.
+3. WS #7, using whatever contract the spike validates.
+4. Only then: build the cluster-screening service against the approved 9-question
+   catalog — the catalog itself doesn't need rework, only the plumbing waits.
+
+**Note for whoever runs WS #4 next:** the screening spec's "prerequisite correction"
+step (canonical `domain_group`, cluster-to-questionnaire identity mapping, singleton
+handling) touches some of the same territory as WS #4's `question_engine.py` change.
+Land WS #4 first, then re-check whether the prerequisite-correction step is still
+needed as written or whether WS #4 already covered part of it — don't run both on
+parallel branches against the same file.
+
 ---
 
 Update this file as reality diverges from the plan. Keep the diffs — they're the record of what the grill missed.

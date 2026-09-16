@@ -54,3 +54,19 @@ folded into WS #4/#10 or flagged for a product decision — see plan §9.2.
       reports back — it should be designed together with WS #7's per-cluster analyzer
       contract, not before it, to avoid building the cluster-facing Claude interface twice.
 - [ ] WS #10 cleanup sweep (dead code, remediation validation) — cheap, can run in parallel, no dependencies.
+
+## Multi-framework screening spec review — 2026-09-16
+
+Codex produced `tasks/handoffs/2026-09-15-multi-framework-screening-spec.md` from the
+design brief; Saqlain approved Option B with Codex directly. Verified against the actual
+code (not just read): 52/52 cluster coverage in the 9-question catalog is exact, the
+governance/security splits match the real `domain_group` field, and the spec correctly
+catches that `assessment.is_multi_framework` is false for ISO-only/NIST-only assessments
+— routing must use `assessment.frameworks == ["dpdpa"]` instead. Full record: plan §9.5.
+
+**Not implementing cluster screening yet** — the spec's own sequencing says to wait for
+WS #5's spike + WS #7's contract first, to avoid building a throwaway Claude interface.
+Next actual step in the build order is still WS #4.
+
+- [x] Adversarially verify the screening spec's factual claims before treating it as settled.
+- [ ] When WS #5 starts, build `ClusterScope`/`ClusterContext` to the shapes this spec already named.
