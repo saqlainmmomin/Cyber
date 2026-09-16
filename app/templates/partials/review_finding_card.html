@@ -37,6 +37,11 @@
         {% set status_colors = {'compliant': 'text-green-600', 'partially_compliant': 'text-yellow-600', 'non_compliant': 'text-red-600'} %}
         <p class="text-sm font-medium {{ status_colors.get(item.ai_compliance_status or item.compliance_status, 'text-gray-600 dark:text-gray-400') }}">
           {{ (item.ai_compliance_status or item.compliance_status) | replace('_', ' ') | title }}
+          {% if item.needs_review %}
+          <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
+                title="The model flagged this verdict for human review because it lacks supporting evidence."
+                aria-label="Needs review">⚠ Needs review</span>
+          {% endif %}
         </p>
       </div>
       <div>

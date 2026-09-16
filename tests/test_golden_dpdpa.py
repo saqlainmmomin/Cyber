@@ -131,11 +131,11 @@ def test_pdf_meta_matches_golden(canonical_dpdpa_assessment, canonical_env):
 
 
 def test_missing_analyzer_recording_fails_before_any_live_call(tmp_path):
-    from app.services import claude_analyzer
+    from app.services import llm_client
 
     with patch.object(
-        claude_analyzer.anthropic,
-        "Anthropic",
+        llm_client,
+        "OpenAI",
         side_effect=AssertionError("live transport must not be constructed"),
     ):
         with pytest.raises(AssertionError, match="recording missing"):
@@ -163,35 +163,37 @@ def test_uncached_optional_call_is_not_swallowed(tmp_path):
 
 
 def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
-    from app.services import claude_analyzer
+    from app.services import claude_analyzer, llm_client
 
-    usage = SimpleNamespace(input_tokens=12, output_tokens=7)
-    message = SimpleNamespace(content=[SimpleNamespace(text='{"ok":true}')], usage=usage)
-
-    class FakeStream:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def get_final_text(self):
-            return '{"streamed":true}'
-
-        def get_final_message(self):
-            return message
-
-    messages = SimpleNamespace(
-        create=lambda **_kwargs: message,
-        stream=lambda **_kwargs: FakeStream(),
+    usage = SimpleNamespace(
+        prompt_tokens=12,
+        completion_tokens=7,
+        prompt_tokens_details=SimpleNamespace(cached_tokens=0),
     )
-    monkeypatch.setattr(
-        claude_analyzer.anthropic,
-        "Anthropic",
-        lambda **_kwargs: SimpleNamespace(messages=messages),
-    )
-    request = {"model": "fixture", "max_tokens": 1, "messages": []}
-    assert claude_analyzer._call_claude(**request) == {
+    choice = SimpleNamespace(message=SimpleNamespace(content='{"ok":true}'))
+    response = SimpleNamespace(choices=[choice], usage=usage)
+
+    stream_chunks = [
+        SimpleNamespace(
+            choices=[SimpleNamespace(delta=SimpleNamespace(content='{"streamed":true}'))],
+            usage=None,
+        ),
+        SimpleNamespace(choices=[], usage=usage),
+    ]
+
+    captured_kwargs: list[dict] = []
+
+    def fake_create(*, stream=False, **kwargs):
+        captured_kwargs.append({"stream": stream, **kwargs})
+        return iter(stream_chunks) if stream else response
+
+    completions = SimpleNamespace(create=fake_create)
+    fake_client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    monkeypatch.setattr(llm_client, "OpenAI", lambda **_kwargs: fake_client)
+    monkeypatch.setattr(llm_client, "_client", None)
+
+    request = {"system": "sys", "messages": [], "max_tokens": 1}
+    assert claude_analyzer._call_llm(tier="extract", **request) == {
         "text": '{"ok":true}',
         "usage": {
             "input_tokens": 12,
@@ -200,4 +202,15 @@ def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
             "cache_creation_input_tokens": 0,
         },
     }
-    assert claude_analyzer._call_claude(stream=True, **request)["text"] == '{"streamed":true}'
+    assert (
+        claude_analyzer._call_llm(tier="extract", stream=True, **request)["text"]
+        == '{"streamed":true}'
+    )
+
+    # Finding #1 (PR #9 remediation): every request must require zero data
+    # retention from OpenRouter's provider routing, on both the non-streaming
+    # and streaming call sites — otherwise client documents can be routed to
+    # a provider that stores or trains on them with nothing recording it.
+    assert len(captured_kwargs) == 2
+    for call_kwargs in captured_kwargs:
+        assert call_kwargs["extra_body"] == {"provider": {"data_collection": "deny", "zdr": True}}

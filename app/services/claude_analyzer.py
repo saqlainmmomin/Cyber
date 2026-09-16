@@ -1,9 +1,12 @@
 """
-Claude API integration for gap analysis.
+Gap analysis pipeline. Talks to whichever model each tier is configured for
+via the shared OpenRouter-backed client in app/services/llm_client.py.
 
 Supports:
 - Single-framework (DPDPA legacy path) and multi-framework analysis
-- Prompt caching for system prompts (~90% cost reduction per framework)
+- System prompt caching via cache_control blocks (see app/dpdpa/prompts.py) —
+  effective cost reduction depends on whether the tier's provider honors it;
+  not yet verified for the OpenRouter transport, see llm_client.py.
 - Two/three-call architecture: evidence extraction → per-framework analysis → synthesis
 - Structured context assembly with risk profile
 """
@@ -12,44 +15,27 @@ import json
 import logging
 import re
 
-import anthropic
-
 from app.config import settings
+from app.services import llm_client
+from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.prompts import (
     build_evidence_extraction_prompt,
     build_system_prompt,
     build_user_prompt,
 )
+from app.schemas.llm_output import validate_and_filter
 
 logger = logging.getLogger(__name__)
 
 
-def _usage_dict(usage) -> dict[str, int]:
-    """Normalize Anthropic usage objects at the single call boundary."""
-    return {
-        "input_tokens": usage.input_tokens,
-        "output_tokens": usage.output_tokens,
-        "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
-        "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
-    }
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Make one LLM request for the given tier and return a plain dict.
 
-
-def _call_claude(*, stream: bool = False, **request) -> dict:
-    """Make one Claude request and return a recording-friendly plain dict.
-
-    Golden tests patch this boundary. Keeping SDK objects behind the boundary
-    makes recordings deterministic and guarantees an uncached replay cannot
-    accidentally reach the network.
+    Golden tests patch this boundary. Keeping the provider client behind the
+    boundary makes recordings deterministic and guarantees an uncached
+    replay cannot accidentally reach the network.
     """
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    if stream:
-        with client.messages.stream(**request) as response_stream:
-            text = response_stream.get_final_text()
-            message = response_stream.get_final_message()
-    else:
-        message = client.messages.create(**request)
-        text = message.content[0].text
-    return {"text": text, "usage": _usage_dict(message.usage)}
+    return llm_client.call_llm(tier, stream=stream, **request)
 
 
 def run_gap_analysis(
@@ -107,8 +93,8 @@ def run_gap_analysis(
         applicable_requirements=applicable_requirements,
     )
 
-    response = _call_claude(
-        model=settings.claude_model,
+    response = _call_llm(
+        tier="judge",
         max_tokens=16384,
         temperature=0,
         system=system_blocks,
@@ -117,6 +103,9 @@ def run_gap_analysis(
 
     raw_text = response["text"]
     parsed = _parse_json_response(raw_text)
+    known_ids = {r["id"] for r in get_all_requirements()}
+    parsed = validate_and_filter(parsed, known_ids)
+    parsed["assessments"] = _flag_unsupported_compliant_items(parsed["assessments"])
 
     # Log cache stats
     usage = response["usage"]
@@ -161,6 +150,46 @@ def _evidence_from_desk_review(desk_review_data: dict | None) -> dict | None:
     return evidence if evidence else None
 
 
+# Smart quotes/apostrophes a PDF extractor or the model itself can introduce
+# in text that's otherwise a verbatim match — normalized to their straight
+# equivalents so grounding doesn't reject a genuine quote over punctuation
+# style alone. This stays a substring check, not fuzzy matching: only
+# whitespace, hyphenation-across-line-breaks, quote style, and case are
+# normalized, nothing about matching approximate wording.
+_QUOTE_NORMALIZE_TABLE = str.maketrans(
+    {"‘": "'", "’": "'", "“": '"', "”": '"'}
+)
+
+
+def _ground_evidence_quotes(evidence: dict, documents: list[dict]) -> dict:
+    """Drop extracted quotes that don't actually appear in the source documents.
+
+    Verbatim substring check (case-insensitive, whitespace/hyphenation/quote-
+    style normalized), run before evidence is threaded into Call 2's prompt —
+    catches a fabricated citation deterministically and for free, regardless
+    of which model produced it.
+    """
+
+    def normalize(text: str) -> str:
+        # De-hyphenate a word wrapped across a line break (e.g.
+        # "authoriza-\ntion") before whitespace collapsing erases the break.
+        text = re.sub(r"-\s*\n\s*", "", text)
+        text = text.translate(_QUOTE_NORMALIZE_TABLE)
+        return " ".join(text.split()).lower()
+
+    source_text = normalize(" ".join(doc.get("text", "") for doc in documents))
+    grounded: dict[str, list[str]] = {}
+    dropped = 0
+    for req_id, quotes in evidence.items():
+        kept = [q for q in quotes if normalize(q) in source_text]
+        dropped += len(quotes) - len(kept)
+        if kept:
+            grounded[req_id] = kept
+    if dropped:
+        logger.warning("Evidence grounding check dropped %d ungrounded quote(s)", dropped)
+    return grounded
+
+
 def _run_evidence_extraction(
     documents: list[dict],
     desk_review_findings: list[dict] | None = None,
@@ -173,8 +202,8 @@ def _run_evidence_extraction(
     prompt = build_evidence_extraction_prompt(documents, desk_review_findings)
 
     try:
-        response = _call_claude(
-            model=settings.claude_model,
+        response = _call_llm(
+            tier="extract",
             max_tokens=8192,
             temperature=0,
             system="You are a document analyst. Extract exact quotes from documents that are relevant to each compliance requirement. Be precise and quote verbatim.",
@@ -183,7 +212,7 @@ def _run_evidence_extraction(
 
         raw = response["text"]
         parsed = _parse_json_response(raw)
-        evidence = parsed.get("evidence", {})
+        evidence = _ground_evidence_quotes(parsed.get("evidence", {}), documents)
 
         logger.info(f"Evidence extraction: found quotes for {len(evidence)} requirements")
         return evidence
@@ -267,6 +296,7 @@ def run_multi_framework_analysis(
         build_synthesis_prompt,
         build_synthesis_system_prompt,
     )
+    from app.frameworks.registry import FrameworkRegistry
 
     truncated_docs = _truncate_documents(documents)
 
@@ -305,9 +335,9 @@ def run_multi_framework_analysis(
 
             # Use streaming to avoid server disconnects on large responses
             # (per-framework prompts with 90+ controls can produce ~50KB responses)
-            response = _call_claude(
+            response = _call_llm(
+                tier="judge",
                 stream=True,
-                model=settings.claude_model,
                 max_tokens=16384,
                 temperature=0,
                 system=system_blocks,
@@ -316,6 +346,9 @@ def run_multi_framework_analysis(
             raw_text = response["text"]
 
             parsed = _parse_json_response(raw_text)
+            known_ids = {c.id for c in FrameworkRegistry.get(fw_id).all_controls()}
+            parsed = validate_and_filter(parsed, known_ids)
+            parsed["assessments"] = _flag_unsupported_compliant_items(parsed["assessments"])
 
             usage = response["usage"]
             cache_read = usage["cache_read_input_tokens"]
@@ -363,9 +396,9 @@ def run_multi_framework_analysis(
             synthesis_prompt = build_synthesis_prompt(per_fw_parsed, company_name, industry)
             synthesis_system = build_synthesis_system_prompt()
 
-            response = _call_claude(
+            response = _call_llm(
+                tier="synthesize",
                 stream=True,
-                model=settings.claude_model,
                 max_tokens=4096,
                 temperature=0,
                 system=synthesis_system,
@@ -404,3 +437,19 @@ def _parse_json_response(text: str) -> dict:
         return json.loads(text)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse Claude response as JSON: {e}\nResponse: {text[:500]}")
+
+
+_NO_EVIDENCE_PHRASES = {"", "no relevant language found"}
+
+
+def _flag_unsupported_compliant_items(assessments: list[dict]) -> list[dict]:
+    """Flag a "compliant" verdict backed by no evidence quote instead of trusting it outright.
+
+    Doesn't change compliance_status — scoring.py owns that mapping — just
+    marks needs_review so the item surfaces for a human look.
+    """
+    for item in assessments:
+        quote = (item.get("evidence_quote") or "").strip().lower()
+        if item.get("compliance_status") == "compliant" and quote in _NO_EVIDENCE_PHRASES:
+            item["needs_review"] = True
+    return assessments

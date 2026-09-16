@@ -18,6 +18,19 @@ class Settings(BaseSettings):
     max_document_words: int = 5000
     max_total_document_words: int = 20000
     claude_model: str = "claude-sonnet-4-20250514"
+
+    # OpenRouter-backed LLM client (app/services/llm_client.py). Only
+    # claude_analyzer.py uses this today — see tasks/handoffs/ for the
+    # workstream that migrated it off the Anthropic SDK directly.
+    openrouter_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # Per-tier model selection. Defaults are DeepSeek Flash (extract),
+    # DeepSeek Pro (judge), and DeepSeek Flash (synthesize) — chosen from a
+    # single fixture comparison run, not a broad evaluation; treat as a
+    # monitored rollout and flip independently once validated further.
+    llm_model_extract: str = "deepseek/deepseek-v4-flash"
+    llm_model_judge: str = "deepseek/deepseek-v4-pro"
+    llm_model_synthesize: str = "deepseek/deepseek-v4-flash"
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"
     auditor_password: str = _DEFAULT_AUDITOR_PASSWORD
