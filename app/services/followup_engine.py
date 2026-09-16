@@ -56,21 +56,7 @@ def generate_followups(
         guidance=guidance,
     )
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
-        max_tokens=512,
-        temperature=0.3,
-        system=(
-            "You are an expert DPDPA compliance auditor conducting a gap assessment. "
-            "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
-            "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
-            "Respond ONLY with valid JSON. No markdown fences, no commentary."
-        ),
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    raw = message.content[0].text.strip()
+    raw = _call_claude_followups(prompt)
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
     if raw.endswith("```"):
@@ -96,6 +82,24 @@ def generate_followups(
         })
 
     return result
+
+
+def _call_claude_followups(prompt: str) -> str:
+    """Call Claude for follow-up questions and return raw response text."""
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    message = client.messages.create(
+        model=settings.claude_model,
+        max_tokens=512,
+        temperature=0.3,
+        system=(
+            "You are an expert DPDPA compliance auditor conducting a gap assessment. "
+            "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
+            "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
+            "Respond ONLY with valid JSON. No markdown fences, no commentary."
+        ),
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
 
 
 def _assess_trigger(

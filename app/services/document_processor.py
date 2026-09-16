@@ -178,6 +178,13 @@ def _extract_image(file_path: str, file_type: str) -> str:
     with open(file_path, "rb") as f:
         image_data = base64.standard_b64encode(f.read()).decode("utf-8")
 
+    description = _call_claude_vision(image_data, media_type)
+    filename = os.path.basename(file_path)
+    return f"[Screenshot: {filename}]\n\n{description}"
+
+
+def _call_claude_vision(image_data: str, media_type: str) -> str:
+    """Call Claude vision for an encoded image and return raw response text."""
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     message = client.messages.create(
         model=settings.claude_model,
@@ -214,10 +221,7 @@ def _extract_image(file_path: str, file_type: str) -> str:
             }
         ],
     )
-
-    description = message.content[0].text
-    filename = os.path.basename(file_path)
-    return f"[Screenshot: {filename}]\n\n{description}"
+    return message.content[0].text
 
 
 def detect_file_type(filename: str) -> str | None:

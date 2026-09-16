@@ -48,8 +48,6 @@ def run_screening_pass(
     if not assessment:
         raise ValueError(f"Assessment {assessment_id} not found")
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-
     system_blocks = build_screening_system_prompt()
     user_prompt = build_screening_user_prompt(
         company_name=assessment.company_name,
@@ -59,14 +57,8 @@ def run_screening_pass(
     )
 
     logger.info("Screening: calling Claude for assessment %s", assessment_id)
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
-        system=system_blocks,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
+    raw_text = _call_claude_screening(system_blocks, user_prompt)
 
-    raw_text = response.content[0].text
     inferences = _parse_inferences(raw_text)
 
     logger.info(
@@ -84,6 +76,18 @@ def run_screening_pass(
 
     db.commit()
     return inferences
+
+
+def _call_claude_screening(system_blocks, user_prompt: str) -> str:
+    """Call Claude for screening and return the raw response text."""
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=4096,
+        system=system_blocks,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    return response.content[0].text
 
 
 def _parse_inferences(raw_text: str) -> dict:

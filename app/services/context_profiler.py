@@ -24,21 +24,8 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     # Build a focused prompt for risk profiling
     prompt = _build_profile_prompt(context_answers, industry, company_size, signals)
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
-        max_tokens=1024,
-        temperature=0,
-        system=(
-            "You are an expert compliance advisor covering DPDPA, ISO 27001, GDPR, HIPAA, "
-            "NIST CSF, and PCI-DSS. Given an organization's context, produce a risk profile "
-            "that will guide an adaptive compliance assessment. "
-            "Respond ONLY with valid JSON matching the requested schema. No markdown, no commentary."
-        ),
-        messages=[{"role": "user", "content": prompt}],
-    )
+    raw = _call_claude_context_profile(prompt)
 
-    raw = message.content[0].text.strip()
     # Strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
@@ -55,6 +42,24 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     profile["has_breach_response"] = signals["has_breach_response"]
 
     return profile
+
+
+def _call_claude_context_profile(prompt: str) -> str:
+    """Call Claude for a context profile and return the raw response text."""
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    message = client.messages.create(
+        model=settings.claude_model,
+        max_tokens=1024,
+        temperature=0,
+        system=(
+            "You are an expert compliance advisor covering DPDPA, ISO 27001, GDPR, HIPAA, "
+            "NIST CSF, and PCI-DSS. Given an organization's context, produce a risk profile "
+            "that will guide an adaptive compliance assessment. "
+            "Respond ONLY with valid JSON matching the requested schema. No markdown, no commentary."
+        ),
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
 
 
 def _extract_signals(answers: list[dict]) -> dict:
