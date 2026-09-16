@@ -87,11 +87,11 @@ def _assessment(db_session, framework_ids):
     return assessment
 
 
-def _gap_item(report_id, requirement_id, status, cluster_id=None):
+def _gap_item(report_id, requirement_id, status, cluster_id=None, framework_id="dpdpa"):
     return GapItem(
         report_id=report_id,
         requirement_id=requirement_id,
-        framework_id="dpdpa",
+        framework_id=framework_id,
         cluster_id=cluster_id,
         chapter="chapter_2",
         requirement_title=requirement_id,
@@ -276,12 +276,43 @@ def test_scoring_contract_shape_and_single_framework_consistency(db_session):
         ClusterVerdict.model_validate(verdict.model_dump())
 
 
-def test_scoring_wrapper_does_not_fabricate_other_frameworks(db_session):
+def test_scoring_supports_iso27001_with_real_cluster_mapping(db_session):
     assessment = _assessment(db_session, ["iso27001"])
+    report = GapReport(
+        assessment_id=assessment.id,
+        overall_score=0,
+        chapter_scores="{}",
+        executive_summary="Summary",
+        raw_ai_response="{}",
+    )
+    db_session.add(report)
+    db_session.flush()
+    db_session.add(
+        _gap_item(
+            report.id,
+            "ISO.A5.35",
+            "compliant",
+            framework_id="iso27001",
+        )
+    )
+    db_session.commit()
+
+    from app.services.scoring import score
+
+    result = score(assessment.id, ["iso27001"], _session=db_session)
+
+    assert set(result.per_framework) == {"iso27001"}
+    assert set(result.cluster_verdicts) == {"CLUSTER_004"}
+    assert result.per_framework["iso27001"].covered_control_count == 3
+    assert result.combined.overall_score == result.per_framework["iso27001"].overall_score
+
+
+def test_scoring_does_not_combine_frameworks(db_session):
+    assessment = _assessment(db_session, ["dpdpa", "iso27001"])
     from app.services.scoring import score
 
     with pytest.raises(NotImplementedError):
-        score(assessment.id, ["iso27001"], _session=db_session)
+        score(assessment.id, ["dpdpa", "iso27001"], _session=db_session)
 
 
 def test_scoring_collapses_mapped_controls_and_matches_legacy_semantics(db_session):
@@ -322,8 +353,38 @@ def test_scoring_rejects_missing_or_mismatched_assessment(db_session):
 
     with pytest.raises(ValueError, match="does not exist"):
         score("missing", ["dpdpa"], _session=db_session)
-    with pytest.raises(ValueError, match="not configured as DPDPA-only"):
+    with pytest.raises(ValueError, match="not configured for"):
         score(assessment.id, ["dpdpa"], _session=db_session)
+
+
+def test_multi_framework_questionnaire_excludes_controls_outside_scope(db_session):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = json.dumps(["ISO.A5.1"])
+    db_session.commit()
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    result = build_adaptive_questionnaire(assessment.id, db_session)
+    rendered_controls = {
+        control_id
+        for section in result["sections"]
+        for question in section["questions"]
+        for control_id in question["maps_to"]
+    }
+    assert rendered_controls == {"ISO.A5.1"}
+    assert result["stats"]["total_questions"] == 1
+
+
+def test_multi_framework_questionnaire_allows_empty_scope(db_session):
+    assessment = _assessment(db_session, ["iso27001"])
+    assessment.applicable_requirements = "[]"
+    db_session.commit()
+
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    result = build_adaptive_questionnaire(assessment.id, db_session)
+    assert result["sections"] == []
+    assert result["stats"]["total_questions"] == 0
 
 
 def test_scoring_schema_rejects_inconsistent_single_framework_combined_view():
