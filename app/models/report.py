@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -49,6 +49,9 @@ class GapItem(Base):
     remediation_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     remediation_closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     review_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+    needs_review: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True, default=False, server_default="0"
+    )
     ai_compliance_status: Mapped[str | None] = mapped_column(Text, nullable=True)
     ai_gap_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     ai_risk_level: Mapped[str | None] = mapped_column(String(20), nullable=True)

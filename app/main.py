@@ -169,6 +169,7 @@ def _run_migrations(engine):
             ("remediation_notes", "TEXT"),
             ("remediation_closed_at", "DATETIME"),
             ("review_status", "VARCHAR(20) DEFAULT 'draft'"),
+            ("needs_review", "BOOLEAN DEFAULT 0"),
             ("ai_compliance_status", "TEXT"),
             ("ai_gap_description", "TEXT"),
             ("ai_risk_level", "VARCHAR(20)"),
