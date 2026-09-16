@@ -46,6 +46,46 @@ _LEGACY_TO_MATURITY_STATUS = {
     "not_assessed": "unknown",
 }
 
+_MIN_CLUSTER_MAPPING_COVERAGE = 0.95
+_WARNED_CLUSTER_COVERAGE: set[str] = set()
+
+
+def _validated_cluster_mapping(framework_id: str) -> dict[str, str]:
+    """Reject frameworks whose controls are not meaningfully cluster-backed."""
+    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
+    from app.frameworks.registry import FrameworkRegistry
+
+    framework = FrameworkRegistry.get_or_none(framework_id)
+    if framework is None:
+        raise ValueError(f"Unsupported framework '{framework_id}'")
+
+    control_ids = {control.id for control in framework.all_controls()}
+    control_clusters = {
+        member["control"]: cluster["cluster_id"]
+        for cluster in CONTROL_CLUSTERS
+        for member in cluster["controls"]
+        if member["framework"] == framework_id and member["control"] in control_ids
+    }
+    total = len(control_ids)
+    coverage = (len(control_clusters) / total) if total else 0.0
+    if coverage < _MIN_CLUSTER_MAPPING_COVERAGE:
+        threshold = round(_MIN_CLUSTER_MAPPING_COVERAGE * 100)
+        raise NotImplementedError(
+            f"Framework '{framework_id}' has insufficient cluster mapping coverage: "
+            f"{len(control_clusters)}/{total} controls mapped; at least {threshold}% is required"
+        )
+    if coverage < 1.0 and framework_id not in _WARNED_CLUSTER_COVERAGE:
+        logger.warning(
+            "Framework '%s' cluster mapping coverage is %.1f%% (%d/%d); "
+            "unmapped controls use degraded singleton handling",
+            framework_id,
+            coverage * 100,
+            len(control_clusters),
+            total,
+        )
+        _WARNED_CLUSTER_COVERAGE.add(framework_id)
+    return control_clusters
+
 
 def _maturity_rating(score: float) -> str:
     return f"M{max(0, min(5, round(score)))}"
@@ -53,7 +93,7 @@ def _maturity_rating(score: float) -> str:
 
 def _build_cluster_verdicts(
     items: list,
-    framework_id: str,
+    control_clusters: dict[str, str],
 ) -> tuple[dict, dict[str, str]]:
     """Collapse legacy control rows to one deterministic verdict per cluster."""
     from app.schemas.scoring import ClusterVerdict
@@ -65,14 +105,7 @@ def _build_cluster_verdicts(
         "implemented": 3,
         "not_applicable": 4,
     }
-    from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
-
     grouped: dict[str, list] = {}
-    control_clusters: dict[str, str] = {}
-    for cluster in CONTROL_CLUSTERS:
-        for member in cluster["controls"]:
-            if member["framework"] == framework_id:
-                control_clusters[member["control"]] = cluster["cluster_id"]
     for item in items:
         cluster_id = (
             item.cluster_id
@@ -179,6 +212,7 @@ def score(
             "combining cluster verdicts across frameworks is WS #7's job"
         )
     framework_id = framework_ids[0]
+    control_clusters = _validated_cluster_mapping(framework_id)
 
     owns_session = _session is None
     db = _session or SessionLocal()
@@ -204,7 +238,10 @@ def score(
         if owns_session:
             db.close()
 
-    cluster_verdicts, control_clusters = _build_cluster_verdicts(items, framework_id)
+    cluster_verdicts, control_clusters = _build_cluster_verdicts(
+        items,
+        control_clusters,
+    )
     framework_score = _derive_framework_score(
         framework_id,
         cluster_verdicts,

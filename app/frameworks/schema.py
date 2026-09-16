@@ -87,16 +87,24 @@ class FrameworkDefinition:
     scope_questions: list[ScopeQuestion] = field(default_factory=list)
     questions: dict[str, QuestionDef] = field(default_factory=dict)
     red_flag_patterns: list[RedFlagPattern] = field(default_factory=list)
+    _all_controls_cache: tuple[Control, ...] | None = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     # -- derived helpers ---------------------------------------------------
 
     def all_controls(self) -> list[Control]:
         """Flatten all controls across domains/sections."""
-        controls = []
-        for domain in self.domains.values():
-            for section in domain.sections.values():
-                controls.extend(section.controls)
-        return controls
+        if self._all_controls_cache is None:
+            controls = []
+            for domain in self.domains.values():
+                for section in domain.sections.values():
+                    controls.extend(section.controls)
+            self._all_controls_cache = tuple(controls)
+        return list(self._all_controls_cache)
 
     def all_controls_enriched(self) -> list[dict]:
         """Flatten controls with domain/section metadata (mirrors legacy get_all_requirements)."""

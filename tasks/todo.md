@@ -111,3 +111,20 @@ with persisted scope `['ISO.A5.1']` rendered exactly one Annex A.5.1 question.
 Standalone finishing is blocked because the installed `ce-work` package is missing its
 mandatory `references/shipping-workflow.md`. Saqlain subsequently authorized committing
 the verified changes and opening a PR as a separate explicit action.
+
+## PR #8 adversarial review fixes — 2026-09-16
+
+Source: `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md`. Implement on a temporary
+local branch based exactly on PR #8, then update the existing PR branch.
+
+- [x] Reset scope-derived state when selected frameworks change and reject unregistered framework IDs at the model boundary.
+- [x] Consolidate excluded-control computation and characterize the real non-DPDPA scope flow.
+- [x] Enforce and test meaningful cluster-mapping coverage across registered scoring frameworks.
+- [x] Cache immutable framework control flattening without changing callers.
+- [x] Run focused, integration/manual, full-suite, and second-order regression checks.
+- [x] Append complete evidence and per-fix regression notes to the handoff Results section.
+
+Codex implemented all 7 fixes and 8 new tests before running out of credits; the commit,
+push, and this bookkeeping were finished by Claude in a follow-up session (2026-09-16) after
+independently rerunning the full suite (77 passed) against the uncommitted working tree.
+See `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md` Results section for the per-fix detail.

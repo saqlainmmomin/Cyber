@@ -85,8 +85,19 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     _is_multi = len(_selected_fw) > 1 or _selected_fw != ["dpdpa"]
 
     if _is_multi:
-        from app.frameworks.questionnaire_builder import build_multi_questionnaire
-        _multi_qs = build_multi_questionnaire(_selected_fw, context_profile=context_profile)
+        from app.frameworks.questionnaire_builder import (
+            build_multi_questionnaire,
+            compute_excluded_controls,
+        )
+        excluded = compute_excluded_controls(
+            _selected_fw,
+            assessment.applicable_requirements,
+        )
+        _multi_qs = build_multi_questionnaire(
+            _selected_fw,
+            excluded_controls=excluded,
+            context_profile=context_profile,
+        )
         expected_question_ids = {
             q["cluster_id"] for q in _multi_qs
             if not q.get("cluster_id", "").startswith("IND.")

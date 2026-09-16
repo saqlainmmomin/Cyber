@@ -74,8 +74,10 @@ def set_frameworks(
     if not assessment:
         raise HTTPException(404, "Assessment not found")
 
+    framework_ids = list(dict.fromkeys(data.framework_ids))
+
     # Validate all framework IDs
-    for fw_id in data.framework_ids:
+    for fw_id in framework_ids:
         if not FrameworkRegistry.is_registered(fw_id):
             available = FrameworkRegistry.all_ids()
             raise HTTPException(
@@ -83,16 +85,21 @@ def set_frameworks(
                 f"Unknown framework '{fw_id}'. Available: {sorted(available)}",
             )
 
-    if not data.framework_ids:
+    if not framework_ids:
         raise HTTPException(400, "At least one framework must be selected")
 
-    assessment.selected_frameworks = json.dumps(data.framework_ids)
+    frameworks_changed = set(assessment.frameworks) != set(framework_ids)
+    assessment.selected_frameworks = json.dumps(framework_ids)
+    if frameworks_changed:
+        assessment.scope_answers = None
+        assessment.applicable_requirements = None
+        assessment.status = "created"
     db.commit()
     db.refresh(assessment)
 
     # Return framework metadata
     frameworks_info = []
-    for fw_id in data.framework_ids:
+    for fw_id in framework_ids:
         fw = FrameworkRegistry.get(fw_id)
         frameworks_info.append({
             "id": fw.id,
@@ -103,7 +110,7 @@ def set_frameworks(
 
     return {
         "assessment_id": assessment_id,
-        "selected_frameworks": data.framework_ids,
+        "selected_frameworks": framework_ids,
         "frameworks": frameworks_info,
     }
 
