@@ -152,7 +152,7 @@ test output, and anything deliberately deferred with reasoning.
 
 ## Results
 
-All 4 findings closed on `claude/llm-provider-reliability` (working tree, not yet committed).
+All 4 findings closed on `claude/llm-provider-reliability`, committed (`3f867ce`) and merged via PR #9.
 Full suite: **126 passed, 0 failed** (`pytest -q`), including the previously-untracked
 `tests/test_remaining_llm_call_sites.py` — its one flaky failure from the original review
 (`test_vision_call_sends_correctly_shaped_image_content_block`, a jpeg/png fixture mismatch)

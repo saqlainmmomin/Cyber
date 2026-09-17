@@ -135,3 +135,39 @@ See `tasks/handoffs/2026-09-16-pr8-ws4-review-fixes.md` Results section for the 
 - [x] Persist and render `needs_review` without changing the existing review-status workflow.
 - [x] Run focused tests, the full suite, and an app/browser smoke check for the marker.
 - [x] Append evidence and deferred work to `tasks/handoffs/2026-09-16-test-harness-and-needs-review-ui.md`.
+
+## LLM provider reliability + review/remediation chain — 2026-09-16
+
+Source: `tasks/handoffs/2026-09-16-llm-provider-reliability-workstream.md` (OpenRouter migration
++ hallucination guardrails for `claude_analyzer.py`, new `app/services/llm_client.py` and
+`app/schemas/llm_output.py`, judge tier flipped to DeepSeek V4 Pro after a live comparison vs
+Claude), followed by an adversarial review, a remediation pass, and a coverage review. Both PRs
+are merged into `main`; working tree is clean.
+
+- [x] Land the OpenRouter migration + guardrails workstream — PR #9.
+- [x] Adversarial review of PR #9 — `tasks/handoffs/2026-09-16-pr9-review.md`, verdict Not ready, 4 findings (1 P0, 3 P1).
+- [x] Remediate all 4 findings — `tasks/handoffs/2026-09-16-pr9-remediation-plan.md`, committed (`3f867ce`), merged via PR #9.
+- [x] Build the test harness for the 6 previously-untested Claude call sites and `needs_review` persistence/UI — `tasks/handoffs/2026-09-16-test-harness-and-needs-review-ui.md`, merged via PR #10 (`8c213de`).
+- [x] Coverage review of the new tests — `tasks/handoffs/2026-09-16-test-coverage-review.md`, added further regression tests, merged via PR #10.
+
+Final state: full suite 126 passed, 0 failed. No open PRs; `main` working tree clean.
+
+## Migrate remaining 6 Claude call sites + judge-tier reliability fix — 2026-09-17
+
+Source/results: `tasks/handoffs/2026-09-17-llm-migration-and-judge-tier-reliability.md`. Used the
+test harness from the previous entry (PR #10) to migrate `desk_review.py`, `screening.py`,
+`context_profiler.py`, `followup_engine.py`, `rfi_generator.py`, and `document_processor.py` off
+the Anthropic SDK onto `app/services/llm_client.py`, removing `anthropic` from the codebase
+entirely. Live smoke testing (real OpenRouter key, not mocked) found the `judge` tier's model
+(`deepseek/deepseek-v4-pro`, a reasoning model) intermittently returned empty/truncated JSON —
+`reasoning: {"exclude": true}` wasn't reliably honored (0–8192 reasoning tokens across identical
+calls, 60% failure rate). Evaluated and rejected `stealth/union-alpha` (no ZDR endpoint, worse
+live results). Fixed by switching `llm_model_judge` to `deepseek/deepseek-v4-flash` (non-reasoning,
+already used elsewhere), plus defense-in-depth: `reasoning.exclude` on every request and a
+`RuntimeError` guard on empty LLM content instead of a downstream crash.
+
+- [x] Migrate the 6 remaining call sites to `llm_client.call_llm`, tiered per site.
+- [x] Add a dedicated `vision` tier (OpenAI `image_url` content shape) for `document_processor.py`.
+- [x] Live smoke test vision and screening against the real OpenRouter API.
+- [x] Diagnose and fix the judge-tier reasoning-token reliability bug found live.
+- [x] Full suite green (128 passed), regression tests added for the new guard behavior.
