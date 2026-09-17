@@ -17,7 +17,7 @@ from app.routers import analysis, assessments, desk_review, documents, questionn
 logger = logging.getLogger(__name__)
 
 # Expose only branding fields to templates — never the full Settings object
-# (which contains anthropic_api_key, session_secret, auditor_password).
+# (which contains openrouter_key, session_secret, auditor_password).
 web.templates.env.globals["branding"] = {
     "firm_name": settings.firm_name,
     "firm_primary_hex": settings.firm_primary_hex,

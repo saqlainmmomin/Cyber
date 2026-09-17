@@ -12,6 +12,12 @@ builds for prompt caching (`[{"type": "text", "text": ..., "cache_control":
 {...}}]`) — the blocks are forwarded as-is inside the system message's
 content array, which OpenRouter passes through to Anthropic-backed models
 for cache_control; other providers just see the text.
+
+Image input (the `vision` tier) must be given in OpenAI's content-block
+shape too — `{"type": "image_url", "image_url": {"url": "data:<media_type>;
+base64,<data>"}}` inside a message's `content` list — not Anthropic's native
+`{"type": "image", "source": {...}}`. OpenRouter translates that shape to
+whatever the underlying vision model actually needs.
 """
 
 from typing import Literal
@@ -20,12 +26,13 @@ from openai import OpenAI
 
 from app.config import settings
 
-Tier = Literal["extract", "judge", "synthesize"]
+Tier = Literal["extract", "judge", "synthesize", "vision"]
 
 _TIER_MODELS: dict[Tier, str] = {
     "extract": "llm_model_extract",
     "judge": "llm_model_judge",
     "synthesize": "llm_model_synthesize",
+    "vision": "llm_model_vision",
 }
 
 # Every request carries these documents (compliance policies, questionnaire
@@ -35,7 +42,19 @@ _TIER_MODELS: dict[Tier, str] = {
 # data retention is a hard requirement, not a preference: a provider/model
 # combination that can't honor it should fail the request, not silently fall
 # back to one that retains data.
-_ZDR_PROVIDER_PREFS = {"provider": {"data_collection": "deny", "zdr": True}}
+#
+# `reasoning: {"exclude": True}` turns off hidden chain-of-thought tokens on
+# reasoning models (the `judge` tier's deepseek-v4-pro is one). Discovered
+# live: without this, deepseek-v4-pro spent up to ~94% of a 4096-token budget
+# on invisible reasoning before writing any answer, hitting finish_reason
+# "length" with truncated or entirely empty `content` in 2 of 3 real calls
+# against the actual screening prompt (see tasks/handoffs/ for the smoke-test
+# session that found this). Harmless to send on non-reasoning models — they
+# just ignore it.
+_REQUEST_PREFS = {
+    "provider": {"data_collection": "deny", "zdr": True},
+    "reasoning": {"exclude": True},
+}
 
 _client: OpenAI | None = None
 
@@ -99,9 +118,13 @@ def call_llm(
             messages=request_messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            extra_body=_ZDR_PROVIDER_PREFS,
+            extra_body=_REQUEST_PREFS,
         )
-        text = response.choices[0].message.content
+        choice = response.choices[0]
+        text = choice.message.content
+        _require_content(
+            text, tier=tier, model=model, finish_reason=getattr(choice, "finish_reason", None)
+        )
         return {"text": text, "usage": _usage_dict(response.usage)}
 
     chunks = client.chat.completions.create(
@@ -111,15 +134,36 @@ def call_llm(
         temperature=temperature,
         stream=True,
         stream_options={"include_usage": True},
-        extra_body=_ZDR_PROVIDER_PREFS,
+        extra_body=_REQUEST_PREFS,
     )
     text_parts: list[str] = []
+    finish_reason = None
     usage = None
     for chunk in chunks:
         if chunk.choices:
             delta = chunk.choices[0].delta.content
             if delta:
                 text_parts.append(delta)
+            chunk_finish_reason = getattr(chunk.choices[0], "finish_reason", None)
+            if chunk_finish_reason:
+                finish_reason = chunk_finish_reason
         if getattr(chunk, "usage", None) is not None:
             usage = chunk.usage
-    return {"text": "".join(text_parts), "usage": _usage_dict(usage)}
+    text = "".join(text_parts)
+    _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
+    return {"text": text, "usage": _usage_dict(usage)}
+
+
+def _require_content(text: str | None, *, tier: Tier, model: str, finish_reason: str | None) -> None:
+    """Fail loudly at the provider boundary instead of letting `None`/empty text
+    reach a caller's parser as a confusing `AttributeError`/`JSONDecodeError` far
+    from the actual cause. Seen live: a reasoning model can hit its token budget
+    (`finish_reason="length"`) with nothing but hidden reasoning tokens spent,
+    leaving `content` empty even though the request "succeeded"."""
+    if not text:
+        raise RuntimeError(
+            f"LLM returned no content for tier={tier!r} model={model!r} "
+            f"(finish_reason={finish_reason!r}). If finish_reason is 'length', "
+            "the model likely exhausted max_tokens — on a reasoning model check "
+            "whether reasoning tokens consumed the budget before any answer was written."
+        )

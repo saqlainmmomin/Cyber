@@ -1,39 +1,35 @@
-"""Characterization coverage for Claude call sites outside claude_analyzer."""
+"""Characterization coverage for LLM call sites outside claude_analyzer.
+
+All six services route through their own module-level `_call_llm` seam (which
+delegates to `app.services.llm_client.call_llm`) — patch that seam directly,
+same convention `claude_analyzer.py`'s golden tests use.
+"""
 
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 
-def _message(text: str):
-    return SimpleNamespace(
-        content=[SimpleNamespace(text=text)],
-        usage=SimpleNamespace(
-            input_tokens=12,
-            output_tokens=7,
-            cache_read_input_tokens=0,
-            cache_creation_input_tokens=0,
-        ),
-    )
-
-
-def _client_for(text: str):
-    response = _message(text)
-    return SimpleNamespace(
-        messages=SimpleNamespace(create=lambda **_kwargs: response),
-    )
+def _response(text: str, **usage_overrides) -> dict:
+    usage = {
+        "input_tokens": 12,
+        "output_tokens": 7,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+    }
+    usage.update(usage_overrides)
+    return {"text": text, "usage": usage}
 
 
 def test_desk_review_call_parses_valid_json():
     from app.services.desk_review import _call_claude_desk_review
 
     with patch(
-        "app.services.desk_review.anthropic.Anthropic",
-        return_value=_client_for('{"document_catalog": []}'),
+        "app.services.desk_review._call_llm",
+        return_value=_response('{"document_catalog": []}'),
     ):
         result = _call_claude_desk_review([], "Acme", "saas")
 
@@ -43,10 +39,7 @@ def test_desk_review_call_parses_valid_json():
 def test_desk_review_call_rejects_non_json_response():
     from app.services.desk_review import _call_claude_desk_review
 
-    with patch(
-        "app.services.desk_review.anthropic.Anthropic",
-        return_value=_client_for("not json"),
-    ):
+    with patch("app.services.desk_review._call_llm", return_value=_response("not json")):
         with pytest.raises(ValueError, match="Failed to parse desk review response"):
             _call_claude_desk_review([], "Acme", "saas")
 
@@ -70,8 +63,8 @@ def test_screening_call_seam_returns_provider_text():
     from app.services.screening import _call_claude_screening
 
     with patch(
-        "app.services.screening.anthropic.Anthropic",
-        return_value=_client_for('{"inferences": {}}'),
+        "app.services.screening._call_llm",
+        return_value=_response('{"inferences": {}}'),
     ):
         assert _call_claude_screening("system", "prompt") == '{"inferences": {}}'
 
@@ -114,8 +107,8 @@ def test_context_profile_call_seam_returns_provider_text():
     from app.services.context_profiler import _call_claude_context_profile
 
     with patch(
-        "app.services.context_profiler.anthropic.Anthropic",
-        return_value=_client_for('{"risk_tier": "LOW"}'),
+        "app.services.context_profiler._call_llm",
+        return_value=_response('{"risk_tier": "LOW"}'),
     ):
         assert _call_claude_context_profile("prompt") == '{"risk_tier": "LOW"}'
 
@@ -209,14 +202,21 @@ def test_followup_generation_skips_provider_for_non_triggering_answer():
     call.assert_not_called()
 
 
+def test_followup_call_seam_returns_provider_text():
+    from app.services.followup_engine import _call_claude_followups
+
+    with patch(
+        "app.services.followup_engine._call_llm",
+        return_value=_response('{"followups": []}'),
+    ):
+        assert _call_claude_followups("prompt") == '{"followups": []}'
+
+
 def test_rfi_call_parses_valid_json_and_preserves_raw_text():
     from app.services.rfi_generator import _call_claude_rfi
 
     raw = '{"items": [{"item_id": "RFI-001", "evidence_requested": "Policy"}]}'
-    with patch(
-        "app.services.rfi_generator.anthropic.Anthropic",
-        return_value=_client_for(raw),
-    ):
+    with patch("app.services.rfi_generator._call_llm", return_value=_response(raw)):
         result = _call_claude_rfi("Acme", "saas", [{
             "item_id": "RFI-001",
             "requirement_id": "CH2.CONSENT.1",
@@ -234,10 +234,7 @@ def test_rfi_call_parses_valid_json_and_preserves_raw_text():
 def test_rfi_call_uses_empty_enhancements_for_non_json_response():
     from app.services.rfi_generator import _call_claude_rfi
 
-    with patch(
-        "app.services.rfi_generator.anthropic.Anthropic",
-        return_value=_client_for("not json"),
-    ):
+    with patch("app.services.rfi_generator._call_llm", return_value=_response("not json")):
         result = _call_claude_rfi("Acme", "saas", [])
 
     assert result["items"] == []
@@ -265,36 +262,35 @@ def test_vision_call_seam_returns_provider_text():
     from app.services.document_processor import _call_claude_vision
 
     with patch(
-        "app.services.document_processor.anthropic.Anthropic",
-        return_value=_client_for("VISIBLE TEXT: hello"),
+        "app.services.document_processor._call_llm",
+        return_value=_response("VISIBLE TEXT: hello"),
     ):
         assert _call_claude_vision("aGVsbG8=", "image/png") == "VISIBLE TEXT: hello"
 
 
-def test_vision_call_sends_correctly_shaped_image_content_block():
-    """The shared `_client_for()` mock discards its kwargs, so no other test in this
-    file checks the actual request shape. The vision call is the one call site whose
-    request has structure a swallowed-kwargs mock could hide a bug in (an image
-    content block, not just a text prompt) — assert it directly here."""
+def test_vision_call_uses_vision_tier_with_openai_shaped_image_block():
+    """The vision call is the one call site whose request has structure worth
+    asserting directly (an image content block, not just a text prompt): it must
+    route through the dedicated `vision` tier (the text tiers aren't vision-capable)
+    and send OpenRouter/OpenAI's `image_url` data-URI shape, not Anthropic's native
+    `type: image, source: {...}` block — llm_client.call_llm forwards content as-is,
+    so a caller sending the wrong shape would silently break at the real provider."""
     from app.services.document_processor import _call_claude_vision
 
     captured = {}
 
-    def _capture(**kwargs):
+    def _capture(tier, **kwargs):
+        captured["tier"] = tier
         captured.update(kwargs)
-        return _message("VISIBLE TEXT: hi")
+        return _response("VISIBLE TEXT: hi")
 
-    fake_client = SimpleNamespace(messages=SimpleNamespace(create=_capture))
-    with patch("app.services.document_processor.anthropic.Anthropic", return_value=fake_client):
+    with patch("app.services.document_processor.llm_client.call_llm", side_effect=_capture):
         _call_claude_vision("aGVsbG8=", "image/png")
 
+    assert captured["tier"] == "vision"
     content_blocks = captured["messages"][0]["content"]
-    image_block = next(block for block in content_blocks if block["type"] == "image")
-    assert image_block["source"] == {
-        "type": "base64",
-        "media_type": "image/png",
-        "data": "aGVsbG8=",
-    }
+    image_block = next(block for block in content_blocks if block["type"] == "image_url")
+    assert image_block["image_url"] == {"url": "data:image/png;base64,aGVsbG8="}
 
 
 def test_extract_image_keeps_non_json_vision_text(tmp_path):

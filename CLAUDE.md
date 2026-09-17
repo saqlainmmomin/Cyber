@@ -4,7 +4,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 ## Running
 ```bash
-cp .env.example .env   # add ANTHROPIC_API_KEY and OPENROUTER_KEY
+cp .env.example .env   # add OPENROUTER_KEY
 pip install -r requirements.txt
 uvicorn app.main:app --reload   # needs Python 3.13, see gotchas
 pytest
@@ -28,8 +28,10 @@ pytest
 - **Python 3.13 required** — system Python too old, Homebrew 3.14 breaks Jinja2's `LRUCache`.
 - **All PDF text through `S()`** (latin-1 sanitizer) — missing it crashes fpdf2.
 - **Scoring is deterministic, server-side** — the LLM outputs qualitative strings only.
-- **Only `claude_analyzer.py` is OpenRouter-tiered**, and its caching doesn't pass through
-  (`cache_read_input_tokens` was 0 on a live call) — 6 other files still call Anthropic directly.
+- **Every LLM call site is OpenRouter-tiered now** (`app/services/llm_client.py`); prompt-cache
+  passthrough is unverified (`cache_read_input_tokens` was 0 on a live call). Vision (image OCR
+  in `document_processor.py`) uses its own `llm_model_vision` tier — the text tiers aren't
+  vision-capable.
 - **DPDPA framework lives in Python dicts**, not the database — version-controlled, prompt-embeddable.
 - **PDF sections are additive-only** — don't rewrite existing pages.
 - **No auth** (single-user MVP); JSON stored as TEXT columns, no native JSON type.

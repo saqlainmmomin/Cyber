@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import pdfplumber
@@ -181,11 +180,17 @@ def _synthetic_screening_response() -> str:
 
 @contextmanager
 def synthetic_screening_transport():
-    """Replace screening's provider client while exercising its real parse/persist path."""
-    response = SimpleNamespace(content=[SimpleNamespace(text=_synthetic_screening_response())])
-    messages = SimpleNamespace(create=lambda **_kwargs: response)
-    client = SimpleNamespace(messages=messages)
-    with patch("app.services.screening.anthropic.Anthropic", return_value=client):
+    """Replace screening's LLM seam while exercising its real parse/persist path."""
+    response = {
+        "text": _synthetic_screening_response(),
+        "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        },
+    }
+    with patch("app.services.screening._call_llm", return_value=response):
         yield
 
 

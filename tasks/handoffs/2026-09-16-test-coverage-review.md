@@ -95,8 +95,9 @@ a point turned out to be a non-issue rather than manufacturing a finding to look
 
 ## Results
 
-Reviewed both files against the working tree as it stands (Task 2's production changes still
-uncommitted, as expected). Verdicts on the 7 points:
+Reviewed both files against the working tree as it stood at the time (Task 2's production changes
+were still uncommitted then; both the reviewed tests and Task 2's changes are now committed and
+merged via PR #10). Verdicts on the 7 points:
 
 **1. Multi-framework `needs_review` persistence — real gap, fixed.** Confirmed by reading
 `app/routers/analysis.py` that both `GapItem(...)` sites (~line 314 single-framework, ~line 505
