@@ -14,13 +14,13 @@ import logging
 import re
 from datetime import datetime, timezone
 
-import anthropic
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.dpdpa.prompts import build_desk_review_system_prompt, build_desk_review_user_prompt
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+from app.services import llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -140,35 +140,37 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     return summary
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_desk_review(
     documents: list[dict],
     company_name: str,
     industry: str,
 ) -> dict:
-    """Call Claude for desk review analysis (Call 0)."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-
+    """Call the LLM for desk review analysis (Call 0)."""
     system_blocks = build_desk_review_system_prompt()
     user_prompt = build_desk_review_user_prompt(documents, company_name, industry)
 
-    message = client.messages.create(
-        model=settings.claude_model,
+    response = _call_llm(
+        tier="judge",
         max_tokens=16000,
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
     )
 
-    raw_text = message.content[0].text
+    raw_text = response["text"]
 
     # Log cache stats
-    usage = message.usage
-    cache_read = getattr(usage, "cache_read_input_tokens", 0)
-    cache_create = getattr(usage, "cache_creation_input_tokens", 0)
+    usage = response["usage"]
     logger.info(
-        f"Desk review tokens — input: {usage.input_tokens}, "
-        f"output: {usage.output_tokens}, "
-        f"cache_read: {cache_read}, cache_create: {cache_create}"
+        f"Desk review tokens — input: {usage['input_tokens']}, "
+        f"output: {usage['output_tokens']}, "
+        f"cache_read: {usage['cache_read_input_tokens']}, "
+        f"cache_create: {usage['cache_creation_input_tokens']}"
     )
 
     return _parse_json_response(raw_text)

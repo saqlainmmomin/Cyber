@@ -19,10 +19,8 @@ import json
 import logging
 from datetime import datetime, timezone, timedelta
 
-import anthropic
-
-from app.config import settings
 from app.dpdpa.framework import get_all_requirements
+from app.services import llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -189,8 +187,13 @@ def _describe_current_status(gap: dict) -> str:
     return prefix
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_rfi(company_name: str, industry: str, items: list[dict], frameworks_label: str = "") -> dict:
-    """Call Claude to generate professional RFI prose."""
+    """Call the LLM to generate professional RFI prose."""
     compliance_context = f"{frameworks_label} compliance" if frameworks_label else "compliance"
     items_summary = []
     for item in items:
@@ -232,9 +235,8 @@ Return ONLY valid JSON:
 {{"introduction": "...", "items": [{{"item_id": "RFI-001", "evidence_requested": "..."}}], "response_instructions": "..."}}
 """
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
+    response = _call_llm(
+        tier="synthesize",
         max_tokens=4096,
         temperature=0.2,
         system=(
@@ -246,7 +248,7 @@ Return ONLY valid JSON:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    raw = message.content[0].text.strip()
+    raw = response["text"].strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
     if raw.endswith("```"):

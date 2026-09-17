@@ -12,11 +12,11 @@ import os
 import re
 import uuid
 
-import anthropic
 import pdfplumber
 from docx import Document
 
 from app.config import settings
+from app.services import llm_client
 
 # Media type map for Claude vision
 _IMAGE_MEDIA_TYPES = {
@@ -183,12 +183,21 @@ def _extract_image(file_path: str, file_type: str) -> str:
     return f"[Screenshot: {filename}]\n\n{description}"
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_vision(image_data: str, media_type: str) -> str:
-    """Call Claude vision for an encoded image and return raw response text."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
+    """Call the vision model for an encoded image and return raw response text."""
+    response = _call_llm(
+        tier="vision",
         max_tokens=1500,
+        # No temperature was set on the original Anthropic call, which
+        # defaults to 1.0 — preserve that instead of `llm_client`'s
+        # temperature=0 default so this migration doesn't quietly change
+        # the vision call's output distribution.
+        temperature=1,
         system=(
             "You are a compliance document analyst. When shown a screenshot or image, "
             "extract and transcribe all visible text exactly as it appears. Then add a "
@@ -203,11 +212,9 @@ def _call_claude_vision(image_data: str, media_type: str) -> str:
                 "role": "user",
                 "content": [
                     {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": image_data,
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{media_type};base64,{image_data}",
                         },
                     },
                     {
@@ -221,7 +228,7 @@ def _call_claude_vision(image_data: str, media_type: str) -> str:
             }
         ],
     )
-    return message.content[0].text
+    return response["text"]
 
 
 def detect_file_type(filename: str) -> str | None:

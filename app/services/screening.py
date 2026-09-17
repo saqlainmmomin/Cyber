@@ -12,9 +12,6 @@ import json
 import logging
 import re
 
-import anthropic
-
-from app.config import settings
 from app.dpdpa.prompts import (
     SCREENING_DOMAINS,
     build_screening_system_prompt,
@@ -23,6 +20,7 @@ from app.dpdpa.prompts import (
 from app.dpdpa.framework import get_all_requirements
 from app.models.assessment import Assessment
 from app.models.questionnaire import QuestionnaireResponse
+from app.services import llm_client
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -78,16 +76,29 @@ def run_screening_pass(
     return inferences
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_screening(system_blocks, user_prompt: str) -> str:
-    """Call Claude for screening and return the raw response text."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
+    """Call the LLM for screening and return the raw response text."""
+    response = _call_llm(
+        tier="judge",
+        # Was 4096 (the original Anthropic call's value) — bumped after a live
+        # smoke test hit finish_reason="length" with empty content: 41
+        # requirements' worth of {status, confidence, reasoning} JSON can
+        # exceed 4096 tokens on its own, even with hidden reasoning excluded.
+        max_tokens=8192,
+        # No temperature was set on the original Anthropic call, which
+        # defaults to 1.0 — preserve that instead of `llm_client`'s
+        # temperature=0 default so this migration doesn't quietly change
+        # screening's output distribution.
+        temperature=1,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
     )
-    return response.content[0].text
+    return response["text"]
 
 
 def _parse_inferences(raw_text: str) -> dict:

@@ -211,6 +211,41 @@ def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
     # retention from OpenRouter's provider routing, on both the non-streaming
     # and streaming call sites — otherwise client documents can be routed to
     # a provider that stores or trains on them with nothing recording it.
+    #
+    # `reasoning.exclude` (added after a live smoke test found deepseek-v4-pro
+    # burning its whole max_tokens budget on hidden reasoning, see llm_client.py)
+    # must also be set on both call sites.
     assert len(captured_kwargs) == 2
     for call_kwargs in captured_kwargs:
-        assert call_kwargs["extra_body"] == {"provider": {"data_collection": "deny", "zdr": True}}
+        assert call_kwargs["extra_body"] == {
+            "provider": {"data_collection": "deny", "zdr": True},
+            "reasoning": {"exclude": True},
+        }
+
+
+def test_call_llm_raises_on_empty_content_instead_of_returning_none(monkeypatch):
+    """A reasoning model can exhaust max_tokens on hidden reasoning and return
+    finish_reason="length" with empty `content` (seen live against deepseek-v4-pro
+    on the judge tier). Without a guard, `None`/"" text reaches a caller's JSON
+    parser as an unrelated-looking AttributeError/JSONDecodeError far from the
+    real cause — call_llm must fail loudly at the boundary instead."""
+    from app.services import llm_client
+
+    choice = SimpleNamespace(
+        message=SimpleNamespace(content=None), finish_reason="length"
+    )
+    usage = SimpleNamespace(
+        prompt_tokens=900, completion_tokens=4096, prompt_tokens_details=None
+    )
+    response = SimpleNamespace(choices=[choice], usage=usage)
+
+    fake_client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **_kwargs: response))
+    )
+    monkeypatch.setattr(llm_client, "OpenAI", lambda **_kwargs: fake_client)
+    monkeypatch.setattr(llm_client, "_client", None)
+
+    with pytest.raises(RuntimeError, match="LLM returned no content"):
+        llm_client.call_llm(
+            "judge", system="sys", messages=[], max_tokens=4096
+        )

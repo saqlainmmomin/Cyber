@@ -7,9 +7,7 @@ framing that guides the adaptive Phase 2 questionnaire and gap analysis.
 
 import json
 
-import anthropic
-
-from app.config import settings
+from app.services import llm_client
 
 
 def derive_risk_profile(context_answers: list[dict], industry: str, company_size: str) -> dict:
@@ -44,11 +42,15 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     return profile
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_context_profile(prompt: str) -> str:
-    """Call Claude for a context profile and return the raw response text."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
+    """Call the LLM for a context profile and return the raw response text."""
+    response = _call_llm(
+        tier="extract",
         max_tokens=1024,
         temperature=0,
         system=(
@@ -59,7 +61,7 @@ def _call_claude_context_profile(prompt: str) -> str:
         ),
         messages=[{"role": "user", "content": prompt}],
     )
-    return message.content[0].text
+    return response["text"]
 
 
 def _extract_signals(answers: list[dict]) -> dict:

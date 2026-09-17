@@ -17,9 +17,7 @@ Follow-up count is DYNAMIC based on answer content:
 
 import json
 
-import anthropic
-
-from app.config import settings
+from app.services import llm_client
 
 
 def generate_followups(
@@ -84,11 +82,15 @@ def generate_followups(
     return result
 
 
+def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
+    """Seam for the OpenRouter-backed client — patched directly in tests."""
+    return llm_client.call_llm(tier, stream=stream, **request)
+
+
 def _call_claude_followups(prompt: str) -> str:
-    """Call Claude for follow-up questions and return raw response text."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    message = client.messages.create(
-        model=settings.claude_model,
+    """Call the LLM for follow-up questions and return raw response text."""
+    response = _call_llm(
+        tier="extract",
         max_tokens=512,
         temperature=0.3,
         system=(
@@ -99,7 +101,7 @@ def _call_claude_followups(prompt: str) -> str:
         ),
         messages=[{"role": "user", "content": prompt}],
     )
-    return message.content[0].text
+    return response["text"]
 
 
 def _assess_trigger(
