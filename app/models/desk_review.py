@@ -24,6 +24,7 @@ class DeskReviewSummary(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    legacy_history: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class DeskReviewFinding(Base):

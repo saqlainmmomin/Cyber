@@ -173,6 +173,10 @@ def _run_migrations(engine):
         ],
         "gap_reports": [
             ("framework_scores", "TEXT"),
+            ("legacy_history", "TEXT"),
+        ],
+        "desk_review_summaries": [
+            ("legacy_history", "TEXT"),
         ],
     }
     with engine.begin() as conn:

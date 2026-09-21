@@ -1754,6 +1754,29 @@ def run_desk_review_web(
         .first()
     )
     if summary:
+        old_findings = db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id
+        ).all()
+        if old_findings:
+            snapshot = {
+                "preserved_at": datetime.now(timezone.utc).isoformat(),
+                "label": "desk_review_rerun",
+                "findings": [
+                    {c.name: getattr(f, c.name) for c in f.__table__.columns}
+                    for f in old_findings
+                ],
+            }
+            history = []
+            if summary.legacy_history:
+                try:
+                    history = json.loads(summary.legacy_history)
+                    if not isinstance(history, list):
+                        history = [history]
+                except json.JSONDecodeError:
+                    history = []
+            history.append(snapshot)
+            summary.legacy_history = json.dumps(history, default=str)
+
         db.query(DeskReviewFinding).filter(
             DeskReviewFinding.assessment_id == assessment_id
         ).delete()

@@ -1,5 +1,6 @@
 import logging
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -247,13 +248,35 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
 
     scores = compute_scores(assessments)
 
-    # Delete any existing report + initiatives for this assessment
+    # Preserve existing report data before re-run, then delete
     existing = (
         db.query(GapReport)
         .filter(GapReport.assessment_id == assessment_id)
         .first()
     )
+    _carried_history = None
     if existing:
+        old_items = db.query(GapItem).filter(GapItem.report_id == existing.id).all()
+        snapshot = {
+            "preserved_at": datetime.now().isoformat(),
+            "label": "gap_analysis_rerun",
+            "report": {c.name: getattr(existing, c.name) for c in existing.__table__.columns},
+            "items": [
+                {c.name: getattr(item, c.name) for c in item.__table__.columns}
+                for item in old_items
+            ],
+        }
+        history = []
+        if existing.legacy_history:
+            try:
+                history = json.loads(existing.legacy_history)
+                if not isinstance(history, list):
+                    history = [history]
+            except json.JSONDecodeError:
+                history = []
+        history.append(snapshot)
+        _carried_history = json.dumps(history, default=str)
+
         db.query(GapItem).filter(GapItem.report_id == existing.id).delete()
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
@@ -264,6 +287,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         chapter_scores=json.dumps(scores["chapter_scores"]),
         executive_summary=parsed.get("executive_summary", ""),
         raw_ai_response=raw,
+        legacy_history=_carried_history,
     )
     db.add(report)
     db.flush()

@@ -17,6 +17,7 @@ class GapReport(Base):
     executive_summary: Mapped[str] = mapped_column(Text)
     raw_ai_response: Mapped[str] = mapped_column(Text)
     framework_scores: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: per-framework score breakdown
+    legacy_history: Mapped[str | None] = mapped_column(Text, nullable=True)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
