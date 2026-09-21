@@ -23,10 +23,13 @@ from app.schemas.assessment import DocumentCategory
 from app.services.document_processor import detect_file_type, extract_text, save_upload
 from app.utils.review_gate import require_review_approval
 
+from app.template_config import configure_templates
+
 router = APIRouter(tags=["web"])
 logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
+configure_templates(templates)
 
 ENABLED_ASSESSMENT_FRAMEWORKS = ("dpdpa", "iso27001", "nist_csf")
 ROADMAP_FRAMEWORKS = ("gdpr", "hipaa", "pci_dss")
