@@ -85,6 +85,8 @@ def _ensure_questionnaire_answer_constraint(conn):
                     evidence_reference TEXT,
                     na_reason TEXT,
                     confidence TEXT,
+                    cluster_id VARCHAR(80),
+                    answer_source VARCHAR(20) DEFAULT 'human',
                     submitted_at DATETIME NOT NULL,
                     CONSTRAINT ck_questionnaire_responses_answer_valid
                         CHECK (answer IN ('fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'))
@@ -96,10 +98,10 @@ def _ensure_questionnaire_answer_constraint(conn):
             text(
                 """
                 INSERT INTO questionnaire_responses (
-                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, submitted_at
+                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, cluster_id, answer_source, submitted_at
                 )
                 SELECT
-                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, submitted_at
+                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, cluster_id, answer_source, submitted_at
                 FROM questionnaire_responses_old
                 """
             )
