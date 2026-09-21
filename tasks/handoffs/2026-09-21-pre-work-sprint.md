@@ -275,3 +275,15 @@ All five tasks committed. Full test suite passes (128 existing + new tests). No 
 PW-3 (branding fix, 30 min) → PW-1 (questionnaire fix, 30 min) → PW-4 (test harness, 2-3 hours) → PW-2 (history preservation, 1 hour) → PW-5 (foreign keys, 1-2 hours).
 
 PW-3 first because it unblocks PW-4's test fixtures. PW-1 is a quick win. PW-4 is the long pole and everything else benefits from having it. PW-2 and PW-5 are independent.
+
+## Execution: Claude, not Codex
+
+Use **Claude** (interactive session) for all 5 pre-work tasks. Reasoning:
+
+- **PW-1 through PW-3** are surgical 1-2 file edits. Claude handles these in minutes. No parallelism advantage from Codex.
+- **PW-4 (test harness)** needs to understand existing test patterns (`tests/support/analyzer_mock.py`), route signatures, DB fixtures, and LLM mocking. If the first fixture doesn't work, you iterate in-session. Codex runs blind and you'd debug its output anyway.
+- **PW-5 (FK retrofit)** touches every model file and the delete routes. Needs judgment calls on orphan handling and SQLite FK pragma edge cases. Interactive beats fire-and-forget.
+
+Run PW-3 → PW-1 → PW-4 → PW-2 → PW-5 in one Claude session (or split after PW-4 if context gets long). Should take an afternoon.
+
+**Save Codex for Phase 1** — the Alembic adoption, target schema migration, and backfill script are more mechanical, well-specified, and benefit from Codex's longer unattended runs.
