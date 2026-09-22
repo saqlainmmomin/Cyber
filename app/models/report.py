@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -11,7 +11,7 @@ class GapReport(Base):
     __tablename__ = "gap_reports"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    assessment_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
+    assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), unique=True, index=True)
     overall_score: Mapped[float] = mapped_column(Float)
     chapter_scores: Mapped[str] = mapped_column(Text)  # JSON string
     executive_summary: Mapped[str] = mapped_column(Text)
@@ -25,7 +25,7 @@ class GapItem(Base):
     __tablename__ = "gap_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    report_id: Mapped[str] = mapped_column(String(36), index=True)
+    report_id: Mapped[str] = mapped_column(String(36), ForeignKey("gap_reports.id"), index=True)
     requirement_id: Mapped[str] = mapped_column(String(50))
     framework_id: Mapped[str | None] = mapped_column(String(30), nullable=True)  # e.g. "dpdpa", "iso27001"
     cluster_id: Mapped[str | None] = mapped_column(String(80), nullable=True)  # UCC cluster ID

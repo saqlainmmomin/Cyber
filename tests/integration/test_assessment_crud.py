@@ -27,11 +27,18 @@ def test_dashboard_lists_assessment(client, db_session):
     assert "DashboardCo" in response.text
 
 
-def test_delete_assessment(client, db_session):
+def test_delete_assessment_archives(client, db_session):
     assessment_id = create_test_assessment(client)
     response = client.delete(f"/assessments/{assessment_id}")
     assert response.status_code == 200
-    assert db_session.get(Assessment, assessment_id) is None
+    db_session.expire_all()
+    assessment = db_session.get(Assessment, assessment_id)
+    assert assessment is not None
+    assert assessment.status == "archived"
+
+    # Archived assessment should not appear on dashboard
+    dashboard = client.get("/")
+    assert assessment_id not in dashboard.text
 
 
 def test_get_nonexistent_assessment_returns_404(client):

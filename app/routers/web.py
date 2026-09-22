@@ -83,7 +83,7 @@ def _framework_catalog() -> list[dict]:
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    assessments = db.query(Assessment).order_by(Assessment.created_at.desc()).all()
+    assessments = db.query(Assessment).filter(Assessment.status != "archived").order_by(Assessment.created_at.desc()).all()
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {"request": request, "assessments": assessments},
@@ -361,7 +361,7 @@ def delete_assessment_web(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
-    db.delete(assessment)
+    assessment.status = "archived"
     db.commit()
     return HTMLResponse("")
 
