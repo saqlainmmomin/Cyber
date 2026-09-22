@@ -2,7 +2,7 @@ import uuid
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.database import Base
@@ -38,6 +38,10 @@ class Assessment(Base):
     # Multi-framework support
     selected_frameworks: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: ["dpdpa", "iso27001", ...]
     review_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    engagement_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("engagements.id"), nullable=True, index=True
+    )
+    version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
