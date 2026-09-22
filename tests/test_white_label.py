@@ -46,8 +46,9 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
     from app import main
     from app.routers import web
 
+    isolated_db_url = f"sqlite:///{tmp_path / 'white-label.db'}"
     isolated_engine = create_engine(
-        f"sqlite:///{tmp_path / 'white-label.db'}",
+        isolated_db_url,
         connect_args={"check_same_thread": False},
     )
     isolated_session = sessionmaker(
@@ -63,7 +64,9 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
         finally:
             db.close()
 
-    monkeypatch.setattr(main, "engine", isolated_engine)
+    # Lifespan runs `alembic upgrade head` against app.config.settings.database_url —
+    # redirect it so the TestClient's startup migration never touches the real dev DB.
+    monkeypatch.setattr(main.settings, "database_url", isolated_db_url)
     main.app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(main.app) as client:

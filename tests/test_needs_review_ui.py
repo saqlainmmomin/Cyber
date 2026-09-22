@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
 from app.database import Base
-from app.main import _run_migrations
+from app.legacy_migrations import run_column_migrations
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.report import GapItem
 
@@ -98,7 +98,7 @@ def test_migration_adds_needs_review_to_existing_gap_items():
         )
 
     assert "needs_review" not in {column["name"] for column in inspect(engine).get_columns("gap_items")}
-    _run_migrations(engine)
+    run_column_migrations(engine)
     columns = {column["name"]: column for column in inspect(engine).get_columns("gap_items")}
 
     assert columns["needs_review"]["default"] == "0"
@@ -107,7 +107,7 @@ def test_migration_adds_needs_review_to_existing_gap_items():
 def test_migration_adds_needs_review_against_full_gap_items_schema():
     """Same migration, but against the real column set (NOT NULLs and all), not the
     stripped 8-column table above — guards against the ALTER/UPDATE/INDEX statements
-    in `_run_migrations` interacting badly with columns the stripped table omits."""
+    in `run_column_migrations` interacting badly with columns the stripped table omits."""
     engine = create_engine("sqlite://")
     with engine.begin() as connection:
         connection.execute(
@@ -167,7 +167,7 @@ def test_migration_adds_needs_review_against_full_gap_items_schema():
         )
 
     assert "needs_review" not in {column["name"] for column in inspect(engine).get_columns("gap_items")}
-    _run_migrations(engine)
+    run_column_migrations(engine)
     columns = {column["name"]: column for column in inspect(engine).get_columns("gap_items")}
 
     assert columns["needs_review"]["default"] == "0"

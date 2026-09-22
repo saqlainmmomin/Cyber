@@ -13,20 +13,44 @@ Covers all eight verification items from the handoff:
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
 from app.database import Base
-from app.main import _ensure_foreign_keys, _run_migrations
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.models.rfi import RFIDocument
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _alembic_upgrade(engine):
+    """Run `alembic upgrade head` against the given engine's database file.
+
+    Alembic opens its own internal engine/connection pool against the same
+    URL, separate from `engine`. Dispose `engine` afterwards so any
+    connection it had pooled *before* the migration ran (tests often seed
+    legacy data via a raw connection on `engine` first) gets invalidated,
+    the same way the old `_ensure_foreign_keys()` disposed its engine
+    argument at the end of every run.
+    """
+    alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+    alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+    try:
+        command.upgrade(alembic_cfg, "head")
+    finally:
+        engine.dispose()
 
 
 def _fresh_engine(tmp_path, name="test.db"):
@@ -382,8 +406,7 @@ class TestLegacyUpgrade:
         cursor.close()
         raw.close()
 
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)
+        _alembic_upgrade(engine)
 
         with engine.connect() as conn:
             for table, expected_from in [
@@ -424,8 +447,7 @@ class TestLegacyUpgrade:
         cursor.close()
         raw.close()
 
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)
+        _alembic_upgrade(engine)
 
         with engine.connect() as conn:
             with pytest.raises(Exception):
@@ -462,10 +484,8 @@ class TestLegacyOrphanAbort:
         cursor.close()
         raw.close()
 
-        _run_migrations(engine)
-
         with pytest.raises(RuntimeError, match="FK migration blocked"):
-            _ensure_foreign_keys(engine)
+            _alembic_upgrade(engine)
 
         # Database should be unchanged (no partial rebuild)
         with engine.connect() as conn:
@@ -496,8 +516,7 @@ class TestLegacyOrphanAbort:
         cursor.close()
         raw.close()
 
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)  # Should NOT raise
+        _alembic_upgrade(engine)  # Should NOT raise
 
         with engine.connect() as conn:
             rows = conn.execute(text(
@@ -527,8 +546,7 @@ class TestSchemaConvergence:
         cursor.close()
         raw.close()
 
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)
+        _alembic_upgrade(engine)
 
         with engine.connect() as conn:
             fks_before = {}
@@ -538,8 +556,7 @@ class TestSchemaConvergence:
                 ).fetchall()
 
         # Run again — should be a no-op
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)
+        _alembic_upgrade(engine)
 
         with engine.connect() as conn:
             for table in ["gap_reports", "gap_items", "desk_review_findings"]:
@@ -566,8 +583,7 @@ class TestSchemaConvergence:
         raw.commit()
         cursor.close()
         raw.close()
-        _run_migrations(legacy_engine)
-        _ensure_foreign_keys(legacy_engine)
+        _alembic_upgrade(legacy_engine)
 
         tables_to_check = [
             "assessment_documents", "gap_reports", "gap_items", "initiatives",
@@ -641,8 +657,7 @@ class TestFkDeleteActionDrift:
             doc_fk = next(r for r in fks if r[3] == "document_id")
             assert doc_fk[6] == "NO ACTION"
 
-        _run_migrations(engine)
-        _ensure_foreign_keys(engine)
+        _alembic_upgrade(engine)
 
         with engine.connect() as conn:
             fks = conn.execute(text("PRAGMA foreign_key_list(desk_review_findings)")).fetchall()

@@ -3,10 +3,10 @@ import asyncio
 import pytest
 from sqlalchemy import create_engine, text
 
+from app.legacy_migrations import run_column_migrations
 from app.main import (
     _assert_framework_catalog_complete,
     _register_frameworks,
-    _run_migrations,
     lifespan,
 )
 
@@ -61,8 +61,8 @@ def test_lifespan_validates_catalog_before_running_migrations(monkeypatch):
     startup_events = []
 
     monkeypatch.setattr(
-        "app.main.Base.metadata.create_all",
-        lambda bind: startup_events.append("create_all"),
+        "app.main._run_alembic_upgrade",
+        lambda: startup_events.append("alembic_upgrade"),
     )
     monkeypatch.setattr(
         "app.main._register_frameworks",
@@ -74,10 +74,6 @@ def test_lifespan_validates_catalog_before_running_migrations(monkeypatch):
         raise RuntimeError("invalid catalog")
 
     monkeypatch.setattr("app.main._assert_framework_catalog_complete", reject_catalog)
-    monkeypatch.setattr(
-        "app.main._run_migrations",
-        lambda migration_engine: startup_events.append("run_migrations"),
-    )
 
     async def start_app():
         async with lifespan(None):
@@ -86,7 +82,7 @@ def test_lifespan_validates_catalog_before_running_migrations(monkeypatch):
     with pytest.raises(RuntimeError, match="invalid catalog"):
         asyncio.run(start_app())
 
-    assert startup_events == ["create_all", "register_frameworks", "validate_catalog"]
+    assert startup_events == ["alembic_upgrade", "register_frameworks", "validate_catalog"]
 
 
 def test_migration_backfills_legacy_gap_item_framework_ids():
@@ -115,7 +111,7 @@ def test_migration_backfills_legacy_gap_item_framework_ids():
             )
         )
 
-    _run_migrations(migration_engine)
+    run_column_migrations(migration_engine)
 
     with migration_engine.connect() as conn:
         rows = dict(

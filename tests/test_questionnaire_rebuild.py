@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import create_engine, text
 
-from app.main import _ensure_questionnaire_answer_constraint
+from app.legacy_migrations import ensure_questionnaire_answer_constraint
 
 
 def test_rebuild_preserves_cluster_id_and_answer_source(tmp_path):
@@ -53,7 +53,7 @@ def test_rebuild_preserves_cluster_id_and_answer_source(tmp_path):
         )
         conn.commit()
 
-        _ensure_questionnaire_answer_constraint(conn)
+        ensure_questionnaire_answer_constraint(conn)
         conn.commit()
 
         row = conn.execute(
