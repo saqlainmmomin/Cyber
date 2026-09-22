@@ -209,3 +209,22 @@ def test_downgrade_removes_only_p1_2_schema_and_upgrade_restores_it(migrated_db)
     }
     assert NEW_TABLES <= restored_tables
     assert {"engagement_id", "version"} <= restored_columns
+
+
+def test_downgrade_refuses_when_p1_2_data_is_present(migrated_db):
+    session, engine, config = migrated_db
+
+    session.add(Client(name="Acme", industry="Technology", size="small"))
+    session.commit()
+
+    with pytest.raises(RuntimeError, match="Refusing to downgrade past P1-2"):
+        command.downgrade(config, "-1")
+
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM clients")).scalar() == 1
+        assessment_columns = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(assessments)"))
+        }
+
+    assert {"engagement_id", "version"} <= assessment_columns
