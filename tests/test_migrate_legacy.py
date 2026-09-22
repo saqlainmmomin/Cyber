@@ -43,7 +43,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, event, func, select, text
+from sqlalchemy import create_engine, event, func, insert, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 import app.models  # noqa: F401 - register all ORM tables
@@ -247,7 +247,15 @@ def _seed_legacy_assessment(
         session.add(report)
         session.flush()
         for item_kwargs in gap_items:
-            session.add(GapItem(report_id=report.id, **item_kwargs))
+            # Use a Core insert, not the ORM constructor: GapItem.remediation_status
+            # has a Python-side ``default="open"``, which SQLAlchemy applies even
+            # when the caller explicitly passes ``remediation_status=None`` to the
+            # mapped class's __init__ (the default fires whenever the resolved
+            # value is None, not only when the attribute was left unset). A Core
+            # insert bypasses that default, so an explicit None here is genuinely
+            # persisted as NULL — matching a real legacy row that was never
+            # touched, as opposed to one explicitly reopened with status "open".
+            session.execute(insert(GapItem).values(report_id=report.id, **item_kwargs))
 
     session.commit()
     return assessment
@@ -779,6 +787,41 @@ def test_null_remediation_status_creates_no_finding_or_action(db):
     assert stats.actions == 0
     assert _count(session, Finding) == 0
     assert _count(session, Action) == 0
+
+
+def test_bare_open_remediation_status_with_no_other_fields_still_creates_finding(db):
+    """A genuinely-open, not-yet-triaged item is not the same as an untouched one.
+
+    ``remediation_status="open"`` with no owner/target_date/notes/closed_at is a
+    completely ordinary real-world state (a finding was opened but nobody has
+    been assigned yet) — it must never be conflated with ``remediation_status
+    is None`` ("never touched"), no matter how the two look alike on an
+    otherwise-empty row. The spec is explicit: "treat an explicit 'open' value
+    the same as any other status -- it's still a real Finding."
+    """
+    session, _engine, _db_path = db
+    _seed_legacy_assessment(
+        session,
+        company_name="Freshly Opened Co",
+        frameworks=["dpdpa"],
+        gap_items=[
+            _gap_item_kwargs(
+                remediation_status="open",
+                remediation_owner=None,
+                remediation_target_date=None,
+                remediation_notes=None,
+                remediation_closed_at=None,
+            )
+        ],
+    )
+
+    stats = run_migration(session)
+    session.expire_all()
+
+    assert stats.findings == 1
+    assert stats.actions == 1
+    assert _count(session, Finding) == 1
+    assert _count(session, Action) == 1
 
 
 @pytest.mark.parametrize("remediation_status", ["open", "in_progress", "closed"])

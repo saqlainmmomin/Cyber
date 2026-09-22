@@ -1,9 +1,8 @@
 """P1-3: one-shot, idempotent migration of legacy assessment data into the target schema.
 
-INTERFACE STUB ONLY — every function body raises ``NotImplementedError``.
-Claude owns the design + the failing test suite (``tests/test_migrate_legacy.py``);
-Codex implements the bodies against those tests. Do not change the signatures
-without updating the test suite.
+Claude owns the design and the test suite (``tests/test_migrate_legacy.py``);
+this module implements the migration against that executable specification. Do
+not change the function signatures without updating the test suite.
 
 What this script does
 ---------------------
@@ -67,27 +66,19 @@ D-A. ``framework_scores`` has nowhere to go. ``AssessmentPack`` (P1-2, already
 
 D-B. ``Conclusion.evidence_summary`` is a **non-nullable** ``Text`` column, but
      its source ``GapItem.evidence_quote`` is nullable. The spec says "carry
-     ``None`` through if absent", which the schema forbids. The implementer must
-     pick one and document it in this docstring:
-       (i)  coerce ``None`` -> ``""`` (recommended: no schema change, and the
-            empty string is honestly "no evidence captured"); or
-       (ii) make ``conclusions.evidence_summary`` nullable via a new Alembic
-            revision (heavier: changes an already-merged P1-2 table).
-     The test suite asserts only that the row is created and that
-     ``evidence_summary`` is falsy for a ``None`` source, so either choice passes
-     — but the choice must be stated, not silently made.
+     ``None`` through if absent", which the schema forbids. Resolution: coerce
+     ``None`` -> ``""`` (no schema change; the empty string honestly means no
+     evidence was captured).
 
 D-C. ``Engagement.status`` is non-nullable with no model default, and
-     ``Client.industry`` / ``Client.size`` are likewise non-nullable. The spec
-     does not name values for these. Suggested: ``Engagement.status="active"``,
-     and copy ``Assessment.industry`` / ``Assessment.company_size`` into the
-     ``Client``. When one company_name spans assessments with differing
-     industry/size, the first-seen assessment (ordered by ``created_at``) wins —
-     the ``Client`` is never updated on a later pass. Document whichever rule is
-     implemented.
+     ``Client.industry`` / ``Client.size`` are likewise non-nullable. Resolution:
+     use ``Engagement.status="active"``, copy ``Assessment.industry`` /
+     ``Assessment.company_size`` into a new ``Client``, and process assessments
+     by ``created_at`` so the first assessment for a company wins. A later pass
+     never updates the existing ``Client``.
 
-D-D. ``Finding.status`` / ``Action.status`` value sets. ``Finding``'s target set
-     is ``open|in_progress|resolved|accepted_risk`` per the plan's intent; any
+D-D. ``Finding.status`` / ``Action.status`` value sets. Resolution: ``Finding``'s
+     target set is ``open|in_progress|resolved|accepted_risk``; any
      ``remediation_status`` that is not in the target set falls back to ``"open"``
      with a ``logger.warning``. ``Action``'s set is
      ``open|in_progress|closed|verified``; migration only ever produces ``open``
@@ -108,15 +99,30 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+import json
 import logging
+from pathlib import Path
+import sys
 
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from scripts.backup import create_backup  # noqa: F401 - main() must call this
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from app.config import settings
+from app.models.action import Action
+from app.models.assessment import Assessment
+from app.models.assessment_pack import AssessmentPack
+from app.models.client import Client
+from app.models.conclusion import Conclusion, ConclusionRevision
+from app.models.engagement import Engagement
+from app.models.finding import Finding
+from app.models.report import GapItem, GapReport
+from scripts.backup import create_backup, database_path
 
 logger = logging.getLogger(__name__)
-
-_NOT_IMPLEMENTED = "P1-3: implemented by Codex"
 
 #: Legacy ``GapItem.compliance_status`` -> target ``Conclusion.outcome``.
 OUTCOME_MAP: dict[str, str] = {
@@ -178,19 +184,33 @@ def map_outcome(compliance_status: str, *, assessment_id: str, requirement_id: s
     ``logger.warning`` naming ``assessment_id`` and ``requirement_id``.
     """
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    outcome = OUTCOME_MAP[compliance_status]
+    if compliance_status == "not_assessed":
+        logger.warning(
+            "Assessment %s requirement %s is not assessed; migrating as "
+            "insufficient_evidence",
+            assessment_id,
+            requirement_id,
+        )
+    return outcome
 
 
 def map_finding_status(remediation_status: str | None) -> str:
     """Map ``GapItem.remediation_status`` to ``Finding.status`` (see D-D)."""
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    if remediation_status in FINDING_STATUSES:
+        return remediation_status
+    logger.warning(
+        "Unknown remediation status %r; defaulting Finding.status to 'open'",
+        remediation_status,
+    )
+    return "open"
 
 
 def map_action_status(remediation_status: str | None, remediation_closed_at) -> str:
     """Map remediation state to ``Action.status`` (closed wins, see D-D)."""
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    return "closed" if remediation_closed_at is not None else "open"
 
 
 def run_migration(session: Session) -> MigrationStats:
@@ -201,13 +221,251 @@ def run_migration(session: Session) -> MigrationStats:
     own work before returning.
     """
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    stats = MigrationStats()
+
+    try:
+        assessments = list(
+            session.execute(
+                select(Assessment).order_by(Assessment.created_at, Assessment.id)
+            ).scalars()
+        )
+
+        for assessment in assessments:
+            client = session.execute(
+                select(Client).where(Client.name == assessment.company_name)
+            ).scalar_one_or_none()
+            if client is None:
+                client = Client(
+                    name=assessment.company_name,
+                    industry=assessment.industry,
+                    size=assessment.company_size,
+                )
+                session.add(client)
+                session.flush()
+                stats.clients += 1
+
+            engagement = (
+                session.get(Engagement, assessment.engagement_id)
+                if assessment.engagement_id
+                else None
+            )
+            if engagement is None:
+                engagement_name = assessment.description or (
+                    f"Imported: {assessment.company_name} "
+                    f"({assessment.created_at.date()})"
+                )
+                engagement = Engagement(
+                    client_id=client.id,
+                    name=engagement_name,
+                    type="gap_assessment",
+                    status="active",
+                )
+                session.add(engagement)
+                session.flush()
+                assessment.engagement_id = engagement.id
+                stats.engagements += 1
+            for framework_id in assessment.frameworks:
+                pack = session.execute(
+                    select(AssessmentPack).where(
+                        AssessmentPack.assessment_id == assessment.id,
+                        AssessmentPack.framework_id == framework_id,
+                    )
+                ).scalar_one_or_none()
+                if pack is None:
+                    session.add(
+                        AssessmentPack(
+                            assessment_id=assessment.id,
+                            framework_id=framework_id,
+                            pack_version=UNKNOWN_PACK_VERSION,
+                        )
+                    )
+                    session.flush()
+                    stats.assessment_packs += 1
+
+            report = session.execute(
+                select(GapReport).where(GapReport.assessment_id == assessment.id)
+            ).scalar_one_or_none()
+            if report is None:
+                continue
+
+            items = list(
+                session.execute(
+                    select(GapItem).where(GapItem.report_id == report.id)
+                ).scalars()
+            )
+            for item in items:
+                framework_id = item.framework_id or assessment.frameworks[0]
+                remediation_status = item.remediation_status
+                conclusion = session.execute(
+                    select(Conclusion).where(
+                        Conclusion.assessment_id == assessment.id,
+                        Conclusion.requirement_id == item.requirement_id,
+                        Conclusion.framework_id == framework_id,
+                    )
+                ).scalar_one_or_none()
+
+                if conclusion is None:
+                    outcome = map_outcome(
+                        item.compliance_status,
+                        assessment_id=assessment.id,
+                        requirement_id=item.requirement_id,
+                    )
+                    conclusion = Conclusion(
+                        assessment_id=assessment.id,
+                        requirement_id=item.requirement_id,
+                        framework_id=framework_id,
+                        cluster_id=item.cluster_id,
+                        outcome=outcome,
+                        rationale=item.gap_description,
+                        evidence_summary=item.evidence_quote or "",
+                        gaps_identified=item.gap_description,
+                        risk_level=item.risk_level,
+                        recommended_action=item.remediation_action,
+                        ai_proposed=True,
+                        version=1,
+                    )
+                    session.add(conclusion)
+                    session.flush()
+                    stats.conclusions += 1
+                    if item.compliance_status == "not_assessed":
+                        stats.warnings.append(
+                            f"Assessment {assessment.id} requirement "
+                            f"{item.requirement_id} is not assessed; migrating as "
+                            "insufficient_evidence"
+                        )
+
+                proposed = session.execute(
+                    select(ConclusionRevision).where(
+                        ConclusionRevision.conclusion_id == conclusion.id,
+                        ConclusionRevision.action == "proposed",
+                    )
+                ).scalar_one_or_none()
+                if proposed is None:
+                    proposed_values = {
+                        "conclusion_id": conclusion.id,
+                        "actor": MIGRATION_ACTOR,
+                        "action": "proposed",
+                        "previous_outcome": None,
+                        "previous_rationale": None,
+                        "citations_json": None,
+                    }
+                    if item.reviewed_at is not None:
+                        proposed_values["created_at"] = item.reviewed_at - timedelta(
+                            microseconds=1
+                        )
+                    session.add(
+                        ConclusionRevision(**proposed_values)
+                    )
+                    session.flush()
+                    stats.conclusion_revisions += 1
+
+                if item.reviewed_at is not None:
+                    approved = session.execute(
+                        select(ConclusionRevision).where(
+                            ConclusionRevision.conclusion_id == conclusion.id,
+                            ConclusionRevision.action == "approved",
+                        )
+                    ).scalar_one_or_none()
+                    if approved is None:
+                        session.add(
+                            ConclusionRevision(
+                                conclusion_id=conclusion.id,
+                                actor=item.reviewed_by or "unknown",
+                                action="approved",
+                                previous_outcome=(
+                                    item.ai_compliance_status or conclusion.outcome
+                                ),
+                                previous_rationale=(
+                                    item.ai_gap_description or conclusion.rationale
+                                ),
+                                citations_json=None,
+                                created_at=item.reviewed_at,
+                            )
+                        )
+                        session.flush()
+                        stats.conclusion_revisions += 1
+
+                if remediation_status is None:
+                    continue
+
+                finding = session.execute(
+                    select(Finding).where(
+                        Finding.assessment_id == assessment.id,
+                        Finding.conclusion_id == conclusion.id,
+                    )
+                ).scalar_one_or_none()
+                if finding is None:
+                    finding_status = map_finding_status(remediation_status)
+                    if remediation_status not in FINDING_STATUSES:
+                        stats.warnings.append(
+                            f"Unknown remediation status {remediation_status!r}; "
+                            "defaulting Finding.status to 'open'"
+                        )
+                    finding = Finding(
+                        assessment_id=assessment.id,
+                        conclusion_id=conclusion.id,
+                        title=item.requirement_title,
+                        description=item.gap_description,
+                        severity=item.risk_level,
+                        priority=item.remediation_priority,
+                        status=finding_status,
+                    )
+                    session.add(finding)
+                    session.flush()
+                    stats.findings += 1
+
+                action = session.execute(
+                    select(Action).where(Action.finding_id == finding.id)
+                ).scalar_one_or_none()
+                if action is None:
+                    timestamp = datetime.now(timezone.utc).isoformat()
+                    session.add(
+                        Action(
+                            finding_id=finding.id,
+                            title=item.remediation_action,
+                            owner=item.remediation_owner,
+                            target_date=item.remediation_target_date,
+                            status=map_action_status(
+                                remediation_status, item.remediation_closed_at
+                            ),
+                            history_json=json.dumps(
+                                [
+                                    {
+                                        "actor": MIGRATION_ACTOR,
+                                        "action": "imported",
+                                        "timestamp": timestamp,
+                                        "notes": "Migrated from legacy GapItem remediation fields",
+                                    }
+                                ]
+                            ),
+                        )
+                    )
+                    session.flush()
+                    stats.actions += 1
+
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+
+    return stats
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
     """CLI parser. ``--skip-backup`` is accepted but suppressed from ``--help``."""
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    parser = argparse.ArgumentParser(
+        description="Migrate legacy CyberAssess assessment data into the target schema."
+    )
+    parser.add_argument("--db-url", default=settings.database_url)
+    parser.add_argument("--upload-dir", default=settings.upload_dir)
+    parser.add_argument("--backup-out-dir", default="backups")
+    parser.add_argument(
+        "--skip-backup",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    return parser
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -223,7 +481,41 @@ def main(argv: list[str] | None = None) -> int:
     ``--skip-backup`` (hidden).
     """
 
-    raise NotImplementedError(_NOT_IMPLEMENTED)
+    args = build_arg_parser().parse_args(argv)
+    db_path = database_path(args.db_url)
+    upload_dir = Path(args.upload_dir)
+    backup_dir = None
+
+    if not args.skip_backup:
+        try:
+            backup_dir = create_backup(
+                db_path,
+                upload_dir,
+                Path(args.backup_out_dir),
+            )
+        except Exception as exc:
+            print(f"Migration backup failed: {exc}", file=sys.stderr)
+            return 1
+
+    engine = create_engine(
+        args.db_url,
+        connect_args={"check_same_thread": False}
+        if args.db_url.startswith("sqlite")
+        else {},
+    )
+    try:
+        with Session(engine) as session:
+            stats = run_migration(session)
+    except Exception as exc:
+        print(f"Migration failed: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        engine.dispose()
+
+    if backup_dir is not None:
+        print(f"Backup: {backup_dir}")
+    print(f"Migration complete: {stats.total} rows created")
+    return 0
 
 
 if __name__ == "__main__":  # pragma: no cover
