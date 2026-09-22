@@ -228,6 +228,18 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint('id'),
         )
         op.create_index(op.f('ix_gap_items_report_id'), 'gap_items', ['report_id'], unique=False)
+        # Partial index over rows still awaiting the framework_id backfill.
+        # Declared here (not just created ad hoc by app.legacy_migrations'
+        # run_column_migrations) so a fresh Alembic install's actual schema
+        # matches its declared target contract -- this index has always been
+        # created unconditionally on every upgrade, fresh installs included;
+        # this only makes that already-existing behavior visible in the
+        # frozen DDL instead of leaving it as undeclared drift.
+        op.create_index(
+            op.f('ix_gap_items_null_framework_id'),
+            'gap_items', ['id'], unique=False,
+            sqlite_where=sa.text('framework_id IS NULL'),
+        )
 
     if 'initiatives' not in existing_tables:
         op.create_table(
@@ -250,10 +262,58 @@ def upgrade() -> None:
         op.create_index(op.f('ix_initiatives_report_id'), 'initiatives', ['report_id'], unique=False)
 
 
+_APPLICATION_TABLES = [
+    'assessments', 'assessment_documents', 'desk_review_summaries',
+    'gap_reports', 'questionnaire_responses', 'rfi_documents',
+    'desk_review_findings', 'gap_items', 'initiatives',
+]
+
+
+def _refuse_downgrade_if_any_data(bind, existing_tables) -> None:
+    """Refuse to downgrade past this baseline if any application table
+    still holds rows.
+
+    `upgrade()` deliberately adopts a pre-existing, unversioned legacy
+    database by skipping tables that already exist (see module docstring).
+    `downgrade()` below unconditionally drops every one of those tables,
+    which would silently destroy that database's real data if someone ran
+    `alembic downgrade` against it expecting a reversible rollback.
+
+    Alembic downgrade is not a production rollback tool for this project;
+    restore a verified SQLite backup instead (see CLAUDE.md: "Treat SQLite
+    deployment as single-writer maintenance work. Take a verified backup").
+    This guard only allows the drop to proceed when every application
+    table is empty -- e.g. a fresh test fixture -- so the documented
+    upgrade/downgrade round trip used in tests still works, while a real
+    (adopted or freshly-used) database with data in it always refuses.
+    """
+    non_empty = []
+    for table in _APPLICATION_TABLES:
+        if table not in existing_tables:
+            continue
+        count = bind.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar()
+        if count:
+            non_empty.append(f"{table} ({count} rows)")
+    if non_empty:
+        raise RuntimeError(
+            "Refusing to downgrade past baseline revision 6fc718bb9f09: "
+            f"these tables still hold data: {', '.join(non_empty)}. "
+            "Downgrading would permanently drop them -- including on a "
+            "database adopted from before Alembic, whose tables 'upgrade()' "
+            "intentionally left untouched. Alembic downgrade is not a "
+            "production rollback path here; restore a verified backup "
+            "instead."
+        )
+
+
 def downgrade() -> None:
     bind = op.get_bind()
     existing_tables = set(sa.inspect(bind).get_table_names())
 
+    _refuse_downgrade_if_any_data(bind, existing_tables)
+
+    if 'gap_items' in existing_tables:
+        op.drop_index(op.f('ix_gap_items_null_framework_id'), table_name='gap_items')
     if 'initiatives' in existing_tables:
         op.drop_index(op.f('ix_initiatives_report_id'), table_name='initiatives')
         op.drop_table('initiatives')

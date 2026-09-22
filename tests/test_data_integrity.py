@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
@@ -70,9 +70,15 @@ def _fresh_engine(tmp_path, name="test.db"):
 
 @pytest.fixture()
 def fresh_db(tmp_path):
-    """Fresh database created via create_all — models define the schema."""
+    """Fresh database created via the real Alembic `upgrade head` command
+    path — the same path app.main's startup and production both use — not
+    `Base.metadata.create_all()`. This exercises the frozen baseline +
+    retrofit revisions themselves rather than a live re-derivation of the
+    ORM models, so a drift between the two (see
+    TestAlembicContractParity below) is caught instead of silently masked.
+    """
     engine = _fresh_engine(tmp_path)
-    Base.metadata.create_all(engine)
+    _alembic_upgrade(engine)
     session = sessionmaker(bind=engine)()
     yield session, engine
     session.close()
@@ -567,6 +573,12 @@ class TestLegacyOrphanAbort:
             )).fetchall()
             assert rows[0][0] is None, "Orphaned document_id should be SET NULL"
 
+            violations = conn.execute(text("PRAGMA foreign_key_check")).fetchall()
+            assert violations == [], (
+                f"database must pass a full FK integrity check after the SET NULL "
+                f"cleanup, found: {violations}"
+            )
+
         engine.dispose()
 
 
@@ -920,6 +932,195 @@ class TestDeskReviewRerunHistory:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# PR #16 remediation: automate the Alembic verification the plan requires
+# (docs/plans/2026-09-21-002-revised-implementation-plan.md:312-317) instead
+# of relying on a manual one-off check. Covers: (a) a fresh Alembic-built
+# database's tables/columns/FKs/indexes match the ORM's own declared
+# contract (modulo the few known, documented differences), and (b) the
+# exact upgrade -> downgrade -1 -> upgrade round trip.
+# ---------------------------------------------------------------------------
+
+
+def _schema_snapshot(engine):
+    """{table: {"columns": {name}, "fks": {(col, target_table, target_col)},
+    "indexes": {name}}} for every non-Alembic-internal table."""
+    insp = inspect(engine)
+    snapshot = {}
+    for table in insp.get_table_names():
+        if table == "alembic_version":
+            continue
+        snapshot[table] = {
+            "columns": {c["name"] for c in insp.get_columns(table)},
+            "fks": {
+                (fk["constrained_columns"][0], fk["referred_table"], fk["referred_columns"][0])
+                for fk in insp.get_foreign_keys(table)
+            },
+            "indexes": {i["name"] for i in insp.get_indexes(table)},
+        }
+    return snapshot
+
+
+class TestAlembicContractParity:
+    """Fresh-vs-frozen-contract diff: a database built by the real Alembic
+    `upgrade head` path must match a database built by
+    `Base.metadata.create_all()` (the ORM's own declared target schema),
+    except for documented, intentional differences."""
+
+    # Legacy-compatibility artifact: created unconditionally by every
+    # upgrade (app.legacy_migrations.run_column_migrations, also declared
+    # in the baseline revision — see alembic/versions/6fc718bb9f09), but
+    # not represented in the ORM models, so create_all() never produces it.
+    _KNOWN_ALEMBIC_ONLY_INDEXES = {"gap_items": {"ix_gap_items_null_framework_id"}}
+
+    def test_tables_columns_fks_indexes_match_orm_metadata(self, tmp_path):
+        alembic_engine = _fresh_engine(tmp_path, "alembic_contract.db")
+        _alembic_upgrade(alembic_engine)
+
+        orm_engine = _fresh_engine(tmp_path, "orm_contract.db")
+        Base.metadata.create_all(orm_engine)
+
+        alembic_schema = _schema_snapshot(alembic_engine)
+        orm_schema = _schema_snapshot(orm_engine)
+
+        assert set(alembic_schema) == set(orm_schema), (
+            f"table set mismatch: alembic-only={set(alembic_schema) - set(orm_schema)}, "
+            f"orm-only={set(orm_schema) - set(alembic_schema)}"
+        )
+
+        for table, orm_contract in orm_schema.items():
+            alembic_contract = alembic_schema[table]
+            assert alembic_contract["columns"] == orm_contract["columns"], (
+                f"{table} column mismatch: "
+                f"alembic-only={alembic_contract['columns'] - orm_contract['columns']}, "
+                f"orm-only={orm_contract['columns'] - alembic_contract['columns']}"
+            )
+            assert alembic_contract["fks"] == orm_contract["fks"], (
+                f"{table} FK mismatch: alembic={alembic_contract['fks']}, orm={orm_contract['fks']}"
+            )
+
+            known_extra = self._KNOWN_ALEMBIC_ONLY_INDEXES.get(table, set())
+            assert alembic_contract["indexes"] - orm_contract["indexes"] == known_extra, (
+                f"{table} has undocumented Alembic-only indexes: "
+                f"{alembic_contract['indexes'] - orm_contract['indexes'] - known_extra}"
+            )
+            assert orm_contract["indexes"] - alembic_contract["indexes"] == set(), (
+                f"{table} is missing ORM-declared indexes: "
+                f"{orm_contract['indexes'] - alembic_contract['indexes']}"
+            )
+
+        alembic_engine.dispose()
+        orm_engine.dispose()
+
+
+class TestAlembicRoundTrip:
+    """`upgrade head -> downgrade -1 -> upgrade head` against a fresh,
+    isolated SQLite database, using Alembic's own command path with an
+    isolated `sqlalchemy.url` (never data/dpdpa.db)."""
+
+    def test_fresh_upgrade_downgrade_upgrade_round_trip(self, tmp_path):
+        db_path = tmp_path / "roundtrip.db"
+        alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+        command.upgrade(alembic_cfg, "head")
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        schema_before = _schema_snapshot(engine)
+        engine.dispose()
+
+        command.downgrade(alembic_cfg, "-1")
+        command.upgrade(alembic_cfg, "head")
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            with engine.connect() as conn:
+                current = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            assert current == "6fcd9e575309"
+
+            schema_after = _schema_snapshot(engine)
+            assert schema_after == schema_before, (
+                "full schema contract must match exactly before and after the "
+                "downgrade -1 -> upgrade head round trip, not just spot checks: "
+                f"before={schema_before}, after={schema_after}"
+            )
+            assert "gap_items" in schema_after
+            assert "framework_id" in schema_after["gap_items"]["columns"]
+            assert ("assessment_id", "assessments", "id") in schema_after["assessment_documents"]["fks"]
+        finally:
+            engine.dispose()
+
+
+class TestAdoptedDatabaseDowngradePolicy:
+    """P2: downgrading a database that already holds data (including one
+    adopted from before Alembic) must refuse rather than silently drop it.
+    Downgrading an empty database (e.g. a throwaway test fixture) is still
+    allowed so the round-trip test above keeps working."""
+
+    def test_downgrade_refuses_when_data_present(self, tmp_path):
+        db_path = tmp_path / "adopted.db"
+        alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+        command.upgrade(alembic_cfg, "head")
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        aid = _make_assessment(sessionmaker(bind=engine)())
+        engine.dispose()
+
+        with pytest.raises(RuntimeError, match="Refusing to downgrade"):
+            command.downgrade(alembic_cfg, "base")
+
+        # Data must survive the refused downgrade untouched: the retrofit
+        # revision's own downgrade() is a genuine no-op (it never touches
+        # application tables), so Alembic may legitimately record it as
+        # rolled back to 6fc718bb9f09 before the *baseline* revision's
+        # downgrade raises and aborts -- no table is ever dropped either
+        # way. Re-running upgrade head must cleanly recover to head.
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            with engine.connect() as conn:
+                assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
+                version_after_refusal = conn.execute(
+                    text("SELECT version_num FROM alembic_version")
+                ).scalar()
+            assert version_after_refusal in {"6fcd9e575309", "6fc718bb9f09"}, (
+                "no application table should ever be dropped by a refused "
+                f"downgrade, regardless of which step recorded {version_after_refusal!r}"
+            )
+        finally:
+            engine.dispose()
+
+        command.upgrade(alembic_cfg, "head")
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            with engine.connect() as conn:
+                assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
+                assert conn.execute(
+                    text("SELECT version_num FROM alembic_version")
+                ).scalar() == "6fcd9e575309"
+        finally:
+            engine.dispose()
+
+    def test_downgrade_allowed_when_empty(self, tmp_path):
+        db_path = tmp_path / "empty.db"
+        alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+        command.upgrade(alembic_cfg, "head")
+        command.downgrade(alembic_cfg, "base")  # must not raise
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            tables = set(inspect(engine).get_table_names()) - {"alembic_version"}
+            assert tables == set(), f"expected all application tables dropped, found {tables}"
+        finally:
+            engine.dispose()
+
+
 class TestDetectOrphans:
     def test_detect_orphans_clean_db(self, fresh_db):
         from scripts.detect_orphans import detect_orphans
@@ -957,3 +1158,470 @@ class TestDetectOrphans:
             conn.commit()
 
         assert detect_orphans(str(engine.url)) is False
+
+
+# ---------------------------------------------------------------------------
+# PR #16 final remediation: two confirmed blockers from the adversarial
+# review (see tasks/handoffs/2026-09-22-pr16-final-migration-closure.md).
+#
+# P1a: the orphan preflight only scanned tables slated for an FK rebuild,
+# so an already-FK'd table's non-SET-NULL orphan could slip through while
+# a different table's rebuild committed -- and a retry with nothing left
+# to rebuild never re-verified anything, so it could stamp head over the
+# still-present orphan.
+#
+# P1b: the legacy gap_items rebuild dropped the ad-hoc partial index
+# `ix_gap_items_null_framework_id` (created by run_column_migrations
+# before the rebuild) because FROZEN_TABLES["gap_items"] never declared
+# it, which also broke the empty-adopted-database downgrade path (its
+# `DROP INDEX` had nothing to drop).
+# ---------------------------------------------------------------------------
+
+
+def _make_fk_declared_gap_reports(cursor):
+    """Replace `_create_legacy_schema`'s FK-less gap_reports with a variant
+    that already declares its intended FK -- so
+    `compute_fk_tables_to_rebuild` will NOT select it for rebuild -- while
+    still allowing an orphan row to be inserted with FK enforcement off."""
+    cursor.execute("DROP TABLE gap_reports")
+    cursor.execute("""
+        CREATE TABLE gap_reports (
+            id VARCHAR(36) NOT NULL PRIMARY KEY,
+            assessment_id VARCHAR(36) NOT NULL,
+            overall_score FLOAT NOT NULL,
+            chapter_scores TEXT NOT NULL,
+            executive_summary TEXT NOT NULL,
+            raw_ai_response TEXT NOT NULL,
+            framework_scores TEXT,
+            legacy_history TEXT,
+            generated_at DATETIME NOT NULL,
+            FOREIGN KEY(assessment_id) REFERENCES assessments (id)
+        )
+    """)
+    cursor.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_gap_reports_assessment_id "
+        "ON gap_reports (assessment_id)"
+    )
+
+
+class TestLegacyGapItemsPartialIndexPreserved:
+    """P1b: `ix_gap_items_null_framework_id` must survive a genuine legacy
+    `upgrade head` that rebuilds gap_items for FK enforcement."""
+
+    def test_partial_index_survives_legacy_rebuild(self, tmp_path):
+        engine = _fresh_engine(tmp_path, "gap_items_index.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)  # no FKs -> forces a gap_items rebuild
+        _insert_legacy_data(cursor, now_str)
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        _alembic_upgrade(engine)
+
+        with engine.connect() as conn:
+            indexes = inspect(conn).get_indexes("gap_items")
+            partial = next(
+                (i for i in indexes if i["name"] == "ix_gap_items_null_framework_id"), None
+            )
+            assert partial is not None, (
+                "ix_gap_items_null_framework_id must survive the legacy FK rebuild"
+            )
+            assert partial["column_names"] == ["id"]
+
+            # Assert the WHERE predicate itself, not just the index's presence
+            # -- a same-named index with no predicate would pass a name check.
+            index_sql = conn.execute(
+                text(
+                    "SELECT sql FROM sqlite_master WHERE type='index' "
+                    "AND name='ix_gap_items_null_framework_id'"
+                )
+            ).scalar()
+            assert index_sql is not None
+            assert "framework_id IS NULL" in index_sql
+
+        engine.dispose()
+
+
+class TestMixedLegacyOrphanState:
+    """P1a: the preflight must scan every FK_SPEC table for orphans, not
+    only the ones selected for rebuild. gap_reports here already has its
+    FK declared (so it's excluded from the rebuild list) but carries an
+    orphan; gap_items has no FK (so it IS selected for rebuild). The
+    orphan on gap_reports must still block the migration before gap_items
+    is touched."""
+
+    def _build_mixed_state_db(self, tmp_path, name):
+        engine = _fresh_engine(tmp_path, name)
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)
+        _make_fk_declared_gap_reports(cursor)
+        _insert_legacy_data(cursor, now_str)
+        cursor.execute(
+            "INSERT INTO gap_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("orphan-r", "nonexistent-a", 0.0, "{}", "", "{}", None, None, now_str),
+        )
+        raw.commit()
+        cursor.close()
+        raw.close()
+        return engine
+
+    def test_first_upgrade_aborts_before_any_write(self, tmp_path):
+        engine = self._build_mixed_state_db(tmp_path, "mixed_orphan.db")
+
+        with engine.connect() as conn:
+            # Sanity: gap_reports already has its FK (excluded from the
+            # rebuild list); gap_items does not (included).
+            assert len(conn.execute(text("PRAGMA foreign_key_list(gap_reports)")).fetchall()) == 1
+            assert len(conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()) == 0
+
+        with pytest.raises(RuntimeError, match="FK migration blocked"):
+            _alembic_upgrade(engine)
+
+        with engine.connect() as conn:
+            # gap_items must still be untouched: no FK added, no ai_*
+            # backfill (part of run_column_migrations, which must run
+            # strictly after the preflight completes).
+            assert len(conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()) == 0
+            ai_status = conn.execute(
+                text("SELECT ai_compliance_status FROM gap_items WHERE id = 'g1'")
+            ).scalar()
+            assert ai_status is None, (
+                "run_column_migrations must not have run before the mixed-state "
+                "preflight aborted"
+            )
+
+            version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            assert version != "6fcd9e575309", (
+                "retrofit revision must not be recorded as applied when it aborted"
+            )
+
+        engine.dispose()
+
+    def test_retry_without_repair_still_fails_and_never_stamps_head(self, tmp_path):
+        engine = self._build_mixed_state_db(tmp_path, "mixed_orphan_retry.db")
+
+        with pytest.raises(RuntimeError, match="FK migration blocked"):
+            _alembic_upgrade(engine)
+        with pytest.raises(RuntimeError, match="FK migration blocked"):
+            _alembic_upgrade(engine)
+
+        with engine.connect() as conn:
+            version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            assert version != "6fcd9e575309", (
+                "a retry with the orphan still present must never record the "
+                "retrofit revision as applied"
+            )
+        engine.dispose()
+
+
+class TestApplyFkRebuildAlwaysVerifiesIntegrity:
+    """P1a (defense in depth): `apply_fk_rebuild` itself must always run
+    `PRAGMA foreign_key_check`, even when `tables_to_rebuild` is empty --
+    not just rely on the preflight to have caught every case first. This
+    calls `apply_fk_rebuild` directly (bypassing `preflight_fk_orphans`) to
+    prove the integrity check is unconditional at that layer too."""
+
+    def test_empty_rebuild_list_still_raises_on_existing_violation(self, tmp_path):
+        from app.legacy_migrations import apply_fk_rebuild
+        from app.legacy_migrations_schema import FROZEN_TABLES
+
+        engine = _fresh_engine(tmp_path, "already_fkd_with_orphan.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)
+        _make_fk_declared_gap_reports(cursor)
+        _insert_legacy_data(cursor, now_str)
+        cursor.execute(
+            "INSERT INTO gap_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("orphan-r", "nonexistent-a", 0.0, "{}", "", "{}", None, None, now_str),
+        )
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        with pytest.raises(RuntimeError, match="Foreign key violations"):
+            apply_fk_rebuild(engine, [], FROZEN_TABLES)
+
+
+class TestEmptyAdoptedLegacyDowngrade:
+    """Matrix item 7: an empty, adopted, genuinely-legacy database (no FKs,
+    no data) still requires a gap_items rebuild on upgrade. That rebuild
+    must not leave the database unable to downgrade to base -- the P1b bug
+    this handoff fixes -- and a data-bearing equivalent must still refuse
+    before any table drop, then recover to head cleanly."""
+
+    def test_upgrade_then_downgrade_base_leaves_no_tables(self, tmp_path):
+        db_path = tmp_path / "empty_legacy.db"
+        engine = _fresh_engine(tmp_path, "empty_legacy.db")
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)  # no data inserted -> stays empty
+        raw.commit()
+        cursor.close()
+        raw.close()
+        engine.dispose()
+
+        alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+        command.upgrade(alembic_cfg, "head")
+
+        with create_engine(f"sqlite:///{db_path}").connect() as conn:
+            fks = conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()
+            assert len(fks) == 1, "legacy gap_items should have been FK-rebuilt"
+
+        command.downgrade(alembic_cfg, "base")  # must not raise "no such index"
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            tables = set(inspect(engine).get_table_names()) - {"alembic_version"}
+            assert tables == set(), f"expected all application tables dropped, found {tables}"
+        finally:
+            engine.dispose()
+
+    def test_data_bearing_adopted_db_refuses_then_recovers_to_head(self, tmp_path):
+        db_path = tmp_path / "data_bearing_legacy.db"
+        engine = _fresh_engine(tmp_path, "data_bearing_legacy.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)
+        _insert_legacy_data(cursor, now_str)
+        raw.commit()
+        cursor.close()
+        raw.close()
+        engine.dispose()
+
+        alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+        command.upgrade(alembic_cfg, "head")
+
+        with pytest.raises(RuntimeError, match="Refusing to downgrade"):
+            command.downgrade(alembic_cfg, "base")
+
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            with engine.connect() as conn:
+                assert conn.execute(text("SELECT COUNT(*) FROM gap_items")).scalar() == 1
+        finally:
+            engine.dispose()
+
+        command.upgrade(alembic_cfg, "head")  # clean recovery
+        engine = create_engine(f"sqlite:///{db_path}")
+        try:
+            with engine.connect() as conn:
+                assert conn.execute(
+                    text("SELECT version_num FROM alembic_version")
+                ).scalar() == "6fcd9e575309"
+                indexes = inspect(conn).get_indexes("gap_items")
+                assert any(i["name"] == "ix_gap_items_null_framework_id" for i in indexes)
+        finally:
+            engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# Adversarial re-review finding: rebuilding a parent table can corrupt an
+# already-FK'd child table's FK metadata.
+#
+# `_rebuild_table_for_fks` renames the table being rebuilt to
+# `_{table_name}_pre_fk`, recreates it under its original name, then drops
+# the renamed copy. SQLite's default `ALTER TABLE ... RENAME` behavior
+# (`legacy_alter_table=OFF`) rewrites the FK clause of every OTHER table
+# that references the renamed table to point at its new (temporary) name.
+# A sibling table that already has its correct FK to the table being
+# rebuilt -- so it is NOT itself in `tables_to_rebuild` -- had its FK
+# silently rewritten to reference `_{table_name}_pre_fk`; once that
+# temp table was dropped, the sibling was left with a dangling FK the
+# moment the (non-transactional, SQLite DDL) transaction committed. The
+# fix wraps the rebuild in `PRAGMA legacy_alter_table=ON`, which disables
+# that cross-table FK rewrite.
+# ---------------------------------------------------------------------------
+
+
+class TestParentRebuildDoesNotCorruptSiblingFks:
+    """A parent table needing an FK rebuild (assessment_documents, or
+    gap_reports) must not corrupt the FK metadata of a sibling table that
+    already has its correct FK declared (desk_review_findings, or
+    gap_items/initiatives) and is therefore excluded from the rebuild."""
+
+    def test_assessment_documents_rebuild_preserves_desk_review_findings_fk(self, tmp_path):
+        engine = _fresh_engine(tmp_path, "parent_child_docs.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)  # assessment_documents has no FK -> rebuilt
+
+        # desk_review_findings ALREADY has its correct FKs (assessment_id,
+        # and document_id -> assessment_documents ON DELETE SET NULL) -- so
+        # it is excluded from tables_to_rebuild, but assessment_documents
+        # (its parent) is rebuilt this run.
+        cursor.execute("DROP TABLE desk_review_findings")
+        cursor.execute("""
+            CREATE TABLE desk_review_findings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                assessment_id VARCHAR(36) NOT NULL,
+                finding_type VARCHAR(20) NOT NULL,
+                requirement_id VARCHAR(30),
+                document_id VARCHAR(36),
+                content TEXT NOT NULL,
+                severity VARCHAR(20) DEFAULT 'medium',
+                source_quote TEXT,
+                source_location VARCHAR(200),
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY(assessment_id) REFERENCES assessments (id),
+                FOREIGN KEY(document_id) REFERENCES assessment_documents (id) ON DELETE SET NULL
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS ix_desk_review_findings_assessment_id "
+            "ON desk_review_findings (assessment_id)"
+        )
+        _insert_legacy_data(cursor, now_str)
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        # Sanity: assessment_documents needs rebuild, desk_review_findings does not.
+        with engine.connect() as conn:
+            assert len(conn.execute(text("PRAGMA foreign_key_list(assessment_documents)")).fetchall()) == 0
+            assert len(conn.execute(text("PRAGMA foreign_key_list(desk_review_findings)")).fetchall()) == 2
+
+        _alembic_upgrade(engine)  # must succeed on the FIRST attempt, not just a retry
+
+        with engine.connect() as conn:
+            fks = conn.execute(text("PRAGMA foreign_key_list(desk_review_findings)")).fetchall()
+            doc_fk = next(r for r in fks if r[3] == "document_id")
+            assert doc_fk[2] == "assessment_documents", (
+                "desk_review_findings.document_id must still reference "
+                f"assessment_documents, not a rebuild temp table: {doc_fk}"
+            )
+            assert doc_fk[6] == "SET NULL"
+
+            violations = conn.execute(text("PRAGMA foreign_key_check")).fetchall()
+            assert violations == [], f"no dangling FKs after the rebuild, found: {violations}"
+
+            assert conn.execute(text("SELECT COUNT(*) FROM desk_review_findings")).scalar() == 1
+
+        engine.dispose()
+
+    def test_gap_reports_rebuild_preserves_gap_items_and_initiatives_fks(self, tmp_path):
+        engine = _fresh_engine(tmp_path, "parent_child_reports.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)  # gap_reports has no FK -> rebuilt
+
+        # gap_items and initiatives ALREADY have their correct FK to
+        # gap_reports -- excluded from tables_to_rebuild -- while gap_reports
+        # (their parent) is rebuilt this run.
+        cursor.execute("DROP TABLE gap_items")
+        cursor.execute("""
+            CREATE TABLE gap_items (
+                id VARCHAR(36) NOT NULL PRIMARY KEY,
+                report_id VARCHAR(36) NOT NULL,
+                requirement_id VARCHAR(50) NOT NULL,
+                framework_id VARCHAR(30),
+                cluster_id VARCHAR(80),
+                control_reference VARCHAR(100),
+                chapter VARCHAR(50) NOT NULL,
+                requirement_title VARCHAR(255) NOT NULL,
+                compliance_status VARCHAR(30) NOT NULL,
+                current_state TEXT NOT NULL,
+                gap_description TEXT NOT NULL,
+                risk_level VARCHAR(20) NOT NULL,
+                remediation_action TEXT NOT NULL,
+                remediation_priority INTEGER NOT NULL,
+                remediation_effort VARCHAR(20) NOT NULL,
+                timeline_weeks INTEGER NOT NULL,
+                maturity_level INTEGER,
+                root_cause_category TEXT,
+                evidence_quote TEXT,
+                evidence_confidence TEXT,
+                remediation_status VARCHAR(20) DEFAULT 'open',
+                remediation_owner VARCHAR(255),
+                remediation_target_date DATETIME,
+                remediation_notes TEXT,
+                remediation_closed_at DATETIME,
+                review_status VARCHAR(20) DEFAULT 'draft',
+                needs_review BOOLEAN DEFAULT 0,
+                ai_compliance_status TEXT,
+                ai_gap_description TEXT,
+                ai_risk_level VARCHAR(20),
+                reviewer_notes TEXT,
+                reviewed_by VARCHAR(255),
+                reviewed_at DATETIME,
+                FOREIGN KEY(report_id) REFERENCES gap_reports (id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_gap_items_report_id ON gap_items (report_id)")
+
+        cursor.execute("DROP TABLE initiatives")
+        cursor.execute("""
+            CREATE TABLE initiatives (
+                id VARCHAR(36) NOT NULL PRIMARY KEY,
+                report_id VARCHAR(36) NOT NULL,
+                initiative_id VARCHAR(20) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                root_cause TEXT NOT NULL,
+                root_cause_category VARCHAR(30) NOT NULL,
+                requirements_addressed TEXT NOT NULL,
+                combined_effort VARCHAR(20) NOT NULL,
+                combined_timeline_weeks INTEGER NOT NULL,
+                priority INTEGER NOT NULL,
+                budget_estimate_band VARCHAR(50),
+                suggested_approach TEXT NOT NULL,
+                FOREIGN KEY(report_id) REFERENCES gap_reports (id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_initiatives_report_id ON initiatives (report_id)")
+
+        _insert_legacy_data(cursor, now_str)
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        with engine.connect() as conn:
+            assert len(conn.execute(text("PRAGMA foreign_key_list(gap_reports)")).fetchall()) == 0
+            assert len(conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()) == 1
+            assert len(conn.execute(text("PRAGMA foreign_key_list(initiatives)")).fetchall()) == 1
+
+        _alembic_upgrade(engine)  # must succeed on the FIRST attempt
+
+        with engine.connect() as conn:
+            for table in ("gap_items", "initiatives"):
+                fks = conn.execute(text(f"PRAGMA foreign_key_list({table})")).fetchall()
+                assert len(fks) == 1
+                assert fks[0][2] == "gap_reports", (
+                    f"{table}.report_id must still reference gap_reports, not a "
+                    f"rebuild temp table: {fks[0]}"
+                )
+
+            violations = conn.execute(text("PRAGMA foreign_key_check")).fetchall()
+            assert violations == [], f"no dangling FKs after the rebuild, found: {violations}"
+
+            assert conn.execute(text("SELECT COUNT(*) FROM gap_items")).scalar() == 1
+
+        engine.dispose()

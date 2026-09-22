@@ -28,6 +28,7 @@ from app.legacy_migrations import (
     preflight_fk_orphans,
     run_column_migrations,
 )
+from app.legacy_migrations_schema import FROZEN_TABLES
 
 # revision identifiers, used by Alembic.
 revision: str = '6fcd9e575309'
@@ -44,16 +45,26 @@ def upgrade() -> None:
     engine = op.get_bind().engine
 
     # 1. Read-only: figure out which tables need an FK rebuild, and abort
-    #    now if any of them has an orphaned row — before any write below.
+    #    now if ANY FK_SPEC-covered table has an orphaned row — not only
+    #    the ones slated for rebuild — before any write below. A table
+    #    that already has its FK declared can still carry a non-SET-NULL
+    #    orphan, and that must block the migration even though it isn't
+    #    the table this run would rebuild.
     tables_to_rebuild = compute_fk_tables_to_rebuild(engine)
-    preflight_fk_orphans(engine, tables_to_rebuild)
+    preflight_fk_orphans(engine)
 
     # 2. Only after the preflight passes: column adds, questionnaire
     #    constraint rebuild, and gap_items backfill.
     run_column_migrations(engine)
 
-    # 3. The actual FK rebuild.
-    apply_fk_rebuild(engine, tables_to_rebuild)
+    # 3. The actual FK rebuild, followed by an unconditional
+    #    PRAGMA foreign_key_check (even when tables_to_rebuild is empty)
+    #    so a retry can never record head while an orphan remains.
+    #    FROZEN_TABLES is hand-written, revision-owned DDL
+    #    (app/legacy_migrations_schema.py) -- not a live lookup of
+    #    Base.metadata -- so this historical revision's output can never
+    #    drift with, or collide with, later model/schema changes.
+    apply_fk_rebuild(engine, tables_to_rebuild, FROZEN_TABLES)
 
 
 def downgrade() -> None:
