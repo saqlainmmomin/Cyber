@@ -260,7 +260,11 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         snapshot = {
             "preserved_at": datetime.now().isoformat(),
             "label": "gap_analysis_rerun",
-            "report": {c.name: getattr(existing, c.name) for c in existing.__table__.columns},
+            "report": {
+                c.name: getattr(existing, c.name)
+                for c in existing.__table__.columns
+                if c.name != "legacy_history"
+            },
             "items": [
                 {c.name: getattr(item, c.name) for c in item.__table__.columns}
                 for item in old_items
@@ -405,9 +409,35 @@ def _run_multi_framework_analysis(
         db.commit()
         raise HTTPException(500, f"Multi-framework analysis failed: {str(e)}")
 
-    # Delete existing report + initiatives
+    # Preserve existing report data before re-run, then delete
     existing = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+    _carried_history = None
     if existing:
+        old_items = db.query(GapItem).filter(GapItem.report_id == existing.id).all()
+        snapshot = {
+            "preserved_at": datetime.now().isoformat(),
+            "label": "gap_analysis_rerun",
+            "report": {
+                c.name: getattr(existing, c.name)
+                for c in existing.__table__.columns
+                if c.name != "legacy_history"
+            },
+            "items": [
+                {c.name: getattr(item, c.name) for c in item.__table__.columns}
+                for item in old_items
+            ],
+        }
+        history = []
+        if existing.legacy_history:
+            try:
+                history = json.loads(existing.legacy_history)
+                if not isinstance(history, list):
+                    history = [history]
+            except json.JSONDecodeError:
+                history = []
+        history.append(snapshot)
+        _carried_history = json.dumps(history, default=str)
+
         db.query(GapItem).filter(GapItem.report_id == existing.id).delete()
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
@@ -479,6 +509,7 @@ def _run_multi_framework_analysis(
         framework_scores=json.dumps(per_fw_scores),
         executive_summary=executive_summary,
         raw_ai_response="\n\n---\n\n".join(combined_raw),
+        legacy_history=_carried_history,
     )
     db.add(report)
     db.flush()

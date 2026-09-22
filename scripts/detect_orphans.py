@@ -18,6 +18,7 @@ def detect_orphans(db_url: str | None = None):
         ("rfi_documents", "assessment_id", "assessments", "id"),
         ("gap_items", "report_id", "gap_reports", "id"),
         ("initiatives", "report_id", "gap_reports", "id"),
+        ("desk_review_findings", "document_id", "assessment_documents", "id"),
     ]
 
     found_any = False
@@ -35,7 +36,7 @@ def detect_orphans(db_url: str | None = None):
                     f"SELECT c.{child_col}, COUNT(*) as cnt "
                     f"FROM {child_table} c "
                     f"LEFT JOIN {parent_table} p ON c.{child_col} = p.{parent_col} "
-                    f"WHERE p.{parent_col} IS NULL "
+                    f"WHERE p.{parent_col} IS NULL AND c.{child_col} IS NOT NULL "
                     f"GROUP BY c.{child_col}"
                 )
             ).fetchall()

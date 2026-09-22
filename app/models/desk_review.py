@@ -34,7 +34,9 @@ class DeskReviewFinding(Base):
     assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), index=True)
     finding_type: Mapped[str] = mapped_column(String(20))  # evidence|absence|signal
     requirement_id: Mapped[str | None] = mapped_column(String(30), nullable=True)  # nullable for cross-cutting signals
-    document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)  # FK to assessment_documents
+    document_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("assessment_documents.id", ondelete="SET NULL"), nullable=True,
+    )
     content: Mapped[str] = mapped_column(Text)
     severity: Mapped[str] = mapped_column(String(20), default="medium")  # info|low|medium|high|critical
     source_quote: Mapped[str | None] = mapped_column(Text, nullable=True)

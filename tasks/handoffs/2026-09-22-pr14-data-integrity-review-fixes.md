@@ -68,3 +68,91 @@ Add focused tests that prove all of the following before reporting completion:
 ## Report back
 
 Append a `## Results` section to this file. Include the migration design, tables and relationships covered, orphan policy, test commands/results, `PRAGMA foreign_key_list` evidence for both fresh and upgraded fixtures, and any residual compatibility risk. Do not claim completion without those results.
+
+## Results
+
+### Migration design
+
+The FK migration uses a three-phase approach in `app/main.py:_ensure_foreign_keys()`:
+
+1. **Detection** — For each table in `_FK_REBUILD_ORDER`, `PRAGMA foreign_key_list(table)` is compared against the expected FK spec. Tables with all FKs present are skipped (idempotent).
+2. **Orphan preflight** — Before any schema change, every non-nullable FK relationship is checked for orphaned rows. If any exist, the migration raises `RuntimeError` with the count and a pointer to `scripts/detect_orphans.py`. SET NULL FKs (`desk_review_findings.document_id`) are cleaned automatically by NULLing orphaned references.
+3. **Atomic rebuild** — A raw DBAPI connection with `PRAGMA foreign_keys=OFF` runs the rename → create (from SQLAlchemy model DDL via `CreateTable`) → copy → drop cycle inside a single transaction. After commit, `PRAGMA foreign_keys=ON` and `PRAGMA foreign_key_check` verify no violations. The connection pool is disposed to clear cached schema metadata.
+
+The rebuild order (parent tables first): `assessment_documents` → `gap_reports` → `gap_items` → `initiatives` → `desk_review_summaries` → `desk_review_findings` → `rfi_documents` → `questionnaire_responses`.
+
+### Tables and relationships covered
+
+| Child table | FK column | Parent table | Parent column | ondelete |
+|---|---|---|---|---|
+| assessment_documents | assessment_id | assessments | id | NO ACTION |
+| gap_reports | assessment_id | assessments | id | NO ACTION |
+| gap_items | report_id | gap_reports | id | NO ACTION |
+| initiatives | report_id | gap_reports | id | NO ACTION |
+| desk_review_summaries | assessment_id | assessments | id | NO ACTION |
+| desk_review_findings | assessment_id | assessments | id | NO ACTION |
+| desk_review_findings | document_id | assessment_documents | id | SET NULL |
+| rfi_documents | assessment_id | assessments | id | NO ACTION |
+| questionnaire_responses | assessment_id | assessments | id | NO ACTION |
+
+### Orphan policy
+
+- **Non-nullable FKs**: Migration aborts before any schema change. Operator must resolve orphans via `scripts/detect_orphans.py` (which now covers all 9 relationships including `document_id`).
+- **SET NULL FKs** (`desk_review_findings.document_id`): Orphaned references are automatically NULLed before rebuild. Document deletion retains findings with `document_id = NULL`.
+- **No silent data deletion** — the migration never drops orphaned rows.
+
+### History snapshot fix
+
+- **Gap analysis** (`app/routers/analysis.py`): Snapshots now exclude `legacy_history` from the report dict (`if c.name != "legacy_history"`). The outer history list is the record of prior runs; no nesting occurs.
+- **Multi-framework path**: Added history preservation (was missing entirely — existing report was deleted with no snapshot).
+- **Desk review** (`app/routers/web.py`): Already flat — finding snapshots serialize `DeskReviewFinding` columns, which have no `legacy_history` field. No change needed.
+
+### Test commands and results
+
+```
+$ uv run pytest -q
+162 passed, 30 warnings in 3.92s
+
+$ uv run python -m scripts.detect_orphans
+  OK: assessment_documents.assessment_id -> assessments.id
+  OK: questionnaire_responses.assessment_id -> assessments.id
+  OK: desk_review_summaries.assessment_id -> assessments.id
+  OK: desk_review_findings.assessment_id -> assessments.id
+  OK: gap_reports.assessment_id -> assessments.id
+  OK: rfi_documents.assessment_id -> assessments.id
+  OK: gap_items.report_id -> gap_reports.id
+  OK: initiatives.report_id -> gap_reports.id
+  OK: desk_review_findings.document_id -> assessment_documents.id
+  No orphans found.
+```
+
+14 new tests in `tests/test_data_integrity.py`:
+
+| # | Verification item | Test |
+|---|---|---|
+| 1 | Fresh schema FKs | `TestFreshSchemaFKs::test_every_intended_fk_exists` |
+| 1 | Document FK SET NULL | `TestFreshSchemaFKs::test_desk_review_finding_document_id_fk_exists` |
+| 1 | FK rejects invalid insert | `TestFreshSchemaFKs::test_gap_report_rejects_invalid_assessment` |
+| 1 | Document deletion policy | `TestFreshSchemaFKs::test_document_deletion_sets_finding_null` |
+| 2 | Legacy upgrade + PRAGMA | `TestLegacyUpgrade::test_migration_adds_fks_and_preserves_data` |
+| 2 | Post-upgrade rejection | `TestLegacyUpgrade::test_invalid_insert_fails_after_upgrade` |
+| 3 | Orphan abort | `TestLegacyOrphanAbort::test_migration_aborts_on_orphaned_rows` |
+| 3 | SET NULL orphan cleanup | `TestLegacyOrphanAbort::test_set_null_fk_orphans_are_cleaned` |
+| 4 | Second migration no-op | `TestSchemaConvergence::test_second_migration_is_noop` |
+| 4 | Fresh ≡ upgraded schema | `TestSchemaConvergence::test_fresh_schema_matches_upgraded` |
+| 5 | Analysis rerun ×3 | `TestAnalysisRerunHistory::test_three_reruns_flat_history` |
+| 6 | Desk review rerun ×3 | `TestDeskReviewRerunHistory::test_three_desk_reruns_flat_history` |
+| 7 | detect_orphans clean | `TestDetectOrphans::test_detect_orphans_clean_db` |
+| 7 | detect_orphans document_id | `TestDetectOrphans::test_detect_orphans_finds_document_orphan` |
+
+### PRAGMA foreign_key_list evidence
+
+**Fresh schema** (via `create_all`): All 8 child tables have their FKs, verified by `TestFreshSchemaFKs::test_every_intended_fk_exists`.
+
+**Upgraded legacy fixture**: `TestLegacyUpgrade::test_migration_adds_fks_and_preserves_data` constructs a pre-PR schema (no FKs), inserts valid data, runs `_run_migrations` + `_ensure_foreign_keys`, then asserts every expected FK column appears in `PRAGMA foreign_key_list` output. `TestSchemaConvergence::test_fresh_schema_matches_upgraded` asserts the FK sets are identical between fresh and upgraded schemas.
+
+### Residual compatibility risk
+
+- **Python sqlite3 module**: The migration uses `engine.raw_connection()` and explicit `PRAGMA foreign_keys=OFF` to bypass the application-level FK enforcement during schema changes. This is the SQLite-recommended approach. The `engine.dispose()` after migration ensures the connection pool clears stale schema cache.
+- **Concurrent access during migration**: The rename-create-copy-drop cycle holds a write lock. If another process writes during migration, it will block until commit. This is acceptable for a single-user SQLite deployment.
+- **Existing production databases**: Any database with orphaned rows (broken parent references) will cause startup to fail with a clear error message. The dev database had 1 orphaned `questionnaire_responses` row which was cleaned as part of this work.
