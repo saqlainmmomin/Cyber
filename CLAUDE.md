@@ -2,6 +2,17 @@
 
 AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR, HIPAA, NIST CSF, PCI-DSS) — Jinja2 + HTMX + Tailwind. Desk-review pre-fill, adaptive tiering, tiered LLM gap analysis, deterministic scoring, board-ready PDF/RFI reports, controls de-duplicated via Unified Control Clusters.
 
+## Current Plan (source of truth)
+
+**Implementation plan:** `docs/plans/2026-09-21-002-revised-implementation-plan.md`
+**Product requirements:** `docs/product/2026-09-21-cyberassess-product-requirements.md`
+**Decisions log:** `tasks/2026-09-21-adversarial-review.md` (D1–D11)
+
+All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
+
+**Current phase:** Phase 1 — Schema & Hierarchy (Alembic, target schema, Client→Engagement→Assessment, portfolio dashboard, per-framework scoring).
+**Pre-work sprint:** Completed (PW-1 through PW-5).
+
 ## Running
 ```bash
 cp .env.example .env   # add OPENROUTER_KEY
@@ -14,7 +25,7 @@ pytest
 
 | Path | Purpose |
 |---|---|
-| `app/main.py` | FastAPI app, DIY migrations, routers |
+| `app/main.py` | FastAPI app, routers |
 | `app/frameworks/` | Registry, 6 `FrameworkDefinition`s, UCC cluster mappings |
 | `app/dpdpa/` | DPDPA domain knowledge — legacy single-framework path |
 | `app/services/claude_analyzer.py` | Tiered, OpenRouter-backed gap analysis pipeline |
