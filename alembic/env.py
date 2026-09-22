@@ -7,7 +7,7 @@ from alembic import context
 
 import app.models  # noqa: F401 — ensure all models registered before target_metadata is read
 from app.config import settings
-from app.database import Base
+from app.database import Base, ensure_sqlite_parent_dir
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -64,6 +64,11 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Same guard as app/database.py: a clean checkout has no `data/`
+    # directory, and SQLite won't create it — only the file. Resolve
+    # against whatever URL will actually be used (a caller, e.g. a test,
+    # may have overridden it after this module's initial import).
+    ensure_sqlite_parent_dir(config.get_main_option("sqlalchemy.url"))
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

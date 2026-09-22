@@ -497,6 +497,49 @@ class TestLegacyOrphanAbort:
 
         engine.dispose()
 
+    def test_orphan_blocks_before_any_destructive_write(self, tmp_path):
+        """The FK orphan preflight must run — and abort — before
+        run_column_migrations touches anything: no gap_items ai_*
+        backfill, and the retrofit revision (6fcd9e575309) must not be
+        recorded as applied."""
+        engine = _fresh_engine(tmp_path, "orphan_precheck.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)
+        _insert_legacy_data(cursor, now_str)
+        # Orphan: gap_report referencing a nonexistent assessment.
+        cursor.execute(
+            "INSERT INTO gap_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("orphan-r2", "nonexistent-a", 0.0, "{}", "", "{}", None, None, now_str),
+        )
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        with pytest.raises(RuntimeError, match="FK migration blocked"):
+            _alembic_upgrade(engine)
+
+        with engine.connect() as conn:
+            # _insert_legacy_data's gap_item ("g1") is inserted without
+            # ai_compliance_status, so it's NULL unless run_column_migrations'
+            # backfill (UPDATE ... WHERE ai_compliance_status IS NULL) ran.
+            ai_status = conn.execute(
+                text("SELECT ai_compliance_status FROM gap_items WHERE id = 'g1'")
+            ).scalar()
+            assert ai_status is None, (
+                "gap_items ai_* backfill ran despite the FK preflight failing first"
+            )
+
+            version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            assert version != "6fcd9e575309", (
+                "retrofit revision must not be recorded as applied when it aborted"
+            )
+
+        engine.dispose()
+
     def test_set_null_fk_orphans_are_cleaned(self, tmp_path):
         """document_id orphans should be NULLed, not cause an abort."""
         engine = _fresh_engine(tmp_path, "setnull.db")

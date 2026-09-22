@@ -85,6 +85,26 @@ def test_lifespan_validates_catalog_before_running_migrations(monkeypatch):
     assert startup_events == ["alembic_upgrade", "register_frameworks", "validate_catalog"]
 
 
+def test_lifespan_creates_missing_data_directory_for_default_sqlite_url(monkeypatch, tmp_path):
+    """A clean checkout has no `data/` directory. Startup must create the
+    parent directory for a file-backed SQLite URL (the default is
+    sqlite:///data/dpdpa.db) rather than failing to open the DB file."""
+    from app import main
+
+    nested_db_path = tmp_path / "nested" / "does_not_exist_yet" / "app.db"
+    assert not nested_db_path.parent.exists()
+
+    monkeypatch.setattr(main.settings, "database_url", f"sqlite:///{nested_db_path}")
+
+    async def start_app():
+        async with main.lifespan(None):
+            pass
+
+    asyncio.run(start_app())
+
+    assert nested_db_path.exists()
+
+
 def test_migration_backfills_legacy_gap_item_framework_ids():
     migration_engine = create_engine("sqlite://")
     with migration_engine.begin() as conn:

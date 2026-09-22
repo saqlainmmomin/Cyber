@@ -269,21 +269,20 @@ def _rebuild_table_for_fks(cursor, table_name, dialect):
     logger.info("Migration: rebuilt %s with foreign key constraints", table_name)
 
 
-def run_fk_retrofit(engine):
-    """Rebuild tables missing FK constraints on legacy SQLite databases.
+def compute_fk_tables_to_rebuild(engine) -> list[str]:
+    """Read-only: which tables are missing the intended FK set. No writes.
 
-    Uses a raw DBAPI connection with PRAGMA foreign_keys=OFF so that the
-    rename-create-copy-drop cycle is safe.  Runs an orphan preflight before
-    any schema change; aborts if orphaned rows would violate a non-nullable FK.
+    Split out from the old combined `_ensure_foreign_keys` so callers can
+    run this (and the orphan preflight below) *before* any destructive
+    migration step, rather than discovering an orphan mid-migration after
+    other writes have already landed.
     """
     if engine.dialect.name != "sqlite":
-        return
+        return []
 
     dbapi_conn = engine.raw_connection()
     try:
         cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA foreign_keys=OFF")
-
         tables_to_rebuild: list[str] = []
         for table_name in FK_REBUILD_ORDER:
             cursor.execute(
@@ -302,9 +301,26 @@ def run_fk_retrofit(engine):
                     tables_to_rebuild.append(table_name)
                     break
 
-        if not tables_to_rebuild:
-            return
+        return tables_to_rebuild
+    finally:
+        dbapi_conn.close()
 
+
+def preflight_fk_orphans(engine, tables_to_rebuild: list[str]) -> None:
+    """Read-only: raise RuntimeError if any table slated for an FK rebuild
+    has orphaned rows on a non-SET-NULL column.
+
+    Must run — and fully complete — before any destructive migration step
+    (column adds, questionnaire cleanup/backfill, or the FK rebuild itself)
+    so that an abort here leaves the database completely untouched and the
+    migration unrecorded, rather than partially applied.
+    """
+    if not tables_to_rebuild:
+        return
+
+    dbapi_conn = engine.raw_connection()
+    try:
+        cursor = dbapi_conn.cursor()
         for table_name in tables_to_rebuild:
             for child_col, parent_table, parent_col, on_delete in FK_SPEC[table_name]:
                 if on_delete == "SET NULL":
@@ -321,7 +337,23 @@ def run_fk_retrofit(engine):
                         f"orphaned rows referencing non-existent {parent_table}.{parent_col}. "
                         f"Run 'python scripts/detect_orphans.py' for details and fix manually."
                     )
+    finally:
+        dbapi_conn.close()
 
+
+def apply_fk_rebuild(engine, tables_to_rebuild: list[str]) -> None:
+    """Perform the actual FK retrofit (SET NULL cleanup + table rebuild).
+
+    Assumes `preflight_fk_orphans` has already been run against the same
+    `tables_to_rebuild` and did not raise.
+    """
+    if not tables_to_rebuild:
+        return
+
+    dbapi_conn = engine.raw_connection()
+    try:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
         cursor.execute("BEGIN")
 
         for table_name in tables_to_rebuild:
@@ -353,3 +385,17 @@ def run_fk_retrofit(engine):
     finally:
         dbapi_conn.close()
         engine.dispose()
+
+
+def run_fk_retrofit(engine):
+    """Convenience wrapper: compute + preflight + apply in one call.
+
+    Kept for direct callers/tests that want the old combined behavior in
+    isolation. The Alembic revision itself calls the three steps separately
+    so the orphan preflight can run before `run_column_migrations`.
+    """
+    if engine.dialect.name != "sqlite":
+        return
+    tables_to_rebuild = compute_fk_tables_to_rebuild(engine)
+    preflight_fk_orphans(engine, tables_to_rebuild)
+    apply_fk_rebuild(engine, tables_to_rebuild)

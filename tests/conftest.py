@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 import pytest
 from pathlib import Path
 from sqlalchemy import create_engine
@@ -11,6 +13,38 @@ import app.models  # noqa: F401 - register all ORM tables
 from app.database import Base
 
 CANONICAL_FIXTURE = Path(__file__).parent / "fixtures" / "canonical_dpdpa"
+
+# The real developer database (app.config.settings.database_url's default
+# path). Every test must use an isolated per-test database instead of this
+# one — the session-scoped guard below fails loudly if any test leaks
+# through to it, e.g. via a TestClient(app.main.app) that forgot to
+# redirect settings.database_url before entering the lifespan.
+_DEV_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "dpdpa.db"
+
+
+def _dev_db_fingerprint() -> tuple[int, int, str] | None:
+    if not _DEV_DB_PATH.exists():
+        return None
+    stat = _DEV_DB_PATH.stat()
+    digest = hashlib.sha256(_DEV_DB_PATH.read_bytes()).hexdigest()
+    return (stat.st_mtime_ns, stat.st_size, digest)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _guard_dev_database_untouched():
+    """Regression guard: the test suite must never create or modify the
+    real developer database. A mismatch here means some test's app
+    lifespan ran `alembic upgrade head` (or otherwise wrote) against
+    settings.database_url's default path instead of an isolated
+    per-test database."""
+    before = _dev_db_fingerprint()
+    yield
+    after = _dev_db_fingerprint()
+    assert after == before, (
+        f"The test suite created or modified the real developer database at "
+        f"{_DEV_DB_PATH} — a test is leaking through to settings.database_url's "
+        "default path instead of using an isolated per-test database."
+    )
 
 
 @pytest.fixture(scope="session")
