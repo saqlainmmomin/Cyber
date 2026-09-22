@@ -2,7 +2,7 @@ import uuid
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.database import Base
@@ -83,7 +83,7 @@ class AssessmentDocument(Base):
     __tablename__ = "assessment_documents"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    assessment_id: Mapped[str] = mapped_column(String(36), index=True)
+    assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), index=True)
     filename: Mapped[str] = mapped_column(String(255))
     file_path: Mapped[str] = mapped_column(String(500))
     file_type: Mapped[str] = mapped_column(String(10))

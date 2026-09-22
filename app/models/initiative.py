@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -9,7 +9,7 @@ class Initiative(Base):
     __tablename__ = "initiatives"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    report_id: Mapped[str] = mapped_column(String(36), index=True)
+    report_id: Mapped[str] = mapped_column(String(36), ForeignKey("gap_reports.id"), index=True)
     initiative_id: Mapped[str] = mapped_column(String(20))  # e.g., "INIT-001"
     title: Mapped[str] = mapped_column(String(255))
     root_cause: Mapped[str] = mapped_column(Text)

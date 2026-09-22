@@ -23,10 +23,13 @@ from app.schemas.assessment import DocumentCategory
 from app.services.document_processor import detect_file_type, extract_text, save_upload
 from app.utils.review_gate import require_review_approval
 
+from app.template_config import configure_templates
+
 router = APIRouter(tags=["web"])
 logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
+configure_templates(templates)
 
 ENABLED_ASSESSMENT_FRAMEWORKS = ("dpdpa", "iso27001", "nist_csf")
 ROADMAP_FRAMEWORKS = ("gdpr", "hipaa", "pci_dss")
@@ -80,7 +83,7 @@ def _framework_catalog() -> list[dict]:
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    assessments = db.query(Assessment).order_by(Assessment.created_at.desc()).all()
+    assessments = db.query(Assessment).filter(Assessment.status != "archived").order_by(Assessment.created_at.desc()).all()
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {"request": request, "assessments": assessments},
@@ -358,7 +361,7 @@ def delete_assessment_web(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
-    db.delete(assessment)
+    assessment.status = "archived"
     db.commit()
     return HTMLResponse("")
 
@@ -1751,6 +1754,29 @@ def run_desk_review_web(
         .first()
     )
     if summary:
+        old_findings = db.query(DeskReviewFinding).filter(
+            DeskReviewFinding.assessment_id == assessment_id
+        ).all()
+        if old_findings:
+            snapshot = {
+                "preserved_at": datetime.now(timezone.utc).isoformat(),
+                "label": "desk_review_rerun",
+                "findings": [
+                    {c.name: getattr(f, c.name) for c in f.__table__.columns}
+                    for f in old_findings
+                ],
+            }
+            history = []
+            if summary.legacy_history:
+                try:
+                    history = json.loads(summary.legacy_history)
+                    if not isinstance(history, list):
+                        history = [history]
+                except json.JSONDecodeError:
+                    history = []
+            history.append(snapshot)
+            summary.legacy_history = json.dumps(history, default=str)
+
         db.query(DeskReviewFinding).filter(
             DeskReviewFinding.assessment_id == assessment_id
         ).delete()

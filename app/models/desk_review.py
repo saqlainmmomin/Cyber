@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -16,7 +16,7 @@ class DeskReviewSummary(Base):
     __tablename__ = "desk_review_summaries"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    assessment_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
+    assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), unique=True, index=True)
     document_catalog: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     coverage_summary: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     raw_ai_response: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -24,16 +24,19 @@ class DeskReviewSummary(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    legacy_history: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class DeskReviewFinding(Base):
     __tablename__ = "desk_review_findings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    assessment_id: Mapped[str] = mapped_column(String(36), index=True)
+    assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), index=True)
     finding_type: Mapped[str] = mapped_column(String(20))  # evidence|absence|signal
     requirement_id: Mapped[str | None] = mapped_column(String(30), nullable=True)  # nullable for cross-cutting signals
-    document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)  # FK to assessment_documents
+    document_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("assessment_documents.id", ondelete="SET NULL"), nullable=True,
+    )
     content: Mapped[str] = mapped_column(Text)
     severity: Mapped[str] = mapped_column(String(20), default="medium")  # info|low|medium|high|critical
     source_quote: Mapped[str | None] = mapped_column(Text, nullable=True)

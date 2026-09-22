@@ -154,5 +154,5 @@ def delete_assessment(assessment_id: str, db: Session = Depends(get_db)):
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-    db.delete(assessment)
+    assessment.status = "archived"
     db.commit()

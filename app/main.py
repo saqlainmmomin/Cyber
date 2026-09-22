@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
+from sqlalchemy.schema import CreateIndex, CreateTable
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
@@ -15,14 +16,6 @@ import app.models  # noqa: F401 — ensure all models registered before create_a
 from app.routers import analysis, assessments, desk_review, documents, questionnaire, remediation, reports, review, web
 
 logger = logging.getLogger(__name__)
-
-# Expose only branding fields to templates — never the full Settings object
-# (which contains openrouter_key, session_secret, auditor_password).
-web.templates.env.globals["branding"] = {
-    "firm_name": settings.firm_name,
-    "firm_primary_hex": settings.firm_primary_hex,
-    "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
-}
 
 APP_DIR = Path(__file__).resolve().parent
 VALID_QUESTIONNAIRE_ANSWERS = (
@@ -93,9 +86,12 @@ def _ensure_questionnaire_answer_constraint(conn):
                     evidence_reference TEXT,
                     na_reason TEXT,
                     confidence TEXT,
+                    cluster_id VARCHAR(80),
+                    answer_source VARCHAR(20) DEFAULT 'human',
                     submitted_at DATETIME NOT NULL,
                     CONSTRAINT ck_questionnaire_responses_answer_valid
-                        CHECK (answer IN ('fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'))
+                        CHECK (answer IN ('fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable')),
+                    FOREIGN KEY (assessment_id) REFERENCES assessments(id)
                 )
                 """
             )
@@ -104,10 +100,10 @@ def _ensure_questionnaire_answer_constraint(conn):
             text(
                 """
                 INSERT INTO questionnaire_responses (
-                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, submitted_at
+                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, cluster_id, answer_source, submitted_at
                 )
                 SELECT
-                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, submitted_at
+                    id, assessment_id, question_id, answer, notes, evidence_reference, na_reason, confidence, cluster_id, answer_source, submitted_at
                 FROM questionnaire_responses_old
                 """
             )
@@ -179,6 +175,10 @@ def _run_migrations(engine):
         ],
         "gap_reports": [
             ("framework_scores", "TEXT"),
+            ("legacy_history", "TEXT"),
+        ],
+        "desk_review_summaries": [
+            ("legacy_history", "TEXT"),
         ],
     }
     with engine.begin() as conn:
@@ -221,6 +221,141 @@ def _run_migrations(engine):
                     """
                 )
             )
+
+
+_FK_SPEC: dict[str, list[tuple[str, str, str, str | None]]] = {
+    "assessment_documents": [("assessment_id", "assessments", "id", None)],
+    "gap_reports": [("assessment_id", "assessments", "id", None)],
+    "gap_items": [("report_id", "gap_reports", "id", None)],
+    "initiatives": [("report_id", "gap_reports", "id", None)],
+    "desk_review_summaries": [("assessment_id", "assessments", "id", None)],
+    "desk_review_findings": [
+        ("assessment_id", "assessments", "id", None),
+        ("document_id", "assessment_documents", "id", "SET NULL"),
+    ],
+    "rfi_documents": [("assessment_id", "assessments", "id", None)],
+    "questionnaire_responses": [("assessment_id", "assessments", "id", None)],
+}
+
+_FK_REBUILD_ORDER = [
+    "assessment_documents",
+    "gap_reports",
+    "gap_items",
+    "initiatives",
+    "desk_review_summaries",
+    "desk_review_findings",
+    "rfi_documents",
+    "questionnaire_responses",
+]
+
+
+def _rebuild_table_for_fks(cursor, table_name, dialect):
+    """Rebuild a single table using the SQLAlchemy model DDL to enforce FK constraints."""
+    table = Base.metadata.tables[table_name]
+
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+    common_cols = [c.name for c in table.columns if c.name in existing_cols]
+    col_list = ", ".join(common_cols)
+
+    cursor.execute(f"ALTER TABLE {table_name} RENAME TO _{table_name}_pre_fk")
+    create_ddl = str(CreateTable(table).compile(dialect=dialect))
+    cursor.execute(create_ddl)
+    cursor.execute(f"INSERT INTO {table_name} ({col_list}) SELECT {col_list} FROM _{table_name}_pre_fk")
+    cursor.execute(f"DROP TABLE _{table_name}_pre_fk")
+
+    for idx in table.indexes:
+        idx_sql = str(CreateIndex(idx).compile(dialect=dialect))
+        idx_sql = idx_sql.replace("CREATE INDEX", "CREATE INDEX IF NOT EXISTS", 1)
+        cursor.execute(idx_sql)
+
+    logger.info("Migration: rebuilt %s with foreign key constraints", table_name)
+
+
+def _ensure_foreign_keys(engine):
+    """Rebuild tables missing FK constraints on legacy SQLite databases.
+
+    Uses a raw DBAPI connection with PRAGMA foreign_keys=OFF so that the
+    rename-create-copy-drop cycle is safe.  Runs an orphan preflight before
+    any schema change; aborts if orphaned rows would violate a non-nullable FK.
+    """
+    if engine.dialect.name != "sqlite":
+        return
+
+    dbapi_conn = engine.raw_connection()
+    try:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+
+        tables_to_rebuild: list[str] = []
+        for table_name in _FK_REBUILD_ORDER:
+            cursor.execute(
+                f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+            )
+            if not cursor.fetchone():
+                continue
+
+            cursor.execute(f"PRAGMA foreign_key_list({table_name})")
+            existing_fks = cursor.fetchall()
+            existing_fk_set = {(row[3], row[2], row[4], row[6]) for row in existing_fks}
+
+            for child_col, parent_table, parent_col, on_delete in _FK_SPEC[table_name]:
+                expected_on_delete = on_delete or "NO ACTION"
+                if (child_col, parent_table, parent_col, expected_on_delete) not in existing_fk_set:
+                    tables_to_rebuild.append(table_name)
+                    break
+
+        if not tables_to_rebuild:
+            return
+
+        for table_name in tables_to_rebuild:
+            for child_col, parent_table, parent_col, on_delete in _FK_SPEC[table_name]:
+                if on_delete == "SET NULL":
+                    continue
+                cursor.execute(
+                    f"SELECT COUNT(*) FROM {table_name} c "
+                    f"LEFT JOIN {parent_table} p ON c.{child_col} = p.{parent_col} "
+                    f"WHERE p.{parent_col} IS NULL AND c.{child_col} IS NOT NULL"
+                )
+                orphan_count = cursor.fetchone()[0]
+                if orphan_count:
+                    raise RuntimeError(
+                        f"FK migration blocked: {table_name}.{child_col} has {orphan_count} "
+                        f"orphaned rows referencing non-existent {parent_table}.{parent_col}. "
+                        f"Run 'python scripts/detect_orphans.py' for details and fix manually."
+                    )
+
+        cursor.execute("BEGIN")
+
+        for table_name in tables_to_rebuild:
+            for child_col, parent_table, parent_col, on_delete in _FK_SPEC[table_name]:
+                if on_delete == "SET NULL":
+                    cursor.execute(
+                        f"UPDATE {table_name} SET {child_col} = NULL "
+                        f"WHERE {child_col} IS NOT NULL AND {child_col} NOT IN "
+                        f"(SELECT {parent_col} FROM {parent_table})"
+                    )
+
+            _rebuild_table_for_fks(cursor, table_name, engine.dialect)
+
+        cursor.execute("COMMIT")
+
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA foreign_key_check")
+        violations = cursor.fetchall()
+        if violations:
+            logger.error("FK violations after migration: %s", violations)
+            raise RuntimeError(
+                f"Foreign key violations detected after migration: {violations}"
+            )
+
+        logger.info(
+            "Migration: FK enforcement verified for %s",
+            ", ".join(tables_to_rebuild),
+        )
+    finally:
+        dbapi_conn.close()
+        engine.dispose()
 
 
 def _register_frameworks():
@@ -282,6 +417,7 @@ async def lifespan(app: FastAPI):
     _register_frameworks()
     _assert_framework_catalog_complete()
     _run_migrations(engine)
+    _ensure_foreign_keys(engine)
     yield
 
 
