@@ -1,23 +1,33 @@
 """Shared fixtures for HTTP integration tests."""
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from fastapi.testclient import TestClient
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401 — register all ORM tables
-from app.database import Base, get_db
+from app.database import get_db
 from app.main import app, settings
 from app.template_config import configure_templates
 from app.routers.web import templates
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture()
 def db_session(tmp_path):
     """Fresh SQLite database per test."""
     db_path = tmp_path / "integration.db"
+    alembic_cfg = Config(str(REPO_ROOT / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+    alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+    command.upgrade(alembic_cfg, "head")
+
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-    Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
     session = Session()
     try:

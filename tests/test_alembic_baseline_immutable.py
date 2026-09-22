@@ -27,7 +27,7 @@ _LATER_REVISION_TEMPLATE = textwrap.dedent(
     import sqlalchemy as sa
 
     revision = "zzzz_review_probe"
-    down_revision = "6fcd9e575309"
+    down_revision = "5c7c75960f43"
     branch_labels = None
     depends_on = None
 
@@ -88,7 +88,7 @@ _LATER_COLUMN_REVISION_TEMPLATE = textwrap.dedent(
     import sqlalchemy as sa
 
     revision = "zzzz_later_column_probe"
-    down_revision = "6fcd9e575309"
+    down_revision = "5c7c75960f43"
     branch_labels = None
     depends_on = None
 
