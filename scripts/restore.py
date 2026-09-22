@@ -31,28 +31,84 @@ def _read_manifest(backup_dir: Path) -> dict:
     return manifest
 
 
+def _remove_path(path: Path) -> None:
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    elif path.exists() or path.is_symlink():
+        path.unlink()
+
+
+def _file_sizes(directory: Path) -> dict[Path, int]:
+    return {
+        path.relative_to(directory): path.stat().st_size
+        for path in directory.rglob("*")
+        if path.is_file()
+    }
+
+
+def _copy_database_for_safety(db_path: Path, safety_db: Path) -> None:
+    partial_db = safety_db.with_name(f".{safety_db.name}.partial")
+    shutil.copy2(str(db_path), str(partial_db))
+    if partial_db.stat().st_size != db_path.stat().st_size:
+        raise RuntimeError("Pre-restore database safety copy size does not match the live database")
+    partial_db.replace(safety_db)
+
+
+def _copy_uploads_for_safety(upload_dir: Path, safety_uploads: Path) -> None:
+    partial_uploads = safety_uploads.with_name(f".{safety_uploads.name}.partial")
+    copied_file_count = copy_tree_and_count(upload_dir, partial_uploads)
+    source_sizes = _file_sizes(upload_dir)
+    copied_sizes = _file_sizes(partial_uploads)
+    if copied_file_count != len(source_sizes) or source_sizes != copied_sizes:
+        raise RuntimeError("Pre-restore uploads safety copy does not match the live uploads")
+    partial_uploads.replace(safety_uploads)
+
+
 def _restore_safety_copy(
     safety_dir: Path,
     db_path: Path,
     upload_dir: Path,
     *,
+    db_live_existed: bool,
+    upload_live_existed: bool,
+    db_safety_copy_verified: bool,
+    upload_safety_copy_verified: bool,
+    db_moved_aside: bool,
+    upload_moved_aside: bool,
+    upload_removal_started: bool,
     db_restore_attempted: bool,
     upload_restore_attempted: bool,
 ) -> None:
     safety_db = safety_dir / db_path.name
+    partial_db = safety_db.with_name(f".{safety_db.name}.partial")
     safety_uploads = safety_dir / "uploads"
-    if safety_db.exists():
+    partial_uploads = safety_uploads.with_name(f".{safety_uploads.name}.partial")
+
+    if db_moved_aside or (db_safety_copy_verified and db_restore_attempted):
         if db_path.exists():
-            db_path.unlink()
+            _remove_path(db_path)
+        if safety_db.exists():
+            shutil.move(str(safety_db), str(db_path))
+    elif db_safety_copy_verified and not db_path.exists():
         shutil.move(str(safety_db), str(db_path))
-    elif db_restore_attempted and db_path.exists():
-        db_path.unlink()
-    if safety_uploads.exists():
+    elif not db_live_existed and db_restore_attempted:
+        _remove_path(db_path)
+    else:
+        _remove_path(safety_db)
+    _remove_path(partial_db)
+
+    if upload_moved_aside or (upload_safety_copy_verified and upload_removal_started):
         if upload_dir.exists():
-            shutil.rmtree(upload_dir)
+            _remove_path(upload_dir)
+        if safety_uploads.exists():
+            shutil.move(str(safety_uploads), str(upload_dir))
+    elif upload_safety_copy_verified and not upload_dir.exists():
         shutil.move(str(safety_uploads), str(upload_dir))
-    elif upload_restore_attempted and upload_dir.exists():
-        shutil.rmtree(upload_dir)
+    elif not upload_live_existed and upload_restore_attempted:
+        _remove_path(upload_dir)
+    else:
+        _remove_path(safety_uploads)
+    _remove_path(partial_uploads)
 
 
 def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: bool = False) -> Path:
@@ -74,19 +130,36 @@ def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: 
         if answer.lower() not in {"y", "yes"}:
             raise RuntimeError("Restore cancelled")
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     safety_dir = backup_dir.parent / f"pre-restore-{timestamp}"
-    safety_dir.mkdir(exist_ok=False)
+    db_live_existed = db_path.exists()
+    upload_live_existed = upload_dir.exists()
+    if db_live_existed or upload_live_existed:
+        safety_dir.mkdir(exist_ok=False)
+
+    db_safety_copy_verified = False
+    upload_safety_copy_verified = False
+    db_moved_aside = False
+    upload_moved_aside = False
+    upload_removal_started = False
     db_restore_attempted = False
     upload_restore_attempted = False
 
     try:
-        if db_path.exists():
+        if db_live_existed:
             safety_db = safety_dir / db_path.name
             safety_db.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(db_path), str(safety_db))
-        if upload_dir.exists():
-            shutil.move(str(upload_dir), str(safety_dir / "uploads"))
+            _copy_database_for_safety(db_path, safety_db)
+            db_safety_copy_verified = True
+            db_path.unlink()
+            db_moved_aside = True
+        if upload_live_existed:
+            safety_uploads = safety_dir / "uploads"
+            _copy_uploads_for_safety(upload_dir, safety_uploads)
+            upload_safety_copy_verified = True
+            upload_removal_started = True
+            shutil.rmtree(upload_dir)
+            upload_moved_aside = True
 
         db_path.parent.mkdir(parents=True, exist_ok=True)
         db_restore_attempted = True
@@ -103,6 +176,13 @@ def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: 
                 safety_dir,
                 db_path,
                 upload_dir,
+                db_live_existed=db_live_existed,
+                upload_live_existed=upload_live_existed,
+                db_safety_copy_verified=db_safety_copy_verified,
+                upload_safety_copy_verified=upload_safety_copy_verified,
+                db_moved_aside=db_moved_aside,
+                upload_moved_aside=upload_moved_aside,
+                upload_removal_started=upload_removal_started,
                 db_restore_attempted=db_restore_attempted,
                 upload_restore_attempted=upload_restore_attempted,
             )

@@ -43,8 +43,11 @@ def copy_tree_and_count(source: Path, destination: Path) -> int:
 
 
 def check_integrity(database_path: Path) -> None:
-    with sqlite3.connect(database_path) as connection:
+    connection = sqlite3.connect(database_path)
+    try:
         result = connection.execute("PRAGMA integrity_check").fetchone()[0]
+    finally:
+        connection.close()
     if result != "ok":
         raise RuntimeError(f"SQLite integrity check failed: {result}")
 
@@ -57,14 +60,20 @@ def create_backup(db_path: Path, upload_dir: Path, out_dir: Path) -> Path:
     if not db_path.is_file():
         raise FileNotFoundError(f"Database file does not exist: {db_path}")
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     backup_dir = out_dir / timestamp
     backup_dir.mkdir(parents=True, exist_ok=False)
 
     try:
         backup_db_path = backup_dir / db_path.name
-        with sqlite3.connect(db_path) as source, sqlite3.connect(backup_db_path) as destination:
+        source = sqlite3.connect(db_path)
+        destination = sqlite3.connect(backup_db_path)
+        try:
             source.backup(destination)
+            destination.commit()
+        finally:
+            source.close()
+            destination.close()
         check_integrity(backup_db_path)
 
         backup_upload_dir = backup_dir / "uploads"
