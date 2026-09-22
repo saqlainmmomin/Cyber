@@ -156,3 +156,13 @@ $ uv run python -m scripts.detect_orphans
 - **Python sqlite3 module**: The migration uses `engine.raw_connection()` and explicit `PRAGMA foreign_keys=OFF` to bypass the application-level FK enforcement during schema changes. This is the SQLite-recommended approach. The `engine.dispose()` after migration ensures the connection pool clears stale schema cache.
 - **Concurrent access during migration**: The rename-create-copy-drop cycle holds a write lock. If another process writes during migration, it will block until commit. This is acceptable for a single-user SQLite deployment.
 - **Existing production databases**: Any database with orphaned rows (broken parent references) will cause startup to fail with a clear error message. The dev database had 1 orphaned `questionnaire_responses` row which was cleaned as part of this work.
+
+### Codex robustness follow-up (P2, resolved)
+
+Codex reviewed the uncommitted candidate changes and flagged one open item before endorsing the migration as permanent: `_ensure_foreign_keys()`'s "is this table already upgraded" check in `app/main.py` compared FK presence using only `(child_col, parent_table, parent_col)` from `PRAGMA foreign_key_list`, ignoring the `on_delete` field. Codex reproduced a drift scenario: a database with `desk_review_findings.document_id -> assessment_documents.id` already declared but with the SQLite default `NO ACTION` (instead of the intended `SET NULL`) was treated as already-upgraded and never rebuilt.
+
+Fix: `app/main.py` now includes the expected `on_delete` action (`row[6]` from `PRAGMA foreign_key_list`, mapped from `_FK_SPEC`'s `on_delete` value or `"NO ACTION"` when unset) in the schema-comparison tuple, so a drifted delete action triggers a rebuild like any other missing FK.
+
+Regression test: `tests/test_data_integrity.py::TestFkDeleteActionDrift::test_detects_and_fixes_on_delete_drift` constructs a legacy database with `desk_review_findings` already FK-declared at `NO ACTION` on both columns, runs the real migration, and asserts `document_id`'s `on_delete` is corrected to `SET NULL` with data preserved. Verified the test fails against the pre-fix code (a stale `_assessment_documents_pre_fk` naming collision surfaces as a different `RuntimeError`, but it still fails) and passes with the fix.
+
+`uv run pytest -q`: **163 passed**.

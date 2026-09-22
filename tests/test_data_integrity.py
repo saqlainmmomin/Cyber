@@ -589,6 +589,76 @@ class TestSchemaConvergence:
 
 
 # ---------------------------------------------------------------------------
+# Codex P2 robustness fix: FK presence check must include on_delete, not just
+# (child_col, parent_table, parent_col). Otherwise a database that already has
+# desk_review_findings.document_id -> assessment_documents.id declared with the
+# SQLite default ON DELETE NO ACTION is wrongly treated as already-upgraded and
+# is never rebuilt to the intended ON DELETE SET NULL.
+# ---------------------------------------------------------------------------
+
+
+class TestFkDeleteActionDrift:
+    def test_detects_and_fixes_on_delete_drift(self, tmp_path):
+        engine = _fresh_engine(tmp_path, "drift.db")
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        raw = engine.raw_connection()
+        cursor = raw.cursor()
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        _create_legacy_schema(cursor)
+        # Simulate a database that already has FKs on desk_review_findings, but
+        # document_id was declared with the SQLite default ON DELETE NO ACTION
+        # instead of the intended SET NULL.
+        cursor.execute("DROP TABLE desk_review_findings")
+        cursor.execute("""
+            CREATE TABLE desk_review_findings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                assessment_id VARCHAR(36) NOT NULL,
+                finding_type VARCHAR(20) NOT NULL,
+                requirement_id VARCHAR(30),
+                document_id VARCHAR(36),
+                content TEXT NOT NULL,
+                severity VARCHAR(20) DEFAULT 'medium',
+                source_quote TEXT,
+                source_location VARCHAR(200),
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY(assessment_id) REFERENCES assessments (id),
+                FOREIGN KEY(document_id) REFERENCES assessment_documents (id)
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS ix_desk_review_findings_assessment_id "
+            "ON desk_review_findings (assessment_id)"
+        )
+        _insert_legacy_data(cursor, now_str)
+        raw.commit()
+        cursor.close()
+        raw.close()
+
+        # Sanity check: on_delete is NO ACTION before migration runs.
+        with engine.connect() as conn:
+            fks = conn.execute(text("PRAGMA foreign_key_list(desk_review_findings)")).fetchall()
+            doc_fk = next(r for r in fks if r[3] == "document_id")
+            assert doc_fk[6] == "NO ACTION"
+
+        _run_migrations(engine)
+        _ensure_foreign_keys(engine)
+
+        with engine.connect() as conn:
+            fks = conn.execute(text("PRAGMA foreign_key_list(desk_review_findings)")).fetchall()
+            doc_fk = next(r for r in fks if r[3] == "document_id")
+            assert doc_fk[6] == "SET NULL", (
+                "Migration should rebuild the table to fix a drifted ON DELETE "
+                f"action, but it was left as {doc_fk[6]!r}"
+            )
+            assert conn.execute(
+                text("SELECT COUNT(*) FROM desk_review_findings")
+            ).scalar() == 1, "Data must survive the drift-correcting rebuild"
+
+        engine.dispose()
+
+
+# ---------------------------------------------------------------------------
 # 5. Analysis rerun x3: flat history, no nested legacy_history
 # ---------------------------------------------------------------------------
 

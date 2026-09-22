@@ -297,10 +297,11 @@ def _ensure_foreign_keys(engine):
 
             cursor.execute(f"PRAGMA foreign_key_list({table_name})")
             existing_fks = cursor.fetchall()
-            existing_fk_set = {(row[3], row[2], row[4]) for row in existing_fks}
+            existing_fk_set = {(row[3], row[2], row[4], row[6]) for row in existing_fks}
 
-            for child_col, parent_table, parent_col, _on_delete in _FK_SPEC[table_name]:
-                if (child_col, parent_table, parent_col) not in existing_fk_set:
+            for child_col, parent_table, parent_col, on_delete in _FK_SPEC[table_name]:
+                expected_on_delete = on_delete or "NO ACTION"
+                if (child_col, parent_table, parent_col, expected_on_delete) not in existing_fk_set:
                     tables_to_rebuild.append(table_name)
                     break
 
