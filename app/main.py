@@ -24,6 +24,7 @@ from app.routers import (
     remediation,
     reports,
     review,
+    snapshots,
     web,
 )
 from app.services.magic_links import MagicTokenRedactionFilter
@@ -137,6 +138,7 @@ app.include_router(remediation.router)
 app.include_router(review.router)
 app.include_router(conclusions.router)
 app.include_router(findings.router)
+app.include_router(snapshots.router)
 
 # Web portal routes
 app.include_router(magic.router)
