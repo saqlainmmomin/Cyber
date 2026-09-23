@@ -1,6 +1,6 @@
 # CyberAssess implementation tracker
 
-**Updated:** 2026-09-22 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 1
+**Updated:** 2026-09-23 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 2
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
@@ -14,14 +14,14 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Phase 1 — Schema & Hierarchy
 
-- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — unblocked (P1-3 merged). Handoff written: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`.
-- [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — unblocked (P1-2 merged), can run in parallel with P1-4. Handoff written: `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md` — flags that removing `compute_unified_maturity()` also requires fixing two pre-existing latent bugs found while designing this task (a multi-framework 500 in `reports.py` and a `KeyError` in `pdf_export.py`, both from a `chapter_scores`/`framework_scores` shape collision).
+- [x] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — implemented and adversarial-review fixes applied. Verified: 17 portfolio integration cases and 257 full-suite tests pass; live ASGI smoke exercised the new page, POST, detail, and both HTMX fragments (TCP/Unix socket binds unavailable in the managed sandbox). Handoff results: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`. **Merged:** PR #21.
+- [x] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — implemented and verified: 249 tests passed; per-framework persistence/API/UI/PDF surfaces smoke-tested with no combined percentage; adversarial review added a standing `.py`-side regression guard against the blend reappearing. Handoff Results appended in `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md`. **Merged:** PR #22.
 
-**Phase 1 exit:** full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore.
+**Phase 1 exit:** ✅ full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore. Full suite: 266 passed. `docs/p1-progress-2026-09-22` → `main` integration: PR #23.
 
 ## Later phases
 
-- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]`
+- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — not started. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
 - [ ] **Phase 3 — Reports & remediation** `[AR: report immutability, provenance, closure verification]`
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 

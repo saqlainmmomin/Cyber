@@ -29,11 +29,16 @@ class ChapterScore(BaseModel):
     title: str
 
 
+class FrameworkScoreOut(BaseModel):
+    overall_score: float
+    overall_rating: str
+    domain_scores: dict[str, ChapterScore]
+
+
 class ReportOut(BaseModel):
     id: str
     assessment_id: str
-    overall_score: float
-    overall_rating: str
+    framework_scores: dict[str, FrameworkScoreOut]
     chapter_scores: dict[str, ChapterScore]
     executive_summary: str
     gap_items: list[GapItemOut]
@@ -43,8 +48,7 @@ class ReportOut(BaseModel):
 
 
 class ReportSummary(BaseModel):
-    overall_score: float
-    overall_rating: str
+    framework_scores: dict[str, FrameworkScoreOut]
     total_requirements: int
     compliant: int
     partially_compliant: int

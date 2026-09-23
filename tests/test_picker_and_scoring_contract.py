@@ -166,8 +166,7 @@ def test_picker_disables_roadmap_frameworks_and_submit(client):
     assert 'value="gdpr" disabled' in response.text
     assert 'value="hipaa" disabled' in response.text
     assert 'value="pci_dss" disabled' in response.text
-    assert 'id="create-assessment"' in response.text
-    assert 'id="create-assessment" disabled' in response.text
+    assert 'id="create-assessment"' not in response.text
 
 
 def test_assessment_page_renders_framework_tabs_only_when_multi(client, db_session):
@@ -335,8 +334,9 @@ def test_scoring_contract_shape_and_single_framework_consistency(db_session):
 
     result = score(assessment.id, ["dpdpa"], _session=db_session)
     assert set(result.per_framework) == {"dpdpa"}
-    assert result.combined.overall_score == result.per_framework["dpdpa"].overall_score
-    assert result.combined.by_framework == result.per_framework
+    assert not hasattr(result, "combined")
+    assert result.unique_clusters == len(result.cluster_verdicts)
+    assert result.total_controls_evaluated == result.per_framework["dpdpa"].covered_control_count
     assert len(result.cluster_verdicts) == 1
     for verdict in result.cluster_verdicts.values():
         ClusterVerdict.model_validate(verdict.model_dump())
@@ -370,7 +370,7 @@ def test_scoring_supports_iso27001_with_real_cluster_mapping(db_session):
     assert set(result.per_framework) == {"iso27001"}
     assert set(result.cluster_verdicts) == {"CLUSTER_004"}
     assert result.per_framework["iso27001"].covered_control_count == 3
-    assert result.combined.overall_score == result.per_framework["iso27001"].overall_score
+    assert result.total_controls_evaluated == 3
 
 
 @pytest.mark.parametrize(
@@ -415,7 +415,7 @@ def test_scoring_supports_other_cluster_backed_frameworks(
     assert set(result.per_framework) == {framework_id}
     assert set(result.cluster_verdicts) == {cluster_id}
     assert result.per_framework[framework_id].covered_control_count == covered_control_count
-    assert result.combined.overall_score == result.per_framework[framework_id].overall_score
+    assert result.total_controls_evaluated == covered_control_count
 
 
 def test_scoring_rejects_unregistered_and_sparse_framework_mappings(db_session, monkeypatch):
@@ -431,12 +431,19 @@ def test_scoring_rejects_unregistered_and_sparse_framework_mappings(db_session, 
         score(assessment.id, ["iso27001"], _session=db_session)
 
 
-def test_scoring_does_not_combine_frameworks(db_session):
+def test_scoring_supports_multiple_frameworks_without_combining(db_session):
     assessment = _assessment(db_session, ["dpdpa", "iso27001"])
     from app.services.scoring import score
 
-    with pytest.raises(NotImplementedError):
-        score(assessment.id, ["dpdpa", "iso27001"], _session=db_session)
+    result = score(assessment.id, ["dpdpa", "iso27001"], _session=db_session)
+
+    assert set(result.per_framework) == {"dpdpa", "iso27001"}
+    assert not hasattr(result, "combined")
+    assert result.unique_clusters == len(result.cluster_verdicts)
+    assert result.total_controls_evaluated == sum(
+        framework.covered_control_count
+        for framework in result.per_framework.values()
+    )
 
 
 def test_scoring_collapses_mapped_controls_and_matches_legacy_semantics(db_session):
@@ -463,12 +470,12 @@ def test_scoring_collapses_mapped_controls_and_matches_legacy_semantics(db_sessi
     result = score(assessment.id, ["dpdpa"], _session=db_session)
     assert result.cluster_verdicts["CLUSTER_004"].status == "partial"
     assert result.per_framework["dpdpa"].covered_control_count == 4
-    assert result.combined.total_controls_evaluated == 4
+    assert result.total_controls_evaluated == 4
     propagated_legacy = compute_scores([
         {"requirement_id": "CH4.SDF.2", "compliance_status": "partially_compliant"},
         {"requirement_id": "CH4.SDF.4", "compliance_status": "partially_compliant"},
     ])
-    assert result.combined.overall_score == propagated_legacy["overall_score"] / 20
+    assert result.per_framework["dpdpa"].overall_score == propagated_legacy["overall_score"] / 20
 
 
 def test_scoring_rejects_missing_or_mismatched_assessment(db_session):
@@ -612,10 +619,8 @@ def test_framework_controls_are_cached():
     assert isinstance(ISO27001_DEFINITION._all_controls_cache, tuple)
 
 
-def test_scoring_schema_rejects_inconsistent_single_framework_combined_view():
-    from pydantic import ValidationError
-
-    from app.schemas.scoring import CombinedScore, FrameworkScore, ScoringResult
+def test_scoring_schema_has_no_combined_view():
+    from app.schemas.scoring import FrameworkScore, ScoringResult
 
     framework = FrameworkScore(
         framework_id="dpdpa",
@@ -626,15 +631,10 @@ def test_scoring_schema_rejects_inconsistent_single_framework_combined_view():
         covered_control_count=1,
         contributing_clusters=["SINGLE.X"],
     )
-    with pytest.raises(ValidationError, match="single-framework combined"):
-        ScoringResult(
-            per_framework={"dpdpa": framework},
-            combined=CombinedScore(
-                overall_score=3.0,
-                overall_rating="M3",
-                by_framework={"dpdpa": framework},
-                unique_clusters=0,
-                total_controls_evaluated=1,
-            ),
-            cluster_verdicts={},
-        )
+    result = ScoringResult(
+        per_framework={"dpdpa": framework},
+        cluster_verdicts={},
+        unique_clusters=0,
+        total_controls_evaluated=1,
+    )
+    assert not hasattr(result, "combined")

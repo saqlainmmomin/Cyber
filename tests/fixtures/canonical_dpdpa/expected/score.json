@@ -155,53 +155,6 @@
       "status": "not_implemented"
     }
   },
-  "combined": {
-    "by_framework": {
-      "dpdpa": {
-        "by_domain": {
-          "breach_notification": 1.88,
-          "chapter_2": 0.92,
-          "chapter_3": 1.88,
-          "chapter_4": 0.38,
-          "consent_management": 0.0,
-          "cross_border": 0.0
-        },
-        "contributing_clusters": [
-          "CLUSTER_002",
-          "CLUSTER_003",
-          "CLUSTER_004",
-          "CLUSTER_006",
-          "CLUSTER_010",
-          "CLUSTER_014",
-          "CLUSTER_016",
-          "CLUSTER_017",
-          "CLUSTER_018",
-          "CLUSTER_020",
-          "CLUSTER_021",
-          "CLUSTER_022",
-          "CLUSTER_023",
-          "CLUSTER_024",
-          "CLUSTER_025",
-          "CLUSTER_028",
-          "CLUSTER_029",
-          "CLUSTER_030",
-          "CLUSTER_031",
-          "CLUSTER_032",
-          "CLUSTER_052",
-          "CLUSTER_053"
-        ],
-        "control_count": 41,
-        "covered_control_count": 41,
-        "framework_id": "dpdpa",
-        "overall_rating": "M1",
-        "overall_score": 0.91
-      }
-    },
-    "overall_rating": "M1",
-    "overall_score": 0.91,
-    "total_controls_evaluated": 41,
-    "unique_clusters": 22
-  },
   "per_framework": {
     "dpdpa": {
       "by_domain": {
@@ -242,5 +195,7 @@
       "overall_rating": "M1",
       "overall_score": 0.91
     }
-  }
+  },
+  "total_controls_evaluated": 41,
+  "unique_clusters": 22
 }

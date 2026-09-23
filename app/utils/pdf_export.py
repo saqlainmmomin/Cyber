@@ -9,13 +9,14 @@ import json
 import math
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 from fpdf import FPDF
 
 from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.models.report import GapItem, GapReport
-from app.services.scoring import get_rating
+from app.services.scoring import report_framework_scores
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -505,16 +506,18 @@ def generate_pdf(
     initiatives: list | None = None,
     answer_source_map: dict[str, str] | None = None,
     selected_frameworks: list[str] | None = None,
+    assessment=None,
 ) -> bytes:
     """Generate a board-level PDF report."""
     selected_frameworks = selected_frameworks or ["dpdpa"]
     dpdpa_only = selected_frameworks == ["dpdpa"]
     has_dpdpa = "dpdpa" in selected_frameworks
 
-    framework_names = []
+    framework_metadata = []
     for fw_id in selected_frameworks:
         fw_def = FrameworkRegistry.get_or_none(fw_id)
-        framework_names.append(fw_def.name if fw_def else fw_id.upper())
+        framework_metadata.append((fw_id, fw_def.name if fw_def else fw_id.upper()))
+    framework_names = [name for _framework_id, name in framework_metadata]
     frameworks_label = ", ".join(framework_names) if framework_names else "the assessed framework"
 
     if dpdpa_only:
@@ -523,8 +526,20 @@ def generate_pdf(
         cover_title = f"{framework_names[0]} Compliance"
     else:
         cover_title = "Multi-Framework Compliance"
-    chapter_scores = json.loads(report.chapter_scores)
-    overall_rating = get_rating(report.overall_score)
+    chapter_scores = json.loads(report.chapter_scores or "{}")
+    score_assessment = assessment or SimpleNamespace(frameworks=selected_frameworks)
+    framework_scores = report_framework_scores(report, score_assessment)
+    framework_score_rows = []
+    for framework_id, framework_name in framework_metadata:
+        scores = framework_scores.get(framework_id)
+        if not scores or scores.get("overall_score") is None:
+            continue
+        framework_score_rows.append((
+            framework_id,
+            framework_name,
+            scores["overall_score"],
+            scores.get("overall_rating", "N/A"),
+        ))
 
     # Compute summary stats
     counts = {"compliant": 0, "partially_compliant": 0, "non_compliant": 0, "not_assessed": 0}
@@ -610,20 +625,30 @@ def generate_pdf(
         pdf.set_text_color(*MID_TEXT)
         pdf.text(PM, 88, S(f"Frameworks assessed: {frameworks_label}"))
 
-    # Score ring (centered)
-    cx = PW / 2
+    # One score ring per framework; no cross-framework ring exists.
     cy = 130
-    _draw_score_ring(pdf, cx, cy, 30, report.overall_score, overall_rating)
+    ring_count = len(framework_score_rows)
+    ring_radius = 30 if ring_count == 1 else (22 if ring_count in (2, 3) else 18)
+    for index, (_framework_id, framework_name, framework_score, framework_rating) in enumerate(
+        framework_score_rows
+    ):
+        cx = PM + CW * (index + 0.5) / ring_count
+        _draw_score_ring(pdf, cx, cy, ring_radius, framework_score, framework_rating)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.set_text_color(*MID_TEXT)
+        framework_label = S(framework_name)
+        label_width = pdf.get_string_width(framework_label)
+        pdf.text(cx - label_width / 2, cy + ring_radius + 10, framework_label)
 
     # Summary stats below ring
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*MID_TEXT)
     summary_text = f"{total} requirements assessed  |  {critical_count + high_count} gaps identified  |  ~{max_weeks} weeks to full remediation"
     tw = pdf.get_string_width(summary_text)
-    pdf.text((PW - tw) / 2, 175, S(summary_text))
+    pdf.text((PW - tw) / 2, 182, S(summary_text))
 
     # Bottom section: chapter score preview bars
-    bar_y = 195
+    bar_y = 202
     pdf.set_font("Helvetica", "B", 10)
     pdf.set_text_color(*NAVY)
     pdf.text(PM, bar_y - 5, "Assessment Areas")
@@ -641,19 +666,34 @@ def generate_pdf(
     _page_header(pdf, "Executive Dashboard")
 
     # KPI cards row
-    card_w = (CW - 9) / 4  # 4 cards with 3px gaps
+    card_w = (CW - 6) / 3  # 3 cards with 3px gaps
     card_y = pdf.get_y() + 2
     _draw_kpi_card(pdf, PM, card_y, card_w, 27,
-                   f"{report.overall_score:.0f}%", "Overall Score", _rating_color(overall_rating))
-    _draw_kpi_card(pdf, PM + card_w + 3, card_y, card_w, 27,
                    str(critical_count), "Critical Gaps", RISK_COLORS["critical"])
-    _draw_kpi_card(pdf, PM + 2 * (card_w + 3), card_y, card_w, 27,
+    _draw_kpi_card(pdf, PM + card_w + 3, card_y, card_w, 27,
                    str(high_count), "High Risk Gaps", RISK_COLORS["high"])
-    _draw_kpi_card(pdf, PM + 3 * (card_w + 3), card_y, card_w, 27,
+    _draw_kpi_card(pdf, PM + 2 * (card_w + 3), card_y, card_w, 27,
                    f"~{max_weeks}w", "Remediation Timeline", NAVY)
 
-    # Compliance distribution bar
+    # Per-framework scores
     pdf.set_y(card_y + 35)
+    _section_title(pdf, "Framework Scores")
+    framework_bar_y = pdf.get_y()
+    for _framework_id, framework_name, framework_score, framework_rating in framework_score_rows:
+        _draw_h_bar(
+            pdf,
+            PM,
+            framework_bar_y,
+            CW,
+            8,
+            framework_score,
+            S(framework_name),
+            framework_rating,
+        )
+        framework_bar_y += 11
+
+    # Compliance distribution bar
+    pdf.set_y(framework_bar_y + 5)
     _section_title(pdf, "Compliance Distribution")
     _draw_status_bar(pdf, PM, pdf.get_y(), CW, 10, counts, total)
 
@@ -1042,8 +1082,7 @@ This report is prepared solely for the use of the named organization. It should 
             "Framework Overview:\n"
             f"Requirements are drawn directly from the source standard for each selected framework "
             f"({frameworks_label}). Each framework retains its own internal chapter/domain structure and "
-            "weighting; scores are computed and reported per framework before being combined into an "
-            "overall maturity view.\n\n"
+            "weighting; scores are computed and reported independently for each framework.\n\n"
         )
         chapter_weights_block = ""
         risk_basis = "regulatory exposure, potential penalties under the applicable framework(s), and impact on affected individuals"

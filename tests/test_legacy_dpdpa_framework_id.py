@@ -53,8 +53,12 @@ def test_legacy_dpdpa_analysis_persists_framework_id(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(
         analysis,
-        "compute_scores",
-        lambda _assessments: {"overall_score": 100.0, "chapter_scores": {}},
+        "compute_framework_scores",
+        lambda *_args: {
+            "overall_score": 100.0,
+            "overall_rating": "Compliant",
+            "domain_scores": {},
+        },
     )
     monkeypatch.setattr(analysis, "generate_initiatives", lambda _assessments: [])
 

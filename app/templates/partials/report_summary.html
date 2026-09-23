@@ -1,8 +1,3 @@
-{% set score = report.overall_score %}
-{% set gauge_circumference = 251.327 %}
-{% set gauge_offset = (gauge_circumference * (1 - score / 100)) | round(2) %}
-{% set gauge_color = "#22c55e" if score >= 80 else ("#eab308" if score >= 60 else ("#f97316" if score >= 40 else "#ef4444")) %}
-
 <!-- Review banner area (populated by Session C router when review_status is set) -->
 <div id="review-banner">
   {% if review_status == 'approved' %}
@@ -22,25 +17,37 @@
 </div>
 
 <!-- ── A. Hero Metrics Row ─────────────────────────────────────────────────── -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-{{ [framework_display | length + 3, 4] | min }} gap-4 mb-6">
 
-  <!-- Overall Score Gauge -->
+  <!-- Per-framework score gauges -->
+  {% for fw_id, fw_data in framework_display.items() %}
+  {% if fw_data.score is not none %}
+  {% set fw_score = fw_data.score %}
+  {% set fw_color = "#22c55e" if fw_score >= 80 else ("#eab308" if fw_score >= 60 else ("#f97316" if fw_score >= 40 else "#ef4444")) %}
+  {% set fw_circ = 251.327 %}
+  {% set fw_offset = (fw_circ * (1 - fw_score / 100)) | round(2) %}
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col items-center justify-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Overall Score</p>
-    <svg viewBox="0 0 100 100" class="w-28 h-28" role="img" aria-label="Overall compliance score: {{ score | round(0) | int }}%">
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ fw_data.name }}</p>
+    <svg viewBox="0 0 100 100" class="w-28 h-28" role="img" aria-label="{{ fw_data.name }} score: {{ fw_score | round(0) | int }}%">
       <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
       <circle cx="50" cy="50" r="40" fill="none"
-              stroke="{{ gauge_color }}" stroke-width="8"
-              stroke-dasharray="{{ gauge_circumference }}"
-              stroke-dashoffset="{{ gauge_offset }}"
+              stroke="{{ fw_color }}" stroke-width="8"
+              stroke-dasharray="{{ fw_circ }}"
+              stroke-dashoffset="{{ fw_offset }}"
               stroke-linecap="round"
               transform="rotate(-90 50 50)"/>
-      <text x="50" y="46" text-anchor="middle" font-size="16" font-weight="700" fill="{{ gauge_color }}">{{ score | round(0) | int }}%</text>
-      <text x="50" y="60" text-anchor="middle" font-size="7" fill="#9ca3af">
-        {% if score >= 80 %}Compliant{% elif score >= 60 %}Partial{% elif score >= 40 %}Needs Work{% else %}Non-Compliant{% endif %}
-      </text>
+      <text x="50" y="46" text-anchor="middle" font-size="16" font-weight="700" fill="{{ fw_color }}">{{ fw_score | round(0) | int }}%</text>
+      <text x="50" y="60" text-anchor="middle" font-size="7" fill="#9ca3af">{{ fw_data.rating }}</text>
     </svg>
   </div>
+  {% else %}
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col items-center justify-center text-center">
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
+    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Scores unavailable</p>
+    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Re-run analysis</p>
+  </div>
+  {% endif %}
+  {% endfor %}
 
   <!-- Requirements Summary -->
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
@@ -198,40 +205,6 @@
   <a href="/assessments/{{ assessment_id }}/report?view=combined&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'combined' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Combined</a>
   <a href="/assessments/{{ assessment_id }}/report?view=per_framework&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'per_framework' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Per framework</a>
 </div>
-
-<!-- ── C2. Per-Framework Scores (multi-framework only) ────────────────────── -->
-{% if view_mode == 'per_framework' and framework_display %}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Framework Scores</h3>
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ [framework_display | length, 4] | min }} gap-4">
-    {% for fw_id, fw_data in framework_display.items() %}
-    {% set fw_score = fw_data.overall_score %}
-    {% set fw_color = "#22c55e" if fw_score >= 80 else ("#eab308" if fw_score >= 60 else ("#f97316" if fw_score >= 40 else "#ef4444")) %}
-    {% set fw_circ = 251.327 %}
-    {% set fw_offset = (fw_circ * (1 - fw_score / 100)) | round(2) %}
-    <div class="flex flex-col items-center p-4 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-      <svg viewBox="0 0 100 100" class="w-20 h-20 mb-2" role="img" aria-label="{{ fw_data.name }} score: {{ fw_score | round(0) | int }}%">
-        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-        <circle cx="50" cy="50" r="40" fill="none"
-                stroke="{{ fw_color }}" stroke-width="8"
-                stroke-dasharray="{{ fw_circ }}"
-                stroke-dashoffset="{{ fw_offset }}"
-                stroke-linecap="round"
-                transform="rotate(-90 50 50)"/>
-        <text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="{{ fw_color }}">{{ fw_score | round(0) | int }}%</text>
-      </svg>
-      <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ fw_data.name }}</p>
-      <p class="text-xs text-gray-400 dark:text-gray-500">{{ fw_data.version }}</p>
-      <p class="text-xs mt-1 font-medium
-         {% if fw_score >= 80 %}text-green-600 dark:text-green-400{% elif fw_score >= 60 %}text-yellow-600 dark:text-yellow-400{% elif fw_score >= 40 %}text-orange-500 dark:text-orange-400{% else %}text-red-600 dark:text-red-400{% endif %}">
-        {{ fw_data.overall_rating }}
-      </p>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
 
 <!-- ── D. Compliance Distribution by Chapter ─────────────────────────────── -->
 {% if chapter_scores %}

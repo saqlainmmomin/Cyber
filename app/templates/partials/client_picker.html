@@ -1,0 +1,54 @@
+{# Expected context: mode, clients, preselected_client_id, form_values. #}
+{% if mode == 'existing' %}
+<div>
+  <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client</label>
+  <select name="client_id" id="client_id" required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
+    <option value="">Select a client</option>
+    {% for client in clients %}
+    <option value="{{ client.id }}"{% if (form_values and form_values.client_id == client.id) or (not form_values and preselected_client_id == client.id) %} selected{% endif %}>{{ client.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% else %}
+<div>
+  <label for="company_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
+  <input type="text" name="company_name" id="company_name" required
+         placeholder="e.g., Meridian Retail Ltd"
+         value="{{ form_values.company_name if form_values else '' }}"
+         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+  <div>
+    <label for="industry" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Industry</label>
+    {% set industry_value = form_values.industry if form_values else '' %}
+    <select name="industry" id="industry" required
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
+      <option value="">Select industry</option>
+      <option value="it_services"{% if industry_value == 'it_services' %} selected{% endif %}>IT Services</option>
+      <option value="fintech"{% if industry_value == 'fintech' %} selected{% endif %}>Fintech</option>
+      <option value="healthcare"{% if industry_value == 'healthcare' %} selected{% endif %}>Healthcare</option>
+      <option value="ecommerce"{% if industry_value == 'ecommerce' %} selected{% endif %}>E-Commerce</option>
+      <option value="manufacturing"{% if industry_value == 'manufacturing' %} selected{% endif %}>Manufacturing</option>
+      <option value="education"{% if industry_value == 'education' %} selected{% endif %}>Education</option>
+      <option value="real_estate"{% if industry_value == 'real_estate' %} selected{% endif %}>Real Estate</option>
+      <option value="legal"{% if industry_value == 'legal' %} selected{% endif %}>Legal</option>
+      <option value="accounting"{% if industry_value == 'accounting' %} selected{% endif %}>Accounting</option>
+      <option value="other"{% if industry_value == 'other' %} selected{% endif %}>Other</option>
+    </select>
+  </div>
+  <div>
+    <label for="company_size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Size</label>
+    {% set size_value = form_values.company_size if form_values else '' %}
+    <select name="company_size" id="company_size" required
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
+      <option value="">Select size</option>
+      <option value="startup"{% if size_value == 'startup' %} selected{% endif %}>Startup (&lt;50 employees)</option>
+      <option value="sme"{% if size_value == 'sme' %} selected{% endif %}>SME (50-500)</option>
+      <option value="large"{% if size_value == 'large' %} selected{% endif %}>Large (500-5000)</option>
+      <option value="enterprise"{% if size_value == 'enterprise' %} selected{% endif %}>Enterprise (5000+)</option>
+    </select>
+  </div>
+</div>
+{% endif %}

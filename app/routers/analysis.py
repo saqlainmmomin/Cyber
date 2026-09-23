@@ -14,11 +14,10 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
 from app.services.scoring import (
-    compute_scores,
     compute_framework_scores,
-    compute_unified_maturity,
     generate_initiatives,
     generate_multi_framework_initiatives,
+    namespaced_domain_scores,
 )
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}", tags=["analysis"])
@@ -246,7 +245,10 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             if a.get("requirement_id") and a["requirement_id"] not in applicable_set:
                 a["compliance_status"] = "not_applicable"
 
-    scores = compute_scores(assessments)
+    framework_id = assessment.frameworks[0]
+    per_fw_scores = {
+        framework_id: compute_framework_scores(assessments, framework_id)
+    }
 
     # Preserve existing report data before re-run, then delete
     existing = (
@@ -287,8 +289,9 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
 
     report = GapReport(
         assessment_id=assessment_id,
-        overall_score=scores["overall_score"],
-        chapter_scores=json.dumps(scores["chapter_scores"]),
+        overall_score=0.0,
+        chapter_scores=json.dumps(namespaced_domain_scores(per_fw_scores)),
+        framework_scores=json.dumps(per_fw_scores),
         executive_summary=parsed.get("executive_summary", ""),
         raw_ai_response=raw,
         legacy_history=_carried_history,
@@ -370,7 +373,10 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     return {
         "report_id": report.id,
         "status": "completed",
-        "overall_score": report.overall_score,
+        "per_framework_scores": {
+            fw_id: scores["overall_score"]
+            for fw_id, scores in per_fw_scores.items()
+        },
         "initiatives_generated": len(initiatives_data),
         "message": "Gap analysis completed successfully",
     }
@@ -442,15 +448,18 @@ def _run_multi_framework_analysis(
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
 
-    # Score each framework and compute unified maturity
+    # Score each framework independently. There is intentionally no aggregate.
     per_fw_scores = {}
     per_fw_assessments = {}
     all_gap_items_data = []
     combined_raw = []
     combined_executive = []
 
-    for fw_id, fw_result in result["frameworks"].items():
-        if "error" in fw_result:
+    for fw_id in selected_frameworks:
+        fw_result = result["frameworks"].get(fw_id)
+        if not fw_result or "error" in fw_result:
+            per_fw_assessments[fw_id] = []
+            per_fw_scores[fw_id] = compute_framework_scores([], fw_id)
             continue
 
         parsed = fw_result["parsed"]
@@ -487,12 +496,6 @@ def _run_multi_framework_analysis(
                 "control_reference": ctrl.reference if ctrl else "",
             })
 
-    # Compute unified maturity
-    unified = compute_unified_maturity(
-        {fw_id: {"assessments": assmts} for fw_id, assmts in per_fw_assessments.items()},
-        per_fw_scores,
-    )
-
     # Synthesis executive summary
     synthesis = result.get("synthesis")
     executive_summary = ""
@@ -504,8 +507,8 @@ def _run_multi_framework_analysis(
     # Create report
     report = GapReport(
         assessment_id=assessment_id,
-        overall_score=unified["overall_score"],
-        chapter_scores=json.dumps(unified.get("framework_scores", {})),
+        overall_score=0.0,
+        chapter_scores=json.dumps(namespaced_domain_scores(per_fw_scores)),
         framework_scores=json.dumps(per_fw_scores),
         executive_summary=executive_summary,
         raw_ai_response="\n\n---\n\n".join(combined_raw),
@@ -589,8 +592,7 @@ def _run_multi_framework_analysis(
     return {
         "report_id": report.id,
         "status": "completed",
-        "overall_score": report.overall_score,
-        "frameworks_analyzed": list(result["frameworks"].keys()),
+        "frameworks_analyzed": list(per_fw_scores),
         "per_framework_scores": {fw_id: s["overall_score"] for fw_id, s in per_fw_scores.items()},
         "initiatives_generated": len(initiatives_data),
         "message": f"Multi-framework analysis completed ({len(selected_frameworks)} frameworks)",
