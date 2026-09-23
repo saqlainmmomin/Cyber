@@ -8,15 +8,24 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
+from app.models.client import Client
+from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.rfi import RFIDocument
 from app.services.followup_engine import generate_followups
+from app.services.engagement_factory import create_engagement_with_assessment
+from app.services.portfolio import (
+    build_client_card,
+    build_engagement_card,
+    framework_badges,
+)
 from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.schemas.assessment import DocumentCategory
@@ -105,11 +114,404 @@ def _framework_catalog() -> list[dict]:
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    assessments = db.query(Assessment).filter(Assessment.status != "archived").order_by(Assessment.created_at.desc()).all()
+    clients = db.query(Client).order_by(Client.name).all()
+    engagements = (
+        db.query(Engagement)
+        .filter(Engagement.status != "closed")
+        .order_by(Engagement.created_at.desc())
+        .all()
+    )
+    linked = (
+        db.query(Assessment)
+        .filter(
+            Assessment.status != "archived",
+            Assessment.engagement_id.isnot(None),
+        )
+        .all()
+    )
+    unmigrated = (
+        db.query(Assessment)
+        .filter(
+            Assessment.engagement_id.is_(None),
+            Assessment.status != "archived",
+        )
+        .order_by(Assessment.created_at.desc())
+        .all()
+    )
+
+    assessments_by_engagement = defaultdict(list)
+    for assessment in linked:
+        assessments_by_engagement[assessment.engagement_id].append(assessment)
+
+    engagements_by_client = defaultdict(list)
+    for engagement in engagements:
+        engagements_by_client[engagement.client_id].append(
+            build_engagement_card(
+                engagement,
+                assessments_by_engagement[engagement.id],
+            )
+        )
+
+    client_cards = [
+        build_client_card(client, engagements_by_client[client.id])
+        for client in clients
+    ]
     return templates.TemplateResponse(
         "pages/dashboard.html",
-        {"request": request, "assessments": assessments},
+        {
+            "request": request,
+            "clients": client_cards,
+            "unmigrated_assessments": unmigrated,
+            "total_client_count": len(clients),
+            "total_engagement_count": len(engagements),
+        },
     )
+
+
+# --- Portfolio hierarchy ---
+
+
+def _is_fragment_request(request: Request) -> bool:
+    is_htmx = request.headers.get("HX-Request", "").lower() == "true"
+    is_boosted = request.headers.get("HX-Boosted", "").lower() == "true"
+    return is_htmx and not is_boosted
+
+
+def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
+    # Hide closed engagements on client detail and its lazy fragment too, for consistency with the dashboard.
+    engagements = (
+        db.query(Engagement)
+        .filter(
+            Engagement.client_id == client_id,
+            Engagement.status != "closed",
+        )
+        .order_by(Engagement.created_at.desc())
+        .all()
+    )
+    engagement_ids = [engagement.id for engagement in engagements]
+    assessments = (
+        db.query(Assessment)
+        .filter(
+            Assessment.engagement_id.in_(engagement_ids),
+            Assessment.status != "archived",
+        )
+        .all()
+        if engagement_ids
+        else []
+    )
+    assessments_by_engagement = defaultdict(list)
+    for assessment in assessments:
+        assessments_by_engagement[assessment.engagement_id].append(assessment)
+    cards = [
+        build_engagement_card(
+            engagement,
+            assessments_by_engagement[engagement.id],
+        )
+        for engagement in engagements
+    ]
+    return sorted(cards, key=lambda card: card["last_activity"], reverse=True)
+
+
+@router.get("/clients/{client_id}", response_class=HTMLResponse)
+def client_detail(
+    request: Request,
+    client_id: str,
+    db: Session = Depends(get_db),
+):
+    client = db.get(Client, client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    engagements = _engagement_cards_for_client(db, client_id)
+    return templates.TemplateResponse(
+        "pages/client_detail.html",
+        {
+            "request": request,
+            "client": client,
+            "engagements": engagements,
+            "assessment_count": sum(card["assessment_count"] for card in engagements),
+            "last_activity": max(
+                (card["last_activity"] for card in engagements),
+                default=client.updated_at,
+            ),
+        },
+    )
+
+
+@router.get("/clients/{client_id}/engagements-list", response_class=HTMLResponse)
+def client_engagement_list(
+    request: Request,
+    client_id: str,
+    db: Session = Depends(get_db),
+):
+    client = db.get(Client, client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    if not _is_fragment_request(request):
+        return RedirectResponse(f"/clients/{client_id}", status_code=307)
+    return templates.TemplateResponse(
+        "partials/engagement_list.html",
+        {"request": request, "engagements": _engagement_cards_for_client(db, client_id)},
+    )
+
+
+@router.get("/engagements/new", response_class=HTMLResponse)
+def new_engagement_page(
+    request: Request,
+    client_id: str | None = None,
+    db: Session = Depends(get_db),
+):
+    return templates.TemplateResponse(
+        "pages/new_engagement.html",
+        _new_engagement_context(
+            request,
+            db,
+            preselected_client_id=client_id,
+        ),
+    )
+
+
+@router.get("/engagements/new/client-fields", response_class=HTMLResponse)
+def new_engagement_client_fields(
+    request: Request,
+    mode: str,
+    client_id: str | None = None,
+    db: Session = Depends(get_db),
+):
+    if mode not in {"existing", "new"}:
+        raise HTTPException(400, "mode must be 'existing' or 'new'")
+    if not _is_fragment_request(request):
+        return RedirectResponse("/engagements/new", status_code=307)
+    clients = db.query(Client).order_by(Client.name).all()
+    return templates.TemplateResponse(
+        "partials/client_picker.html",
+        {
+            "request": request,
+            "mode": mode,
+            "clients": clients,
+            "preselected_client_id": client_id,
+            "form_values": None,
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}", response_class=HTMLResponse)
+def engagement_detail(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if not engagement:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    assessments = (
+        db.query(Assessment)
+        .filter(
+            Assessment.engagement_id == engagement_id,
+            Assessment.status != "archived",
+        )
+        .order_by(Assessment.created_at.desc())
+        .all()
+    )
+    card = build_engagement_card(engagement, assessments)
+    assessment_cards = [
+        {
+            "id": assessment.id,
+            "company_name": assessment.company_name,
+            "description": assessment.description,
+            "status": assessment.status,
+            "created_at": assessment.created_at,
+            "updated_at": assessment.updated_at,
+            "framework_badges": framework_badges(assessment.frameworks),
+        }
+        for assessment in assessments
+    ]
+    return templates.TemplateResponse(
+        "pages/engagement_detail.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "card": card,
+            "assessments": assessment_cards,
+        },
+    )
+
+
+def _new_engagement_form_values(form) -> dict:
+    return {
+        "client_mode": form.get("client_mode", ""),
+        "client_id": form.get("client_id", ""),
+        "company_name": form.get("company_name", ""),
+        "industry": form.get("industry", ""),
+        "company_size": form.get("company_size", ""),
+        "engagement_name": form.get("engagement_name", ""),
+        "engagement_type": form.get("engagement_type", "gap_assessment"),
+        "description": form.get("description", ""),
+        "selected_frameworks": form.getlist("selected_frameworks"),
+    }
+
+
+def _new_engagement_context(
+    request: Request,
+    db: Session,
+    *,
+    mode: str | None = None,
+    preselected_client_id: str | None = None,
+    error: str | None = None,
+    form_values: dict | None = None,
+) -> dict:
+    clients = db.query(Client).order_by(Client.name).all()
+    values = form_values or {}
+    selected_client_id = values.get("client_id") or preselected_client_id
+    return {
+        "request": request,
+        "frameworks": _framework_catalog(),
+        "clients": clients,
+        "mode": values.get("client_mode") or mode or (
+            "existing" if selected_client_id else "new"
+        ),
+        "preselected_client_id": selected_client_id,
+        "error": error,
+        "form_values": form_values,
+    }
+
+
+def _render_new_engagement_error(
+    request: Request,
+    db: Session,
+    error: str,
+    form_values: dict,
+):
+    return templates.TemplateResponse(
+        "pages/new_engagement.html",
+        _new_engagement_context(
+            request,
+            db,
+            error=error,
+            form_values=form_values,
+        ),
+        status_code=400,
+    )
+
+
+@router.post("/engagements")
+async def create_engagement(request: Request, db: Session = Depends(get_db)):
+    form = await request.form()
+    form_values = _new_engagement_form_values(form)
+    client_mode = form_values["client_mode"]
+    if client_mode not in {"existing", "new"}:
+        return _render_new_engagement_error(
+            request,
+            db,
+            "Select an existing client or create a new one.",
+            form_values,
+        )
+
+    framework_ids = list(dict.fromkeys(form.getlist("selected_frameworks")))
+    form_values["selected_frameworks"] = framework_ids
+    if not framework_ids:
+        return _render_new_engagement_error(
+            request,
+            db,
+            "Select at least one framework to assess against.",
+            form_values,
+        )
+    if any(framework_id not in ENABLED_ASSESSMENT_FRAMEWORKS for framework_id in framework_ids):
+        return _render_new_engagement_error(
+            request,
+            db,
+            "One or more selected frameworks are not available for assessment yet.",
+            form_values,
+        )
+
+    engagement_name = str(form_values["engagement_name"] or "").strip()
+    form_values["engagement_name"] = engagement_name
+    if not engagement_name:
+        return _render_new_engagement_error(
+            request,
+            db,
+            "Engagement name is required.",
+            form_values,
+        )
+    engagement_type = str(form_values["engagement_type"] or "gap_assessment")
+    if engagement_type not in {"gap_assessment", "audit", "readiness"}:
+        return _render_new_engagement_error(
+            request,
+            db,
+            "Select a valid engagement type.",
+            form_values,
+        )
+    description = str(form_values["description"] or "")
+
+    client = None
+    if client_mode == "existing":
+        client_id = str(form_values["client_id"] or "").strip()
+        client = db.get(Client, client_id) if client_id else None
+        if not client:
+            return _render_new_engagement_error(
+                request,
+                db,
+                "Select an existing client or create a new one.",
+                form_values,
+            )
+    else:
+        company_name = str(form_values["company_name"] or "").strip()
+        industry = str(form_values["industry"] or "").strip()
+        company_size = str(form_values["company_size"] or "").strip()
+        form_values.update(
+            {
+                "company_name": company_name,
+                "industry": industry,
+                "company_size": company_size,
+            }
+        )
+        if not company_name or not industry or not company_size:
+            return _render_new_engagement_error(
+                request,
+                db,
+                "Client details are required.",
+                form_values,
+            )
+        if db.query(Client).filter(Client.name == company_name).first():
+            return _render_new_engagement_error(
+                request,
+                db,
+                f"A client named '{company_name}' already exists — select it instead.",
+                form_values,
+            )
+        client = Client(name=company_name, industry=industry, size=company_size)
+        db.add(client)
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            return _render_new_engagement_error(
+                request,
+                db,
+                f"A client named '{company_name}' already exists — select it instead.",
+                form_values,
+            )
+
+    try:
+        engagement = create_engagement_with_assessment(
+            db,
+            client=client,
+            engagement_name=engagement_name,
+            engagement_type=engagement_type,
+            description=description,
+            framework_ids=framework_ids,
+        )
+    except Exception:
+        return _render_new_engagement_error(
+            request,
+            db,
+            "Unable to create the engagement. Please try again.",
+            form_values,
+        )
+    return RedirectResponse(f"/engagements/{engagement.id}", status_code=303)
 
 
 # --- Assessment CRUD ---
@@ -117,10 +519,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/assessments/new", response_class=HTMLResponse)
 def new_assessment_page(request: Request):
-    return templates.TemplateResponse(
-        "pages/new_assessment.html",
-        {"request": request, "frameworks": _framework_catalog()},
-    )
+    return RedirectResponse("/engagements/new", status_code=307)
 
 
 @router.post("/assessments", include_in_schema=False)
@@ -139,49 +538,93 @@ async def create_assessment(
     selected_frameworks = form.getlist("selected_frameworks") or form.getlist("frameworks")
     if not selected_frameworks:
         return templates.TemplateResponse(
-            "pages/new_assessment.html",
-            {
-                "request": request,
-                "frameworks": _framework_catalog(),
-                "error": "Select at least one framework to assess against.",
-                "form_values": {
+            "pages/new_engagement.html",
+            _new_engagement_context(
+                request,
+                db,
+                error="Select at least one framework to assess against.",
+                form_values={
+                    "client_mode": "new",
                     "company_name": company_name,
                     "industry": industry,
                     "company_size": company_size,
+                    "engagement_name": f"{company_name} Assessment",
+                    "engagement_type": "gap_assessment",
                     "description": description,
+                    "selected_frameworks": [],
                 },
-            },
+            ),
             status_code=400,
         )
 
     selected_frameworks = list(dict.fromkeys(selected_frameworks))
     if any(fid not in ENABLED_ASSESSMENT_FRAMEWORKS for fid in selected_frameworks):
         return templates.TemplateResponse(
-            "pages/new_assessment.html",
-            {
-                "request": request,
-                "frameworks": _framework_catalog(),
-                "error": "One or more selected frameworks are not available for assessment yet.",
-                "form_values": {
+            "pages/new_engagement.html",
+            _new_engagement_context(
+                request,
+                db,
+                error="One or more selected frameworks are not available for assessment yet.",
+                form_values={
+                    "client_mode": "new",
                     "company_name": company_name,
                     "industry": industry,
                     "company_size": company_size,
+                    "engagement_name": f"{company_name} Assessment",
+                    "engagement_type": "gap_assessment",
                     "description": description,
+                    "selected_frameworks": selected_frameworks,
                 },
-            },
+            ),
             status_code=400,
         )
 
-    assessment = Assessment(
-        company_name=company_name,
-        industry=industry,
-        company_size=company_size,
-        description=description or None,
-        selected_frameworks=json.dumps(selected_frameworks),
+    client = db.query(Client).filter(Client.name == company_name).first()
+    if not client:
+        client = Client(name=company_name, industry=industry, size=company_size)
+        db.add(client)
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            client = db.query(Client).filter(Client.name == company_name).first()
+            if not client:
+                raise
+    try:
+        engagement = create_engagement_with_assessment(
+            db,
+            client=client,
+            engagement_name=f"{company_name} Assessment",
+            engagement_type="gap_assessment",
+            description=description,
+            framework_ids=selected_frameworks,
+        )
+    except Exception:
+        return templates.TemplateResponse(
+            "pages/new_engagement.html",
+            _new_engagement_context(
+                request,
+                db,
+                error="Unable to create the engagement. Please try again.",
+                form_values={
+                    "client_mode": "new",
+                    "company_name": company_name,
+                    "industry": industry,
+                    "company_size": company_size,
+                    "engagement_name": f"{company_name} Assessment",
+                    "engagement_type": "gap_assessment",
+                    "description": description,
+                    "selected_frameworks": selected_frameworks,
+                },
+            ),
+            status_code=400,
+        )
+    assessment = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement.id)
+        .order_by(Assessment.created_at.desc())
+        .first()
     )
-    db.add(assessment)
-    db.commit()
-    db.refresh(assessment)
     return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
 
 

@@ -14,8 +14,8 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Phase 1 — Schema & Hierarchy
 
-- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — unblocked (P1-3 merged). Handoff written: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`.
-- [x] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — implemented and verified: 249 tests passed; per-framework persistence/API/UI/PDF surfaces smoke-tested with no combined percentage. Handoff Results appended in `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md`.
+- [x] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — implemented and adversarial-review fixes applied. Verified: 17 portfolio integration cases and 257 full-suite tests pass; live ASGI smoke exercised the new page, POST, detail, and both HTMX fragments (TCP/Unix socket binds unavailable in the managed sandbox). Handoff results: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`. **Merged:** PR #21.
+- [x] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — implemented and verified: 249 tests passed; per-framework persistence/API/UI/PDF surfaces smoke-tested with no combined percentage; adversarial review added a standing `.py`-side regression guard against the blend reappearing. Handoff Results appended in `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md`.
 
 **Phase 1 exit:** full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore.
 
