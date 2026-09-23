@@ -252,18 +252,27 @@ def resolve_token(db: Session, token: str) -> MagicLink | None:
 
     digest = token_digest(token)
     matches = db.query(MagicLink).filter(MagicLink.token_digest == digest).all()
-    if len(matches) != 1:
+    link = matches[0] if len(matches) == 1 else None
+    engagement_id = (
+        link.engagement_id
+        if link is not None
+        else "__invalid_magic_link_engagement__"
+    )
+    engagement = (
+        db.query(Engagement)
+        .filter(Engagement.id == engagement_id)
+        .first()
+    )
+    if link is None:
         if len(matches) > 1:
             logger.error("Multiple magic links share a token digest")
         else:
             logger.info("Rejected magic-link request: invalid, expired or revoked link")
         return None
 
-    link = matches[0]
     if link_status(link) != "active":
         logger.info("Rejected magic-link request: invalid, expired or revoked link")
         return None
-    engagement = db.get(Engagement, link.engagement_id)
     if engagement is None or engagement.status != "active":
         logger.info("Rejected magic-link request: invalid, expired or revoked link")
         return None
@@ -311,12 +320,14 @@ def receive_client_upload(
     item_key: str,
     filename: str,
     content: bytes,
+    usage: LinkUsage | None = None,
 ) -> evidence_service.IngestResult:
     item = next((item for item in scope_items(link) if item.get("key") == item_key), None)
     if item is None:
         raise MagicLinkValidationError("Choose one of the requested items.")
 
-    usage = check_upload_allowed(db, link)
+    if usage is None:
+        usage = check_upload_allowed(db, link)
     if len(content) > MAX_FILE_BYTES:
         raise PayloadTooLarge(FILE_TOO_LARGE_MESSAGE)
     if usage.bytes_total + len(content) > link.max_size_bytes:

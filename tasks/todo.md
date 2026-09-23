@@ -23,7 +23,7 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 - [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — P2-1 and P2-5 complete; P2-2→P2-4 remain in the parallel lane. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
 - [x] **P2-1: Evidence service** — implemented and verified: 43 contract tests and 309 full-suite tests pass; live ASGI smoke, hash verification, archive/restore, mocked desk review, and two-pass copy migration completed. Handoff Results: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`.
-- [x] **P2-5: Client evidence magic links** — implemented and verified: 29 contract tests and the Evidence regression suite pass; full-suite result is 338 passed with the parallel P2-2 citation lane absent in this worktree. Handoff Results appended to `tasks/handoffs/2026-09-23-p2-5-magic-links.md`.
+- [x] **P2-5: Client evidence magic links** — implemented and verified: 29 contract tests and the Evidence regression suite pass; full-suite result is 338 passed with the parallel P2-2 citation lane absent in this worktree. Handoff Results appended to `tasks/handoffs/2026-09-23-p2-5-magic-links.md`; adversarial follow-up hardening is applied on this branch.
 - [ ] **Phase 3 — Reports & remediation** `[AR: report immutability, provenance, closure verification]`
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 

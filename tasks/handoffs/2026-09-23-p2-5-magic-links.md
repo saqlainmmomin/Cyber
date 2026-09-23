@@ -355,3 +355,9 @@ Append a `## Results` section to this file containing:
   6. The hourly-limit smoke returned 429 with a clamped `Retry-After` value between 1 and 3600 in the contract suite. The live upload loop could not run because of the same bind restriction.
 
 - Current-code note: the P2-5 handoff was accurate for the P2-5 boundary. This worktree contains the sibling P2-2 citation tests without that lane's implementation/revision, so its full-suite result is not the handoff's advertised 309+29 baseline. The test-created ignored zero-byte `data/dpdpa.db` was removed after the run; no schema or migration was added.
+
+### Adversarial-review addendum
+
+- `resolve_token` now performs an unconditional engagement query for every well-formed candidate after the digest lookup, including unknown, expired, revoked, and inactive-engagement cases. The inline SQL statement counter reported `{'unknown': 2, 'expired': 2, 'revoked': 2, 'inactive-engagement': 2}`; malformed tokens still intentionally execute zero statements.
+- The magic-token redaction filter is installed on both `uvicorn.access` and `uvicorn.error`. The router's upload-limit check is performed once and its `LinkUsage` result is passed into `receive_client_upload`; direct service callers still enforce the check internally.
+- Verification after these fixes: `.venv/bin/pytest -q tests/test_magic_links.py` → `29 passed`; `.venv/bin/pytest -q --ignore=tests/test_citations.py` → `338 passed`. No permanent test was added and no existing test assertion was changed.

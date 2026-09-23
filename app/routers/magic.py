@@ -157,7 +157,7 @@ async def post_magic_link(token: str, request: Request, db: Session = Depends(ge
         )
 
     try:
-        magic_service.check_upload_allowed(db, link)
+        usage = magic_service.check_upload_allowed(db, link)
     except magic_service.RateLimited as exc:
         headers = dict(magic_service.SECURITY_HEADERS)
         headers["Retry-After"] = str(exc.retry_after_seconds)
@@ -208,6 +208,7 @@ async def post_magic_link(token: str, request: Request, db: Session = Depends(ge
             item_key=item_key,
             filename=upload.filename,
             content=content,
+            usage=usage,
         )
     except (magic_service.MagicLinkError, evidence_service.EvidenceError) as exc:
         db.rollback()

@@ -16,7 +16,9 @@ from app.services.magic_links import MagicTokenRedactionFilter
 
 logger = logging.getLogger(__name__)
 
-logging.getLogger("uvicorn.access").addFilter(MagicTokenRedactionFilter())
+_magic_token_redaction_filter = MagicTokenRedactionFilter()
+for _logger_name in ("uvicorn.access", "uvicorn.error"):
+    logging.getLogger(_logger_name).addFilter(_magic_token_redaction_filter)
 
 APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
