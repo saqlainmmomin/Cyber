@@ -11,7 +11,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase:** Phase 1 complete (PRs #16-#23). Phase 2 — Evidence & Conclusions in progress: P2-1/P2-2/P2-5 merged (PRs #24-#26); P2-3 implemented and reviewed, PR #27 open; P2-4 (consultant approval + optimistic locking) and P2-6 (workpaper) remain — see `tasks/todo.md`.
+**Current phase:** Phase 1 complete (PRs #16-#23). Phase 2 — Evidence & Conclusions complete: P2-1 through P2-5 merged (PRs #24-#28); P2-6 (workpaper) implemented and reviewed, PR #29 open. Phase 3 (Reports & Remediation) not yet started — see `tasks/todo.md`.
 **Pre-work sprint:** Completed (PW-1 through PW-5).
 
 ## Running
