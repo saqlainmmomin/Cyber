@@ -51,3 +51,72 @@ Append a `## Results` section to **this file** (not to the two new handoff files
 - The specific answers you gave to each item in the P2-5-specific constraint bullet (token generation, rate-limit storage, non-enumerability behavior, response headers, scope_json shape).
 - Any open question you deliberately flagged rather than resolved in either handoff.
 - Confirmation the full existing suite (309+ baseline) still passes.
+
+## Results
+
+### Deliverables
+
+| Task | Handoff | Failing contract suite |
+|---|---|---|
+| P2-2 Citation model | `tasks/handoffs/2026-09-23-p2-2-citation-model.md` | `tests/test_citations.py` (26 cases) |
+| P2-5 Magic links | `tasks/handoffs/2026-09-23-p2-5-magic-links.md` | `tests/test_magic_links.py` (29 cases) |
+
+Both handoffs follow P2-1's structure: a header with Plan/Owner/Depends-on/Blocks/Failing-suite lines, then Goal, Current state, named Decisions (`D-P2-2-A…E`, `D-P2-5-A…H`), Required approach (numbered, with exact messages, statuses, and query budgets), Key files, Non-goals, numbered Test scenarios matching the test docstrings, Done criteria, Rollback, and Report back. P2-5 also has an Open questions section. No P2-3/P2-4 handoff was written. Nothing was implemented, and no Codex run, worktree, or PR was started.
+
+### Red-suite verification (actual output at `b19aa64`)
+
+`tests/test_citations.py`: **26 failed, 0 passed**. Grouped by failure message (`pytest -q --tb=no -rf | sort | uniq -c`):
+```
+  23 ModuleNotFoundError: No module named 'app.services.citations'
+   2 AssertionError: assert '7a3f1e2b9c80' == '3d8b6f0a2c51'      # the missing P2-2 head revision
+   1 AssertionError: app/models/citation.py:10:class Citation(Base):   # grep guard finds the model P2-2 deletes
+26 failed in 1.59s
+```
+
+`tests/test_magic_links.py`: **29 failed, 0 passed**, all on `ModuleNotFoundError: No module named 'app.services.magic_links'` (`29 failed in 2.51s`).
+
+Every failure means "not implemented yet". None is a bug in the test file. I went further than the brief asked: each suite was also run against a **throwaway prototype of its spec** in a scratch git worktree (since removed; nothing committed or left in the repo). This showed the assertions are satisfiable as written:
+- **P2-2 prototype: 26/26 green.** It caught one test bug before hand-off: a statement-budget test counted the test's own lazy refresh of an expired ORM object. Fixed by capturing the id before `expire_all()`. Expected character offsets were computed by running code, not by hand. On the full suite, the prototype produced exactly 13 failures in existing tests, all caused by the new Alembic head or the dropped table. Those 13 are listed file by file as the lockstep edits in P2-2 step 2, so Codex has no surprise edits of the kind P2-1 hit.
+- **P2-5 prototype: 29/29 green, full suite 338 passed with no existing test touched.** It caught two test bugs, both fixed: (1) P2-1 attributes scan-driven status-change audit rows to `system:scan-placeholder`, not the uploader, and the test now asserts the real actor sequence; (2) Jinja autoescapes `'`, so the total-size message was reworded to have no apostrophe (`This upload would exceed the total size limit for this link.`).
+
+### Full existing suite
+
+`pytest -q --ignore=tests/test_citations.py --ignore=tests/test_magic_links.py` gives **309 passed**, unchanged from P2-1's merged baseline. With the new files: `55 failed, 309 passed` (55 = 26 + 29, all the intended reds). No existing file was modified.
+
+### P2-2: the `citations` table vs `citations_json` decision
+
+**The JSON column is canonical, and the standalone `citations` table is dropped in P2-2's own revision (`3d8b6f0a2c51`).** The `Citation` model is deleted too. Reasons (D-P2-2-A):
+- The table is P1-2 schema drift. The plan lists it as a table and also annotates `conclusion_revisions.citations_json` as "D2: JSON array, not relational". D2 and the plan's own P2-2 bullet choose JSON.
+- The P1-2 table has **no parent FK**, so it can't record which revision a citation belongs to. Making it canonical would need new columns and joins for a query need that doesn't exist.
+- Two stores for one fact is the easy-to-violate trap the ownership contract exists to close.
+- It has zero rows and zero readers, and P2-2 needs a revision anyway (for the new `desk_review_findings.citations_json`), so dropping it now is the cheapest option.
+
+The downgrade recreates it exactly (the round-trip schema-snapshot test enforces this). The accepted cost is that JSON references aren't FK-protected, so **P4-4 purge must scan `citations_json` columns before purging a version.** That's written into P2-2's Rollback section as a hand-forward.
+
+Other P2-2 calls worth knowing:
+- The location is a **verified character span** (`chars:{start}-{end}` into immutable `extracted_text`, and the excerpt must equal that raw slice exactly) or an explicit `whole_item`. The plan's `page` type isn't derivable, because extraction keeps no page markers (verified in `_extract_pdf`).
+- Matching uses the analyzer's existing grounding normalization, made offset-preserving, and a parity test ties the two together.
+- `NULL` means not captured and `"[]"` means captured with none. P2-4's PR-043 guard needs that distinction.
+- P2-2 wires the desk-review producer (closing the gap P2-1 step 8 deferred) and `attach_citations` for revisions. Creating revisions stays with P2-3.
+
+### P2-5: answers to each constraint item
+
+- **Token generation:** `secrets.token_urlsafe(16)`, i.e. 128 bits from the OS CSPRNG, as 22 URL-safe base64 characters. The suite spies on the call. The format is checked with `^[A-Za-z0-9_-]{22}$` before any DB access (0 statements for a malformed token).
+- **Digest storage and lookup:** `sha256(token.encode("ascii")).hexdigest()` in `token_digest`, looked up by equality on the digest. There's no constant-time compare, because the comparison is on the digest. The raw token is shown once in the consultant's `no-store` create response. It's never stored or logged, and neither is any prefix of it, in any column or in audit metadata. The suite checks this with a full `iterdump`. The plan's `uploaded_by=client_link:{token_prefix}` is **deliberately replaced** by `client_link:{magic_link.id}`, because a token prefix is secret material.
+- **Rate-limit mechanism and where the state lives:** there is no counter table and no in-process state. Usage is derived per request, in one query, from the link's own `Evidence` rows (`uploaded_by == client_link:{id}`). That makes it durable across restarts and workers with zero schema. The limits: 10 uploads per rolling hour (429 + `Retry-After`), `max_uploads` all-time (403), 25 MiB per file (413), `max_size_bytes` per link (413), and a `Content-Length` guard before multipart parsing (411/413). Scan-rejected receipts count toward the quota. The check-then-insert race is named and accepted, matching P2-1's precedent.
+- **Non-enumerability / 403-404-410-429:** malformed, unknown, expired, revoked, and inactive-engagement tokens all return **the same 404 with a byte-identical body** on GET and POST. There's no 410, because distinguishing expired or revoked would be an oracle. 403/409/413/422/429 happen only after a valid token has resolved. There's no per-IP limiter (2^128 makes guessing infeasible) and no audit row for invalid attempts (that would open a flooding vector).
+- **Response headers** on every `/magic/*` response: `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow` (in scope: yes), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`. The client templates are standalone (no `base.html`, no scripts, no external assets, no form `action`, so the token never appears in the HTML). I also found a real leak the plan missed: **uvicorn's access log records `/magic/{token}` paths.** The fix is a `MagicTokenRedactionFilter` on `uvicorn.access`, installed in `app/main.py`.
+- **`scope_json` shape:** `{"items": [{"key": "item-1", "title": "…"}, …], "version": 1}`, with `sort_keys=True` and up to 20 items of at most 200 characters, unique case-insensitively. An upload must name one of the link's own item keys (anything else is a 422). The item is recorded in v1's `change_reason` and in the audit metadata. The client page renders only those titles, the limits, and its own uploads. The suite seeds sentinels for the client/engagement/assessment names and ids, another link's item, other evidence, and a Conclusion, and asserts all of them are absent.
+- **`assessment_id`:** `None`, citing D-P2-1-A without relitigating it. Consequence: client uploads feed no analysis until a consultant maps them via the existing P2-1 `EvidenceUse` API. That's the intended control against unreviewed client content reaching the LLM.
+- **Deduplication:** scoped per link (409 `You have already uploaded this file through this link.`), because P2-1's engagement-wide NULL-scope message would disclose another contributor's filename.
+- **Upload path:** a new `ingest_engagement_upload` in `evidence.py` (P2-1's orchestrator minus the Assessment). The magic code must call it, and a grep guard forbids re-implementing blob, hash, release, or extract. The `upload_received` audit row is added before the orchestrator's single commit, so a rollback discards it atomically.
+- **Lane coordination:** P2-5 adds **no** Alembic revision, so the two parallel lanes can't fork the head. P2-2 owns the only revision.
+
+### Deliberately flagged, not resolved
+
+1. **The malware scan is still P2-1's auto-pass placeholder, and P2-5 makes it reachable by unauthenticated clients.** Acceptable for synthetic demos (P4-2), not for a real client pilot. This raises the priority of PRD open question 5.
+2. **`uq_magic_links_token_digest`** is deferred to the first migration after both lanes merge. Adding it in P2-5 would fork the Alembic head.
+3. **Pre-existing `CORSMiddleware(allow_origins=["*"], allow_credentials=True)`** in `app/main.py` affects all internal routes. It's out of P2-5's scope; revisit when auth lands.
+4. **EvidenceRequest model / PR-023 dedup:** `scope_json` items are free-text titles for now. `"version": 1` exists so a later request-item-id shape can be told apart.
+5. **P4-4 purge must check JSON citation references** (a consequence of P2-2 choosing JSON over FKs).
+6. **Page-level citations** would need extraction to preserve page markers. That's a separate, deliberate change, since it would alter `extracted_text` for new versions.
