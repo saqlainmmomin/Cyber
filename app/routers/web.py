@@ -16,6 +16,7 @@ from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
+from app.models.audit_event import AuditEvent
 from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
@@ -29,9 +30,15 @@ from app.services.portfolio import (
 )
 from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
+from app.models.report_snapshot import ReportSnapshot
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
-from app.services import evidence as evidence_service, findings as finding_service, workpaper
+from app.services import (
+    evidence as evidence_service,
+    findings as finding_service,
+    report_snapshots,
+    workpaper,
+)
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services.scoring import report_framework_scores
@@ -2071,6 +2078,49 @@ def findings_page(
             "assessment": assessment,
             "page": page,
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
+        },
+    )
+
+
+@router.get("/assessments/{assessment_id}/snapshots", response_class=HTMLResponse)
+def snapshots_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
+    groups = report_snapshots.snapshot_rows(db, assessment)
+    latest_consultant = (
+        db.query(AuditEvent)
+        .join(ReportSnapshot, AuditEvent.entity_id == ReportSnapshot.id)
+        .filter(
+            ReportSnapshot.assessment_id == assessment_id,
+            AuditEvent.entity_type == report_snapshots.AUDIT_ENTITY_TYPE,
+            AuditEvent.action.startswith("report_snapshot."),
+            AuditEvent.actor.startswith("consultant:"),
+        )
+        .order_by(
+            AuditEvent.created_at.desc(),
+            literal_column("audit_events.rowid").desc(),
+        )
+        .first()
+    )
+    reviewer_name = (
+        latest_consultant.actor.removeprefix("consultant:")
+        if latest_consultant
+        else ""
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/report_snapshots.html",
+        context={
+            "request": request,
+            "assessment": assessment,
+            "groups": groups,
+            "reviewer_name": reviewer_name,
+            "type_labels": report_snapshots.TYPE_LABELS,
         },
     )
 

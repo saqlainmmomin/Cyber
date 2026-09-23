@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Report versions — {{ assessment.company_name }}{% endblock %}
+
+{% block content %}
+<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+  <span class="mx-1.5">/</span>
+  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+  <span class="mx-1.5">/</span>
+  <span class="text-gray-600 dark:text-gray-300">Report versions</span>
+</nav>
+
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Report versions</h1>
+    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Generating creates a new draft version and never overwrites an earlier one. Issuing releases the newest draft for delivery to the client and makes it permanent.</p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <a href="/assessments/{{ assessment.id }}?tab=report" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Live report →</a>
+    <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (live) →</a>
+  </div>
+</div>
+
+<div class="mb-6 max-w-sm">
+  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
+  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
+         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+</div>
+
+{% for type, rows in groups.items() %}
+<section data-snapshot-type="{{ type }}" class="mb-10">
+  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">{{ type_labels[type] }}</h2>
+      {% if type == 'gap_report' and assessment.review_status != 'approved' %}
+      <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Generating a gap report requires the report to be approved for release.</p>
+      {% endif %}
+    </div>
+    <form hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name">
+      <input type="hidden" name="type" value="{{ type }}">
+      <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Generate new version</button>
+    </form>
+  </div>
+
+  {% if not rows %}
+  <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No versions generated yet.</div>
+  {% else %}
+  <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <table class="min-w-full text-left text-xs">
+      <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
+        <tr>
+          <th class="px-3 py-2">Version</th>
+          <th class="px-3 py-2">State</th>
+          <th class="px-3 py-2">Generated</th>
+          <th class="px-3 py-2">Issued</th>
+          <th class="px-3 py-2">SHA-256</th>
+          <th class="px-3 py-2">Size</th>
+          <th class="px-3 py-2">Source</th>
+          <th class="px-3 py-2">File</th>
+          <th class="px-3 py-2">Release</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
+        {% for row in rows %}
+        <tr data-snapshot-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}">
+          <td class="px-3 py-3 font-mono">v{{ row.sequence }}</td>
+          <td class="px-3 py-3 font-medium">
+            {% if row.state == 'issued' %}{{ 'Issued (current)' if row.is_current_issue else 'Issued' }}{% elif row.state == 'superseded_draft' %}Draft (superseded){% else %}Draft{% endif %}
+          </td>
+          <td class="px-3 py-3"><div>{{ row.snapshot.generated_at }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.generated_by or '' }}</div></td>
+          <td class="px-3 py-3"><div>{{ row.issued_at or '' }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.issued_by or '' }}</div></td>
+          <td class="px-3 py-3 font-mono"{% if row.sha256 %} title="{{ row.sha256 }}"{% endif %}>{{ row.sha256[:12] if row.sha256 else '' }}</td>
+          <td class="px-3 py-3">{{ '%.1f'|format(row.size_bytes / 1024) if row.size_bytes is not none else '' }} KB</td>
+          <td class="px-3 py-3">{% if row.source_changed %}<span class="text-amber-700 dark:text-amber-300">Source data changed since generation</span>{% endif %}</td>
+          <td class="px-3 py-3"><a href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file" class="font-medium text-brand dark:text-navy-300 hover:underline">{{ 'Download' if row.snapshot.format == 'pdf' else 'View' }}</a></td>
+          <td class="px-3 py-3">
+            {% if row.issuable %}
+            <form data-issue-control hx-post="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-confirm="Issue this version? Issued versions are permanent and cannot be changed or withdrawn.">
+              <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Issue</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

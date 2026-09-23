@@ -367,7 +367,8 @@
     </div>
     <div class="flex items-center gap-3">
       <a href="/api/assessments/{{ assessment_id }}/report/pdf" onclick="event.stopPropagation()"
-         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">PDF Report</a>
+         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Live PDF</a>
+      <a href="/assessments/{{ assessment_id }}/snapshots" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Report versions</a>
       <a href="/assessments/{{ assessment_id }}/workpaper" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Workpaper</a>
       {% if rfi %}
       <span class="text-gray-300 dark:text-gray-700">|</span>
