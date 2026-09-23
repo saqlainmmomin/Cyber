@@ -31,7 +31,7 @@ from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
-from app.services import evidence as evidence_service
+from app.services import evidence as evidence_service, workpaper
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services.scoring import report_framework_scores
@@ -2030,6 +2030,23 @@ def conclusions_page(
             "counts": counts,
             "reviewer_name": reviewer_name,
         },
+    )
+
+
+@router.get("/assessments/{assessment_id}/workpaper", response_class=HTMLResponse)
+def workpaper_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
+    wp = workpaper.build_workpaper(db, assessment)
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/workpaper.html",
+        context={"request": request, "assessment": assessment, "wp": wp},
     )
 
 

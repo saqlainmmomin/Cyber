@@ -292,7 +292,7 @@
           {{ item.gap_description[:120] }}{% if item.gap_description | length > 120 %}…{% endif %}
         </p>
         {% endif %}
-        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ item.requirement_id }}</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ item.requirement_id }}<a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a></p>
       </div>
       {% endfor %}
     </div>
@@ -368,6 +368,7 @@
     <div class="flex items-center gap-3">
       <a href="/api/assessments/{{ assessment_id }}/report/pdf" onclick="event.stopPropagation()"
          class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">PDF Report</a>
+      <a href="/assessments/{{ assessment_id }}/workpaper" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Workpaper</a>
       {% if rfi %}
       <span class="text-gray-300 dark:text-gray-700">|</span>
       <a href="/assessments/{{ assessment_id }}/rfi/pdf" onclick="event.stopPropagation()"
@@ -407,6 +408,7 @@
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</p>
               <p class="text-xs text-gray-400 dark:text-gray-500" data-copy-target="requirement-id">{{ item.requirement_id }}</p>
+              <a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
               {% if item.gap_description %}
               <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                 {{ item.gap_description[:200] }}{% if item.gap_description | length > 200 %}...{% endif %}
@@ -470,6 +472,7 @@
             <td class="px-4 py-3">
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</p>
               <p class="text-xs text-gray-400 dark:text-gray-500" data-copy-target="requirement-id">{{ item.requirement_id }}</p>
+              <a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
             </td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
