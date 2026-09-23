@@ -103,7 +103,7 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
     assert "CyberAssess" not in response.text
     assert "background-color: #8b0000" in response.text
     assert "<title>Dashboard — Momin &amp; Co Compliance Assessment</title>" in response.text
-    assert "<title>New Assessment — Momin &amp; Co Compliance Assessment</title>" in new_assessment_response.text
+    assert "<title>New Engagement — Momin &amp; Co Compliance Assessment</title>" in new_assessment_response.text
 
 
 def test_pdf_exports_use_configured_brand(monkeypatch):

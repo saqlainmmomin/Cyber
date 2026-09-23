@@ -166,8 +166,7 @@ def test_picker_disables_roadmap_frameworks_and_submit(client):
     assert 'value="gdpr" disabled' in response.text
     assert 'value="hipaa" disabled' in response.text
     assert 'value="pci_dss" disabled' in response.text
-    assert 'id="create-assessment"' in response.text
-    assert 'id="create-assessment" disabled' in response.text
+    assert 'id="create-assessment"' not in response.text
 
 
 def test_assessment_page_renders_framework_tabs_only_when_multi(client, db_session):

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} — Portfolio{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
+    <span>/</span>
+    <span class="text-gray-700 dark:text-gray-300">{{ client.name }}</span>
+  </div>
+</div>
+
+<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ client.name }}</h1>
+    <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
+      <span>{{ client.industry | replace("_", " ") | title }}</span>
+      <span>{{ client.size | replace("_", " ") | title }}</span>
+      <span>{{ client.retention_years }}-year retention</span>
+      <span>{{ assessment_count }} assessment{% if assessment_count != 1 %}s{% endif %}</span>
+    </div>
+  </div>
+  <a href="/engagements/new?client_id={{ client.id }}" class="inline-flex items-center justify-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    New engagement for this client
+  </a>
+</div>
+
+<section>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Engagements</h2>
+    <span class="text-xs text-gray-500 dark:text-gray-400">Last activity {{ last_activity.strftime('%d %b %Y') }}</span>
+  </div>
+  {% set client_id = client.id %}
+  {% include "partials/engagement_list.html" %}
+</section>
+{% endblock %}
