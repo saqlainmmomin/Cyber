@@ -380,12 +380,264 @@ All in `tests/test_analysis_pipeline.py` (already written). The numbers match th
 - The PR-043 approval guard reads the latest proposal revision's `citations_json`. `"[]"` means explicit absence of grounded support, `NULL` means not captured (legacy only).
 - Decide whether a `migrate_legacy` `approved` revision (the product of a legacy bulk approve) counts as a D3 individual approval, or should be presented for re-approval.
 
-## Report back
+## Results
 
-Append a `## Results` section to this file containing:
-- The public API of `app/services/analysis_pipeline.py` as shipped (names and signatures copied from the code), and the `_normalized_source` signature.
-- The Alembic revision as shipped, and confirmation that the existing-test edits match the step 2 table exactly. List any other file you touched, and why.
-- `pytest -q` output and the pass count of `tests/test_analysis_pipeline.py`.
-- The smoke-test outputs from steps 1–5 (SQL output pasted), including proof that the second trigger succeeded.
-- One sample `claims_json` from the smoke test, with client text elided.
-- Anything this document got wrong about the current code.
+### Shipped API
+
+```python
+CLAIMS_SCHEMA_VERSION = 1
+PIPELINE_ACTOR = "system:analysis"
+RUN_STATUSES = ("running", "completed", "failed")
+OUTCOME_BY_STATUS = {
+    "compliant": "compliant",
+    "partially_compliant": "partially_compliant",
+    "non_compliant": "non_compliant",
+    "not_applicable": "not_applicable",
+    "not_assessed": "insufficient_evidence",
+}
+UNKNOWN_STATUS_OUTCOME = "insufficient_evidence"
+HUMAN_DECISION_ACTIONS = ("approved", "edited", "rejected", "reopened")
+LOCKING_ACTIONS = ("approved", "edited")
+SUPPORTING_OUTCOMES = ("compliant", "partially_compliant")
+
+class AnalysisPipelineError(Exception): ...
+class ConclusionConflict(AnalysisPipelineError):
+    def __init__(self, conclusion_id: str): ...
+
+@dataclass(frozen=True)
+class RunContext:
+    trigger_id: str
+    run_ids: dict[str, str]
+    sources: tuple[CitableSource, ...]
+
+@dataclass(frozen=True)
+class ConclusionState:
+    conclusion: Conclusion
+    locked: bool
+    expected_version: int
+
+def start_runs(db: Session, *, assessment_id: str, framework_ids: list[str]) -> RunContext: ...
+def fail_runs(
+    db: Session,
+    context: RunContext,
+    *,
+    error_type: str,
+    framework_ids: list[str] | None = None,
+) -> None: ...
+def load_conclusion_state(
+    db: Session,
+    *,
+    assessment_id: str,
+    framework_id: str,
+) -> dict[str, ConclusionState]: ...
+def record_framework_run(
+    db: Session,
+    context: RunContext,
+    *,
+    framework_id: str,
+    assessments: list[dict],
+    desk_review_data: dict | None,
+    gap_report_id: str,
+) -> AnalysisRun: ...
+```
+
+The citation memo signature is:
+
+```python
+def _normalized_source(text: str) -> tuple[str, array]: ...
+```
+
+The Alembic revision shipped as `4e8c1a9d2b57`, revising `3d8b6f0a2c51`. It
+adds the nullable indexed `conclusion_revisions.analysis_run_id` foreign key,
+the natural-key unique index on `conclusions`, and upgrade/downgrade guards.
+`alembic heads` reports exactly `4e8c1a9d2b57 (head)`.
+
+The existing-test edits match the step 2 table exactly: both probe templates
+in `test_alembic_baseline_immutable.py`, three head assertions in
+`test_data_integrity.py`, two startup assertions in `test_startup_invariants.py`,
+and the two P2-2 head checks in `test_citations.py`. `tests/test_analysis_pipeline.py`
+was not edited.
+
+Other touched files:
+
+- `app/models/conclusion.py`: ORM unique index and nullable run link.
+- `app/services/analysis_pipeline.py`: immutable run/conclusion/revision service.
+- `app/routers/analysis.py`: dual-write lifecycle, failure handling, response ids,
+  and the two required delete-before-insert flushes.
+- `app/services/citations.py`: bounded source normalization memoization.
+- `scripts/migrate_legacy.py`: skip for assessments already owned by the pipeline.
+- This handoff and `tasks/todo.md`: implementation tracking and results.
+
+No protected legacy consumer, analyzer, template, or golden fixture changed.
+
+### Verification
+
+Focused contract suite:
+
+```text
+29 passed in 3.25s
+```
+
+Final full suite rerun:
+
+```text
+392 passed, 112 warnings in 23.52s
+```
+
+The first full-suite run in this fresh worktree produced the documented
+one-time developer-database guard teardown error because `data/dpdpa.db` did
+not yet exist; the immediate rerun stabilized that pre-existing artifact and
+was fully green.
+
+### ASGI smoke output
+
+The smoke used an isolated Alembic-built SQLite database and an in-process
+`TestClient`, with `run_gap_analysis` patched to two fixed items. The quoting
+item cited an uploaded policy text span.
+
+```text
+POST_STATUS 200 200 200
+RUNS_AFTER_TWO [('dpdpa', 'completed'), ('dpdpa', 'completed')]
+REVISIONS_AFTER_TWO [
+  ('CH2.CONSENT.1', 2, 'proposed', 1, '[{"evidence_version_id": "68486d0a-aeca-448b-8fb3-2e94301ba7eb", "excerpt": "obtains consent before processing", "location_ref": "chars:23-56", "location_type": "text_span"}]'),
+  ('CH2.CONSENT.1', 2, 'proposed', 1, '[{"evidence_version_id": "68486d0a-aeca-448b-8fb3-2e94301ba7eb", "excerpt": "obtains consent before processing", "location_ref": "chars:23-56", "location_type": "text_span"}]'),
+  ('CH2.CONSENT.2', 2, 'proposed', 1, '[]'),
+  ('CH2.CONSENT.2', 2, 'proposed', 1, '[]')
+]
+LOCKED_CONCLUSION_BEFORE_THIRD {'id': 'dfc896e3-6d93-4e28-9ba4-74665d23c864', 'outcome': 'compliant', 'rationale': '[client text elided] consent process is documented', 'version': 2, 'updated_at': '2026-09-23 09:31:08.352746'}
+LOCKED_CONCLUSION_AFTER_THIRD {'outcome': 'compliant', 'rationale': '[client text elided] consent process is documented', 'version': 2, 'updated_at': '2026-09-23 09:31:08.352746'}
+LOCKED_NEWEST_ACTION proposal_withheld
+RUNS_AFTER_THIRD [('dpdpa', 'completed'), ('dpdpa', 'completed'), ('dpdpa', 'completed')]
+REPORT_PAGE 200 True
+PDF 200 application/pdf 13068 attachment; filename="Compliance_Assessment_DPDPA_Smoke_Client.pdf"
+```
+
+The SQL used for the two-run history was:
+
+```sql
+SELECT framework_id, status FROM analysis_runs
+WHERE assessment_id = ? ORDER BY started_at;
+
+SELECT c.requirement_id, c.version, r.action,
+       r.analysis_run_id IS NOT NULL, r.citations_json
+FROM conclusions c
+JOIN conclusion_revisions r ON r.conclusion_id = c.id
+WHERE c.assessment_id = ?
+ORDER BY c.requirement_id, r.created_at, r.rowid;
+```
+
+The result is pasted above: both triggers succeeded, both runs completed, and
+the quoting requirement has a validated `text_span` citation. After inserting
+an `approved` revision and triggering a third time, the locked row's outcome,
+rationale, version, and `updated_at` stayed identical while its newest action
+was `proposal_withheld`.
+
+Sample `claims_json` (client text elided):
+
+```json
+{
+  "claims": [
+    {
+      "cluster_id": "CLUSTER_029",
+      "conclusion_id": "dfc896e3-6d93-4e28-9ba4-74665d23c864",
+      "disposition": "created",
+      "item": {
+        "compliance_status": "compliant",
+        "current_state": "[client text elided] consent process is documented",
+        "evidence_quote": "obtains consent before processing",
+        "gap_description": "No gap",
+        "maturity_level": 4,
+        "needs_review": false,
+        "remediation_action": "None needed",
+        "remediation_effort": "minimal",
+        "remediation_priority": 1,
+        "requirement_id": "CH2.CONSENT.1",
+        "risk_level": "low",
+        "root_cause_category": "process",
+        "timeline_weeks": 0
+      },
+      "outcome": "compliant",
+      "quality": {
+        "citation_count": 1,
+        "contradictions": null,
+        "desk_review_absence": false,
+        "desk_review_red_flags": 0,
+        "evidence_quote_grounded": true,
+        "needs_review": false,
+        "unsupported_assertion": false
+      },
+      "requirement_id": "CH2.CONSENT.1",
+      "revision_id": "61603dae-afed-43dc-9bae-26edf20c9dd5",
+      "scope_enforced": false
+    },
+    {
+      "cluster_id": "CLUSTER_029",
+      "conclusion_id": "ab6a92db-b1b8-4262-a814-7d43d4bdf9d5",
+      "disposition": "created",
+      "item": {
+        "compliance_status": "non_compliant",
+        "current_state": "[client text elided] control is missing",
+        "evidence_quote": "",
+        "gap_description": "Policy gap",
+        "maturity_level": 1,
+        "needs_review": true,
+        "remediation_action": "Create the control",
+        "remediation_effort": "medium",
+        "remediation_priority": 1,
+        "requirement_id": "CH2.CONSENT.2",
+        "risk_level": "high",
+        "root_cause_category": "process",
+        "timeline_weeks": 4
+      },
+      "outcome": "non_compliant",
+      "quality": {
+        "citation_count": 0,
+        "contradictions": null,
+        "desk_review_absence": false,
+        "desk_review_red_flags": 0,
+        "evidence_quote_grounded": null,
+        "needs_review": true,
+        "unsupported_assertion": false
+      },
+      "requirement_id": "CH2.CONSENT.2",
+      "revision_id": "1fc94490-68d2-438f-9968-1f9b87025023",
+      "scope_enforced": false
+    }
+  ],
+  "desk_review_used": false,
+  "error": null,
+  "framework_id": "dpdpa",
+  "gap_report_id": "a0c64c30-8a78-4d41-98f9-75767ba943e6",
+  "inputs": {
+    "applicable_requirements": null,
+    "evidence_versions": [
+      {
+        "evidence_id": "92d06c46-ee13-456f-b059-eac24836cb19",
+        "filename": "smoke-policy.pdf",
+        "version_id": "68486d0a-aeca-448b-8fb3-2e94301ba7eb"
+      }
+    ],
+    "legacy_document_ids": [],
+    "questionnaire_response_count": 1
+  },
+  "model_tiers": {
+    "extract": "deepseek/deepseek-v4-flash",
+    "judge": "deepseek/deepseek-v4-flash",
+    "synthesize": "deepseek/deepseek-v4-flash"
+  },
+  "schema_version": 1,
+  "trigger_id": "0cba3637-d475-4c7a-a1c1-118763b30601"
+}
+```
+
+No discrepancy was found between this document and the current code that
+required an architectural deviation. Operationally, this fresh worktree had
+no usable developer database to copy: the documented guard created a zero-byte
+`data/dpdpa.db` artifact. The smoke therefore used a fresh isolated
+Alembic-built SQLite database with the same schema, and did not touch the
+developer database contents.
+
+The requested local commit could not be created in this managed sandbox:
+Git was denied permission to create
+`.git/worktrees/p2-3-analysis-pipeline/index.lock` (`Operation not permitted`).
+No push was attempted.

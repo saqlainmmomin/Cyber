@@ -14,7 +14,9 @@ from __future__ import annotations
 import json
 import logging
 import re
+from array import array
 from dataclasses import dataclass
+from functools import lru_cache
 
 from sqlalchemy.orm import Session
 
@@ -78,11 +80,17 @@ def normalize_with_offsets(text: str) -> tuple[str, list[int]]:
     return "".join(normalized), offsets
 
 
+@lru_cache(maxsize=16)
+def _normalized_source(text: str) -> tuple[str, array]:
+    normalized, offsets = normalize_with_offsets(text)
+    return normalized, array("l", offsets)
+
+
 def locate_excerpt(text: str, excerpt: str) -> tuple[int, int] | None:
     normalized_excerpt, _ = normalize_with_offsets(excerpt)
     if not normalized_excerpt:
         return None
-    normalized_text, offsets = normalize_with_offsets(text)
+    normalized_text, offsets = _normalized_source(text)
     index = normalized_text.find(normalized_excerpt)
     if index == -1:
         return None

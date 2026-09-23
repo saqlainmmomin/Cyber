@@ -12,6 +12,7 @@ from app.models.assessment import Assessment
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
+from app.services import analysis_pipeline
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
 from app.services.evidence import analysis_documents
 from app.services.scoring import (
@@ -204,6 +205,12 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         )
 
     # --- Legacy single-framework DPDPA path ---
+    run_context = analysis_pipeline.start_runs(
+        db,
+        assessment_id=assessment_id,
+        framework_ids=["dpdpa"],
+    )
+    db.commit()
     try:
         result = run_gap_analysis(
             company_name=assessment.company_name,
@@ -217,6 +224,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             applicable_requirements=applicable_requirements,
         )
     except Exception as e:
+        analysis_pipeline.fail_runs(db, run_context, error_type=type(e).__name__)
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, f"Analysis failed: {str(e)}")
@@ -226,10 +234,52 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
 
     assessments = parsed.get("assessments")
     if not assessments:
+        analysis_pipeline.fail_runs(db, run_context, error_type="EmptyAssessment")
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, "Claude returned an empty or malformed assessment. Try running analysis again.")
 
+    try:
+        return _persist_single_analysis(
+            assessment=assessment,
+            assessment_id=assessment_id,
+            assessments=assessments,
+            parsed=parsed,
+            raw=raw,
+            responses=responses,
+            documents=documents,
+            desk_review_data=desk_review_data,
+            applicable_requirements=applicable_requirements,
+            has_documents=has_documents,
+            db=db,
+            run_context=run_context,
+        )
+    except Exception as exc:
+        db.rollback()
+        analysis_pipeline.fail_runs(db, run_context, error_type=type(exc).__name__)
+        assessment.status = "error"
+        db.commit()
+        raise HTTPException(
+            500,
+            f"Analysis results could not be saved ({type(exc).__name__}). Run analysis again.",
+        ) from exc
+
+
+def _persist_single_analysis(
+    *,
+    assessment: Assessment,
+    assessment_id: str,
+    assessments: list[dict],
+    parsed: dict,
+    raw: str,
+    responses: list[dict],
+    documents: list[dict],
+    desk_review_data: dict | None,
+    applicable_requirements: list[str] | None,
+    has_documents: bool,
+    db: Session,
+    run_context: analysis_pipeline.RunContext,
+) -> dict:
     # Server-side scope enforcement: ensure out-of-scope requirements are not_applicable
     if applicable_requirements:
         applicable_set = set(applicable_requirements)
@@ -278,6 +328,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         db.query(GapItem).filter(GapItem.report_id == existing.id).delete()
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
+        db.flush()  # delete before the replacement INSERT: gap_reports.assessment_id is unique
 
     report = GapReport(
         assessment_id=assessment_id,
@@ -290,6 +341,14 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     )
     db.add(report)
     db.flush()
+    analysis_pipeline.record_framework_run(
+        db,
+        run_context,
+        framework_id="dpdpa",
+        assessments=assessments,
+        desk_review_data=desk_review_data,
+        gap_report_id=report.id,
+    )
 
     # Build evidence confidence lookup
     _dr_evidence_reqs = set()
@@ -371,6 +430,7 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
         },
         "initiatives_generated": len(initiatives_data),
         "message": "Gap analysis completed successfully",
+        "analysis_run_ids": dict(run_context.run_ids),
     }
 
 
@@ -386,9 +446,13 @@ def _run_multi_framework_analysis(
     has_documents: bool,
     db: Session,
 ) -> dict:
-    """Multi-framework analysis: per-framework Claude calls + synthesis + scoring."""
-    from app.frameworks.registry import FrameworkRegistry
-
+    """Run and persist the multi-framework analysis."""
+    run_context = analysis_pipeline.start_runs(
+        db,
+        assessment_id=assessment_id,
+        framework_ids=list(selected_frameworks),
+    )
+    db.commit()
     try:
         result = run_multi_framework_analysis(
             framework_ids=selected_frameworks,
@@ -403,9 +467,69 @@ def _run_multi_framework_analysis(
             applicable_controls=applicable_requirements,
         )
     except Exception as e:
+        analysis_pipeline.fail_runs(db, run_context, error_type=type(e).__name__)
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, f"Multi-framework analysis failed: {str(e)}")
+
+    framework_results = result.get("frameworks", {})
+    failed_frameworks = [
+        framework_id
+        for framework_id in selected_frameworks
+        if not framework_results.get(framework_id)
+        or "error" in framework_results[framework_id]
+    ]
+    if failed_frameworks:
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type="FrameworkAnalysisError",
+            framework_ids=failed_frameworks,
+        )
+    db.commit()
+
+    try:
+        return _persist_multi_framework_analysis(
+            assessment=assessment,
+            assessment_id=assessment_id,
+            responses=responses,
+            documents=documents,
+            context_profile=context_profile,
+            desk_review_data=desk_review_data,
+            applicable_requirements=applicable_requirements,
+            selected_frameworks=selected_frameworks,
+            has_documents=has_documents,
+            db=db,
+            result=result,
+            run_context=run_context,
+        )
+    except Exception as exc:
+        db.rollback()
+        analysis_pipeline.fail_runs(db, run_context, error_type=type(exc).__name__)
+        assessment.status = "error"
+        db.commit()
+        raise HTTPException(
+            500,
+            f"Analysis results could not be saved ({type(exc).__name__}). Run analysis again.",
+        ) from exc
+
+
+def _persist_multi_framework_analysis(
+    assessment: Assessment,
+    assessment_id: str,
+    responses: list[dict],
+    documents: list[dict],
+    context_profile: dict | None,
+    desk_review_data: dict | None,
+    applicable_requirements: list[str] | None,
+    selected_frameworks: list[str],
+    has_documents: bool,
+    db: Session,
+    result: dict,
+    run_context: analysis_pipeline.RunContext,
+) -> dict:
+    """Persist the multi-framework report and append-only analysis records."""
+    from app.frameworks.registry import FrameworkRegistry
 
     # Preserve existing report data before re-run, then delete
     existing = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
@@ -439,6 +563,7 @@ def _run_multi_framework_analysis(
         db.query(GapItem).filter(GapItem.report_id == existing.id).delete()
         db.query(Initiative).filter(Initiative.report_id == existing.id).delete()
         db.delete(existing)
+        db.flush()  # delete before the replacement INSERT: gap_reports.assessment_id is unique
 
     # Score each framework independently. There is intentionally no aggregate.
     per_fw_scores = {}
@@ -508,6 +633,17 @@ def _run_multi_framework_analysis(
     )
     db.add(report)
     db.flush()
+    for framework_id in selected_frameworks:
+        framework_result = result["frameworks"].get(framework_id)
+        if framework_result and "error" not in framework_result:
+            analysis_pipeline.record_framework_run(
+                db,
+                run_context,
+                framework_id=framework_id,
+                assessments=per_fw_assessments[framework_id],
+                desk_review_data=desk_review_data,
+                gap_report_id=report.id,
+            )
 
     # Build evidence confidence lookup
     _dr_evidence_reqs = set()
@@ -588,4 +724,5 @@ def _run_multi_framework_analysis(
         "per_framework_scores": {fw_id: s["overall_score"] for fw_id, s in per_fw_scores.items()},
         "initiatives_generated": len(initiatives_data),
         "message": f"Multi-framework analysis completed ({len(selected_frameworks)} frameworks)",
+        "analysis_run_ids": dict(run_context.run_ids),
     }
