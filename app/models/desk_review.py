@@ -41,4 +41,5 @@ class DeskReviewFinding(Base):
     severity: Mapped[str] = mapped_column(String(20), default="medium")  # info|low|medium|high|critical
     source_quote: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_location: Mapped[str | None] = mapped_column(String(200), nullable=True)  # page/section ref
+    citations_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array; see app.services.citations
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

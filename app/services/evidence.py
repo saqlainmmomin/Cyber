@@ -835,7 +835,10 @@ def verify_version(db: Session, version_id: str) -> bool:
     return sha256_hex(path.read_bytes()) == version.file_hash_sha256
 
 
-def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
+def active_versions_in_scope(
+    db: Session, assessment_id: str
+) -> list[tuple[Evidence, EvidenceVersion]]:
+    """Return active Evidence and its active version when in assessment scope."""
     used = select(EvidenceUse.evidence_id).where(EvidenceUse.assessment_id == assessment_id)
     evidence_rows = (
         db.query(Evidence)
@@ -847,17 +850,29 @@ def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
         .all()
     )
     evidence_ids = [row.id for row in evidence_rows]
+    if not evidence_ids:
+        return []
     versions = (
         db.query(EvidenceVersion)
         .filter(
             EvidenceVersion.evidence_id.in_(evidence_ids),
             EvidenceVersion.status == "active",
         )
+        .order_by(EvidenceVersion.evidence_id, EvidenceVersion.version_number.desc())
         .all()
-        if evidence_ids
-        else []
     )
-    active_by_evidence = {version.evidence_id: version for version in versions}
+    active_by_evidence: dict[str, EvidenceVersion] = {}
+    for version in versions:
+        active_by_evidence.setdefault(version.evidence_id, version)
+    return [
+        (evidence, active_by_evidence[evidence.id])
+        for evidence in evidence_rows
+        if evidence.id in active_by_evidence
+    ]
+
+
+def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
+    active_pairs = active_versions_in_scope(db, assessment_id)
     legacy_pairs = (
         db.query(AssessmentDocument, Evidence.id)
         .outerjoin(Evidence, Evidence.id == AssessmentDocument.id)
@@ -869,10 +884,7 @@ def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
     migrated_ids = {evidence_id for _row, evidence_id in legacy_pairs if evidence_id is not None}
 
     documents = []
-    for evidence in evidence_rows:
-        version = active_by_evidence.get(evidence.id)
-        if version is None:
-            continue
+    for evidence, version in active_pairs:
         documents.append(
             {
                 "id": evidence.id,
