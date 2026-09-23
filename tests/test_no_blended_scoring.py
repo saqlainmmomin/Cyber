@@ -1,5 +1,6 @@
 """Regression guards for the per-framework scoring invariant."""
 
+import ast
 import io
 import json
 import re
@@ -269,6 +270,89 @@ def test_no_template_reads_retired_score():
         capture_output=True,
     )
     assert result.returncode == 1, result.stdout
+
+    token = re.compile(r"(?<![A-Za-z0-9_])overall_score(?![A-Za-z0-9_])")
+    allowed_files = {
+        "app/models/report.py",
+        "app/services/scoring.py",
+        "app/schemas/scoring.py",
+        "app/legacy_migrations.py",
+        "app/legacy_migrations_schema.py",
+        "app/routers/analysis.py",
+    }
+    retired_score_hits = {}
+    for path in (repo / "app").rglob("*.py"):
+        source = path.read_text()
+        tree = ast.parse(source, filename=str(path))
+        matching_lines = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr == "overall_score":
+                matching_lines.add(node.lineno)
+            elif isinstance(node, ast.keyword) and node.arg == "overall_score":
+                matching_lines.add(node.lineno)
+        if matching_lines:
+            lines = source.splitlines()
+            retired_score_hits[path.relative_to(repo).as_posix()] = [
+                (line_number, lines[line_number - 1])
+                for line_number in sorted(matching_lines)
+            ]
+
+    unexpected_files = sorted(set(retired_score_hits) - allowed_files)
+    assert not unexpected_files, (
+        "retired overall_score accesses found outside the allow-list: "
+        + ", ".join(unexpected_files)
+    )
+
+    analysis_path = repo / "app/routers/analysis.py"
+    analysis_source = analysis_path.read_text()
+    analysis_hits = [
+        (line_number, line)
+        for line_number, line in enumerate(analysis_source.splitlines(), start=1)
+        if token.search(line)
+    ]
+    analysis_tree = ast.parse(analysis_source, filename=str(analysis_path))
+    allowed_analysis_lines = set()
+    for node in ast.walk(analysis_tree):
+        if (
+            isinstance(node, ast.keyword)
+            and node.arg == "overall_score"
+            and isinstance(node.value, ast.Constant)
+            and node.value.value == 0.0
+        ):
+            allowed_analysis_lines.update(
+                range(node.lineno, node.end_lineno + 1)
+            )
+        if not isinstance(node, ast.DictComp) or len(node.generators) != 1:
+            continue
+        value = node.value
+        generator = node.generators[0]
+        iterator = generator.iter
+        is_per_framework_iterator = (
+            isinstance(iterator, ast.Call)
+            and isinstance(iterator.func, ast.Attribute)
+            and iterator.func.attr == "items"
+            and isinstance(iterator.func.value, ast.Name)
+            and iterator.func.value.id == "per_fw_scores"
+        )
+        is_overall_score_lookup = (
+            isinstance(value, ast.Subscript)
+            and isinstance(value.slice, ast.Constant)
+            and value.slice.value == "overall_score"
+        )
+        if is_per_framework_iterator and is_overall_score_lookup:
+            allowed_analysis_lines.update(
+                range(node.lineno, node.end_lineno + 1)
+            )
+
+    disallowed_analysis_hits = [
+        f"{analysis_path}:{line_number}: {line.rstrip()}"
+        for line_number, line in analysis_hits
+        if line_number not in allowed_analysis_lines
+    ]
+    assert not disallowed_analysis_hits, (
+        "analysis.py contains an unapproved overall_score reference:\n"
+        + "\n".join(disallowed_analysis_hits)
+    )
 
 
 def test_score_supports_order_deduplication_and_shared_clusters(db_session):
