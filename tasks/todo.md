@@ -1,6 +1,6 @@
 # CyberAssess implementation tracker
 
-**Updated:** 2026-09-23 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 2
+**Updated:** 2026-09-23 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 3
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
@@ -21,12 +21,13 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Later phases
 
-- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — P2-1, P2-2, P2-3 and P2-5 merged; P2-4 implementation is locally verified and awaiting Claude adversarial review, and P2-6 remains. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
+- [x] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — fully implemented: P2-1 through P2-5 are merged, and P2-6 is implemented, Sonnet-reviewed (no blocking findings), and awaiting merge as PR #29. Full suite: 443 passed. Ownership per task: `tasks/agent-ownership.md`.
 - [x] **P2-1: Evidence service** — implemented and verified: 43 contract tests and 309 full-suite tests pass; live ASGI smoke, hash verification, archive/restore, mocked desk review, and two-pass copy migration completed. Handoff Results: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`. **Merged:** PR #24.
 - [x] **P2-2: Citation model** — implemented and verified: 26 citation contract tests pass; drops the dead P1-2 `citations` table in favor of `citations_json`, per D-P2-2-A. Live ASGI smoke stored a verified raw-text span citation. Handoff Results: `tasks/handoffs/2026-09-23-p2-2-citation-model.md`. **Merged:** PR #25.
 - [x] **P2-5: Client evidence magic links** — implemented and verified: 29 contract tests pass; adversarial review found and this branch fixed a query-count timing oracle in `resolve_token` before merge. Handoff Results appended to `tasks/handoffs/2026-09-23-p2-5-magic-links.md`. **Merged:** PR #26.
 - [x] **P2-3: Immutable analysis pipeline** `[AR: dual-write invariant, never overwrite a human decision]` — implemented and verified: 29 contract tests and 392 full-suite tests pass; dual-writes `AnalysisRun`/`Conclusion`/`ConclusionRevision` alongside the unchanged `GapReport`/`GapItem` path (zero diff on scoring/PDF/reports/remediation/review, confirmed twice independently). Also fixes a real, independently-reproduced production bug: re-running analysis crashed with a `UNIQUE constraint` error before this. Two independent reviews (personal + Sonnet adversarial) both returned MERGE AS-IS. Handoff Results: `tasks/handoffs/2026-09-23-p2-3-immutable-analysis-pipeline.md`. **Merged: PR #27.**
-- [ ] **P2-4: Consultant conclusion approval workflow** `[AR: individual-only approvals, optimistic locking]` — implementation and local verification complete: all 15 contract scenarios are covered by 38 new tests, and the 430-test full suite passes. Awaiting Claude adversarial review before merge. Results: `tasks/handoffs/2026-09-23-p2-4-consultant-approval.md#continued-implementation-results-codex`.
+- [x] **P2-4: Consultant conclusion approval workflow** `[AR: individual-only approvals, optimistic locking]` — implementation and local verification complete: all 15 contract scenarios are covered by 38 new tests, and the 430-test full suite passes. Results: `tasks/handoffs/2026-09-23-p2-4-consultant-approval.md#continued-implementation-results-codex`. **Merged: PR #28.**
+- [x] **P2-6: Read-only workpaper view** — implemented and verified: 13 contract/smoke tests cover the complete response → evidence → proposal → decision → revision chain, direct report/conclusion navigation, read-only guards, multi-framework scope, stale runs and edge states; 443 full-suite tests pass. Sonnet adversarial review found no blocking issues (read-only guarantee, "3 clicks" claim, and zero-diff invariant all independently re-verified). Handoff Results: `tasks/handoffs/2026-09-23-p2-6-workpaper-view.md#results`. **PR #29, open, not yet merged.**
 - [ ] **Phase 3 — Reports & remediation** `[AR: report immutability, provenance, closure verification]`
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 

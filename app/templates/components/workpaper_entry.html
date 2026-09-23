@@ -1,0 +1,185 @@
+{% macro citation_list(citations, captured) %}
+  {% if not captured %}
+  <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">Evidence support not captured (legacy)</p>
+  {% elif not citations %}
+  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No supporting citation (explicit evidence absence)</p>
+  {% else %}
+  <ul class="mt-2 space-y-3">
+    {% for citation in citations %}
+    <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm">
+      <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ citation.excerpt }}</p>
+      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        {% if citation.resolved %}<a class="font-medium text-brand dark:text-navy-300 hover:underline" href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or 'Unresolved evidence' }}{% endif %}
+        {% if citation.version_number %} v{{ citation.version_number }}{% endif %}
+        · {{ citation.location_ref }}
+        {% if not citation.is_current %}<span class="text-amber-700 dark:text-amber-300">(superseded version)</span>{% endif %}
+      </p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{% endmacro %}
+
+<article data-workpaper-entry id="{{ entry.anchor }}" data-in-scope="{{ 'true' if entry.in_scope else 'false' }}" data-decision-state="{{ entry.card.state }}" class="scroll-mt-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
+  <header class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span class="font-semibold text-brand dark:text-navy-300">{{ entry.card.conclusion.framework_id|upper }}</span>
+          <span class="font-mono">{{ entry.card.conclusion.requirement_id }}</span>
+          <span>v{{ entry.card.conclusion.version }}</span>
+          <span class="font-mono">{{ entry.card.conclusion.id }}</span>
+        </div>
+        <h3 class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ entry.card.requirement_title }}</h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        {% if entry.card.legacy_bulk_approval %}
+        <span class="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">Legacy bulk approval, not individually reviewed</span>
+        {% elif entry.card.state == 'approved' %}
+        <span class="rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300">Approved</span>
+        {% elif entry.card.state == 'edited' %}
+        <span class="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">Edited and approved</span>
+        {% elif entry.card.state == 'rejected' %}
+        <span class="rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-300">Rejected</span>
+        {% else %}
+        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Pending</span>
+        {% endif %}
+        {% if not entry.in_scope %}<span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Excluded by scope enforcement</span>{% endif %}
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
+      {% if entry.card.locked %}<span class="font-medium text-amber-700 dark:text-amber-300">Locked: re-analysis will not overwrite this</span>{% endif %}
+      <a href="/assessments/{{ assessment.id }}/conclusions#conclusion-card-{{ entry.card.conclusion.id }}" class="font-medium text-brand dark:text-navy-300 hover:underline">Decide on the conclusions page →</a>
+    </div>
+    {% if entry.card.legacy_report_status %}<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">Report view differs: {{ entry.card.legacy_report_status|replace('_', ' ')|title }}</p>{% endif %}
+  </header>
+
+  <div class="p-5 space-y-6">
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">1. Client response</h4>
+      {% if entry.client_response %}
+      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Answer</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ entry.client_response.answer|replace('_', ' ')|title }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Question id</dt><dd class="font-mono text-gray-700 dark:text-gray-300">{{ entry.client_response.question_id }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Answer source</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.answer_source or 'Not recorded' }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Confidence</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.confidence or 'Not recorded' }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">N/A reason</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.na_reason or 'Not recorded' }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Submitted</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.submitted_at }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Notes</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.client_response.notes or 'None recorded' }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Evidence reference</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.client_response.evidence_reference or 'None recorded' }}</dd></div>
+      </dl>
+      {% if entry.client_response.matched_on == 'cluster' %}<p class="mt-3 text-sm text-blue-700 dark:text-blue-300">Shared cluster question {{ entry.client_response.question_id }}: one answer informs every framework requirement in this cluster.</p>{% endif %}
+      {% else %}
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No questionnaire response recorded for this requirement.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">2. Evidence</h4>
+      <h5 class="mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">Mapped evidence</h5>
+      {% if entry.mapped_evidence %}
+      <ul class="mt-2 space-y-2">
+        {% for row in entry.mapped_evidence %}
+        <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-700 dark:text-gray-300">
+          <a href="/evidence/{{ row.evidence_id }}" class="font-medium text-brand dark:text-navy-300 hover:underline">{{ row.filename }}</a>
+          <span class="ml-2">{{ row.relevance }} · {{ row.evidence_status }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No evidence mapped to this requirement.</p>{% endif %}
+
+      <h5 class="mt-4 text-sm font-medium text-gray-800 dark:text-gray-200">Current desk review (replaced when desk review is re-run)</h5>
+      {% if entry.desk_review_findings %}
+      <ul class="mt-2 space-y-3">
+        {% for finding in entry.desk_review_findings %}
+        <li class="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ finding.finding_type|title }} · {{ finding.severity|title }}</p>
+          <p class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ finding.content }}</p>
+          {% if finding.source_quote %}<p class="mt-2 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ finding.source_quote }}</p>{% endif %}
+          {% if finding.source_location %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ finding.source_location }}</p>{% endif %}
+          {{ citation_list(finding.citations, finding.citations_captured) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No desk-review findings for this requirement.</p>{% endif %}
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3. AI proposal</h4>
+      {% if not entry.ai_proposal %}
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No AI proposal recorded.</p>
+      {% elif entry.ai_proposal.claim is none %}
+      <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">No run record for this proposal (migrated from the legacy report).</p>
+      {{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
+      {% else %}
+      {% set claim = entry.ai_proposal.claim %}
+      {% set item = claim.get('item') or {} %}
+      {% set quality = claim.get('quality') or {} %}
+      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ claim.get('outcome')|replace('_', ' ')|title }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Disposition</dt><dd class="text-gray-700 dark:text-gray-300">{{ claim.get('disposition') }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ item.get('current_state') }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gap description</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ item.get('gap_description') }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="text-gray-700 dark:text-gray-300">{{ item.get('risk_level') }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Remediation action</dt><dd class="text-gray-700 dark:text-gray-300">{{ item.get('remediation_action') }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Model</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.model_id }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Started</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.started_at }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Trigger</dt><dd class="font-mono text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.trigger_id }}</dd></div>
+      </dl>
+      {% if claim.get('scope_enforced') %}<p class="mt-3 text-sm font-medium text-amber-700 dark:text-amber-300">Scope-enforced to not applicable at analysis time</p>{% endif %}
+      <ul class="mt-3 grid gap-2 sm:grid-cols-2 text-sm text-gray-700 dark:text-gray-300">
+        <li>Citations: {{ quality.get('citation_count', 0) }}</li>
+        <li>Evidence quote: {% if quality.get('evidence_quote_grounded') is sameas true %}grounded{% elif quality.get('evidence_quote_grounded') is sameas false %}not grounded{% else %}no quote offered{% endif %}</li>
+        <li>Unsupported assertion: {{ 'yes' if quality.get('unsupported_assertion') else 'no' }}</li>
+        <li>Model flagged for review: {{ 'yes' if quality.get('needs_review') else 'no' }}</li>
+        <li>Desk-review red flags: {{ quality.get('desk_review_red_flags', 0) }}</li>
+        <li>Desk-review absence: {{ 'yes' if quality.get('desk_review_absence') else 'no' }}</li>
+        <li>Contradictions: {{ 'Not assessed' if quality.get('contradictions') is none else quality.get('contradictions') }}</li>
+      </ul>
+      {% if quality.get('evidence_quote_grounded') is sameas false %}<p class="mt-3 text-sm text-amber-700 dark:text-amber-300">Ungrounded quote offered by the model (not found in any evidence; not treated as support):</p><p class="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('evidence_quote') }}</p>{% endif %}
+      {{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
+      {% if entry.card.unsupported_assertion %}<p class="mt-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">This supporting outcome has no grounded citation.</p>{% endif %}
+      {% endif %}
+      {% if entry.card.withheld_proposal %}
+      <div class="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">
+        <p class="font-medium">A newer AI proposal was withheld because this conclusion is locked</p>
+        {% if entry.card.withheld_proposal.outcome %}<p class="mt-1">Outcome: {{ entry.card.withheld_proposal.outcome|replace('_', ' ')|title }}</p>{% endif %}
+        {% if entry.card.withheld_proposal.rationale %}<p class="mt-1 whitespace-pre-wrap">{{ entry.card.withheld_proposal.rationale }}</p>{% endif %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">4. Consultant decision</h4>
+      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ 'AI proposal' if entry.card.conclusion.ai_proposed else 'Consultant-edited' }}</p>
+      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ entry.card.conclusion.outcome|replace('_', ' ')|title }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.risk_level|title }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.rationale }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gaps identified</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.gaps_identified }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Recommended action</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.recommended_action }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Evidence summary</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.evidence_summary or 'No grounded supporting quote' }}</dd></div>
+      </dl>
+      {% if not entry.card.conclusion.ai_proposed and entry.card.previous_outcome %}<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">AI proposed before edit: {{ entry.card.previous_outcome|replace('_', ' ')|title }}</p>{% endif %}
+      {% if entry.card.last_decision %}<p class="mt-3 text-sm text-gray-700 dark:text-gray-300">{{ entry.card.last_decision.action }} by {{ entry.card.last_decision.actor_display }} at {{ entry.card.last_decision.created_at }}</p>{% endif %}
+      {% if entry.card.state == 'edited' %}<p class="mt-3 text-sm text-amber-700 dark:text-amber-300">Consultant edits carry no citations; the citations above belong to the AI proposal this edit replaced.</p>{% endif %}
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">5. Revision history</h4>
+      <ol data-revision-history class="mt-3 space-y-3">
+        {% for rev in entry.revisions %}
+        <li data-revision-action="{{ rev.revision.action }}" class="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
+          <p class="font-medium text-gray-900 dark:text-gray-100">#{{ rev.sequence }} · {{ rev.revision.created_at }} · {{ rev.action_label }} by {{ rev.actor_display }}</p>
+          {% if rev.revision.previous_outcome is not none %}<p class="mt-2 text-gray-700 dark:text-gray-300">Before: {{ rev.revision.previous_outcome|replace('_', ' ')|title }}</p><p class="mt-1 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ rev.revision.previous_rationale }}</p>{% endif %}
+          {% if rev.outcome_after is not none %}<p class="mt-2 text-gray-700 dark:text-gray-300">After: {{ rev.outcome_after|replace('_', ' ')|title }}</p><p class="mt-1 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ rev.rationale_after }}</p>{% endif %}
+          {% if rev.run %}
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Run {{ rev.run.id[:8] }} · {{ rev.run.framework_id|upper }} · {{ rev.run.model_id }} · {{ rev.run.status }}</p>
+          {% if rev.claim %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Claim: {{ rev.claim.get('outcome')|replace('_', ' ')|title }} · {{ rev.claim.get('disposition') }}</p>{{ citation_list(rev.citations, rev.citations_captured) }}{% endif %}
+          {% elif rev.revision.action == 'proposed' %}<p class="mt-2 text-sm text-amber-700 dark:text-amber-300">No run record for this proposal (migrated from the legacy report).</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+</article>

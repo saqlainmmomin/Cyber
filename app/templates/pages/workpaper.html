@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Workpaper — {{ assessment.company_name }}{% endblock %}
+
+{% block content %}
+<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+  <span class="mx-1.5">/</span>
+  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+  <span class="mx-1.5">/</span>
+  <span class="text-gray-600 dark:text-gray-300">Workpaper</span>
+</nav>
+
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Workpaper: requirement traceability</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Read-only. Client response, evidence, AI proposal, consultant decision and every revision for each requirement, oldest event first.</p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <a href="/assessments/{{ assessment.id }}/conclusions" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Conclusions (decide) →</a>
+    <a href="/assessments/{{ assessment.id }}?tab=report" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Report →</a>
+  </div>
+</div>
+
+<div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+  {% for key, label in [('conclusions', 'Conclusions'), ('in_scope', 'In scope'), ('excluded', 'Excluded'), ('unconcluded', 'No conclusion'), ('pending', 'Pending'), ('rejected', 'Rejected'), ('approved', 'Approved'), ('edited', 'Edited'), ('legacy_bulk', 'Legacy bulk approvals'), ('runs', 'Analysis runs')] %}
+  <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
+    <p class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</p>
+    <p data-count="{{ key }}" class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ wp.counts[key] }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<section class="mb-8">
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Analysis runs</h2>
+  {% if wp.runs %}
+  <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <table class="min-w-full text-left text-xs">
+      <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
+        <tr><th class="px-3 py-2">Framework</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Model</th><th class="px-3 py-2">Started</th><th class="px-3 py-2">Completed</th><th class="px-3 py-2">Trigger</th><th class="px-3 py-2">Claims</th><th class="px-3 py-2">Evidence versions offered</th><th class="px-3 py-2">Desk review used</th><th class="px-3 py-2">Error type</th></tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
+        {% for run in wp.runs %}
+        <tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}">
+          <td class="px-3 py-2">{{ run.framework_id|upper }}</td>
+          <td class="px-3 py-2">{% if run.stale %}Running (stale: started more than 1 hour ago; likely interrupted){% else %}{{ run.status|title }}{% endif %}</td>
+          <td class="px-3 py-2">{{ run.model_id }}</td>
+          <td class="px-3 py-2">{{ run.started_at }}</td>
+          <td class="px-3 py-2">{{ run.completed_at or '—' }}</td>
+          <td class="px-3 py-2 font-mono">{{ run.trigger_id[:8] if run.trigger_id else '—' }}</td>
+          <td class="px-3 py-2">{{ run.claim_count }}</td>
+          <td class="px-3 py-2">{{ run.evidence_version_count if run.evidence_version_count is not none else '—' }}</td>
+          <td class="px-3 py-2">{{ 'Yes' if run.desk_review_used is sameas true else ('No' if run.desk_review_used is sameas false else '—') }}</td>
+          <td class="px-3 py-2">{{ run.error_type or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-sm text-gray-500 dark:text-gray-400">No analysis runs recorded.</p>{% endif %}
+</section>
+
+{% if wp.sections %}
+  {% for section in wp.sections %}
+  <section data-workpaper-section="{{ section.framework_id }}" class="mb-10">
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">{{ section.framework_id|upper }}</h2>
+    <div class="space-y-5">
+      {% for entry in section.entries %}{% include "components/workpaper_entry.html" %}{% endfor %}
+    </div>
+    {% if section.excluded_entries %}
+    <h3 class="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Excluded by scope enforcement</h3>
+    <div class="space-y-5">
+      {% for entry in section.excluded_entries %}{% include "components/workpaper_entry.html" %}{% endfor %}
+    </div>
+    {% endif %}
+    {% if section.unconcluded %}
+    <h3 class="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Applicable requirements with no conclusion</h3>
+    <ul class="space-y-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 text-sm text-gray-700 dark:text-gray-300">
+      {% for row in section.unconcluded %}<li data-workpaper-unconcluded id="{{ row.anchor }}" class="scroll-mt-6"><span class="font-mono">{{ row.requirement_id }}</span> — {{ row.title }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endfor %}
+{% else %}
+<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-16 text-center">
+  <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">No conclusions yet. Run the gap analysis first.</h2>
+</div>
+{% endif %}
+{% endblock %}
