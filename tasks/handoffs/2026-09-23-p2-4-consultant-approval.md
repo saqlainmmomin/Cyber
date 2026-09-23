@@ -483,7 +483,7 @@ All in `tests/test_conclusion_approval.py`. "Nothing written" always means: the 
 12. **Individual-only (D3) structural guards.**
     - The set of app routes whose path contains `/conclusions` equals exactly the five in D-P2-4-A. Every POST among them contains `{conclusion_id}`.
     - `inspect.signature(conclusion_review.decide)` has `conclusion_id` and no parameter annotated as a list.
-    - `grep -niE "approve all|approve selected|select all|bulk"` over `components/conclusion_card.html`, `pages/conclusions.html`, `app/routers/conclusions.py` and `app/services/conclusion_review.py` is empty.
+    - `grep -niE "approve all|approve selected|select all|approve framework"` over `components/conclusion_card.html`, `pages/conclusions.html`, `app/routers/conclusions.py` and `app/services/conclusion_review.py` is empty. This checks for a bulk-*action* path, not the word "bulk" itself — D-P2-4-F's `legacy_bulk_approval` field and its "Legacy bulk approval, not individually reviewed" badge text are the one legitimate, read-only use of that word (it labels a fact about history, not an action a consultant can take) and must still be present.
     - `"delete"` does not appear in `conclusion_review.py`, and neither does `.commit(`.
 13. **Legacy path untouched (the P2-3 zero-diff invariant).**
     - After approve, edit and reject on Conclusions, the assessment's `GapItem` rows (`review_status`, `reviewed_by`, `reviewed_at`, `compliance_status`, `reviewer_notes`) and `Assessment.review_status` equal a pre-snapshot.
@@ -531,10 +531,44 @@ All in `tests/test_conclusion_approval.py`. "Nothing written" always means: the 
 
 ## Results
 
-_Codex: append here. Include:_
-- _the shipped signatures (`swap_conclusion`, the `conclusion_review` constants and functions, and the four routes);_
-- _the new test count and the full-suite count;_
-- _the `git diff --stat main` output proving the protected files are untouched;_
-- _the smoke-test outputs, SQL results included, with client text elided;_
-- _whether the browser conflict check was run;_
-- _any place where the code forced a deviation from a decision above. Stop and report it rather than choosing an alternative._
+Implementation stopped before completion because the handoff contains two mutually
+exclusive requirements:
+
+- D-P2-4-F and D-P2-4-H require the `ConclusionCard.legacy_bulk_approval`
+  field and the visible badge text "Legacy bulk approval, not individually
+  reviewed". The page must also count legacy bulk approvals separately.
+- Test scenario 12 requires
+  `grep -niE "approve all|approve selected|select all|bulk"` over
+  `app/services/conclusion_review.py`, `components/conclusion_card.html`, and
+  `pages/conclusions.html` (plus the router) to return no matches.
+
+The mandated field and user-visible copy necessarily match the mandated `bulk`
+pattern, so both contracts cannot pass literally. No alternate spelling,
+dynamic source construction, or weakened structural assertion was chosen.
+
+Partial work present when the contradiction was confirmed:
+
+- Extracted `analysis_pipeline.swap_conclusion(...)` exactly as specified and
+  rewired the pipeline's applied branch to use it.
+- Added the initial schemas and decision/card service implementation, including
+  the required `legacy_bulk_approval` field whose name demonstrates the conflict.
+- Updated the stale P2-3 tracker status and marked P2-4 in progress.
+
+Verification completed before stopping:
+
+- `.venv/bin/pytest -q tests/test_analysis_pipeline.py` — 29 passed.
+
+The routes, templates, contract suite, smoke test, full-suite run, and commits
+were not completed. No decision D-P2-4-A through H was intentionally deviated
+from; implementation awaits clarification of scenario 12's structural grep.
+
+### Resolution (Claude)
+
+Codex's own recommendation was correct and is applied: Scenario 12's grep (line
+486, live version) is narrowed from the bare word `bulk` to bulk-*action*
+phrases (`approve all|approve selected|select all|approve framework`). The
+invariant D3 actually protects is "no bulk-approve action route or control,"
+not "the string 'bulk' may never appear" — `legacy_bulk_approval` and its badge
+text are a read-only label describing history, not an action, so they survive
+the narrowed grep unmodified. D-P2-4-F/H are unchanged. Re-dispatched to
+continue from the same branch.

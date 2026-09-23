@@ -15,6 +15,7 @@ history. D-P2-3-H leaves pipeline-owned assessments out of legacy mapping.
 
 This module never commits; the caller owns every transaction. It intentionally
 contains no ORM row-removal operation.
+The compare-and-swap is shared with the consultant decision service.
 """
 
 from __future__ import annotations
@@ -243,6 +244,29 @@ def load_conclusion_state(
     }
 
 
+def swap_conclusion(
+    db: Session,
+    conclusion: Conclusion,
+    *,
+    expected_version: int,
+    values: dict[str, Any],
+) -> None:
+    """Compare-and-swap one Conclusion on its version (D6).
+
+    Writes ``values`` plus ``version = expected_version + 1`` iff the row still
+    holds ``expected_version``; otherwise raises ConclusionConflict. Never commits.
+    """
+    result = db.execute(
+        update(Conclusion)
+        .where(Conclusion.id == conclusion.id, Conclusion.version == expected_version)
+        .values(**values, version=expected_version + 1)
+        .execution_options(synchronize_session=False)
+    )
+    if result.rowcount != 1:
+        raise ConclusionConflict(conclusion.id)
+    db.expire(conclusion)
+
+
 def _cluster_id(framework_id: str, requirement_id: str) -> str | None:
     return {
         member["control"]: cluster["cluster_id"]
@@ -343,22 +367,12 @@ def record_framework_run(
             conclusion = existing.conclusion
             previous_outcome = conclusion.outcome
             previous_rationale = conclusion.rationale
-            result = db.execute(
-                update(Conclusion)
-                .where(
-                    Conclusion.id == conclusion.id,
-                    Conclusion.version == existing.expected_version,
-                )
-                .values(
-                    **content,
-                    ai_proposed=True,
-                    version=existing.expected_version + 1,
-                )
-                .execution_options(synchronize_session=False)
+            swap_conclusion(
+                db,
+                conclusion,
+                expected_version=existing.expected_version,
+                values={**content, "ai_proposed": True},
             )
-            if result.rowcount != 1:
-                raise ConclusionConflict(conclusion.id)
-            db.expire(conclusion)
             disposition = "applied"
 
         revision = ConclusionRevision(
