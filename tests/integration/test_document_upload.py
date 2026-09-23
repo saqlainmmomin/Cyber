@@ -3,16 +3,17 @@
 import io
 from unittest.mock import patch
 
-from app.models.assessment import AssessmentDocument
+from app.config import settings
+from app.models.evidence import Evidence
 from tests.integration.conftest import create_test_assessment
 
 
-def test_upload_document(client, db_session):
+def test_upload_document(client, db_session, tmp_path, monkeypatch):
     assessment_id = create_test_assessment(client)
     pdf_content = b"%PDF-1.4 test content"
+    monkeypatch.setattr(settings, "upload_dir", str(tmp_path / "uploads"))
 
-    with patch("app.routers.web.save_upload", return_value="/tmp/fake/test-policy.pdf"), \
-         patch("app.routers.web.extract_text", return_value="Extracted policy text for testing."):
+    with patch("app.services.evidence.extract_text", return_value="Extracted policy text for testing."):
         response = client.post(
             f"/assessments/{assessment_id}/upload",
             data={"category": "policy"},
@@ -21,11 +22,9 @@ def test_upload_document(client, db_session):
 
     assert response.status_code == 200
 
-    docs = db_session.query(AssessmentDocument).filter(
-        AssessmentDocument.assessment_id == assessment_id
-    ).all()
+    docs = db_session.query(Evidence).filter(Evidence.assessment_id == assessment_id).all()
     assert len(docs) == 1
-    assert docs[0].filename == "test-policy.pdf"
+    assert docs[0].original_filename == "test-policy.pdf"
     assert docs[0].document_category == "policy"
 
 

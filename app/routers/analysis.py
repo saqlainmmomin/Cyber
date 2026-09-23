@@ -8,11 +8,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.questionnaire import build_questionnaire
-from app.models.assessment import Assessment, AssessmentDocument
+from app.models.assessment import Assessment
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
+from app.services.evidence import analysis_documents
 from app.services.scoring import (
     compute_framework_scores,
     generate_initiatives,
@@ -61,18 +62,9 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     ]
 
     # Gather documents
-    docs_db = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .all()
-    )
     documents = [
-        {
-            "filename": d.filename,
-            "category": d.document_category,
-            "text": d.extracted_text or "",
-        }
-        for d in docs_db
+        {"filename": d["filename"], "category": d["category"], "text": d["text"]}
+        for d in analysis_documents(db, assessment_id)
     ]
 
     _selected_fw = ["dpdpa"]

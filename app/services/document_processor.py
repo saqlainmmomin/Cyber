@@ -10,7 +10,6 @@ Supported:
 import base64
 import os
 import re
-import uuid
 
 import pdfplumber
 from docx import Document
@@ -25,17 +24,6 @@ _IMAGE_MEDIA_TYPES = {
     "jpeg": "image/jpeg",
     "webp": "image/webp",
 }
-
-
-def save_upload(assessment_id: str, filename: str, content: bytes) -> str:
-    """Save uploaded file to disk and return the file path."""
-    dest_dir = os.path.join(settings.upload_dir, assessment_id)
-    os.makedirs(dest_dir, exist_ok=True)
-    safe_name = f"{uuid.uuid4().hex[:8]}_{filename}"
-    file_path = os.path.join(dest_dir, safe_name)
-    with open(file_path, "wb") as f:
-        f.write(content)
-    return file_path
 
 
 def extract_text(file_path: str, file_type: str) -> str:

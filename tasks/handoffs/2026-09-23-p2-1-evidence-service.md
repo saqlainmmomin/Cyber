@@ -511,6 +511,99 @@ All in `tests/test_evidence_service.py` (already written — FK-enforcing Alembi
 - **Blobs:** everything P2-1 writes is under `{upload_dir}/evidence/`; after a revert + restore it can be removed as a whole.
 - **Known residual risk:** duplicate detection is check-then-insert (D-P2-1-C); two truly concurrent identical uploads can both succeed. Single-user MVP; revisit when auth/multi-user lands.
 
+## Results
+
+### Routes
+
+| Method | Path | Success | Template or response model |
+|---|---|---:|---|
+| GET | `/api/evidence/{evidence_id}` | 200 | `EvidenceOut` |
+| POST | `/api/evidence/{evidence_id}/versions` | 201 | `EvidenceOut` |
+| POST | `/api/evidence/{evidence_id}/transitions` | 200 | `EvidenceOut` |
+| POST | `/api/evidence/{evidence_id}/uses` | 201 | `EvidenceUseOut` |
+| DELETE | `/api/evidence/{evidence_id}/uses/{use_id}` | 204 | — |
+| POST | `/api/assessments/{assessment_id}/documents` | 201 | `DocumentResponse` |
+| GET | `/api/assessments/{assessment_id}/documents` | 200 | `list[DocumentResponse]` |
+| DELETE | `/api/assessments/{assessment_id}/documents/{document_id}` | 204 | — |
+| POST | `/assessments/{assessment_id}/upload` | 200 | `partials/document_list.html` + `Document uploaded` toast |
+| DELETE | `/assessments/{assessment_id}/documents/{evidence_id}` | 200 | `partials/document_list.html` |
+| POST | `/assessments/{assessment_id}/evidence/{evidence_id}/versions` | 200 | `partials/document_list.html` + `New version uploaded` toast |
+| GET | `/evidence/{evidence_id}` | 200 | `pages/evidence_detail.html` |
+
+No route-table deviation from Required approach step 5. The TCP Uvicorn bind was refused by the managed sandbox, so the smoke used the specified in-process ASGI fallback.
+
+### Lifecycle tables shipped
+
+`EVIDENCE_TRANSITIONS`:
+
+| From | To | Actor | Reason |
+|---|---|---|---|
+| quarantined | active | system | no |
+| quarantined | rejected | system | no |
+| active | invalidated | consultant | yes |
+| invalidated | active | consultant | yes |
+| active | archived | consultant | no |
+| invalidated | archived | consultant | no |
+| rejected | archived | consultant | no |
+| archived | active | consultant | yes |
+
+`VERSION_TRANSITIONS`:
+
+| From | To |
+|---|---|
+| quarantined | active |
+| quarantined | rejected |
+| active | superseded |
+
+### Schema and tests
+
+Alembic revision shipped: `7a3f1e2b9c80`, down revision `5c7c75960f43`. The four specified existing test files were updated for the P2-1 head/model contract: `test_document_upload.py`, `test_target_schema.py`, `test_data_integrity.py`, and `test_alembic_baseline_immutable.py`. The integration upload test now asserts Evidence and redirects storage to its temporary upload tree; the three Alembic updates follow step 2. During full-suite verification, four additional stale `5c7c75960f43` head assertions were found in `test_data_integrity.py` and `test_startup_invariants.py`; those were updated to `7a3f1e2b9c80` so the suite can reflect the pinned head. This is handoff drift, not a contract change.
+
+### Legacy migration copy run
+
+The source dev DB and `uploads/` tree were copied to `/private/tmp/p2-1-migration.TLrgUI`. A legacy text-only AssessmentDocument was seeded in the copy only to exercise the migration path; the live DB was not used as a migration target.
+
+| Run | migrated | text-only | already migrated | orphaned | empty | AssessmentDocument rows |
+|---|---:|---:|---:|---:|---:|---:|
+| First | 1 | 1 | 0 | 0 | 0 | 1 before / 1 after |
+| Immediate second | 0 | 0 | 1 | 0 | 0 | 1 |
+
+The first run printed `Document migration complete: 1 migrated (1 text-only), 0 already migrated, 0 orphaned, 0 empty`; the second printed `0 migrated (0 text-only), 1 already migrated, 0 orphaned, 0 empty`. Both runs took the backup-first path.
+
+### Live smoke counts
+
+The live dev DB was schema-empty before startup; the app startup migrated it to the P2-1 head. Counts below are immediately before and after the upload/version/restore-for-desk-review/final-archive smoke sequence.
+
+| Resource | Before | After |
+|---|---:|---:|
+| `evidence` | 0 | 1 |
+| `evidence_versions` | 0 | 2 |
+| `evidence_uses` | 0 | 0 |
+| `audit_events` | 0 | 10 |
+| blob files under `uploads/evidence/` | 0 | 2 |
+
+Stored hashes matched the two `shasum -a 256` outputs:
+
+```text
+v1: 7a92ece634429b7ba2fd151e7520619e63faa89e6b777f0d7bab89d5e081707a  uploads/evidence/acd7d731-16f4-4823-9d26-c63328e5e29e/b6eba50f-8267-4e4d-8780-8b133663923c/v1.pdf
+v2: e662e3137749233348ec8788fb835e689b8e66935d3e642e35ad19ede423f472  uploads/evidence/acd7d731-16f4-4823-9d26-c63328e5e29e/b6eba50f-8267-4e4d-8780-8b133663923c/v2.pdf
+```
+
+Desk review completed with the LLM seam mocked and received the active v2 evidence text. Because archived evidence is intentionally excluded from analysis, the smoke archived the evidence, restored it through the JSON lifecycle route for desk review, then archived it again; the final status was `archived` and both blobs remained on disk.
+
+### Verification
+
+- `tests/test_evidence_service.py`: **43 passed**.
+- Full `.venv/bin/pytest -q`: **309 passed, 58 warnings in 26.14s**.
+- Source guards: no `AssessmentDocument(` constructor or `save_upload` reference in `app/**/*.py`; no `relationship(` in `app/models/`; the only `db.delete(` in `app/services/evidence.py` deletes an `EvidenceUse` mapping.
+
+### Current-state drift found
+
+- The dev DB was empty rather than containing a ready real engagement, so the smoke created a dedicated smoke client, engagement, and assessment through the normal model hierarchy.
+- The handoff did not mention four stale P2-1 head assertions outside its three listed Alembic edits; they contradicted the pinned `7a3f1e2b9c80` contract and were updated as described above.
+- The handoff’s smoke wording places desk review after archive, but D-P2-1-A makes archived evidence invisible to analysis. The smoke therefore restored the archived evidence for the mocked desk-review check and archived it again as its final state.
+- No missed live writer caller remained after the route swap; the source guard found only the `AssessmentDocument` class declaration itself, which is intentionally preserved.
+
 ## Report back
 
 Append a `## Results` section containing:

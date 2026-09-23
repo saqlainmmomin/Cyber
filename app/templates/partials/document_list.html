@@ -1,42 +1,62 @@
 {% if documents %}
-<table class="min-w-full divide-y divide-gray-200">
-  <thead class="bg-gray-50">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+  <thead class="bg-gray-50 dark:bg-gray-800">
     <tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Extracted</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">File</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Version</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SHA-256</th>
+      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
     </tr>
   </thead>
-  <tbody class="divide-y divide-gray-200">
-    {% for doc in documents %}
-    <tr class="hover:bg-gray-50">
-      <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ doc.filename }}</td>
+  <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+    {% for row in documents %}
+    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+      <td class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+        {% if row.source == "evidence" %}
+        <a href="/evidence/{{ row.id }}" class="text-brand dark:text-navy-300 hover:underline">{{ row.filename }}</a>
+        {% else %}
+        {{ row.filename }}
+        {% endif %}
+        {% if row.mapped_in %}<p class="text-xs text-gray-500 dark:text-gray-400">Mapped from another assessment</p>{% endif %}
+        {% if row.source == "legacy" %}<p class="text-xs text-gray-500 dark:text-gray-400">Uploaded before evidence versioning. Run <code>scripts/migrate_documents_to_evidence.py</code> to enable versioning and archiving.</p>{% endif %}
+      </td>
+      <td class="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">{{ row.category | replace("_", " ") | title }}</td>
+      <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400 uppercase">{{ row.file_type }}</td>
       <td class="px-6 py-3">
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-100 text-brand">
-          {{ doc.document_category | replace("_", " ") | title }}
-        </span>
+        {% with status=row.status %}{% include "components/evidence_status_badge.html" %}{% endwith %}
       </td>
-      <td class="px-6 py-3 text-sm text-gray-500 uppercase">{{ doc.file_type }}</td>
-      <td class="px-6 py-3 text-sm text-gray-500">
-        {{ (doc.extracted_text | length if doc.extracted_text else 0) | filesizeformat if false else ((doc.extracted_text | length if doc.extracted_text else 0) ~ ' chars') }}
+      <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+        {% if row.source == "evidence" %}v{{ row.current_version_number or row.version_count }} of {{ row.version_count }}{% else %}—{% endif %}
       </td>
-      <td class="px-6 py-3 text-right">
-        <button hx-delete="/assessments/{{ assessment_id }}/documents/{{ doc.id }}"
+      <td class="px-6 py-3 text-sm font-mono text-gray-500 dark:text-gray-400">{% if row.sha256_prefix %}{{ row.sha256_prefix }}…{% else %}—{% endif %}</td>
+      <td class="px-6 py-3 text-right text-sm">
+        {% if row.can_archive %}
+        <button hx-delete="/assessments/{{ assessment_id }}/documents/{{ row.id }}"
                 hx-target="#document-list"
                 hx-swap="innerHTML"
-                hx-confirm="Delete {{ doc.filename }}?"
-                class="text-red-400 hover:text-red-600 text-sm transition-colors">
-          Delete
-        </button>
+                hx-confirm="Archive {{ row.filename }}? It will be excluded from analysis but retained."
+                class="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors">Archive</button>
+        {% endif %}
+        {% if row.can_add_version %}
+        <details class="inline-block ml-3 text-left">
+          <summary class="cursor-pointer text-brand dark:text-navy-300">New version</summary>
+          <form class="mt-2 space-y-2" hx-post="/assessments/{{ assessment_id }}/evidence/{{ row.id }}/versions" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+            <input type="file" name="file" required class="block text-xs text-gray-500 dark:text-gray-400">
+            <input type="text" name="change_reason" required placeholder="Change reason" class="w-40 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-xs">
+            <button type="submit" class="text-brand dark:text-navy-300 text-xs">Upload</button>
+          </form>
+        </details>
+        {% endif %}
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% else %}
-<div class="px-6 py-8 text-center text-sm text-gray-500">
+<div class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
   No documents uploaded yet. Upload privacy policies, consent forms, or other compliance documents.
 </div>
 {% endif %}

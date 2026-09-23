@@ -190,7 +190,7 @@ def test_assessment_engagement_is_nullable_and_versions_default_to_one(migrated_
 def test_downgrade_removes_only_p1_2_schema_and_upgrade_restores_it(migrated_db):
     _session, engine, config = migrated_db
 
-    command.downgrade(config, "-1")
+    command.downgrade(config, "6fcd9e575309")
     with engine.connect() as connection:
         tables = set(inspect(engine).get_table_names()) - {"alembic_version"}
         assessment_columns = {
@@ -218,7 +218,7 @@ def test_downgrade_refuses_when_p1_2_data_is_present(migrated_db):
     session.commit()
 
     with pytest.raises(RuntimeError, match="Refusing to downgrade past P1-2"):
-        command.downgrade(config, "-1")
+        command.downgrade(config, "6fcd9e575309")
 
     with engine.connect() as connection:
         assert connection.execute(text("SELECT COUNT(*) FROM clients")).scalar() == 1

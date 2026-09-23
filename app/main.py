@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
-from app.routers import analysis, assessments, desk_review, documents, questionnaire, remediation, reports, review, web
+from app.routers import analysis, assessments, desk_review, documents, evidence, questionnaire, remediation, reports, review, web
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +109,7 @@ app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
 app.include_router(assessments.router)
 app.include_router(questionnaire.router)
 app.include_router(documents.router)
+app.include_router(evidence.router)
 app.include_router(analysis.router)
 app.include_router(reports.router)
 app.include_router(reports.comparison_router)

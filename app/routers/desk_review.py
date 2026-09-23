@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.services.desk_review import run_desk_review
+from app.services.evidence import analysis_documents
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}/desk-review", tags=["desk-review"])
 
@@ -20,14 +21,7 @@ def trigger_desk_review(assessment_id: str, db: Session = Depends(get_db)):
     if not assessment:
         raise HTTPException(404, "Assessment not found")
 
-    # Check documents exist
-    from app.models.assessment import AssessmentDocument
-    doc_count = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .count()
-    )
-    if doc_count == 0:
+    if not analysis_documents(db, assessment_id):
         raise HTTPException(400, "Upload documents before running desk review.")
 
     summary = run_desk_review(assessment_id, db)
