@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ firm_name }} · Evidence upload</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: #f8fafc; color: #172033; }
+    main { width: min(42rem, calc(100% - 2rem)); margin: 3rem auto; }
+    h1 { font-size: 1.6rem; margin-bottom: 0.35rem; }
+    h2 { font-size: 1.05rem; margin: 2rem 0 0.75rem; }
+    p, li { line-height: 1.5; }
+    .muted { color: #526071; font-size: 0.92rem; }
+    .card { background: #fff; border: 1px solid #dbe2ea; border-radius: 0.75rem; padding: 1.25rem; margin-top: 1.25rem; }
+    .notice { border-radius: 0.5rem; padding: 0.8rem 1rem; margin: 1rem 0; }
+    .success { background: #ecfdf3; border: 1px solid #a7f3c3; color: #166534; }
+    .error { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
+    label { display: block; font-weight: 600; margin: 1rem 0 0.4rem; }
+    select, .file-input, button { width: 100%; box-sizing: border-box; font: inherit; }
+    select, .file-input { border: 1px solid #b8c3d1; border-radius: 0.45rem; padding: 0.65rem; background: #fff; }
+    button { margin-top: 1rem; border: 0; border-radius: 0.45rem; padding: 0.7rem 1rem; background: #1d4ed8; color: #fff; font-weight: 700; cursor: pointer; }
+    ul { padding-left: 1.25rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f172a; color: #e5e7eb; }
+      .muted { color: #aab6c5; }
+      .card { background: #111827; border-color: #334155; }
+      select, .file-input { background: #1f2937; color: #e5e7eb; border-color: #475569; }
+      .success { background: #052e16; border-color: #166534; color: #bbf7d0; }
+      .error { background: #4c0519; border-color: #9f1239; color: #fecdd3; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>{{ firm_name }} evidence upload</h1>
+    <p class="muted">Upload the requested evidence securely through this link.</p>
+
+    {% if success_filename %}
+    <div class="notice success">File received: {{ success_filename }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="notice error">{{ error }}</div>
+    {% endif %}
+
+    <section class="card">
+      <h2>Requested items</h2>
+      <ul>
+        {% for item in items %}
+        <li>{{ item.title }}</li>
+        {% endfor %}
+      </ul>
+
+      {% if remaining > 0 %}
+      <p><strong>{{ remaining }} of {{ max_uploads }} uploads remaining</strong></p>
+      <p class="muted">Link expires {{ expires_at }} UTC</p>
+      <form method="post" enctype="multipart/form-data">
+        <label for="item-key">Requested item</label>
+        <select id="item-key" name="item_key" required>
+          {% for item in items %}
+          <option value="{{ item.key }}">{{ item.title }}</option>
+          {% endfor %}
+        </select>
+        <label for="file-upload">File</label>
+        <input id="file-upload" class="file-input" type="file" name="file" required>
+        <button type="submit">Upload evidence</button>
+      </form>
+      {% else %}
+      <p><strong>This link has reached its upload limit.</strong></p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Files received through this link</h2>
+      {% if uploads %}
+      <ul>
+        {% for upload in uploads %}
+        <li>{{ upload.filename }} — {% if upload.status == "rejected" %}Rejected{% else %}Received{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No files have been received through this link.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

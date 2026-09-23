@@ -31,6 +31,7 @@ from app.models.report import GapItem, GapReport
 from app.schemas.assessment import DocumentCategory
 from app.services import evidence as evidence_service
 from app.services.evidence import analysis_documents, evidence_panel_rows
+from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services.scoring import report_framework_scores
 from app.utils.review_gate import require_review_approval
 
@@ -337,6 +338,9 @@ def engagement_detail(
             "client": client,
             "card": card,
             "assessments": assessment_cards,
+            "engagement_id": engagement_id,
+            "magic_links": magic_link_rows(db, engagement_id),
+            "client_uploads": client_upload_rows(db, engagement_id),
         },
     )
 
