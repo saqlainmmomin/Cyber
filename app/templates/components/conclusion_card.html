@@ -1,0 +1,173 @@
+<div id="conclusion-card-{{ card.conclusion.id }}"
+     data-conclusion-card
+     data-state="{{ card.state }}"
+     data-version="{{ card.conclusion.version }}"
+     class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span class="font-semibold text-brand dark:text-navy-300">{{ card.conclusion.framework_id|upper }}</span>
+          <span class="font-mono">{{ card.conclusion.requirement_id }}</span>
+          <span>v{{ card.conclusion.version }}</span>
+        </div>
+        <h3 class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ card.requirement_title }}</h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        {% if card.legacy_bulk_approval %}
+        <span class="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">Legacy bulk approval, not individually reviewed</span>
+        {% elif card.state == 'approved' %}
+        <span class="rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300">Approved</span>
+        {% elif card.state == 'edited' %}
+        <span class="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">Edited &amp; approved</span>
+        {% elif card.state == 'rejected' %}
+        <span class="rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-300">Rejected</span>
+        {% else %}
+        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Pending</span>
+        {% endif %}
+      </div>
+    </div>
+    {% if card.locked %}
+    <p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Locked: re-analysis will not overwrite this</p>
+    {% endif %}
+  </div>
+
+  {% if conflict is defined and conflict %}
+  <div class="m-5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
+    <p class="font-semibold">This conclusion changed since you loaded it (you had version {{ conflict.submitted_version }}, it is now {{ card.conclusion.version }}). Nothing was saved. Review the current state and decide again.</p>
+    {% if conflict.diff %}
+    <div class="mt-3 overflow-x-auto">
+      <table class="min-w-full text-left text-xs">
+        <thead><tr><th class="pr-4 py-1">Field</th><th class="pr-4 py-1">Current value</th><th class="py-1">Your unsaved value</th></tr></thead>
+        <tbody>
+          {% for row in conflict.diff %}
+          <tr class="border-t border-red-200 dark:border-red-800">
+            <td class="pr-4 py-2 font-medium">{{ row.field|replace('_', ' ')|title }}</td>
+            <td class="pr-4 py-2 whitespace-pre-wrap">{{ row.current }}</td>
+            <td class="py-2 whitespace-pre-wrap">{{ row.submitted }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="p-5 space-y-5">
+    <section>
+      <div class="flex flex-wrap items-center gap-2">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current conclusion</h4>
+        <span class="text-xs text-gray-400 dark:text-gray-500">{{ 'AI proposal' if card.conclusion.ai_proposed else 'Consultant-edited' }}</span>
+      </div>
+      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ card.conclusion.outcome|replace('_', ' ')|title }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ card.conclusion.risk_level|title }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.rationale }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gaps identified</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.gaps_identified or 'None recorded' }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Recommended action</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.recommended_action or 'None recorded' }}</dd></div>
+      </dl>
+      {% if not card.conclusion.ai_proposed and card.previous_outcome %}
+      <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">AI proposed before edit: {{ card.previous_outcome|replace('_', ' ')|title }}</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence summary</h4>
+      <p class="mt-2 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ card.conclusion.evidence_summary or 'No grounded supporting quote' }}</p>
+    </section>
+
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Citations</h4>
+      {% if not card.citations_captured %}
+      <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">Evidence support not captured (legacy)</p>
+      {% elif not card.citations %}
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No supporting citation (explicit evidence absence)</p>
+      {% else %}
+      <ul class="mt-2 space-y-3">
+        {% for citation in card.citations %}
+        <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm">
+          <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ citation.excerpt }}</p>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {% if citation.resolved %}<a class="font-medium text-brand dark:text-navy-300 hover:underline" href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or 'Unresolved evidence' }}{% endif %}
+            {% if citation.version_number %} v{{ citation.version_number }}{% endif %}
+            · {{ citation.location_ref }}
+            {% if not citation.is_current %}<span class="text-amber-700 dark:text-amber-300">(superseded version)</span>{% endif %}
+          </p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if card.unsupported_assertion %}
+      <p class="mt-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">This supporting outcome has no grounded citation. Review the evidence before approving.</p>
+      {% endif %}
+    </section>
+
+    {% if card.withheld_proposal %}
+    <section class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4 text-sm text-blue-900 dark:text-blue-200">
+      <p class="font-semibold">A newer AI proposal was withheld because this conclusion is locked{% if card.withheld_proposal.outcome %}: {{ card.withheld_proposal.outcome|replace('_', ' ')|title }}{% endif %}. Reopen to let the next analysis apply it.</p>
+      {% if card.withheld_proposal.rationale %}<p class="mt-2 whitespace-pre-wrap">{{ card.withheld_proposal.rationale }}</p>{% endif %}
+      <p class="mt-2 text-xs">{{ card.withheld_proposal.citation_count }} citation(s) · run {{ card.withheld_proposal.run_id or 'unknown' }}</p>
+    </section>
+    {% endif %}
+
+    {% if card.last_decision %}
+    <p class="text-xs text-gray-500 dark:text-gray-400">{{ card.last_decision.action }} by {{ card.last_decision.actor_display }} at {{ card.last_decision.created_at }}</p>
+    {% endif %}
+    {% if card.legacy_report_status %}
+    <p class="rounded-lg bg-purple-50 dark:bg-purple-950/30 p-3 text-sm text-purple-800 dark:text-purple-200">Report view differs: {{ card.legacy_report_status|replace('_', ' ')|title }}</p>
+    {% endif %}
+
+    <div class="flex flex-wrap items-start gap-3 border-t border-gray-100 dark:border-gray-800 pt-4">
+      {% if 'approved' in card.allowed_actions %}
+      <div>
+        <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/approve" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+          <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+          <button type="submit" {% if card.approval_blocker %}disabled{% endif %} class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
+        </form>
+        {% if card.approval_blocker %}<p class="mt-2 max-w-sm text-xs text-amber-700 dark:text-amber-300">{{ card.approval_blocker }}</p>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if 'edited' in card.allowed_actions %}
+      <details class="w-full rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:w-auto sm:min-w-[32rem]">
+        <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Edit &amp; Approve</summary>
+        <form class="mt-4 grid gap-3" hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/edit" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+          <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Outcome
+            <select name="outcome" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+              {% for value in ['compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'insufficient_evidence'] %}<option value="{{ value }}" {% if card.conclusion.outcome == value %}selected{% endif %}>{{ value|replace('_', ' ')|title }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Risk level
+            <select name="risk_level" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+              {% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}" {% if card.conclusion.risk_level == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
+            </select>
+          </label>
+          {% for field, label, value in [('rationale', 'Rationale', card.conclusion.rationale), ('gaps_identified', 'Gaps identified', card.conclusion.gaps_identified), ('recommended_action', 'Recommended action', card.conclusion.recommended_action)] %}
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ label }}
+            <textarea name="{{ field }}" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ value }}</textarea>
+          </label>
+          {% endfor %}
+          <button type="submit" {% if card.approval_blocker and not card.citations_captured %}disabled{% endif %} class="justify-self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">Save &amp; Approve</button>
+          {% if card.approval_blocker and not card.citations_captured %}<p class="text-xs text-amber-700 dark:text-amber-300">{{ card.approval_blocker }}</p>{% endif %}
+        </form>
+      </details>
+      {% endif %}
+
+      {% if 'rejected' in card.allowed_actions %}
+      <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/reject" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+        <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+        <button type="submit" class="rounded-lg border border-red-300 dark:border-red-700 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40">Reject</button>
+      </form>
+      {% endif %}
+
+      {% if 'reopened' in card.allowed_actions %}
+      <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/reopen" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+        <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+        <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Reopen</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>

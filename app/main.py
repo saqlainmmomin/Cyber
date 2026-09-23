@@ -11,7 +11,20 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
-from app.routers import analysis, assessments, desk_review, documents, evidence, magic, questionnaire, remediation, reports, review, web
+from app.routers import (
+    analysis,
+    assessments,
+    conclusions,
+    desk_review,
+    documents,
+    evidence,
+    magic,
+    questionnaire,
+    remediation,
+    reports,
+    review,
+    web,
+)
 from app.services.magic_links import MagicTokenRedactionFilter
 
 logger = logging.getLogger(__name__)
@@ -121,6 +134,7 @@ app.include_router(reports.comparison_router)
 app.include_router(desk_review.router)
 app.include_router(remediation.router)
 app.include_router(review.router)
+app.include_router(conclusions.router)
 
 # Web portal routes
 app.include_router(magic.router)

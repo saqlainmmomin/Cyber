@@ -8,15 +8,24 @@ document.body.addEventListener('htmx:configRequest', function(event) {
 
 // HTMX-aware redirects (e.g., auth redirect on 401)
 document.body.addEventListener('htmx:responseError', function(event) {
+  if (event.detail.xhr.getResponseHeader('X-Conclusion-Conflict')) return;
   if (event.detail.xhr.status === 401) {
     window.location.href = '/login';
   } else {
-    CyberToast.show('Something went wrong. Please try again.', 'error');
+    const msg = event.detail.xhr.getResponseHeader('X-Toast-Message');
+    CyberToast.show(
+      msg ? decodeURIComponent(msg) : 'Something went wrong. Please try again.',
+      'error'
+    );
   }
 });
 
 // Handle HX-Redirect header
 document.body.addEventListener('htmx:beforeSwap', function(event) {
+  if (event.detail.xhr.status === 409 && event.detail.xhr.getResponseHeader('X-Conclusion-Conflict')) {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
   if (event.detail.xhr.status === 401) {
     window.location.href = '/login';
     event.detail.shouldSwap = false;

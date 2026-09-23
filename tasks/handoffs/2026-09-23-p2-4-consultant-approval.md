@@ -572,3 +572,70 @@ not "the string 'bulk' may never appear" — `legacy_bulk_approval` and its badg
 text are a read-only label describing history, not an action, so they survive
 the narrowed grep unmodified. D-P2-4-F/H are unchanged. Re-dispatched to
 continue from the same branch.
+
+### Continued implementation results (Codex)
+
+The clarified contract was implemented without another decision conflict. The
+existing `legacy_bulk_approval` field and the visible badge text "Legacy bulk
+approval, not individually reviewed" remain exactly as D-P2-4-F/H require;
+Scenario 12 now guards only against bulk-action routes and controls.
+
+Implemented:
+
+- Registered the new `app/routers/conclusions.py` router with four
+  per-Conclusion POST endpoints and no bulk mutation surface.
+- Added the assessment Conclusions page, individual card component, reviewer
+  identity prefill, counts, state/lock badges, evidence and citation display,
+  withheld-proposal display, legacy-report divergence, optimistic-conflict
+  banner and edit diff, and the one link from the legacy review page.
+- Added the HTMX 409 swap handling and server-provided error toast behavior.
+- Added `tests/test_conclusion_approval.py` with 38 cases covering every
+  Scenario 1-15 requirement. No existing test file was modified.
+
+Verification:
+
+- `.venv/bin/pytest -q tests/test_analysis_pipeline.py` — **29 passed**.
+- `.venv/bin/pytest -q tests/test_conclusion_approval.py` — **38 passed**.
+- `.venv/bin/pytest -q` — **430 passed** (the 392-test baseline + 38 new
+  cases), with only the repository's existing warnings.
+- `git diff --stat main -- app/routers/review.py app/services/scoring.py
+  app/utils/pdf_export.py app/routers/reports.py app/routers/remediation.py
+  app/routers/analysis.py` — empty.
+- `git diff --stat main -- scripts/migrate_legacy.py app/models
+  alembic/versions` — empty.
+- `.venv/bin/alembic heads` — exactly `4e8c1a9d2b57 (head)`.
+- `rg -n 'relationship\(' app/models` — empty.
+- Scenario 12's bulk-action grep — empty; `conclusion_review.py` contains
+  neither an ORM row-removal operation nor `.commit(`.
+- `git diff --check` — clean.
+- `.venv/bin/python -m compileall -q app tests/test_conclusion_approval.py` —
+  clean. The repository has no configured lint/typecheck command.
+- The pre-review simplification pass (reuse, quality and efficiency lenses)
+  found no behavior-preserving changes worth applying. The apparent helper
+  duplication with `review.py` is deliberate: D-P2-4-B explicitly forbids
+  importing from that legacy router, and the four explicit route functions
+  preserve the fixed endpoint surface.
+
+Smoke test (fresh Alembic-built temporary SQLite database, in-process ASGI
+`TestClient`, analyzer patched to two fixed items):
+
+- Initial Conclusions page: HTTP 200, two cards.
+- Card A approve: HTTP 200; identical stale approve: HTTP 409 with
+  `X-Conclusion-Conflict: 1`.
+- Card B edit-and-approve: HTTP 200.
+- Audit query returned A `proposed` then `approved` at v2 with
+  `ai_proposed=1`, and B `proposed` then `edited` at v2 with
+  `ai_proposed=0`.
+- After re-analysis, both rows remained at v2 and each newest revision was
+  `proposal_withheld`; the page rendered two withheld-proposal banners.
+- The report tab and legacy review page both returned HTTP 200; the latter
+  still rendered two legacy `GapItem` cards.
+- No browser executable or browser automation tool was available, so the
+  optional two-tab visual check was not claimed.
+
+Commit note: the implementation is ready for the requested logical commits,
+but this execution environment exposes `.git` read-only. The attempted
+path-limited commit failed with `fatal: Unable to create '.git/index.lock':
+Operation not permitted`. No push or PR was attempted. The working-tree changes
+are preserved for the reviewing Claude session to commit after review (or for a
+session with writable Git metadata).
