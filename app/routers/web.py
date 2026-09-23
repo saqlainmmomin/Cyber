@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -28,11 +29,13 @@ from app.services.portfolio import (
 )
 from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
+from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
 from app.services import evidence as evidence_service
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services.scoring import report_framework_scores
+from app.services.conclusion_review import conclusion_cards
 from app.utils.review_gate import require_review_approval
 
 from app.template_config import configure_templates
@@ -1971,6 +1974,61 @@ def review_page(
             "gap_items": gap_items,
             "draft_count": draft_count,
             "reviewer_name": reviewed_item.reviewed_by if reviewed_item else "",
+        },
+    )
+
+
+@router.get("/assessments/{assessment_id}/conclusions", response_class=HTMLResponse)
+def conclusions_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404, "Assessment not found")
+
+    cards = conclusion_cards(db, assessment_id)
+    counts = {
+        "pending": sum(card.state == "pending" for card in cards),
+        "rejected": sum(card.state == "rejected" for card in cards),
+        "approved": sum(
+            card.state == "approved" and not card.legacy_bulk_approval
+            for card in cards
+        ),
+        "edited": sum(card.state == "edited" for card in cards),
+        "legacy_bulk": sum(card.legacy_bulk_approval for card in cards),
+    }
+    latest_consultant = (
+        db.query(ConclusionRevision)
+        .join(
+            Conclusion,
+            ConclusionRevision.conclusion_id == Conclusion.id,
+        )
+        .filter(
+            Conclusion.assessment_id == assessment_id,
+            ConclusionRevision.actor.startswith("consultant:"),
+        )
+        .order_by(
+            ConclusionRevision.created_at.desc(),
+            literal_column("conclusion_revisions.rowid").desc(),
+        )
+        .first()
+    )
+    reviewer_name = (
+        latest_consultant.actor.removeprefix("consultant:")
+        if latest_consultant
+        else ""
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/conclusions.html",
+        context={
+            "request": request,
+            "assessment": assessment,
+            "cards": cards,
+            "counts": counts,
+            "reviewer_name": reviewer_name,
         },
     )
 
