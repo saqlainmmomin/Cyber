@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+from app.services.citations import loads_citations
 from app.services.desk_review import run_desk_review
 from app.services.evidence import analysis_documents
 
@@ -78,6 +79,7 @@ def get_desk_review(assessment_id: str, db: Session = Depends(get_db)):
                     "source_quote": f.source_quote,
                     "source_location": f.source_location,
                     "document_id": f.document_id,
+                    "citations": loads_citations(f.citations_json),
                 }
                 for f in evidence
             ],
@@ -97,6 +99,7 @@ def get_desk_review(assessment_id: str, db: Session = Depends(get_db)):
                     "source_quote": f.source_quote,
                     "source_location": f.source_location,
                     "document_id": f.document_id,
+                    "citations": loads_citations(f.citations_json),
                 }
                 for f in signals
             ],

@@ -3,7 +3,6 @@ from app.models.action import Action
 from app.models.analysis_run import AnalysisRun
 from app.models.assessment_pack import AssessmentPack
 from app.models.audit_event import AuditEvent
-from app.models.citation import Citation
 from app.models.client import Client
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
@@ -24,7 +23,6 @@ __all__ = [
     "AnalysisRun",
     "AssessmentPack",
     "AuditEvent",
-    "Citation",
     "Client",
     "Conclusion",
     "ConclusionRevision",

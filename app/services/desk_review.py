@@ -21,6 +21,13 @@ from app.dpdpa.prompts import build_desk_review_system_prompt, build_desk_review
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.services import llm_client
+from app.services.citations import (
+    CitableSource,
+    cite_quotes,
+    citable_sources,
+    dumps_citations,
+    whole_item_citation,
+)
 from app.services.evidence import analysis_documents
 
 logger = logging.getLogger(__name__)
@@ -101,11 +108,13 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
 
     # Parse and persist results
     try:
+        sources = citable_sources(db, assessment_id)
         _persist_findings(
             db=db,
             assessment_id=assessment_id,
             result=result,
             doc_id_by_filename=doc_id_by_filename,
+            sources=sources,
         )
 
         summary.document_catalog = json.dumps(result.get("document_catalog", []))
@@ -178,6 +187,7 @@ def _persist_findings(
     assessment_id: str,
     result: dict,
     doc_id_by_filename: dict[str, str],
+    sources: list[CitableSource] = (),
 ) -> None:
     """Persist desk review findings to the database."""
 
@@ -185,6 +195,16 @@ def _persist_findings(
     for req_id, evidence_items in result.get("evidence_map", {}).items():
         for item in evidence_items:
             doc_filename = item.get("document", "")
+            quote = item.get("quote", "")
+            citations = (
+                cite_quotes(sources, [quote], preferred_filename=doc_filename)
+                if quote.strip()
+                else [
+                    whole_item_citation(source)
+                    for source in sources
+                    if source.filename == doc_filename
+                ][:1]
+            )
             db.add(DeskReviewFinding(
                 assessment_id=assessment_id,
                 finding_type="evidence",
@@ -194,6 +214,7 @@ def _persist_findings(
                 severity="info",
                 source_quote=item.get("quote", ""),
                 source_location=item.get("location", ""),
+                citations_json=dumps_citations(citations),
             ))
 
     # Absence findings
@@ -204,12 +225,23 @@ def _persist_findings(
             requirement_id=finding.get("requirement_id"),
             content=finding.get("description", ""),
             severity=finding.get("severity", "medium"),
+            citations_json="[]",
         ))
 
     # Signal flags
     for flag in result.get("signal_flags", []):
         doc_filename = flag.get("document", "")
         req_ids = flag.get("requirement_ids", [])
+        quote = flag.get("source_quote", "")
+        citations = (
+            cite_quotes(sources, [quote], preferred_filename=doc_filename)
+            if quote.strip()
+            else [
+                whole_item_citation(source)
+                for source in sources
+                if source.filename == doc_filename
+            ][:1]
+        )
         # Create one finding per signal flag (may map to multiple requirements)
         db.add(DeskReviewFinding(
             assessment_id=assessment_id,
@@ -220,6 +252,7 @@ def _persist_findings(
             severity=flag.get("severity", "medium"),
             source_quote=flag.get("source_quote", ""),
             source_location=flag.get("location", ""),
+            citations_json=dumps_citations(citations),
         ))
 
     db.flush()

@@ -1037,7 +1037,7 @@ class TestAlembicRoundTrip:
         try:
             with engine.connect() as conn:
                 current = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert current == "7a3f1e2b9c80"
+            assert current == "3d8b6f0a2c51"
 
             schema_after = _schema_snapshot(engine)
             assert schema_after == schema_before, (
@@ -1100,7 +1100,7 @@ class TestAdoptedDatabaseDowngradePolicy:
                 assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
                 assert conn.execute(
                     text("SELECT version_num FROM alembic_version")
-                ).scalar() == "7a3f1e2b9c80"
+                ).scalar() == "3d8b6f0a2c51"
         finally:
             engine.dispose()
 
@@ -1431,7 +1431,7 @@ class TestEmptyAdoptedLegacyDowngrade:
             with engine.connect() as conn:
                 assert conn.execute(
                     text("SELECT version_num FROM alembic_version")
-                ).scalar() == "7a3f1e2b9c80"
+                ).scalar() == "3d8b6f0a2c51"
                 indexes = inspect(conn).get_indexes("gap_items")
                 assert any(i["name"] == "ix_gap_items_null_framework_id" for i in indexes)
         finally:

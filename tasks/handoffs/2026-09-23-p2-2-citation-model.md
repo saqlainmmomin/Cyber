@@ -258,3 +258,37 @@ Append a `## Results` section to this file containing:
 - `pytest -q` output and the pass count of `tests/test_citations.py`.
 - The smoke-test output: the stored citation, and a Python-shell proof that `extracted_text[start:end] == excerpt`.
 - Anything this document got wrong about the current code.
+
+## Results
+
+- Public API shipped by `app/services/citations.py`:
+  - `LOCATION_TYPES = ("text_span", "whole_item")`
+  - `CITATION_KEYS = ("evidence_version_id", "location_type", "location_ref", "excerpt")`
+  - `WHOLE_ITEM_REF = "whole"`
+  - `MAX_EXCERPT_CHARS = 2000`
+  - `class CitationError(Exception)`
+  - `@dataclass(frozen=True) class CitableSource`
+  - `normalize_with_offsets(text: str) -> tuple[str, list[int]]`
+  - `locate_excerpt(text: str, excerpt: str) -> tuple[int, int] | None`
+  - `text_span_citation(source: CitableSource, excerpt: str) -> dict | None`
+  - `whole_item_citation(source: CitableSource) -> dict`
+  - `citable_sources(db: Session, assessment_id: str) -> list[CitableSource]`
+  - `cite_quotes(sources: list[CitableSource], quotes: list[str], *, preferred_filename: str | None = None) -> list[dict]`
+  - `validate_citations(db: Session, citations: list[dict], *, assessment_id: str) -> list[dict]`
+  - `dumps_citations(citations: list[dict]) -> str`
+  - `loads_citations(raw: str | None) -> list[dict]`
+  - `attach_citations(db: Session, *, revision: ConclusionRevision, citations: list[dict]) -> ConclusionRevision`
+  - `resolve_citations(db: Session, raw: str | None) -> list[dict]`
+  - `active_versions_in_scope(db: Session, assessment_id: str) -> list[tuple[Evidence, EvidenceVersion]]` in `app/services/evidence.py`.
+- Alembic revision shipped: `3d8b6f0a2c51_p2_2_citations_json.py`, revision `3d8b6f0a2c51`, down revision `7a3f1e2b9c80`. It guards both destructive upgrade and citation-bearing downgrade, drops the standalone `citations` table, adds nullable `desk_review_findings.citations_json`, and recreates the original table/FK/index on downgrade. Existing-test edits match the handoff step 2 table exactly: `tests/test_alembic_baseline_immutable.py`, `tests/test_data_integrity.py`, `tests/test_startup_invariants.py`, `tests/test_evidence_service.py`, `tests/test_migrate_legacy.py`, and `tests/test_target_schema.py`. No other test files were touched.
+- Verification:
+  - `.venv/bin/pytest -q tests/test_citations.py` → `26 passed, 1 warning in 1.79s`.
+  - In-scope regression set (the contract suite plus the six lockstep suites) → `160 passed, 6 warnings in 11.07s`.
+  - Required `.venv/bin/pytest -q` → `334 passed, 29 failed, 1 error in 19.30s`. All 29 failures are the parallel P2-5 `tests/test_magic_links.py` contract importing the not-yet-implemented `app.services.magic_links`; the teardown error is the existing session guard detecting another test’s creation of `data/dpdpa.db`. No P2-2 test failed.
+- Live isolated-DB ASGI smoke output:
+  - `upload_status: 201`
+  - `review_status: 200 completed`
+  - `stored citation: {"evidence_version_id": "e5c05138-74bb-4fa0-8a58-1f11e819a923", "excerpt": "RETAINED for seven years", "location_ref": "chars:28-52", "location_type": "text_span"}`
+  - `offset proof: True`
+  - `raw slice: 'RETAINED for seven years'`
+- The handoff’s current-state baseline count does not match this worktree’s test inventory: P2-5 contract tests are already present while their implementation is intentionally in the sibling lane, so the full suite cannot reach the handoff’s expected `335` pass count here. The citation-specific current-state assumptions and the six-file lockstep list were otherwise accurate.

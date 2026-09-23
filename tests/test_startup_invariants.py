@@ -168,7 +168,7 @@ def test_lifespan_and_health_against_fresh_database(monkeypatch, tmp_path):
     try:
         with engine.connect() as conn:
             version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-        assert version == "7a3f1e2b9c80"
+        assert version == "3d8b6f0a2c51"
     finally:
         engine.dispose()
 
@@ -206,7 +206,7 @@ def test_lifespan_and_health_against_valid_legacy_copy_database(monkeypatch, tmp
     try:
         with engine.connect() as conn:
             version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert version == "7a3f1e2b9c80"
+            assert version == "3d8b6f0a2c51"
             assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
             fks = conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()
             assert len(fks) == 1, "legacy gap_items should have been FK-rebuilt on startup"
