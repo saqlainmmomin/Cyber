@@ -7,14 +7,15 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 ## Done
 
 - [x] **Pre-work (PW-1–PW-5)** — migration safety, preserved rerun history, template setup, HTTP test harness, and SQLite foreign keys. **Verified:** PR #14, 163 tests.
+- [x] **P1-1: Alembic foundation** `[AR: migration cutover]` — **Merged:** PR #16.
+- [x] **P1-2: Target schema (15 new tables + FKs)** `[AR: data integrity]` — adversarial review found a missing downgrade data-loss guard, remediated. **Merged:** PR #17.
+- [x] **P1-6: Backup/restore and recovery rehearsal** `[AR: recoverability]` — adversarial review found a real rollback data-loss bug (partial safety copy could overwrite a good original) plus 3 smaller issues, all remediated. **Merged:** PR #18.
 
 ## Phase 1 — Schema & Hierarchy
 
-- [ ] **P1-1: Alembic foundation** `[AR: migration cutover]`
-- [ ] **P1-2–P1-3: Target schema and one-shot legacy migration** `[AR: data integrity/backfill]`
-- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow**
-- [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]`
-- [ ] **P1-6: Backup/restore and recovery rehearsal** `[AR: recoverability]`
+- [ ] **P1-3: One-shot legacy migration** `[AR: data integrity/backfill]` — implemented against a 26-test failing suite written first; adversarial review found an undocumented heuristic silently dropping genuinely-open remediation items, remediated. 27/27 targeted + 240/240 full suite passing. **PR #19 open, awaiting merge.**
+- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — blocked on P1-3 merge (needs real Client/Engagement rows).
+- [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — unblocked (P1-2 merged), can start in parallel with P1-4.
 
 **Phase 1 exit:** full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore.
 

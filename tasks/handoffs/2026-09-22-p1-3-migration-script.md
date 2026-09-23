@@ -99,3 +99,30 @@ Per the plan's exact scenario list, seed a DB with 3 assessments (single-framewo
 ## Report back
 
 Append a `## Results` section: the exact mapping table implemented (compliance_status → outcome), counts from a real run against the current dev DB (or the 3-assessment fixture if the dev DB is empty), `pytest -q` output, and explicit confirmation of how the framework_scores gap (item 7) was left for a later phase to resolve.
+
+## Results (2026-09-22)
+
+**Status:** Implemented and merged (PR #19).
+
+**Process:** Claude wrote `tests/test_migrate_legacy.py` (26 scenarios) plus `NotImplementedError` interface stubs for `scripts/migrate_legacy.py`/`scripts/rollback_legacy.py`, verified a clean TDD red state (25 failed/1 passed, no collection errors), then handed off to Codex to implement.
+
+**Mapping table implemented** (`compliance_status` → `Conclusion.outcome`, in `OUTCOME_MAP`):
+| compliance_status | outcome |
+|---|---|
+| compliant | compliant |
+| partially_compliant | partially_compliant |
+| non_compliant | non_compliant |
+| not_applicable | not_applicable |
+| not_assessed | insufficient_evidence (+ `logger.warning` with assessment_id/requirement_id) |
+
+**Open decisions (D-A..D-D), resolved as documented in `scripts/migrate_legacy.py`'s module docstring:**
+- D-A: `GapReport.framework_scores` stays authoritative; no score column added to `AssessmentPack` — deferred to a later phase.
+- D-B: `Conclusion.evidence_summary` coerces a `None` `evidence_quote` to `""`.
+- D-C: `Engagement.status="active"`; `Client.industry`/`size` copied from the first-seen assessment (by `created_at`) for a given `company_name`.
+- D-D: `Finding.status` falls back to `"open"` + warning for unrecognized values; `Action.status` is `closed` when `remediation_closed_at is not None`, else `open` (migration never produces `in_progress`/`verified`).
+
+**Adversarial review finding (real bug, fixed before merge):** an undocumented heuristic in the first implementation pass silently treated a genuinely-open, not-yet-triaged `GapItem` (`remediation_status="open"` with no owner/date/notes/closed_at) as untouched (`None`), skipping `Finding`/`Action` creation with no warning — contradicting this doc's explicit instruction (item 6) that an explicit `"open"` value is still a real Finding. Root cause: `GapItem.remediation_status`'s Python-side `default="open"` fires even when `None` is passed explicitly to the ORM constructor, so the original test fixture could never seed a genuine `NULL`. Fixed by seeding `GapItem` rows via a SQLAlchemy Core `insert()` (bypasses the default) instead of the ORM constructor, adding a regression test for the bare-`"open"` case, and removing the heuristic from `run_migration`.
+
+**Test results:** `tests/test_migrate_legacy.py`: 27 passed (26 original scenarios + 1 regression test for the finding above). Full suite: 240 passed, no regressions.
+
+**Real-run counts:** not yet run against the dev DB (currently empty, no legacy rows to migrate per-plan assumption); verified instead against the 3-assessment fixture (single-framework, multi-framework, empty/no-GapReport) as the test scenarios specify.
