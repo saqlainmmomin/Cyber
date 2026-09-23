@@ -1394,8 +1394,8 @@ def test_evidence_panel_rows_shape(db, extractor, monkeypatch):
 
 def test_p2_1_revision_is_head_and_adds_columns_and_constraints(db_path, engine):
     """Scenario 16."""
-    head = ScriptDirectory.from_config(_alembic_config(db_path)).get_current_head()
-    assert head == P2_1_REVISION
+    script = ScriptDirectory.from_config(_alembic_config(db_path))
+    assert script.get_revision("3d8b6f0a2c51").down_revision == P2_1_REVISION
 
     inspector = inspect(engine)
     evidence_columns = {c["name"]: c for c in inspector.get_columns("evidence")}
@@ -1481,7 +1481,7 @@ def test_downgrade_past_p2_1_refuses_while_evidence_exists(db_path, engine):
 def test_downgrade_past_p2_1_succeeds_when_evidence_tables_are_empty(db_path, engine):
     """Scenario 16."""
     config = _alembic_config(db_path)
-    assert ScriptDirectory.from_config(config).get_current_head() == P2_1_REVISION
+    assert ScriptDirectory.from_config(config).get_revision("3d8b6f0a2c51").down_revision == P2_1_REVISION
     command.downgrade(config, P1_2_REVISION)
     engine.dispose()
     inspector = inspect(engine)

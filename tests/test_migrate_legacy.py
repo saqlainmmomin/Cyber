@@ -78,7 +78,7 @@ FK_CHECKS: tuple[tuple[str, str, str, str], ...] = (
 )
 
 #: Tables Phase 2 owns — the migration must leave them empty.
-PHASE_2_TABLES = ("evidence", "evidence_versions", "evidence_uses", "citations", "magic_links")
+PHASE_2_TABLES = ("evidence", "evidence_versions", "evidence_uses", "magic_links")
 
 COUNTED_MODELS = {
     "clients": Client,
