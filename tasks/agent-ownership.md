@@ -40,7 +40,7 @@ Chain: P1-1 → P1-2 → {P1-3, P1-5 in parallel} → P1-4. P1-6 independent fro
 ### Phase 2 — Evidence & Conclusions
 | Task | Owner |
 |---|---|
-| P2-1 Evidence service (hashing, lifecycle state machine) | Claude designs → Codex implements |
+| P2-1 Evidence service (hashing, lifecycle state machine, legacy-document migration) | Claude designs + writes tests → Codex implements (handoff: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`) |
 | P2-2 Citation model | Codex, from Claude spec |
 | P2-3 Immutable analysis pipeline | Claude designs → Codex implements, Claude reviews |
 | P2-4 Consultant approval workflow + optimistic locking | Claude designs locking logic → Codex builds UI/routes |

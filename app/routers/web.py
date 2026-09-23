@@ -29,7 +29,8 @@ from app.services.portfolio import (
 from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.schemas.assessment import DocumentCategory
-from app.services.document_processor import detect_file_type, extract_text, save_upload
+from app.services import evidence as evidence_service
+from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.scoring import report_framework_scores
 from app.utils.review_gate import require_review_approval
 
@@ -667,6 +668,39 @@ def framework_tab(
     )
 
 
+@router.get("/evidence/{evidence_id}", response_class=HTMLResponse)
+def evidence_detail_page(
+    request: Request,
+    evidence_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        evidence = evidence_service.evidence_detail(db, evidence_id)
+    except evidence_service.EvidenceError as exc:
+        raise HTTPException(exc.status_code, exc.message) from exc
+    engagement = db.get(Engagement, evidence["engagement_id"])
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if client is None:
+        raise HTTPException(404, "Client not found")
+    originating_assessment = (
+        db.get(Assessment, evidence["assessment_id"])
+        if evidence["assessment_id"]
+        else None
+    )
+    return templates.TemplateResponse(
+        "pages/evidence_detail.html",
+        {
+            "request": request,
+            "evidence": evidence,
+            "engagement": engagement,
+            "client": client,
+            "originating_assessment": originating_assessment,
+        },
+    )
+
+
 @router.get("/assessments/{assessment_id}", response_class=HTMLResponse)
 def assessment_detail(
     request: Request,
@@ -679,12 +713,8 @@ def assessment_detail(
     if not assessment:
         raise HTTPException(404, "Assessment not found")
 
-    documents = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .order_by(AssessmentDocument.uploaded_at.desc())
-        .all()
-    )
+    documents = evidence_panel_rows(db, assessment_id)
+    analysable_document_count = len(analysis_documents(db, assessment_id))
 
     report = (
         db.query(GapReport)
@@ -780,7 +810,7 @@ def assessment_detail(
 
     timeline_steps = [
         ("Scope", scope_done),
-        ("Documents", bool(documents)),
+        ("Documents", bool(analysable_document_count)),
         ("Desk Review", assessment.desk_review_status == "completed"),
         (
             "Questionnaire",
@@ -795,6 +825,7 @@ def assessment_detail(
             "request": request,
             "assessment": assessment,
             "documents": documents,
+            "analysable_document_count": analysable_document_count,
             "report": report,
             "gap_items": gap_items,
             "tab": tab,
@@ -980,48 +1011,32 @@ async def upload_document_web(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
-
-    file_type = detect_file_type(file.filename or "")
-    if not file_type:
+    try:
+        result = evidence_service.ingest_upload(
+            db,
+            assessment_id=assessment_id,
+            filename=file.filename or "document",
+            content=await file.read(),
+            category=category,
+        )
+        if not result.released:
+            return templates.TemplateResponse(
+                "partials/upload_status.html",
+                {"request": request, "error": evidence_service.SCAN_REJECTED_MESSAGE},
+            )
+    except evidence_service.EvidenceError as exc:
         return templates.TemplateResponse(
             "partials/upload_status.html",
-            {"request": request, "error": "Unsupported file type. Upload PDF, DOCX, PNG, JPG, JPEG, or WEBP."},
+            {"request": request, "error": exc.message},
         )
 
-    content = await file.read()
-    file_path = save_upload(assessment_id, file.filename or "document", content)
-    extracted_text = extract_text(file_path, file_type)
-
-    if not extracted_text.strip():
-        return templates.TemplateResponse(
-            "partials/upload_status.html",
-            {"request": request, "error": "Could not extract text from this document."},
-        )
-
-    doc = AssessmentDocument(
-        assessment_id=assessment_id,
-        filename=file.filename or "document",
-        file_path=file_path,
-        file_type=file_type,
-        document_category=category,
-        extracted_text=extracted_text,
-    )
-    db.add(doc)
-    if assessment.status == "created":
-        assessment.status = "documents_uploaded"
-    db.commit()
-    db.refresh(doc)
-
-    # Return updated document list
-    documents = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .order_by(AssessmentDocument.uploaded_at.desc())
-        .all()
-    )
     response = templates.TemplateResponse(
         "partials/document_list.html",
-        {"request": request, "documents": documents, "assessment_id": assessment_id},
+        {
+            "request": request,
+            "documents": evidence_panel_rows(db, assessment_id),
+            "assessment_id": assessment_id,
+        },
     )
     return _with_toast(response, "Document uploaded")
 
@@ -1034,22 +1049,76 @@ def delete_document_web(
 
     db: Session = Depends(get_db),
 ):
-    doc = db.get(AssessmentDocument, document_id)
-    if not doc or doc.assessment_id != assessment_id:
+    evidence = db.get(evidence_service.Evidence, document_id)
+    if evidence is None:
+        legacy = db.get(AssessmentDocument, document_id)
+        if legacy is not None and legacy.assessment_id == assessment_id:
+            raise HTTPException(
+                409,
+                "Legacy document: run scripts/migrate_documents_to_evidence.py before archiving it.",
+            )
         raise HTTPException(404)
-    db.delete(doc)
-    db.commit()
-
-    documents = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .order_by(AssessmentDocument.uploaded_at.desc())
-        .all()
-    )
+    if evidence.assessment_id != assessment_id:
+        raise HTTPException(404)
+    try:
+        evidence_service.transition_evidence(
+            db,
+            evidence_id=document_id,
+            to_status="archived",
+            actor=evidence_service.CONSULTANT_ACTOR,
+        )
+        db.commit()
+    except evidence_service.EvidenceError as exc:
+        raise HTTPException(exc.status_code, exc.message) from exc
     return templates.TemplateResponse(
         "partials/document_list.html",
-        {"request": request, "documents": documents, "assessment_id": assessment_id},
+        {
+            "request": request,
+            "documents": evidence_panel_rows(db, assessment_id),
+            "assessment_id": assessment_id,
+        },
     )
+
+
+@router.post("/assessments/{assessment_id}/evidence/{evidence_id}/versions", response_class=HTMLResponse)
+async def upload_document_version_web(
+    request: Request,
+    assessment_id: str,
+    evidence_id: str,
+    change_reason: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    evidence = db.get(evidence_service.Evidence, evidence_id)
+    if evidence is None or evidence.assessment_id != assessment_id:
+        raise HTTPException(404)
+    try:
+        result = evidence_service.ingest_new_version(
+            db,
+            evidence_id=evidence_id,
+            filename=file.filename or "document",
+            content=await file.read(),
+            change_reason=change_reason,
+        )
+        if not result.released:
+            return templates.TemplateResponse(
+                "partials/upload_status.html",
+                {"request": request, "error": evidence_service.SCAN_REJECTED_MESSAGE},
+            )
+    except evidence_service.EvidenceError as exc:
+        return templates.TemplateResponse(
+            "partials/upload_status.html",
+            {"request": request, "error": exc.message},
+        )
+    response = templates.TemplateResponse(
+        "partials/document_list.html",
+        {
+            "request": request,
+            "documents": evidence_panel_rows(db, assessment_id),
+            "assessment_id": assessment_id,
+        },
+    )
+    return _with_toast(response, "New version uploaded")
 
 
 # --- Context questionnaire (HTMX step-by-step) ---
@@ -1823,14 +1892,9 @@ def report_summary(
         gap_items_by_chapter[item.chapter].append(item)
 
     reviewed_item = next((item for item in gap_items if item.reviewed_by), None)
-    documents = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .all()
-    )
     timeline_steps = [
         ("Scope", assessment.scope_answers is not None),
-        ("Documents", bool(documents)),
+        ("Documents", bool(analysis_documents(db, assessment_id))),
         ("Desk Review", assessment.desk_review_status == "completed"),
         (
             "Questionnaire",

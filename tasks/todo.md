@@ -21,7 +21,8 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Later phases
 
-- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — not started. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
+- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — P2-1 complete; remaining tasks not started. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
+- [x] **P2-1: Evidence service** — implemented and verified: 43 contract tests and 309 full-suite tests pass; live ASGI smoke, hash verification, archive/restore, mocked desk review, and two-pass copy migration completed. Handoff Results: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`.
 - [ ] **Phase 3 — Reports & remediation** `[AR: report immutability, provenance, closure verification]`
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 

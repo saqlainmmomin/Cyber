@@ -64,3 +64,4 @@ class DocumentResponse(BaseModel):
     document_category: str
     text_length: int
     uploaded_at: datetime
+    status: str

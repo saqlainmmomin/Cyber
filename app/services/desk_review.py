@@ -18,9 +18,10 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.dpdpa.prompts import build_desk_review_system_prompt, build_desk_review_user_prompt
-from app.models.assessment import Assessment, AssessmentDocument
+from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.services import llm_client
+from app.services.evidence import analysis_documents
 
 logger = logging.getLogger(__name__)
 
@@ -37,26 +38,22 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
         raise ValueError(f"Assessment {assessment_id} not found")
 
     # Load documents
-    docs_db = (
-        db.query(AssessmentDocument)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .all()
-    )
+    docs_db = analysis_documents(db, assessment_id)
     if not docs_db:
         raise ValueError("No documents uploaded for this assessment")
 
     documents = [
         {
-            "id": d.id,
-            "filename": d.filename,
-            "category": d.document_category,
-            "text": d.extracted_text or "",
+            "id": d["id"],
+            "filename": d["filename"],
+            "category": d["category"],
+            "text": d["text"],
         }
         for d in docs_db
     ]
 
     # Build document ID lookup for linking findings to documents
-    doc_id_by_filename = {d.filename: d.id for d in docs_db}
+    doc_id_by_filename = {d["filename"]: d["legacy_document_id"] for d in docs_db}
 
     # Create or reset summary
     summary = (
