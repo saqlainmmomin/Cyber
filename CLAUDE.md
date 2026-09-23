@@ -7,10 +7,11 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 **Implementation plan:** `docs/plans/2026-09-21-002-revised-implementation-plan.md`
 **Product requirements:** `docs/product/2026-09-21-cyberassess-product-requirements.md`
 **Decisions log:** `tasks/2026-09-21-adversarial-review.md` (D1–D11)
+**Task ownership (Claude vs Codex):** `tasks/agent-ownership.md` — check before scoping any handoff.
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase:** Phase 1 — Schema & Hierarchy (Alembic, target schema, Client→Engagement→Assessment, portfolio dashboard, per-framework scoring).
+**Current phase:** Phase 1 — Schema & Hierarchy. P1-1/P1-2/P1-3/P1-6 merged (PRs #16-#19); P1-4/P1-5 handoffs written, not started — see `tasks/todo.md`.
 **Pre-work sprint:** Completed (PW-1 through PW-5).
 
 ## Running

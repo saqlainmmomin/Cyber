@@ -7,10 +7,11 @@ CyberAssess is a multi-framework compliance maturity platform. Its FastAPI, Jinj
 **Implementation plan:** `docs/plans/2026-09-21-002-revised-implementation-plan.md`
 **Product requirements:** `docs/product/2026-09-21-cyberassess-product-requirements.md`
 **Decisions log:** `tasks/2026-09-21-adversarial-review.md` (D1–D11)
+**Task ownership (Claude vs Codex):** `tasks/agent-ownership.md` — check before scoping any handoff.
 
 Older plans are historical only; do not use them for implementation decisions.
 
-**Current:** Phase 1 — Schema & Hierarchy.
+**Current:** Phase 1 — Schema & Hierarchy. P1-1/P1-2/P1-3/P1-6 merged; P1-4/P1-5 handoffs written, not started.
 **Pre-work:** Complete.
 **Progress tracking:** Update `tasks/todo.md` in the same change as each completed task.
 
