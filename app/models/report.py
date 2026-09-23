@@ -12,8 +12,11 @@ class GapReport(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     assessment_id: Mapped[str] = mapped_column(String(36), ForeignKey("assessments.id"), unique=True, index=True)
+    # DEPRECATED (P1-5): blended cross-framework score. Always written as 0.0.
+    # Never read, never displayed. Per-framework scores live in framework_scores.
+    # Column retained because dropping it needs a migration (out of scope for P1-5).
     overall_score: Mapped[float] = mapped_column(Float)
-    chapter_scores: Mapped[str] = mapped_column(Text)  # JSON string
+    chapter_scores: Mapped[str] = mapped_column(Text)  # JSON: namespaced domain scores
     executive_summary: Mapped[str] = mapped_column(Text)
     raw_ai_response: Mapped[str] = mapped_column(Text)
     framework_scores: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: per-framework score breakdown

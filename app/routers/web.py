@@ -21,6 +21,7 @@ from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.schemas.assessment import DocumentCategory
 from app.services.document_processor import detect_file_type, extract_text, save_upload
+from app.services.scoring import report_framework_scores
 from app.utils.review_gate import require_review_approval
 
 from app.template_config import configure_templates
@@ -60,6 +61,27 @@ def _selected_framework_names(assessment: Assessment) -> list[str]:
         fw = FrameworkRegistry.get_or_none(fw_id)
         names.append(fw.name if fw else fw_id.upper())
     return names
+
+
+def _framework_display(
+    assessment: Assessment,
+    framework_scores: dict[str, dict],
+) -> dict[str, dict]:
+    """Build ordered, template-safe framework score display data."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    display = {}
+    for framework_id in assessment.frameworks:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        scores = framework_scores.get(framework_id) or {}
+        display[framework_id] = {
+            "name": framework.name if framework else framework_id.upper(),
+            "version": framework.version if framework else "",
+            "score": scores.get("overall_score"),
+            "rating": scores.get("overall_rating"),
+            "domain_scores": scores.get("domain_scores", {}),
+        }
+    return display
 
 
 def _framework_catalog() -> list[dict]:
@@ -306,6 +328,12 @@ def assessment_detail(
                 "name": fw.name,
                 "version": fw.version,
             })
+    framework_display = {}
+    if report and tab in ("report", "questionnaire"):
+        framework_display = _framework_display(
+            assessment,
+            report_framework_scores(report, assessment),
+        )
 
     timeline_steps = [
         ("Scope", scope_done),
@@ -336,6 +364,7 @@ def assessment_detail(
             "selected_frameworks": selected_frameworks_info,
             "active_framework": active_framework,
             "report_view_mode": report_view_mode,
+            "framework_display": framework_display,
             "active_framework_info": next(
                 (fw for fw in selected_frameworks_info if fw["id"] == active_framework),
                 selected_frameworks_info[0] if selected_frameworks_info else {"id": active_framework, "name": active_framework},
@@ -1086,7 +1115,15 @@ def analysis_status(
         report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
         return templates.TemplateResponse(
             "partials/analysis_complete.html",
-            {"request": request, "assessment_id": assessment_id, "report": report},
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "report": report,
+                "framework_display": _framework_display(
+                    assessment,
+                    report_framework_scores(report, assessment) if report else {},
+                ),
+            },
         )
     elif assessment.status == "error":
         return templates.TemplateResponse(
@@ -1263,29 +1300,11 @@ def report_summary(
     gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
     chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
 
-    # Determine if this is a multi-framework report
-    framework_scores = None
     is_multi_framework = assessment.is_multi_framework
-    if report.framework_scores:
-        try:
-            framework_scores = json.loads(report.framework_scores)
-        except (json.JSONDecodeError, TypeError):
-            pass
-
-    # Resolve framework names for multi-framework display
-    framework_display = {}
-    from app.frameworks.registry import FrameworkRegistry
-    for fw_id in assessment.frameworks:
-        scores = (framework_scores or {}).get(fw_id, {})
-        if scores or view_mode == "per_framework":
-            fw = FrameworkRegistry.get_or_none(fw_id)
-            framework_display[fw_id] = {
-                "name": fw.name if fw else fw_id.upper(),
-                "version": fw.version if fw else "",
-                "overall_score": scores.get("overall_score", 0),
-                "overall_rating": scores.get("overall_rating", "N/A"),
-                "domain_scores": scores.get("domain_scores", {}),
-            }
+    framework_display = _framework_display(
+        assessment,
+        report_framework_scores(report, assessment),
+    )
 
     # Count by status
     status_counts: dict[str, int] = {}
@@ -1488,6 +1507,26 @@ def comparison_page(
         .all()
     )
     result = compute_delta(current_items, previous_items)
+    current_scores = report_framework_scores(current_report, assessment)
+    previous_scores = report_framework_scores(previous_report, previous_assessment)
+    framework_names = dict(zip(assessment.frameworks, _selected_framework_names(assessment)))
+    framework_deltas = []
+    for framework_id in assessment.frameworks:
+        current = current_scores.get(framework_id)
+        previous = previous_scores.get(framework_id)
+        current_score = current.get("overall_score") if current else None
+        previous_score = previous.get("overall_score") if previous else None
+        framework_deltas.append({
+            "framework_id": framework_id,
+            "name": framework_names[framework_id],
+            "current": current_score,
+            "previous": previous_score,
+            "delta": (
+                round(current_score - previous_score, 1)
+                if current_score is not None and previous_score is not None
+                else None
+            ),
+        })
 
     return templates.TemplateResponse(
         "pages/comparison.html",
@@ -1496,11 +1535,7 @@ def comparison_page(
             "assessment": assessment,
             "current_report": current_report,
             "previous_report": previous_report,
-            "current_score": current_report.overall_score,
-            "previous_score": previous_report.overall_score,
-            "score_delta": (
-                current_report.overall_score - previous_report.overall_score
-            ),
+            "framework_deltas": framework_deltas,
             "deltas": result["deltas"],
             "delta_summary": result["summary"],
         },

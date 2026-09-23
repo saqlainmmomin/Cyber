@@ -300,3 +300,38 @@ Append a `## Results` section containing:
 - The three JSON endpoints whose response shape changed, with a before/after key list for one of them.
 - A note on the PDF: number of rings rendered on the cover for the multi-framework smoke test, and confirmation that every new string goes through `S()`.
 - Anything this document got wrong about the current code (a drifted symbol, a reference the grep above missed) — name it explicitly rather than silently working around it.
+
+## Results
+
+| File/reference | Final disposition |
+|---|---|
+| `app/models/report.py:overall_score` | Kept as a deprecated, non-null column; every new report write uses literal `0.0`; no production read remains outside the shared legacy reader. |
+| `app/models/report.py:chapter_scores` | Kept as a deprecated-schema-compatible JSON column; both analysis paths now write namespaced `ChapterScore`-shaped domain entries. |
+| `app/models/report.py:framework_scores` | Kept and populated by both analysis paths; authoritative per-framework score JSON. |
+| `app/routers/analysis.py` | Removed the blend import/call; both report writes use `overall_score=0.0`, namespaced `chapter_scores`, and populated `framework_scores`; route results expose `per_framework_scores` only. Failed framework calls still get an independent zero-score entry so selected framework ids remain represented. |
+| `app/services/scoring.py:compute_unified_maturity` | Deleted. `maturity_by_topic` was deleted with it rather than extracted or preserved; grep found no consumer outside the deleted function. |
+| `app/services/scoring.py:namespaced_domain_scores` | Added. It writes `{framework_id}:{domain_key}` keys and prefixes each domain title with the framework display name; it never averages frameworks. |
+| `app/services/scoring.py:report_framework_scores` | Added as the only production reader of `GapReport.overall_score`; it parses modern `framework_scores` and falls back only for legacy single-framework rows. Legacy multi-framework rows return `{}`. |
+| `app/services/scoring.py:score` | Rewritten for N frameworks: dedupes ids, validates set equality, builds one shared cluster-verdict map, projects it independently, and returns per-framework scores plus `unique_clusters` and `total_controls_evaluated`. |
+| `app/schemas/scoring.py` | Deleted `CombinedScore`; `ScoringResult` now contains `per_framework`, `cluster_verdicts`, `unique_clusters`, and `total_controls_evaluated`, with no cross-framework scalar. `FrameworkScore` is unchanged. |
+| `app/schemas/report.py` | Removed top-level `overall_score`/`overall_rating` from `ReportOut` and `ReportSummary`; added `FrameworkScoreOut` and `framework_scores`. `ChapterScore` remains unchanged. |
+| `app/routers/reports.py` | `/report`, `/report/summary`, and `/report/full` no longer read or return a blended scalar; the first two use the shared reader and the full response retains its per-framework `frameworks` object. |
+| `app/routers/web.py` and HTML templates | Comparison now renders one delta per current framework, with `—` for a missing side. Report summary, assessment tab, and analysis-complete surfaces render framework-specific values; `app/templates/` has zero `overall_score` references. |
+| `app/utils/pdf_export.py` | Cover renders one ring per available framework; page 2 uses three non-score KPI cards plus a Framework Scores bar section. New framework labels and section strings go through `S()`; the appendix chapter-key mismatch was intentionally left unchanged per the non-goals. |
+| `app/legacy_migrations.py`, `app/legacy_migrations_schema.py` | Untouched frozen history; no Alembic migration was added. |
+| `tests/test_picker_and_scoring_contract.py`, `tests/test_golden_dpdpa.py`, `tests/support/fixture_capture.py` | Updated for the `ScoringResult` contract without `combined`; deterministic golden score/PDF fixtures were regenerated. |
+| `tests/test_no_blended_scoring.py` | Added persistence, namespacing, grep guards, N-framework scoring, dedupe/shared clusters, comparison, API, PDF, and legacy-reader fallback coverage. Additional stale analysis test seams were updated in `tests/test_legacy_dpdpa_framework_id.py` and `tests/test_needs_review_ui.py`. |
+
+The implemented `chapter_scores` format is exactly:
+`{f"{framework_id}:{domain_key}": {"score": float, "rating": str, "title": f"{framework_display_name} — {domain_title}", "applicable": bool}}`.
+
+Real multi-framework smoke example:
+`"iso27001:organizational": {"score": 50.0, "rating": "Needs Significant Improvement", "title": "ISO 27001 — Organizational Controls", "applicable": true}`.
+
+`ScoringResult` changed from `{per_framework, combined, cluster_verdicts}` to `{per_framework, cluster_verdicts, unique_clusters, total_controls_evaluated}`. `CombinedScore` was removed entirely. The matching tests are `tests/test_picker_and_scoring_contract.py`, `tests/test_golden_dpdpa.py`, `tests/support/fixture_capture.py`, and the new `tests/test_no_blended_scoring.py`; stale analysis monkeypatches were also updated in `tests/test_legacy_dpdpa_framework_id.py` and `tests/test_needs_review_ui.py`.
+
+The three changed JSON endpoints are `/api/assessments/{assessment_id}/report`, `/api/assessments/{assessment_id}/report/summary`, and `/api/assessments/{assessment_id}/report/full`. For `/report`, the before key list was `id`, `assessment_id`, `overall_score`, `overall_rating`, `chapter_scores`, `executive_summary`, `gap_items`, `remediation_roadmap`, `initiatives`, `generated_at`; the after key list is `id`, `assessment_id`, `framework_scores`, `chapter_scores`, `executive_summary`, `gap_items`, `remediation_roadmap`, `initiatives`, `generated_at`.
+
+The multi-framework PDF smoke rendered 2 cover rings. Every new PDF framework/section string introduced by P1-5 goes through `S()`; the existing PDF strings were not broadly rewritten.
+
+Current-code drift/omissions: the handoff’s old line references had moved, as warned; the actual ISO domain key in this checkout is `organizational`, while its display title is `Organizational Controls`; and the stale test seams in `tests/test_legacy_dpdpa_framework_id.py`, `tests/test_needs_review_ui.py`, and `tests/support/canonical_dpdpa.py` also needed updating even though they were not in the handoff’s key-file list. The frozen PDF appendix mismatch between `GapItem.chapter` references and namespaced domain keys remains intentionally out of scope. The requested uvicorn port/socket smoke could not bind in this sandbox (`Operation not permitted`), so the same real app lifespan and routes were exercised in-process against an isolated Alembic SQLite database; report tab, comparison, and PDF all returned 200 and showed no combined percentage. The provided `.venv` had no `pytest` or `httpx` executable/module and network access prevented installation; the full suite nevertheless passed as `249 passed` under the available Python 3.13 environment.

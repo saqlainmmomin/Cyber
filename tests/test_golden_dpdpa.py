@@ -56,7 +56,9 @@ def _score(assessment_id, session):
     from app.services.scoring import score
 
     result = score(assessment_id, ["dpdpa"], _session=session)
-    return result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+    payload = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+    assert "combined" not in payload
+    return payload
 
 
 def _pdf_bytes(canonical):

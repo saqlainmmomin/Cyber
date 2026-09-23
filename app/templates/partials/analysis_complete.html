@@ -6,7 +6,13 @@
     <p class="text-sm font-medium text-green-900 dark:text-green-300">Analysis Complete</p>
   </div>
   {% if report %}
-  <p class="text-sm text-green-700 dark:text-green-400 mb-3">Overall compliance score: <strong>{{ report.overall_score | round(1) }}%</strong></p>
+  <p class="text-sm text-green-700 dark:text-green-400 mb-3">
+    Framework scores:
+    {% for fw_id, fw_data in framework_display.items() %}
+      {% if not loop.first %}, {% endif %}
+      <span><strong>{{ fw_data.name }}</strong> {% if fw_data.score is not none %}{{ fw_data.score | round(0) | int }}%{% else %}scores unavailable{% endif %}</span>
+    {% endfor %}
+  </p>
   {% endif %}
   <div class="flex gap-3">
     <a href="/assessments/{{ assessment_id }}?tab=report"

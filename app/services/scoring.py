@@ -201,18 +201,17 @@ def score(
     *,
     _session=None,
 ) -> ScoringResult:
-    """Return cluster-first scoring for exactly one registered framework."""
+    """Return cluster-first scores for every framework on an assessment."""
     from app.models.assessment import Assessment
     from app.models.report import GapItem, GapReport
-    from app.schemas.scoring import CombinedScore
 
-    if len(framework_ids) != 1:
-        raise NotImplementedError(
-            "Cluster-backed scoring supports exactly one framework at a time; "
-            "combining cluster verdicts across frameworks is WS #7's job"
-        )
-    framework_id = framework_ids[0]
-    control_clusters = _validated_cluster_mapping(framework_id)
+    framework_ids = list(dict.fromkeys(framework_ids))
+    if not framework_ids:
+        raise ValueError("score() requires at least one framework id")
+
+    merged_clusters: dict[str, str] = {}
+    for framework_id in framework_ids:
+        merged_clusters.update(_validated_cluster_mapping(framework_id))
 
     owns_session = _session is None
     db = _session or SessionLocal()
@@ -220,7 +219,7 @@ def score(
         assessment = db.get(Assessment, str(assessment_id))
         if assessment is None:
             raise ValueError(f"Assessment {assessment_id!r} does not exist")
-        if assessment.frameworks != framework_ids:
+        if set(assessment.frameworks) != set(framework_ids):
             raise ValueError(
                 f"Assessment is not configured for exactly {framework_ids}"
             )
@@ -240,25 +239,24 @@ def score(
 
     cluster_verdicts, control_clusters = _build_cluster_verdicts(
         items,
-        control_clusters,
+        merged_clusters,
     )
-    framework_score = _derive_framework_score(
-        framework_id,
-        cluster_verdicts,
-        control_clusters,
-    )
-    per_framework = {framework_id: framework_score}
-    combined = CombinedScore(
-        overall_score=framework_score.overall_score,
-        overall_rating=framework_score.overall_rating,
-        by_framework=per_framework,
-        unique_clusters=len(cluster_verdicts),
-        total_controls_evaluated=framework_score.covered_control_count,
-    )
+    per_framework = {
+        framework_id: _derive_framework_score(
+            framework_id,
+            cluster_verdicts,
+            control_clusters,
+        )
+        for framework_id in framework_ids
+    }
     return ScoringResult(
         per_framework=per_framework,
-        combined=combined,
         cluster_verdicts=cluster_verdicts,
+        unique_clusters=len(cluster_verdicts),
+        total_controls_evaluated=sum(
+            framework_score.covered_control_count
+            for framework_score in per_framework.values()
+        ),
     )
 
 
@@ -610,51 +608,51 @@ def compute_framework_scores(assessments: list[dict], framework_id: str) -> dict
     }
 
 
-def compute_unified_maturity(
-    per_framework_results: dict[str, dict],
-    per_framework_scores: dict[str, dict],
-) -> dict:
+def namespaced_domain_scores(per_framework_scores: dict[str, dict]) -> dict:
+    """Flatten per-framework domains into the report chapter-score shape.
+
+    The framework id remains part of every key so chapter scores can never be
+    mistaken for a cross-framework aggregate.
     """
-    Compute unified maturity view across multiple frameworks.
+    from app.frameworks.registry import FrameworkRegistry
 
-    Args:
-        per_framework_results: {fw_id: {"assessments": [...]}}
-        per_framework_scores: {fw_id: compute_framework_scores() output}
+    namespaced = {}
+    for framework_id, framework_scores in per_framework_scores.items():
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        framework_name = framework.name if framework else framework_id.upper()
+        for domain_key, domain_score in framework_scores.get("domain_scores", {}).items():
+            namespaced[f"{framework_id}:{domain_key}"] = {
+                "score": domain_score["score"],
+                "rating": domain_score["rating"],
+                "title": f"{framework_name} — {domain_score['title']}",
+                "applicable": domain_score.get("applicable", True),
+            }
+    return namespaced
 
-    Returns unified maturity dict.
-    """
-    # Compute overall across frameworks (equal weight by default)
-    fw_scores = [s["overall_score"] for s in per_framework_scores.values() if s.get("overall_score")]
-    unified_score = round(sum(fw_scores) / len(fw_scores), 1) if fw_scores else 0.0
 
-    # Compute per-topic maturity from maturity_level fields
-    topic_maturity: dict[str, dict[str, list[int]]] = {}
+def report_framework_scores(report, assessment) -> dict[str, dict]:
+    """Read a report's per-framework scores, with one legacy fallback."""
+    try:
+        parsed = json.loads(getattr(report, "framework_scores", None))
+        if isinstance(parsed, dict):
+            return parsed
+    except (json.JSONDecodeError, TypeError):
+        pass
 
-    for fw_id, result in per_framework_results.items():
-        for assessment in result.get("assessments", []):
-            ml = assessment.get("maturity_level")
-            if ml is not None:
-                root_cause = assessment.get("root_cause_category", "other")
-                topic_maturity.setdefault(root_cause, {}).setdefault(fw_id, []).append(ml)
+    if len(assessment.frameworks) != 1:
+        return {}
 
-    maturity_by_topic = {}
-    for topic, fw_levels in topic_maturity.items():
-        per_fw = {}
-        all_levels = []
-        for fw_id, levels in fw_levels.items():
-            avg = round(sum(levels) / len(levels), 1)
-            per_fw[fw_id] = avg
-            all_levels.extend(levels)
-        maturity_by_topic[topic] = {
-            "avg_maturity": round(sum(all_levels) / len(all_levels), 1) if all_levels else 0,
-            "per_framework": per_fw,
-        }
-
+    try:
+        domain_scores = json.loads(report.chapter_scores or "{}")
+    except (json.JSONDecodeError, TypeError):
+        domain_scores = {}
+    framework_id = assessment.frameworks[0]
     return {
-        "overall_score": unified_score,
-        "overall_rating": get_rating(unified_score),
-        "framework_scores": per_framework_scores,
-        "maturity_by_topic": maturity_by_topic,
+        framework_id: {
+            "overall_score": report.overall_score,
+            "overall_rating": get_rating(report.overall_score),
+            "domain_scores": domain_scores,
+        }
     }
 
 

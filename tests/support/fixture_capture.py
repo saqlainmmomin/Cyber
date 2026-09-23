@@ -227,7 +227,10 @@ def _score(assessment_id: str, session):
     from app.services import scoring
 
     result = scoring.score(assessment_id, ["dpdpa"], _session=session)
-    return result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+    payload = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+    if "combined" in payload:
+        raise AssertionError("scoring.score() must not emit a combined score")
+    return payload
 
 
 def capture(live: bool) -> None:
