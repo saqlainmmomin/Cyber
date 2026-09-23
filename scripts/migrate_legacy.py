@@ -115,6 +115,7 @@ from app.config import settings
 from app.models.action import Action
 from app.models.assessment import Assessment
 from app.models.assessment_pack import AssessmentPack
+from app.models.analysis_run import AnalysisRun
 from app.models.client import Client
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.engagement import Engagement
@@ -227,7 +228,7 @@ def run_migration(session: Session) -> MigrationStats:
         assessments = list(
             session.execute(
                 select(Assessment).order_by(Assessment.created_at, Assessment.id)
-            ).scalars()
+        ).scalars()
         )
 
         for assessment in assessments:
@@ -281,6 +282,20 @@ def run_migration(session: Session) -> MigrationStats:
                     )
                     session.flush()
                     stats.assessment_packs += 1
+
+            has_analysis_run = session.execute(
+                select(AnalysisRun.id)
+                .where(AnalysisRun.assessment_id == assessment.id)
+                .limit(1)
+            ).scalar_one_or_none()
+            if has_analysis_run is not None:
+                warning = (
+                    f"Assessment {assessment.id}: conclusions are owned by the "
+                    "analysis pipeline (P2-3); legacy GapItem mapping skipped."
+                )
+                stats.warnings.append(warning)
+                logger.warning(warning)
+                continue
 
             report = session.execute(
                 select(GapReport).where(GapReport.assessment_id == assessment.id)

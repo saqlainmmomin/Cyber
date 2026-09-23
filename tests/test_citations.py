@@ -759,7 +759,7 @@ def test_desk_review_persists_citations(db, http, texts, monkeypatch):
 def test_p2_2_revision_is_head_and_reshapes_schema(db_path, engine):
     """Scenario 11."""
     script = ScriptDirectory.from_config(_alembic_config(db_path))
-    assert script.get_current_head() == P2_2_REVISION
+    assert script.get_revision("4e8c1a9d2b57").down_revision == P2_2_REVISION
     assert script.get_revision(P2_2_REVISION).down_revision == P2_1_REVISION
 
     inspector = inspect(engine)
@@ -776,7 +776,7 @@ def test_p2_2_revision_is_head_and_reshapes_schema(db_path, engine):
 def test_p2_2_downgrade_restores_citations_table_and_refuses_with_data(db, db_path, engine):
     """Scenario 11."""
     config = _alembic_config(db_path)
-    assert ScriptDirectory.from_config(config).get_current_head() == P2_2_REVISION
+    assert ScriptDirectory.from_config(config).get_revision("4e8c1a9d2b57").down_revision == P2_2_REVISION
     _client, _engagement, (a,) = _seed_hierarchy(db)
     assessment_id = a.id
     db.close()
