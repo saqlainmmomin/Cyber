@@ -226,8 +226,12 @@ def test_single_framework_analysis_persists_needs_review_flag(tmp_path, monkeypa
         )
         monkeypatch.setattr(
             analysis,
-            "compute_scores",
-            lambda _assessments: {"overall_score": 3.0, "chapter_scores": {}},
+            "compute_framework_scores",
+            lambda *_args: {
+                "overall_score": 3.0,
+                "overall_rating": "Non-Compliant",
+                "domain_scores": {},
+            },
         )
         monkeypatch.setattr(analysis, "generate_initiatives", lambda _assessments: [])
 
@@ -294,11 +298,14 @@ def test_multi_framework_analysis_persists_needs_review_flag(tmp_path, monkeypat
                 "synthesis": None,
             },
         )
-        monkeypatch.setattr(analysis, "compute_framework_scores", lambda *_a, **_kw: {"overall_score": 3.0})
         monkeypatch.setattr(
             analysis,
-            "compute_unified_maturity",
-            lambda *_a, **_kw: {"overall_score": 3.0, "framework_scores": {}},
+            "compute_framework_scores",
+            lambda *_a, **_kw: {
+                "overall_score": 3.0,
+                "overall_rating": "Non-Compliant",
+                "domain_scores": {},
+            },
         )
         monkeypatch.setattr(analysis, "generate_multi_framework_initiatives", lambda *_a, **_kw: [])
 

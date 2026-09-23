@@ -17,7 +17,7 @@ from app.dpdpa.framework import get_all_requirements
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
-from app.services.scoring import compute_scores
+from app.services.scoring import compute_framework_scores, namespaced_domain_scores
 
 FIXED_NOW = datetime(2026, 9, 8, 12, 0, tzinfo=timezone.utc)
 
@@ -270,14 +270,21 @@ def materialize_report(session: Session, assessment: Assessment, analyzer_output
 
     parsed = analyzer_output["parsed"]
     items = parsed["assessments"]
-    scores = compute_scores(items)
+    framework_id = assessment.frameworks[0]
+    per_framework_scores = {
+        framework_id: compute_framework_scores(items, framework_id)
+    }
     report = GapReport(
         id="00000000-0000-4000-8000-000000000030",
         assessment_id=assessment.id,
-        overall_score=scores["overall_score"],
-        chapter_scores=json.dumps(scores["chapter_scores"], sort_keys=True),
+        overall_score=0.0,
+        chapter_scores=json.dumps(
+            namespaced_domain_scores(per_framework_scores),
+            sort_keys=True,
+        ),
         executive_summary=parsed["executive_summary"],
         raw_ai_response=analyzer_output["raw"],
+        framework_scores=json.dumps(per_framework_scores, sort_keys=True),
         generated_at=FIXED_NOW,
     )
     session.add(report)

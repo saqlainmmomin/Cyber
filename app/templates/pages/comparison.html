@@ -33,14 +33,25 @@
   </div>
 </div>
 
-{# Score delta #}
+{# Per-framework score deltas #}
 <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Overall Score</h3>
-  <div class="flex items-baseline gap-3">
-    <span class="text-2xl font-bold {% if score_delta > 0 %}text-green-600{% elif score_delta < 0 %}text-red-600{% else %}text-gray-500 dark:text-gray-400{% endif %}">
-      {% if score_delta > 0 %}+{% endif %}{{ score_delta | round(1) }}%
-    </span>
-    <span class="text-sm text-gray-500 dark:text-gray-400">{{ previous_score | round(0) | int }}% → {{ current_score | round(0) | int }}%</span>
+  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Framework Scores</h3>
+  <div class="divide-y divide-gray-100 dark:divide-gray-800">
+    {% for framework in framework_deltas %}
+    <div class="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ framework.name }}</span>
+      {% if framework.delta is none %}
+      <span class="text-sm text-gray-500 dark:text-gray-400">—</span>
+      {% else %}
+      <div class="flex items-baseline gap-3">
+        <span class="text-2xl font-bold {% if framework.delta > 0 %}text-green-600{% elif framework.delta < 0 %}text-red-600{% else %}text-gray-500 dark:text-gray-400{% endif %}">
+          {% if framework.delta > 0 %}+{% endif %}{{ framework.delta | round(1) }}%
+        </span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ framework.previous | round(0) | int }}% → {{ framework.current | round(0) | int }}%</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
   </div>
 </div>
 

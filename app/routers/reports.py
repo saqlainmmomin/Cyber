@@ -12,7 +12,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.schemas.initiative import InitiativeOut
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
-from app.services.scoring import get_rating
+from app.services.scoring import report_framework_scores
 from app.utils.pdf_export import generate_pdf
 from app.utils.review_gate import require_review_approval
 
@@ -80,7 +80,7 @@ def _initiative_to_schema(init: Initiative) -> InitiativeOut:
 
 @router.get("", response_model=ReportOut)
 def get_report(assessment_id: str, db: Session = Depends(get_db)):
-    require_review_approval(assessment_id, db)
+    assessment = require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
     initiatives = _get_initiatives(report.id, db)
@@ -106,8 +106,7 @@ def get_report(assessment_id: str, db: Session = Depends(get_db)):
     return ReportOut(
         id=report.id,
         assessment_id=report.assessment_id,
-        overall_score=report.overall_score,
-        overall_rating=get_rating(report.overall_score),
+        framework_scores=report_framework_scores(report, assessment),
         chapter_scores=chapter_scores,
         executive_summary=report.executive_summary,
         gap_items=item_schemas,
@@ -119,7 +118,7 @@ def get_report(assessment_id: str, db: Session = Depends(get_db)):
 
 @router.get("/summary", response_model=ReportSummary)
 def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
-    require_review_approval(assessment_id, db)
+    assessment = require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
 
@@ -139,8 +138,7 @@ def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
                 high_gaps += 1
 
     return ReportSummary(
-        overall_score=report.overall_score,
-        overall_rating=get_rating(report.overall_score),
+        framework_scores=report_framework_scores(report, assessment),
         total_requirements=get_requirement_count(),
         compliant=counts["compliant"],
         partially_compliant=counts["partially_compliant"],
@@ -168,7 +166,7 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
     assessment = db.get(Assessment, assessment_id)
 
     chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
-    framework_scores = json.loads(report.framework_scores) if report.framework_scores else None
+    framework_scores = report_framework_scores(report, assessment)
 
     # Resolve framework metadata
     frameworks_info = {}
@@ -177,7 +175,7 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
         for fw_id, scores in framework_scores.items():
             fw = FrameworkRegistry.get_or_none(fw_id)
             frameworks_info[fw_id] = {
-                "name": fw.name if fw else fw_id,
+                "name": fw.name if fw else fw_id.upper(),
                 "version": fw.version if fw else "",
                 "scores": scores,
             }
@@ -205,8 +203,6 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
         "id": report.id,
         "assessment_id": report.assessment_id,
         "company_name": assessment.company_name if assessment else "",
-        "overall_score": report.overall_score,
-        "overall_rating": get_rating(report.overall_score),
         "executive_summary": report.executive_summary,
         "chapter_scores": chapter_scores,
         "frameworks": frameworks_info,
@@ -262,6 +258,7 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
         initiatives=initiatives,
         answer_source_map=answer_source_map,
         selected_frameworks=selected_frameworks,
+        assessment=assessment,
     )
 
     fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
