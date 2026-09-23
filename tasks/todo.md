@@ -14,7 +14,7 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Phase 1 — Schema & Hierarchy
 
-- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — unblocked (P1-3 merged). Handoff written: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`.
+- [x] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — implemented. Verified: 16 portfolio integration tests and 256 full-suite tests pass; live ASGI smoke exercised the new page, POST, detail, and both HTMX fragments (TCP/Unix socket binds unavailable in the managed sandbox). Handoff results: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`.
 - [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — unblocked (P1-2 merged), can run in parallel with P1-4. Handoff written: `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md` — flags that removing `compute_unified_maturity()` also requires fixing two pre-existing latent bugs found while designing this task (a multi-framework 500 in `reports.py` and a `KeyError` in `pdf_export.py`, both from a `chapter_scores`/`framework_scores` shape collision).
 
 **Phase 1 exit:** full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore.

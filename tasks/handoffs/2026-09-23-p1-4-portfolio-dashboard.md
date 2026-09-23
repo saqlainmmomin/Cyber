@@ -270,3 +270,62 @@ Append a `## Results` section containing:
 - Confirmation of the orphan decision as shipped (section rendered, count of orphans present in the dev DB at the time).
 - `pytest -q` output, plus the count of new tests in `tests/integration/test_portfolio_dashboard.py`.
 - Any open question you hit that this document did not answer — name it rather than resolving it silently, so it can be folded back into the next handoff.
+
+## Results
+
+### Final routes
+
+| Method | Path | Template / response | HTMX or page |
+|---|---|---|---|
+| GET | `/` | `pages/dashboard.html` | Full page |
+| GET | `/clients/{client_id}` | `pages/client_detail.html` | Full page |
+| GET | `/clients/{client_id}/engagements-list` | `partials/engagement_list.html` | HTMX fragment; otherwise 307 to client detail |
+| GET | `/engagements/{engagement_id}` | `pages/engagement_detail.html` | Full page |
+| GET | `/engagements/new` | `pages/new_engagement.html` | Full page |
+| GET | `/engagements/new/client-fields` | `partials/client_picker.html` | HTMX fragment; otherwise 307 to new engagement |
+| POST | `/engagements` | 303 to `/engagements/{id}` | Form redirect |
+| GET | `/assessments/new` | 307 to `/engagements/new` | Compatibility redirect |
+| POST | `/assessments`, `/assessments/new` | 303 to `/assessments/{id}` | Compatibility redirect |
+
+No specified P1-4 path differed from step 3. The legacy assessment paths remain as the required compatibility shim, while New Engagement is the sole creation UI entry point.
+
+### Derived values
+
+`STAGE_RANK` was unchanged:
+
+```text
+created=0
+scoped=1
+documents_uploaded=2
+context_gathered=3
+questionnaire_done=4
+analyzing=5
+completed=6
+```
+
+`derive_status` rule order was unchanged: empty -> `empty`; any error -> `error`; all completed -> `completed`; any analyzing -> `analyzing`; otherwise the least-advanced status by `STAGE_RANK`, with unknown statuses ranked 0.
+
+### Live smoke counts
+
+The app completed its startup migrations against the dev SQLite database. This managed sandbox denied TCP and Unix-domain socket binds (`operation not permitted`), so the requested port-8000 curl process could not accept connections. The same live FastAPI ASGI app and lifespan were exercised through `TestClient` against that database, including the real form POST and HTMX headers.
+
+| Table | Before | After |
+|---|---:|---:|
+| clients | 0 | 1 |
+| engagements | 0 | 1 |
+| assessments | 0 | 1 |
+| assessment_packs | 0 | 1 |
+
+The form POST returned 303, the dashboard and engagement detail returned 200, the engagement-list and client-fields HTMX responses returned bare 200 fragments without `<!DOCTYPE>`, `<html>`, or `<nav>`, and their boosted/plain fallbacks returned 307. The created engagement appeared on the dashboard and detail page.
+
+### Orphans
+
+The shipped orphan decision is the distinct `Unmigrated assessments` section with the migration note and direct assessment links. The dev database had 0 orphaned assessments at smoke-test time.
+
+### Verification
+
+`pytest -q`: **256 passed, 48 warnings in 9.02s** (final run with an isolated `DATABASE_URL`; the direct default-database run passed 255 tests before the final API-invariant test was added). The new `tests/integration/test_portfolio_dashboard.py` contains 13 test functions and 16 collected test cases.
+
+### Any open question
+
+- The handoff’s global construction-site invariant covers the existing JSON API factory, although that API contract has no client or engagement fields. It now reuses the hierarchy helper with a default DPDPA pack and a generated engagement name to preserve the API contract; this interpretation should be confirmed when the API creation contract is next revised.

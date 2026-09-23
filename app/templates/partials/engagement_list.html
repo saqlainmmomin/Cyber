@@ -1,0 +1,31 @@
+{# Expected context: engagements (list of engagement_card); optional client_id for dashboard empty state. #}
+{% if engagements %}
+<div class="space-y-2">
+  {% for engagement in engagements %}
+  <a href="/engagements/{{ engagement.id }}" class="flex items-center justify-between gap-4 rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3 hover:border-navy-300 dark:hover:border-navy-600 transition-colors">
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ engagement.name }}</span>
+        {% set derived_status = engagement.derived_status %}
+        {% include "components/engagement_status_badge.html" %}
+      </div>
+      <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <span>{{ engagement.assessment_count }} assessment{% if engagement.assessment_count != 1 %}s{% endif %}</span>
+        <span>{{ engagement.progress_pct }}% progress</span>
+        <span>Updated {{ engagement.last_activity.strftime('%d %b %Y') }}</span>
+      </div>
+    </div>
+    <svg class="h-4 w-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+    </svg>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-4 py-5 text-center">
+  <p class="text-sm text-gray-500 dark:text-gray-400">No engagements yet</p>
+  {% if client_id is defined %}
+  <a href="/engagements/new?client_id={{ client_id }}" class="mt-2 inline-flex text-xs font-medium text-brand dark:text-navy-300 hover:underline">New engagement</a>
+  {% endif %}
+</div>
+{% endif %}

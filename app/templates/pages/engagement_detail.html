@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ engagement.name }} — Portfolio{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
+    <span>/</span>
+    <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>
+    <span>/</span>
+    <span class="text-gray-700 dark:text-gray-300">{{ engagement.name }}</span>
+  </div>
+</div>
+
+<div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-8">
+  <div>
+    <div class="flex flex-wrap items-center gap-3">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ engagement.name }}</h1>
+      {% set derived_status = card.derived_status %}
+      {% include "components/engagement_status_badge.html" %}
+    </div>
+    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ client.name }} · {{ engagement.type | replace("_", " ") | title }}</p>
+  </div>
+  <div class="w-full sm:w-64">
+    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+      <span>Progress</span>
+      <span>{{ card.progress_pct }}%</span>
+    </div>
+    <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      <div class="h-full rounded-full bg-brand dark:bg-navy-400 transition-all" style="width: {{ card.progress_pct }}%"></div>
+    </div>
+    <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Last activity {{ card.last_activity.strftime('%d %b %Y') }}</p>
+  </div>
+</div>
+
+<section>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Assessments</h2>
+    <span class="text-xs text-gray-500 dark:text-gray-400">{{ card.assessment_count }} total</span>
+  </div>
+  {% if assessments %}
+  <div class="space-y-3">
+    {% for a in assessments %}
+    <a href="/assessments/{{ a.id }}" class="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-navy-300 dark:hover:border-navy-600 transition-colors">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ a.company_name }}</h3>
+            {% include "components/status_badge.html" %}
+          </div>
+          {% if a.description %}<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ a.description }}</p>{% endif %}
+          <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Created {{ a.created_at.strftime('%d %b %Y') }} · Updated {{ a.updated_at.strftime('%d %b %Y') }}</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 sm:justify-end">
+          {% for framework in a.framework_badges %}
+          <span class="rounded bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs text-gray-600 dark:text-gray-300" title="{{ framework.version }}">{{ framework.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-10 text-center">
+    <p class="text-sm text-gray-500 dark:text-gray-400">No assessments in this engagement yet.</p>
+    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Progress will appear here when an assessment is added.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

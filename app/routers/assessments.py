@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.client import Client
 from app.schemas.assessment import AssessmentCreate, AssessmentResponse
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
@@ -32,15 +33,32 @@ def list_available_frameworks():
 
 @router.post("", response_model=AssessmentResponse, status_code=201)
 def create_assessment(data: AssessmentCreate, db: Session = Depends(get_db)):
-    assessment = Assessment(
-        company_name=data.company_name,
-        industry=data.industry.value,
-        company_size=data.company_size.value,
+    # Keep the API factory compatible while preserving the portfolio invariant.
+    from app.routers.web import _create_engagement_with_assessment
+
+    client = db.query(Client).filter(Client.name == data.company_name).first()
+    if not client:
+        client = Client(
+            name=data.company_name,
+            industry=data.industry.value,
+            size=data.company_size.value,
+        )
+        db.add(client)
+        db.flush()
+    engagement = _create_engagement_with_assessment(
+        db,
+        client=client,
+        engagement_name=f"{data.company_name} Assessment",
+        engagement_type="gap_assessment",
         description=data.description,
+        framework_ids=["dpdpa"],
     )
-    db.add(assessment)
-    db.commit()
-    db.refresh(assessment)
+    assessment = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement.id)
+        .order_by(Assessment.created_at.desc())
+        .first()
+    )
     return assessment
 
 
