@@ -11,7 +11,7 @@ CyberAssess is a multi-framework compliance maturity platform. Its FastAPI, Jinj
 
 Older plans are historical only; do not use them for implementation decisions.
 
-**Current:** Phase 1 — Schema & Hierarchy. P1-1/P1-2/P1-6 merged; P1-3 implemented, PR #19 open; P1-4/P1-5 not started.
+**Current:** Phase 1 — Schema & Hierarchy. P1-1/P1-2/P1-3/P1-6 merged; P1-4/P1-5 handoffs written, not started.
 **Pre-work:** Complete.
 **Progress tracking:** Update `tasks/todo.md` in the same change as each completed task.
 

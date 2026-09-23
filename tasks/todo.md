@@ -10,12 +10,12 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 - [x] **P1-1: Alembic foundation** `[AR: migration cutover]` — **Merged:** PR #16.
 - [x] **P1-2: Target schema (15 new tables + FKs)** `[AR: data integrity]` — adversarial review found a missing downgrade data-loss guard, remediated. **Merged:** PR #17.
 - [x] **P1-6: Backup/restore and recovery rehearsal** `[AR: recoverability]` — adversarial review found a real rollback data-loss bug (partial safety copy could overwrite a good original) plus 3 smaller issues, all remediated. **Merged:** PR #18.
+- [x] **P1-3: One-shot legacy migration** `[AR: data integrity/backfill]` — implemented against a 26-test failing suite written first; adversarial review (manual + automated) found an undocumented heuristic silently dropping genuinely-open remediation items, remediated; independent final verification pass confirmed safe. 27/27 targeted + 240/240 full suite passing. **Merged:** PR #19.
 
 ## Phase 1 — Schema & Hierarchy
 
-- [ ] **P1-3: One-shot legacy migration** `[AR: data integrity/backfill]` — implemented against a 26-test failing suite written first; adversarial review found an undocumented heuristic silently dropping genuinely-open remediation items, remediated. 27/27 targeted + 240/240 full suite passing. **PR #19 open, awaiting merge.**
-- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — blocked on P1-3 merge (needs real Client/Engagement rows).
-- [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — unblocked (P1-2 merged), can start in parallel with P1-4.
+- [ ] **P1-4: Portfolio, hierarchy navigation, and new-engagement flow** — unblocked (P1-3 merged). Handoff written: `tasks/handoffs/2026-09-23-p1-4-portfolio-dashboard.md`.
+- [ ] **P1-5: Per-framework scoring; remove blended scores** `[AR: scoring semantics]` — unblocked (P1-2 merged), can run in parallel with P1-4. Handoff written: `tasks/handoffs/2026-09-23-p1-5-deprecate-blended-scoring.md` — flags that removing `compute_unified_maturity()` also requires fixing two pre-existing latent bugs found while designing this task (a multi-framework 500 in `reports.py` and a `KeyError` in `pdf_export.py`, both from a `chapter_scores`/`framework_scores` shape collision).
 
 **Phase 1 exit:** full target schema, safe legacy migration, working portfolio and legacy assessment routes, separate framework scores, tested backup/restore.
 
