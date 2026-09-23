@@ -83,6 +83,8 @@ D-D. ``Finding.status`` / ``Action.status`` value sets. Resolution: ``Finding``'
      with a ``logger.warning``. ``Action``'s set is
      ``open|in_progress|closed|verified``; migration only ever produces ``open``
      or ``closed`` (``closed`` when ``remediation_closed_at is not None``).
+     A later run skips any existing Finding because its Actions are then
+     consultant-operated and must not be re-mapped.
 
 Backup safety
 -------------
@@ -409,54 +411,52 @@ def run_migration(session: Session) -> MigrationStats:
                         Finding.conclusion_id == conclusion.id,
                     )
                 ).scalar_one_or_none()
-                if finding is None:
-                    finding_status = map_finding_status(remediation_status)
-                    if remediation_status not in FINDING_STATUSES:
-                        stats.warnings.append(
-                            f"Unknown remediation status {remediation_status!r}; "
-                            "defaulting Finding.status to 'open'"
-                        )
-                    finding = Finding(
-                        assessment_id=assessment.id,
-                        conclusion_id=conclusion.id,
-                        title=item.requirement_title,
-                        description=item.gap_description,
-                        severity=item.risk_level,
-                        priority=item.remediation_priority,
-                        status=finding_status,
+                if finding is not None:
+                    # P3-1: an existing Finding and its Actions are consultant-operated; never re-map them.
+                    continue
+                finding_status = map_finding_status(remediation_status)
+                if remediation_status not in FINDING_STATUSES:
+                    stats.warnings.append(
+                        f"Unknown remediation status {remediation_status!r}; "
+                        "defaulting Finding.status to 'open'"
                     )
-                    session.add(finding)
-                    session.flush()
-                    stats.findings += 1
+                finding = Finding(
+                    assessment_id=assessment.id,
+                    conclusion_id=conclusion.id,
+                    title=item.requirement_title,
+                    description=item.gap_description,
+                    severity=item.risk_level,
+                    priority=item.remediation_priority,
+                    status=finding_status,
+                )
+                session.add(finding)
+                session.flush()
+                stats.findings += 1
 
-                action = session.execute(
-                    select(Action).where(Action.finding_id == finding.id)
-                ).scalar_one_or_none()
-                if action is None:
-                    timestamp = datetime.now(timezone.utc).isoformat()
-                    session.add(
-                        Action(
-                            finding_id=finding.id,
-                            title=item.remediation_action,
-                            owner=item.remediation_owner,
-                            target_date=item.remediation_target_date,
-                            status=map_action_status(
-                                remediation_status, item.remediation_closed_at
-                            ),
-                            history_json=json.dumps(
-                                [
-                                    {
-                                        "actor": MIGRATION_ACTOR,
-                                        "action": "imported",
-                                        "timestamp": timestamp,
-                                        "notes": "Migrated from legacy GapItem remediation fields",
-                                    }
-                                ]
-                            ),
-                        )
+                timestamp = datetime.now(timezone.utc).isoformat()
+                session.add(
+                    Action(
+                        finding_id=finding.id,
+                        title=item.remediation_action,
+                        owner=item.remediation_owner,
+                        target_date=item.remediation_target_date,
+                        status=map_action_status(
+                            remediation_status, item.remediation_closed_at
+                        ),
+                        history_json=json.dumps(
+                            [
+                                {
+                                    "actor": MIGRATION_ACTOR,
+                                    "action": "imported",
+                                    "timestamp": timestamp,
+                                    "notes": "Migrated from legacy GapItem remediation fields",
+                                }
+                            ]
+                        ),
                     )
-                    session.flush()
-                    stats.actions += 1
+                )
+                session.flush()
+                stats.actions += 1
 
         session.commit()
     except Exception:

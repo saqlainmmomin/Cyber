@@ -1,0 +1,75 @@
+<article data-finding-card id="finding-{{ view.finding.id }}" data-finding-origin="{{ view.origin }}" data-source-approved="{{ 'true' if view.source_approved else 'false' }}" class="scroll-mt-6 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+  <header class="border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ view.finding.title }}</h3>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ view.finding.severity|title }} · Priority {{ view.finding.priority }} · Status: {{ view.finding.status }}</p>
+      </div>
+      {% if view.workpaper_href %}<a href="{{ view.workpaper_href }}" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>{% endif %}
+    </div>
+    {% if view.card %}<p class="mt-3 text-sm text-gray-600 dark:text-gray-300"><span class="font-semibold">{{ view.card.conclusion.framework_id|upper }}</span> · <span class="font-mono">{{ view.card.conclusion.requirement_id }}</span> · {{ view.card.requirement_title }} · {{ view.card.conclusion.outcome|replace('_', ' ')|title }}</p>{% endif %}
+    {% if view.origin == 'migrated' %}<p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Migrated from legacy remediation</p>{% else %}<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Created by {{ view.created_by }}</p>{% endif %}
+    {% if view.card and view.card.legacy_bulk_approval %}<p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Legacy bulk approval, not individually reviewed</p>{% endif %}
+    {% if not view.source_approved %}<p class="mt-2 text-sm font-medium text-amber-700 dark:text-amber-300">Source conclusion is no longer approved (now {{ view.card.state if view.card else 'missing' }}). Review it before relying on this finding.</p>{% endif %}
+    <p class="mt-3 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ view.finding.description }}</p>
+  </header>
+
+  <div class="space-y-5 p-5">
+    <section>
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Actions</h4>
+      <div class="mt-3 space-y-4">
+        {% for row in view.actions %}
+        <div data-action-row id="action-{{ row.action.id }}" data-action-status="{{ row.action.status }}" class="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+          <h5 class="font-medium text-gray-900 dark:text-gray-100">{{ row.action.title }}</h5>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Owner: {{ row.action.owner if row.action.owner else 'Unassigned' }} · Target: {{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else 'No target date' }} · Status: {{ row.action.status }}</p>
+          {% if row.history_readable %}
+          <ol data-action-history class="mt-3 space-y-2">
+            {% for e in row.history %}
+            <li data-history-action="{{ e.action }}" class="rounded bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-700 dark:text-gray-300">
+              <p class="font-medium">#{{ e.sequence }} · {{ e.timestamp }} · {{ e.label }} · {{ e.actor_display }}</p>
+              {% for name, change in e.changes.items() %}<p class="mt-1 text-xs">{{ name }}: {{ change['from'] or '—' }} → {{ change['to'] or '—' }}</p>{% endfor %}
+              {% if e.notes %}<p class="mt-2 whitespace-pre-wrap">{{ e.notes }}</p>{% endif %}
+            </li>
+            {% endfor %}
+          </ol>
+          {% else %}<p class="mt-3 text-sm font-medium text-red-700 dark:text-red-300">History could not be read.</p>{% endif %}
+
+          {% if row.allowed_statuses %}
+          <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/status" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-4 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+            <label class="text-sm text-gray-700 dark:text-gray-300">Status<select name="status" class="mt-1 block rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{% for value in row.allowed_statuses %}<option value="{{ value }}">{{ value|replace('_', ' ')|title }}</option>{% endfor %}</select></label>
+            <label class="min-w-64 flex-1 text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+            <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Update status</button>
+          </form>
+          {% endif %}
+
+          {% if row.editable %}
+          <details class="mt-4">
+            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Edit details</summary>
+            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/update" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-2">
+              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+              <label class="text-sm text-gray-700 dark:text-gray-300">Title<input name="title" value="{{ row.action.title }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+              <label class="text-sm text-gray-700 dark:text-gray-300">Owner<input name="owner" value="{{ row.action.owner or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+              <label class="text-sm text-gray-700 dark:text-gray-300">Target date<input type="date" name="target_date" value="{{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+              <label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+              <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save details</button></div>
+            </form>
+          </details>
+          {% else %}<p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Closed and verified actions cannot be changed here.</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <details>
+      <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Add action</summary>
+      <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-2">
+        <label class="text-sm text-gray-700 dark:text-gray-300">Title<input name="title" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+        <label class="text-sm text-gray-700 dark:text-gray-300">Owner<input name="owner" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+        <label class="text-sm text-gray-700 dark:text-gray-300">Target date<input type="date" name="target_date" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+        <label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+        <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Add action</button></div>
+      </form>
+    </details>
+  </div>
+</article>

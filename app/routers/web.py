@@ -31,7 +31,7 @@ from app.services.question_engine import build_adaptive_questionnaire
 from app.models.report import GapItem, GapReport
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
-from app.services import evidence as evidence_service, workpaper
+from app.services import evidence as evidence_service, findings as finding_service, workpaper
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services.scoring import report_framework_scores
@@ -1978,6 +1978,30 @@ def review_page(
     )
 
 
+def _latest_reviewer_name(db: Session, assessment_id: str) -> str:
+    latest_consultant = (
+        db.query(ConclusionRevision)
+        .join(
+            Conclusion,
+            ConclusionRevision.conclusion_id == Conclusion.id,
+        )
+        .filter(
+            Conclusion.assessment_id == assessment_id,
+            ConclusionRevision.actor.startswith("consultant:"),
+        )
+        .order_by(
+            ConclusionRevision.created_at.desc(),
+            literal_column("conclusion_revisions.rowid").desc(),
+        )
+        .first()
+    )
+    return (
+        latest_consultant.actor.removeprefix("consultant:")
+        if latest_consultant
+        else ""
+    )
+
+
 @router.get("/assessments/{assessment_id}/conclusions", response_class=HTMLResponse)
 def conclusions_page(
     request: Request,
@@ -1999,27 +2023,6 @@ def conclusions_page(
         "edited": sum(card.state == "edited" for card in cards),
         "legacy_bulk": sum(card.legacy_bulk_approval for card in cards),
     }
-    latest_consultant = (
-        db.query(ConclusionRevision)
-        .join(
-            Conclusion,
-            ConclusionRevision.conclusion_id == Conclusion.id,
-        )
-        .filter(
-            Conclusion.assessment_id == assessment_id,
-            ConclusionRevision.actor.startswith("consultant:"),
-        )
-        .order_by(
-            ConclusionRevision.created_at.desc(),
-            literal_column("conclusion_revisions.rowid").desc(),
-        )
-        .first()
-    )
-    reviewer_name = (
-        latest_consultant.actor.removeprefix("consultant:")
-        if latest_consultant
-        else ""
-    )
     return templates.TemplateResponse(
         request=request,
         name="pages/conclusions.html",
@@ -2028,7 +2031,7 @@ def conclusions_page(
             "assessment": assessment,
             "cards": cards,
             "counts": counts,
-            "reviewer_name": reviewer_name,
+            "reviewer_name": _latest_reviewer_name(db, assessment_id),
         },
     )
 
@@ -2047,6 +2050,28 @@ def workpaper_page(
         request=request,
         name="pages/workpaper.html",
         context={"request": request, "assessment": assessment, "wp": wp},
+    )
+
+
+@router.get("/assessments/{assessment_id}/findings", response_class=HTMLResponse)
+def findings_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
+    page = finding_service.findings_page(db, assessment_id)
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/findings.html",
+        context={
+            "request": request,
+            "assessment": assessment,
+            "page": page,
+            "reviewer_name": _latest_reviewer_name(db, assessment_id),
+        },
     )
 
 

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Findings — {{ assessment.company_name }}{% endblock %}
+
+{% block content %}
+<nav class="mb-2 text-xs text-gray-400 dark:text-gray-500">
+  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+  <span class="mx-1.5">/</span>
+  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+  <span class="mx-1.5">/</span>
+  <span class="text-gray-600 dark:text-gray-300">Findings</span>
+</nav>
+
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Findings and actions</h1>
+    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Create a finding from an individually approved conclusion, then track its remediation actions. Every change is appended to the action's history.</p>
+    <div class="mt-2 flex flex-wrap gap-3">
+      <a href="/assessments/{{ assessment.id }}/conclusions" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Conclusions (decide) →</a>
+      <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (read-only trace) →</a>
+    </div>
+  </div>
+  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+    Reviewer name
+    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
+  </label>
+</div>
+
+<section class="mb-10">
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Approved conclusions without a finding</h2>
+  {% if page.eligible %}
+  <div class="space-y-4">
+    {% for row in page.eligible %}
+    <div data-eligible-conclusion id="eligible-{{ row.card.conclusion.id }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><span class="font-semibold text-brand dark:text-navy-300">{{ row.card.conclusion.framework_id|upper }}</span> · <span class="font-mono">{{ row.card.conclusion.requirement_id }}</span></p>
+          <h3 class="mt-1 font-semibold text-gray-900 dark:text-gray-100">{{ row.card.requirement_title }}</h3>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ row.card.conclusion.outcome|replace('_', ' ')|title }} · {{ row.card.conclusion.risk_level|title }}</p>
+        </div>
+        <a href="{{ row.workpaper_href }}" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
+      </div>
+      <details class="mt-4">
+        <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Create finding</summary>
+        <form hx-post="/api/assessments/{{ assessment.id }}/findings" hx-swap="none" hx-include="#reviewer-name" class="mt-4 grid gap-4 sm:grid-cols-2">
+          <input type="hidden" name="conclusion_id" value="{{ row.card.conclusion.id }}">
+          <input type="hidden" name="conclusion_version" value="{{ row.card.conclusion.version }}">
+          <label class="text-sm text-gray-700 dark:text-gray-300">Title<input name="title" value="{{ row.prefill.title }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300">Severity<select name="severity" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}" {% if value == row.prefill.severity %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300 sm:col-span-2">Description<textarea name="description" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{{ row.prefill.description }}</textarea></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300">Priority<select name="priority" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{% for value in [1, 2, 3, 4] %}<option value="{{ value }}" {% if value == row.prefill.priority %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300">Action title<input name="action_title" value="{{ row.prefill.action_title }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300">Owner<input name="action_owner" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300">Target date<input type="date" name="action_target_date" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+          <label class="text-sm text-gray-700 dark:text-gray-300 sm:col-span-2">Notes<textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></textarea></label>
+          <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Create finding</button></div>
+        </form>
+      </details>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No approved conclusions are waiting for a finding.</p>{% endif %}
+</section>
+
+<section>
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Findings</h2>
+  {% if page.findings %}<div class="space-y-5">{% for view in page.findings %}{% include "components/finding_card.html" %}{% endfor %}</div>
+  {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No findings yet.</p>{% endif %}
+</section>
+{% endblock %}

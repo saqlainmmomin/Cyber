@@ -18,6 +18,7 @@ from app.routers import (
     desk_review,
     documents,
     evidence,
+    findings,
     magic,
     questionnaire,
     remediation,
@@ -135,6 +136,7 @@ app.include_router(desk_review.router)
 app.include_router(remediation.router)
 app.include_router(review.router)
 app.include_router(conclusions.router)
+app.include_router(findings.router)
 
 # Web portal routes
 app.include_router(magic.router)

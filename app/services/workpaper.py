@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import literal_column, select
@@ -15,6 +15,7 @@ from app.models.assessment import Assessment
 from app.models.conclusion import ConclusionRevision
 from app.models.desk_review import DeskReviewFinding
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
+from app.models.finding import Finding
 from app.models.questionnaire import QuestionnaireResponse
 from app.services import analysis_pipeline, conclusion_review
 from app.services.citations import resolve_citations
@@ -93,6 +94,7 @@ class WorkpaperEntry:
     desk_review_findings: list[dict]
     ai_proposal: RevisionEntry | None
     revisions: list[RevisionEntry]
+    findings: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -339,6 +341,14 @@ def build_workpaper(
     now: datetime | None = None,
 ) -> Workpaper:
     cards = conclusion_review.conclusion_cards(db, assessment.id)
+    finding_rows = db.execute(
+        select(Finding)
+        .where(Finding.assessment_id == assessment.id)
+        .order_by(Finding.created_at, literal_column("findings.rowid"))
+    ).scalars().all()
+    findings_by_conclusion: dict[str, list[Finding]] = {}
+    for finding in finding_rows:
+        findings_by_conclusion.setdefault(finding.conclusion_id, []).append(finding)
     conclusion_ids = [card.conclusion.id for card in cards]
     revision_rows = (
         db.execute(
@@ -403,6 +413,19 @@ def build_workpaper(
                     None,
                 ),
                 revisions=revision_entries,
+                findings=[
+                    {
+                        "finding_id": finding.id,
+                        "title": finding.title,
+                        "status": finding.status,
+                        "severity": finding.severity,
+                        "href": (
+                            f"/assessments/{assessment.id}/findings"
+                            f"#finding-{finding.id}"
+                        ),
+                    }
+                    for finding in findings_by_conclusion.get(conclusion.id, [])
+                ],
             )
         )
 
