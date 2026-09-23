@@ -11,9 +11,14 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
-from app.routers import analysis, assessments, desk_review, documents, evidence, questionnaire, remediation, reports, review, web
+from app.routers import analysis, assessments, desk_review, documents, evidence, magic, questionnaire, remediation, reports, review, web
+from app.services.magic_links import MagicTokenRedactionFilter
 
 logger = logging.getLogger(__name__)
+
+_magic_token_redaction_filter = MagicTokenRedactionFilter()
+for _logger_name in ("uvicorn.access", "uvicorn.error"):
+    logging.getLogger(_logger_name).addFilter(_magic_token_redaction_filter)
 
 APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
@@ -118,6 +123,7 @@ app.include_router(remediation.router)
 app.include_router(review.router)
 
 # Web portal routes
+app.include_router(magic.router)
 app.include_router(web.router)
 
 

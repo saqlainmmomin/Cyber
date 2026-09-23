@@ -17,6 +17,7 @@ from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment, AssessmentDocument, _new_id
 from app.models.audit_event import AuditEvent
+from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.services.document_processor import detect_file_type, extract_text
 
@@ -703,6 +704,63 @@ def ingest_upload(
         released_version.extracted_text = extracted
         if assessment.status == "created":
             assessment.status = "documents_uploaded"
+        db.commit()
+        return IngestResult(evidence, released_version, True)
+    except Exception:
+        db.rollback()
+        for path in written_paths:
+            path.unlink(missing_ok=True)
+        raise
+
+
+def ingest_engagement_upload(
+    db: Session,
+    *,
+    engagement_id: str,
+    filename: str,
+    content: bytes,
+    category: str | None,
+    uploaded_by: str,
+    change_reason: str | None = None,
+    evidence_id: str | None = None,
+    allow_duplicate: bool = False,
+) -> IngestResult:
+    """Ingest an engagement-level receipt without changing an assessment."""
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise EvidenceNotFound("Engagement not found")
+
+    written_paths: list[Path] = []
+    try:
+        evidence, version = receive_evidence(
+            db,
+            engagement_id=engagement.id,
+            assessment_id=None,
+            filename=filename,
+            content=content,
+            category=category,
+            uploaded_by=uploaded_by,
+            actor=uploaded_by,
+            evidence_id=evidence_id,
+            change_reason=change_reason,
+            allow_duplicate=allow_duplicate,
+        )
+        written_paths.append(blob_path(version.storage_path))
+        released_version = release_from_quarantine(db, version_id=version.id)
+        if released_version.status != "active":
+            db.commit()
+            return IngestResult(evidence, released_version, False)
+
+        extracted = extract_text(
+            blob_path(released_version.storage_path),
+            Path(released_version.storage_path).suffix.removeprefix("."),
+        )
+        if not extracted.strip():
+            raise EvidenceValidationError(
+                "Could not extract text from this document. If it is a scanned PDF, "
+                "try uploading it as a PNG or JPEG screenshot instead."
+            )
+        released_version.extracted_text = extracted
         db.commit()
         return IngestResult(evidence, released_version, True)
     except Exception:

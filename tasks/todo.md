@@ -21,9 +21,10 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Later phases
 
-- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — P2-1 and P2-2 complete; P2-3/P2-4/P2-5/P2-6 remain. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
-- [x] **P2-1: Evidence service** — implemented and verified: 43 contract tests and 309 full-suite tests pass; live ASGI smoke, hash verification, archive/restore, mocked desk review, and two-pass copy migration completed. Handoff Results: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`.
-- [x] **P2-2: Citation model** — implemented and verified: 26 citation contract tests and 160 in-scope regression tests pass; full-suite run is blocked by the parallel P2-5 contract suite and an existing developer-DB guard leak. Live ASGI smoke stored a verified raw-text span citation. Handoff Results: `tasks/handoffs/2026-09-23-p2-2-citation-model.md`.
+- [ ] **Phase 2 — Evidence & conclusions** `[AR: evidence lifecycle, citations, immutable analysis, approvals, magic links]` — P2-1, P2-2 and P2-5 complete; P2-3/P2-4/P2-6 remain. Ownership per task: `tasks/agent-ownership.md`. Gating task is P2-1 (evidence service); {P2-2→P2-3→P2-4} and {P2-5} are independent lanes after that; P2-6 depends on all of them.
+- [x] **P2-1: Evidence service** — implemented and verified: 43 contract tests and 309 full-suite tests pass; live ASGI smoke, hash verification, archive/restore, mocked desk review, and two-pass copy migration completed. Handoff Results: `tasks/handoffs/2026-09-23-p2-1-evidence-service.md`. **Merged:** PR #24.
+- [x] **P2-2: Citation model** — implemented and verified: 26 citation contract tests pass; drops the dead P1-2 `citations` table in favor of `citations_json`, per D-P2-2-A. Live ASGI smoke stored a verified raw-text span citation. Handoff Results: `tasks/handoffs/2026-09-23-p2-2-citation-model.md`. **Merged:** PR #25.
+- [x] **P2-5: Client evidence magic links** — implemented and verified: 29 contract tests pass; adversarial review found and this branch fixed a query-count timing oracle in `resolve_token` before merge. Handoff Results appended to `tasks/handoffs/2026-09-23-p2-5-magic-links.md`. **Merged:** PR #26.
 - [ ] **Phase 3 — Reports & remediation** `[AR: report immutability, provenance, closure verification]`
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 

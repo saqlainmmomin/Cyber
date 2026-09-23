@@ -301,3 +301,63 @@ Append a `## Results` section to this file containing:
 - `pytest -q` output and the pass count of `tests/test_magic_links.py`, and confirmation that no existing test file was modified.
 - The six security-smoke outputs listed in Done criteria.
 - Anything this document got wrong about the current code.
+
+## Results
+
+- Route table implemented:
+
+  | Method | Path | Success | Template |
+  |---|---|---:|---|
+  | GET | `/magic/{token}` | 200 | `magic/upload.html` |
+  | GET | `/magic/{token}` invalid | 404 | `magic/invalid.html` |
+  | POST | `/magic/{token}` | 200 | `magic/upload.html` |
+  | POST | `/engagements/{engagement_id}/magic-links` | 200 | `partials/magic_links.html` |
+  | POST | `/engagements/{engagement_id}/magic-links/{link_id}/revoke` | 200 | `partials/magic_links.html` |
+
+  `POST /magic/{token}` intentionally returns handled statuses 400 (unsupported file type), 403 (upload count limit), 404 (invalid, unknown, expired, revoked, or inactive-engagement token), 409 (same-link duplicate), 411 (missing or non-numeric `Content-Length`), 413 (request/file/link-total size limit), 422 (bad item, missing file, empty file, extraction failure, or scan rejection), and 429 (hourly rate limit with `Retry-After`). All handled errors render `magic/upload.html` except the non-enumerable 404, which renders `magic/invalid.html`; no deviation from step 3. The consultant create route returns 404 for an unknown engagement and 200 partial responses for validation/conflict errors; revoke returns 404 for a missing/wrong-engagement link and 200 partial responses for conflicts.
+
+- Security constants copied from the implementation:
+
+  ```python
+  TOKEN_BYTES = 16
+  UPLOADS_PER_HOUR = 10
+  MAX_FILE_BYTES = 25 * 1024 * 1024
+  MULTIPART_OVERHEAD_BYTES = 64 * 1024
+  MAX_ITEMS = 20
+  MAX_ITEM_TITLE_CHARS = 200
+  EXPIRES_DAYS_RANGE = (1, 30)
+  MAX_UPLOADS_RANGE = (1, 100)
+  MAX_TOTAL_MB_RANGE = (1, 500)
+  SECURITY_HEADERS = {
+      "Referrer-Policy": "no-referrer",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex, nofollow",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Content-Security-Policy": (
+          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; "
+          "frame-ancestors 'none'; base-uri 'none'"
+      ),
+  }
+  ```
+
+  The scope shape is `json.dumps({"items": [{"key": "item-1", "title": "Information security policy"}, {"key": "item-2", "title": "Access review evidence"}], "version": 1}, sort_keys=True)`. Tokens are generated with `secrets.token_urlsafe(16)` and stored only as the SHA-256 digest.
+
+- Verification: `.venv/bin/pytest -q tests/test_magic_links.py` → `29 passed, 55 warnings`; the combined Evidence regression run → `72 passed, 60 warnings`. The full requested `.venv/bin/pytest -q` run → `338 passed, 26 failed, 1 error, 112 warnings`: the 26 failures are the parallel P2-2 citation contract tests (`app.services.citations` and revision `3d8b6f0a2c51` are not present in this worktree), and the teardown error is the existing developer-database guard after a test-created `data/dpdpa.db`. No existing test file was modified. `alembic heads` remains one unchanged head: `7a3f1e2b9c80`.
+
+- Security-smoke outputs:
+
+  1. The targeted contract smoke passed the scoped client page check: the named item title and remaining count were present; client, engagement, assessment, evidence, conclusion, other-link, token, external-asset, and form-action sentinels were absent. A real Uvicorn process reached `Application startup complete`, but this managed sandbox refused both TCP and Unix-socket binds with `Operation not permitted`, so no live HTTP request could be generated here.
+  2. The six client response headers were confirmed by the contract suite as: `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`.
+  3. The upload contract smoke confirmed `assessment_id IS NULL` and `uploaded_by = client_link:<link id>`; the exact audit order and metadata also passed. The attempted live Uvicorn upload was blocked by the bind restriction above.
+  4. The contract smoke revoked a link and confirmed its old URL response body is byte-identical to a random-token 404 on GET and POST. The live curl comparison could not run because Uvicorn could not bind.
+  5. The redaction filter test produced `127.0.0.1:5000 - "GET /magic/[redacted]?x=1 HTTP/1.1" 200`; the raw token and its first 12 characters were absent from the audit metadata and SQLite dump. No real Uvicorn access-log line was available because of the sandbox bind restriction.
+  6. The hourly-limit smoke returned 429 with a clamped `Retry-After` value between 1 and 3600 in the contract suite. The live upload loop could not run because of the same bind restriction.
+
+- Current-code note: the P2-5 handoff was accurate for the P2-5 boundary. This worktree contains the sibling P2-2 citation tests without that lane's implementation/revision, so its full-suite result is not the handoff's advertised 309+29 baseline. The test-created ignored zero-byte `data/dpdpa.db` was removed after the run; no schema or migration was added.
+
+### Adversarial-review addendum
+
+- `resolve_token` now performs an unconditional engagement query for every well-formed candidate after the digest lookup, including unknown, expired, revoked, and inactive-engagement cases. The inline SQL statement counter reported `{'unknown': 2, 'expired': 2, 'revoked': 2, 'inactive-engagement': 2}`; malformed tokens still intentionally execute zero statements.
+- The magic-token redaction filter is installed on both `uvicorn.access` and `uvicorn.error`. The router's upload-limit check is performed once and its `LinkUsage` result is passed into `receive_client_upload`; direct service callers still enforce the check internally.
+- Verification after these fixes: `.venv/bin/pytest -q tests/test_magic_links.py` → `29 passed`; `.venv/bin/pytest -q --ignore=tests/test_citations.py` → `338 passed`. No permanent test was added and no existing test assertion was changed.
