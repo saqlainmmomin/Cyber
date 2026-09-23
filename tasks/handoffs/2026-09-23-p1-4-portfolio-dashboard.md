@@ -329,3 +329,11 @@ The shipped orphan decision is the distinct `Unmigrated assessments` section wit
 ### Any open question
 
 - The handoff’s global construction-site invariant covers the existing JSON API factory, although that API contract has no client or engagement fields. It now reuses the hierarchy helper with a default DPDPA pack and a generated engagement name to preserve the API contract; this interpretation should be confirmed when the API creation contract is next revised.
+
+### Adversarial review addendum (2026-09-23)
+
+- Moved the shared hierarchy factory to `app/services/engagement_factory.py`; both the HTML and JSON routers now use the public service function. The JSON API continues to reuse an exact-name Client while each POST creates its own Engagement, Assessment, and DPDPA pack, with repeated-company coverage added.
+- Wired engagement badge text to the Python-computed `derived_status_label`, removed the duplicate template label map, corrected the New Engagement title and orphaned button, and fixed the dashboard shortcut indentation.
+- Resolved the previously open client-detail filtering decision: client detail and its HTMX engagement fragment hide closed engagements for consistency with the dashboard; the engagement-detail page still renders a closed engagement when addressed directly.
+- Made the `engagement_type` validity check explicit in the validation order (after engagement name and before client resolution), with a 400/no-write regression case.
+- Verification: `.venv/bin/pytest -q` — **257 passed, 50 warnings in 9.18s**. `tests/integration/test_portfolio_dashboard.py` contains 13 test functions and 17 collected cases.

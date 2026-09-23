@@ -239,6 +239,7 @@ def test_new_engagement_new_client_and_duplicate_are_atomic(client, db_session):
         ({"selected_frameworks": []}, "Select at least one framework to assess against."),
         ({"selected_frameworks": ["gdpr"]}, "One or more selected frameworks are not available for assessment yet."),
         ({"engagement_name": "   "}, "Engagement name is required."),
+        ({"engagement_type": "invalid"}, "Select a valid engagement type."),
         ({"client_mode": "existing", "client_id": "does-not-exist"}, "Select an existing client or create a new one."),
     ],
 )
@@ -369,14 +370,15 @@ def test_legacy_entry_point_creates_hierarchy_and_keeps_redirect(client, db_sess
 
 
 def test_json_api_factory_also_preserves_the_hierarchy_invariant(client, db_session):
+    payload = {
+        "company_name": "API Entry Co",
+        "industry": "it_services",
+        "company_size": "sme",
+        "description": "API compatibility",
+    }
     response = client.post(
         "/api/assessments",
-        json={
-            "company_name": "API Entry Co",
-            "industry": "it_services",
-            "company_size": "sme",
-            "description": "API compatibility",
-        },
+        json=payload,
     )
 
     assert response.status_code == 201
@@ -386,3 +388,11 @@ def test_json_api_factory_also_preserves_the_hierarchy_invariant(client, db_sess
     assert engagement is not None
     assert db_session.query(Client).filter_by(name="API Entry Co").count() == 1
     assert db_session.query(AssessmentPack).filter_by(assessment_id=assessment.id).count() == 1
+
+    repeated = client.post("/api/assessments", json=payload)
+
+    assert repeated.status_code == 201
+    assert db_session.query(Client).filter_by(name="API Entry Co").count() == 1
+    assert db_session.query(Engagement).count() == 2
+    assert db_session.query(Assessment).filter_by(company_name="API Entry Co").count() == 2
+    assert db_session.query(AssessmentPack).filter(AssessmentPack.framework_id == "dpdpa").count() == 2

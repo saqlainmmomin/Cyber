@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models.assessment import Assessment
 from app.models.client import Client
 from app.schemas.assessment import AssessmentCreate, AssessmentResponse
+from app.services.engagement_factory import create_engagement_with_assessment
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
 
@@ -33,9 +34,7 @@ def list_available_frameworks():
 
 @router.post("", response_model=AssessmentResponse, status_code=201)
 def create_assessment(data: AssessmentCreate, db: Session = Depends(get_db)):
-    # Keep the API factory compatible while preserving the portfolio invariant.
-    from app.routers.web import _create_engagement_with_assessment
-
+    # Reuse an exact-name Client while creating a new hierarchy-linked assessment.
     client = db.query(Client).filter(Client.name == data.company_name).first()
     if not client:
         client = Client(
@@ -45,7 +44,7 @@ def create_assessment(data: AssessmentCreate, db: Session = Depends(get_db)):
         )
         db.add(client)
         db.flush()
-    engagement = _create_engagement_with_assessment(
+    engagement = create_engagement_with_assessment(
         db,
         client=client,
         engagement_name=f"{data.company_name} Assessment",

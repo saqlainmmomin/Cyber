@@ -163,7 +163,7 @@ const Shortcuts = {
       if (scope === 'dashboard') {
         if (key === 'n') {
           e.preventDefault();
-        window.location.href = '/engagements/new';
+          window.location.href = '/engagements/new';
         }
       }
 

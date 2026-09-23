@@ -15,12 +15,12 @@ from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
-from app.models.assessment_pack import AssessmentPack
 from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.rfi import RFIDocument
 from app.services.followup_engine import generate_followups
+from app.services.engagement_factory import create_engagement_with_assessment
 from app.services.portfolio import (
     build_client_card,
     build_engagement_card,
@@ -156,6 +156,7 @@ def _is_fragment_request(request: Request) -> bool:
 
 
 def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
+    # Hide closed engagements on client detail and its lazy fragment too, for consistency with the dashboard.
     engagements = (
         db.query(Engagement)
         .filter(
@@ -374,54 +375,6 @@ def _render_new_engagement_error(
     )
 
 
-def _create_engagement_with_assessment(
-    db: Session,
-    *,
-    client: Client,
-    engagement_name: str,
-    engagement_type: str,
-    description: str | None,
-    framework_ids: list[str],
-) -> Engagement:
-    """Create an engagement hierarchy atomically and return its engagement."""
-    try:
-        engagement = Engagement(
-            client_id=client.id,
-            name=engagement_name,
-            type=engagement_type,
-            status="active",
-        )
-        db.add(engagement)
-        db.flush()
-        assessment = Assessment(
-            company_name=client.name,
-            industry=client.industry,
-            company_size=client.size,
-            description=description or None,
-            selected_frameworks=json.dumps(framework_ids),
-            engagement_id=engagement.id,
-        )
-        db.add(assessment)
-        db.flush()
-        from app.frameworks.registry import FrameworkRegistry
-
-        for framework_id in framework_ids:
-            framework = FrameworkRegistry.get_or_none(framework_id)
-            db.add(
-                AssessmentPack(
-                    assessment_id=assessment.id,
-                    framework_id=framework_id,
-                    pack_version=framework.version if framework else "unknown",
-                )
-            )
-        db.commit()
-        db.refresh(engagement)
-        return engagement
-    except Exception:
-        db.rollback()
-        raise
-
-
 @router.post("/engagements")
 async def create_engagement(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
@@ -521,7 +474,7 @@ async def create_engagement(request: Request, db: Session = Depends(get_db)):
             )
 
     try:
-        engagement = _create_engagement_with_assessment(
+        engagement = create_engagement_with_assessment(
             db,
             client=client,
             engagement_name=engagement_name,
@@ -616,7 +569,7 @@ async def create_assessment(
             if not client:
                 raise
     try:
-        engagement = _create_engagement_with_assessment(
+        engagement = create_engagement_with_assessment(
             db,
             client=client,
             engagement_name=f"{company_name} Assessment",

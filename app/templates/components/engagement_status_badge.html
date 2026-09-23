@@ -1,4 +1,4 @@
-{# Expected context: derived_status. #}
+{# Expected context: derived_status and derived_status_label from build_engagement_card. #}
 {% set colors = {
   'empty': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   'created': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -10,17 +10,6 @@
   'completed': 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
   'error': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
 } %}
-{% set labels = {
-  'empty': 'No assessments',
-  'created': 'New',
-  'scoped': 'Scoped',
-  'documents_uploaded': 'Documents Uploaded',
-  'context_gathered': 'Context Gathered',
-  'questionnaire_done': 'Questionnaire Done',
-  'analyzing': 'Analyzing…',
-  'completed': 'Completed',
-  'error': 'Error',
-} %}
 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ colors.get(derived_status, 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300') }}">
   {% if derived_status == 'analyzing' %}
   <svg class="animate-spin -ml-0.5 mr-1.5 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -28,5 +17,5 @@
     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
   </svg>
   {% endif %}
-  {{ labels.get(derived_status, derived_status | replace("_", " ") | title) }}
+  {{ derived_status_label }}
 </span>
