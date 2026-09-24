@@ -1,5 +1,7 @@
 # Handoff: v3 Adversarial Seed Company — Multi-Framework "Red Team" Test Case for CyberAssess
 
+> **Superseded (2026-09-24):** never executed. Its company becomes C3 in P5-9. Its archetype, gap classes and decoy rules are reused by `tasks/handoffs/2026-09-24-p5-9-authoring-brief.md`. Its instructions about `seed_test_companies.py` and `test_ground_truth.json` no longer apply.
+
 ## Goal
 
 Create ONE new synthetic test company for CyberAssess (an AI-powered multi-framework compliance gap assessment tool) undergoing a **combined DPDPA + ISO 27001 + NIST CSF assessment**, whose hidden compliance gaps are as hard to detect as you can make them while remaining objectively real and scoreable. This is an adversarial test: you are the red team. The tool's Claude-powered pipeline (desk review of documents → adaptive Unified Control Cluster questionnaire → gap analysis) must find gaps that are invisible to any single-document, single-answer, or single-framework review — gaps that only emerge from cross-referencing multiple documents, questionnaire answers, dates, numbers, and the *differences between the three frameworks* against each other.
