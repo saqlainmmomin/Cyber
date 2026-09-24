@@ -19,6 +19,12 @@
     </a>
   </div>
 
+  {% if failed_framework_names %}
+  <div data-desk-review-failed-frameworks class="p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900 mb-5">
+    Desk review failed for {{ failed_framework_names | join(", ") }}. Findings for the other frameworks were saved. Run desk review again to complete it.
+  </div>
+  {% endif %}
+
   <!-- Signal Flags (most important — show first) -->
   {% if signals %}
   <div class="mb-5">
@@ -48,8 +54,8 @@
           "{{ flag.source_quote[:200] }}{% if flag.source_quote | length > 200 %}...{% endif %}"
         </blockquote>
         {% endif %}
-        {% if flag.requirement_id %}
-        <p class="mt-1 text-xs text-gray-400">Related: {{ flag.requirement_id }}</p>
+        {% if flag.requirement_ids %}
+        <p class="mt-1 text-xs text-gray-400">Related: {{ flag.requirement_ids | join(", ") }}</p>
         {% endif %}
       </div>
       {% endfor %}

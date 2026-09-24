@@ -25,7 +25,7 @@ INDUSTRY_QUESTIONS = {
                 "criticality": "critical",
                 "guidance": "DPDPA Section 8(4) requires reasonable security safeguards. For SaaS platforms, tenant data isolation is a foundational control.",
                 "skip_if": {"desk_review_coverage": {"CH2.SECURITY.1": "adequate", "CH2.SECURITY.2": "adequate"}},
-                "deepen_if": {"signal_flags": ["template_artifacts", "scope_gaps"]},
+                "deepen_if": {"signal_flags": ["template_artifact", "scope_gap"]},
                 "follow_up_triggers": {
                     "weak_answers": ["not_implemented", "planned"],
                     "inconsistency_check": True,
@@ -54,7 +54,7 @@ INDUSTRY_QUESTIONS = {
                 "criticality": "high",
                 "guidance": "API-based data sharing creates consent propagation challenges. Each API consumer may be a separate data processor under DPDPA.",
                 "skip_if": {},
-                "deepen_if": {"signal_flags": ["gdpr_copy_paste", "scope_gaps"]},
+                "deepen_if": {"signal_flags": ["gdpr_copy_paste", "scope_gap"]},
                 "follow_up_triggers": {
                     "weak_answers": ["partially_implemented", "not_implemented", "planned"],
                     "inconsistency_check": True,
@@ -96,7 +96,7 @@ INDUSTRY_QUESTIONS = {
                 "criticality": "high",
                 "guidance": "Sub-processors handling personal data must meet the same DPDPA obligations. Many SaaS vendors unknowingly create a processor chain.",
                 "skip_if": {},
-                "deepen_if": {"signal_flags": ["scope_gaps"]},
+                "deepen_if": {"signal_flags": ["scope_gap"]},
                 "follow_up_triggers": {
                     "weak_answers": ["partially_implemented", "not_implemented", "planned"],
                     "inconsistency_check": True,
@@ -168,7 +168,7 @@ INDUSTRY_QUESTIONS = {
                 "criticality": "high",
                 "guidance": "In B2B SaaS, the tenant is typically the data fiduciary and you are the processor. But if you have a direct relationship with end-users, you may also be a fiduciary.",
                 "skip_if": {},
-                "deepen_if": {"signal_flags": ["scope_gaps"]},
+                "deepen_if": {"signal_flags": ["scope_gap"]},
                 "follow_up_triggers": {
                     "weak_answers": ["partially_implemented", "not_implemented"],
                     "inconsistency_check": True,

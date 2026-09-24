@@ -2323,7 +2323,7 @@ def generate_rfi_web(
     db: Session = Depends(get_db),
 ):
     """Generate RFI document from gap analysis results."""
-    from app.models.desk_review import DeskReviewFinding
+    from app.services.desk_review_findings import group_signal_findings, scoped_findings
     from app.services.rfi_generator import generate_rfi
 
     assessment = db.get(Assessment, assessment_id)
@@ -2352,19 +2352,19 @@ def generate_rfi_web(
     ]
 
     # Desk review absences and signals
+    findings = scoped_findings(db, assessment)
     absences = [
         {"requirement_id": f.requirement_id, "content": f.content}
-        for f in db.query(DeskReviewFinding).filter(
-            DeskReviewFinding.assessment_id == assessment_id,
-            DeskReviewFinding.finding_type == "absence",
-        ).all()
+        for f in findings
+        if f.finding_type == "absence"
     ]
     signals = [
-        {"content": f.content, "severity": f.severity, "requirement_id": f.requirement_id}
-        for f in db.query(DeskReviewFinding).filter(
-            DeskReviewFinding.assessment_id == assessment_id,
-            DeskReviewFinding.finding_type == "signal",
-        ).all()
+        {
+            "content": signal["content"],
+            "severity": signal["severity"],
+            "requirement_id": signal["requirement_id"],
+        }
+        for signal in group_signal_findings(findings)
     ]
 
     try:
@@ -2478,7 +2478,13 @@ def desk_review_status_web(
     db: Session = Depends(get_db),
 ):
     """Return desk review status/findings as HTML partial."""
-    from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+    from app.frameworks.registry import FrameworkRegistry
+    from app.models.desk_review import DeskReviewSummary
+    from app.services.desk_review_findings import (
+        failed_desk_review_frameworks,
+        group_signal_findings,
+        scoped_findings,
+    )
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
@@ -2509,17 +2515,27 @@ def desk_review_status_web(
         )
 
     # Completed — load findings
-    findings = (
-        db.query(DeskReviewFinding)
-        .filter(DeskReviewFinding.assessment_id == assessment_id)
-        .all()
-    )
+    findings = scoped_findings(db, assessment)
     evidence = [f for f in findings if f.finding_type == "evidence"]
     absences = [f for f in findings if f.finding_type == "absence"]
-    signals = [f for f in findings if f.finding_type == "signal"]
+    signals = group_signal_findings(findings)
 
-    coverage = json.loads(summary.coverage_summary) if summary.coverage_summary else {}
+    control_ids = {
+        control.id
+        for framework_id in assessment.frameworks
+        for control in FrameworkRegistry.get(framework_id).all_controls()
+    }
+    raw_coverage = json.loads(summary.coverage_summary) if summary.coverage_summary else {}
+    coverage = {
+        requirement_id: level
+        for requirement_id, level in raw_coverage.items()
+        if requirement_id in control_ids
+    }
     catalog = json.loads(summary.document_catalog) if summary.document_catalog else []
+    failed_framework_names = [
+        FrameworkRegistry.get(framework_id).name
+        for framework_id in failed_desk_review_frameworks(summary)
+    ]
 
     return templates.TemplateResponse(
         "partials/desk_review_findings.html",
@@ -2531,7 +2547,8 @@ def desk_review_status_web(
             "signals": signals,
             "coverage": coverage,
             "catalog": catalog,
-            "total_findings": len(findings),
+            "failed_framework_names": failed_framework_names,
+            "total_findings": len(evidence) + len(absences) + len(signals),
         },
     )
 

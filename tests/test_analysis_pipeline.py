@@ -1151,7 +1151,7 @@ def test_p2_3_revision_is_head_and_adds_link_and_uniqueness(db_path, engine, db)
     unique index on conclusions (assessment_id, framework_id,
     requirement_id), which is enforced."""
     script = ScriptDirectory.from_config(_alembic_config(db_path))
-    assert script.get_current_head() == P2_3_REVISION
+    assert script.get_revision("8b2d5f7e1c34").down_revision == P2_3_REVISION
     assert script.get_revision(P2_3_REVISION).down_revision == P2_2_REVISION
 
     inspector = inspect(engine)

@@ -12,12 +12,20 @@ Analyzes uploaded documents to produce:
 import json
 import logging
 import re
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.dpdpa.prompts import build_desk_review_system_prompt, build_desk_review_user_prompt
+from app.frameworks.prompts import (
+    CURATED_PROMPT_FRAMEWORK_ID,
+    UNCLASSIFIED_FLAG_TYPE,
+    build_framework_desk_review_system_prompt,
+    desk_review_flag_types,
+)
+from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.services import llm_client
@@ -31,6 +39,15 @@ from app.services.citations import (
 from app.services.evidence import analysis_documents
 
 logger = logging.getLogger(__name__)
+
+DESK_REVIEW_PARTIAL_MESSAGE = (
+    "Desk review failed for {names}. Findings for the other frameworks were saved. "
+    "Run desk review again to complete it."
+)
+DESK_REVIEW_ALL_FAILED_MESSAGE = (
+    "Desk review failed for every selected framework ({names}). Run desk review again."
+)
+RAW_RESPONSE_SCHEMA_VERSION = 2
 
 
 def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
@@ -92,16 +109,35 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     # Truncate documents for prompt
     truncated = _truncate_documents(documents)
 
-    try:
-        result = _call_claude_desk_review(
-            documents=truncated,
-            company_name=assessment.company_name,
-            industry=assessment.industry,
-        )
-    except Exception as e:
-        logger.error(f"Desk review Claude call failed: {e}")
+    framework_ids = assessment.frameworks
+    results: dict[str, dict] = {}
+    errors: dict[str, str] = {}
+    for framework_id in framework_ids:
+        try:
+            results[framework_id] = _normalize_result(
+                framework_id,
+                _desk_review_call(
+                    framework_id,
+                    documents=truncated,
+                    company_name=assessment.company_name,
+                    industry=assessment.industry,
+                ),
+            )
+        except Exception as exc:
+            errors[framework_id] = str(exc)
+            logger.error("Desk review failed for %s: %s", framework_id, exc)
+
+    if not results:
         summary.status = "error"
-        summary.error_message = str(e)
+        if len(framework_ids) == 1:
+            summary.error_message = str(errors[framework_ids[0]])
+        else:
+            names = ", ".join(
+                FrameworkRegistry.get(framework_id).name
+                for framework_id in framework_ids
+            )
+            summary.error_message = DESK_REVIEW_ALL_FAILED_MESSAGE.format(names=names)
+        summary.raw_ai_response = _raw_response(framework_ids, results, errors)
         assessment.desk_review_status = "error"
         db.commit()
         return summary
@@ -109,18 +145,42 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     # Parse and persist results
     try:
         sources = citable_sources(db, assessment_id)
-        _persist_findings(
-            db=db,
-            assessment_id=assessment_id,
-            result=result,
-            doc_id_by_filename=doc_id_by_filename,
-            sources=sources,
-        )
+        for framework_id in framework_ids:
+            if framework_id in results:
+                _persist_findings(
+                    db=db,
+                    assessment_id=assessment_id,
+                    framework_id=framework_id,
+                    result=results[framework_id],
+                    doc_id_by_filename=doc_id_by_filename,
+                    sources=sources,
+                )
 
-        summary.document_catalog = json.dumps(result.get("document_catalog", []))
-        summary.coverage_summary = json.dumps(result.get("coverage_summary", {}))
-        summary.raw_ai_response = json.dumps(result)
+        merged_coverage: dict[str, str] = {}
+        for framework_id in framework_ids:
+            if framework_id in results:
+                merged_coverage.update(results[framework_id]["coverage_summary"])
+
+        successful_ids = [
+            framework_id for framework_id in framework_ids if framework_id in results
+        ]
+        if len(successful_ids) == 1:
+            catalog = results[successful_ids[0]]["document_catalog"]
+        else:
+            catalog = _merge_document_catalogs(successful_ids, results)
+
+        summary.document_catalog = json.dumps(catalog)
+        summary.coverage_summary = json.dumps(merged_coverage)
+        summary.raw_ai_response = _raw_response(framework_ids, results, errors)
         summary.status = "completed"
+        summary.error_message = None
+        if errors:
+            names = ", ".join(
+                FrameworkRegistry.get(framework_id).name
+                for framework_id in framework_ids
+                if framework_id in errors
+            )
+            summary.error_message = DESK_REVIEW_PARTIAL_MESSAGE.format(names=names)
         summary.completed_at = datetime.now(timezone.utc)
         assessment.desk_review_status = "completed"
         db.commit()
@@ -182,9 +242,195 @@ def _call_claude_desk_review(
     return _parse_json_response(raw_text)
 
 
+def _call_framework_desk_review(
+    framework_id: str,
+    documents: list[dict],
+    company_name: str,
+    industry: str,
+) -> dict:
+    """Run a registry-driven desk review for a non-curated framework."""
+    system_blocks = build_framework_desk_review_system_prompt(framework_id)
+    user_prompt = build_desk_review_user_prompt(documents, company_name, industry)
+    response = _call_llm(
+        tier="judge",
+        stream=True,
+        max_tokens=16384,
+        temperature=0,
+        system=system_blocks,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    usage = response["usage"]
+    logger.info(
+        "Desk review (%s) tokens — input: %s, output: %s, cache_read: %s, cache_create: %s",
+        framework_id,
+        usage["input_tokens"],
+        usage["output_tokens"],
+        usage["cache_read_input_tokens"],
+        usage["cache_creation_input_tokens"],
+    )
+    return _parse_json_response(response["text"])
+
+
+def _desk_review_call(
+    framework_id: str,
+    *,
+    documents,
+    company_name,
+    industry,
+) -> dict:
+    """Dispatch desk review to the curated or registry-driven prompt seam."""
+    if framework_id == CURATED_PROMPT_FRAMEWORK_ID:
+        return _call_claude_desk_review(
+            documents=documents,
+            company_name=company_name,
+            industry=industry,
+        )
+    return _call_framework_desk_review(
+        framework_id, documents, company_name, industry
+    )
+
+
+def _normalize_result(framework_id: str, result: dict) -> dict:
+    """Normalize one framework's desk-review result before persistence."""
+    control_ids = {
+        control.id for control in FrameworkRegistry.get(framework_id).all_controls()
+    }
+    flag_vocab = set(desk_review_flag_types(framework_id))
+    dropped = 0
+
+    catalog = result.get("document_catalog") or []
+    if not isinstance(catalog, list):
+        catalog = []
+
+    evidence_map: dict[str, list[dict]] = {}
+    raw_evidence = result.get("evidence_map") or {}
+    if isinstance(raw_evidence, dict):
+        for requirement_id, items in raw_evidence.items():
+            if requirement_id not in control_ids:
+                dropped += 1
+                continue
+            if not isinstance(items, list):
+                continue
+            evidence_map[requirement_id] = [
+                item for item in items if isinstance(item, dict)
+            ]
+
+    absences: list[dict] = []
+    raw_absences = result.get("absence_findings") or []
+    if isinstance(raw_absences, list):
+        for item in raw_absences:
+            if not isinstance(item, dict):
+                continue
+            requirement_id = item.get("requirement_id")
+            if (
+                isinstance(requirement_id, str)
+                and requirement_id
+                and requirement_id not in control_ids
+            ):
+                dropped += 1
+                continue
+            absences.append(item)
+
+    signals: list[dict] = []
+    raw_signals = result.get("signal_flags") or []
+    if isinstance(raw_signals, list):
+        for item in raw_signals:
+            if not isinstance(item, dict):
+                continue
+            valid_requirement_ids = []
+            for requirement_id in item.get("requirement_ids") or []:
+                if isinstance(requirement_id, str) and requirement_id in control_ids:
+                    if requirement_id not in valid_requirement_ids:
+                        valid_requirement_ids.append(requirement_id)
+                elif isinstance(requirement_id, str):
+                    dropped += 1
+            signal = dict(item)
+            signal["requirement_ids"] = valid_requirement_ids
+            signal["flag_type"] = (
+                item.get("flag_type")
+                if item.get("flag_type") in flag_vocab
+                else UNCLASSIFIED_FLAG_TYPE
+            )
+            signals.append(signal)
+
+    coverage: dict[str, object] = {}
+    raw_coverage = result.get("coverage_summary") or {}
+    if isinstance(raw_coverage, dict):
+        for requirement_id, value in raw_coverage.items():
+            if requirement_id in control_ids:
+                coverage[requirement_id] = value
+            else:
+                dropped += 1
+
+    if dropped:
+        logger.warning(
+            "Desk review (%s) dropped %d unknown control id(s)",
+            framework_id,
+            dropped,
+        )
+
+    return {
+        "document_catalog": catalog,
+        "evidence_map": evidence_map,
+        "absence_findings": absences,
+        "signal_flags": signals,
+        "coverage_summary": coverage,
+    }
+
+
+def _raw_response(
+    framework_ids: list[str],
+    results: dict[str, dict],
+    errors: dict[str, str],
+) -> str:
+    """Serialize the versioned per-framework raw desk-review response."""
+    return json.dumps(
+        {
+            "schema_version": RAW_RESPONSE_SCHEMA_VERSION,
+            "frameworks": {
+                framework_id: (
+                    {"status": "completed", "result": results[framework_id]}
+                    if framework_id in results
+                    else {"status": "error", "error": errors[framework_id]}
+                )
+                for framework_id in framework_ids
+            },
+        }
+    )
+
+
+def _merge_document_catalogs(
+    framework_ids: list[str],
+    results: dict[str, dict],
+) -> list[dict]:
+    """Merge successful framework catalogs by filename in framework order."""
+    catalog: list[dict] = []
+    by_filename: dict[str, dict] = {}
+    for framework_id in framework_ids:
+        for entry in results[framework_id]["document_catalog"]:
+            if not isinstance(entry, dict) or not entry.get("filename"):
+                catalog.append(entry)
+                continue
+            filename = entry["filename"]
+            if filename not in by_filename:
+                merged = dict(entry)
+                merged["coverage_areas"] = list(
+                    dict.fromkeys(entry.get("coverage_areas") or [])
+                )
+                catalog.append(merged)
+                by_filename[filename] = merged
+                continue
+            coverage_areas = by_filename[filename].setdefault("coverage_areas", [])
+            for control_id in entry.get("coverage_areas") or []:
+                if control_id not in coverage_areas:
+                    coverage_areas.append(control_id)
+    return catalog
+
+
 def _persist_findings(
     db: Session,
     assessment_id: str,
+    framework_id: str,
     result: dict,
     doc_id_by_filename: dict[str, str],
     sources: list[CitableSource] = (),
@@ -207,6 +453,7 @@ def _persist_findings(
             )
             db.add(DeskReviewFinding(
                 assessment_id=assessment_id,
+                framework_id=framework_id,
                 finding_type="evidence",
                 requirement_id=req_id,
                 document_id=doc_id_by_filename.get(doc_filename),
@@ -221,6 +468,7 @@ def _persist_findings(
     for finding in result.get("absence_findings", []):
         db.add(DeskReviewFinding(
             assessment_id=assessment_id,
+            framework_id=framework_id,
             finding_type="absence",
             requirement_id=finding.get("requirement_id"),
             content=finding.get("description", ""),
@@ -242,18 +490,23 @@ def _persist_findings(
                 if source.filename == doc_filename
             ][:1]
         )
-        # Create one finding per signal flag (may map to multiple requirements)
-        db.add(DeskReviewFinding(
-            assessment_id=assessment_id,
-            finding_type="signal",
-            requirement_id=req_ids[0] if req_ids else None,
-            document_id=doc_id_by_filename.get(doc_filename),
-            content=flag.get("description", ""),
-            severity=flag.get("severity", "medium"),
-            source_quote=flag.get("source_quote", ""),
-            source_location=flag.get("location", ""),
-            citations_json=dumps_citations(citations),
-        ))
+        serialized = dumps_citations(citations)
+        group_id = str(uuid.uuid4())
+        for requirement_id in (req_ids or [None]):
+            db.add(DeskReviewFinding(
+                assessment_id=assessment_id,
+                framework_id=framework_id,
+                finding_type="signal",
+                requirement_id=requirement_id,
+                flag_type=flag["flag_type"],
+                signal_group_id=group_id,
+                document_id=doc_id_by_filename.get(doc_filename),
+                content=flag.get("description", ""),
+                severity=flag.get("severity", "medium"),
+                source_quote=flag.get("source_quote", ""),
+                source_location=flag.get("location", ""),
+                citations_json=serialized,
+            ))
 
     db.flush()
 

@@ -6,6 +6,8 @@ preliminary compliance status for all 41 DPDPA requirements.
 
 Results are stored in Assessment.screening_results as JSON:
   {req_id: {"compliance_status": str, "confidence": str, "reasoning": str}}
+
+Runs only on DPDPA-only assessments (P5-3 D-P5-3-M).
 """
 
 import json
@@ -24,6 +26,15 @@ from app.services import llm_client
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+SCREENING_NOT_APPLICABLE_MESSAGE = (
+    "Domain screening covers DPDPA requirements only, so it runs only on DPDPA-only assessments. "
+    "Answer the questionnaire for this assessment directly."
+)
+
+
+class ScreeningNotApplicable(ValueError):
+    """Raised before any LLM call when screening cannot pre-fill this assessment's questionnaire."""
 
 
 def run_screening_pass(
@@ -45,6 +56,8 @@ def run_screening_pass(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise ValueError(f"Assessment {assessment_id} not found")
+    if assessment.frameworks != ["dpdpa"]:
+        raise ScreeningNotApplicable(SCREENING_NOT_APPLICABLE_MESSAGE)
 
     system_blocks = build_screening_system_prompt()
     user_prompt = build_screening_user_prompt(

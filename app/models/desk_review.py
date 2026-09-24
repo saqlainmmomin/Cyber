@@ -42,4 +42,7 @@ class DeskReviewFinding(Base):
     source_quote: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_location: Mapped[str | None] = mapped_column(String(200), nullable=True)  # page/section ref
     citations_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array; see app.services.citations
+    framework_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # NULL = legacy row = "dpdpa" (P5-3)
+    flag_type: Mapped[str | None] = mapped_column(String(100), nullable=True)  # signal rows only
+    signal_group_id: Mapped[str | None] = mapped_column(String(36), nullable=True)  # shared by rows of one signal
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
