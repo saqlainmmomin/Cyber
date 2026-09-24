@@ -40,7 +40,9 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 **Phase 3 exit:** ✅ append-only Findings/Actions with evidence-backed closure and verification, write-once immutable report snapshots, per-framework PDF scores with citations and no blend, an engagement-level integrated report, and a fully retired legacy remediation path. Full suite: 502 passed.
 
-- [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]` — P4-1 implementation complete; review Results in [`2026-09-24-p4-1-aws-evidence-adapter.md`](tasks/handoffs/2026-09-24-p4-1-aws-evidence-adapter.md). P4-2/P4-4 need a handoff each (P4-4 is the most destructive code path in the plan); P4-3 is standalone. All four are independent and can run concurrently. Kickoff process doc: `tasks/handoffs/2026-09-24-phase-4-kickoff.md`.
+- [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]` — P4-1 and P4-2 implementation complete; review Results in [`2026-09-24-p4-1-aws-evidence-adapter.md`](tasks/handoffs/2026-09-24-p4-1-aws-evidence-adapter.md) and [`2026-09-24-p4-2-longitudinal-demo.md`](tasks/handoffs/2026-09-24-p4-2-longitudinal-demo.md). P4-4 is the most destructive code path in the plan; P4-3 is standalone. All four are independent and can run concurrently. Kickoff process doc: `tasks/handoffs/2026-09-24-phase-4-kickoff.md`.
+- [x] **P4-1: AWS evidence adapter** — implemented and verified: AssumeRole with engagement-bound external ID, pinned least-privilege policy (Config rule evaluations + Security Hub findings), no stored credentials, all-or-nothing write. Results: `tasks/handoffs/2026-09-24-p4-1-aws-evidence-adapter.md#results`. **Merged: PR #34.**
+- [x] **P4-2: Longitudinal synthetic demo** — implemented and verified: two-client route-driven seed, consultant-confirmed evidence reuse with age/scope warnings, and 13 contract scenarios. Results: `tasks/handoffs/2026-09-24-p4-2-longitudinal-demo.md#results`. **Merged: PR #35.**
 
 ## Source of truth
 

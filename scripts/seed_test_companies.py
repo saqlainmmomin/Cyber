@@ -1663,14 +1663,821 @@ def seed_default_companies() -> None:
         session.close()
 
 
+# --- P4-2 longitudinal demo (tasks/handoffs/2026-09-24-p4-2-longitudinal-demo.md) ---
+
+import copy
+from datetime import date, time, timedelta
+
+from app.config import settings
+from app.database import get_db
+from app.frameworks.registry import FrameworkRegistry
+from app.models.action import Action
+from app.models.analysis_run import AnalysisRun
+from app.models.assessment_pack import AssessmentPack
+from app.models.audit_event import AuditEvent
+from app.models.client import Client
+from app.models.conclusion import Conclusion, ConclusionRevision
+from app.models.engagement import Engagement
+from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
+from app.models.finding import Finding
+from app.models.report import GapItem, GapReport
+from app.models.report_snapshot import ReportSnapshot
+from app.services import evidence as evidence_service
+from app.services import evidence_reuse, magic_links
+from scripts.backup import create_backup, database_path
+
+DEMO_CLIENT_A = "Meridian Ledger Technologies Pvt Ltd"
+DEMO_CLIENT_B = "Loomwire Labs Inc."
+DEMO_CLIENT_NAMES = (DEMO_CLIENT_A, DEMO_CLIENT_B)
+DEMO_REVIEWER = "Priya Sharma"
+REUSE_DECLINED_KEY = "a_access_q1"
+
+Q_POLICY_REVIEW = "The information security policy is reviewed annually and communicated to all employees and contractors."
+Q_POLICY_ENCRYPTION = "All production databases and customer data stores are encrypted at rest using AES-256."
+Q_ROPA = "The record of processing lists 23 processing activities with the purpose, data categories, retention period and recipients of each."
+Q_ACCESS_EARLIER = "Access reviews were completed for 11 of 14 production systems; the payments ledger, card vault and data warehouse were not reviewed."
+Q_DR = "The failover of the payments platform completed in 6 hours against a recovery time objective of 4 hours."
+Q_ACCESS_CURRENT = "Access reviews were completed for all 14 production systems, and 37 stale accounts were removed."
+Q_B_POLICY = "This policy is owned by the CTO, approved by the founders and reviewed every twelve months."
+Q_B_MFA = "MFA is enforced for 38 of 41 accounts; 3 service accounts are exempt from MFA."
+
+
+class DemoAlreadySeeded(Exception):
+    message = (
+        "Longitudinal demo already seeded (Meridian Ledger Technologies Pvt Ltd, Loomwire Labs Inc.); "
+        "nothing was changed. Restore a pre-seed backup with scripts/restore.py to seed it again."
+    )
+
+    def __init__(self):
+        super().__init__(self.message)
+
+
+@dataclass(frozen=True)
+class LongitudinalDemo:
+    anchor: date
+    client_ids: dict[str, str]
+    engagement_ids: dict[str, str]
+    assessment_ids: dict[str, str]
+    evidence_ids: dict[str, str]
+    finding_ids: dict[str, str]
+    action_ids: dict[str, str]
+    magic_link_id: str
+    integrated_snapshot_id: str
+
+
+def _at(anchor: date, offset: int) -> datetime:
+    return datetime.combine(anchor + timedelta(days=offset), time(9, 0), tzinfo=timezone.utc)
+
+
+def _expect(response, status: int, what: str):
+    if response.status_code != status:
+        raise RuntimeError(
+            f"{what}: expected {status}, got {response.status_code}: {response.text[:500]}"
+        )
+    return response
+
+
+def _add_assessment_to_engagement(
+    db,
+    *,
+    engagement: Engagement,
+    client: Client,
+    description: str,
+    framework_ids: list[str],
+    created_at: datetime,
+) -> Assessment:
+    assessment = Assessment(
+        company_name=client.name,
+        industry=client.industry,
+        company_size=client.size,
+        description=description,
+        selected_frameworks=json.dumps(framework_ids),
+        engagement_id=engagement.id,
+        created_at=created_at,
+    )
+    db.add(assessment)
+    db.flush()
+    for framework_id in framework_ids:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        db.add(
+            AssessmentPack(
+                assessment_id=assessment.id,
+                framework_id=framework_id,
+                pack_version=framework.version if framework else "unknown",
+            )
+        )
+    db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def _scripted_item(
+    requirement_id: str,
+    compliance_status: str,
+    risk_level: str,
+    current_state: str,
+    evidence_quote: str,
+    gap_description: str = "No gap identified.",
+    remediation_action: str = "None required.",
+) -> dict:
+    return {
+        "requirement_id": requirement_id,
+        "compliance_status": compliance_status,
+        "current_state": current_state,
+        "gap_description": gap_description,
+        "risk_level": risk_level,
+        "remediation_action": remediation_action,
+        "remediation_priority": {"high": 1, "medium": 2, "low": 3}[risk_level],
+        "remediation_effort": "medium",
+        "timeline_weeks": 6,
+        "maturity_level": {
+            "compliant": 4,
+            "partially_compliant": 3,
+            "non_compliant": 2,
+        }[compliance_status],
+        "root_cause_category": "process",
+        "evidence_quote": evidence_quote,
+        "needs_review": False,
+    }
+
+
+ITEMS = {
+    "baseline": {
+        "dpdpa": [
+            _scripted_item(
+                "CH3.ACCESS.1", "compliant", "low",
+                "A maintained record of processing covers every processing activity.", Q_ROPA,
+            ),
+            _scripted_item(
+                "CH2.SECURITY.1", "partially_compliant", "medium",
+                "Encryption at rest is documented for production data stores.", Q_POLICY_ENCRYPTION,
+                "Backup encryption is delegated to the hosting provider without evidence.",
+                "Obtain and file the hosting provider's backup encryption attestation.",
+            ),
+            _scripted_item(
+                "CH2.CONSENT.3", "non_compliant", "high",
+                "The mobile app offers no way to withdraw consent once given.", "",
+                "There is no consent withdrawal mechanism.",
+                "Ship an in-app consent withdrawal flow that is as easy as giving consent.",
+            ),
+        ],
+        "iso27001": [
+            _scripted_item(
+                "ISO.A5.1", "compliant", "low",
+                "An approved information security policy is reviewed annually.", Q_POLICY_REVIEW,
+            ),
+            _scripted_item(
+                "ISO.A5.18", "non_compliant", "high",
+                "Quarterly access reviews skipped three production systems.", Q_ACCESS_EARLIER,
+                "Three production systems were left out of the quarterly access review.",
+                "Extend the quarterly access review to every production system.",
+            ),
+            _scripted_item(
+                "ISO.A5.30", "partially_compliant", "medium",
+                "A DR failover test was run but missed its recovery time objective.", Q_DR,
+                "The last failover test took 6 hours against a 4-hour RTO.",
+                "Fix the failover runbook and re-test within the 4-hour RTO.",
+            ),
+        ],
+    },
+    "validation": {
+        "iso27001": [
+            _scripted_item(
+                "ISO.A5.1", "compliant", "low",
+                "The reused policy is still current and reviewed annually.", Q_POLICY_REVIEW,
+            ),
+            _scripted_item(
+                "ISO.A5.18", "compliant", "low",
+                "The current quarterly access review covers all 14 production systems.", Q_ACCESS_CURRENT,
+            ),
+            _scripted_item(
+                "ISO.A5.30", "partially_compliant", "medium",
+                "No failover test has been run since the test that missed the RTO.", Q_DR,
+                "The failover has not been re-tested within the 4-hour RTO.",
+                "Run and evidence a failover test within the 4-hour RTO.",
+            ),
+        ],
+    },
+    "nist": {
+        "nist_csf": [
+            _scripted_item(
+                "NIST.GV.PO.01", "compliant", "low",
+                "An owned, approved security policy with a yearly review exists.", Q_B_POLICY,
+            ),
+            _scripted_item(
+                "NIST.PR.AA.03", "partially_compliant", "high",
+                "MFA is enforced for most accounts, with three exempt service accounts.", Q_B_MFA,
+                "Three service accounts are exempt from MFA.",
+                "Remove the MFA exemptions or apply compensating controls.",
+            ),
+            _scripted_item(
+                "NIST.RS.MA.01", "non_compliant", "high",
+                "No incident response plan was provided; the requested item is outstanding.", "",
+                "There is no documented incident response plan.",
+                "Document and tabletop-test an incident response plan.",
+            ),
+        ],
+    },
+}
+
+
+def _document_specs(anchor: date) -> list[dict]:
+    return [
+        {
+            "key": "a_policy",
+            "assessment": "baseline",
+            "received": -196,
+            "filename": "Meridian_Information_Security_Policy_v4.2.docx",
+            "category": "other",
+            "title": "Meridian Ledger Technologies - Information Security Policy v4.2",
+            "paragraphs": [
+                f"Approved by the Board Risk Committee on {(anchor + timedelta(days=-230)):%d %B %Y}. Owner: Chief Information Security Officer.",
+                Q_POLICY_REVIEW,
+                Q_POLICY_ENCRYPTION,
+                "Backup media encryption is managed by the hosting provider under its standard terms.",
+            ],
+        },
+        {
+            "key": "a_ropa",
+            "assessment": "baseline",
+            "received": -196,
+            "filename": "Meridian_Record_of_Processing.docx",
+            "category": "processing_records",
+            "title": f"Record of Processing Activities - {(anchor + timedelta(days=-196)):%B %Y}",
+            "paragraphs": [Q_ROPA, "The Data Protection Officer maintains the record and reviews it every quarter."],
+        },
+        {
+            "key": "a_access_q1",
+            "assessment": "baseline",
+            "received": -196,
+            "filename": f"Meridian_Access_Review_{(anchor + timedelta(days=-196)):%Y-%m}.docx",
+            "category": "other",
+            "title": f"Quarterly User Access Review - {(anchor + timedelta(days=-196)):%B %Y}",
+            "paragraphs": [Q_ACCESS_EARLIER, "Review owner: IT Operations. Exceptions were not approved by the system owners."],
+        },
+        {
+            "key": "a_dr_report",
+            "assessment": "baseline",
+            "received": -120,
+            "filename": f"Meridian_DR_Test_Report_{(anchor + timedelta(days=-120)):%Y-%m}.docx",
+            "category": "other",
+            "title": f"Business Continuity and DR Test Report - {(anchor + timedelta(days=-120)):%B %Y}",
+            "paragraphs": [Q_DR, "The runbook step for promoting the replica database had to be performed manually."],
+        },
+        {
+            "key": "a_access_memo",
+            "assessment": "baseline",
+            "received": -40,
+            "filename": f"Meridian_Access_Review_Remediation_Memo_{(anchor + timedelta(days=-40)):%Y-%m}.docx",
+            "category": "other",
+            "title": "Access Review Remediation Memo",
+            "paragraphs": [
+                f"Prepared by IT Operations on {(anchor + timedelta(days=-40)):%d %B %Y}.",
+                "The payments ledger, card vault and data warehouse were added to the quarterly access review and reviewed in full.",
+                "Sign-off by each system owner is attached to the review record.",
+            ],
+        },
+        {
+            "key": "a_access_q3",
+            "assessment": "validation",
+            "received": -5,
+            "filename": f"Meridian_Access_Review_{(anchor + timedelta(days=-5)):%Y-%m}.docx",
+            "category": "other",
+            "title": f"Quarterly User Access Review - {(anchor + timedelta(days=-5)):%B %Y}",
+            "paragraphs": [Q_ACCESS_CURRENT, "Every exception was approved by the system owner."],
+        },
+        {
+            "key": "b_policy",
+            "engagement": "b",
+            "magic_item": "item-1",
+            "filename": "Loomwire_Security_Policy.docx",
+            "title": "Loomwire Labs - Information Security Policy",
+            "paragraphs": [Q_B_POLICY, "All staff acknowledge the policy during onboarding."],
+        },
+        {
+            "key": "b_mfa_export",
+            "engagement": "b",
+            "magic_item": "item-2",
+            "filename": "Loomwire_MFA_Enforcement_Export.docx",
+            "title": "Identity Provider MFA Enforcement Export",
+            "paragraphs": [Q_B_MFA, "Exempt accounts: ci-deploy, backup-agent, legacy-billing."],
+        },
+        {
+            "key": "b_mfa_fix",
+            "assessment": "nist",
+            "filename": "Loomwire_Service_Account_Remediation.docx",
+            "category": "other",
+            "title": "Service Account Remediation Note",
+            "paragraphs": [
+                "The 3 exempt service accounts were moved to workload identity federation and can no longer sign in interactively.",
+                "Change ticket SEC-142 records the configuration change.",
+            ],
+        },
+    ]
+
+
+FINDING_SPECS = {
+    "a_consent": {
+        "assessment": "baseline", "framework": "dpdpa", "requirement": "CH2.CONSENT.3",
+        "title": "No in-app consent withdrawal", "severity": "high",
+        "action_title": "Ship an in-app consent withdrawal flow", "owner": "Rhea Kapoor", "target": 30,
+    },
+    "a_access": {
+        "assessment": "baseline", "framework": "iso27001", "requirement": "ISO.A5.18",
+        "title": "Quarterly access review skipped three production systems", "severity": "high",
+        "action_title": "Extend the quarterly access review to every production system", "owner": "Arjun Mehta", "target": -60,
+    },
+    "a_dr": {
+        "assessment": "baseline", "framework": "iso27001", "requirement": "ISO.A5.30",
+        "title": "DR failover exceeded the 4-hour RTO", "severity": "medium",
+        "action_title": "Re-run the DR failover test within the 4-hour RTO", "owner": "Arjun Mehta", "target": -14,
+    },
+    "v_dr": {
+        "assessment": "validation", "framework": "iso27001", "requirement": "ISO.A5.30",
+        "title": "DR failover still not re-tested within the RTO", "severity": "medium",
+        "action_title": "Run and evidence a DR failover test within the RTO", "owner": "Arjun Mehta", "target": 21,
+    },
+    "b_mfa": {
+        "assessment": "nist", "framework": "nist_csf", "requirement": "NIST.PR.AA.03",
+        "title": "Three service accounts exempt from MFA", "severity": "high",
+        "action_title": "Remove MFA exemptions for service accounts", "owner": "Dev Anand", "target": 14,
+    },
+    "b_ir": {
+        "assessment": "nist", "framework": "nist_csf", "requirement": "NIST.RS.MA.01",
+        "title": "No documented incident response plan", "severity": "high",
+        "action_title": "Document and tabletop-test an incident response plan", "owner": None, "target": -3,
+    },
+}
+
+
+def _create_hierarchy(db, http, *, name: str, industry: str, size: str, engagement_name: str, frameworks: list[str], description: str):
+    fields = {
+        "client_mode": "new",
+        "company_name": name,
+        "industry": industry,
+        "company_size": size,
+        "engagement_name": engagement_name,
+        "engagement_type": "gap_assessment",
+        "description": description,
+        "selected_frameworks": frameworks,
+    }
+    response = _expect(
+        http.post("/engagements", data=fields, follow_redirects=False),
+        303,
+        f"create {name} engagement",
+    )
+    db.expire_all()
+    engagement = db.query(Engagement).filter(Engagement.name == engagement_name).first()
+    if name == DEMO_CLIENT_A and engagement is None:
+        raise RuntimeError("The TestClient is not bound to the seeding session.")
+    if engagement is None:
+        raise RuntimeError(f"The engagement for {name} was not created.")
+    client = db.get(Client, engagement.client_id)
+    assessment = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement.id)
+        .order_by(Assessment.created_at.desc(), Assessment.id.desc())
+        .first()
+    )
+    return client, engagement, assessment, response
+
+
+def _backdate_hierarchy(db, client, engagement, assessment, created_at: datetime) -> None:
+    client.created_at = created_at
+    engagement.created_at = created_at
+    assessment.created_at = created_at
+    db.commit()
+    db.expire_all()
+
+
+def _upload_assessment_document(db, http, assessment_id: str, spec: dict, anchor: date) -> str:
+    response = _expect(
+        http.post(
+            f"/api/assessments/{assessment_id}/documents",
+            data={"category": spec["category"]},
+            files={
+                "file": (
+                    spec["filename"],
+                    _build_docx_bytes(spec["title"], "\n\n".join(spec["paragraphs"])),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        ),
+        201,
+        f"upload {spec['key']}",
+    )
+    evidence_id = response.json()["id"]
+    db.expire_all()
+    if "received" in spec:
+        received_at = _at(anchor, spec["received"])
+        evidence = db.get(Evidence, evidence_id)
+        version = evidence_service.current_version(db, evidence_id)
+        evidence.created_at = received_at
+        version.created_at = received_at
+        db.commit()
+        db.expire_all()
+    return evidence_id
+
+
+def _map(http, evidence_id: str, assessment_id: str, framework_id: str, requirement_id: str, relevance: str):
+    return _expect(
+        http.post(
+            f"/api/evidence/{evidence_id}/uses",
+            json={
+                "assessment_id": assessment_id,
+                "framework_id": framework_id,
+                "requirement_id": requirement_id,
+                "relevance": relevance,
+            },
+        ),
+        201,
+        f"map {evidence_id} to {requirement_id}",
+    )
+
+
+def _analyze(http, assessment_id: str, assessment_key: str, assessment_keys: dict[str, str]):
+    from app.routers import analysis
+
+    def fake(**kwargs):
+        return {
+            "frameworks": {
+                framework_id: {
+                    "parsed": {
+                        "executive_summary": f"{framework_id} synthetic demo summary",
+                        "assessments": copy.deepcopy(ITEMS[assessment_key][framework_id]),
+                    },
+                    "raw": "{}",
+                }
+                for framework_id in kwargs["framework_ids"]
+            },
+            "synthesis": None,
+            "total_usage": {},
+        }
+
+    with patch.object(analysis, "run_multi_framework_analysis", fake):
+        _expect(
+            http.post(f"/api/assessments/{assessment_id}/analyze"),
+            200,
+            f"analyze {assessment_key}",
+        )
+    assessment_keys[assessment_id] = assessment_key
+
+
+def _approve_conclusions(db, http, assessment_id: str, assessment_key: str):
+    db.expire_all()
+    rows = db.query(Conclusion).filter(Conclusion.assessment_id == assessment_id).all()
+    by_key = {(row.framework_id, row.requirement_id): row for row in rows}
+    for framework_id in ITEMS[assessment_key]:
+        for item in ITEMS[assessment_key][framework_id]:
+            conclusion = by_key[(framework_id, item["requirement_id"])]
+            _expect(
+                http.post(
+                    f"/api/assessments/{assessment_id}/conclusions/{conclusion.id}/approve",
+                    data={"expected_version": conclusion.version, "reviewer_name": DEMO_REVIEWER},
+                ),
+                200,
+                f"approve {framework_id}/{conclusion.requirement_id}",
+            )
+            db.expire_all()
+
+
+def _create_finding(db, http, *, key: str, assessment_ids: dict[str, str], anchor: date) -> tuple[str, str]:
+    spec = FINDING_SPECS[key]
+    assessment_id = assessment_ids[spec["assessment"]]
+    db.expire_all()
+    conclusion = (
+        db.query(Conclusion)
+        .filter(
+            Conclusion.assessment_id == assessment_id,
+            Conclusion.framework_id == spec["framework"],
+            Conclusion.requirement_id == spec["requirement"],
+        )
+        .one()
+    )
+    data = {
+        "conclusion_id": conclusion.id,
+        "conclusion_version": conclusion.version,
+        "title": spec["title"],
+        "description": conclusion.gaps_identified,
+        "severity": spec["severity"],
+        "priority": 1 if spec["severity"] == "high" else 2,
+        "action_title": spec["action_title"],
+        "action_target_date": str(anchor + timedelta(days=spec["target"])),
+        "reviewer_name": DEMO_REVIEWER,
+    }
+    if spec["owner"] is not None:
+        data["action_owner"] = spec["owner"]
+    response = _expect(
+        http.post(f"/api/assessments/{assessment_id}/findings", data=data),
+        200,
+        f"create finding {key}",
+    )
+    finding_id = response.json()["finding_id"]
+    db.expire_all()
+    action = db.query(Action).filter(Action.finding_id == finding_id).one()
+    return finding_id, action.id
+
+
+def _release_assessment(db, http, assessment_id: str) -> None:
+    db.expire_all()
+    report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).one()
+    items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
+    for item in items:
+        _expect(
+            http.patch(f"/api/assessments/{assessment_id}/review/items/{item.id}", json={"review_status": "accepted"}),
+            200,
+            f"accept report item {item.id}",
+        )
+    _expect(
+        http.post(f"/api/assessments/{assessment_id}/review/approve", json={"reviewer_name": DEMO_REVIEWER}),
+        200,
+        f"release assessment {assessment_id}",
+    )
+
+
+def _history_length(db, action_id: str) -> int:
+    db.expire_all()
+    action = db.get(Action, action_id)
+    return len(json.loads(action.history_json))
+
+
+def _status(http, assessment_id: str, finding_id: str, action_id: str, db, notes: str) -> None:
+    _expect(
+        http.post(
+            f"/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/status",
+            data={
+                "status": "in_progress",
+                "expected_history_length": _history_length(db, action_id),
+                "notes": notes,
+                "reviewer_name": DEMO_REVIEWER,
+            },
+        ),
+        200,
+        f"advance action {action_id}",
+    )
+
+
+def _close(http, assessment_id: str, finding_id: str, action_id: str, db, version_id: str, notes: str) -> None:
+    _expect(
+        http.post(
+            f"/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/close",
+            data={
+                "evidence_version_id": version_id,
+                "expected_history_length": _history_length(db, action_id),
+                "notes": notes,
+                "reviewer_name": DEMO_REVIEWER,
+            },
+        ),
+        200,
+        f"close action {action_id}",
+    )
+
+
+def _verify(http, assessment_id: str, finding_id: str, action_id: str, db, notes: str) -> None:
+    _expect(
+        http.post(
+            f"/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/verify",
+            data={
+                "expected_history_length": _history_length(db, action_id),
+                "notes": notes,
+                "reviewer_name": DEMO_REVIEWER,
+            },
+        ),
+        200,
+        f"verify action {action_id}",
+    )
+
+
+def seed_longitudinal_demo(db, http, *, anchor: date | None = None) -> LongitudinalDemo:
+    if db.query(Client).filter(Client.name.in_(DEMO_CLIENT_NAMES)).first() is not None:
+        raise DemoAlreadySeeded()
+    anchor = anchor or datetime.now(timezone.utc).date()
+    assessment_keys: dict[str, str] = {}
+
+    client_a, engagement_a, baseline, _ = _create_hierarchy(
+        db, http,
+        name=DEMO_CLIENT_A,
+        industry="fintech",
+        size="large",
+        engagement_name="FY2026 DPDPA and ISO 27001 programme",
+        frameworks=["dpdpa", "iso27001"],
+        description="Baseline gap assessment (DPDPA + ISO 27001)",
+    )
+    if db.get(Engagement, engagement_a.id) is None:
+        raise RuntimeError("The TestClient is not bound to the seeding session.")
+    _backdate_hierarchy(db, client_a, engagement_a, baseline, _at(anchor, -200))
+
+    evidence_ids: dict[str, str] = {}
+    specs = {spec["key"]: spec for spec in _document_specs(anchor)}
+    for key in ("a_policy", "a_ropa", "a_access_q1", "a_dr_report"):
+        spec = specs[key]
+        evidence_ids[key] = _upload_assessment_document(db, http, baseline.id, spec, anchor)
+    for evidence_key, framework_id, requirement_id, relevance in (
+        ("a_policy", "iso27001", "ISO.A5.1", "primary"),
+        ("a_policy", "dpdpa", "CH2.SECURITY.1", "supporting"),
+        ("a_ropa", "dpdpa", "CH3.ACCESS.1", "primary"),
+        ("a_access_q1", "iso27001", "ISO.A5.18", "primary"),
+        ("a_dr_report", "iso27001", "ISO.A5.30", "primary"),
+    ):
+        _map(http, evidence_ids[evidence_key], baseline.id, framework_id, requirement_id, relevance)
+    _analyze(http, baseline.id, "baseline", assessment_keys)
+    _approve_conclusions(db, http, baseline.id, "baseline")
+    finding_ids: dict[str, str] = {}
+    action_ids: dict[str, str] = {}
+    for key in ("a_consent", "a_access", "a_dr"):
+        finding_ids[key], action_ids[key] = _create_finding(
+            db, http, key=key, assessment_ids={"baseline": baseline.id}, anchor=anchor
+        )
+    _release_assessment(db, http, baseline.id)
+
+    _status(http, baseline.id, finding_ids["a_access"], action_ids["a_access"], db, "Remediation started")
+    memo_spec = specs["a_access_memo"]
+    evidence_ids["a_access_memo"] = _upload_assessment_document(db, http, baseline.id, memo_spec, anchor)
+    memo_version = evidence_service.current_version(db, evidence_ids["a_access_memo"])
+    _close(http, baseline.id, finding_ids["a_access"], action_ids["a_access"], db, memo_version.id, "Remediation memo received")
+    _verify(http, baseline.id, finding_ids["a_access"], action_ids["a_access"], db, "Memo checked against the system owner sign-offs")
+    _status(http, baseline.id, finding_ids["a_dr"], action_ids["a_dr"], db, "Runbook fix in progress")
+
+    validation = _add_assessment_to_engagement(
+        db,
+        engagement=engagement_a,
+        client=client_a,
+        description="Remediation validation (ISO 27001)",
+        framework_ids=["iso27001"],
+        created_at=_at(anchor, -7),
+    )
+    assessment_keys[validation.id] = "validation"
+    db.expire_all()
+    candidates = evidence_reuse.reuse_candidates(db, validation.id)
+    candidate_by_requirement = {(c.evidence_id, c.requirement_id): c for c in candidates}
+    for evidence_key, requirement_id in (("a_policy", "ISO.A5.1"), ("a_dr_report", "ISO.A5.30")):
+        candidate = candidate_by_requirement[(evidence_ids[evidence_key], requirement_id)]
+        _expect(
+            http.post(
+                f"/assessments/{validation.id}/evidence-reuse/{candidate.source_use_id}/confirm",
+                data={"acknowledge_warnings": "yes", "reviewer_name": DEMO_REVIEWER},
+                follow_redirects=False,
+            ),
+            303,
+            f"confirm reuse {evidence_key}",
+        )
+        db.expire_all()
+    q3_spec = specs["a_access_q3"]
+    evidence_ids["a_access_q3"] = _upload_assessment_document(db, http, validation.id, q3_spec, anchor)
+    _analyze(http, validation.id, "validation", assessment_keys)
+    _approve_conclusions(db, http, validation.id, "validation")
+    finding_ids["v_dr"], action_ids["v_dr"] = _create_finding(
+        db, http, key="v_dr", assessment_ids={"validation": validation.id}, anchor=anchor
+    )
+    _release_assessment(db, http, validation.id)
+    report_response = _expect(
+        http.post(
+            f"/api/engagements/{engagement_a.id}/integrated-reports",
+            data={"reviewer_name": DEMO_REVIEWER},
+        ),
+        200,
+        "generate integrated report",
+    )
+    integrated_snapshot_id = report_response.json()["snapshot_id"]
+    _expect(
+        http.post(
+            f"/api/engagements/{engagement_a.id}/integrated-reports/{integrated_snapshot_id}/issue",
+            data={"reviewer_name": DEMO_REVIEWER},
+        ),
+        200,
+        "issue integrated report",
+    )
+
+    client_b, engagement_b, nist, _ = _create_hierarchy(
+        db, http,
+        name=DEMO_CLIENT_B,
+        industry="it_services",
+        size="startup",
+        engagement_name="NIST CSF 2.0 gap assessment",
+        frameworks=["nist_csf"],
+        description="NIST CSF 2.0 baseline gap assessment",
+    )
+    _backdate_hierarchy(db, client_b, engagement_b, nist, _at(anchor, -30))
+    created_link = magic_links.create_link(
+        db,
+        engagement_id=engagement_b.id,
+        item_titles=["Information security policy", "MFA enforcement export", "Incident response plan"],
+        expires_in_days=14,
+        max_uploads=10,
+        max_total_mb=25,
+        actor="consultant",
+    )
+    db.commit()
+    for key in ("b_policy", "b_mfa_export"):
+        spec = specs[key]
+        _expect(
+            http.post(
+                f"/magic/{created_link.token}",
+                data={"item_key": spec["magic_item"]},
+                files={
+                    "file": (
+                        spec["filename"],
+                        _build_docx_bytes(spec["title"], "\n\n".join(spec["paragraphs"])),
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    )
+                },
+            ),
+            200,
+            f"magic-link upload {key}",
+        )
+    db.expire_all()
+    client_uploads = (
+        db.query(Evidence)
+        .filter(Evidence.uploaded_by == f"client_link:{created_link.link.id}")
+        .order_by(Evidence.created_at, Evidence.id)
+        .all()
+    )
+    evidence_ids["b_policy"] = next(row.id for row in client_uploads if row.original_filename == specs["b_policy"]["filename"])
+    evidence_ids["b_mfa_export"] = next(row.id for row in client_uploads if row.original_filename == specs["b_mfa_export"]["filename"])
+    _map(http, evidence_ids["b_policy"], nist.id, "nist_csf", "NIST.GV.PO.01", "primary")
+    _map(http, evidence_ids["b_mfa_export"], nist.id, "nist_csf", "NIST.PR.AA.03", "primary")
+    _analyze(http, nist.id, "nist", assessment_keys)
+    _approve_conclusions(db, http, nist.id, "nist")
+    finding_ids["b_mfa"], action_ids["b_mfa"] = _create_finding(
+        db, http, key="b_mfa", assessment_ids={"nist": nist.id}, anchor=anchor
+    )
+    finding_ids["b_ir"], action_ids["b_ir"] = _create_finding(
+        db, http, key="b_ir", assessment_ids={"nist": nist.id}, anchor=anchor
+    )
+    _status(http, nist.id, finding_ids["b_mfa"], action_ids["b_mfa"], db, "Moving accounts to workload identity")
+    evidence_ids["b_mfa_fix"] = _upload_assessment_document(db, http, nist.id, specs["b_mfa_fix"], anchor)
+    fix_version = evidence_service.current_version(db, evidence_ids["b_mfa_fix"])
+    _close(http, nist.id, finding_ids["b_mfa"], action_ids["b_mfa"], db, fix_version.id, "Remediation note received")
+
+    return LongitudinalDemo(
+        anchor=anchor,
+        client_ids={"a": client_a.id, "b": client_b.id},
+        engagement_ids={"a": engagement_a.id, "b": engagement_b.id},
+        assessment_ids={"baseline": baseline.id, "validation": validation.id, "nist": nist.id},
+        evidence_ids=evidence_ids,
+        finding_ids=finding_ids,
+        action_ids=action_ids,
+        magic_link_id=created_link.link.id,
+        integrated_snapshot_id=integrated_snapshot_id,
+    )
+
+
+def seed_longitudinal_cli() -> None:
+    from app.database import SessionLocal
+
+    with TestClient(api_app) as http:
+        db = SessionLocal()
+
+        def _override_get_db():
+            yield db
+
+        api_app.dependency_overrides[get_db] = _override_get_db
+        try:
+            if db.query(Client).filter(Client.name.in_(DEMO_CLIENT_NAMES)).first() is not None:
+                print(DemoAlreadySeeded.message)
+                return
+            backup_dir = create_backup(
+                database_path(settings.database_url),
+                Path(settings.upload_dir),
+                Path("backups"),
+            )
+            print(f"Backup written to {backup_dir}")
+            demo = seed_longitudinal_demo(db, http)
+            print(f"Seeded {DEMO_CLIENT_A} and {DEMO_CLIENT_B}")
+            print("URLs:")
+            for url in (
+                "/",
+                f"/engagements/{demo.engagement_ids['a']}",
+                f"/engagements/{demo.engagement_ids['b']}",
+                f"/assessments/{demo.assessment_ids['validation']}/evidence-reuse",
+                f"/engagements/{demo.engagement_ids['a']}/remediation",
+                f"/engagements/{demo.engagement_ids['a']}/integrated-reports",
+                f"/engagements/{demo.engagement_ids['b']}/remediation",
+            ):
+                print(url)
+        finally:
+            api_app.dependency_overrides.pop(get_db, None)
+            db.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument(
         "--multi",
         action="store_true",
         help="Seed only the multi-framework assessments via API flows.",
     )
+    modes.add_argument(
+        "--longitudinal",
+        action="store_true",
+        help="Seed the two-client longitudinal demonstration through application routes.",
+    )
     args = parser.parse_args()
+
+    if args.longitudinal:
+        seed_longitudinal_cli()
+        return
 
     if args.multi:
         seed_multi_framework_companies()

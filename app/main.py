@@ -19,6 +19,7 @@ from app.routers import (
     desk_review,
     documents,
     evidence,
+    evidence_reuse,
     findings,
     integrated_reports,
     magic,
@@ -143,6 +144,7 @@ app.include_router(integrated_reports.router)
 
 # Web portal routes
 app.include_router(aws.router)
+app.include_router(evidence_reuse.router)
 app.include_router(magic.router)
 app.include_router(web.router)
 
