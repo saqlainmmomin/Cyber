@@ -16,11 +16,14 @@ class GapItemOut(BaseModel):
     risk_level: str
     remediation_action: str
     remediation_priority: int
-    remediation_effort: str
-    timeline_weeks: int
+    remediation_effort: str | None = None
+    timeline_weeks: int | None = None
     maturity_level: int | None = None
     root_cause_category: str | None = None
     evidence_quote: str | None = None
+    framework_id: str | None = None
+    conclusion_id: str | None = None
+    conclusion_version: int | None = None
     dependencies: list[str] | None = None  # Prerequisite requirement IDs
 
 
@@ -31,10 +34,11 @@ class ChapterScore(BaseModel):
 
 
 class FrameworkScoreOut(BaseModel):
-    status: Literal["scored", "failed"] = "scored"
+    status: Literal["scored", "not_scored", "pending_review", "unavailable", "failed"] = "scored"
     overall_score: float | None
     overall_rating: str | None
     domain_scores: dict[str, ChapterScore]
+    coverage: dict[str, int] | None = None
 
 
 class ReportOut(BaseModel):
@@ -57,6 +61,8 @@ class ReportSummary(BaseModel):
     partially_compliant: int
     non_compliant: int
     not_assessed: int
+    insufficient_evidence: int = 0
+    not_applicable: int = 0
     critical_gaps: int
     high_gaps: int
     chapter_scores: dict[str, ChapterScore]

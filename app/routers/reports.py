@@ -7,13 +7,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
-from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
-from app.models.report import GapItem, GapReport
-from app.schemas.initiative import InitiativeOut
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
-from app.services import report_content
-from app.services.scoring import failed_framework_ids, report_framework_scores
+from app.services import approved_report, report_content
+from app.services.scoring import compute_delta
 from app.utils.pdf_export import generate_pdf
 from app.utils.review_gate import require_review_approval
 
@@ -21,31 +18,7 @@ router = APIRouter(prefix="/api/assessments/{assessment_id}/report", tags=["repo
 comparison_router = APIRouter(prefix="/api/assessments", tags=["reports"])
 
 
-def _get_report(assessment_id: str, db: Session) -> GapReport:
-    report = (
-        db.query(GapReport)
-        .filter(GapReport.assessment_id == assessment_id)
-        .first()
-    )
-    if not report:
-        raise HTTPException(404, "No report found. Run analysis first.")
-    return report
-
-
-def _get_gap_items(report_id: str, db: Session) -> list[GapItem]:
-    return db.query(GapItem).filter(GapItem.report_id == report_id).all()
-
-
-def _get_initiatives(report_id: str, db: Session) -> list[Initiative]:
-    return (
-        db.query(Initiative)
-        .filter(Initiative.report_id == report_id)
-        .order_by(Initiative.priority)
-        .all()
-    )
-
-
-def _item_to_schema(item: GapItem) -> GapItemOut:
+def _item_to_schema(item: approved_report.ApprovedRow) -> GapItemOut:
     return GapItemOut(
         requirement_id=item.requirement_id,
         chapter=item.chapter,
@@ -61,37 +34,33 @@ def _item_to_schema(item: GapItem) -> GapItemOut:
         maturity_level=item.maturity_level,
         root_cause_category=item.root_cause_category,
         evidence_quote=item.evidence_quote,
+        framework_id=item.framework_id,
+        conclusion_id=item.conclusion_id,
+        conclusion_version=item.conclusion_version,
     )
 
 
-def _initiative_to_schema(init: Initiative) -> InitiativeOut:
-    return InitiativeOut(
-        initiative_id=init.initiative_id,
-        title=init.title,
-        root_cause=init.root_cause,
-        root_cause_category=init.root_cause_category,
-        requirements_addressed=json.loads(init.requirements_addressed),
-        combined_effort=init.combined_effort,
-        combined_timeline_weeks=init.combined_timeline_weeks,
-        priority=init.priority,
-        budget_estimate_band=init.budget_estimate_band,
-        suggested_approach=init.suggested_approach,
-    )
+def _chapter_scores(raw: dict[str, dict]) -> dict[str, ChapterScore]:
+    return {key: ChapterScore(**value) for key, value in raw.items()}
+
+
+def _assessment_and_view(
+    assessment_id: str,
+    db: Session,
+) -> tuple[Assessment, approved_report.ApprovedReport]:
+    assessment = require_review_approval(assessment_id, db)
+    return assessment, approved_report.build_approved_report(db, assessment)
 
 
 @router.get("", response_model=ReportOut)
 def get_report(assessment_id: str, db: Session = Depends(get_db)):
-    assessment = require_review_approval(assessment_id, db)
-    report = _get_report(assessment_id, db)
-    items = _get_gap_items(report.id, db)
-    initiatives = _get_initiatives(report.id, db)
+    assessment, approved = _assessment_and_view(assessment_id, db)
+    if approved.report_id is None:
+        raise HTTPException(404, "No report found. Run analysis first.")
 
-    chapter_scores_raw = json.loads(report.chapter_scores)
-    chapter_scores = {k: ChapterScore(**v) for k, v in chapter_scores_raw.items()}
-
-    item_schemas = [_item_to_schema(i) for i in items]
-
-    # Build remediation roadmap grouped by priority
+    item_schemas = [_item_to_schema(item) for item in approved.rows]
+    raw_scores = approved.chapter_scores
+    chapter_score_models = _chapter_scores(raw_scores)
     roadmap: dict[str, list[GapItemOut]] = {
         "immediate": [],
         "short_term": [],
@@ -105,32 +74,33 @@ def get_report(assessment_id: str, db: Session = Depends(get_db)):
             roadmap[bucket].append(item)
 
     return ReportOut(
-        id=report.id,
-        assessment_id=report.assessment_id,
-        framework_scores=report_framework_scores(report, assessment),
-        chapter_scores=chapter_scores,
-        executive_summary=report.executive_summary,
+        id=approved.report_id,
+        assessment_id=assessment.id,
+        framework_scores=approved.framework_scores,
+        chapter_scores=chapter_score_models,
+        executive_summary=approved.summary_text,
         gap_items=item_schemas,
         remediation_roadmap=roadmap,
-        initiatives=[_initiative_to_schema(i) for i in initiatives],
-        generated_at=report.generated_at,
+        initiatives=[],
+        generated_at=approved.generated_at,
     )
 
 
 @router.get("/summary", response_model=ReportSummary)
 def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
-    assessment = require_review_approval(assessment_id, db)
-    report = _get_report(assessment_id, db)
-    items = _get_gap_items(report.id, db)
-
-    chapter_scores_raw = json.loads(report.chapter_scores)
-    chapter_scores = {k: ChapterScore(**v) for k, v in chapter_scores_raw.items()}
-
-    counts = {"compliant": 0, "partially_compliant": 0, "non_compliant": 0, "not_assessed": 0}
+    assessment, approved = _assessment_and_view(assessment_id, db)
+    raw_scores = approved.chapter_scores
+    chapter_score_models = _chapter_scores(raw_scores)
+    counts = {
+        "compliant": 0,
+        "partially_compliant": 0,
+        "non_compliant": 0,
+        "insufficient_evidence": 0,
+        "not_applicable": 0,
+    }
     critical_gaps = 0
     high_gaps = 0
-
-    for item in items:
+    for item in approved.rows:
         counts[item.compliance_status] = counts.get(item.compliance_status, 0) + 1
         if item.compliance_status in ("non_compliant", "partially_compliant"):
             if item.risk_level == "critical":
@@ -142,92 +112,66 @@ def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
         framework_id: FrameworkRegistry.get(framework_id).control_count()
         for framework_id in assessment.frameworks
     }
-
     return ReportSummary(
-        framework_scores=report_framework_scores(report, assessment),
+        framework_scores=approved.framework_scores,
         requirement_counts=requirement_counts,
         total_requirements=sum(requirement_counts.values()),
         compliant=counts["compliant"],
         partially_compliant=counts["partially_compliant"],
         non_compliant=counts["non_compliant"],
-        not_assessed=counts["not_assessed"],
+        not_assessed=counts["insufficient_evidence"],
+        insufficient_evidence=counts["insufficient_evidence"],
+        not_applicable=counts["not_applicable"],
         critical_gaps=critical_gaps,
         high_gaps=high_gaps,
-        chapter_scores=chapter_scores,
+        chapter_scores=chapter_score_models,
     )
 
 
 @router.get("/full")
 def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
-    """
-    Extended report endpoint with per-framework scores for multi-framework assessments.
-
-    For single-framework DPDPA assessments, returns the same data as the standard endpoint.
-    For multi-framework, includes framework_scores breakdown.
-    """
-    require_review_approval(assessment_id, db)
-    report = _get_report(assessment_id, db)
-    items = _get_gap_items(report.id, db)
-    initiatives = _get_initiatives(report.id, db)
-
-    assessment = db.get(Assessment, assessment_id)
-
-    chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
-    framework_scores = report_framework_scores(report, assessment)
-
-    # Resolve framework metadata
+    assessment, approved = _assessment_and_view(assessment_id, db)
     frameworks_info = {}
-    if framework_scores:
-        from app.frameworks.registry import FrameworkRegistry
-        for fw_id, scores in framework_scores.items():
-            fw = FrameworkRegistry.get_or_none(fw_id)
-            frameworks_info[fw_id] = {
-                "name": fw.name if fw else fw_id.upper(),
-                "version": fw.version if fw else "",
-                "scores": scores,
-            }
+    for framework_id in assessment.frameworks:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        frameworks_info[framework_id] = {
+            "name": framework.name if framework else framework_id.upper(),
+            "version": framework.version if framework else "",
+            "scores": approved.framework_scores[framework_id],
+        }
 
-    # Group items by framework
     items_by_framework: dict[str, list[dict]] = {}
-    for item in items:
-        fw_id = item.framework_id or "dpdpa"
-        items_by_framework.setdefault(fw_id, []).append({
+    for item in approved.rows:
+        items_by_framework.setdefault(item.framework_id, []).append({
             "requirement_id": item.requirement_id,
             "requirement_title": item.requirement_title,
             "compliance_status": item.compliance_status,
-            "risk_level": item.risk_level,
+            "current_state": item.current_state,
             "gap_description": item.gap_description,
+            "risk_level": item.risk_level,
             "remediation_action": item.remediation_action,
             "remediation_priority": item.remediation_priority,
+            "remediation_effort": item.remediation_effort,
+            "timeline_weeks": item.timeline_weeks,
             "maturity_level": item.maturity_level,
             "root_cause_category": item.root_cause_category,
             "evidence_quote": item.evidence_quote,
             "evidence_confidence": item.evidence_confidence,
             "control_reference": item.control_reference,
+            "conclusion_id": item.conclusion_id,
+            "conclusion_version": item.conclusion_version,
         })
 
     return JSONResponse({
-        "id": report.id,
-        "assessment_id": report.assessment_id,
-        "company_name": assessment.company_name if assessment else "",
-        "executive_summary": report.executive_summary,
-        "chapter_scores": chapter_scores,
+        "id": approved.report_id,
+        "assessment_id": assessment.id,
+        "company_name": assessment.company_name,
+        "executive_summary": approved.summary_text,
+        "chapter_scores": approved.chapter_scores,
         "frameworks": frameworks_info,
         "gap_items_by_framework": items_by_framework,
-        "initiatives": [
-            {
-                "initiative_id": i.initiative_id,
-                "title": i.title,
-                "root_cause_category": i.root_cause_category,
-                "requirements_addressed": json.loads(i.requirements_addressed),
-                "combined_effort": i.combined_effort,
-                "priority": i.priority,
-                "budget_estimate_band": i.budget_estimate_band,
-                "suggested_approach": i.suggested_approach,
-            }
-            for i in initiatives
-        ],
-        "generated_at": report.generated_at.isoformat() if report.generated_at else None,
+        "initiatives": [],
+        "generated_at": approved.generated_at.isoformat() if approved.generated_at else None,
     })
 
 
@@ -242,52 +186,41 @@ def _download_pdf_response(
     *,
     allow_failed_draft: bool = False,
 ):
-    if allow_failed_draft:
-        assessment = db.get(Assessment, assessment_id)
-        report = _get_report(assessment_id, db)
-        if not failed_framework_ids(report_framework_scores(report, assessment), assessment.frameworks):
-            require_review_approval(assessment_id, db)
-    else:
-        require_review_approval(assessment_id, db)
-    report = _get_report(assessment_id, db)
-    items = _get_gap_items(report.id, db)
-    initiatives = _get_initiatives(report.id, db)
-
     assessment = db.get(Assessment, assessment_id)
-    company_name = assessment.company_name if assessment else "Unknown"
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
 
-    # Build answer_source lookup: requirement_id -> answer_source
+    approved = approved_report.build_approved_report(db, assessment)
+    if not allow_failed_draft or not any(
+        entry.get("status") == "failed" for entry in approved.framework_scores.values()
+    ):
+        require_review_approval(assessment_id, db)
+        approved = approved_report.build_approved_report(db, assessment)
+    if approved.report_id is None:
+        raise HTTPException(404, "No report found. Run analysis first.")
+
     answer_source_map: dict[str, str] = {}
     responses = (
         db.query(QuestionnaireResponse)
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
         .all()
     )
-    for resp in responses:
-        # question_id format matches requirement_id (e.g. "DPDPA-2.1.1")
-        answer_source_map[resp.question_id] = resp.answer_source or "human"
-
-    # Determine if multi-framework for filename
-    selected_frameworks = ["dpdpa"]
-    if assessment and assessment.selected_frameworks:
-        try:
-            selected_frameworks = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    for response in responses:
+        answer_source_map[response.question_id] = response.answer_source or "human"
 
     report_findings = report_content.assessment_findings(db, assessment)
     pdf_bytes = generate_pdf(
-        report, items, company_name,
-        initiatives=initiatives,
+        approved.render_report(),
+        list(approved.rows),
+        assessment.company_name or "Unknown",
+        initiatives=None,
         answer_source_map=answer_source_map,
-        selected_frameworks=selected_frameworks,
+        selected_frameworks=assessment.frameworks,
         assessment=assessment,
         report_findings=report_findings,
     )
-
-    fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])
-    filename = f"Compliance_Assessment_{fw_label}_{company_name.replace(' ', '_')}.pdf"
-
+    fw_label = "_".join(framework_id.upper() for framework_id in assessment.frameworks[:3])
+    filename = f"Compliance_Assessment_{fw_label}_{assessment.company_name.replace(' ', '_')}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -296,52 +229,60 @@ def _download_pdf_response(
 
 
 @comparison_router.get("/{assessment_id}/comparable")
-def get_comparable_assessments(
-    assessment_id: str,
-    db: Session = Depends(get_db),
-):
+def get_comparable_assessments(assessment_id: str, db: Session = Depends(get_db)):
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-
-    others = (
+    candidates = (
         db.query(Assessment)
         .filter(
             Assessment.company_name == assessment.company_name,
             Assessment.id != assessment_id,
             Assessment.status == "completed",
-            Assessment.review_status == "approved",
         )
         .order_by(Assessment.created_at.desc())
         .all()
     )
     return [
-        {
-            "id": other.id,
-            "created_at": other.created_at.isoformat(),
-            "status": other.status,
-        }
-        for other in others
+        {"id": other.id, "created_at": other.created_at.isoformat(), "status": other.status}
+        for other in candidates
+        if approved_report.is_released(db, other)
     ]
 
 
 @comparison_router.get("/{assessment_id}/compare/{other_id}")
-def compare_assessments(
-    assessment_id: str,
-    other_id: str,
-    db: Session = Depends(get_db),
-):
-    from app.services.scoring import compute_delta
-
-    current = require_review_approval(assessment_id, db)
-    previous = require_review_approval(other_id, db)
+def compare_assessments(assessment_id: str, other_id: str, db: Session = Depends(get_db)):
+    current, current_view = _assessment_and_view(assessment_id, db)
+    previous, previous_view = _assessment_and_view(other_id, db)
     if current.company_name != previous.company_name:
         raise HTTPException(400, "Assessments must belong to the same company")
     if current.status != "completed" or previous.status != "completed":
         raise HTTPException(400, "Both assessments must be completed")
-
-    current_report = _get_report(assessment_id, db)
-    previous_report = _get_report(other_id, db)
-    current_items = _get_gap_items(current_report.id, db)
-    previous_items = _get_gap_items(previous_report.id, db)
-    return compute_delta(current_items, previous_items)
+    result = compute_delta(list(current_view.rows), list(previous_view.rows))
+    framework_deltas = []
+    for framework_id in current.frameworks:
+        current_score = current_view.framework_scores.get(framework_id, {})
+        previous_score = previous_view.framework_scores.get(framework_id, {})
+        current_value = (
+            current_score.get("overall_score")
+            if current_score.get("status") == "scored"
+            else None
+        )
+        previous_value = (
+            previous_score.get("overall_score")
+            if previous_score.get("status") == "scored"
+            else None
+        )
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        framework_deltas.append({
+            "framework_id": framework_id,
+            "name": framework.name if framework else framework_id.upper(),
+            "current": current_value,
+            "previous": previous_value,
+            "delta": (
+                round(current_value - previous_value, 1)
+                if current_value is not None and previous_value is not None
+                else None
+            ),
+        })
+    return {**result, "framework_deltas": framework_deltas}

@@ -15,7 +15,6 @@ from fpdf import FPDF
 
 from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
-from app.models.report import GapItem, GapReport
 from app.services.scoring import is_failed_framework_score, report_framework_scores
 
 # ---------------------------------------------------------------------------
@@ -38,6 +37,7 @@ STATUS_COLORS = {
     "partially_compliant": (241, 196, 15),
     "non_compliant": (231, 76, 60),
     "not_assessed": (189, 195, 199),
+    "insufficient_evidence": (155, 89, 182),
 }
 
 # Risk colors
@@ -234,19 +234,27 @@ def _draw_h_bar(pdf: FPDF, x: float, y: float, w: float, h: float,
 
 
 def _draw_status_bar(pdf: FPDF, x: float, y: float, w: float, h: float,
-                     counts: dict, total: int):
+                     counts: dict, total: int, *, show_insufficient_evidence: bool = True):
     """Draw a stacked horizontal bar showing compliance distribution."""
     if total == 0:
         return
     cur_x = x
-    order = ["compliant", "partially_compliant", "non_compliant", "not_assessed"]
+    order = [
+        "compliant",
+        "partially_compliant",
+        "non_compliant",
+        "not_assessed",
+        "insufficient_evidence",
+    ]
     labels = {
         "compliant": "Compliant",
         "partially_compliant": "Partial",
         "non_compliant": "Non-Compliant",
         "not_assessed": "N/A",
+        "insufficient_evidence": "Insufficient evidence",
     }
-    for status in order:
+    legend_order = order if show_insufficient_evidence else order[:-1]
+    for status in legend_order:
         count = counts.get(status, 0)
         if count == 0:
             continue
@@ -265,19 +273,19 @@ def _draw_status_bar(pdf: FPDF, x: float, y: float, w: float, h: float,
     # Legend below
     legend_y = y + h + 3
     leg_x = x
-    for status in order:
+    for status in legend_order:
         count = counts.get(status, 0)
         r, g, b = STATUS_COLORS[status]
         pdf.set_fill_color(r, g, b)
         pdf.rect(leg_x, legend_y, 3, 3, style="F")
         pdf.set_font("Helvetica", "", 7)
         pdf.set_text_color(*MID_TEXT)
-        pdf.text(leg_x + 4, legend_y + 2.5, f"{labels[status]} ({count})")
+        pdf.text(leg_x + 4, legend_y + 2.5, S(f"{labels[status]} ({count})"))
         leg_x += 38
 
 
 def _draw_timeline_block(pdf: FPDF, x: float, y: float, w: float,
-                         priority: int, items: list[GapItem]):
+                         priority: int, items: list):
     """Draw a single priority block in the remediation timeline."""
     config = PRIORITY_CONFIG.get(priority, ("Other", "", NAVY))
     label, timeframe, color = config
@@ -303,10 +311,11 @@ def _draw_timeline_block(pdf: FPDF, x: float, y: float, w: float,
         pdf.text(x + 4, item_y + 3, S(text))
 
         # Effort + timeline tag
-        tag_text = f"{item.remediation_effort} | ~{item.timeline_weeks}w"
-        pdf.set_font("Helvetica", "", 7)
-        pdf.set_text_color(*LIGHT_TEXT)
-        pdf.text(x + w - pdf.get_string_width(tag_text) - 2, item_y + 3, tag_text)
+        if item.remediation_effort and item.timeline_weeks:
+            tag_text = S(f"{item.remediation_effort} | ~{item.timeline_weeks}w")
+            pdf.set_font("Helvetica", "", 7)
+            pdf.set_text_color(*LIGHT_TEXT)
+            pdf.text(x + w - pdf.get_string_width(tag_text) - 2, item_y + 3, tag_text)
         pdf.set_font("Helvetica", "", 8)
         item_y += 6
 
@@ -318,7 +327,7 @@ def _draw_timeline_block(pdf: FPDF, x: float, y: float, w: float,
     return item_y + 4
 
 
-def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float,
+def _draw_gap_card(pdf: FPDF, item, x: float, y: float, w: float,
                    show_evidence: bool = False,
                    answer_source: str | None = None) -> float:
     """Draw a compact card for a gap item. Returns height consumed."""
@@ -436,7 +445,7 @@ def _draw_gap_card(pdf: FPDF, item: GapItem, x: float, y: float, w: float,
 
 
 def _draw_heatmap_row(pdf: FPDF, x: float, y: float, label: str,
-                      score: float, rating: str, items: list[GapItem]):
+                      score: float, rating: str, items: list):
     """Draw a chapter heatmap row — label, mini squares, score."""
     # Label
     pdf.set_font("Helvetica", "B", 8)
@@ -658,8 +667,8 @@ def _render_findings_section(
 # ---------------------------------------------------------------------------
 
 def generate_pdf(
-    report: GapReport,
-    gap_items: list[GapItem],
+    report: object,
+    gap_items: list,
     company_name: str,
     initiatives: list | None = None,
     answer_source_map: dict[str, str] | None = None,
@@ -688,6 +697,10 @@ def generate_pdf(
     chapter_scores = json.loads(report.chapter_scores or "{}")
     score_assessment = assessment or SimpleNamespace(frameworks=selected_frameworks)
     framework_scores = report_framework_scores(report, score_assessment)
+    approved_input = any(
+        isinstance(scores, dict) and "status" in scores
+        for scores in framework_scores.values()
+    )
     framework_score_rows = []
     for framework_id, framework_name in framework_metadata:
         scores = framework_scores.get(framework_id)
@@ -706,7 +719,13 @@ def generate_pdf(
     ]
 
     # Compute summary stats
-    counts = {"compliant": 0, "partially_compliant": 0, "non_compliant": 0, "not_assessed": 0}
+    counts = {
+        "compliant": 0,
+        "partially_compliant": 0,
+        "non_compliant": 0,
+        "not_assessed": 0,
+        "insufficient_evidence": 0,
+    }
     critical_count = 0
     high_count = 0
     for item in gap_items:
@@ -719,13 +738,17 @@ def generate_pdf(
     total = sum(counts.values())
 
     # Group items
-    chapters_grouped: dict[str, list[GapItem]] = {}
+    chapters_grouped: dict[str, list] = {}
     for item in gap_items:
         chapters_grouped.setdefault(item.chapter, []).append(item)
 
-    priority_grouped: dict[int, list[GapItem]] = {}
+    priority_grouped: dict[int, list] = {}
     for item in gap_items:
-        if item.compliance_status not in ("compliant", "not_assessed"):
+        if item.compliance_status not in (
+            "compliant",
+            "not_assessed",
+            "insufficient_evidence",
+        ):
             priority_grouped.setdefault(item.remediation_priority, []).append(item)
 
     # Max remediation timeline
@@ -815,7 +838,11 @@ def generate_pdf(
     # Summary stats below ring
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*MID_TEXT)
-    summary_text = f"{total} requirements assessed  |  {critical_count + high_count} gaps identified  |  ~{max_weeks} weeks to full remediation"
+    summary_text = (
+        f"{total} requirements assessed  |  {critical_count + high_count} gaps identified"
+        if max_weeks == 0
+        else f"{total} requirements assessed  |  {critical_count + high_count} gaps identified  |  ~{max_weeks} weeks to full remediation"
+    )
     tw = pdf.get_string_width(summary_text)
     pdf.text((PW - tw) / 2, 182, S(summary_text))
 
@@ -844,8 +871,16 @@ def generate_pdf(
                    str(critical_count), "Critical Gaps", RISK_COLORS["critical"])
     _draw_kpi_card(pdf, PM + card_w + 3, card_y, card_w, 27,
                    str(high_count), "High Risk Gaps", RISK_COLORS["high"])
-    _draw_kpi_card(pdf, PM + 2 * (card_w + 3), card_y, card_w, 27,
-                   f"~{max_weeks}w", "Remediation Timeline", NAVY)
+    _draw_kpi_card(
+        pdf,
+        PM + 2 * (card_w + 3),
+        card_y,
+        card_w,
+        27,
+        "n/a" if max_weeks == 0 else f"~{max_weeks}w",
+        "Remediation Timeline (not estimated)" if max_weeks == 0 else "Remediation Timeline",
+        NAVY,
+    )
 
     # Per-framework scores
     pdf.set_y(card_y + 35)
@@ -870,10 +905,44 @@ def generate_pdf(
             pdf.text(PM, framework_bar_y, S(f"{framework_name}: analysis failed. Not scored."))
             framework_bar_y += 11
 
+    for framework_id, framework_name in framework_metadata:
+        scores = framework_scores.get(framework_id) or {}
+        coverage = scores.get("coverage")
+        if not coverage:
+            continue
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(*MID_TEXT)
+        if scores.get("status") == "scored":
+            coverage_text = (
+                f"{framework_name}: {coverage['scored']} of {coverage['in_scope']} "
+                "in-scope requirements scored; "
+                f"{coverage['insufficient_evidence']} insufficient evidence "
+                "(excluded from the score, not counted as non-compliant); "
+                f"{coverage['not_applicable']} not applicable."
+            )
+            pdf.text(PM, framework_bar_y, S(coverage_text))
+            framework_bar_y += 7
+        elif scores.get("status") == "not_scored":
+            pdf.text(
+                PM,
+                framework_bar_y,
+                S(f"{framework_name}: not scored. No in-scope requirement has a scoring outcome."),
+            )
+            framework_bar_y += 7
+
     # Compliance distribution bar
     pdf.set_y(framework_bar_y + 5)
     _section_title(pdf, "Compliance Distribution")
-    _draw_status_bar(pdf, PM, pdf.get_y(), CW, 10, counts, total)
+    _draw_status_bar(
+        pdf,
+        PM,
+        pdf.get_y(),
+        CW,
+        10,
+        counts,
+        total,
+        show_insufficient_evidence=approved_input,
+    )
 
     # Chapter scores with heatmap
     pdf.set_y(pdf.get_y() + 22)
@@ -1152,12 +1221,26 @@ def generate_pdf(
                 pdf.set_text_color(39, 174, 96)
                 pdf.text(PM + 4, cur_y + 3.8, S(f"COMPLIANT  {item.requirement_id}: {item.requirement_title[:70]}"))
                 pdf.set_y(cur_y + 7)
-            elif item.compliance_status == "not_assessed":
-                pdf.set_fill_color(*STATUS_COLORS["not_assessed"])
+            elif item.compliance_status in ("not_assessed", "insufficient_evidence"):
+                status_color = (
+                    "insufficient_evidence"
+                    if item.compliance_status == "insufficient_evidence"
+                    else "not_assessed"
+                )
+                pdf.set_fill_color(*STATUS_COLORS[status_color])
                 pdf.rect(PM, cur_y, 2, 5, style="F")
                 pdf.set_font("Helvetica", "", 8)
                 pdf.set_text_color(*LIGHT_TEXT)
-                pdf.text(PM + 4, cur_y + 3.8, S(f"N/A  {item.requirement_id}: {item.requirement_title[:70]}"))
+                label = (
+                    "Insufficient evidence"
+                    if item.compliance_status == "insufficient_evidence"
+                    else "N/A"
+                )
+                pdf.text(
+                    PM + 4,
+                    cur_y + 3.8,
+                    S(f"{label}  {item.requirement_id}: {item.requirement_title[:70]}"),
+                )
                 pdf.set_y(cur_y + 7)
             else:
                 # Full card for gaps (with evidence in appendix)
@@ -1193,6 +1276,49 @@ def generate_pdf(
             f"requirements across the following framework(s): {frameworks_label}."
         )
 
+    if dpdpa_only:
+        not_covered_text = (
+            "This assessment does not include technical penetration testing, source code review, "
+            "network security assessment, physical security review, or any form of independent "
+            "technical verification. Findings in areas where the organization provided limited "
+            "or no evidence are based on stated intent and disclosed posture only."
+        )
+    else:
+        not_covered_text = (
+            "This assessment does not include technical penetration testing, source code review, "
+            "network security assessment, or any form of independent technical verification. "
+            "Where the selected framework(s) include physical or environmental controls, findings "
+            "on those controls are based on disclosed information and submitted documents, not on "
+            "an on-site inspection. Findings in areas where the organization provided limited or no "
+            "evidence are based on stated intent and disclosed posture only."
+        )
+
+    if dpdpa_only:
+        follow_on_text = (
+            "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High "
+            "risk level, independent verification by a qualified legal counsel or certified privacy "
+            "professional is strongly recommended before relying on those findings for regulatory "
+            "submissions, board reporting, or contractual representations."
+        )
+    elif has_dpdpa:
+        other_names = ", ".join(
+            name for framework_id, name in framework_metadata if framework_id != "dpdpa"
+        )
+        follow_on_text = (
+            "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High "
+            "risk level, independent verification by qualified legal counsel or a certified privacy "
+            f"professional (for DPDPA requirements), or by a qualified information security auditor "
+            f"(for {other_names}), is strongly recommended before relying on those findings for "
+            "regulatory submissions, board reporting, or contractual representations."
+        )
+    else:
+        follow_on_text = (
+            "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High "
+            "risk level, independent verification by a qualified information security auditor is "
+            "strongly recommended before relying on those findings for certification, board reporting, "
+            "or contractual representations."
+        )
+
     scope_text = f"""Assessment Date: {assessment_date}
 
 Nature of Assessment:
@@ -1202,13 +1328,13 @@ Scope of Coverage:
 {scope_of_coverage}
 
 What Is Not Covered:
-This assessment does not include technical penetration testing, source code review, network security assessment, physical security review, or any form of independent technical verification. Findings in areas where the organization provided limited or no evidence are based on stated intent and disclosed posture only.
+{not_covered_text}
 
 Reliance on Disclosed Information:
 All findings reflect the information provided to the assessor at the time of the assessment. The assessor has not independently verified the accuracy or completeness of information provided. Material omissions or inaccuracies in disclosed information would affect the reliability of findings.
 
 Recommended Follow-On Actions:
-For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by a qualified legal counsel or certified privacy professional is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.
+{follow_on_text}
 
 Confidentiality:
 This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. {settings.firm_name} and the named organization are the intended recipients of this report."""
@@ -1261,12 +1387,33 @@ This report is prepared solely for the use of the named organization. It should 
         )
         framework_overview = (
             "Framework Overview:\n"
-            f"Requirements are drawn directly from the source standard for each selected framework "
-            f"({frameworks_label}). Each framework retains its own internal chapter/domain structure and "
+            f"Requirements are referenced by clause or control identifier for each selected framework "
+            f"({frameworks_label}); requirement descriptions are summarised for assessment purposes "
+            "and do not reproduce the source standard. Each framework retains its own internal chapter/domain structure and "
             "weighting; scores are computed and reported independently for each framework.\n\n"
         )
         chapter_weights_block = ""
         risk_basis = "regulatory exposure, potential penalties under the applicable framework(s), and impact on affected individuals"
+
+    strategic_initiatives_block = (
+        "Strategic Initiatives:\n"
+        "Gaps are clustered by root cause (Policy, People, Process, Technology, Governance) into named remediation initiatives. Each initiative groups related requirements that share a common fix pattern, enabling efficient resource and budget allocation. Initiatives are sequenced considering prerequisite dependencies between requirements.\n\n"
+        if initiatives or not approved_input
+        else ""
+    )
+    approved_scoring_basis = (
+        "Scoring Basis:\n"
+        "Scores are computed only from conclusions a consultant has individually approved. "
+        "Each approved outcome counts as follows: Compliant 100 points, Partially Compliant "
+        "50 points, Non-Compliant 0 points. Not Applicable and Insufficient Evidence are "
+        "excluded from the scoring denominator. Insufficient Evidence is not treated as "
+        "Non-Compliant; the number of requirements with insufficient evidence is reported "
+        "next to each framework score. Requirements excluded at scoping are not scored. "
+        "A framework is scored only when every in-scope requirement has an approved "
+        "conclusion.\n\n"
+        if approved_input
+        else ""
+    )
 
     methodology = f"""{methodology_intro}
 
@@ -1281,7 +1428,7 @@ Questionnaire responses use a five-option scale:
 Scoring Formula:
 Each requirement is scored based on its GRC response. Section scores are the unweighted average of constituent requirement scores. Chapter scores are weighted averages of section scores using published section weights. The overall score is the weighted average of chapter scores using the published chapter/domain weights. Not Applicable responses are excluded from the denominator, so scores reflect the applicable compliance universe only.
 
-{chapter_weights_block}Rating Thresholds:
+{approved_scoring_basis}{chapter_weights_block}Rating Thresholds:
 - 80-100%: Compliant
 - 60-79%: Partially Compliant
 - 40-59%: Needs Significant Improvement
@@ -1300,10 +1447,7 @@ M4 - Quantitative: Process is measured with KPIs; performance tracked and report
 M5 - Optimizing: Continuous improvement cycle in place; best-in-class privacy practice
 The minimum remediation target for regulatory compliance is M3 (Defined). The gap between current maturity and M3 drives the remediation effort estimate.
 
-Strategic Initiatives:
-Gaps are clustered by root cause (Policy, People, Process, Technology, Governance) into named remediation initiatives. Each initiative groups related requirements that share a common fix pattern, enabling efficient resource and budget allocation. Initiatives are sequenced considering prerequisite dependencies between requirements.
-
-Disclaimer:
+{strategic_initiatives_block}Disclaimer:
 This assessment provides guidance based on the information provided and should not be considered legal advice. Organizations should consult qualified legal counsel for definitive compliance determinations."""
 
     pdf.set_x(PM)

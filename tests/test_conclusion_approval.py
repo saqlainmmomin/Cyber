@@ -22,13 +22,16 @@ from app.database import get_db
 from app.dpdpa.framework import get_all_requirements
 from app.main import app
 from app.models.assessment import Assessment
+from app.models.audit_event import AuditEvent
 from app.models.client import Client
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceVersion
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
-from app.services import analysis_pipeline, conclusion_review
+from app.services import analysis_pipeline, approved_report, conclusion_review
+
+LEGACY_REVIEW_RETIRED = approved_report.LEGACY_REVIEW_RETIRED
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQS = [row["id"] for row in get_all_requirements()][:3]
@@ -652,7 +655,7 @@ def test_scenario_12_individual_only_structural_guards():
 
 
 def test_scenario_13_legacy_path_and_status_are_untouched(db, http, gate, monkeypatch):
-    """Scenario 13: Conclusion actions and legacy review remain isolated in both directions."""
+    """Scenario 13: retired legacy review routes leave conclusions and history unchanged."""
     assessment = _seed(db, applicable=REQS)
     _stub_single(monkeypatch, [_item(requirement_id) for requirement_id in REQS])
     gate.trigger_analysis(assessment.id, db)
@@ -710,21 +713,29 @@ def test_scenario_13_legacy_path_and_status_are_untouched(db, http, gate, monkey
         for conclusion in conclusions
         for row in _revisions(db, conclusion.id)
     }
+    audit_count = db.query(AuditEvent).count()
     for item in items:
-        assert http.patch(
+        response = http.patch(
             f"/api/assessments/{assessment.id}/review/items/{item.id}",
             data={"review_status": "accepted"},
-        ).status_code == 200
+        )
+        assert response.status_code == 410
+        assert response.json()["detail"] == LEGACY_REVIEW_RETIRED
     response = http.post(
         f"/api/assessments/{assessment.id}/review/approve",
         data={"reviewer_name": "Legacy Reviewer"},
     )
-    assert response.status_code == 200 and "HX-Redirect" in response.headers
+    assert response.status_code == 410
+    assert response.json()["detail"] == LEGACY_REVIEW_RETIRED
+    response = http.post(f"/api/assessments/{assessment.id}/review/reject")
+    assert response.status_code == 410
+    assert response.json()["detail"] == LEGACY_REVIEW_RETIRED
     assert {
         row.id
         for conclusion in conclusions
         for row in _revisions(db, conclusion.id)
     } == revision_ids
+    assert db.query(AuditEvent).count() == audit_count
 
 
 def test_scenario_14_page_render_citations_divergence_identity_and_escaping(

@@ -1684,6 +1684,7 @@ from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links
+from app.services import approved_report
 from scripts.backup import create_backup, database_path
 
 DEMO_CLIENT_A = "Meridian Ledger Technologies Pvt Ltd"
@@ -2095,8 +2096,18 @@ def _map(http, evidence_id: str, assessment_id: str, framework_id: str, requirem
     )
 
 
-def _analyze(http, assessment_id: str, assessment_key: str, assessment_keys: dict[str, str]):
+def _analyze(db, http, assessment_id: str, assessment_key: str, assessment_keys: dict[str, str]):
     from app.routers import analysis
+
+    applicable = [
+        item["requirement_id"]
+        for framework_items in ITEMS[assessment_key].values()
+        for item in framework_items
+    ]
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is not None:
+        assessment.applicable_requirements = json.dumps(sorted(applicable))
+        db.commit()
 
     def fake(**kwargs):
         return {
@@ -2182,17 +2193,11 @@ def _create_finding(db, http, *, key: str, assessment_ids: dict[str, str], ancho
 
 
 def _release_assessment(db, http, assessment_id: str) -> None:
-    db.expire_all()
-    report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).one()
-    items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
-    for item in items:
-        _expect(
-            http.patch(f"/api/assessments/{assessment_id}/review/items/{item.id}", json={"review_status": "accepted"}),
-            200,
-            f"accept report item {item.id}",
-        )
     _expect(
-        http.post(f"/api/assessments/{assessment_id}/review/approve", json={"reviewer_name": DEMO_REVIEWER}),
+        http.post(
+            f"/api/assessments/{assessment_id}/release",
+            data={"reviewer_name": DEMO_REVIEWER},
+        ),
         200,
         f"release assessment {assessment_id}",
     )
@@ -2283,7 +2288,7 @@ def seed_longitudinal_demo(db, http, *, anchor: date | None = None) -> Longitudi
         ("a_dr_report", "iso27001", "ISO.A5.30", "primary"),
     ):
         _map(http, evidence_ids[evidence_key], baseline.id, framework_id, requirement_id, relevance)
-    _analyze(http, baseline.id, "baseline", assessment_keys)
+    _analyze(db, http, baseline.id, "baseline", assessment_keys)
     _approve_conclusions(db, http, baseline.id, "baseline")
     finding_ids: dict[str, str] = {}
     action_ids: dict[str, str] = {}
@@ -2327,7 +2332,7 @@ def seed_longitudinal_demo(db, http, *, anchor: date | None = None) -> Longitudi
         db.expire_all()
     q3_spec = specs["a_access_q3"]
     evidence_ids["a_access_q3"] = _upload_assessment_document(db, http, validation.id, q3_spec, anchor)
-    _analyze(http, validation.id, "validation", assessment_keys)
+    _analyze(db, http, validation.id, "validation", assessment_keys)
     _approve_conclusions(db, http, validation.id, "validation")
     finding_ids["v_dr"], action_ids["v_dr"] = _create_finding(
         db, http, key="v_dr", assessment_ids={"validation": validation.id}, anchor=anchor
@@ -2399,7 +2404,7 @@ def seed_longitudinal_demo(db, http, *, anchor: date | None = None) -> Longitudi
     evidence_ids["b_mfa_export"] = next(row.id for row in client_uploads if row.original_filename == specs["b_mfa_export"]["filename"])
     _map(http, evidence_ids["b_policy"], nist.id, "nist_csf", "NIST.GV.PO.01", "primary")
     _map(http, evidence_ids["b_mfa_export"], nist.id, "nist_csf", "NIST.PR.AA.03", "primary")
-    _analyze(http, nist.id, "nist", assessment_keys)
+    _analyze(db, http, nist.id, "nist", assessment_keys)
     _approve_conclusions(db, http, nist.id, "nist")
     finding_ids["b_mfa"], action_ids["b_mfa"] = _create_finding(
         db, http, key="b_mfa", assessment_ids={"nist": nist.id}, anchor=anchor

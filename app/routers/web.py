@@ -51,8 +51,9 @@ from app.services import (
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
-from app.services.scoring import is_failed_framework_score, report_framework_scores
+from app.services import approved_report, conclusion_review
 from app.services.conclusion_review import conclusion_cards
+from app.services.scoring import compute_delta
 from app.utils.review_gate import require_review_approval
 
 from app.template_config import configure_templates
@@ -139,7 +140,9 @@ def _framework_display(
             "score": scores.get("overall_score"),
             "rating": scores.get("overall_rating"),
             "domain_scores": scores.get("domain_scores", {}),
-            "failed": is_failed_framework_score(scores),
+            "status": scores.get("status", "scored"),
+            "coverage": scores.get("coverage"),
+            "failed": scores.get("status") == "failed",
         }
     return display
 
@@ -763,13 +766,11 @@ def framework_tab(
     report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
     finding_count = 0
     if report:
-        finding_count = (
-            db.query(GapItem)
-            .filter(
-                GapItem.report_id == report.id,
-                GapItem.framework_id == framework_id,
-            )
-            .count()
+        approved = approved_report.build_approved_report(db, assessment)
+        finding_count = sum(
+            row.framework_id == framework_id
+            and row.compliance_status in conclusion_review.GAP_OUTCOMES
+            for row in approved.rows
         )
     return templates.TemplateResponse(
         "partials/framework_panel.html",
@@ -839,14 +840,6 @@ def assessment_detail(
         .filter(GapReport.assessment_id == assessment_id)
         .first()
     )
-
-    gap_items = []
-    if report:
-        gap_items = (
-            db.query(GapItem)
-            .filter(GapItem.report_id == report.id)
-            .all()
-        )
 
     # Check questionnaire progress
     try:
@@ -941,9 +934,10 @@ def assessment_detail(
             })
     framework_display = {}
     if report and tab in ("report", "questionnaire"):
+        approved = approved_report.build_approved_report(db, assessment)
         framework_display = _framework_display(
             assessment,
-            report_framework_scores(report, assessment),
+            approved.framework_scores,
         )
 
     timeline_steps = [
@@ -966,7 +960,6 @@ def assessment_detail(
             "documents": documents,
             "analysable_document_count": analysable_document_count,
             "report": report,
-            "gap_items": gap_items,
             "tab": tab,
             "response_count": response_count,
             "context_done": context_done,
@@ -986,8 +979,14 @@ def assessment_detail(
             ),
             "active_framework_definition": FrameworkRegistry.get(active_framework),
             "active_framework_finding_count": sum(
-                1 for item in gap_items
-                if item.framework_id == active_framework
+                1
+                for row in (
+                    approved.rows
+                    if report and tab in ("report", "questionnaire")
+                    else ()
+                )
+                if row.framework_id == active_framework
+                and row.compliance_status in conclusion_review.GAP_OUTCOMES
             ),
             "timeline_steps": timeline_steps,
             **scope_context,
@@ -1818,6 +1817,7 @@ def analysis_status(
 
     if assessment.status == "completed":
         report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+        approved = approved_report.build_approved_report(db, assessment) if report else None
         return templates.TemplateResponse(
             "partials/analysis_complete.html",
             {
@@ -1826,12 +1826,13 @@ def analysis_status(
                 "report": report,
                 "framework_display": _framework_display(
                     assessment,
-                    report_framework_scores(report, assessment) if report else {},
+                    approved.framework_scores if approved else {},
                 ),
             },
         )
     elif assessment.status == "error":
         report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
+        approved = approved_report.build_approved_report(db, assessment) if report else None
         return templates.TemplateResponse(
             "partials/analysis_error.html",
             {
@@ -1839,7 +1840,7 @@ def analysis_status(
                 "assessment_id": assessment_id,
                 "framework_display": _framework_display(
                     assessment,
-                    report_framework_scores(report, assessment) if report else {},
+                    approved.framework_scores if approved else {},
                 ),
             },
         )
@@ -1901,7 +1902,7 @@ def _compute_chapter_status_counts(gap_items) -> dict:
             counts[ch] = {
                 "compliant": 0, "partially_compliant": 0,
                 "non_compliant": 0, "not_applicable": 0,
-                "not_assessed": 0, "total": 0,
+                "not_assessed": 0, "insufficient_evidence": 0, "total": 0,
             }
         status = item.compliance_status or "not_assessed"
         counts[ch][status] = counts[ch].get(status, 0) + 1
@@ -2015,14 +2016,12 @@ def report_summary(
             {"request": request, "assessment_id": assessment_id},
         )
 
-    gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
-    chapter_scores = json.loads(report.chapter_scores) if report.chapter_scores else {}
+    approved = approved_report.build_approved_report(db, assessment)
+    gap_items = list(approved.rows)
+    chapter_scores = approved.chapter_scores
 
     is_multi_framework = assessment.is_multi_framework
-    framework_display = _framework_display(
-        assessment,
-        report_framework_scores(report, assessment),
-    )
+    framework_display = _framework_display(assessment, approved.framework_scores)
 
     # Count by status
     status_counts: dict[str, int] = {}
@@ -2035,7 +2034,7 @@ def report_summary(
     # Derived visualisation data
     chapter_status_counts = _compute_chapter_status_counts(gap_items)
     business_impact = _compute_business_impact(gap_items)
-    root_cause_counts = _compute_root_cause_counts(gap_items)
+    root_cause_counts = {}
 
     # Critical findings: non/partial, risk=critical|high, sorted by priority then severity
     _severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -2046,37 +2045,47 @@ def report_summary(
         key=lambda x: (x.remediation_priority or 3, _severity_rank.get(x.risk_level, 2)),
     )[:5]
 
-    # Quick wins: non/partial, low effort, priority <= 2
-    quick_wins = sorted(
-        [i for i in gap_items
-         if i.compliance_status in ("non_compliant", "partially_compliant")
-         and i.remediation_effort == "low"
-         and (i.remediation_priority or 99) <= 2],
-        key=lambda x: x.remediation_priority or 3,
-    )[:4]
+    quick_wins = []
 
     has_dpdpa = "dpdpa" in assessment.frameworks
 
     remediation_counts = remediation_rollup.assessment_action_counts(db, assessment_id)
 
-    comparable_assessments = (
+    comparable_candidates = (
         db.query(Assessment)
         .filter(
             Assessment.company_name == assessment.company_name,
             Assessment.id != assessment_id,
             Assessment.status == "completed",
-            Assessment.review_status == "approved",
         )
         .order_by(Assessment.created_at.desc())
-        .limit(5)
         .all()
     )
+    comparable_assessments = [
+        candidate
+        for candidate in comparable_candidates
+        if approved_report.is_released(db, candidate)
+    ][:5]
 
     gap_items_by_chapter = defaultdict(list)
     for item in gap_items:
-        gap_items_by_chapter[item.chapter].append(item)
+        gap_items_by_chapter[item.chapter_title].append(item)
 
-    reviewed_item = next((item for item in gap_items if item.reviewed_by), None)
+    legacy_remediation = {}
+    for item in db.query(GapItem).filter(GapItem.report_id == report.id).all():
+        if any(
+            getattr(item, field, None) is not None
+            for field in (
+                "remediation_effort",
+                "timeline_weeks",
+                "maturity_level",
+                "root_cause_category",
+                "evidence_confidence",
+            )
+        ):
+            legacy_remediation[(item.framework_id or "dpdpa", item.requirement_id)] = item
+    release = approved.release
+    release_status = "released" if release.released else "stale" if release.stale else "not_released"
     timeline_steps = [
         ("Scope", assessment.scope_answers is not None),
         ("Documents", bool(analysis_documents(db, assessment_id))),
@@ -2102,6 +2111,7 @@ def report_summary(
             "root_cause_counts": root_cause_counts,
             "critical_findings": critical_findings,
             "quick_wins": quick_wins,
+            "quick_wins_available": False,
             "rfi": rfi,
             "is_multi_framework": is_multi_framework,
             "framework_display": framework_display,
@@ -2111,9 +2121,10 @@ def report_summary(
             "remediation_counts": remediation_counts,
             "comparable_assessments": comparable_assessments,
             "gap_items_by_chapter": dict(gap_items_by_chapter),
-            "review_status": assessment.review_status,
-            "reviewed_by": reviewed_item.reviewed_by if reviewed_item else None,
-            "reviewed_at": reviewed_item.reviewed_at if reviewed_item else None,
+            "legacy_remediation": legacy_remediation,
+            "summary_text": approved.summary_text,
+            "release": release,
+            "release_status": release_status,
             "timeline_steps": timeline_steps,
         },
     )
@@ -2128,31 +2139,9 @@ def review_page(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-
-    report = (
-        db.query(GapReport)
-        .filter(GapReport.assessment_id == assessment_id)
-        .first()
-    )
-    if not report:
-        raise HTTPException(400, "No report - run analysis first")
-
-    gap_items = db.query(GapItem).filter(GapItem.report_id == report.id).all()
-    draft_count = sum(
-        1 for item in gap_items
-        if (item.review_status or "draft") == "draft"
-    )
-    reviewed_item = next((item for item in gap_items if item.reviewed_by), None)
-
-    return templates.TemplateResponse(
-        "pages/review.html",
-        {
-            "request": request,
-            "assessment": assessment,
-            "gap_items": gap_items,
-            "draft_count": draft_count,
-            "reviewer_name": reviewed_item.reviewed_by if reviewed_item else "",
-        },
+    return RedirectResponse(
+        f"/assessments/{assessment_id}/conclusions",
+        status_code=303,
     )
 
 
@@ -2201,6 +2190,7 @@ def conclusions_page(
         "edited": sum(card.state == "edited" for card in cards),
         "legacy_bulk": sum(card.legacy_bulk_approval for card in cards),
     }
+    release = approved_report.release_state(db, assessment)
     return templates.TemplateResponse(
         request=request,
         name="pages/conclusions.html",
@@ -2210,6 +2200,7 @@ def conclusions_page(
             "cards": cards,
             "counts": counts,
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
+            "release": release,
         },
     )
 
@@ -2292,6 +2283,7 @@ def snapshots_page(
             "groups": groups,
             "reviewer_name": reviewer_name,
             "type_labels": report_snapshots.TYPE_LABELS,
+            "release": approved_report.release_state(db, assessment),
         },
     )
 
@@ -2306,8 +2298,6 @@ def comparison_page(
     other_id: str,
     db: Session = Depends(get_db),
 ):
-    from app.services.scoring import compute_delta
-
     assessment = require_review_approval(assessment_id, db)
     previous_assessment = require_review_approval(other_id, db)
     if assessment.company_name != previous_assessment.company_name:
@@ -2315,42 +2305,19 @@ def comparison_page(
     if assessment.status != "completed" or previous_assessment.status != "completed":
         raise HTTPException(400, "Both assessments must be completed")
 
-    current_report = (
-        db.query(GapReport)
-        .filter(GapReport.assessment_id == assessment_id)
-        .first()
-    )
-    previous_report = (
-        db.query(GapReport)
-        .filter(GapReport.assessment_id == other_id)
-        .first()
-    )
-    if not current_report or not previous_report:
-        raise HTTPException(404, "Reports not found")
-
-    current_items = (
-        db.query(GapItem)
-        .filter(GapItem.report_id == current_report.id)
-        .all()
-    )
-    previous_items = (
-        db.query(GapItem)
-        .filter(GapItem.report_id == previous_report.id)
-        .all()
-    )
-    result = compute_delta(current_items, previous_items)
-    current_scores = report_framework_scores(current_report, assessment)
-    previous_scores = report_framework_scores(previous_report, previous_assessment)
-    framework_names = dict(zip(assessment.frameworks, _selected_framework_names(assessment)))
+    current_view = approved_report.build_approved_report(db, assessment)
+    previous_view = approved_report.build_approved_report(db, previous_assessment)
+    result = compute_delta(list(current_view.rows), list(previous_view.rows))
+    framework_names = _selected_framework_names(assessment)
     framework_deltas = []
     for framework_id in assessment.frameworks:
-        current = current_scores.get(framework_id)
-        previous = previous_scores.get(framework_id)
-        current_score = current.get("overall_score") if current else None
-        previous_score = previous.get("overall_score") if previous else None
+        current = current_view.framework_scores.get(framework_id, {})
+        previous = previous_view.framework_scores.get(framework_id, {})
+        current_score = current.get("overall_score") if current.get("status") == "scored" else None
+        previous_score = previous.get("overall_score") if previous.get("status") == "scored" else None
         framework_deltas.append({
             "framework_id": framework_id,
-            "name": framework_names[framework_id],
+            "name": framework_names[assessment.frameworks.index(framework_id)],
             "current": current_score,
             "previous": previous_score,
             "delta": (
@@ -2365,8 +2332,8 @@ def comparison_page(
         {
             "request": request,
             "assessment": assessment,
-            "current_report": current_report,
-            "previous_report": previous_report,
+            "current_report": current_view.render_report(),
+            "previous_report": previous_view.render_report(),
             "framework_deltas": framework_deltas,
             "deltas": result["deltas"],
             "delta_summary": result["summary"],

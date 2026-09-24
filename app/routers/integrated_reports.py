@@ -11,7 +11,7 @@ from app.database import get_db
 from app.models.assessment import Assessment
 from app.models.client import Client
 from app.models.engagement import Engagement
-from app.services import conclusion_review, report_content, report_snapshots
+from app.services import approved_report, conclusion_review, report_content, report_snapshots
 from app.utils import pdf_export
 
 router = APIRouter(prefix="/api/engagements", tags=["integrated-reports"])
@@ -107,7 +107,19 @@ def issue_integrated_report(
         source = generated.get("source") or {}
         for source_assessment in source.get("assessments", []):
             assessment = db.get(Assessment, source_assessment.get("assessment_id"))
-            if assessment is None or assessment.review_status != "approved":
+            release_event = (
+                approved_report.latest_release_event(db, assessment.id)
+                if assessment is not None
+                else None
+            )
+            if (
+                assessment is None
+                or not approved_report.is_released(db, assessment)
+                or release_event is None
+                or not report_snapshots.generated_after(
+                    db, snapshot.id, release_event.id
+                )
+            ):
                 db.rollback()
                 return _error(403, INTEGRATED_NOT_RELEASABLE)
         snapshot = report_snapshots.issue_snapshot(

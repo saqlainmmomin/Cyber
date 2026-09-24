@@ -10,7 +10,7 @@
     Framework scores:
     {% for fw_id, fw_data in framework_display.items() %}
       {% if not loop.first %}, {% endif %}
-      <span><strong>{{ fw_data.name }}</strong> {% if fw_data.failed %}analysis failed{% elif fw_data.score is not none %}{{ fw_data.score | round(0) | int }}%{% else %}scores unavailable{% endif %}</span>
+      <span><strong>{{ fw_data.name }}</strong> {% if fw_data.failed %}analysis failed{% elif fw_data.status == 'pending_review' %}awaiting consultant review{% elif fw_data.score is not none %}{{ fw_data.score | round(0) | int }}%{% else %}scores unavailable{% endif %}</span>
     {% endfor %}
   </p>
   {% endif %}
@@ -18,6 +18,10 @@
     <a href="/assessments/{{ assessment_id }}?tab=report"
        class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
       View Report
+    </a>
+    <a href="/assessments/{{ assessment_id }}/conclusions" data-review-conclusions-link
+       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+      Review conclusions
     </a>
     <a href="/api/assessments/{{ assessment_id }}/report/pdf"
        class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">

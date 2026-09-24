@@ -20,6 +20,13 @@ STATUS_SCORES = {
     "non_compliant": 0,
 }
 
+APPROVED_OUTCOME_POINTS = {
+    "compliant": 100,
+    "partially_compliant": 50,
+    "non_compliant": 0,
+}
+DENOMINATOR_EXCLUDED_OUTCOMES = ("not_applicable", "insufficient_evidence")
+
 # All statuses Claude is allowed to return. Anything outside this set is unexpected.
 KNOWN_STATUSES = frozenset(STATUS_SCORES) | {"not_assessed", "not_applicable"}
 
@@ -72,6 +79,43 @@ def failed_framework_ids(framework_scores: dict, framework_ids: list[str]) -> li
         for framework_id in framework_ids
         if is_failed_framework_score(framework_scores.get(framework_id))
     ]
+
+
+def approved_framework_scores(outcomes: dict[str, str], framework_id: str) -> dict:
+    """Compute a deterministic framework score from approved Conclusions.
+
+    ``outcomes`` is already restricted to eligible, in-scope Conclusions by the
+    approved-report reader.  The scoring engine remains database-free and uses
+    the established per-framework weighting algorithm.
+    """
+    allowed_outcomes = set(APPROVED_OUTCOME_POINTS) | set(DENOMINATOR_EXCLUDED_OUTCOMES)
+    for requirement_id, outcome in outcomes.items():
+        if outcome not in allowed_outcomes:
+            raise ValueError(
+                f"Unknown approved outcome {outcome!r} for {requirement_id}"
+            )
+
+    scored = {
+        requirement_id: outcome
+        for requirement_id, outcome in outcomes.items()
+        if outcome in APPROVED_OUTCOME_POINTS
+    }
+    if not scored:
+        return {
+            "status": "not_scored",
+            "overall_score": None,
+            "overall_rating": None,
+            "domain_scores": {},
+        }
+
+    base = compute_framework_scores(
+        [
+            {"requirement_id": requirement_id, "compliance_status": outcome}
+            for requirement_id, outcome in scored.items()
+        ],
+        framework_id,
+    )
+    return {"status": "scored", **base}
 
 
 def _validated_cluster_mapping(framework_id: str) -> dict[str, str]:

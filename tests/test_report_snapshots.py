@@ -7,6 +7,7 @@ import hashlib
 import inspect
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -25,13 +26,14 @@ from app.main import app
 from app.models.assessment import Assessment, _new_id
 from app.models.audit_event import AuditEvent
 from app.models.client import Client
-from app.models.conclusion import Conclusion
+from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.routers import web
 from app.services import report_snapshots
+from app.services import approved_report
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQS = [row["id"] for row in get_all_requirements()][:3]
@@ -217,11 +219,28 @@ def _run_one(db, gate, monkeypatch, *, item=None, client_name="Acme Corp", appro
     assessment = _seed(db, client_name=client_name)
     _stub_single(monkeypatch, [item or _item(REQS[0])])
     gate.trigger_analysis(assessment.id, db)
-    if approved:
-        assessment.review_status = "approved"
-        db.commit()
     conclusion = db.query(Conclusion).filter_by(assessment_id=assessment.id).one()
+    if approved:
+        _direct_decision(db, conclusion, "approved")
+        approved_report.record_release(db, assessment, actor="consultant:Priya")
+        db.commit()
     return assessment, conclusion
+
+
+def _direct_decision(db, conclusion, action, *, actor="consultant:Priya"):
+    conclusion.version += 1
+    db.add(
+        ConclusionRevision(
+            conclusion_id=conclusion.id,
+            actor=actor,
+            action=action,
+            previous_outcome=conclusion.outcome,
+            previous_rationale=conclusion.rationale,
+            citations_json="[]",
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+    db.commit()
 
 
 def _generate(http, assessment_id, snapshot_type="gap_report", reviewer="Priya"):
@@ -285,7 +304,7 @@ def test_generate_issue_regenerate_preserves_the_issued_artifact(
     db, http, gate, monkeypatch, fake_pdf, upload_root
 ):
     """Scenario 1: generate, issue and regenerate without replacing v1."""
-    assessment, _conclusion = _run_one(db, gate, monkeypatch)
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
 
     first_response = _generate(http, assessment.id)
     assert first_response.status_code == 200
@@ -395,13 +414,13 @@ def test_issued_snapshot_survives_conclusion_and_analysis_changes(
     first_meta = _generated_meta(db, first_id)
     first_bytes = (upload_root / db.get(ReportSnapshot, first_id).storage_path).read_bytes()
 
-    assert _approve(http, assessment, conclusion).status_code == 200
+    _direct_decision(db, conclusion, "reopened")
+    _direct_decision(db, conclusion, "approved")
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
+    db.commit()
     db.refresh(conclusion)
     _stub_single(monkeypatch, [_item(REQS[0], status="non_compliant", gap="Different gap")])
     gate.trigger_analysis(assessment.id, db)
-    assessment.review_status = "approved"
-    db.commit()
-
     downloaded = http.get(f"/api/assessments/{assessment.id}/snapshots/{first_id}/file")
     assert downloaded.content == first_bytes
     assert hashlib.sha256(first_bytes).hexdigest() == first_meta["sha256"]
@@ -457,13 +476,14 @@ def test_release_gate_applies_to_gap_generation_and_all_issues(
     refused_issue = _issue(http, assessment.id, workpaper_id)
     assert refused_issue.status_code == 403
     assert _state(db, upload_root) == before_issue
-    assessment.review_status = "approved"
+    _direct_decision(db, db.query(Conclusion).filter_by(assessment_id=assessment.id).one(), "approved")
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
     db.commit()
-    assert _issue(http, assessment.id, workpaper_id).status_code == 200
+    refused_after_release = _issue(http, assessment.id, workpaper_id)
+    assert refused_after_release.status_code == 409
+    assert refused_after_release.json()["detail"] == report_snapshots.SNAPSHOT_STALE_MESSAGE
 
     unanalysed = _seed(db, client_name="No Report")
-    unanalysed.review_status = "approved"
-    db.commit()
     before_missing = _state(db, upload_root)
     missing = _generate(http, unanalysed.id)
     assert missing.status_code == 404
@@ -475,7 +495,7 @@ def test_workpaper_snapshot_matches_live_page_then_stays_frozen(
     db, http, gate, monkeypatch, upload_root
 ):
     """Scenario 7: workpaper HTML is the exact live render captured once."""
-    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    assessment, conclusion = _run_one(db, gate, monkeypatch, approved=False)
     response = _generate(http, assessment.id, "workpaper")
     snapshot = db.get(ReportSnapshot, response.json()["snapshot_id"])
     assert snapshot.format == "html"
@@ -497,7 +517,7 @@ def test_audit_records_capture_exact_hash_manifest_and_actor(
     db, http, gate, monkeypatch, fake_pdf, upload_root
 ):
     """Scenario 8: generation and issue events hold exact provenance."""
-    assessment, _conclusion = _run_one(db, gate, monkeypatch)
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
     response = _generate(http, assessment.id)
     snapshot = db.get(ReportSnapshot, response.json()["snapshot_id"])
     generated = _events(db, snapshot.id, report_snapshots.GENERATED_ACTION)[0]
@@ -549,8 +569,6 @@ def test_validation_scoping_and_unknown_resources_write_nothing(
 
     snapshot_id = _generate(http, assessment.id).json()["snapshot_id"]
     other = _seed(db, client_name="Other")
-    other.review_status = "approved"
-    db.commit()
     unknown = "00000000-0000-0000-0000-000000000000"
     for method, url in (
         ("post", f"/api/assessments/{unknown}/snapshots"),
@@ -714,7 +732,7 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
     db, http, gate, monkeypatch, fake_pdf
 ):
     """Scenario 13: page groups versions and exposes only valid issue controls."""
-    assessment, _conclusion = _run_one(db, gate, monkeypatch)
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
     empty = http.get(f"/assessments/{assessment.id}/snapshots")
     assert empty.status_code == 200
     assert empty.text.count("data-snapshot-type=") == 2
@@ -741,11 +759,11 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
     ).group()
     assert "data-issue-control" in newest_row
 
-    assessment.review_status = "pending"
+    _direct_decision(db, conclusion, "reopened")
     assessment.company_name = "<script>x</script>"
     db.commit()
     pending = http.get(f"/assessments/{assessment.id}/snapshots").text
-    assert "Generating a gap report requires the report to be approved for release." in pending
+    assert "Generating a gap report requires the report to be released." in pending
     assert "&lt;script&gt;x&lt;/script&gt;" in pending
     assert "<script>x</script>" not in pending
 

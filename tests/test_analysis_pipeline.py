@@ -1109,18 +1109,14 @@ def test_legacy_report_path_is_unchanged(db, gate, monkeypatch):
     assert score(a.id, ["dpdpa"], _session=db).per_framework["dpdpa"].covered_control_count > 0
 
 
-def test_legacy_consumers_do_not_read_the_new_tables():
-    """Scenario 12 (standing guard; passes today): scoring, the live bulk
-    review flow, reports, remediation and PDF export keep reading GapItem/
-    GapReport only. Moving them to Conclusions is a later, separate task."""
-    files = [
-        "app/services/scoring.py",
-        "app/routers/review.py",
-        "app/routers/reports.py",
-        "app/utils/pdf_export.py",
-    ]
+def test_release_readers_do_not_read_ai_outcomes():
+    """Scenario 12: release readers use the approved Conclusions reader."""
     result = subprocess.run(
-        ["grep", "-nE", r"Conclusion|AnalysisRun|analysis_pipeline", *files],
+        [
+            "grep", "-nE", r"\bGapItem\b|\bInitiative\b|report_framework_scores|chapter_scores\)|\.executive_summary",
+            "app/routers/reports.py", "app/utils/review_gate.py",
+            "app/services/report_content.py", "app/routers/integrated_reports.py",
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

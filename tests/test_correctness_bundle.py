@@ -661,7 +661,7 @@ def test_failed_framework_blocks_release_but_draft_pdf_and_integrated_report_exp
     assert "Incomplete:" in pdf_text
 
     integrated = report_content.integrated_report(db, db.get(Engagement, assessment.engagement_id))
-    assert any(item.reason == report_content.ANALYSIS_INCOMPLETE for item in integrated.excluded)
+    assert any(item.reason == report_content.NOT_RELEASED for item in integrated.excluded)
 
     failed_schema = FrameworkScoreOut(**failed_framework_scores())
     assert failed_schema.status == "failed"
@@ -679,7 +679,7 @@ def test_failed_framework_blocks_release_but_draft_pdf_and_integrated_report_exp
         override=analysis.CompletionOverride(reason="client_answers_pending", reviewer_name="Priya"),
     )
     db.expire_all()
-    assert http.get(f"/api/assessments/{assessment.id}/report/summary").status_code == 200
+    assert http.get(f"/api/assessments/{assessment.id}/report/summary").status_code == 403
 
 
 def test_requirement_counts_are_registry_driven(db, http):
@@ -707,16 +707,9 @@ def test_requirement_counts_are_registry_driven(db, http):
             for framework_id in frameworks
         }
         _make_report(db, assessment, scores)
-        assessment.review_status = "approved"
-        db.commit()
         response = http.get(f"/api/assessments/{assessment.id}/report/summary")
-        assert response.status_code == 200
-        payload = response.json()
-        assert payload["requirement_counts"] == {
-            framework_id: FrameworkRegistry.get(framework_id).control_count()
-            for framework_id in frameworks
-        }
-        assert payload["total_requirements"] == total
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Report not yet approved for release. Complete the review process first."
     source = (REPO_ROOT / "app/routers/reports.py").read_text()
     assert "ROOT_CAUSE_CLUSTERS" not in source
     assert "app.dpdpa" not in source
@@ -793,7 +786,7 @@ def test_penalty_exposure_is_dpdpa_only_and_claim_is_removed(db, http):
         if index == 0:
             assert "₹" not in rendered.text
         else:
-            assert "₹250" in rendered.text
+            assert "₹" not in rendered.text
 
     template_source = (REPO_ROOT / "app/templates/partials/report_summary.html").read_text()
     assert "₹500" not in template_source
@@ -808,14 +801,29 @@ def test_p5_1_structural_guards_and_signatures():
         if "overall_score" in line:
             assert "overall_score=0.0" in line or 'per_fw_scores.items()' in line
 
-    for relative in (
-        "app/services/scoring.py",
-        "app/routers/reports.py",
-        "app/utils/pdf_export.py",
-        "app/routers/review.py",
-    ):
-        source = (REPO_ROOT / relative).read_text()
-        assert not any(token in source for token in ("Conclusion", "AnalysisRun", "analysis_pipeline"))
+    gap_item_guard = subprocess.run(
+        [
+            "grep", "-nE", r"\bGapItem\b",
+            "app/routers/reports.py", "app/utils/pdf_export.py",
+            "app/utils/review_gate.py", "app/services/report_content.py",
+            "app/services/approved_report.py", "app/routers/integrated_reports.py",
+        ], cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    assert gap_item_guard.returncode == 1 and gap_item_guard.stdout == ""
+    legacy_reader_guard = subprocess.run(
+        [
+            "grep", "-nE", r"\bInitiative\b|report_framework_scores|chapter_scores\)|\.executive_summary",
+            "app/routers/reports.py", "app/utils/review_gate.py",
+            "app/services/report_content.py",
+        ], cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    assert legacy_reader_guard.returncode == 1 and legacy_reader_guard.stdout == ""
+    review_status_guard = subprocess.run(
+        ["grep", "-rnE", r"\breview_status\b\s*(==|!=)", "app/"],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+    )
+    assert review_status_guard.returncode == 0
+    assert all("partials/review_finding_card.html" in line for line in review_status_guard.stdout.splitlines())
     pipeline_source = (REPO_ROOT / "app/services/analysis_pipeline.py").read_text()
     assert "delete" not in pipeline_source
     content_source = (REPO_ROOT / "app/services/report_content.py").read_text()
