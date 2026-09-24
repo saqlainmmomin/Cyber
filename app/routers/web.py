@@ -36,6 +36,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services import (
     evidence as evidence_service,
     findings as finding_service,
+    report_content,
     report_snapshots,
     workpaper,
 )
@@ -351,6 +352,38 @@ def engagement_detail(
             "engagement_id": engagement_id,
             "magic_links": magic_link_rows(db, engagement_id),
             "client_uploads": client_upload_rows(db, engagement_id),
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/integrated-reports", response_class=HTMLResponse)
+def integrated_reports_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if client is None:
+        raise HTTPException(404, "Client not found")
+    data = report_content.integrated_report(db, engagement)
+    rows = report_snapshots.engagement_snapshot_rows(
+        db, engagement, current_source=data.source
+    )
+    reviewer_name = (
+        rows[0].generated_by if rows and rows[0].generated_by is not None else ""
+    )
+    return templates.TemplateResponse(
+        "pages/integrated_reports.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "data": data,
+            "rows": rows,
+            "reviewer_name": reviewer_name,
         },
     )
 

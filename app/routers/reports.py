@@ -12,6 +12,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.schemas.initiative import InitiativeOut
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
+from app.services import report_content
 from app.services.scoring import report_framework_scores
 from app.utils.pdf_export import generate_pdf
 from app.utils.review_gate import require_review_approval
@@ -253,12 +254,14 @@ def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
         except json.JSONDecodeError:
             pass
 
+    report_findings = report_content.assessment_findings(db, assessment)
     pdf_bytes = generate_pdf(
         report, items, company_name,
         initiatives=initiatives,
         answer_source_map=answer_source_map,
         selected_frameworks=selected_frameworks,
         assessment=assessment,
+        report_findings=report_findings,
     )
 
     fw_label = "_".join(fw.upper() for fw in selected_frameworks[:3])

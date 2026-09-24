@@ -461,4 +461,14 @@ All in `tests/test_pdf_updates.py`. "Nothing written" means these are unchanged 
 
 ## Results
 
-_To be completed by the implementer: what was built, the full-suite count, the smoke-test outputs and the path of the two PDFs left for review, and any deviation (there should be none; if the code forced one, describe it and stop)._
+Implemented all D-P3-3 decisions without deviation:
+
+- Added the read-only `report_content` dataclasses/read model, including current individual-approval filtering, severity/framework ordering, citations with evidence-version SHA-256 prefixes, Actions, scope, pack versions, per-assessment scores, and the integrated provenance manifest.
+- Added the additive-only `Approved Findings` evidence-chain section to gap PDFs and the separate-section integrated PDF renderer. Existing PDF pages remain untouched when `report_findings` is absent or empty.
+- Wired gap-report rendering through `reports.py`; extracted shared write-once snapshot storage/row building; added integrated engagement snapshot generation, issue/release gating, file streaming, the integrated reports page, and engagement navigation link.
+- Added `tests/test_pdf_updates.py` with 13 tests covering all 12 scenarios. `.venv/bin/pytest -q tests/test_pdf_updates.py` passed **13 passed**. The authoritative full suite passed **490 passed, 120 warnings**. No known teardown error occurred in this checkout.
+- Smoke test used a fresh Alembic database, temporary upload directory, real renderers, and in-process ASGI `TestClient`. The live multi-framework gap PDF returned 200 and rendered 10 pages; its Findings pages contained both framework Findings, citations, evidence hashes, decisions, and workpaper anchors. A generated gap snapshot contained the same Findings section. The integrated report generated and issued successfully (200/200); its snapshot rows showed the gap PDF plus an issued integrated PDF scoped to the engagement, and its sections kept scores within their assessment headings with no blended score.
+- Claude review artifacts: [live gap report](/private/tmp/cyberassess-p3-3-pdf-review-0nitkwmd/live_gap_report.pdf) and [issued integrated report](/private/tmp/cyberassess-p3-3-pdf-review-0nitkwmd/issued_integrated_report.pdf). Rendered PNG inspection showed no clipping, overlap, or unreadable text. Browser verification was unavailable in this session.
+- Logical commits could not be created in this sandbox because the linked worktree's Git metadata is outside the writable workspace and cannot create `index.lock` or `COMMIT_EDITMSG`; no push or PR was attempted. The complete verified diff is preserved for commit in an environment with writable worktree metadata.
+
+No architectural deviation, circular import, schema change, forbidden-file change, or P3-4 coordination conflict occurred.

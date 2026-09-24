@@ -142,6 +142,58 @@ def _record_event(
     )
 
 
+def _store(
+    db: Session,
+    *,
+    snapshot_id: str,
+    snapshot_type: str,
+    fmt: str,
+    storage_path: str,
+    content: bytes,
+    actor: str,
+    assessment_id: str | None,
+    engagement_id: str | None,
+    review_status: str | None,
+    source: dict,
+) -> ReportSnapshot:
+    digest = hashlib.sha256(content).hexdigest()
+    path = _write_file(storage_path, content)
+    try:
+        snapshot = ReportSnapshot(
+            id=snapshot_id,
+            assessment_id=assessment_id,
+            engagement_id=engagement_id,
+            type=snapshot_type,
+            format=fmt,
+            storage_path=storage_path,
+            is_issued=False,
+        )
+        db.add(snapshot)
+        _record_event(
+            db,
+            actor=actor,
+            action=GENERATED_ACTION,
+            snapshot_id=snapshot_id,
+            metadata={
+                "schema_version": MANIFEST_SCHEMA_VERSION,
+                "type": snapshot_type,
+                "format": fmt,
+                "storage_path": storage_path,
+                "sha256": digest,
+                "size_bytes": len(content),
+                "assessment_id": assessment_id,
+                "engagement_id": engagement_id,
+                "review_status": review_status,
+                "source": source,
+            },
+        )
+        db.flush()
+        return snapshot
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+
+
 def create_snapshot(
     db: Session,
     *,
@@ -162,43 +214,73 @@ def create_snapshot(
         fmt=fmt,
         assessment_id=assessment.id,
     )
-    digest = hashlib.sha256(content).hexdigest()
     manifest = source_manifest(db, assessment)
-    path = _write_file(storage_path, content)
-    try:
-        snapshot = ReportSnapshot(
-            id=snapshot_id,
-            assessment_id=assessment.id,
-            engagement_id=assessment.engagement_id,
-            type=snapshot_type,
-            format=fmt,
-            storage_path=storage_path,
-            is_issued=False,
+    return _store(
+        db,
+        snapshot_id=snapshot_id,
+        snapshot_type=snapshot_type,
+        fmt=fmt,
+        storage_path=storage_path,
+        content=content,
+        actor=actor,
+        assessment_id=assessment.id,
+        engagement_id=assessment.engagement_id,
+        review_status=assessment.review_status,
+        source=manifest,
+    )
+
+
+def create_engagement_snapshot(
+    db: Session,
+    *,
+    engagement,
+    content: bytes,
+    actor: str,
+    source: dict,
+) -> ReportSnapshot:
+    if not content:
+        raise InvalidSnapshot("Rendered report was empty; nothing was saved.")
+    snapshot_id = _new_id()
+    fmt = FORMAT_BY_TYPE["integrated_report"]
+    storage_path = storage_path_for(
+        snapshot_id=snapshot_id,
+        fmt=fmt,
+        engagement_id=engagement.id,
+    )
+    return _store(
+        db,
+        snapshot_id=snapshot_id,
+        snapshot_type="integrated_report",
+        fmt=fmt,
+        storage_path=storage_path,
+        content=content,
+        actor=actor,
+        assessment_id=None,
+        engagement_id=engagement.id,
+        review_status=None,
+        source=source,
+    )
+
+
+def load_engagement_snapshot(
+    db: Session,
+    *,
+    engagement_id: str,
+    snapshot_id: str,
+) -> ReportSnapshot:
+    snapshot = (
+        db.query(ReportSnapshot)
+        .filter(
+            ReportSnapshot.id == snapshot_id,
+            ReportSnapshot.engagement_id == engagement_id,
+            ReportSnapshot.assessment_id.is_(None),
+            ReportSnapshot.type == "integrated_report",
         )
-        db.add(snapshot)
-        _record_event(
-            db,
-            actor=actor,
-            action=GENERATED_ACTION,
-            snapshot_id=snapshot_id,
-            metadata={
-                "schema_version": MANIFEST_SCHEMA_VERSION,
-                "type": snapshot_type,
-                "format": fmt,
-                "storage_path": storage_path,
-                "sha256": digest,
-                "size_bytes": len(content),
-                "assessment_id": assessment.id,
-                "engagement_id": assessment.engagement_id,
-                "review_status": assessment.review_status,
-                "source": manifest,
-            },
-        )
-        db.flush()
-        return snapshot
-    except Exception:
-        path.unlink(missing_ok=True)
-        raise
+        .first()
+    )
+    if snapshot is None:
+        raise SnapshotNotFound("Report version not found.")
+    return snapshot
 
 
 def load_snapshot(
@@ -314,16 +396,56 @@ class SnapshotRow:
     source_changed: bool
 
 
-def snapshot_rows(
-    db: Session,
-    assessment: Assessment,
-) -> dict[str, list[SnapshotRow]]:
-    snapshots = db.execute(
-        select(ReportSnapshot)
-        .where(ReportSnapshot.assessment_id == assessment.id)
-        .order_by(literal_column("report_snapshots.rowid"))
-    ).scalars().all()
-    snapshot_ids = [snapshot.id for snapshot in snapshots]
+def _build_rows(
+    snapshots: list[ReportSnapshot],
+    generated_by_id: dict[str, AuditEvent],
+    issued_by_id: dict[str, AuditEvent],
+    current_source: dict | None,
+) -> list[SnapshotRow]:
+    newest_id = snapshots[-1].id if snapshots else None
+    issued_rows = [row for row in snapshots if row.is_issued]
+    current_issue_id = issued_rows[-1].id if issued_rows else None
+    rendered_rows = []
+    for sequence, snapshot in enumerate(snapshots, start=1):
+        generated = generated_by_id.get(snapshot.id)
+        issued = issued_by_id.get(snapshot.id)
+        try:
+            metadata = (
+                json.loads(generated.metadata_json)
+                if generated is not None and generated.metadata_json is not None
+                else {}
+            )
+        except (json.JSONDecodeError, TypeError):
+            metadata = {}
+        state = (
+            "issued"
+            if snapshot.is_issued
+            else "draft"
+            if snapshot.id == newest_id
+            else "superseded_draft"
+        )
+        rendered_rows.append(
+            SnapshotRow(
+                snapshot=snapshot,
+                sequence=sequence,
+                state=state,
+                is_current_issue=snapshot.id == current_issue_id,
+                issuable=state == "draft",
+                sha256=metadata.get("sha256"),
+                size_bytes=metadata.get("size_bytes"),
+                generated_by=_actor_display(generated.actor if generated else None),
+                issued_by=_actor_display(issued.actor if issued else None),
+                issued_at=issued.created_at if issued else None,
+                source_changed=(
+                    current_source is not None
+                    and metadata.get("source") != current_source
+                ),
+            )
+        )
+    return list(reversed(rendered_rows))
+
+
+def _event_maps(db: Session, snapshot_ids: list[str]):
     events = (
         db.execute(
             select(AuditEvent)
@@ -337,8 +459,6 @@ def snapshot_rows(
         if snapshot_ids
         else []
     )
-    current_manifest = source_manifest(db, assessment)
-
     generated_by_id: dict[str, AuditEvent] = {}
     issued_by_id: dict[str, AuditEvent] = {}
     for event in events:
@@ -346,6 +466,21 @@ def snapshot_rows(
             generated_by_id[event.entity_id] = event
         elif event.action == ISSUED_ACTION:
             issued_by_id[event.entity_id] = event
+    return generated_by_id, issued_by_id
+
+
+def snapshot_rows(
+    db: Session,
+    assessment: Assessment,
+) -> dict[str, list[SnapshotRow]]:
+    snapshots = db.execute(
+        select(ReportSnapshot)
+        .where(ReportSnapshot.assessment_id == assessment.id)
+        .order_by(literal_column("report_snapshots.rowid"))
+    ).scalars().all()
+    snapshot_ids = [snapshot.id for snapshot in snapshots]
+    generated_by_id, issued_by_id = _event_maps(db, snapshot_ids)
+    current_manifest = source_manifest(db, assessment)
 
     grouped: dict[str, list[ReportSnapshot]] = {
         snapshot_type: [] for snapshot_type in ASSESSMENT_SNAPSHOT_TYPES
@@ -358,42 +493,36 @@ def snapshot_rows(
         snapshot_type: [] for snapshot_type in ASSESSMENT_SNAPSHOT_TYPES
     }
     for snapshot_type, rows in grouped.items():
-        newest_id = rows[-1].id if rows else None
-        issued_rows = [row for row in rows if row.is_issued]
-        current_issue_id = issued_rows[-1].id if issued_rows else None
-        rendered_rows = []
-        for sequence, snapshot in enumerate(rows, start=1):
-            generated = generated_by_id.get(snapshot.id)
-            issued = issued_by_id.get(snapshot.id)
-            try:
-                metadata = (
-                    json.loads(generated.metadata_json)
-                    if generated is not None and generated.metadata_json is not None
-                    else {}
-                )
-            except (json.JSONDecodeError, TypeError):
-                metadata = {}
-            state = (
-                "issued"
-                if snapshot.is_issued
-                else "draft"
-                if snapshot.id == newest_id
-                else "superseded_draft"
-            )
-            rendered_rows.append(
-                SnapshotRow(
-                    snapshot=snapshot,
-                    sequence=sequence,
-                    state=state,
-                    is_current_issue=snapshot.id == current_issue_id,
-                    issuable=state == "draft",
-                    sha256=metadata.get("sha256"),
-                    size_bytes=metadata.get("size_bytes"),
-                    generated_by=_actor_display(generated.actor if generated else None),
-                    issued_by=_actor_display(issued.actor if issued else None),
-                    issued_at=issued.created_at if issued else None,
-                    source_changed=metadata.get("source") != current_manifest,
-                )
-            )
-        result[snapshot_type] = list(reversed(rendered_rows))
+        result[snapshot_type] = _build_rows(
+            rows,
+            generated_by_id,
+            issued_by_id,
+            current_manifest,
+        )
     return result
+
+
+def engagement_snapshot_rows(
+    db: Session,
+    engagement,
+    *,
+    current_source: dict | None,
+) -> list[SnapshotRow]:
+    snapshots = db.execute(
+        select(ReportSnapshot)
+        .where(
+            ReportSnapshot.engagement_id == engagement.id,
+            ReportSnapshot.assessment_id.is_(None),
+            ReportSnapshot.type == "integrated_report",
+        )
+        .order_by(literal_column("report_snapshots.rowid"))
+    ).scalars().all()
+    generated_by_id, issued_by_id = _event_maps(
+        db, [snapshot.id for snapshot in snapshots]
+    )
+    return _build_rows(
+        snapshots,
+        generated_by_id,
+        issued_by_id,
+        current_source,
+    )

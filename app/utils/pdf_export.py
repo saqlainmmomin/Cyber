@@ -495,6 +495,164 @@ def _section_title(pdf: FPDF, title: str):
     pdf.ln(10)
 
 
+# Findings and evidence chain (P3-3)
+
+def _draw_finding_detail(pdf: FPDF, finding, index: int, y: float) -> float:
+    """Draw one approved finding and its evidence chain."""
+    risk_color = RISK_COLORS.get(finding.severity, NAVY)
+    pdf.set_fill_color(*risk_color)
+    pdf.rect(PM, y, 2.5, 8, style="F")
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.set_xy(PM + 5, y)
+    pdf.multi_cell(
+        CW - 5,
+        4,
+        text=S(f"F{index}. {finding.title}"),
+        new_x="LMARGIN",
+    )
+    y = pdf.get_y() + 2
+
+    def paragraph(text: str, *, style: str = "", size: float = 7.5, color=MID_TEXT):
+        pdf.set_font("Helvetica", style, size)
+        pdf.set_text_color(*color)
+        pdf.set_xy(PM + 5, y)
+        pdf.multi_cell(CW - 5, 3.7, text=S(text), new_x="LMARGIN")
+        return pdf.get_y()
+
+    y = paragraph(
+        f"{finding.framework_name} {finding.requirement_id}: "
+        f"{finding.requirement_title}"
+    ) + 1
+    y = paragraph(
+        f"Severity: {finding.severity.title()} | Priority P{finding.priority} | "
+        f"Finding status: {finding.status_label}"
+    ) + 1
+    decided_date = (
+        finding.decided_at.strftime("%d %b %Y")
+        if finding.decided_at is not None
+        else "unknown date"
+    )
+    y = paragraph(
+        f"Decision: {finding.outcome_label}, {finding.decision_label} by "
+        f"{finding.decided_by or 'unknown'} on {decided_date}, "
+        f"record v{finding.decision_version} | Workpaper ref: {finding.workpaper_ref}"
+    ) + 1
+    description = finding.description or ""
+    if len(description) > 600:
+        description = f"{description[:600]}..."
+    if description:
+        y = paragraph(description) + 1
+
+    y = paragraph("Evidence chain:", style="B", color=DARK_TEXT) + 1
+    if finding.citations:
+        for citation_index, citation in enumerate(finding.citations, start=1):
+            excerpt = citation.excerpt or ""
+            if len(excerpt) > 300:
+                excerpt = f"{excerpt[:300]}..."
+            y = paragraph(f'[{citation_index}] "{excerpt}"', style="I") + 0.5
+            if not citation.resolved:
+                y = paragraph("Unresolved evidence") + 0.5
+            else:
+                version = citation.version_number or "unknown"
+                filename = citation.filename or "unknown file"
+                location = citation.location_ref or "unknown location"
+                sha256 = citation.sha256[:16] if citation.sha256 else "unknown"
+                suffix = " | superseded version" if not citation.is_current else ""
+                y = paragraph(
+                    f"{filename} v{version} | {location} | SHA-256 {sha256}{suffix}"
+                ) + 0.5
+    elif finding.citations_captured:
+        y = paragraph("No supporting citation (explicit evidence absence)") + 0.5
+    else:
+        y = paragraph("Evidence support not captured (legacy)") + 0.5
+
+    y = paragraph("Actions:", style="B", color=DARK_TEXT) + 1
+    if finding.actions:
+        for action in finding.actions:
+            target = (
+                action.target_date.strftime("%Y-%m-%d")
+                if action.target_date is not None
+                else "No target date"
+            )
+            y = paragraph(
+                f"- {action.title} | Owner: {action.owner or 'Unassigned'} | "
+                f"Target: {target} | {action.status_label}"
+            ) + 0.5
+    else:
+        y = paragraph("No actions recorded.") + 0.5
+    return y + 4
+
+
+def _render_findings_section(
+    pdf: FPDF,
+    company_name: str,
+    report_findings,
+    *,
+    header: str = "Findings and Evidence Chain",
+):
+    """Render the additive approved-findings section."""
+    pdf.add_page()
+    _page_header(pdf, header)
+    _section_title(pdf, "Approved Findings")
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(*MID_TEXT)
+    pdf.set_x(PM)
+    pdf.multi_cell(
+        CW,
+        3.8,
+        text=S(
+            "Each finding below is bound to an individually approved requirement "
+            "decision and lists the evidence it cites."
+        ),
+        new_x="LMARGIN",
+    )
+    if report_findings.omitted_count > 0:
+        pdf.set_x(PM)
+        pdf.multi_cell(
+            CW,
+            3.8,
+            text=S(
+                f"{report_findings.omitted_count} finding(s) not shown: their source "
+                "decision is not a current individual consultant approval."
+            ),
+            new_x="LMARGIN",
+        )
+    pdf.ln(2)
+
+    current_framework = None
+    finding_index = 0
+    for finding in report_findings.findings:
+        if finding.framework_id != current_framework:
+            if pdf.get_y() > 245:
+                _page_footer(pdf, company_name)
+                pdf.add_page()
+                _page_header(pdf, f"{header} (continued)")
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_text_color(*NAVY)
+            pdf.set_xy(PM, pdf.get_y())
+            pdf.multi_cell(CW, 5, text=S(finding.framework_name), new_x="LMARGIN")
+            current_framework = finding.framework_id
+            pdf.ln(1)
+
+        if pdf.get_y() > 250:
+            _page_footer(pdf, company_name)
+            pdf.add_page()
+            _page_header(pdf, f"{header} (continued)")
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_text_color(*NAVY)
+            pdf.set_xy(PM, pdf.get_y())
+            pdf.multi_cell(CW, 5, text=S(finding.framework_name), new_x="LMARGIN")
+            pdf.ln(1)
+
+        finding_index += 1
+        pdf.set_y(pdf.get_y())
+        new_y = _draw_finding_detail(pdf, finding, finding_index, pdf.get_y())
+        pdf.set_y(new_y)
+
+    _page_footer(pdf, company_name)
+
+
 # ---------------------------------------------------------------------------
 # Main PDF generation
 # ---------------------------------------------------------------------------
@@ -507,6 +665,7 @@ def generate_pdf(
     answer_source_map: dict[str, str] | None = None,
     selected_frameworks: list[str] | None = None,
     assessment=None,
+    report_findings=None,
 ) -> bytes:
     """Generate a board-level PDF report."""
     selected_frameworks = selected_frameworks or ["dpdpa"]
@@ -989,6 +1148,9 @@ def generate_pdf(
 
         _page_footer(pdf, company_name)
 
+    if report_findings is not None and (report_findings.findings or report_findings.omitted_count):
+        _render_findings_section(pdf, company_name, report_findings)
+
     # ===================================================================
     # APPENDIX: SCOPE & LIMITATIONS
     # ===================================================================
@@ -1129,5 +1291,133 @@ This assessment provides guidance based on the information provided and should n
     pdf.multi_cell(CW, 4.5, text=S(methodology), new_x="LMARGIN")
 
     _page_footer(pdf, company_name)
+
+    return bytes(pdf.output())
+
+
+def generate_integrated_pdf(report_data) -> bytes:
+    """Generate a write-once integrated report with separate assessment sections."""
+    pdf = FPDF()
+    pdf.alias_nb_pages()
+    pdf.set_auto_page_break(auto=False)
+
+    pdf.add_page()
+    pdf.set_fill_color(*NAVY)
+    pdf.rect(0, 0, PW, 55, style="F")
+    _set_font_to_fit(pdf, settings.firm_name, CW)
+    pdf.set_text_color(*WHITE)
+    pdf.text(PM, 15, S(settings.firm_name))
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.text(PM, 29, "Integrated Engagement Report")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(180, 180, 210)
+    pdf.text(PM, 42, datetime.now(timezone.utc).strftime("%B %d, %Y"))
+
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.text(PM, 78, S(report_data.engagement_name))
+    pdf.set_font("Helvetica", "", 11)
+    pdf.set_text_color(*MID_TEXT)
+    pdf.text(PM, 88, S(report_data.client_name))
+    pdf.set_draw_color(*brand_rgb())
+    pdf.set_line_width(0.8)
+    pdf.line(PM, 96, PW - PM, 96)
+    pdf.set_line_width(0.2)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.text(PM, 108, S(f"Assessments included: {len(report_data.sections)}"))
+    cover_y = 119
+    for section in report_data.sections:
+        pdf.set_xy(PM, cover_y)
+        pdf.multi_cell(CW, 4.5, text=S(section.label), new_x="LMARGIN")
+        cover_y = pdf.get_y() + 2
+    pdf.set_xy(PM, max(cover_y + 8, 145))
+    pdf.multi_cell(
+        CW,
+        4.5,
+        text=S(
+            "Results are reported separately for each assessment and framework. "
+            "Scores are never combined across assessments or frameworks."
+        ),
+        new_x="LMARGIN",
+    )
+    _page_footer(pdf, report_data.client_name)
+
+    for section in report_data.sections:
+        pdf.add_page()
+        _page_header(pdf, f"Assessment: {section.label}")
+        _section_title(pdf, section.label)
+        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_text_color(*DARK_TEXT)
+        scope_lines = [
+            f"Assessment created: {section.created_at:%d %b %Y}",
+            "Analysis date: "
+            + (
+                section.analysed_at.strftime("%d %b %Y")
+                if section.analysed_at is not None
+                else "not recorded"
+            ),
+            "Frameworks and pack versions: "
+            + ", ".join(
+                f"{name} ({version})" for name, version in section.frameworks
+            ),
+            f"Scope: {section.scope_label}",
+            "Assessment period and evidence cut-off: not recorded",
+        ]
+        for line in scope_lines:
+            pdf.set_x(PM)
+            pdf.multi_cell(CW, 4, text=S(line), new_x="LMARGIN")
+        pdf.ln(3)
+        _section_title(pdf, "Framework Scores (this assessment only)")
+        if section.scores:
+            score_y = pdf.get_y()
+            for line in section.scores:
+                _draw_h_bar(
+                    pdf,
+                    PM,
+                    score_y,
+                    CW,
+                    8,
+                    line.score,
+                    line.framework_name,
+                    line.rating,
+                )
+                score_y += 11
+            pdf.set_y(score_y + 3)
+        else:
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.set_text_color(*MID_TEXT)
+            pdf.set_x(PM)
+            pdf.multi_cell(
+                CW,
+                4,
+                text="Scores unavailable for this assessment.",
+                new_x="LMARGIN",
+            )
+        _page_footer(pdf, report_data.client_name)
+        if section.findings.findings or section.findings.omitted_count:
+            _render_findings_section(
+                pdf,
+                report_data.client_name,
+                section.findings,
+                header=f"Assessment: {section.label}",
+            )
+
+    if report_data.excluded:
+        pdf.add_page()
+        _page_header(pdf, "Assessments Not Included")
+        _section_title(pdf, "Assessments Not Included")
+        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_text_color(*DARK_TEXT)
+        for excluded in report_data.excluded:
+            pdf.set_x(PM)
+            pdf.multi_cell(
+                CW,
+                4,
+                text=S(f"{excluded.label}: {excluded.reason}"),
+                new_x="LMARGIN",
+            )
+            pdf.ln(1)
+        _page_footer(pdf, report_data.client_name)
 
     return bytes(pdf.output())
