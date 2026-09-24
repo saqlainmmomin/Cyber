@@ -347,3 +347,43 @@ Append a `## Results` section containing:
 - for any miss, the D-P4-3-J attribution (the function, the statement count, the time split, `EXPLAIN QUERY PLAN` output for any index candidate), what was done (an index, per D-P4-3-K), or the "threshold miss requiring a follow-up" / "Postgres gate" paragraph;
 - `.venv/bin/pytest -q` output without the env var, and `alembic heads`;
 - anything this document got wrong about the current code (a drifted symbol, a stub that no longer matches `trigger_analysis`, a seed step the real services rejected). Name it rather than working around it.
+
+## Results
+
+Implemented `scripts/benchmark_performance.py` and `tests/test_performance_benchmarks.py`. The seeder uses a fresh Alembic-built file-backed SQLite database, real A0 analysis/decision/finding paths with patched deterministic analysis results, direct ORM filler rows, fresh sessions per measured request, five timed runs after one warm-up, statement counters, breakdown timings, CLI JSON logging, and the required opt-in pytest guard. No numbered D-P4-3 decision was changed, and no index was required.
+
+CLI run (`.venv/bin/python scripts/benchmark_performance.py`, fresh explicit temp database):
+
+```text
+name                       | median_s | max_s    | statements | status | PASS/FAIL
+---------------------------+----------+----------+------------+--------+----------
+portfolio_dashboard        | 0.002585 | 0.002896 | 4          | 200    | PASS
+workpaper_3_framework      | 0.235780 | 0.312872 | 1158       | 200    | PASS
+gap_report_pdf_3_framework | 0.494659 | 0.512616 | 250        | 200    | PASS
+evidence_search_engagement | 0.001429 | 0.001535 | 1          | None   | PASS
+```
+
+Opt-in pytest run (`CYBERASSESS_RUN_BENCHMARKS=1 .venv/bin/pytest -q -s tests/test_performance_benchmarks.py`):
+
+```text
+name                       | median_s | max_s    | statements | status | PASS/FAIL
+---------------------------+----------+----------+------------+--------+----------
+portfolio_dashboard        | 0.003184 | 0.005135 | 4          | 200    | PASS
+workpaper_3_framework      | 0.224453 | 0.331271 | 1158       | 200    | PASS
+gap_report_pdf_3_framework | 0.518870 | 0.524752 | 250        | 200    | PASS
+evidence_search_engagement | 0.001429 | 0.001593 | 1          | None   | PASS
+```
+
+Both runs used Python `3.13.13`, SQLite `3.53.2`, and platform `macOS-26.3.1-arm64-arm-64bit-Mach-O`. `seed_seconds` was `34.51195833273232` for the CLI run and `35.79861733317375` for the pytest run. The pytest JSON recorded the same operation order and threshold `2.0` seconds.
+
+The full counts dict from the CLI JSON was:
+
+```json
+{"a0_conclusion_revisions": 1083, "a0_findings": 95, "actions": 95, "analysis_runs": 41, "assessment_packs": 32, "assessments": 30, "audit_events": 1709, "clients": 5, "conclusion_revisions": 3000, "conclusions": 808, "engagements": 10, "evidence": 250, "evidence_uses": 114, "evidence_versions": 500, "findings": 95, "gap_items": 228, "gap_reports": 1, "questionnaire_responses": 808}
+```
+
+A0 produced the expected `1083` conclusion revisions and `95` findings. The workpaper breakdown was `build_workpaper_seconds=0.208192` in the CLI run and `0.236377` in the pytest run; its pytest median `0.224453s` is recorded next to the P2-6 baseline of `0.010783s` for 41 conclusions. The report breakdown was `assessment_findings_seconds=0.098320` and `generate_pdf_seconds=0.414557` in the CLI run, and `0.095756` and `0.434039` in the pytest run.
+
+`.venv/bin/pytest -q` completed with `502 passed, 9 skipped, 126 warnings in 43.70s`. The benchmark dataset seed did not run in normal mode. The known unrelated teardown artifact did not reproduce in this run; there were no test errors. The benchmark module itself passed `9 passed, 7 warnings in 44.27s`. `alembic heads` remained `4e8c1a9d2b57 (head)`.
+
+No operation missed the 2-second median threshold, so the D-P4-3-J bounded miss ladder was not entered. No files outside `scripts/benchmark_performance.py`, `tests/test_performance_benchmarks.py`, `tasks/todo.md`, and this handoff were changed; `.venv` was pre-existing untracked worktree state and was left untouched.
