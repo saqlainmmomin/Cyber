@@ -1,7 +1,7 @@
 """
 Scope Profiler — deterministic requirement filtering and evidence checklist generation.
 
-Given scope answers plus industry + company_size from the Assessment, produces:
+Given scope answers from the Assessment, produces:
   - applicable_requirements: list of requirement IDs to include in questionnaire + analysis
   - excluded_requirements: list of requirement IDs excluded with reason
   - evidence_checklist: list of document types the client should provide, with justification
@@ -42,14 +42,12 @@ PROCESSOR_REQUIREMENT_IDS = {
 }
 
 
-def compute_scope(scope_answers: dict, industry: str, company_size: str) -> dict:
+def compute_scope(scope_answers: dict) -> dict:
     """
     Compute applicable requirements and evidence checklist from scope answers.
 
     Args:
         scope_answers: dict mapping SCP.* question IDs to answer values
-        industry: assessment industry (from creation form)
-        company_size: assessment company_size (from creation form)
 
     Returns:
         {
@@ -102,7 +100,6 @@ def compute_scope(scope_answers: dict, industry: str, company_size: str) -> dict
         sdf_active=sdf_active,
         processors_active=processors_active,
         processing_context=processing_context,
-        industry=industry,
     )
 
     return {
@@ -125,7 +122,6 @@ def _build_evidence_checklist(
     sdf_active: bool,
     processors_active: bool,
     processing_context: str,
-    industry: str,
 ) -> list[dict]:
     """
     Build an ordered evidence checklist. Each item has:
@@ -275,8 +271,6 @@ def _build_evidence_checklist(
 
 def compute_scope_multi(
     scope_answers: dict,
-    industry: str,
-    company_size: str,
     framework_ids: list[str],
 ) -> dict:
     """
@@ -295,7 +289,7 @@ def compute_scope_multi(
 
     for fw_id in framework_ids:
         if fw_id == "dpdpa":
-            result = compute_scope(scope_answers, industry, company_size)
+            result = compute_scope(scope_answers)
             all_applicable.extend(result["applicable_requirements"])
             all_excluded.extend(result["excluded_requirements"])
             all_checklist.extend(result["evidence_checklist"])

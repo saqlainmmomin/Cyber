@@ -847,7 +847,7 @@ def assessment_detail(
         if scope_done:
             from app.services.scope_profiler import compute_scope_multi
             scope_data = json.loads(assessment.scope_answers)
-            result = compute_scope_multi(scope_data, assessment.industry or "", assessment.company_size or "", raw_fw_ids)
+            result = compute_scope_multi(scope_data, raw_fw_ids)
             scope_context = {
                 "checklist": result["evidence_checklist"],
                 "excluded": result["excluded_requirements"],
@@ -1002,7 +1002,7 @@ async def save_scope(
 
     # Compute applicable requirements across all selected frameworks
     result = compute_scope_multi(
-        scope_answers, assessment.industry or "", assessment.company_size or "", selected_fw_ids
+        scope_answers, selected_fw_ids
     )
     assessment.applicable_requirements = json.dumps(result["applicable_requirements"])
 
@@ -1030,8 +1030,6 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
     scope_answers = json.loads(assessment.scope_answers)
     result = compute_scope_multi(
         scope_answers,
-        assessment.industry or "",
-        assessment.company_size or "",
         _selected_framework_ids(assessment),
     )
 
@@ -1062,8 +1060,6 @@ def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(g
     scope_answers = json.loads(assessment.scope_answers)
     result = compute_scope_multi(
         scope_answers,
-        assessment.industry or "",
-        assessment.company_size or "",
         _selected_framework_ids(assessment),
     )
 
@@ -1238,25 +1234,6 @@ def get_context_block(
             "is_context": True,
         },
     )
-
-
-@router.post("/assessments/{assessment_id}/context/submit", response_class=HTMLResponse)
-def submit_context_web(
-    request: Request,
-    assessment_id: str,
-
-    db: Session = Depends(get_db),
-):
-    from app.services.context_profiler import derive_risk_profile
-
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment:
-        raise HTTPException(404)
-
-    form_data = {}  # Will be populated from HTMX form
-    # Parse the accumulated form data
-    # Context answers are sent as hidden fields with name=question_id
-    return RedirectResponse(f"/assessments/{assessment_id}?tab=questionnaire", status_code=303)
 
 
 @router.post("/assessments/{assessment_id}/context/save", response_class=HTMLResponse)
@@ -2396,6 +2373,7 @@ def download_rfi_docx(assessment_id: str, db: Session = Depends(get_db)):
         evidence_items=evidence_items,
         response_instructions=rfi.response_instructions,
         generated_at=rfi.generated_at,
+        framework_label=", ".join(_selected_framework_names(assessment)),
     )
 
     filename = f"RFI-{assessment.company_name.replace(' ', '-')}.docx"

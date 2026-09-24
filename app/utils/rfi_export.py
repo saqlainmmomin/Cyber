@@ -244,6 +244,7 @@ def generate_rfi_docx(
     evidence_items: list[dict],
     response_instructions: str,
     generated_at: datetime | None = None,
+    framework_label: str = "",
 ) -> bytes:
     """Generate a professional RFI DOCX document."""
     from docx import Document
@@ -253,6 +254,7 @@ def generate_rfi_docx(
 
     doc = Document()
     date_str = (generated_at or datetime.now(timezone.utc)).strftime("%d %B %Y")
+    subtitle = f"{framework_label} Compliance Gap Assessment" if framework_label else "Compliance Gap Assessment"
 
     # Style defaults
     style = doc.styles["Normal"]
@@ -262,6 +264,8 @@ def generate_rfi_docx(
     # Title
     title_p = doc.add_heading(f"{settings.firm_name} — {title}", level=0)
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    subtitle_p = doc.add_paragraph(subtitle)
+    subtitle_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     # Metadata
     meta_p = doc.add_paragraph()
