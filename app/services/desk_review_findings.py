@@ -7,6 +7,22 @@ from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 
 
 LEGACY_FINDING_FRAMEWORK_ID = "dpdpa"
+GROUNDED_CITATION_LOCATION_TYPE = "text_span"
+
+
+def finding_has_grounded_citation(finding: DeskReviewFinding) -> bool:
+    """True for an evidence row whose quote was located in an evidence version."""
+    if finding.finding_type != "evidence" or not (finding.source_quote or "").strip():
+        return False
+    try:
+        citations = json.loads(finding.citations_json or "[]")
+    except (json.JSONDecodeError, TypeError):
+        return False
+    return isinstance(citations, list) and any(
+        isinstance(citation, dict)
+        and citation.get("location_type") == GROUNDED_CITATION_LOCATION_TYPE
+        for citation in citations
+    )
 
 
 def finding_framework_id(finding: DeskReviewFinding) -> str:

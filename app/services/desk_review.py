@@ -189,8 +189,8 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
         try:
             from app.services.auto_answer import persist_document_answers
             pre_fill_count = persist_document_answers(assessment_id, db)
+            db.commit()
             if pre_fill_count:
-                db.commit()
                 logger.info(f"Desk review: pre-filled {pre_fill_count} responses from evidence")
         except Exception as e:
             # Pre-fill failure should not block the desk review result

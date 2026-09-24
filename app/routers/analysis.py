@@ -125,6 +125,7 @@ def trigger_analysis(
             "notes": r.notes,
             "na_reason": r.na_reason,
             "confidence": r.confidence,
+            "answer_source": r.answer_source,
         }
         for r in responses_db
     ]

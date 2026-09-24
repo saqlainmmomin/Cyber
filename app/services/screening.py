@@ -37,6 +37,13 @@ class ScreeningNotApplicable(ValueError):
     """Raised before any LLM call when screening cannot pre-fill this assessment's questionnaire."""
 
 
+def screening_applies(assessment: Assessment) -> bool:
+    """Screening pre-fills DPDPA requirement ids, which only the DPDPA-only questionnaire renders."""
+    from app.services.question_engine import is_dpdpa_only
+
+    return is_dpdpa_only(assessment)
+
+
 def run_screening_pass(
     assessment_id: str,
     domain_answers: dict[str, str],
@@ -56,7 +63,7 @@ def run_screening_pass(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise ValueError(f"Assessment {assessment_id} not found")
-    if assessment.frameworks != ["dpdpa"]:
+    if not screening_applies(assessment):
         raise ScreeningNotApplicable(SCREENING_NOT_APPLICABLE_MESSAGE)
 
     system_blocks = build_screening_system_prompt()

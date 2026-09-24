@@ -1,6 +1,15 @@
 <!-- Phase 3: Domain-Level Screening Form -->
 <div class="space-y-6">
 
+  {% if not screening_available %}
+  {% if error %}
+  <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3">
+    <p class="text-sm font-medium text-red-800 dark:text-red-300">Screening failed</p>
+    <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ error }}</p>
+  </div>
+  {% endif %}
+  {% else %}
+
   {% if screening_done %}
   <div class="flex items-center gap-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/40 px-4 py-3">
     <svg class="h-5 w-5 flex-shrink-0 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -10,13 +19,6 @@
       <p class="text-sm font-medium text-purple-900 dark:text-purple-300">Domain screening complete</p>
       <p class="text-xs text-purple-700 dark:text-purple-400 mt-0.5">Questions have been pre-filled based on your screening answers. Review and confirm in the questionnaire.</p>
     </div>
-  </div>
-  {% endif %}
-
-  {% if error %}
-  <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3">
-    <p class="text-sm font-medium text-red-800 dark:text-red-300">Screening failed</p>
-    <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ error }}</p>
   </div>
   {% endif %}
 
@@ -30,7 +32,7 @@
       <div>
         <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Domain Screening — 9 questions, ~5 minutes</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Answer these high-level questions and AI will pre-fill ~30-40% of your detailed assessment. You'll only need to manually answer the controls where it's uncertain.
+          Answer these high-level questions and AI will propose answers for the DPDPA requirements it can infer with high confidence. Proposed answers are pre-filled for you to confirm or change in the questionnaire.
         </p>
       </div>
     </div>
@@ -96,4 +98,5 @@
   </p>
   {% endif %}
 
+  {% endif %}
 </div>

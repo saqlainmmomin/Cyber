@@ -12,7 +12,9 @@ Answer source tracking:
   - "human"               → human entered from scratch (no pre-fill)
   - "inferred"            → pre-filled from domain screening (DPDPA-only), awaiting confirmation
 
-Pre-fill runs only on DPDPA-only assessments (P5-3 D-P5-3-L).
+DPDPA-only assessments pre-fill by requirement id. Every other assessment pre-fills
+by cluster question id, only for questions the cluster questionnaire shows as document
+pre-fills (P5-4 D-P5-4-F).
 """
 
 import json
@@ -58,12 +60,9 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
     if not assessment:
         logger.warning(f"Auto-answer: assessment {assessment_id} not found")
         return 0
-    if assessment.frameworks != ["dpdpa"]:
-        logger.info(
-            "Auto-answer: skipped for %s, pre-fill is keyed to the DPDPA-only questionnaire",
-            assessment_id,
-        )
-        return 0
+    from app.services.question_engine import is_dpdpa_only
+    if not is_dpdpa_only(assessment):
+        return _persist_cluster_document_answers(assessment, db)
 
     # Load desk review coverage summary
     dr_summary = (
@@ -166,6 +165,67 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
         )
 
     return created_count
+
+
+def _persist_cluster_document_answers(assessment: Assessment, db: Session) -> int:
+    """Persist live document pre-fills for rendered UCC questions."""
+    from app.services.question_engine import build_adaptive_questionnaire
+
+    questionnaire = build_adaptive_questionnaire(assessment.id, db)
+    prefilled = [
+        question
+        for section in questionnaire["sections"]
+        for question in section.get("questions", [])
+        if question.get("status") == "pre_filled"
+        and question.get("pre_fill_source") == "document"
+    ]
+    existing_by_qid = {
+        response.question_id: response
+        for response in db.query(QuestionnaireResponse)
+        .filter(QuestionnaireResponse.assessment_id == assessment.id)
+        .all()
+    }
+
+    created = 0
+    updated = 0
+    for question in prefilled:
+        existing = existing_by_qid.get(question["id"])
+        if existing and existing.answer_source != "document":
+            continue
+
+        notes = question["pre_fill_evidence_summary"]
+        evidence_ref = "; ".join(sorted({
+            evidence["source_location"]
+            for evidence in (question["desk_review_evidence"] or [])
+            if evidence["source_location"]
+        }))
+        if existing:
+            existing.answer = question["pre_fill_answer"]
+            existing.confidence = question["pre_fill_confidence"]
+            existing.notes = notes
+            existing.evidence_reference = evidence_ref
+            updated += 1
+        else:
+            db.add(QuestionnaireResponse(
+                assessment_id=assessment.id,
+                question_id=question["id"],
+                answer=question["pre_fill_answer"],
+                notes=notes,
+                evidence_reference=evidence_ref,
+                confidence=question["pre_fill_confidence"],
+                answer_source="document",
+            ))
+            created += 1
+
+    if created or updated:
+        db.flush()
+        logger.info(
+            "Auto-answer: created %d and updated %d cluster document pre-fills for assessment %s",
+            created,
+            updated,
+            assessment.id,
+        )
+    return created
 
 
 def _build_evidence_notes(findings: list) -> str:

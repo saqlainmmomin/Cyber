@@ -2,6 +2,7 @@
 {% if stats %}
 <div class="mb-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
   <span>{{ stats.total_questions }} questions</span>
+  {% if stats.get('answered_questions') is not none %}<span data-stat-answered>{{ stats.answered_questions }} answered</span>{% endif %}
   {% if stats.get('tier_counts') %}
   <span class="text-amber-600 dark:text-amber-500">⚠️ {{ stats.tier_counts.get('deep', 0) }} deep review</span>
   <span class="text-gray-600 dark:text-gray-400">{{ stats.tier_counts.get('standard', 0) }} standard</span>
@@ -13,8 +14,9 @@
   {% if stats.get('inferred_questions', 0) > 0 %}
   <span class="text-purple-600 dark:text-purple-400">✨ {{ stats.inferred_questions }} inferred from screening</span>
   {% endif %}
+  {% if stats.get('awaiting_confirmation', 0) > 0 %}<span data-stat-awaiting-confirmation class="text-slate-600 dark:text-slate-400">{{ stats.awaiting_confirmation }} pre-filled answers awaiting confirmation</span>{% endif %}
   {% if stats.skipped_questions > 0 %}
-  <span class="text-green-600 dark:text-green-500">{{ stats.skipped_questions }} skipped (covered by documents)</span>
+  <span class="text-green-600 dark:text-green-500">{{ stats.skipped_questions }} out of scope</span>
   {% endif %}
   {% if stats.deepened_questions > 0 %}
   <span class="text-amber-600 dark:text-amber-500">{{ stats.deepened_questions }} deepened (needs attention)</span>
