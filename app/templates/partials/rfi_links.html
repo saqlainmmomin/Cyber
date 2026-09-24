@@ -1,0 +1,56 @@
+<section id="rfi-links" data-rfi-links class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 mb-6">
+  <div class="mb-5">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Client request links</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Issue selected RFI items to a client through a secure upload link.</p>
+  </div>
+
+  {% if new_link_url %}
+  <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+    <p class="font-medium">Copy this link now. It will not be shown again.</p>
+    <input data-rfi-new-link readonly value="{{ new_link_url }}" class="mt-2 w-full rounded border border-green-300 bg-white px-3 py-2 font-mono text-xs">
+  </div>
+  {% endif %}
+  {% if error %}<div data-rfi-link-error class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>{% endif %}
+
+  <form data-rfi-link-form hx-post="/assessments/{{ assessment.id }}/rfi/versions/{{ current_issue.id }}/magic-links" hx-target="#rfi-links" hx-swap="outerHTML" hx-include="#reviewer-name" class="space-y-4">
+    <div class="grid gap-2 sm:grid-cols-3">
+      <label class="text-xs text-gray-500">Expiry in days<input name="expires_in_days" value="7" class="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></label>
+      <label class="text-xs text-gray-500">Maximum uploads<input name="max_uploads" value="20" class="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></label>
+      <label class="text-xs text-gray-500">Maximum total MB<input name="max_total_mb" value="100" class="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></label>
+    </div>
+    <p class="text-xs text-gray-500 dark:text-gray-400">A link can include up to 20 items. Create several links to send different items to different people.</p>
+    <div class="space-y-2">
+      {% for item in current_items %}
+      <label class="flex flex-wrap items-start gap-3 rounded-lg border border-gray-100 dark:border-gray-800 px-3 py-2 text-sm">
+        <input type="checkbox" name="item_ids" value="{{ item.item_id }}" class="mt-1 rounded border-gray-300">
+        <span class="min-w-0 flex-1"><span class="font-mono text-xs text-brand">{{ item.item_id }}</span> {{ item.title }}</span>
+        <span data-rfi-coverage="{{ item.item_id }}" class="text-xs text-gray-500">
+          {% if coverage.get(item.item_id) %}Covered by {{ coverage[item.item_id] | join(", ") }}{% else %}<span data-rfi-unsent>Not yet in an active client link</span>{% endif %}
+        </span>
+        {% for received_item in received.get((current_issue.id, item.item_id), []) %}
+        <span data-rfi-received class="w-full pl-7 text-xs text-gray-500"><a href="/evidence/{{ received_item.evidence_id }}" class="text-brand hover:underline">{{ received_item.filename }}</a> — {{ received_item.status }}</span>
+        {% endfor %}
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light">Create client link</button>
+  </form>
+
+  <div class="mt-7 overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="text-xs uppercase tracking-wide text-gray-500"><tr><th class="py-2 pr-3">Link</th><th class="py-2 pr-3">Version</th><th class="py-2 pr-3">Status</th><th class="py-2 pr-3">Items</th><th class="py-2 pr-3">Usage</th><th class="py-2">Expiry</th></tr></thead>
+      <tbody>
+        {% for link in links %}
+        <tr data-rfi-link-row class="border-t border-gray-100 dark:border-gray-800">
+          <td class="py-2 pr-3 font-mono text-xs">{{ link.id_prefix }}</td>
+          <td class="py-2 pr-3">v{{ link.sequence }}</td>
+          <td class="py-2 pr-3">{{ link.status }}</td>
+          <td class="py-2 pr-3">{{ link.items | length }}</td>
+          <td class="py-2 pr-3">{{ link.uploads_used }} of {{ link.max_uploads }}</td>
+          <td class="py-2">{{ link.expires_at.strftime("%d %b %Y") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

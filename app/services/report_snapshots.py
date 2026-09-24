@@ -21,16 +21,20 @@ from app.services.conclusion_review import REVIEWER_ACTOR_PREFIX
 
 SNAPSHOT_TYPES = ("gap_report", "workpaper", "integrated_report")
 ASSESSMENT_SNAPSHOT_TYPES = ("gap_report", "workpaper")
+RFI_SNAPSHOT_TYPE = "rfi"
+RFI_DOCUMENT_SUFFIX = ".json"
 FORMAT_BY_TYPE = {
     "gap_report": "pdf",
     "workpaper": "html",
     "integrated_report": "pdf",
+    RFI_SNAPSHOT_TYPE: "pdf",
 }
 MEDIA_TYPES = {"pdf": "application/pdf", "html": "text/html; charset=utf-8"}
 TYPE_LABELS = {
     "gap_report": "Gap report (PDF)",
     "workpaper": "Workpaper (HTML)",
     "integrated_report": "Integrated engagement report (PDF)",
+    RFI_SNAPSHOT_TYPE: "Request for information (PDF)",
 }
 
 AUDIT_ENTITY_TYPE = "report_snapshot"
@@ -102,6 +106,12 @@ def snapshot_path(snapshot: ReportSnapshot) -> Path:
     return Path(settings.upload_dir) / snapshot.storage_path
 
 
+def rfi_document_path(snapshot: ReportSnapshot) -> Path:
+    return Path(settings.upload_dir) / (
+        snapshot.storage_path.removesuffix(".pdf") + RFI_DOCUMENT_SUFFIX
+    )
+
+
 def source_manifest(db: Session, assessment: Assessment) -> dict:
     report_row = (
         db.query(GapReport.id)
@@ -159,8 +169,28 @@ def _store(
     engagement_id: str | None,
     review_status: str | None,
     source: dict,
+    extra_metadata: dict | None = None,
 ) -> ReportSnapshot:
     digest = hashlib.sha256(content).hexdigest()
+    metadata = {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "type": snapshot_type,
+        "format": fmt,
+        "storage_path": storage_path,
+        "sha256": digest,
+        "size_bytes": len(content),
+        "assessment_id": assessment_id,
+        "engagement_id": engagement_id,
+        "review_status": review_status,
+        "source": source,
+    }
+    if extra_metadata:
+        collisions = set(metadata).intersection(extra_metadata)
+        if collisions:
+            raise ValueError(
+                f"Snapshot metadata keys already exist: {', '.join(sorted(collisions))}"
+            )
+        metadata.update(extra_metadata)
     path = _write_file(storage_path, content)
     try:
         snapshot = ReportSnapshot(
@@ -178,18 +208,7 @@ def _store(
             actor=actor,
             action=GENERATED_ACTION,
             snapshot_id=snapshot_id,
-            metadata={
-                "schema_version": MANIFEST_SCHEMA_VERSION,
-                "type": snapshot_type,
-                "format": fmt,
-                "storage_path": storage_path,
-                "sha256": digest,
-                "size_bytes": len(content),
-                "assessment_id": assessment_id,
-                "engagement_id": engagement_id,
-                "review_status": review_status,
-                "source": source,
-            },
+            metadata=metadata,
         )
         db.flush()
         return snapshot
@@ -231,6 +250,124 @@ def create_snapshot(
         engagement_id=assessment.engagement_id,
         review_status=assessment.review_status,
         source=manifest,
+    )
+
+
+def create_rfi_snapshot(
+    db: Session,
+    *,
+    assessment: Assessment,
+    pdf_content: bytes,
+    document_content: bytes,
+    source: dict,
+    omitted_document_types: list[str],
+    actor: str,
+) -> ReportSnapshot:
+    if not pdf_content or not document_content:
+        raise InvalidSnapshot("Rendered report was empty; nothing was saved.")
+
+    snapshot_id = _new_id()
+    storage_path = storage_path_for(
+        snapshot_id=snapshot_id,
+        fmt=FORMAT_BY_TYPE[RFI_SNAPSHOT_TYPE],
+        assessment_id=assessment.id,
+    )
+    sidecar = rfi_document_path(
+        ReportSnapshot(
+            id=snapshot_id,
+            assessment_id=assessment.id,
+            storage_path=storage_path,
+            type=RFI_SNAPSHOT_TYPE,
+            format=FORMAT_BY_TYPE[RFI_SNAPSHOT_TYPE],
+        )
+    )
+    _write_file(
+        str(sidecar.relative_to(Path(settings.upload_dir))),
+        document_content,
+    )
+    try:
+        return _store(
+            db,
+            snapshot_id=snapshot_id,
+            snapshot_type=RFI_SNAPSHOT_TYPE,
+            fmt=FORMAT_BY_TYPE[RFI_SNAPSHOT_TYPE],
+            storage_path=storage_path,
+            content=pdf_content,
+            actor=actor,
+            assessment_id=assessment.id,
+            engagement_id=assessment.engagement_id,
+            review_status=assessment.review_status,
+            source=source,
+            extra_metadata={
+                "document_sha256": hashlib.sha256(document_content).hexdigest(),
+                "document_size_bytes": len(document_content),
+                "omitted_document_types": omitted_document_types,
+            },
+        )
+    except Exception:
+        getattr(sidecar, "unlink")(missing_ok=True)
+        raise
+
+
+def read_rfi_document(db: Session, snapshot: ReportSnapshot) -> dict:
+    if snapshot.type != RFI_SNAPSHOT_TYPE:
+        raise SnapshotNotFound("RFI version not found.")
+    metadata = generated_event(db, snapshot.id)
+    expected = metadata.get("document_sha256")
+    try:
+        content = rfi_document_path(snapshot).read_bytes()
+    except OSError:
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE) from None
+    if not isinstance(expected, str) or hashlib.sha256(content).hexdigest() != expected:
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE)
+    try:
+        document = json.loads(content)
+    except (json.JSONDecodeError, TypeError):
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE) from None
+    if not isinstance(document, dict):
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE)
+    return document
+
+
+def rfi_snapshot_rows(
+    db: Session,
+    assessment: Assessment,
+    *,
+    current_source: dict | None,
+) -> list[SnapshotRow]:
+    snapshots = db.execute(
+        select(ReportSnapshot)
+        .where(
+            ReportSnapshot.assessment_id == assessment.id,
+            ReportSnapshot.type == RFI_SNAPSHOT_TYPE,
+        )
+        .order_by(literal_column("report_snapshots.rowid"))
+    ).scalars().all()
+    generated_by_id, issued_by_id = _event_maps(
+        db, [snapshot.id for snapshot in snapshots]
+    )
+    return _build_rows(
+        snapshots,
+        generated_by_id,
+        issued_by_id,
+        current_source,
+    )
+
+
+def current_rfi_issue(db: Session, assessment: Assessment) -> ReportSnapshot | None:
+    return (
+        db.execute(
+            select(ReportSnapshot)
+            .where(
+                ReportSnapshot.assessment_id == assessment.id,
+                ReportSnapshot.type == RFI_SNAPSHOT_TYPE,
+                ReportSnapshot.is_issued.is_(True),
+            )
+            .order_by(literal_column("report_snapshots.rowid").desc())
+            .limit(1)
+        )
+        .scalars()
+        .first()
     )
 
 

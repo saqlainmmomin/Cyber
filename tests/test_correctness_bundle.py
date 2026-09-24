@@ -36,6 +36,7 @@ from app.models.report_snapshot import ReportSnapshot
 from app.routers import analysis, web
 from app.schemas.report import FrameworkScoreOut
 from app.services import evidence as evidence_service, report_content
+from app.services.rfi_requests import LEGACY_RFI_RETIRED
 from app.services.scoring import (
     compute_framework_scores,
     failed_framework_scores,
@@ -636,11 +637,14 @@ def test_failed_framework_blocks_release_but_draft_pdf_and_integrated_report_exp
         f"/api/assessments/{assessment.id}/report/summary",
         f"/api/assessments/{assessment.id}/report/full",
         f"/api/assessments/{assessment.id}/report/pdf",
-        f"/assessments/{assessment.id}/rfi/pdf",
     ):
         response = http.get(path)
         assert response.status_code == 409
         assert response.json()["detail"] == release_detail
+
+    retired = http.get(f"/assessments/{assessment.id}/rfi/pdf")
+    assert retired.status_code == 410
+    assert retired.json()["detail"] == LEGACY_RFI_RETIRED
 
     draft = http.post(
         f"/api/assessments/{assessment.id}/snapshots",

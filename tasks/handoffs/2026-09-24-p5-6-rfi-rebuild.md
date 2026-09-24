@@ -518,3 +518,73 @@ Append a `## Results` section to this file containing:
 - Anything this document got wrong about the current code. **Name it and stop if it forces a design change. Do not pick an alternative.**
 
 Commits and PRs for this task carry **no** `Co-Authored-By: Claude` trailer and no "Generated with Claude Code" footer. Codex cannot commit (its sandbox refuses to write `.git`). Leave the tree uncommitted, and the reviewing session commits on your behalf.
+
+## Results
+
+### Step 0 and contract verification
+
+The merged P5-2 implementation matches every referenced symbol and field. `app/services/approved_report.py` has `ApprovedRow`, `ApprovedReport`, `build_approved_report(db, assessment)`, `release_state(db, assessment)`, `is_released(db, assessment)`, and `in_scope_requirement_ids`; `ApprovedRow` fields are `id`, `conclusion_id`, `conclusion_version`, `framework_id`, `requirement_id`, `requirement_title`, `chapter`, `chapter_title`, `control_reference`, `compliance_status`, `current_state`, `gap_description`, `risk_level`, `remediation_action`, `remediation_priority`, `evidence_quote`, `decision`, `decided_by`, `decided_at`, `remediation_effort`, `timeline_weeks`, `maturity_level`, `root_cause_category`, and `evidence_confidence`. No P5-2 symbol or field discrepancy forced a design change.
+
+Step 0 measured `2 failed, 623 passed, 9 skipped, 247 warnings in 94.02s`. The baseline failures were the known longitudinal scenario-9 ordering flake and the known P5-4 scenario-13 structural-guard fragility. The P5-2 handoff's claim that its migration test contained RFI route references was stale: the merged `tests/test_p5_2_reader_migration.py` does not contain those references. This did not affect any P5-2 symbol/field contract, so implementation continued. Alembic head was `8b2d5f7e1c34 (head)`.
+
+### Shipped API and data contract
+
+`app/services/rfi_requests.py` ships these constants/messages: `RFI_DOCUMENT_SCHEMA_VERSION = 1`, `RFI_ITEM_ID_FORMAT = "RFI-{n:03d}"`, `RFI_DOCUMENTS_GROUP = "Documents requested"`, `RFI_DOCUMENT_STATUS = "Document requested for this assessment"`, `RFI_REQUIREMENT_STATUS = "Evidence needed before this requirement can be concluded"`, `RFI_REQUIREMENT_FALLBACK = "Provide evidence showing how this requirement is met."`, `DEADLINE_WEEKS = {"Required": 2, "Recommended": 4}`, plus the fixed `RFI_INTRODUCTION` and `RFI_RESPONSE_INSTRUCTIONS`; `RFI_SCOPE_REQUIRED_MESSAGE = "Record the assessment scope before preparing an RFI."`; `RFI_EMPTY_MESSAGE = "Nothing to request: every evidence request item is omitted and no approved conclusion is marked insufficient evidence."`; `RFI_UNKNOWN_OMISSION_MESSAGE = "One of the omitted items is not in the current evidence request. Reload the page and try again."`; `RFI_STALE_MESSAGE = "This RFI version no longer matches the current scope, evidence request or approved conclusions. Generate a new version, then issue it."`; `RFI_NOT_FOUND_MESSAGE = "RFI version not found."`; `RFI_WRONG_ROUTE_MESSAGE = "RFI versions are generated and issued from the RFI page."`; `RFI_LINK_NOT_CURRENT_MESSAGE = "Client links can only be created from the current issued RFI version."`; `RFI_NO_ENGAGEMENT_MESSAGE = "This assessment is not part of an engagement, so a client link cannot be created."`; `RFI_UNKNOWN_ITEM_MESSAGE = "Choose requested items from this RFI version."`; and `LEGACY_RFI_RETIRED = "The previous RFI generator has been retired. Prepare a versioned RFI from the RFI page."`.
+
+Implemented signatures:
+
+```text
+build_rfi_document(db, assessment, *, omitted=())
+current_source(db, assessment)
+canonical_bytes(document)
+render_items(document)
+generate_version(db, assessment, *, omitted, actor)
+issue_version(db, assessment, snapshot_id, *, actor)
+create_client_link(db, assessment, snapshot_id, *, item_ids, expires_in_days, max_uploads, max_total_mb, actor)
+page_context(db, assessment)
+create_rfi_snapshot(db, *, assessment, pdf_content, document_content, source, omitted_document_types, actor)
+read_rfi_document(db, snapshot)
+rfi_snapshot_rows(db, assessment, *, current_source)
+current_rfi_issue(db, assessment)
+create_rfi_link(db, *, engagement_id, assessment_id, snapshot_id, rfi_items, expires_in_days, max_uploads, max_total_mb, actor='consultant')
+_validated_titles(db, *, engagement_id, item_titles, expires_in_days, max_uploads, max_total_mb)
+_insert_link(db, *, engagement_id, scope, item_keys, expires_in_days, max_uploads, max_total_mb, actor, extra_audit=None)
+generate_rfi_pdf(title, company_name, introduction, evidence_items, response_instructions, generated_at=None, framework_label='', *, version_label='')
+generate_rfi_docx(title, company_name, introduction, evidence_items, response_instructions, generated_at=None, framework_label='', *, version_label='')
+```
+
+`RfiLinkRow` fields are `link_id`, `id_prefix`, `status`, `created_at`, `expires_at`, `snapshot_id`, `sequence`, `items`, `uploads_used`, and `max_uploads`. `RFI_SNAPSHOT_TYPE = "rfi"`, `RFI_DOCUMENT_SUFFIX = ".json"`, `RFI_SCOPE_VERSION = 2`, and `RFI_UNKNOWN_ITEM_TEXT = "Choose requested items from this RFI version."`. The v2 magic-link scope is reference-only: `items[{key,rfi_item_id,title}]`, `rfi{assessment_id,snapshot_id}`, and `version: 2`; the token remains only in the URL response and digest storage.
+
+### Routes
+
+| Method and path | Success | Errors implemented |
+|---|---:|---|
+| `POST /api/assessments/{assessment_id}/rfi/versions` | 200 | 404 assessment; 400 invalid omission; 409 scope required or empty RFI; 500 persistence failure |
+| `POST /api/assessments/{assessment_id}/rfi/versions/{snapshot_id}/issue` | 200 | 404 assessment/version; 409 stale, already issued, or newer version; 500 integrity/persistence failure |
+| `GET /api/assessments/{assessment_id}/rfi/versions/{snapshot_id}/docx` | 200 | 404 assessment/version; 500 integrity failure |
+| `POST /api/assessments/{assessment_id}/snapshots/{snapshot_id}/issue` | 400 for RFI | 404 assessment/version; 400 RFI wrong route or release-gate errors; 409 generic snapshot conflicts |
+| `GET /api/assessments/{assessment_id}/snapshots/{snapshot_id}/file` | 200 | 404 assessment/version; 500 integrity failure |
+| `POST /assessments/{assessment_id}/rfi/versions/{snapshot_id}/magic-links` | 200 | 404 assessment/version; 200 rendered validation/conflict errors; 409 archived engagement guard; 422 invalid item selection; 500 integrity/unexpected failure |
+| `GET /assessments/{assessment_id}/rfi` | 200 | 404 assessment |
+| legacy `POST /assessments/{assessment_id}/generate-rfi` and `GET /assessments/{assessment_id}/rfi/{pdf,docx}` | — | 410 `LEGACY_RFI_RETIRED` |
+
+### Implementation and tests
+
+Implemented the deterministic, consultant-approved RFI document builder; scope/checklist and approved-conclusion source binding; immutable PDF plus canonical JSON sidecar snapshots; version issue/staleness/integrity checks; DOCX/PDF rendering; current-version client links; RFI coverage and received-upload UI; entry points from scope and report pages; legacy-generator retirement; and the standing guard forbidding release-gate calls in the new RFI path. `rfi_generator.py` and `rfi_generated.html` were removed. No schema or Alembic change was made.
+
+The new `tests/test_p5_6_rfi_rebuild.py` contains all 22 handoff scenarios and passes. Existing tests changed under D-P5-6-M:
+
+- `tests/test_remaining_llm_call_sites.py`: removed the three tests that imported the deleted legacy AI generator (D-P5-6-J).
+- `tests/test_correctness_bundle.py::test_failed_framework_blocks_release_but_draft_pdf_and_integrated_report_explain_it`: removed the retired legacy RFI route from the release-gate assertion and added its 410 retirement assertion (D-P5-6-J).
+
+`tests/test_p5_2_reader_migration.py` was not changed. The focused unchanged suite (`test_magic_links.py`, `test_report_snapshots.py`, `test_white_label.py`, `test_p5_8_mechanical_cleanup.py`, `test_p5_5_scoping_evidence.py`) passed; the combined retention command was otherwise green but its dirty-tree-only guard failed because the required D-P5-6 test changes are uncommitted. `git diff --check` is clean, protected P5-2/model/Alembic surfaces have zero diff, and `alembic heads` remains `8b2d5f7e1c34 (head)`.
+
+Final focused result: `22 passed, 30 warnings`. Final full result: `641 passed, 9 skipped, 3 failed, 279 warnings in 70.18s`. The three failures were the expected uncommitted-tree protected-surface guard, the pre-existing P5-4 scenario-13 structural-guard fragility, and the retention test's uncommitted-change guard. The known workpaper teardown and longitudinal scenario-9 ordering flake did not reproduce in this run. No new RFI contract test failed.
+
+### Smoke test
+
+In a fresh Alembic-built SQLite database with analyzers and evidence extraction stubbed, ISO + NIST generated a draft RFI (`type: "rfi"`, `is_issued: false`), with 34 items/documents and totals `documents=34`, `items=34`, `required=15`, `requirements=0`; issue returned 200 and `is_issued: true`. The generated metadata contained the ten base snapshot keys plus `document_sha256`, `document_size_bytes`, and `omitted_document_types`; the source contained `schema_version`, `framework_ids`, `checklist_sha256`, and `conclusion_versions`. Two links for 20 and 14 items had the v2 reference-only scope and no token in persisted scope/audit data. PDF text included the firm RFI heading, framework subtitle, `Version: v1`, `15 Required | 19 Recommended`, `RFI-001`, `Documents requested`, and `Requested for:`.
+
+The client page showed only the requested item titles. A DPDPA smoke assessment produced a requirement item for an approved insufficient-evidence conclusion; approving another conclusion made the older draft issue return 409 with `RFI_STALE_MESSAGE`. The retired PDF route returned 410 with `LEGACY_RFI_RETIRED`. No browser was available for the optional browser check.
+
+No discrepancy required an alternative design. The only implementation note is that local httpx multipart handling required the repeated-form test helpers to submit multipart fields explicitly; the production route retains the handoff's `list[str] = Form(default=[])` signature. The tree is intentionally left uncommitted.

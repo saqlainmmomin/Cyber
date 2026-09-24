@@ -402,13 +402,6 @@
          class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Live PDF</a>
       <a href="/assessments/{{ assessment_id }}/snapshots" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Report versions</a>
       <a href="/assessments/{{ assessment_id }}/workpaper" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Workpaper</a>
-      {% if rfi %}
-      <span class="text-gray-300 dark:text-gray-700">|</span>
-      <a href="/assessments/{{ assessment_id }}/rfi/pdf" onclick="event.stopPropagation()"
-         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">RFI PDF</a>
-      <a href="/assessments/{{ assessment_id }}/rfi/docx" onclick="event.stopPropagation()"
-         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">RFI DOCX</a>
-      {% endif %}
       <svg class="h-4 w-4 text-gray-400 dark:text-gray-500 details-chevron transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
       </svg>
@@ -561,28 +554,13 @@
   <div class="flex items-center justify-between mb-4">
     <div>
       <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Request for Information (RFI)</h3>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Generate a formal evidence request document for compliance gaps</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400">Prepare a versioned evidence request from the scope and your approved conclusions.</p>
     </div>
   </div>
   <div id="rfi-section">
-    {% if rfi %}
-      {% include "partials/rfi_generated.html" %}
-    {% else %}
-    <button hx-post="/assessments/{{ assessment_id }}/generate-rfi"
-            hx-target="#rfi-section"
-            hx-swap="innerHTML"
-            class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-      </svg>
-      Generate RFI
-      <span class="htmx-indicator">
-        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-      </span>
-    </button>
-    {% endif %}
+    <a href="/assessments/{{ assessment_id }}/rfi" data-rfi-link
+       class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+      Open RFI
+    </a>
   </div>
 </div>
