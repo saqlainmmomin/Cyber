@@ -14,6 +14,7 @@ from app.models.assessment import Assessment
 from app.routers import reports
 from app.services import report_snapshots, workpaper
 from app.services.conclusion_review import reviewer_actor
+from app.services import approved_report
 from app.template_config import configure_templates
 from app.utils.review_gate import require_review_approval
 
@@ -129,6 +130,13 @@ def issue_snapshot_route(
             snapshot_id=snapshot_id,
         )
         require_review_approval(assessment_id, db)
+        release_event = approved_report.latest_release_event(db, assessment_id)
+        if release_event is None or not report_snapshots.generated_after(
+            db, snapshot.id, release_event.id
+        ):
+            raise report_snapshots.SnapshotNotIssuable(
+                report_snapshots.SNAPSHOT_STALE_MESSAGE
+            )
         snapshot = report_snapshots.issue_snapshot(
             db,
             snapshot,

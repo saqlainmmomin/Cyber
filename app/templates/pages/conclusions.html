@@ -32,6 +32,8 @@
   {% endfor %}
 </div>
 
+{% include "partials/release_panel.html" %}
+
 {% if cards %}
   {% for card in cards %}
     {% if loop.first or card.conclusion.framework_id != cards[loop.index0 - 1].conclusion.framework_id %}

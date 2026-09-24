@@ -1,0 +1,14 @@
+<section data-release-panel data-release-state="{% if release.released %}released{% elif release.stale %}stale{% else %}not_released{% endif %}" class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  {% if release.released %}
+  <p class="text-sm font-medium text-green-700 dark:text-green-400">Released by {{ release.released_by }} on {{ release.released_at.strftime("%d %b %Y") }}</p>
+  {% elif release.blockers %}
+  <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Not ready to release</h2>
+  <ul data-release-blockers class="mt-2 list-disc pl-5 text-xs text-gray-600 dark:text-gray-400">
+    {% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <form data-release-form hx-post="/api/assessments/{{ assessment.id }}/release" hx-include="#reviewer-name" hx-swap="none" hx-confirm="Release this report? Exports will use the approved conclusions exactly as they are now.">
+    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Release report</button>
+  </form>
+  {% endif %}
+</section>

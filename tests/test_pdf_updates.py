@@ -38,7 +38,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.routers import web
-from app.services import report_content, report_snapshots
+from app.services import approved_report, report_content, report_snapshots
 from app.services.scoring import report_framework_scores
 from app.utils import pdf_export
 
@@ -417,7 +417,8 @@ def _run_one(
     _stub_single(monkeypatch, [items])
     gate.trigger_analysis(assessment.id, db)
     if approved:
-        assessment.review_status = "approved"
+        _human_revision(db, db.query(Conclusion).filter_by(assessment_id=assessment.id).one(), "approved")
+        approved_report.record_release(db, assessment, actor="consultant:Priya")
         db.commit()
     conclusion = db.query(Conclusion).filter_by(assessment_id=assessment.id).one()
     return assessment, conclusion
@@ -556,6 +557,20 @@ def _setup_integrated(db, http, gate, monkeypatch):
     third.review_status = "pending"
     db.commit()
 
+    for assessment_row, conclusions in (
+        (first, first_conclusions),
+        (second, db.query(Conclusion).filter_by(assessment_id=second.id).all()),
+    ):
+        for conclusion in conclusions:
+            if not any(
+                revision.action in ("approved", "edited")
+                and revision.actor.startswith("consultant:")
+                for revision in _revisions(db, conclusion.id)
+            ):
+                _human_revision(db, conclusion, "approved")
+        approved_report.record_release(db, assessment_row, actor="consultant:Priya")
+    db.commit()
+
     _set_scores(db, first, {"dpdpa": 100.0})
     _set_scores(db, second, {"dpdpa": 40.0, "iso27001": 60.0})
     return engagement, first, second, third, first_conclusions
@@ -611,7 +626,7 @@ def test_scenario_1_multiframework_pdf_has_findings_and_no_blend(
     _approve(http, db, assessment, iso_conclusion)
     created = _create(http, assessment, iso_conclusion, title="ISO finding")
     assert created.status_code == 200
-    assessment.review_status = "approved"
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
     db.commit()
 
     response = http.get(f"/api/assessments/{assessment.id}/report/pdf")
@@ -645,7 +660,7 @@ def test_scenario_2_reopened_findings_are_omitted(db, http, gate, monkeypatch):
         db, gate, monkeypatch, item=_item(REQS[0], "non_compliant")
     )
     _approved_finding(db, http, gate, monkeypatch, assessment, conclusion)
-    assessment.review_status = "approved"
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
     db.commit()
     reopened = _decide(http, assessment, conclusion, "reopen")
     assert reopened.status_code == 200
@@ -779,7 +794,10 @@ def test_scenario_4_gap_snapshots_capture_new_findings_without_changing_old_byte
     first_file = http.get(f"/api/assessments/{assessment.id}/snapshots/{first_id}/file")
     assert "Approved Findings" not in _pdf_text(first_file.content)
     first_hash = first_file.headers["X-Snapshot-Sha256"]
+    _human_revision(db, conclusion, "reopened")
     _approved_finding(db, http, gate, monkeypatch, assessment, conclusion)
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
+    db.commit()
     second_response = http.post(
         f"/api/assessments/{assessment.id}/snapshots",
         data={"type": "gap_report", "reviewer_name": "Priya"},
@@ -842,12 +860,12 @@ def test_scenario_5_integrated_report_happy_path(db, http, gate, monkeypatch, up
     assert "Integrated Engagement Report" in text_value
     assert "Assessment A" in text_value and "Assessment B" in text_value
     assert "Framework Scores (this assessment only)" in text_value
-    assert all(value in text_value for value in ("100%", "40%", "60%"))
+    assert all(value in text_value for value in ("0%", "50%"))
     assert "Assessment A finding" in text_value and "Assessment B finding" in text_value
     assert "Assessments Not Included" in text_value
     assert "Assessment C" in text_value and "Not approved for release" in text_value
     assert "Assessment period and evidence cut-off: not recorded" in text_value
-    assert all(value not in text_value for value in ("67%", "50%", "70%", "Overall"))
+    assert all(value not in text_value for value in ("67%", "70%", "Overall"))
     first_label = next(section.label for section in data.sections if section.assessment_id == first.id)
     second_label = next(section.label for section in data.sections if section.assessment_id == second.id)
     assert text_value.index("Assessment A finding") > text_value.rindex(first_label)
@@ -875,7 +893,7 @@ def test_scenario_6_integrated_lifecycle_release_gate_and_source_change(
 
     third_response = _generate_integrated(http, engagement)
     third_id = third_response.json()["snapshot_id"]
-    first.review_status = "pending"
+    _human_revision(db, first_conclusions[0], "reopened")
     db.commit()
     before = _state(db, upload_root)
     blocked = _issue_integrated(http, engagement, third_id)
@@ -884,16 +902,22 @@ def test_scenario_6_integrated_lifecycle_release_gate_and_source_change(
         blocked.headers["X-Toast-Message"]
     )
     assert _state(db, upload_root) == before
-    first.review_status = "approved"
+    _human_revision(db, first_conclusions[0], "approved")
+    approved_report.record_release(db, first, actor="consultant:Priya")
     db.commit()
-    assert _issue_integrated(http, engagement, third_id).status_code == 200
+    assert _issue_integrated(http, engagement, third_id).status_code == 403
+    fourth_response = _generate_integrated(http, engagement)
+    fourth_id = fourth_response.json()["snapshot_id"]
+    fourth_issue = _issue_integrated(http, engagement, fourth_id)
+    assert fourth_issue.status_code == 200, fourth_issue.text
     rows = report_snapshots.engagement_snapshot_rows(db, engagement, current_source=None)
-    assert [row.snapshot.id for row in rows if row.is_current_issue] == [third_id]
+    assert [row.snapshot.id for row in rows if row.is_current_issue] == [fourth_id]
     third_bytes = (upload_root / next(row for row in rows if row.snapshot.id == third_id).snapshot.storage_path).read_bytes()
 
     second_conclusion = next(
         row for row in first_conclusions if row.requirement_id == REQS[1]
     )
+    _human_revision(db, second_conclusion, "reopened")
     _approved_finding(
         db, http, gate, monkeypatch, first, second_conclusion, title="Later finding"
     )
@@ -923,12 +947,10 @@ def test_scenario_7_validation_and_snapshot_scoping(db, http, gate, monkeypatch)
     )
 
     no_report = _seed(db, client_name="No Report Client")
-    no_report.review_status = "approved"
-    db.commit()
     no_report_engagement = db.get(Engagement, no_report.engagement_id)
     assert _generate_integrated(http, no_report_engagement).status_code == 400
     page = http.get(f"/engagements/{no_report_engagement.id}/integrated-reports")
-    assert "No analysis report yet" in page.text
+    assert "Not approved for release" in page.text
 
     first, _ = _run_one(db, gate, monkeypatch, approved=True, client_name="Scope A")
     first_engagement = db.get(Engagement, first.engagement_id)

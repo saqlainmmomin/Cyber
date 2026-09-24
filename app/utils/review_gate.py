@@ -2,35 +2,33 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.assessment import Assessment
-from app.models.report import GapReport
-from app.services.scoring import failed_framework_ids, report_framework_scores
-
-RELEASE_BLOCKED_MESSAGE = "Analysis failed for {names}. Run analysis again before releasing this report."
+from app.services.approved_report import (
+    NOT_RELEASED_MESSAGE,
+    RELEASE_BLOCKED_MESSAGE,
+    build_approved_report,
+)
 
 
 def require_review_approval(assessment_id: str, db: Session) -> Assessment:
-    """Require manager approval before releasing downloadable output."""
+    """Require an active consultant release before serving client output."""
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-    if assessment.review_status != "approved":
-        raise HTTPException(
-            403,
-            "Report not yet approved for release. Complete the review process first.",
-        )
-    report = (
-        db.query(GapReport)
-        .filter(GapReport.assessment_id == assessment_id)
-        .first()
-    )
-    if report:
-        failed = failed_framework_ids(
-            report_framework_scores(report, assessment),
-            assessment.frameworks,
-        )
-        if failed:
-            from app.frameworks.registry import FrameworkRegistry
 
-            names = ", ".join(FrameworkRegistry.get(framework_id).name for framework_id in failed)
-            raise HTTPException(409, RELEASE_BLOCKED_MESSAGE.format(names=names))
+    approved = build_approved_report(db, assessment)
+    if approved.report_id is None:
+        raise HTTPException(404, "No report found. Run analysis first.")
+
+    failed_names = [
+        review.name
+        for review in approved.framework_reviews.values()
+        if review.status == "failed"
+    ]
+    if failed_names:
+        raise HTTPException(
+            409,
+            RELEASE_BLOCKED_MESSAGE.format(names=", ".join(failed_names)),
+        )
+    if not approved.release.released:
+        raise HTTPException(403, NOT_RELEASED_MESSAGE)
     return assessment

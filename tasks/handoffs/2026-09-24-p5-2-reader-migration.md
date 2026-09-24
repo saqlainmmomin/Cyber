@@ -575,3 +575,158 @@ Append a `## Results` section to this file containing:
 - Anything this document got wrong about the current code. **Name it and stop if it forces a design change. Do not pick an alternative.**
 
 Commits and PRs for this task carry **no** `Co-Authored-By: Claude` trailer and no "Generated with Claude Code" footer. Codex cannot commit (its sandbox refuses to write `.git`). Leave the tree uncommitted, and the reviewing session commits on your behalf.
+
+## Results
+
+### Step 0 and baseline
+
+The required Step 0 checks passed:
+
+```text
+32:UNCONFIRMED_ANSWER_SOURCES = ("document", "inferred")
+35:def confirmed_response_clause()
+52:FRAMEWORK_ANALYSIS_FAILED = "failed"
+55:def failed_framework_scores() -> dict
+64:def is_failed_framework_score(entry) -> bool
+68:def failed_framework_ids(framework_scores: dict, framework_ids: list[str]) -> list[str]
+8:RELEASE_BLOCKED_MESSAGE = "Analysis failed for {names}. Run analysis again before releasing this report."
+17:def scoped_findings(db, assessment, *, framework_ids: list[str] | None = None)
+64:def load_desk_review_data(db, assessment)
+8b2d5f7e1c34 (head)
+```
+
+Baseline before implementation: `1 failed, 592 passed, 9 skipped, 211 warnings in 109.89s`; the only failure was the known `tests/test_longitudinal_demo.py::test_scenario_9_rollups_and_integrated_reporting` ordering flake.
+
+### Shipped contract
+
+`app/services/approved_report.py` is the read-only approved view and release-state reader. It exports:
+
+```text
+RELEASE_EVENT = "assessment.released"
+RELEASE_SCHEMA_VERSION = 1
+FRAMEWORK_VIEW_STATUSES = ("scored", "not_scored", "pending_review", "unavailable", "failed")
+PRIORITY_BY_RISK = {"critical": 1, "high": 2, "medium": 3, "low": 4}
+NO_ANALYSIS_MESSAGE = "Run analysis before releasing this report."
+ANALYSIS_RUNNING_MESSAGE = "Analysis is running. Wait for it to finish before releasing this report."
+RELEASE_BLOCKED_MESSAGE = "Analysis failed for {names}. Run analysis again before releasing this report."
+MISSING_CONCLUSIONS_MESSAGE = "{name}: no conclusion was proposed for {count} in-scope requirement(s). Run analysis again."
+AWAITING_DECISION_MESSAGE = "{name}: {count} of {total} in-scope conclusions still need an individual consultant decision."
+NOTHING_IN_SCOPE_MESSAGE = "No requirement is in scope for this assessment. Record the scope before releasing."
+ALREADY_RELEASED_MESSAGE = "This report is already released for the current approved conclusions."
+NOT_RELEASED_MESSAGE = "Report not yet approved for release. Complete the review process first."
+LEGACY_REVIEW_RETIRED = "Assessment-level review has been retired. Approve each conclusion individually on the Conclusions page, then release the report."
+SNAPSHOT_STALE_MESSAGE = "This version was generated before the current release. Generate a new version, then issue it."
+APPROVED_OUTCOME_POINTS = {"compliant": 100, "partially_compliant": 50, "non_compliant": 0}
+DENOMINATOR_EXCLUDED_OUTCOMES = ("not_applicable", "insufficient_evidence")
+```
+
+Signatures shipped: `approved_framework_scores(outcomes: dict[str, str], framework_id: str) -> dict`, `in_scope_requirement_ids(raw: str | None) -> frozenset[str] | None`, `build_approved_report(db: Session, assessment: Assessment) -> ApprovedReport`, `release_state(db: Session, assessment: Assessment) -> ReleaseState`, `is_released(db: Session, assessment: Assessment) -> bool`, `record_release(db: Session, assessment: Assessment, *, actor: str) -> AuditEvent`, `latest_release_event(db: Session, assessment_id: str) -> AuditEvent | None`, and `generated_after(db: Session, snapshot_id: str, event_id: str) -> bool`. `generate_pdf` retains the exact parameter list `report, gap_items, company_name, initiatives, answer_source_map, selected_frameworks, assessment, report_findings`.
+
+Dataclass field lists:
+
+```text
+ApprovedRow: id, conclusion_id, conclusion_version, framework_id, requirement_id,
+requirement_title, chapter, chapter_title, control_reference, compliance_status,
+current_state, gap_description, risk_level, remediation_action, remediation_priority,
+evidence_quote, decision, decided_by, decided_at, remediation_effort, timeline_weeks,
+maturity_level, root_cause_category, evidence_confidence
+FrameworkReview: framework_id, name, in_scope_ids, out_of_scope_ids, missing_ids,
+awaiting_ids, rows, coverage, status, score
+ReleaseState: blockers, releasable, released, stale, release_event_id, released_by, released_at
+RenderReport: id, assessment_id, chapter_scores, framework_scores, executive_summary, generated_at
+ApprovedReport: assessment_id, report_id, generated_at, rows, framework_reviews,
+framework_scores, chapter_scores, summary_text, release
+```
+
+### X1-X13 reader migration
+
+| Reader | What changed |
+|---|---|
+| X1 `reports.get_report` | Uses `ApprovedReport` rows/scores/summary and an approved-only roadmap; initiatives are empty. |
+| X2 `reports.get_report_summary` | Counts approved rows, includes coverage and excluded-outcome counts, and is release-gated. |
+| X3 `reports.get_full_report` | Groups approved rows and returns approved scores and deterministic summary only. |
+| X4 `_download_pdf_response` | Renders `ApprovedReport.render_report()` and approved rows through the unchanged PDF signature. |
+| X5 `pdf_export.generate_pdf` | Removed model imports; added approved coverage, insufficient-evidence, no-estimate timeline, methodology, and conditional A7 copy. Legacy direct `GapReport` golden callers remain compatible. |
+| X6 comparison | Uses approved rows for deltas and approved scored framework entries for framework deltas. |
+| X7 comparable assessments | Uses `is_released`, excluding stale and legacy bulk-approved assessments. |
+| X8 framework display/poll | Shows approved status and coverage; pending review shows progress rather than a percentage. |
+| X9 report tab | Uses approved rows, deterministic summary, release state/banner, coverage, pending/not-scored cards, and only the permitted historical remediation lookup. |
+| X10 framework tab | Counts approved gap-outcome rows per framework. |
+| X11 integrated report | Includes released assessments only and scores from approved framework entries. |
+| X12 integrated issue | Requires every source to be currently released and generated after its release event. |
+| X13 legacy review | Bulk review routes return 410 without writes; the old page redirects to Conclusions; obsolete review schema/filter/page templates are deleted and the frozen finding-card partial remains. |
+
+### Permitted existing tests and scripts
+
+- `tests/test_analysis_pipeline.py` — (d): retired and renamed the old legacy-reader guard to check release readers.
+- `tests/test_conclusion_approval.py` — (c): legacy review success expectations `200 → 410`, with no-cross-write checks retained.
+- `tests/test_correctness_bundle.py` — (a), (b), (d): hand-set release became individual approval/release; release-path `200 → 403` where appropriate; old ₹250 output assertion became no ₹ output; the reader guard was inverted.
+- `tests/test_no_blended_scoring.py` — (b): synthetic report setup now creates consultant-approved Conclusions and records release.
+- `tests/test_pdf_updates.py` — (a), (b), (d), (e): direct decisions/release replaced hand-set approval; approved-derived score literals changed `100%/40%/60% → 0%/50%`; stale issue expectations changed `200 → 403/409` and fresh regeneration is asserted.
+- `tests/test_report_snapshots.py` — (a), (e): direct decisions/release replaced hand-set approval; stale workpaper issue changed `200 → 409` with `SNAPSHOT_STALE_MESSAGE`; release wording changed to “released”.
+- `scripts/seed_test_companies.py` — (a): scope is set through the existing seed session and bulk review is replaced by `POST /release`.
+- `scripts/benchmark_performance.py` — (a): all synthetic a0 requirements remain in scope, pending/rejected Conclusions are approved after findings, and `record_release` replaces hand-set approval.
+- `tests/test_performance_benchmarks.py` — (a): only the permitted a0 revision literal changed `1083 → 1197`.
+- `tests/test_p5_2_reader_migration.py` — new 19-scenario contract suite.
+
+### Verification
+
+New contract suite: `19 passed, 7 warnings in 4.99s`.
+
+Focused migration/regression set: `103 passed, 22 warnings in 20.11s`.
+
+Full `.venv/bin/pytest -q` run: `3 failed, 609 passed, 9 skipped, 218 warnings in 67.75s`. The failures were the documented longitudinal scenario-9 ordering flake and the two expected uncommitted working-tree guards (`test_longitudinal_demo.py::test_scenario_13_protected_surface_is_unchanged` and `test_retention.py::test_scenario_13_only_new_retention_test_file_changes`). The fresh workpaper teardown issue did not appear. `git diff --check`, compilation, the Alembic head, protected-file diff, relationship guard, reader grep/AST guards, and PDF signature checks passed.
+
+The opt-in benchmark run was `8 passed, 1 failed`; its single failure is the handoff inconsistency recorded below.
+
+### Smoke output
+
+Fresh Alembic SQLite + in-process `TestClient`, with DPDPA + ISO scope restricted to 3 + 3:
+
+```text
+PENDING_SUMMARY 403 Report not yet approved for release. Complete the review process first.
+PENDING_RELEASE 409 ["India DPDPA: 3 of 3 in-scope conclusions still need an individual consultant decision.", "ISO 27001: 3 of 3 in-scope conclusions still need an individual consultant decision."]
+RELEASE 200 consultant:Smoke ['coverage', 'gap_report_id', 'manifest', 'schema_version'] ['dpdpa', 'iso27001']
+COVERAGE dpdpa={in_scope: 3, eligible: 3, scored: 3, compliant: 3} iso27001={in_scope: 3, eligible: 3, scored: 3, compliant: 2, partially_compliant: 1}
+PDF_STATUS 200
+PDF_FIRST_30
+CyberAssess
+Multi-Framework Compliance
+Gap Assessment Report
+September 24, 2026
+Smoke Reader
+Frameworks assessed: India DPDPA, ISO 27001
+100% 83%
+Compliant Compliant
+India DPDPA ISO 27001
+6 requirements assessed | 0 gaps identified
+Assessment Areas
+India DPDPA - Breach Notification 0%
+India DPDPA - Obligations of Data Fidu 100%
+India DPDPA - Rights of Data Principal 0%
+India DPDPA - Special Provisions 0%
+India DPDPA - Consent Management (Deta 0%
+India DPDPA - Cross-Border Data Transf 0%
+ISO 27001 - Organizational Controls 83%
+ISO 27001 - People Controls 0%
+CyberAssess | CONFIDENTIAL | Smoke Reader Page 1/9
+ISO 27001 - Physical Controls 0%
+CyberAssess | Executive Dashboard
+0 0 n/a
+Critical Gaps High Risk Gaps Remediation Timeline (not estimated)
+Framework Scores
+India DPDPA 100%
+ISO 27001 83%
+India DPDPA: 3 of 3 in-scope requirements scored; 0 insufficient evidence (excluded from the score, not counted as non-compliant); 0 not applicable.
+ISO 27001: 3 of 3 in-scope requirements scored; 0 insufficient evidence (excluded from the score, not counted as non-compliant); 0 not applicable.
+REOPEN 200 403 Report not yet approved for release. Complete the review process first. True
+```
+
+The release JSON was `{"status":"released","release_event_id":"<uuid>"}`. The recorded event was `assessment.released`, actor `consultant:Smoke`, with metadata keys `coverage`, `gap_report_id`, `manifest`, and `schema_version`. Browser automation was unavailable, so no browser check is claimed.
+
+### Discrepancies and flags
+
+1. The literal D-P5-2-R command `grep -rnE "review_status\\s*(==|!=)" app/` also matches unrelated pre-existing `desk_review_status` comparisons in `web.py` and `retention.py`. The permitted guard tests use `\\breview_status\\b` to express the intended field boundary; no desk-review behavior was changed.
+2. The benchmark instructions require approving pending/rejected a0 Conclusions after the existing finding loop so findings do not change, while unchanged `test_a0_product_shapes` requires persisted findings to equal every approved gap outcome. Following the handoff produces 95 persisted findings versus 171 approved gap outcomes. I did not invent a workaround or change that assertion beyond the explicitly permitted `1083 → 1197` literal; the opt-in failure is left flagged for review.
+
+The repository remains uncommitted as requested. No schema migration, protected analysis/pipeline/model/Alembic change, or commit was made.

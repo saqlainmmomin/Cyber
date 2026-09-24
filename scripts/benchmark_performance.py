@@ -46,7 +46,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.models.initiative import Initiative
 from app.routers import analysis
-from app.services import conclusion_review, findings, report_content, workpaper
+from app.services import approved_report, conclusion_review, findings, report_content, workpaper
 from app.services.evidence import map_evidence
 from app.utils import pdf_export
 
@@ -547,6 +547,14 @@ def _patch_analysis(items: dict[str, list[dict]]):
 
 def _seed_a0(db: Session, clock: _SeedClock, a0: Assessment) -> int:
     items = _build_analysis_items()
+    a0.applicable_requirements = json.dumps(
+        sorted(
+            item["requirement_id"]
+            for framework_items in items.values()
+            for item in framework_items
+        )
+    )
+    db.flush()
     patches = _patch_analysis(items)
     with patches[0], patches[1], patches[2], patches[3], patches[4]:
         analysis.trigger_analysis(a0.id, db)
@@ -625,6 +633,24 @@ def _seed_a0(db: Session, clock: _SeedClock, a0: Assessment) -> int:
                 notes=None,
                 actor=reviewer,
                 now=BASE,
+            )
+    db.commit()
+
+    for framework_id, requirement_id in ordered_ids:
+        conclusion = conclusions_by_key[(framework_id, requirement_id)]
+        card = conclusion_review.conclusion_card(
+            db,
+            assessment_id=a0.id,
+            conclusion_id=conclusion.id,
+        )
+        if card.state in ("pending", "rejected"):
+            conclusion_review.decide(
+                db,
+                assessment_id=a0.id,
+                conclusion_id=conclusion.id,
+                action="approved",
+                expected_version=conclusion.version,
+                actor=reviewer,
             )
     db.commit()
 
@@ -715,7 +741,7 @@ def seed_benchmark_dataset(bench_engine) -> SeedHandle:
             fillers,
             PLAN_COUNTS["conclusion_revisions"] - actual_a0_revisions,
         )
-        a0.review_status = "approved"
+        approved_report.record_release(db, a0, actor="consultant:Bench Reviewer")
         db.commit()
         counts = seed_counts(db)
         counts["a0_conclusion_revisions"] = actual_a0_revisions

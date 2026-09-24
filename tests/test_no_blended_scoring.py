@@ -5,6 +5,7 @@ import io
 import json
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pdfplumber
@@ -25,6 +26,7 @@ from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
 from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
+from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.report import GapItem, GapReport
 from app.routers import analysis as analysis_router
 from app.routers import reports as reports_router
@@ -32,6 +34,7 @@ from app.routers.web import router as web_router
 from app.routers.web import templates
 from app.schemas.report import ChapterScore
 from app.services.scoring import compute_framework_scores, namespaced_domain_scores
+from app.services import approved_report
 from app.config import settings
 
 
@@ -130,6 +133,38 @@ def _report(db_session, assessment, framework_scores, *, overall_score=0.0):
     db_session.add(report)
     db_session.commit()
     db_session.refresh(report)
+    for framework_id, score in framework_scores.items():
+        outcome = "compliant" if score.get("overall_score", 0) >= 99 else "partially_compliant"
+        for control in FrameworkRegistry.get(framework_id).all_controls():
+            conclusion = Conclusion(
+                assessment_id=assessment.id,
+                requirement_id=control.id,
+                framework_id=framework_id,
+                outcome=outcome,
+                rationale="Synthetic rationale",
+                evidence_summary="Synthetic evidence",
+                gaps_identified="Synthetic gap",
+                risk_level="medium",
+                recommended_action="Synthetic action",
+                ai_proposed=False,
+                version=2,
+            )
+            db_session.add(conclusion)
+            db_session.flush()
+            db_session.add(
+                ConclusionRevision(
+                    conclusion_id=conclusion.id,
+                    actor="consultant:Priya",
+                    action="approved",
+                    previous_outcome=outcome,
+                    previous_rationale="Synthetic rationale",
+                    citations_json="[]",
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
+    db_session.commit()
+    approved_report.record_release(db_session, assessment, actor="consultant:Priya")
+    db_session.commit()
     return report
 
 

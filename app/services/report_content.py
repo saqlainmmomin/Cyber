@@ -15,10 +15,9 @@ from app.models.assessment_pack import AssessmentPack
 from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.evidence import EvidenceVersion
-from app.models.report import GapReport
 from app.services import findings as finding_service
 from app.services import report_snapshots
-from app.services.scoring import failed_framework_ids, report_framework_scores
+from app.services.approved_report import build_approved_report, is_released
 from app.services.workpaper import anchor_for
 
 SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -281,22 +280,18 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
 
     for assessment in assessments:
         label = _assessment_label(assessment)
-        if assessment.review_status != "approved":
+        if not is_released(db, assessment):
             excluded.append(
                 ExcludedAssessment(assessment.id, label, NOT_RELEASED)
             )
             continue
-        report = (
-            db.query(GapReport)
-            .filter(GapReport.assessment_id == assessment.id)
-            .first()
-        )
-        if report is None:
+        approved = build_approved_report(db, assessment)
+        if approved.report_id is None:
             excluded.append(ExcludedAssessment(assessment.id, label, NO_REPORT))
             continue
-        if failed_framework_ids(
-            report_framework_scores(report, assessment),
-            assessment.frameworks,
+        if any(
+            entry.get("status") == "failed"
+            for entry in approved.framework_scores.values()
         ):
             excluded.append(ExcludedAssessment(assessment.id, label, ANALYSIS_INCOMPLETE))
             continue
@@ -311,11 +306,10 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
             (_framework_name(framework_id), packs.get(framework_id, "not recorded"))
             for framework_id in assessment.frameworks
         ]
-        framework_scores = report_framework_scores(report, assessment)
         scores = []
         for framework_id in assessment.frameworks:
-            score_data = framework_scores.get(framework_id)
-            if not score_data or score_data.get("overall_score") is None:
+            score_data = approved.framework_scores.get(framework_id, {})
+            if score_data.get("status") != "scored":
                 continue
             scores.append(
                 ScoreLine(
@@ -329,7 +323,7 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
                 assessment_id=assessment.id,
                 label=label,
                 created_at=assessment.created_at,
-                analysed_at=report.generated_at,
+                analysed_at=approved.generated_at,
                 frameworks=frameworks,
                 scope_label=_scope_label(assessment),
                 scores=scores,

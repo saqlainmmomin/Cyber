@@ -97,7 +97,7 @@ def test_seed_counts_and_a0_shape(bench):
             .join(Conclusion, Conclusion.id == ConclusionRevision.conclusion_id)
             .filter(Conclusion.assessment_id == handle.a0_id)
             .count()
-            == 1083
+            == 1197
         )
         assert (
             db.query(AnalysisRun)

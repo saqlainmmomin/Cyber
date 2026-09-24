@@ -54,6 +54,10 @@ INTEGRITY_MESSAGE = (
     "The stored file for this version is missing or does not match its recorded "
     "hash. Nothing was issued."
 )
+SNAPSHOT_STALE_MESSAGE = (
+    "This version was generated before the current release. Generate a new version, "
+    "then issue it."
+)
 
 
 class SnapshotError(Exception):
@@ -321,6 +325,30 @@ def generated_event(db: Session, snapshot_id: str) -> dict:
     if not isinstance(metadata, dict):
         raise SnapshotIntegrityError(INTEGRITY_MESSAGE)
     return metadata
+
+
+def generated_after(db: Session, snapshot_id: str, event_id: str) -> bool:
+    """Return whether a snapshot was generated after the supplied audit event."""
+    generated_rowid = db.execute(
+        select(literal_column("audit_events.rowid"))
+        .where(
+            AuditEvent.entity_type == AUDIT_ENTITY_TYPE,
+            AuditEvent.entity_id == snapshot_id,
+            AuditEvent.action == GENERATED_ACTION,
+        )
+        .order_by(literal_column("audit_events.rowid").desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    release_rowid = db.execute(
+        select(literal_column("audit_events.rowid")).where(
+            AuditEvent.id == event_id,
+        )
+    ).scalar_one_or_none()
+    return (
+        generated_rowid is not None
+        and release_rowid is not None
+        and generated_rowid > release_rowid
+    )
 
 
 def read_snapshot_bytes(db: Session, snapshot: ReportSnapshot) -> bytes:
