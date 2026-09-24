@@ -10,6 +10,18 @@
   </div>
 </div>
 
+<input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="mb-6 w-full max-w-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+
+<section class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Retention</h2>
+  <form class="mt-3" data-retention-form hx-post="/api/clients/{{ client.id }}/retention" hx-include="#reviewer-name">
+    <label for="retention-years" class="block text-sm text-gray-600 dark:text-gray-300">Retention period in years</label>
+    <input id="retention-years" type="number" name="retention_years" min="1" max="50" value="{{ client.retention_years }}" class="mt-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm">
+    <button type="submit" class="ml-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Save retention</button>
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p>
+  </form>
+</section>
+
 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
   <div>
     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ client.name }}</h1>
@@ -35,5 +47,47 @@
   </div>
   {% set client_id = client.id %}
   {% include "partials/engagement_list.html" %}
+</section>
+
+<section class="mt-8">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Archived engagements</h2>
+  {% if retention_view.archived %}
+  <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+    {% for row in retention_view.archived %}
+    <li data-archived-engagement id="archived-{{ row.engagement_id }}" class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
+      <a href="/engagements/{{ row.engagement_id }}" class="font-medium text-brand hover:underline">{{ row.name }}</a>
+      {% if row.archived_at %}<span class="ml-2">Archived {{ row.archived_at.strftime('%d %b %Y') }}</span>{% endif %}
+      {% if row.elapsed %}<span class="ml-2">Eligible for purge now</span>
+      {% elif row.eligible_at %}<span class="ml-2">Eligible for purge from {{ row.eligible_at.strftime('%d %b %Y') }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">No archived engagements.</p>
+  {% endif %}
+</section>
+
+<section class="mt-8">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Purge history</h2>
+  {% if retention_view.purges %}
+  <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+    {% for row in retention_view.purges %}
+    <li data-purge-record class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
+      <span class="font-medium">{{ row.engagement_name }}</span>
+      <span class="ml-2">Purged {{ row.purged_at.strftime('%d %b %Y') }} by {{ row.purged_by_display }}</span>
+      {% if row.blobs_removed %}
+      <span class="ml-2">Files removed</span>
+      {% else %}
+      <span class="ml-2">Files pending removal</span>
+      <form class="mt-3" data-purge-complete-control hx-post="/api/engagements/{{ row.engagement_id }}/purge/complete" hx-include="#reviewer-name">
+        <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">Finish removing files</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">No engagements have been purged.</p>
+  {% endif %}
 </section>
 {% endblock %}

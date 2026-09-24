@@ -1,0 +1,29 @@
+<div class="mt-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="mb-4 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+  {% if not retention.archived %}
+  <div data-retention-panel>
+    <p class="text-sm text-gray-600 dark:text-gray-300">Retention: {{ retention.client_retention_years }} years after archive (client setting)</p>
+    <form class="mt-4" data-archive-control hx-post="/api/engagements/{{ engagement.id }}/archive" hx-include="#reviewer-name" hx-confirm="Archive this engagement? It becomes read-only and leaves the portfolio views. You can unarchive it later.">
+      <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Archive engagement</button>
+    </form>
+  </div>
+  {% else %}
+  <div data-archived-banner class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <p class="font-medium">This engagement is archived and read-only.</p>
+    {% if retention.record %}
+    <p class="mt-1">Archived on {{ retention.record.archived_at.strftime('%d %b %Y') }} by {{ retention.archived_by_display }}.</p>
+    {% if retention.eligible_at %}
+    <p class="mt-1">Eligible for permanent purge on or after {{ retention.eligible_at.strftime('%d %b %Y') }}.</p>
+    {% else %}
+    <p class="mt-1">Retention setting is not valid.</p>
+    {% endif %}
+    {% else %}
+    <p class="mt-1">No archive record was found.</p>
+    {% endif %}
+  </div>
+  <form class="mt-4" data-unarchive-control hx-post="/api/engagements/{{ engagement.id }}/unarchive" hx-include="#reviewer-name" hx-confirm="Unarchive this engagement? It becomes editable again, and its retention period restarts the next time it is archived.">
+    <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200">Unarchive engagement</button>
+  </form>
+  <a data-purge-preview-link href="/engagements/{{ engagement.id }}/purge" class="mt-3 inline-block text-sm font-medium text-red-700 hover:underline">Review permanent purge →</a>
+  {% endif %}
+</div>

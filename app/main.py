@@ -4,7 +4,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +26,7 @@ from app.routers import (
     questionnaire,
     reports,
     review,
+    retention as retention_router,
     snapshots,
     web,
 )
@@ -127,26 +128,29 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
 
+_ARCHIVE_GUARD = [Depends(retention_router.archive_write_guard)]
+
 # API routes
-app.include_router(assessments.router)
-app.include_router(questionnaire.router)
-app.include_router(documents.router)
-app.include_router(evidence.router)
-app.include_router(analysis.router)
-app.include_router(reports.router)
-app.include_router(reports.comparison_router)
-app.include_router(desk_review.router)
-app.include_router(review.router)
-app.include_router(conclusions.router)
-app.include_router(findings.router)
-app.include_router(snapshots.router)
-app.include_router(integrated_reports.router)
+app.include_router(assessments.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(questionnaire.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(documents.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(evidence.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(analysis.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(reports.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(reports.comparison_router, dependencies=_ARCHIVE_GUARD)
+app.include_router(desk_review.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(review.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(conclusions.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(findings.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(snapshots.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(retention_router.router)
 
 # Web portal routes
-app.include_router(aws.router)
-app.include_router(evidence_reuse.router)
-app.include_router(magic.router)
-app.include_router(web.router)
+app.include_router(aws.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(evidence_reuse.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(magic.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(web.router, dependencies=_ARCHIVE_GUARD)
 
 
 @app.get("/login", include_in_schema=False)
