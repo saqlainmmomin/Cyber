@@ -3,6 +3,7 @@
 import json
 import logging
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
@@ -36,6 +37,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services import (
     evidence as evidence_service,
     findings as finding_service,
+    remediation_rollup,
     report_content,
     report_snapshots,
     workpaper,
@@ -384,6 +386,31 @@ def integrated_reports_page(
             "data": data,
             "rows": rows,
             "reviewer_name": reviewer_name,
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/remediation", response_class=HTMLResponse)
+def remediation_tracker_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if not engagement:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    rollup = remediation_rollup.engagement_rollup(db, engagement)
+    return templates.TemplateResponse(
+        "pages/remediation_tracker.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "rollup": rollup,
+            "today": datetime.now(timezone.utc).date(),
         },
     )
 
@@ -1898,28 +1925,7 @@ def report_summary(
 
     has_dpdpa = "dpdpa" in assessment.frameworks
 
-    applicable_gap_items = [
-        item for item in gap_items if item.compliance_status != "not_applicable"
-    ]
-    remediation_counts = {
-        "open": sum(
-            1 for item in applicable_gap_items
-            if (item.remediation_status or "open") == "open"
-        ),
-        "in_progress": sum(
-            1 for item in applicable_gap_items
-            if item.remediation_status == "in_progress"
-        ),
-        "closed": sum(
-            1 for item in applicable_gap_items
-            if item.remediation_status == "closed"
-        ),
-        "accepted_risk": sum(
-            1 for item in applicable_gap_items
-            if item.remediation_status == "accepted_risk"
-        ),
-        "total": len(applicable_gap_items),
-    }
+    remediation_counts = remediation_rollup.assessment_action_counts(db, assessment_id)
 
     comparable_assessments = (
         db.query(Assessment)

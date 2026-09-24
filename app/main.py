@@ -22,7 +22,6 @@ from app.routers import (
     integrated_reports,
     magic,
     questionnaire,
-    remediation,
     reports,
     review,
     snapshots,
@@ -135,7 +134,6 @@ app.include_router(analysis.router)
 app.include_router(reports.router)
 app.include_router(reports.comparison_router)
 app.include_router(desk_review.router)
-app.include_router(remediation.router)
 app.include_router(review.router)
 app.include_router(conclusions.router)
 app.include_router(findings.router)

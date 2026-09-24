@@ -605,10 +605,10 @@ def test_scenario_4_action_state_machine(
 ):
     """Scenario 4: the P3-1 state machine permits only open and in-progress reversal."""
     assert findings.ACTION_TRANSITIONS == {
-        "open": ("in_progress",),
-        "in_progress": ("open",),
-        "closed": (),
-        "verified": (),
+        "open": ("in_progress", "closed"),
+        "in_progress": ("open", "closed"),
+        "closed": ("verified", "in_progress"),
+        "verified": ("in_progress",),
     }
     assert findings.CLOSURE_STATUSES == ("closed", "verified")
     assert set(findings.ACTION_STATUSES) == set(migrate_legacy.ACTION_STATUSES)
@@ -1073,6 +1073,9 @@ def test_scenario_11_structural_guards():
         ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions"),
         ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/status"),
         ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/update"),
+        ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/close"),
+        ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/verify"),
+        ("POST", "/api/assessments/{assessment_id}/findings/{finding_id}/actions/{action_id}/reopen"),
     }
     actual = {
         (method, route.path)

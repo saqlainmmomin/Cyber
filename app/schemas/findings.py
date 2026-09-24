@@ -40,3 +40,22 @@ class ActionUpdateIn(BaseModel):
     expected_history_length: int
     notes: str | None = None
     reviewer_name: str | None = None
+
+
+class ActionCloseIn(BaseModel):
+    evidence_version_id: str | None = None
+    expected_history_length: int
+    notes: str | None = None
+    reviewer_name: str | None = None
+
+
+class ActionVerifyIn(BaseModel):
+    expected_history_length: int
+    notes: str | None = None
+    reviewer_name: str | None = None
+
+
+class ActionReopenIn(BaseModel):
+    expected_history_length: int
+    notes: str | None = None
+    reviewer_name: str | None = None

@@ -1,9 +1,9 @@
-"""Findings and Actions (P3-1): one Finding per individually approved gap Conclusion, and append-only Action history in actions.history_json. Never commits."""
+"""Findings and Actions (P3-1, P3-4): one Finding per individually approved gap Conclusion, append-only Action history in actions.history_json, evidence-backed closure with separate verification, and a Finding status derived from its Actions. Never commits."""
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 
 from sqlalchemy import literal_column, select, update
@@ -12,8 +12,10 @@ from sqlalchemy.orm import Session
 from app.models.action import Action
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
+from app.models.evidence import Evidence, EvidenceVersion
 from app.models.finding import Finding
 from app.services import conclusion_review
+from app.services import evidence as evidence_service
 from app.services.analysis_pipeline import HUMAN_DECISION_ACTIONS
 from app.services.conclusion_review import (
     GAP_OUTCOMES,
@@ -28,17 +30,30 @@ NEW_FINDING_STATUS = "open"
 ACTION_STATUSES = ("open", "in_progress", "closed", "verified")
 NEW_ACTION_STATUS = "open"
 ACTION_TRANSITIONS = {
-    "open": ("in_progress",),
-    "in_progress": ("open",),
-    "closed": (),
-    "verified": (),
+    "open": ("in_progress", "closed"),
+    "in_progress": ("open", "closed"),
+    "closed": ("verified", "in_progress"),
+    "verified": ("in_progress",),
 }
 CLOSURE_STATUSES = ("closed", "verified")
+GENERIC_STATUS_TARGETS = ("open", "in_progress")
+ACTION_STATUS_LABELS = {
+    "open": "Open",
+    "in_progress": "In progress",
+    "closed": "Closed, awaiting verification",
+    "verified": "Closed and verified",
+}
+FINDING_STATUS_LABELS = {
+    "open": "Open",
+    "in_progress": "In progress",
+    "resolved": "Resolved",
+    "accepted_risk": "Accepted risk",
+}
 ELIGIBLE_STATES = ("approved", "edited")
 PRIORITIES = (1, 2, 3, 4)
 PRIORITY_BY_SEVERITY = {"critical": 1, "high": 1, "medium": 2, "low": 3}
 HISTORY_KEYS = ("actor", "action", "timestamp", "notes", "changes")
-HISTORY_ACTIONS = ("created", "status_changed", "updated")
+HISTORY_ACTIONS = ("created", "status_changed", "updated", "closed", "verified", "reopened")
 LEGACY_HISTORY_ACTION = "imported"
 TRACKED_FIELDS = ("title", "owner", "target_date")
 HISTORY_LABELS = {
@@ -46,6 +61,9 @@ HISTORY_LABELS = {
     "status_changed": "Status changed",
     "updated": "Details updated",
     "imported": "Imported from legacy remediation",
+    "closed": "Closed with evidence",
+    "verified": "Closure verified",
+    "reopened": "Reopened",
 }
 MAX_TITLE = 255
 MAX_OWNER = 255
@@ -59,11 +77,28 @@ LEGACY_BULK = "This conclusion has a legacy bulk approval. Reopen and approve it
 NO_GAP = "Only a conclusion with a gap (partially compliant, non-compliant or insufficient evidence) can become a finding."
 DUPLICATE = "A finding already exists for this conclusion."
 STALE_ACTION = "This action changed since you loaded the page. Reload and try again. Nothing was saved."
-CLOSURE_RESERVED = "Closing or verifying an action requires closure evidence and is not available yet."
+CLOSURE_RESERVED = "Closing and verifying have their own steps: close with closure evidence, then verify."
+NOT_CLOSABLE = "Only an open or in-progress action can be closed."
+CLOSURE_EVIDENCE_REQUIRED = "Choose the closure evidence before closing this action."
+CLOSURE_EVIDENCE_INVALID = "Closure evidence must be an active, intact evidence version of this assessment."
+NOT_VERIFIABLE = "Only a closed action can be verified."
+LEGACY_CLOSURE = "This action was closed without closure evidence. Reopen it and close it again with evidence before verifying."
+CLOSURE_EVIDENCE_CHANGED = "The closure evidence is missing, changed or no longer active. Reopen the action and close it again with current evidence."
+NOT_REOPENABLE = "Only a closed or verified action can be reopened."
+REOPEN_REASON_REQUIRED = "Give a reason for reopening this action."
 TERMINAL = "This action is closed and cannot be changed here."
 UNREADABLE_HISTORY = "This action's history could not be read. Nothing was saved."
 NO_CHANGES = "No changes to save."
 TITLE_TOO_LONG = "Titles must be 255 characters or fewer."
+CLOSURE_HISTORY_KEYS = HISTORY_KEYS + ("evidence",)
+EVIDENCE_KEYS = (
+    "evidence_id",
+    "evidence_version_id",
+    "version_number",
+    "sha256",
+    "filename",
+)
+CLOSURE_VERSION_STATUSES = ("active", "superseded")
 
 
 class FindingError(Exception):
@@ -95,6 +130,7 @@ class HistoryEntryView:
     timestamp: str
     notes: str | None
     changes: dict
+    evidence: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -105,6 +141,12 @@ class ActionView:
     history_length: int
     allowed_statuses: tuple[str, ...]
     editable: bool
+    status_label: str = ""
+    closable: bool = False
+    verifiable: bool = False
+    legacy_closure: bool = False
+    reopenable: bool = False
+    closure_evidence: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -116,6 +158,8 @@ class FindingView:
     source_approved: bool
     workpaper_href: str | None
     actions: list[ActionView]
+    status_label: str = ""
+    closure_options: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -258,6 +302,206 @@ def _append(
         raise FindingConflict(STALE_ACTION)
     db.expire(action)
     return action
+
+
+def _sync_finding_status(db: Session, finding: Finding) -> None:
+    if finding.status == "accepted_risk":
+        return
+    statuses = db.execute(
+        select(Action.status).where(Action.finding_id == finding.id)
+    ).scalars().all()
+    if statuses and all(status == "verified" for status in statuses):
+        derived = "resolved"
+    elif any(status != "open" for status in statuses):
+        derived = "in_progress"
+    else:
+        derived = "open"
+    if finding.status != derived:
+        finding.status = derived
+        db.flush()
+
+
+def closure_on_record(history: list[dict]) -> dict | None:
+    evidence = None
+    for entry in history:
+        action = entry.get("action")
+        if action == "reopened":
+            evidence = None
+        elif action == "closed":
+            candidate = entry.get("evidence")
+            evidence = (
+                dict(candidate)
+                if isinstance(candidate, dict) and set(candidate) == set(EVIDENCE_KEYS)
+                else None
+            )
+    return evidence
+
+
+def _eligible_closure_evidence(
+    db: Session, assessment_id: str, evidence_version_id: str
+) -> dict | None:
+    for evidence, version in evidence_service.active_versions_in_scope(db, assessment_id):
+        if version.id != evidence_version_id:
+            continue
+        if evidence.status != "active" or version.status != "active":
+            return None
+        if not evidence_service.verify_version(db, version.id):
+            return None
+        return {
+            "evidence_id": evidence.id,
+            "evidence_version_id": version.id,
+            "version_number": version.version_number,
+            "sha256": version.file_hash_sha256,
+            "filename": version.original_filename,
+        }
+    return None
+
+
+def _closure_evidence_intact(db: Session, evidence: dict) -> bool:
+    version = db.get(EvidenceVersion, evidence["evidence_version_id"])
+    if version is None or version.evidence_id != evidence["evidence_id"]:
+        return False
+    if version.file_hash_sha256 != evidence["sha256"]:
+        return False
+    if not evidence_service.verify_version(db, version.id):
+        return False
+    if version.status not in CLOSURE_VERSION_STATUSES:
+        return False
+    parent = db.get(Evidence, version.evidence_id)
+    return parent is not None and parent.status == "active"
+
+
+def close_action(
+    db: Session,
+    *,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    evidence_version_id: str | None,
+    expected_history_length: int,
+    notes: str | None,
+    actor: str,
+    now: datetime | None = None,
+) -> Action:
+    finding = _finding(db, assessment_id, finding_id)
+    action = _action(db, finding, action_id)
+
+    def _build():
+        current = action.status
+        if "closed" not in ACTION_TRANSITIONS.get(current, ()):
+            raise InvalidFindingRequest(NOT_CLOSABLE)
+        selected_id = _text(evidence_version_id)
+        if selected_id is None:
+            raise InvalidFindingRequest(CLOSURE_EVIDENCE_REQUIRED)
+        evidence = _eligible_closure_evidence(db, assessment_id, selected_id)
+        if evidence is None:
+            raise InvalidFindingRequest(CLOSURE_EVIDENCE_INVALID)
+        entry_notes = _notes(notes)
+        entry = _entry(
+            actor=actor,
+            action="closed",
+            notes=entry_notes,
+            changes={"status": {"from": current, "to": "closed"}},
+            now=now,
+        )
+        entry["evidence"] = evidence
+        return entry, {"status": "closed"}
+
+    result = _append(
+        db,
+        action,
+        expected_history_length=expected_history_length,
+        build_entry=_build,
+    )
+    _sync_finding_status(db, finding)
+    return result
+
+
+def verify_action(
+    db: Session,
+    *,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    expected_history_length: int,
+    notes: str | None,
+    actor: str,
+    now: datetime | None = None,
+) -> Action:
+    finding = _finding(db, assessment_id, finding_id)
+    action = _action(db, finding, action_id)
+
+    def _build():
+        current = action.status
+        if "verified" not in ACTION_TRANSITIONS.get(current, ()):
+            raise InvalidFindingRequest(NOT_VERIFIABLE)
+        history = load_history(action.history_json)
+        evidence = closure_on_record(history)
+        if evidence is None:
+            raise InvalidFindingRequest(LEGACY_CLOSURE)
+        if not _closure_evidence_intact(db, evidence):
+            raise InvalidFindingRequest(CLOSURE_EVIDENCE_CHANGED)
+        entry_notes = _notes(notes)
+        entry = _entry(
+            actor=actor,
+            action="verified",
+            notes=entry_notes,
+            changes={"status": {"from": "closed", "to": "verified"}},
+            now=now,
+        )
+        entry["evidence"] = dict(evidence)
+        return entry, {"status": "verified"}
+
+    result = _append(
+        db,
+        action,
+        expected_history_length=expected_history_length,
+        build_entry=_build,
+    )
+    _sync_finding_status(db, finding)
+    return result
+
+
+def reopen_action(
+    db: Session,
+    *,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    expected_history_length: int,
+    notes: str | None,
+    actor: str,
+    now: datetime | None = None,
+) -> Action:
+    finding = _finding(db, assessment_id, finding_id)
+    action = _action(db, finding, action_id)
+
+    def _build():
+        current = action.status
+        if current not in CLOSURE_STATUSES:
+            raise InvalidFindingRequest(NOT_REOPENABLE)
+        if _text(notes) is None:
+            raise InvalidFindingRequest(REOPEN_REASON_REQUIRED)
+        entry_notes = _notes(notes)
+        return (
+            _entry(
+                actor=actor,
+                action="reopened",
+                notes=entry_notes,
+                changes={"status": {"from": current, "to": "in_progress"}},
+                now=now,
+            ),
+            {"status": "in_progress"},
+        )
+
+    result = _append(
+        db,
+        action,
+        expected_history_length=expected_history_length,
+        build_entry=_build,
+    )
+    _sync_finding_status(db, finding)
+    return result
 
 
 def create_finding(
@@ -415,6 +659,7 @@ def add_action(
     )
     db.add(action)
     db.flush()
+    _sync_finding_status(db, finding)
     return action
 
 
@@ -440,6 +685,8 @@ def change_action_status(
             raise InvalidFindingRequest("Unknown action status.")
         if status in CLOSURE_STATUSES:
             raise InvalidFindingRequest(CLOSURE_RESERVED)
+        if status not in GENERIC_STATUS_TARGETS:
+            raise InvalidFindingRequest(CLOSURE_RESERVED)
         if status not in ACTION_TRANSITIONS.get(current, ()):
             raise InvalidFindingRequest(
                 f"An action cannot move from {current} to {status}."
@@ -456,12 +703,14 @@ def change_action_status(
             {"status": status},
         )
 
-    return _append(
+    result = _append(
         db,
         action,
         expected_history_length=expected_history_length,
         build_entry=_build,
     )
+    _sync_finding_status(db, finding)
+    return result
 
 
 def update_action(
@@ -537,6 +786,7 @@ def _action_view(action: Action) -> ActionView:
             history_length=0,
             allowed_statuses=(),
             editable=False,
+            status_label=ACTION_STATUS_LABELS.get(action.status, action.status),
         )
     history = [
         HistoryEntryView(
@@ -549,21 +799,51 @@ def _action_view(action: Action) -> ActionView:
             timestamp=str(entry.get("timestamp", "")),
             notes=entry.get("notes"),
             changes=entry.get("changes") or {},
+            evidence=entry.get("evidence") if isinstance(entry.get("evidence"), dict) else None,
         )
         for sequence, entry in enumerate(raw_history, start=1)
     ]
+    closure_evidence = (
+        closure_on_record(raw_history) if action.status in CLOSURE_STATUSES else None
+    )
+    readable_statuses = (
+        ()
+        if action.status in CLOSURE_STATUSES
+        else tuple(
+            target
+            for target in ACTION_TRANSITIONS.get(action.status, ())
+            if target in GENERIC_STATUS_TARGETS
+        )
+    )
     return ActionView(
         action=action,
         history=history,
         history_readable=True,
         history_length=len(history),
-        allowed_statuses=ACTION_TRANSITIONS.get(action.status, ()),
+        allowed_statuses=readable_statuses,
         editable=action.status in ("open", "in_progress"),
+        status_label=ACTION_STATUS_LABELS.get(action.status, action.status),
+        closable=action.status in ("open", "in_progress"),
+        verifiable=action.status == "closed" and closure_evidence is not None,
+        legacy_closure=action.status == "closed" and closure_evidence is None,
+        reopenable=action.status in CLOSURE_STATUSES,
+        closure_evidence=closure_evidence,
     )
 
 
 def findings_page(db: Session, assessment_id: str) -> FindingsPage:
     cards = conclusion_review.conclusion_cards(db, assessment_id)
+    closure_options = [
+        {
+            "evidence_version_id": version.id,
+            "evidence_id": evidence.id,
+            "label": (
+                f"{version.original_filename} v{version.version_number} "
+                f"({version.file_hash_sha256[:12]})"
+            ),
+        }
+        for evidence, version in evidence_service.active_versions_in_scope(db, assessment_id)
+    ]
     finding_rows = db.execute(
         select(Finding)
         .where(Finding.assessment_id == assessment_id)
@@ -642,6 +922,8 @@ def findings_page(db: Session, assessment_id: str) -> FindingsPage:
                 source_approved=card is not None and card.state in ELIGIBLE_STATES,
                 workpaper_href=href,
                 actions=[_action_view(action) for action in actions_by_finding[finding.id]],
+                status_label=FINDING_STATUS_LABELS.get(finding.status, finding.status),
+                closure_options=closure_options,
             )
         )
     return FindingsPage(eligible=eligible, findings=views)
