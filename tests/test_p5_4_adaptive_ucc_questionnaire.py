@@ -952,7 +952,7 @@ def test_scenario_13_structural_guards(db):
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert protected.stdout == ""
     analysis_diff = subprocess.run([
-        "git", "diff", "--", "app/routers/analysis.py",
+        "git", "diff", "main", "--", "app/routers/analysis.py",
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert analysis_diff.stdout.count('+            "answer_source": r.answer_source,') == 1
     assert '-            "answer_source": r.answer_source,' not in analysis_diff.stdout
