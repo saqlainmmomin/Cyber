@@ -21,3 +21,7 @@ Confirm the prompt, or add `--force` for an unattended recovery. Before any live
 overwritten, restore moves the current database and uploads into a sibling
 `pre-restore-<timestamp>/` safety copy. If restored SQLite integrity or upload file-count
 verification fails, it automatically puts that safety copy back.
+
+## See also
+
+See [retention, archive, and purge](retention-purge.md) for the manual two-phase purge procedure and pending-file recovery.

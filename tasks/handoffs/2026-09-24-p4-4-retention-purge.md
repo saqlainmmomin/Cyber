@@ -447,6 +447,38 @@ PURGE_BLOBS_REMOVED_EVENT = "engagement.purge_blobs_removed"
 RETENTION_CHANGED_EVENT = "client.retention_changed"
 EVENT_SCHEMA_VERSION = 1
 COMPLETION_SCRIPT_ACTOR = "system:purge-completion"
+ENGAGEMENT_NOT_FOUND = "Engagement not found"
+CLIENT_NOT_FOUND = "Client not found"
+ARCHIVED_READ_ONLY = "This engagement is archived and read-only. Unarchive it to make changes."
+ALREADY_ARCHIVED = "This engagement is already archived."
+NOT_ARCHIVABLE = "Only an active or closed engagement can be archived."
+ARCHIVE_IN_FLIGHT = "An analysis or desk review is still running in this engagement. Wait for it to finish, then archive."
+ARCHIVE_CONFLICT = "This engagement changed while you were archiving it. Reload and try again."
+NOT_ARCHIVED = "This engagement is not archived."
+UNARCHIVE_CONFLICT = "This engagement changed while you were restoring it. Reload and try again."
+RETENTION_YEARS_INVALID = "Retention must be a whole number of years from 1 to 50."
+RETENTION_CONFLICT = "The retention of this client changed while you were editing it. Reload and try again."
+CONFIRM_MISMATCH = "Type the engagement name exactly as shown to confirm permanent deletion."
+ALREADY_PURGED = "This engagement has already been purged."
+PURGE_FAILED = "The purge could not be completed. Nothing was deleted."
+PURGE_BLOBS_PENDING = "The records of this engagement were permanently deleted, but some stored files could not be removed yet. Finish the purge from the client page or run scripts/complete_purges.py."
+NO_PENDING_PURGE = "There is no unfinished purge for this engagement."
+PURGE_LEDGER_INCONSISTENT = "The purge record for this engagement does not match the database. Nothing was removed."
+PURGE_LEDGER_INVALID = "The purge record for this engagement is not valid. Nothing was removed."
+REASON_MESSAGES = {
+    "not_archived": "Only an archived engagement can be purged.",
+    "archive_record_missing": "No archive record was found for this engagement. Unarchive it and archive it again to start its retention period.",
+    "retention_invalid": "The retention setting of this client is not valid. Set a retention period from 1 to 50 years first.",
+    "retention_not_elapsed": "The retention period has not elapsed. This engagement can be purged on or after {eligible_at:%d %b %Y}.",
+    "active_dependencies": "Other records still depend on the evidence of this engagement: {dependencies}.",
+    "storage_layout_invalid": "Some stored files of this engagement are outside its storage folders. Nothing can be purged until this is resolved.",
+}
+DEPENDENCY_LABELS = {
+    "evidence_used_elsewhere": "evidence mapped into an assessment of another engagement",
+    "evidence_cited_elsewhere": "evidence cited by records of another engagement",
+    "evidence_linked_elsewhere": "evidence filed under another engagement",
+    "blob_shared_elsewhere": "stored files shared with another engagement",
+}
 ```
 
 | Action | entity | Metadata keys (exact) |
@@ -806,3 +838,127 @@ Append a `## Results` section to this file containing:
 - `pytest -q` output for the new file and for the full suite, with the baseline you measured.
 - The smoke outputs listed in Done criteria.
 - Anything this document got wrong about the current code (a drifted symbol, a route the enumeration missed, a test that contradicts the spec, a guard that fires). **Name it explicitly and stop if it forces a design change. Do not pick an alternative.**
+
+## Results
+
+Implemented P4-4 within the specified file scope:
+
+- Added `app/services/retention.py` with reversible archive state, archive-time retention floors, dependency and storage-layout eligibility checks, locked two-phase purge, audit-ledger resumption, idempotent completion, and client retention views.
+- Added `app/routers/retention.py` with the six specified routes and typed-name purge confirmation.
+- Applied the archive read-only dependency to every existing router and left the retention router unguarded.
+- Added the engagement/client/assessment UI, purge preview, completion control, operations documentation, `scripts/complete_purges.py`, and `tests/test_retention.py`.
+- Updated `tasks/todo.md` and linked the backup/restore documentation to the retention procedure.
+
+The shipped retention constants are:
+
+```python
+ARCHIVED_STATUS = "archived"
+ARCHIVABLE_STATUSES = ("active", "closed")
+RETENTION_YEARS_RANGE = (1, 50)
+SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
+RETAINED_TABLES = ("clients", "audit_events")
+REFUSAL_REASONS = (
+    "not_archived",
+    "archive_record_missing",
+    "retention_invalid",
+    "retention_not_elapsed",
+    "active_dependencies",
+    "storage_layout_invalid",
+)
+DEPENDENCY_CODES = (
+    "evidence_used_elsewhere",
+    "evidence_cited_elsewhere",
+    "evidence_linked_elsewhere",
+    "blob_shared_elsewhere",
+)
+ENGAGEMENT_ENTITY = "engagement"
+CLIENT_ENTITY = "client"
+ARCHIVED_EVENT = "engagement.archived"
+UNARCHIVED_EVENT = "engagement.unarchived"
+PURGE_REFUSED_EVENT = "engagement.purge_refused"
+PURGED_EVENT = "engagement.purged"
+PURGE_BLOBS_REMOVED_EVENT = "engagement.purge_blobs_removed"
+RETENTION_CHANGED_EVENT = "client.retention_changed"
+EVENT_SCHEMA_VERSION = 1
+COMPLETION_SCRIPT_ACTOR = "system:purge-completion"
+```
+
+The public service signatures shipped are:
+
+```python
+def add_years(moment: datetime, years: int) -> datetime: ...
+def archive_record(db: Session, engagement_id: str) -> ArchiveRecord | None: ...
+def retention_state(db: Session, engagement: Engagement, *, now: datetime | None = None) -> RetentionState: ...
+def engagement_ids_for_path(db: Session, path_params: Mapping[str, str]) -> set[str]: ...
+def archived_engagement_ids(db: Session, engagement_ids: set[str]) -> set[str]: ...
+def archive_engagement(db: Session, *, engagement_id: str, actor: str, now: datetime | None = None) -> Engagement: ...
+def unarchive_engagement(db: Session, *, engagement_id: str, actor: str, now: datetime | None = None) -> Engagement: ...
+def set_client_retention(db: Session, *, client_id: str, retention_years: str | int | None, actor: str) -> tuple[Client, bool]: ...
+def build_purge_plan(db: Session, engagement: Engagement) -> PurgePlan: ...
+def evaluate_purge(db: Session, engagement: Engagement, plan: PurgePlan, *, now: datetime | None = None) -> Eligibility: ...
+def refusal_message(eligibility: Eligibility) -> str: ...
+def purge_engagement(db: Session, *, engagement_id: str, confirm_name: str | None, actor: str, now: datetime | None = None) -> PurgeResult: ...
+def pending_purges(db: Session) -> list[PendingPurge]: ...
+def complete_pending_purge(db: Session, *, engagement_id: str, actor: str) -> CompletionOutcome: ...
+def client_retention_view(db: Session, client: Client) -> ClientRetentionView: ...
+```
+
+The shipped `PURGE_ORDER` is:
+
+```python
+(
+    "evidence_uses", "actions", "findings", "conclusion_revisions", "conclusions",
+    "analysis_runs", "initiatives", "gap_items", "gap_reports", "desk_review_findings",
+    "desk_review_summaries", "questionnaire_responses", "rfi_documents", "assessment_packs",
+    "report_snapshots", "evidence_versions", "evidence", "assessment_documents",
+    "magic_links", "assessments", "engagements",
+)
+```
+
+Scenario 1's foreign-key order check passed: every foreign key whose child and parent tables are both in `PURGE_ORDER` has the child before the parent, except `SET NULL` relationships as specified. Alembic remains at `4e8c1a9d2b57 (head)` and no model relationships were added.
+
+Scenario 3 exercised six retention routes:
+
+```text
+POST /api/engagements/{engagement_id}/archive
+POST /api/engagements/{engagement_id}/unarchive
+GET  /engagements/{engagement_id}/purge
+POST /api/engagements/{engagement_id}/purge
+POST /api/engagements/{engagement_id}/purge/complete
+POST /api/clients/{client_id}/retention
+```
+
+The five intentionally unresolvable mutating routes were:
+
+```text
+POST /engagements
+POST /assessments
+POST /assessments/new
+POST /api/assessments
+POST /magic/{token}
+```
+
+Test verification:
+
+```text
+$ .venv/bin/pytest -q tests/test_retention.py
+13 passed, 21 warnings in 4.73s
+
+$ .venv/bin/pytest -q
+515 passed, 147 warnings in 43.28s
+```
+
+The measured pre-P4-4 baseline was 502 passing tests; P4-4 adds 13 tests. The known workpaper teardown error did not occur in this run. The new test file covers all 13 handoff scenarios, including the six dependency cases, all refusal reasons, route guard coverage, pre-commit rollback, foreign-key and row-count backstops, phase-2 failure recovery, process death, tampered-ledger validation, symlink refusal, stale previews, double purge, no automatic purge, lifespan survival, and scope verification.
+
+Crash safety was verified in scenario 10 as follows: forced failure before the phase-1 commit left the complete row/file snapshot unchanged and allowed a successful retry; the foreign-key and row-count backstops also left snapshots unchanged; a forced phase-2 failure removed the first existing root, committed `engagement.purged`, left later roots pending, and was completed once with an idempotent second completion; a raised `BaseException` propagated between phases, and a new session observed deleted rows plus the committed purge ledger and completed the roots through `scripts/complete_purges.py`. The completion and tampered-ledger checks confirmed that only ledger-derived, exact in-root paths are removable and that no database reference or outside file was left dangling.
+
+Fresh-database smoke output:
+
+```text
+SMOKE_FILES ['evidence/57e69bbc-5437-4621-8bf7-980da4872e39/5f5a7e20-01da-4e1e-80b5-117f8133aa38/v1.pdf', 'reports/assessments/33d468a4-5633-4a7c-86cf-b2d4e1885bf5/ea55d9f4-45d8-47f3-b0a2-f586c69ed885.pdf']
+SMOKE_COUNTS {'engagements': 1, 'assessments': 1, 'evidence': 1, 'evidence_versions': 1, 'conclusions': 1, 'conclusion_revisions': 1, 'report_snapshots': 1, 'audit_events': 5}
+```
+
+The smoke flow created an engagement, uploaded a PDF, ran one fixed-result analysis, approved the resulting review items, and generated one gap-report snapshot. The browser check was not run because no browser tool was available in this environment.
+
+No deviation from D-P4-4-A through D-P4-4-U was identified. No existing test file was modified, no schema or model file was changed, no commit was attempted, and no additional files outside the required scope were touched.

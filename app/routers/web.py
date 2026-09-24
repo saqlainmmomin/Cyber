@@ -40,6 +40,7 @@ from app.services import (
     remediation_rollup,
     report_content,
     report_snapshots,
+    retention,
     workpaper,
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
@@ -132,7 +133,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     clients = db.query(Client).order_by(Client.name).all()
     engagements = (
         db.query(Engagement)
-        .filter(Engagement.status != "closed")
+        .filter(Engagement.status.notin_(("closed", "archived")))
         .order_by(Engagement.created_at.desc())
         .all()
     )
@@ -198,7 +199,7 @@ def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
         db.query(Engagement)
         .filter(
             Engagement.client_id == client_id,
-            Engagement.status != "closed",
+            Engagement.status.notin_(("closed", "archived")),
         )
         .order_by(Engagement.created_at.desc())
         .all()
@@ -237,6 +238,7 @@ def client_detail(
     if not client:
         raise HTTPException(404, "Client not found")
     engagements = _engagement_cards_for_client(db, client_id)
+    retention_view = retention.client_retention_view(db, client)
     return templates.TemplateResponse(
         "pages/client_detail.html",
         {
@@ -248,6 +250,7 @@ def client_detail(
                 (card["last_activity"] for card in engagements),
                 default=client.updated_at,
             ),
+            "retention_view": retention_view,
         },
     )
 
@@ -331,6 +334,7 @@ def engagement_detail(
         .all()
     )
     card = build_engagement_card(engagement, assessments)
+    retention_state = retention.retention_state(db, engagement)
     assessment_cards = [
         {
             "id": assessment.id,
@@ -354,6 +358,7 @@ def engagement_detail(
             "engagement_id": engagement_id,
             "magic_links": magic_link_rows(db, engagement_id),
             "client_uploads": client_upload_rows(db, engagement_id),
+            "retention": retention_state,
         },
     )
 
@@ -786,6 +791,10 @@ def assessment_detail(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
+    engagement_archived = bool(
+        assessment.engagement_id
+        and retention.archived_engagement_ids(db, {assessment.engagement_id})
+    )
 
     documents = evidence_panel_rows(db, assessment_id)
     analysable_document_count = len(analysis_documents(db, assessment_id))
@@ -898,6 +907,7 @@ def assessment_detail(
         {
             "request": request,
             "assessment": assessment,
+            "engagement_archived": engagement_archived,
             "documents": documents,
             "analysable_document_count": analysable_document_count,
             "report": report,

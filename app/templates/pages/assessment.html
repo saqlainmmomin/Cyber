@@ -2,6 +2,9 @@
 {% block title %}{{ assessment.company_name }}{% endblock %}
 
 {% block content %}
+{% if engagement_archived %}
+<div data-archived-banner class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">This assessment belongs to an archived engagement and is read-only. Changes are refused until the engagement is unarchived.</div>
+{% endif %}
 <div class="mb-6 flex items-center justify-between">
   <div>
     <a href="/" class="text-sm text-gray-500 hover:text-brand transition-colors">&larr; Dashboard</a>
