@@ -12,9 +12,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.schemas.findings import (
+    ActionCloseIn,
     ActionCreateIn,
+    ActionReopenIn,
     ActionStatusIn,
     ActionUpdateIn,
+    ActionVerifyIn,
     FindingCreateIn,
 )
 from app.services import conclusion_review
@@ -226,4 +229,110 @@ async def update_action_route(
         assessment_id=assessment_id,
         finding_id=finding_id,
         message="Action updated",
+    )
+
+
+@router.post("/{assessment_id}/findings/{finding_id}/actions/{action_id}/close")
+async def close_action_route(
+    request: Request,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        body = _validated(ActionCloseIn, await _payload(request))
+    except HTTPException:
+        db.rollback()
+        raise
+    try:
+        finding_service.close_action(
+            db,
+            assessment_id=assessment_id,
+            finding_id=finding_id,
+            action_id=action_id,
+            evidence_version_id=body.evidence_version_id,
+            expected_history_length=body.expected_history_length,
+            notes=body.notes,
+            actor=conclusion_review.reviewer_actor(body.reviewer_name),
+        )
+    except finding_service.FindingError as exc:
+        return _error(db, exc)
+    db.commit()
+    return _card_response(
+        request,
+        db,
+        assessment_id=assessment_id,
+        finding_id=finding_id,
+        message="Action closed",
+    )
+
+
+@router.post("/{assessment_id}/findings/{finding_id}/actions/{action_id}/verify")
+async def verify_action_route(
+    request: Request,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        body = _validated(ActionVerifyIn, await _payload(request))
+    except HTTPException:
+        db.rollback()
+        raise
+    try:
+        finding_service.verify_action(
+            db,
+            assessment_id=assessment_id,
+            finding_id=finding_id,
+            action_id=action_id,
+            expected_history_length=body.expected_history_length,
+            notes=body.notes,
+            actor=conclusion_review.reviewer_actor(body.reviewer_name),
+        )
+    except finding_service.FindingError as exc:
+        return _error(db, exc)
+    db.commit()
+    return _card_response(
+        request,
+        db,
+        assessment_id=assessment_id,
+        finding_id=finding_id,
+        message="Closure verified",
+    )
+
+
+@router.post("/{assessment_id}/findings/{finding_id}/actions/{action_id}/reopen")
+async def reopen_action_route(
+    request: Request,
+    assessment_id: str,
+    finding_id: str,
+    action_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        body = _validated(ActionReopenIn, await _payload(request))
+    except HTTPException:
+        db.rollback()
+        raise
+    try:
+        finding_service.reopen_action(
+            db,
+            assessment_id=assessment_id,
+            finding_id=finding_id,
+            action_id=action_id,
+            expected_history_length=body.expected_history_length,
+            notes=body.notes,
+            actor=conclusion_review.reviewer_actor(body.reviewer_name),
+        )
+    except finding_service.FindingError as exc:
+        return _error(db, exc)
+    db.commit()
+    return _card_response(
+        request,
+        db,
+        assessment_id=assessment_id,
+        finding_id=finding_id,
+        message="Action reopened",
     )

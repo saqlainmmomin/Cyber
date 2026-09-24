@@ -22,6 +22,7 @@
     </div>
     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ client.name }} · {{ engagement.type | replace("_", " ") | title }}</p>
     <a href="/engagements/{{ engagement.id }}/integrated-reports" class="mt-2 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Integrated reports →</a>
+    <a href="/engagements/{{ engagement.id }}/remediation" class="mt-2 ml-4 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Remediation tracker →</a>
   </div>
   <div class="w-full sm:w-64">
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">

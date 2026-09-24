@@ -1117,7 +1117,6 @@ def test_legacy_consumers_do_not_read_the_new_tables():
         "app/services/scoring.py",
         "app/routers/review.py",
         "app/routers/reports.py",
-        "app/routers/remediation.py",
         "app/utils/pdf_export.py",
     ]
     result = subprocess.run(

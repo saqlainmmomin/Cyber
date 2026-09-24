@@ -3,7 +3,7 @@
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ view.finding.title }}</h3>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ view.finding.severity|title }} · Priority {{ view.finding.priority }} · Status: {{ view.finding.status }}</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ view.finding.severity|title }} · Priority {{ view.finding.priority }} · Status: {{ view.status_label }}</p>
       </div>
       {% if view.workpaper_href %}<a href="{{ view.workpaper_href }}" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>{% endif %}
     </div>
@@ -21,13 +21,14 @@
         {% for row in view.actions %}
         <div data-action-row id="action-{{ row.action.id }}" data-action-status="{{ row.action.status }}" class="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <h5 class="font-medium text-gray-900 dark:text-gray-100">{{ row.action.title }}</h5>
-          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Owner: {{ row.action.owner if row.action.owner else 'Unassigned' }} · Target: {{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else 'No target date' }} · Status: {{ row.action.status }}</p>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Owner: {{ row.action.owner if row.action.owner else 'Unassigned' }} · Target: {{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else 'No target date' }} · Status: {{ row.status_label }}</p>
           {% if row.history_readable %}
           <ol data-action-history class="mt-3 space-y-2">
             {% for e in row.history %}
             <li data-history-action="{{ e.action }}" class="rounded bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-700 dark:text-gray-300">
               <p class="font-medium">#{{ e.sequence }} · {{ e.timestamp }} · {{ e.label }} · {{ e.actor_display }}</p>
               {% for name, change in e.changes.items() %}<p class="mt-1 text-xs">{{ name }}: {{ change['from'] or '—' }} → {{ change['to'] or '—' }}</p>{% endfor %}
+              {% if e.evidence %}<p class="mt-2 text-xs">Evidence: <a href="/evidence/{{ e.evidence.evidence_id }}" class="text-brand dark:text-navy-300 hover:underline">{{ e.evidence.filename }}</a> v{{ e.evidence.version_number }} (SHA-256 {{ e.evidence.sha256[:12] }})</p>{% endif %}
               {% if e.notes %}<p class="mt-2 whitespace-pre-wrap">{{ e.notes }}</p>{% endif %}
             </li>
             {% endfor %}
@@ -41,6 +42,41 @@
             <label class="min-w-64 flex-1 text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
             <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Update status</button>
           </form>
+          {% endif %}
+
+          {% if row.closable %}
+          <details data-close-control class="mt-4">
+            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Close with evidence</summary>
+            {% if view.closure_options %}
+            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/close" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3">
+              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+              <label class="text-sm text-gray-700 dark:text-gray-300">Closure evidence<select name="evidence_version_id" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Choose closure evidence</option>{% for option in view.closure_options %}<option value="{{ option.evidence_version_id }}">{{ option.label }}</option>{% endfor %}</select></label>
+              <label class="text-sm text-gray-700 dark:text-gray-300">Notes<textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></textarea></label>
+              <div><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Close action</button></div>
+            </form>
+            {% else %}<p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Upload closure evidence to this assessment first. <a href="/assessments/{{ assessment.id }}" class="text-brand dark:text-navy-300 hover:underline">Upload evidence →</a></p>{% endif %}
+          </details>
+          {% endif %}
+
+          {% if row.verifiable %}
+          <div class="mt-4 text-sm text-gray-600 dark:text-gray-300">Closure evidence: <a href="/evidence/{{ row.closure_evidence.evidence_id }}" class="text-brand dark:text-navy-300 hover:underline">{{ row.closure_evidence.filename }} v{{ row.closure_evidence.version_number }}</a></div>
+          <form data-verify-control hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/verify" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div><input type="hidden" name="expected_history_length" value="{{ row.history_length }}"><label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label></div>
+            <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Verify closure</button>
+          </form>
+          {% endif %}
+
+          {% if row.legacy_closure %}<p class="mt-4 text-sm font-medium text-amber-700 dark:text-amber-300">Closed without closure evidence (legacy). Reopen it to close it again with evidence.</p>{% endif %}
+
+          {% if row.reopenable %}
+          <details data-reopen-control class="mt-4">
+            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Reopen</summary>
+            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/reopen" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3">
+              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+              <label class="text-sm text-gray-700 dark:text-gray-300">Reason for reopening<textarea name="notes" rows="2" required placeholder="Reason for reopening" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></textarea></label>
+              <div><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Reopen action</button></div>
+            </form>
+          </details>
           {% endif %}
 
           {% if row.editable %}
