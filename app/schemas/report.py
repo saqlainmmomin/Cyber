@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -30,8 +31,9 @@ class ChapterScore(BaseModel):
 
 
 class FrameworkScoreOut(BaseModel):
-    overall_score: float
-    overall_rating: str
+    status: Literal["scored", "failed"] = "scored"
+    overall_score: float | None
+    overall_rating: str | None
     domain_scores: dict[str, ChapterScore]
 
 
@@ -49,6 +51,7 @@ class ReportOut(BaseModel):
 
 class ReportSummary(BaseModel):
     framework_scores: dict[str, FrameworkScoreOut]
+    requirement_counts: dict[str, int]
     total_requirements: int
     compliant: int
     partially_compliant: int

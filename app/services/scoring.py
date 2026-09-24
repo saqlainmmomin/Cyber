@@ -49,6 +49,30 @@ _LEGACY_TO_MATURITY_STATUS = {
 _MIN_CLUSTER_MAPPING_COVERAGE = 0.95
 _WARNED_CLUSTER_COVERAGE: set[str] = set()
 
+FRAMEWORK_ANALYSIS_FAILED = "failed"
+
+
+def failed_framework_scores() -> dict:
+    return {
+        "status": FRAMEWORK_ANALYSIS_FAILED,
+        "overall_score": None,
+        "overall_rating": None,
+        "domain_scores": {},
+    }
+
+
+def is_failed_framework_score(entry) -> bool:
+    return isinstance(entry, dict) and entry.get("status") == FRAMEWORK_ANALYSIS_FAILED
+
+
+def failed_framework_ids(framework_scores: dict, framework_ids: list[str]) -> list[str]:
+    """Return failed framework ids in the selected-framework order."""
+    return [
+        framework_id
+        for framework_id in framework_ids
+        if is_failed_framework_score(framework_scores.get(framework_id))
+    ]
+
 
 def _validated_cluster_mapping(framework_id: str) -> dict[str, str]:
     """Reject frameworks whose controls are not meaningfully cluster-backed."""
@@ -618,6 +642,8 @@ def namespaced_domain_scores(per_framework_scores: dict[str, dict]) -> dict:
 
     namespaced = {}
     for framework_id, framework_scores in per_framework_scores.items():
+        if is_failed_framework_score(framework_scores):
+            continue
         framework = FrameworkRegistry.get_or_none(framework_id)
         framework_name = framework.name if framework else framework_id.upper()
         for domain_key, domain_score in framework_scores.get("domain_scores", {}).items():

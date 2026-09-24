@@ -45,7 +45,7 @@ from app.services import (
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
-from app.services.scoring import report_framework_scores
+from app.services.scoring import is_failed_framework_score, report_framework_scores
 from app.services.conclusion_review import conclusion_cards
 from app.utils.review_gate import require_review_approval
 
@@ -105,6 +105,7 @@ def _framework_display(
             "score": scores.get("overall_score"),
             "rating": scores.get("overall_rating"),
             "domain_scores": scores.get("domain_scores", {}),
+            "failed": is_failed_framework_score(scores),
         }
     return display
 
@@ -1638,15 +1639,23 @@ async def submit_screening(
 def run_analysis_web(
     request: Request,
     assessment_id: str,
-
+    override_reason: str = Form(""),
+    reviewer_name: str = Form(""),
     db: Session = Depends(get_db),
 ):
     """Trigger analysis: set status to analyzing, kick off in background via direct call."""
-    from app.routers.analysis import trigger_analysis
+    from app.routers.analysis import (
+        COMPLETION_OVERRIDE_REASONS,
+        CompletionGateRefused,
+        CompletionOverride,
+        trigger_analysis,
+    )
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
+
+    previous_status = assessment.status
 
     # Run analysis synchronously (15-30s). The HTMX polling handles UX.
     # Set status first so the poll shows "running"
@@ -1658,9 +1667,47 @@ def run_analysis_web(
         from app.database import SessionLocal
         analysis_db = SessionLocal()
         try:
-            trigger_analysis(assessment_id, db=analysis_db)
+            trigger_analysis(
+                assessment_id,
+                db=analysis_db,
+                override=(
+                    CompletionOverride(reason=override_reason, reviewer_name=reviewer_name)
+                    if override_reason.strip()
+                    else None
+                ),
+            )
         finally:
             analysis_db.close()
+    except CompletionGateRefused as exc:
+        assessment.status = previous_status
+        db.commit()
+        response = templates.TemplateResponse(
+            "partials/analysis_gate_blocked.html",
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "message": exc.detail,
+                "show_override": True,
+                "override_reasons": COMPLETION_OVERRIDE_REASONS,
+            },
+        )
+        return _with_toast(response, "Analysis not started", "error")
+    except HTTPException as exc:
+        if exc.status_code != 400:
+            raise
+        assessment.status = previous_status
+        db.commit()
+        response = templates.TemplateResponse(
+            "partials/analysis_gate_blocked.html",
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "message": exc.detail,
+                "show_override": False,
+                "override_reasons": {},
+            },
+        )
+        return _with_toast(response, "Analysis not started", "error")
     except Exception:
         assessment.status = "error"
         db.commit()
@@ -1699,9 +1746,17 @@ def analysis_status(
             },
         )
     elif assessment.status == "error":
+        report = db.query(GapReport).filter(GapReport.assessment_id == assessment_id).first()
         return templates.TemplateResponse(
             "partials/analysis_error.html",
-            {"request": request, "assessment_id": assessment_id},
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "framework_display": _framework_display(
+                    assessment,
+                    report_framework_scores(report, assessment) if report else {},
+                ),
+            },
         )
 
     return templates.TemplateResponse(
@@ -1779,12 +1834,13 @@ def _compute_business_impact(gap_items) -> dict:
         if item.compliance_status not in ("non_compliant", "partially_compliant"):
             continue
         req_id = item.requirement_id or ""
-        for prefix, penalty in _PENALTY_MAP:
-            if req_id.startswith(prefix):
-                max_penalty = max(max_penalty, penalty)
-                break
-        else:
-            max_penalty = max(max_penalty, 50)
+        if (item.framework_id or "dpdpa") == "dpdpa":
+            for prefix, penalty in _PENALTY_MAP:
+                if req_id.startswith(prefix):
+                    max_penalty = max(max_penalty, penalty)
+                    break
+            else:
+                max_penalty = max(max_penalty, 50)
         for prefix, domain in _DOMAIN_MAP:
             if req_id.startswith(prefix):
                 affected_domains.add(domain)
@@ -1796,7 +1852,11 @@ def _compute_business_impact(gap_items) -> dict:
         "max_penalty_cr": max_penalty,
         "affected_domains": sorted(affected_domains),
         "critical_high_count": critical_high_count,
-        "has_gaps": max_penalty > 0,
+        "has_gaps": any(
+            item.compliance_status in ("non_compliant", "partially_compliant")
+            for item in gap_items
+        ),
+        "has_dpdpa_exposure": max_penalty > 0,
     }
 
 

@@ -18,7 +18,7 @@ from app.models.evidence import EvidenceVersion
 from app.models.report import GapReport
 from app.services import findings as finding_service
 from app.services import report_snapshots
-from app.services.scoring import report_framework_scores
+from app.services.scoring import failed_framework_ids, report_framework_scores
 from app.services.workpaper import anchor_for
 
 SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -37,6 +37,7 @@ FINDING_STATUS_LABELS = {
 }
 NOT_RELEASED = "Not approved for release"
 NO_REPORT = "No analysis report yet"
+ANALYSIS_INCOMPLETE = "Analysis failed for at least one framework"
 PERIOD_NOT_RECORDED = "not recorded"
 
 
@@ -292,6 +293,12 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
         )
         if report is None:
             excluded.append(ExcludedAssessment(assessment.id, label, NO_REPORT))
+            continue
+        if failed_framework_ids(
+            report_framework_scores(report, assessment),
+            assessment.frameworks,
+        ):
+            excluded.append(ExcludedAssessment(assessment.id, label, ANALYSIS_INCOMPLETE))
             continue
 
         packs = {

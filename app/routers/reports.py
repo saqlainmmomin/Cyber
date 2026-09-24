@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dpdpa.framework import ROOT_CAUSE_CLUSTERS, get_requirement_count
+from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
@@ -13,7 +13,7 @@ from app.models.report import GapItem, GapReport
 from app.schemas.initiative import InitiativeOut
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
 from app.services import report_content
-from app.services.scoring import report_framework_scores
+from app.services.scoring import failed_framework_ids, report_framework_scores
 from app.utils.pdf_export import generate_pdf
 from app.utils.review_gate import require_review_approval
 
@@ -138,9 +138,15 @@ def get_report_summary(assessment_id: str, db: Session = Depends(get_db)):
             elif item.risk_level == "high":
                 high_gaps += 1
 
+    requirement_counts = {
+        framework_id: FrameworkRegistry.get(framework_id).control_count()
+        for framework_id in assessment.frameworks
+    }
+
     return ReportSummary(
         framework_scores=report_framework_scores(report, assessment),
-        total_requirements=get_requirement_count(),
+        requirement_counts=requirement_counts,
+        total_requirements=sum(requirement_counts.values()),
         compliant=counts["compliant"],
         partially_compliant=counts["partially_compliant"],
         non_compliant=counts["non_compliant"],
@@ -227,7 +233,22 @@ def get_full_report(assessment_id: str, db: Session = Depends(get_db)):
 
 @router.get("/pdf")
 def download_pdf(assessment_id: str, db: Session = Depends(get_db)):
-    require_review_approval(assessment_id, db)
+    return _download_pdf_response(assessment_id, db)
+
+
+def _download_pdf_response(
+    assessment_id: str,
+    db: Session,
+    *,
+    allow_failed_draft: bool = False,
+):
+    if allow_failed_draft:
+        assessment = db.get(Assessment, assessment_id)
+        report = _get_report(assessment_id, db)
+        if not failed_framework_ids(report_framework_scores(report, assessment), assessment.frameworks):
+            require_review_approval(assessment_id, db)
+    else:
+        require_review_approval(assessment_id, db)
     report = _get_report(assessment_id, db)
     items = _get_gap_items(report.id, db)
     initiatives = _get_initiatives(report.id, db)

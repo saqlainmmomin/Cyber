@@ -15,13 +15,25 @@
   </div>
   {% endif %}
 </div>
+{% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list %}
+{% if failed_names %}
+<div data-analysis-incomplete-banner class="mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-sm text-red-800 dark:text-red-300">
+  Analysis failed for {{ failed_names | join(", ") }}. This report is incomplete: those frameworks have no score, and the report cannot be released until analysis is run again.
+</div>
+{% endif %}
 
 <!-- ── A. Hero Metrics Row ─────────────────────────────────────────────────── -->
 <div class="grid grid-cols-2 md:grid-cols-{{ [framework_display | length + 3, 4] | min }} gap-4 mb-6">
 
   <!-- Per-framework score gauges -->
   {% for fw_id, fw_data in framework_display.items() %}
-  {% if fw_data.score is not none %}
+  {% if fw_data.failed %}
+  <div data-framework-failed="{{ fw_id }}" class="bg-white dark:bg-gray-900 rounded-xl border border-red-200 dark:border-red-800 p-5 flex flex-col items-center justify-center text-center">
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
+    <p class="text-sm font-medium text-red-600 dark:text-red-400">Analysis failed</p>
+    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Not scored. Run analysis again.</p>
+  </div>
+  {% elif fw_data.score is not none %}
   {% set fw_score = fw_data.score %}
   {% set fw_color = "#22c55e" if fw_score >= 80 else ("#eab308" if fw_score >= 60 else ("#f97316" if fw_score >= 40 else "#ef4444")) %}
   {% set fw_circ = 251.327 %}
@@ -87,7 +99,7 @@
   <!-- Regulatory Exposure -->
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Max Regulatory Exposure</p>
-    {% if business_impact.has_gaps and has_dpdpa %}
+    {% if business_impact.has_dpdpa_exposure %}
     <p class="text-2xl font-bold text-red-600 dark:text-red-400">₹{{ business_impact.max_penalty_cr }}Cr</p>
     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">per incident under DPDPA</p>
     {% elif business_impact.has_gaps %}
@@ -115,11 +127,10 @@
     <!-- Regulatory Exposure -->
     <div>
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Regulatory Exposure</p>
-      {% if has_dpdpa %}
+      {% if business_impact.has_dpdpa_exposure %}
       <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">Up to ₹{{ business_impact.max_penalty_cr }} Crore</p>
       <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
         Per-incident penalty under the DPDPA 2023 Schedule for the highest-severity violation category identified.
-        Repeat violations attract up to ₹500 Crore.
       </p>
       {% else %}
       <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">{{ business_impact.critical_high_count }} high-severity gaps</p>

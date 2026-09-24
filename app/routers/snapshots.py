@@ -49,7 +49,11 @@ def _success(snapshot, assessment_id: str, message: str) -> JSONResponse:
 
 def _render(db: Session, assessment: Assessment, snapshot_type: str) -> bytes:
     if snapshot_type == "gap_report":
-        response = reports.download_pdf(assessment_id=assessment.id, db=db)
+        response = reports._download_pdf_response(
+            assessment_id=assessment.id,
+            db=db,
+            allow_failed_draft=True,
+        )
         return bytes(response.body)
     wp = workpaper.build_workpaper(db, assessment)
     return (

@@ -1,0 +1,25 @@
+<div data-completion-gate-blocked class="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800">
+  <div class="flex items-center gap-3 mb-2">
+    <p class="text-sm font-medium text-yellow-900 dark:text-yellow-300">Analysis not started</p>
+  </div>
+  <p class="text-sm text-yellow-800 dark:text-yellow-400 mb-4">{{ message }}</p>
+  {% if show_override %}
+  <form data-completion-override-form
+        hx-post="/assessments/{{ assessment_id }}/run-analysis"
+        hx-target="#analysis-area"
+        hx-swap="innerHTML"
+        hx-confirm="Run analysis on an incomplete questionnaire? The override and its reason are recorded in the audit log.">
+    <div class="space-y-3 mb-4">
+      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300" for="override_reason">Override reason</label>
+      <select id="override_reason" name="override_reason" required class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm">
+        {% for code, label in override_reasons.items() %}
+        <option value="{{ code }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <input name="reviewer_name" placeholder="Your name" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm">
+    </div>
+    <button type="submit" class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Run analysis with override</button>
+  </form>
+  {% endif %}
+  <a href="/assessments/{{ assessment_id }}?tab=questionnaire" class="inline-block mt-4 text-sm text-brand dark:text-navy-300 hover:underline">Back to questionnaire</a>
+</div>
