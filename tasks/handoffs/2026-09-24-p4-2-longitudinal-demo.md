@@ -551,4 +551,100 @@ Append a `## Results` section to this file containing:
 
 ## Results
 
-_To be completed by the implementer. If the code forces a deviation from this design, stop and report it here; do not pick an alternative._
+Implemented with no deviation from D-P4-2-A through D-P4-2-Q.
+
+### Routes
+
+| Method | Path | Success | Template |
+|---|---|---:|---|
+| GET | `/assessments/{assessment_id}/evidence-reuse` | 200 | `pages/evidence_reuse.html` |
+| POST | `/assessments/{assessment_id}/evidence-reuse/{source_use_id}/confirm` | 303 | Redirects to the reuse page; 400/409 re-renders `pages/evidence_reuse.html`, and 404 uses the declared HTTP error |
+
+No deviation from D-P4-2-G.
+
+### Reuse constants
+
+```text
+REUSE_AGE_WARNING_DAYS = 180
+ASSESSMENT_NOT_FOUND = "Assessment not found"
+REUSE_NOT_AVAILABLE = "This evidence is no longer available for reuse in this assessment. Reload the page. Nothing was saved."
+REUSE_ACK_REQUIRED = "Confirm that this evidence still applies despite the warnings shown. Nothing was saved."
+AUDIT_METADATA_KEYS = (
+    "acknowledged_warnings", "age_days", "evidence_id", "evidence_version_id",
+    "framework_id", "reference_date", "requirement_id", "sha256",
+    "source_assessment_id", "source_use_id", "warnings",
+)
+```
+
+### Smoke run
+
+Anchor date: `2026-09-24`. The smoke used `/private/tmp/p42-longitudinal-smoke.xFvdYi`, a throwaway database, and a throwaway upload tree.
+
+1. First CLI run:
+
+```text
+Backup written to backups/20260924-041802-668259
+Seeded Meridian Ledger Technologies Pvt Ltd and Loomwire Labs Inc.
+URLs:
+/
+/engagements/c77e8768-20fd-4f3f-9f40-bc0435f3d752
+/engagements/460b1a31-3e62-4647-aa85-da67459b4e18
+/assessments/c2ff6c73-a2a9-4cf3-88a8-8d4684ee87d2/evidence-reuse
+/engagements/c77e8768-20fd-4f3f-9f40-bc0435f3d752/remediation
+/engagements/c77e8768-20fd-4f3f-9f40-bc0435f3d752/integrated-reports
+/engagements/460b1a31-3e62-4647-aa85-da67459b4e18/remediation
+FIRST_EXIT=0
+```
+
+No `/magic/` URL was printed.
+
+2. Second CLI run:
+
+```text
+Longitudinal demo already seeded (Meridian Ledger Technologies Pvt Ltd, Loomwire Labs Inc.); nothing was changed. Restore a pre-seed backup with scripts/restore.py to seed it again.
+SECOND_EXIT=0
+```
+
+3. Hierarchy query:
+
+```text
+Loomwire Labs Inc.|NIST CSF 2.0 gap assessment|NIST CSF 2.0 baseline gap assessment|["nist_csf"]|2026-08-25
+Meridian Ledger Technologies Pvt Ltd|FY2026 DPDPA and ISO 27001 programme|Baseline gap assessment (DPDPA + ISO 27001)|["dpdpa", "iso27001"]|2026-03-08
+Meridian Ledger Technologies Pvt Ltd|FY2026 DPDPA and ISO 27001 programme|Remediation validation (ISO 27001)|["iso27001"]|2026-09-17
+```
+
+4. Reuse audit query:
+
+```text
+evidence_reuse.confirmed|{"acknowledged_warnings": true, "age_days": 189, "evidence_id": "384093d5-e8cd-442a-a59b-220fe091b4c6", "evidence_version_id": "56a9bc5a-eeb2-47a1-bc54-3ba1e0308a58", "framework_id": "iso27001", "reference_date": "2026-09-17", "requirement_id": "ISO.A5.1", "sha256": "07f88aeed1632ac91b066242d9325af7e3de2175b20080214c490548661f46cb", "source_assessment_id": "2efaebc3-0a6d-4ad9-81b4-36b709330491", "source_use_id": "238b2210-8370-4395-92bb-614af806b3bc", "warnings": ["age", "scope"]}
+evidence_reuse.confirmed|{"acknowledged_warnings": true, "age_days": 113, "evidence_id": "1863b8f9-b8b4-4e83-b20b-8dd581f49511", "evidence_version_id": "e7c9b474-c14d-4146-a1dd-e4e68fdad56e", "framework_id": "iso27001", "reference_date": "2026-09-17", "requirement_id": "ISO.A5.30", "sha256": "80e37b05ac713f59b4cfafa8714a703aa7a6cc084eb045045f7735575955aaa1", "source_assessment_id": "2efaebc3-0a6d-4ad9-81b4-36b709330491", "source_use_id": "bdae10eb-f416-4991-b572-b7ef2f2b11a5", "warnings": ["scope"]}
+```
+
+5. Action query:
+
+```text
+DR failover exceeded the 4-hour RTO|in_progress|in_progress|Arjun Mehta|2026-09-10
+DR failover still not re-tested within the RTO|open|open|Arjun Mehta|2026-10-15
+No documented incident response plan|open|open||2026-09-21
+No in-app consent withdrawal|open|open|Rhea Kapoor|2026-10-24
+Quarterly access review skipped three production systems|resolved|verified|Arjun Mehta|2026-07-26
+Three service accounts exempt from MFA|in_progress|closed|Dev Anand|2026-10-08
+```
+
+6. In-process ASGI checks against the same database:
+
+```text
+{'dashboard_both_clients': True, 'reuse_page': True, 'remediation': True, 'integrated_reports': True}
+```
+
+7. Browser check: no browser was available in this environment, so no browser result is claimed.
+
+### Tests and scope
+
+- Existing-suite baseline: `502 passed, 126 warnings in 44.92s` using `pytest -q --ignore=tests/test_longitudinal_demo.py`.
+- `tests/test_longitudinal_demo.py`: `13 passed, 44 warnings in 10.16s`.
+- Final `.venv/bin/pytest -q`: `515 passed, 170 warnings in 53.83s`.
+- No existing test file was modified; the test inventory was grepped before implementation and had no longitudinal/reuse contract file.
+- The protected-file `git diff --stat` is empty.
+- `alembic heads` remains `4e8c1a9d2b57 (head)`.
+- No current-code drift forced an alternative; no numbered decision was changed.
