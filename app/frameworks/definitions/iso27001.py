@@ -11,8 +11,10 @@ Total: 93 Annex A controls.
 """
 
 from app.frameworks.schema import (
+    ApplicabilityProposal,
     Control,
     Domain,
+    EvidenceRequest,
     FrameworkDefinition,
     QuestionDef,
     RedFlagPattern,
@@ -1012,7 +1014,7 @@ _ISO_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="ISO.SCP.2",
         question="Does your organization use cloud services for storing or processing information?",
-        help_text="Cloud services include IaaS, PaaS, SaaS. This activates cloud-specific controls (A.5.23).",
+        help_text="Cloud services include IaaS, PaaS and SaaS (including email and file sharing). If you answer No, the cloud-services control (A.5.23) is proposed as likely not applicable for the consultant to confirm; nothing is removed automatically.",
         type="single_select",
         options=[
             {"value": "yes", "label": "Yes"},
@@ -1023,7 +1025,7 @@ _ISO_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="ISO.SCP.3",
         question="Does your organization develop software or systems (in-house or outsourced)?",
-        help_text="This determines applicability of secure development lifecycle controls (A.8.25-A.8.34).",
+        help_text="If you answer No, the development-specific controls (A.8.4, A.8.25, A.8.28, A.8.30, A.8.31, A.8.33) are proposed as likely not applicable; if development is in-house only, outsourced development (A.8.30) is. The consultant confirms each one; nothing is removed automatically.",
         type="single_select",
         options=[
             {"value": "inhouse", "label": "Yes — in-house development"},
@@ -1035,13 +1037,93 @@ _ISO_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="ISO.SCP.4",
         question="Does your organization have physical premises with sensitive information processing facilities?",
-        help_text="This determines applicability of physical security controls (A.7.1-A.7.14).",
+        help_text="If you are fully remote with no premises, the site-related physical controls (A.7.1-A.7.6, A.7.8, A.7.11, A.7.12) are proposed as likely not applicable for the consultant to confirm. Controls that still apply to remote staff and equipment (A.7.7, A.7.9, A.7.10, A.7.13, A.7.14) stay in scope.",
         type="single_select",
         options=[
             {"value": "yes_datacenter", "label": "Yes — including data center / server room"},
             {"value": "yes_office", "label": "Yes — office only (no on-prem servers)"},
             {"value": "fully_remote", "label": "No — fully remote / cloud-only"},
         ],
+    ),
+]
+
+_ISO_EVIDENCE_REQUESTS = [
+    EvidenceRequest("isms_scope", "ISMS scope statement and boundaries", "Defines the units, locations, services and assets the ISMS covers (clause 4.3); frames every Annex A conclusion in this assessment.", True),
+    EvidenceRequest("statement_of_applicability", "Statement of Applicability (current version)", "Records your own applicability decision and justification for each Annex A control; compared against this assessment's applicability proposals.", True),
+    EvidenceRequest("security_policy", "Information security policy and topic-specific policies", "Evidence for policy definition, approval and communication (A.5.1), acceptable use (A.5.10) and documented procedures (A.5.37).", True, ("ISO.A5.1", "ISO.A5.10", "ISO.A5.37")),
+    EvidenceRequest("risk_assessment", "Information security risk assessment methodology, risk register and risk treatment plan", "Risk assessment and treatment (clauses 6.1.2, 6.1.3, 8.2, 8.3) drive control selection; reviewed as context for every Annex A conclusion.", True),
+    EvidenceRequest("roles_responsibilities", "Security organisation chart and roles and responsibilities (RACI)", "Evidence for security roles (A.5.2), segregation of duties (A.5.3) and management responsibilities (A.5.4).", False, ("ISO.A5.2", "ISO.A5.3", "ISO.A5.4")),
+    EvidenceRequest("asset_inventory", "Information asset inventory and classification scheme", "Evidence for asset inventory (A.5.9), classification (A.5.12) and labelling (A.5.13).", True, ("ISO.A5.9", "ISO.A5.12", "ISO.A5.13")),
+    EvidenceRequest("access_control_policy", "Access control policy and recent user access review records", "Evidence for access control, identity, authentication and access rights (A.5.15-A.5.18), privileged access (A.8.2), access restriction (A.8.3) and secure authentication (A.8.5).", True, ("ISO.A5.15", "ISO.A5.16", "ISO.A5.17", "ISO.A5.18", "ISO.A8.2", "ISO.A8.3", "ISO.A8.5")),
+    EvidenceRequest("supplier_security", "Supplier security policy, supplier register and sample supplier agreements", "Evidence for supplier relationships, agreements, ICT supply chain and supplier monitoring (A.5.19-A.5.22).", True, ("ISO.A5.19", "ISO.A5.20", "ISO.A5.21", "ISO.A5.22")),
+    EvidenceRequest("cloud_services", "Cloud services register and provider assurance reports (e.g. SOC 2 reports, certificates)", "Evidence for secure use of cloud services (A.5.23).", False, ("ISO.A5.23",)),
+    EvidenceRequest("breach_procedure", "Incident management procedure / incident response plan", "Evidence for incident planning, assessment, response, learning and evidence collection (A.5.24-A.5.28), contact with authorities (A.5.5) and event reporting (A.6.8).", True, ("ISO.A5.24", "ISO.A5.25", "ISO.A5.26", "ISO.A5.27", "ISO.A5.28", "ISO.A5.5", "ISO.A6.8")),
+    EvidenceRequest("incident_log", "Incident register for the last 12 months", "Shows incident handling and lessons learned in operation, not only on paper (A.5.26, A.5.27).", False, ("ISO.A5.26", "ISO.A5.27")),
+    EvidenceRequest("business_continuity", "Business continuity and ICT disaster recovery plans, with latest test results", "Evidence for security during disruption (A.5.29), ICT readiness (A.5.30) and redundancy (A.8.14).", True, ("ISO.A5.29", "ISO.A5.30", "ISO.A8.14")),
+    EvidenceRequest("backup", "Backup policy and restore test records", "Evidence for information backup (A.8.13).", False, ("ISO.A8.13",)),
+    EvidenceRequest("training_records", "Security awareness training programme and completion records", "Evidence for awareness, education and training (A.6.3).", True, ("ISO.A6.3",)),
+    EvidenceRequest("hr_security", "HR security procedures: screening, employment terms, NDAs, disciplinary and leaver process", "Evidence for the employment lifecycle controls (A.6.1, A.6.2, A.6.4-A.6.6) and return of assets (A.5.11).", False, ("ISO.A6.1", "ISO.A6.2", "ISO.A6.4", "ISO.A6.5", "ISO.A6.6", "ISO.A5.11")),
+    EvidenceRequest("remote_working_policy", "Remote working, clear desk / clear screen and endpoint device policy", "Evidence for remote working (A.6.7), clear desk and screen (A.7.7), off-premises assets (A.7.9) and endpoint devices (A.8.1).", False, ("ISO.A6.7", "ISO.A7.7", "ISO.A7.9", "ISO.A8.1")),
+    EvidenceRequest("physical_security", "Physical and environmental security procedures (site access, visitor logs, secure areas)", "Evidence for site perimeter, entry, facilities, monitoring, environmental protection, secure areas, equipment siting, utilities and cabling (A.7.1-A.7.6, A.7.8, A.7.11, A.7.12).", True, ("ISO.A7.1", "ISO.A7.2", "ISO.A7.3", "ISO.A7.4", "ISO.A7.5", "ISO.A7.6", "ISO.A7.8", "ISO.A7.11", "ISO.A7.12")),
+    EvidenceRequest("media_disposal", "Media handling, information deletion and secure disposal procedures", "Evidence for storage media (A.7.10), secure disposal or re-use (A.7.14) and information deletion (A.8.10).", False, ("ISO.A7.10", "ISO.A7.14", "ISO.A8.10")),
+    EvidenceRequest("vulnerability_management", "Vulnerability and patch management procedure, with recent scan reports", "Evidence for technical vulnerability management (A.8.8).", True, ("ISO.A8.8",)),
+    EvidenceRequest("configuration_baselines", "Secure configuration / hardening baselines and malware protection standard", "Evidence for malware protection (A.8.7) and configuration management (A.8.9).", False, ("ISO.A8.7", "ISO.A8.9")),
+    EvidenceRequest("logging_monitoring", "Logging and monitoring standard, with evidence of log review or SIEM alerting", "Evidence for logging (A.8.15), monitoring (A.8.16) and clock synchronisation (A.8.17).", True, ("ISO.A8.15", "ISO.A8.16", "ISO.A8.17")),
+    EvidenceRequest("network_security", "Network architecture diagram and network security / segmentation standard", "Evidence for network security, network services, segregation and web filtering (A.8.20-A.8.23).", False, ("ISO.A8.20", "ISO.A8.21", "ISO.A8.22", "ISO.A8.23")),
+    EvidenceRequest("cryptography_policy", "Cryptography and key management policy", "Evidence for use of cryptography (A.8.24).", False, ("ISO.A8.24",)),
+    EvidenceRequest("change_management", "Change management procedure and sample change records", "Evidence for change management (A.8.32) and controls over installing software on live systems (A.8.19).", False, ("ISO.A8.32", "ISO.A8.19")),
+    EvidenceRequest("sdlc_policy", "Secure development lifecycle policy, secure coding standard and environment separation", "Evidence for source code access (A.8.4), the secure development life cycle (A.8.25), secure coding (A.8.28), environment separation (A.8.31) and test information (A.8.33).", True, ("ISO.A8.4", "ISO.A8.25", "ISO.A8.28", "ISO.A8.31", "ISO.A8.33")),
+    EvidenceRequest("application_security_testing", "Application security requirements and acceptance testing records for new or changed systems", "Evidence for application security requirements (A.8.26), secure architecture principles (A.8.27) and security testing in development and acceptance (A.8.29); applies to acquired as well as developed systems.", False, ("ISO.A8.26", "ISO.A8.27", "ISO.A8.29")),
+    EvidenceRequest("outsourced_development", "Outsourced development contracts and oversight records", "Evidence for outsourced development (A.8.30).", False, ("ISO.A8.30",)),
+    EvidenceRequest("privacy_policy", "Privacy / PII protection policy", "Evidence for privacy and protection of personal information (A.5.34).", False, ("ISO.A5.34",)),
+    EvidenceRequest("legal_register", "Compliance register: applicable laws, regulations, contracts and standards", "Evidence for legal and contractual requirements (A.5.31), intellectual property (A.5.32) and protection of records (A.5.33).", False, ("ISO.A5.31", "ISO.A5.32", "ISO.A5.33")),
+    EvidenceRequest("isms_audit_reports", "Internal audit reports and management review minutes", "Evidence for independent review (A.5.35) and compliance with policies (A.5.36); management review (clause 9.3) is reviewed as context.", True, ("ISO.A5.35", "ISO.A5.36")),
+]
+
+_ISO_APPLICABILITY_PROPOSALS = [
+    ApplicabilityProposal(
+        scope_question_id="ISO.SCP.2",
+        answers=("no",),
+        control_ids=("ISO.A5.23",),
+        rationale=(
+            "Scope answer: no cloud services in use. Confirm that no SaaS (including email, "
+            "file sharing or collaboration tools), PaaS or IaaS is used before recording A.5.23 "
+            "as not applicable; most organisations use at least one cloud service."
+        ),
+    ),
+    ApplicabilityProposal(
+        scope_question_id="ISO.SCP.3",
+        answers=("no",),
+        control_ids=("ISO.A8.4", "ISO.A8.25", "ISO.A8.28", "ISO.A8.30", "ISO.A8.31", "ISO.A8.33"),
+        rationale=(
+            "Scope answer: no software development, in-house or outsourced. Development-specific "
+            "controls may not apply; confirm the organisation holds no source code and does not "
+            "commission or configure-and-test systems in separate environments. A.8.26, A.8.27 "
+            "and A.8.29 still apply to acquired systems and are not proposed."
+        ),
+    ),
+    ApplicabilityProposal(
+        scope_question_id="ISO.SCP.3",
+        answers=("inhouse",),
+        control_ids=("ISO.A8.30",),
+        rationale=(
+            "Scope answer: development is in-house only. Outsourced development (A.8.30) may not "
+            "apply; confirm no contractors or agencies build or change systems."
+        ),
+    ),
+    ApplicabilityProposal(
+        scope_question_id="ISO.SCP.4",
+        answers=("fully_remote",),
+        control_ids=(
+            "ISO.A7.1", "ISO.A7.2", "ISO.A7.3", "ISO.A7.4", "ISO.A7.5",
+            "ISO.A7.6", "ISO.A7.8", "ISO.A7.11", "ISO.A7.12",
+        ),
+        rationale=(
+            "Scope answer: fully remote with no premises. Site-related physical controls may not "
+            "apply; physical security of hosting is addressed through supplier and cloud controls "
+            "(A.5.19-A.5.23). A.7.7, A.7.9, A.7.10, A.7.13 and A.7.14 still apply to remote staff "
+            "and equipment and are not proposed."
+        ),
     ),
 ]
 
@@ -1115,4 +1197,6 @@ ISO27001_DEFINITION = FrameworkDefinition(
     scope_questions=_ISO_SCOPE_QUESTIONS,
     questions=_ISO_QUESTIONS,
     red_flag_patterns=_ISO_RED_FLAGS,
+    evidence_requests=_ISO_EVIDENCE_REQUESTS,
+    applicability_proposals=_ISO_APPLICABILITY_PROPOSALS,
 )

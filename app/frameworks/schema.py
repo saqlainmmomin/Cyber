@@ -71,6 +71,29 @@ class RedFlagPattern:
     severity: str = "medium"  # low | medium | high
 
 
+@dataclass(frozen=True)
+class EvidenceRequest:
+    """A document the consultant asks the client for. Suggestion only (D8, D-P5-D):
+    never used to map Evidence to requirements automatically."""
+
+    document_type: str            # stable snake_case key; the cross-framework merge key
+    label: str                    # client-facing document name
+    reason: str                   # client-facing why; references only, no standard text (D4)
+    required: bool                # True = required, False = recommended
+    maps_to: tuple[str, ...] = () # this framework's control IDs; may be empty for context documents
+
+
+@dataclass(frozen=True)
+class ApplicabilityProposal:
+    """A scope answer that makes specific controls *likely* not applicable.
+    Proposal only: never removes a control from applicable_requirements."""
+
+    scope_question_id: str
+    answers: tuple[str, ...]      # option values that trigger the proposal
+    control_ids: tuple[str, ...]
+    rationale: str                # consultant-facing; references only (D4)
+
+
 @dataclass
 class FrameworkDefinition:
     """Complete definition of a compliance framework."""
@@ -87,6 +110,8 @@ class FrameworkDefinition:
     scope_questions: list[ScopeQuestion] = field(default_factory=list)
     questions: dict[str, QuestionDef] = field(default_factory=dict)
     red_flag_patterns: list[RedFlagPattern] = field(default_factory=list)
+    evidence_requests: list[EvidenceRequest] = field(default_factory=list)
+    applicability_proposals: list[ApplicabilityProposal] = field(default_factory=list)
     _all_controls_cache: tuple[Control, ...] | None = field(
         default=None,
         init=False,

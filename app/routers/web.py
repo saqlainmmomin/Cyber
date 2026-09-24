@@ -855,6 +855,8 @@ def assessment_detail(
                 "flags": result["flags"],
                 "applicable_count": len(result["applicable_requirements"]),
                 "total_count": result["total_count"],
+                "has_dpdpa": result["has_dpdpa"],
+                "proposed_not_applicable": _with_control_titles(result["proposed_not_applicable"]),
             }
         else:
             scope_questions_by_fw = []
@@ -957,6 +959,24 @@ def delete_assessment_web(
 # --- Scope ---
 
 
+def _with_control_titles(proposals: list[dict]) -> list[dict]:
+    """Add display metadata to consultant-facing applicability proposals."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    enriched = []
+    for proposal in proposals:
+        item = dict(proposal)
+        framework = FrameworkRegistry.get_or_none(proposal["framework_id"])
+        item["control_title"] = (
+            framework.get_control(proposal["control_id"]).title
+            if framework and framework.get_control(proposal["control_id"])
+            else ""
+        )
+        item["framework_name"] = framework.name if framework else ""
+        enriched.append(item)
+    return enriched
+
+
 @router.get("/assessments/{assessment_id}/scope", response_class=HTMLResponse)
 def scope_page(
     request: Request,
@@ -1038,6 +1058,8 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
         company_name=assessment.company_name,
         checklist=result["evidence_checklist"],
         flags=result["flags"],
+        has_dpdpa=result["has_dpdpa"],
+        framework_label=", ".join(_selected_framework_names(assessment)),
     )
     filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.pdf"
     return Response(
@@ -1068,6 +1090,8 @@ def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(g
         company_name=assessment.company_name,
         checklist=result["evidence_checklist"],
         flags=result["flags"],
+        has_dpdpa=result["has_dpdpa"],
+        framework_label=", ".join(_selected_framework_names(assessment)),
     )
     filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.docx"
     return Response(
