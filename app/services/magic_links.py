@@ -32,6 +32,8 @@ MAX_ITEM_TITLE_CHARS = 200
 EXPIRES_DAYS_RANGE = (1, 30)
 MAX_UPLOADS_RANGE = (1, 100)
 MAX_TOTAL_MB_RANGE = (1, 500)
+RFI_SCOPE_VERSION = 2
+RFI_UNKNOWN_ITEM_TEXT = "Choose requested items from this RFI version."
 INVALID_LINK_MESSAGE = "This link is invalid or has expired. Contact your consultant for a new link."
 FILE_TOO_LARGE_MESSAGE = "Files must be 25 MB or smaller."
 UPLOAD_LIMIT_MESSAGE = "This link has reached its upload limit. Contact your consultant."
@@ -143,7 +145,7 @@ def _audit(
     )
 
 
-def create_link(
+def _validated_titles(
     db: Session,
     *,
     engagement_id: str,
@@ -151,8 +153,7 @@ def create_link(
     expires_in_days: int,
     max_uploads: int,
     max_total_mb: int,
-    actor: str = "consultant",
-) -> CreatedLink:
+) -> list[str]:
     engagement = db.get(Engagement, engagement_id)
     if engagement is None:
         raise MagicLinkNotFound("Engagement not found")
@@ -177,17 +178,38 @@ def create_link(
     if not MAX_TOTAL_MB_RANGE[0] <= max_total_mb <= MAX_TOTAL_MB_RANGE[1]:
         raise MagicLinkValidationError("Total size limit must be between 1 and 500 MB.")
 
+    return titles
+
+
+def _insert_link(
+    db: Session,
+    *,
+    engagement_id: str,
+    scope: dict,
+    item_keys: list[str],
+    expires_in_days: int,
+    max_uploads: int,
+    max_total_mb: int,
+    actor: str,
+    extra_audit: dict | None = None,
+) -> CreatedLink:
     token = generate_token()
     expires_at = _now() + timedelta(days=expires_in_days)
-    items = [
-        {"key": f"item-{index}", "title": title}
-        for index, title in enumerate(titles, start=1)
-    ]
+    audit_metadata = {
+        "engagement_id": engagement_id,
+        "expires_at": expires_at.isoformat(),
+        "item_keys": item_keys,
+        "max_size_bytes": max_total_mb * 1024 * 1024,
+        "max_uploads": max_uploads,
+    }
+    if extra_audit:
+        audit_metadata.update(extra_audit)
+
     link = MagicLink(
         id=_new_id(),
         engagement_id=engagement_id,
         token_digest=token_digest(token),
-        scope_json=json.dumps({"items": items, "version": 1}, sort_keys=True),
+        scope_json=json.dumps(scope, sort_keys=True),
         max_uploads=max_uploads,
         max_size_bytes=max_total_mb * 1024 * 1024,
         expires_at=expires_at,
@@ -199,16 +221,98 @@ def create_link(
         actor=actor,
         action="magic_link.created",
         entity_id=link.id,
-        metadata={
-            "engagement_id": engagement_id,
-            "expires_at": expires_at.isoformat(),
-            "item_keys": [item["key"] for item in items],
-            "max_size_bytes": link.max_size_bytes,
-            "max_uploads": max_uploads,
-        },
+        metadata=audit_metadata,
     )
     db.flush()
     return CreatedLink(link=link, token=token)
+
+
+def create_link(
+    db: Session,
+    *,
+    engagement_id: str,
+    item_titles: list[str],
+    expires_in_days: int,
+    max_uploads: int,
+    max_total_mb: int,
+    actor: str = "consultant",
+) -> CreatedLink:
+    titles = _validated_titles(
+        db,
+        engagement_id=engagement_id,
+        item_titles=item_titles,
+        expires_in_days=expires_in_days,
+        max_uploads=max_uploads,
+        max_total_mb=max_total_mb,
+    )
+    items = [
+        {"key": f"item-{index}", "title": title}
+        for index, title in enumerate(titles, start=1)
+    ]
+    return _insert_link(
+        db,
+        engagement_id=engagement_id,
+        scope={"items": items, "version": 1},
+        item_keys=[item["key"] for item in items],
+        expires_in_days=expires_in_days,
+        max_uploads=max_uploads,
+        max_total_mb=max_total_mb,
+        actor=actor,
+    )
+
+
+def create_rfi_link(
+    db: Session,
+    *,
+    engagement_id: str,
+    assessment_id: str,
+    snapshot_id: str,
+    rfi_items: list[tuple[str, str]],
+    expires_in_days: int,
+    max_uploads: int,
+    max_total_mb: int,
+    actor: str = "consultant",
+) -> CreatedLink:
+    titles = _validated_titles(
+        db,
+        engagement_id=engagement_id,
+        item_titles=[title for _item_id, title in rfi_items],
+        expires_in_days=expires_in_days,
+        max_uploads=max_uploads,
+        max_total_mb=max_total_mb,
+    )
+    item_ids = [item_id for item_id, _title in rfi_items]
+    if (
+        any(re.fullmatch(r"RFI-\d{3,}", item_id) is None for item_id in item_ids)
+        or len(set(item_ids)) != len(item_ids)
+    ):
+        raise MagicLinkValidationError(RFI_UNKNOWN_ITEM_TEXT)
+    items = [
+        {"key": f"item-{index}", "rfi_item_id": item_id, "title": _validated_title}
+        for index, ((item_id, title), _validated_title) in enumerate(
+            zip(rfi_items, titles),
+            start=1,
+        )
+    ]
+    return _insert_link(
+        db,
+        engagement_id=engagement_id,
+        scope={
+            "items": items,
+            "rfi": {"assessment_id": assessment_id, "snapshot_id": snapshot_id},
+            "version": RFI_SCOPE_VERSION,
+        },
+        item_keys=[item["key"] for item in items],
+        expires_in_days=expires_in_days,
+        max_uploads=max_uploads,
+        max_total_mb=max_total_mb,
+        actor=actor,
+        extra_audit={
+            "rfi_assessment_id": assessment_id,
+            "rfi_snapshot_id": snapshot_id,
+            "rfi_item_ids": item_ids,
+        },
+    )
 
 
 def revoke_link(

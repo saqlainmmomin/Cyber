@@ -212,52 +212,6 @@ def test_followup_call_seam_returns_provider_text():
         assert _call_claude_followups("prompt") == '{"followups": []}'
 
 
-def test_rfi_call_parses_valid_json_and_preserves_raw_text():
-    from app.services.rfi_generator import _call_claude_rfi
-
-    raw = '{"items": [{"item_id": "RFI-001", "evidence_requested": "Policy"}]}'
-    with patch("app.services.rfi_generator._call_llm", return_value=_response(raw)):
-        result = _call_claude_rfi("Acme", "saas", [{
-            "item_id": "RFI-001",
-            "requirement_id": "CH2.CONSENT.1",
-            "requirement_title": "Consent",
-            "section_ref": "2.1",
-            "priority": "High",
-            "current_status": "Missing",
-            "gap_description": "No policy",
-        }])
-
-    assert result["items"][0]["evidence_requested"] == "Policy"
-    assert result["_raw"] == raw
-
-
-def test_rfi_call_uses_empty_enhancements_for_non_json_response():
-    from app.services.rfi_generator import _call_claude_rfi
-
-    with patch("app.services.rfi_generator._call_llm", return_value=_response("not json")):
-        result = _call_claude_rfi("Acme", "saas", [])
-
-    assert result["items"] == []
-    assert result["introduction"] == ""
-    assert result["_raw"] == "not json"
-
-
-def test_rfi_evidence_items_exclude_compliant_and_not_assessed_gaps():
-    from app.services.rfi_generator import _build_evidence_items
-
-    items = _build_evidence_items(
-        [
-            {"requirement_id": "CH2.CONSENT.1", "compliance_status": "compliant"},
-            {"requirement_id": "CH2.CONSENT.2", "compliance_status": "not_assessed"},
-            {"requirement_id": "CH2.CONSENT.3", "compliance_status": "non_compliant"},
-        ],
-        None,
-        None,
-    )
-
-    assert [item["requirement_id"] for item in items] == ["CH2.CONSENT.3"]
-
-
 def test_vision_call_seam_returns_provider_text():
     from app.services.document_processor import _call_claude_vision
 

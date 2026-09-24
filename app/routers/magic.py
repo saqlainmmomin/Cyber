@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
 from app.config import settings
 from app.database import get_db
+from app.models.assessment import Assessment
 from app.routers.web import templates
 from app.services import evidence as evidence_service
-from app.services import magic_links as magic_service
+from app.services import magic_links as magic_service, rfi_requests, report_snapshots
+from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(include_in_schema=False)
 
@@ -118,6 +122,47 @@ def _form_int(form, name: str, default: int, message: str) -> int:
         return int(raw)
     except (TypeError, ValueError) as exc:
         raise magic_service.MagicLinkValidationError(message) from exc
+
+
+def _render_rfi_links(
+    request: Request,
+    db: Session,
+    assessment: Assessment,
+    *,
+    error: str | None = None,
+    new_link_url: str | None = None,
+    status_code: int = 200,
+):
+    try:
+        context = rfi_requests.page_context(db, assessment)
+    except report_snapshots.SnapshotError as exc:
+        context = {
+            "assessment": assessment,
+            "scope_recorded": assessment.scope_answers is not None,
+            "preview": None,
+            "mapped_hints": {},
+            "versions": [],
+            "current_issue": None,
+            "current_items": [],
+            "links": [],
+            "coverage": {},
+            "received": {},
+            "reviewer_name": "",
+        }
+        error = exc.message
+    context.update(
+        {
+            "request": request,
+            "error": error,
+            "new_link_url": new_link_url,
+        }
+    )
+    return templates.TemplateResponse(
+        "partials/rfi_links.html",
+        context,
+        status_code=status_code,
+        headers=_CONSULTANT_HEADERS,
+    )
 
 
 @router.get("/magic/{token}")
@@ -288,6 +333,112 @@ async def create_magic_link(
         request,
         db,
         engagement_id,
+        new_link_url=new_link_url,
+    )
+
+
+@router.post("/assessments/{assessment_id}/rfi/versions/{snapshot_id}/magic-links")
+async def create_rfi_magic_link(
+    assessment_id: str,
+    snapshot_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        return _render_rfi_links(
+            request,
+            db,
+            Assessment(
+                id=assessment_id,
+                company_name="",
+                industry="",
+                company_size="",
+            ),
+            status_code=404,
+            error="Assessment not found",
+        )
+    form = await request.form()
+    item_ids = [value for value in form.getlist("item_ids") if isinstance(value, str)]
+    try:
+        created = rfi_requests.create_client_link(
+            db,
+            assessment,
+            snapshot_id,
+            item_ids=item_ids,
+            expires_in_days=_form_int(
+                form,
+                "expires_in_days",
+                7,
+                "Expiry must be between 1 and 30 days.",
+            ),
+            max_uploads=_form_int(
+                form,
+                "max_uploads",
+                20,
+                "Upload limit must be between 1 and 100.",
+            ),
+            max_total_mb=_form_int(
+                form,
+                "max_total_mb",
+                100,
+                "Total size limit must be between 1 and 500 MB.",
+            ),
+            actor=reviewer_actor(form.get("reviewer_name", "")),
+        )
+        db.commit()
+    except rfi_requests.RfiError as exc:
+        db.rollback()
+        status = 404 if exc.status_code == 404 else 200
+        return _render_rfi_links(
+            request,
+            db,
+            assessment,
+            status_code=status,
+            error=exc.message,
+        )
+    except magic_service.MagicLinkNotFound as exc:
+        db.rollback()
+        return _render_rfi_links(
+            request,
+            db,
+            assessment,
+            status_code=404,
+            error=exc.message,
+        )
+    except report_snapshots.SnapshotIntegrityError as exc:
+        db.rollback()
+        return _render_rfi_links(
+            request,
+            db,
+            assessment,
+            status_code=500,
+            error=exc.message,
+        )
+    except magic_service.MagicLinkError as exc:
+        db.rollback()
+        return _render_rfi_links(
+            request,
+            db,
+            assessment,
+            error=exc.message,
+        )
+    except Exception:
+        db.rollback()
+        return _render_rfi_links(
+            request,
+            db,
+            assessment,
+            status_code=500,
+            error="The client link could not be created. Try again.",
+        )
+
+    new_link_url = str(request.base_url).rstrip("/") + "/magic/" + created.token
+    return _render_rfi_links(
+        request,
+        db,
+        assessment,
         new_link_url=new_link_url,
     )
 

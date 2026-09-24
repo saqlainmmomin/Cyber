@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.routers import reports
-from app.services import report_snapshots, workpaper
+from app.services import report_snapshots, rfi_requests, workpaper
 from app.services.conclusion_review import reviewer_actor
 from app.services import approved_report
 from app.template_config import configure_templates
@@ -43,6 +43,21 @@ def _success(snapshot, assessment_id: str, message: str) -> JSONResponse:
         status_code=200,
     )
     response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/snapshots"
+    response.headers["X-Toast-Message"] = message
+    response.headers["X-Toast-Type"] = "success"
+    return response
+
+
+def _rfi_success(snapshot, assessment_id: str, message: str) -> JSONResponse:
+    response = JSONResponse(
+        {
+            "snapshot_id": snapshot.id,
+            "type": snapshot.type,
+            "is_issued": snapshot.is_issued,
+        },
+        status_code=200,
+    )
+    response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/rfi"
     response.headers["X-Toast-Message"] = message
     response.headers["X-Toast-Type"] = "success"
     return response
@@ -112,6 +127,128 @@ def generate_snapshot(
     return _success(snapshot, assessment_id, "Draft version generated")
 
 
+@router.post("/{assessment_id}/rfi/versions")
+def generate_rfi_version(
+    assessment_id: str,
+    omit: list[str] = Form(default=[]),
+    reviewer_name: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        return _error(404, "Assessment not found")
+    snapshot = None
+    try:
+        snapshot = rfi_requests.generate_version(
+            db,
+            assessment,
+            omitted=omit,
+            actor=reviewer_actor(reviewer_name),
+        )
+    except rfi_requests.RfiError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+    except report_snapshots.SnapshotError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        if snapshot is not None:
+            getattr(report_snapshots.snapshot_path(snapshot), "unlink")(missing_ok=True)
+            getattr(report_snapshots.rfi_document_path(snapshot), "unlink")(missing_ok=True)
+        return _error(500, "The report version could not be saved. Try again.")
+    return _rfi_success(snapshot, assessment_id, "Draft RFI version generated")
+
+
+@router.post("/{assessment_id}/rfi/versions/{snapshot_id}/issue")
+def issue_rfi_version(
+    assessment_id: str,
+    snapshot_id: str,
+    reviewer_name: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        return _error(404, "Assessment not found")
+    try:
+        snapshot = rfi_requests.issue_version(
+            db,
+            assessment,
+            snapshot_id,
+            actor=reviewer_actor(reviewer_name),
+        )
+        db.commit()
+    except rfi_requests.RfiError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+    except report_snapshots.SnapshotError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+    except Exception:
+        db.rollback()
+        return _error(500, "The report version could not be saved. Try again.")
+    return _rfi_success(snapshot, assessment_id, "RFI version issued")
+
+
+@router.get("/{assessment_id}/rfi/versions/{snapshot_id}/docx")
+def rfi_version_docx(
+    assessment_id: str,
+    snapshot_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        return _error(404, "Assessment not found")
+    try:
+        snapshot = report_snapshots.load_snapshot(
+            db,
+            assessment_id=assessment_id,
+            snapshot_id=snapshot_id,
+        )
+        document = report_snapshots.read_rfi_document(db, snapshot)
+        row = next(
+            row
+            for row in report_snapshots.rfi_snapshot_rows(
+                db,
+                assessment,
+                current_source=None,
+            )
+            if row.snapshot.id == snapshot.id
+        )
+        content = rfi_requests.render_docx(
+            document,
+            generated_at=snapshot.generated_at,
+            version_label=f"v{row.sequence}",
+        )
+        metadata = report_snapshots.generated_event(db, snapshot.id)
+    except report_snapshots.SnapshotError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+    except StopIteration:
+        db.rollback()
+        return _error(404, rfi_requests.RFI_NOT_FOUND_MESSAGE)
+
+    safe_company = re.sub(
+        r"[^A-Za-z0-9._-]+", "_", assessment.company_name
+    ).strip("_") or "report"
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{safe_company}_rfi_v{row.sequence}_'
+                f'{snapshot.id[:8]}.docx"'
+            ),
+            "X-RFI-Document-Sha256": metadata["document_sha256"],
+        },
+    )
+
+
 @router.post("/{assessment_id}/snapshots/{snapshot_id}/issue")
 def issue_snapshot_route(
     assessment_id: str,
@@ -129,6 +266,9 @@ def issue_snapshot_route(
             assessment_id=assessment_id,
             snapshot_id=snapshot_id,
         )
+        if snapshot.type == report_snapshots.RFI_SNAPSHOT_TYPE:
+            db.rollback()
+            return _error(400, rfi_requests.RFI_WRONG_ROUTE_MESSAGE)
         require_review_approval(assessment_id, db)
         release_event = approved_report.latest_release_event(db, assessment_id)
         if release_event is None or not report_snapshots.generated_after(
@@ -179,11 +319,12 @@ def snapshot_file_route(
         safe_company = re.sub(
             r"[^A-Za-z0-9._-]+", "_", assessment.company_name
         ).strip("_") or "report"
-        row = next(
-            row
-            for row in report_snapshots.snapshot_rows(db, assessment)[snapshot.type]
-            if row.snapshot.id == snapshot.id
+        rows = (
+            report_snapshots.rfi_snapshot_rows(db, assessment, current_source=None)
+            if snapshot.type == report_snapshots.RFI_SNAPSHOT_TYPE
+            else report_snapshots.snapshot_rows(db, assessment)[snapshot.type]
         )
+        row = next(row for row in rows if row.snapshot.id == snapshot.id)
         headers["Content-Disposition"] = (
             f'attachment; filename="{safe_company}_{snapshot.type}_v{row.sequence}_'
             f'{snapshot.id[:8]}.pdf"'
