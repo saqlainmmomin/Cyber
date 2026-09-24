@@ -1,0 +1,21 @@
+{
+  "artifact_id": "E03",
+  "filename": "incident-exercise.conf.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "magic_item": null,
+  "consultant_maps_to": [],
+  "render": {
+    "kind": "config",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Incident Exercise Settings",
+    "lines": [
+      "exercise.mode = tabletop",
+      "exercise.participants = 5",
+      "exercise.review_interval_days = 365"
+    ]
+  }
+}

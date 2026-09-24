@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E02",
+  "filename": "privileged-access-register.png",
+  "category": "other",
+  "channel": "consultant_upload",
+  "magic_item": null,
+  "consultant_maps_to": [],
+  "render": {
+    "kind": "table",
+    "format": "png",
+    "degrade": "scan_heavy"
+  },
+  "content": {
+    "title": "Privileged Account MFA Register",
+    "subtitle": "Exported 18 September 2026",
+    "preamble": [
+      "Status at the time of export."
+    ],
+    "columns": ["Account", "MFA status"],
+    "rows": [
+      ["admin-01", "Enrolled"],
+      ["admin-02", "Enrolled"],
+      ["admin-03", "Not enrolled"],
+      ["admin-04", "Not enrolled"]
+    ],
+    "footer": [
+      "Four privileged accounts remain outside MFA."
+    ]
+  }
+}

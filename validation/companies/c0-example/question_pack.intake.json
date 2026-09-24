@@ -1,0 +1,1020 @@
+{
+  "context": [
+    {
+      "id": "CTX.DATA.1",
+      "options": [
+        "identity",
+        "financial",
+        "health",
+        "biometric",
+        "location",
+        "behavioral",
+        "childrens",
+        "other"
+      ],
+      "text": "What categories of personal data does your organization collect?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.2",
+      "options": [
+        "web_forms",
+        "mobile_app",
+        "third_party_apis",
+        "physical_forms",
+        "automated_tracking"
+      ],
+      "text": "What is your primary mechanism for collecting personal data?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.3",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you use third-party data processors or SaaS vendors who handle personal data on your behalf?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you transfer personal data across international borders?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4a",
+      "options": [],
+      "text": "If yes, which regions do you transfer data to?",
+      "type": "text"
+    },
+    {
+      "id": "CTX.POSTURE.1",
+      "options": [
+        "full_time",
+        "part_time_shared",
+        "no"
+      ],
+      "text": "Do you have a dedicated privacy or Data Protection Officer function?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.2",
+      "options": [
+        "iso_27001_certified",
+        "soc2",
+        "internal_policy_only",
+        "none"
+      ],
+      "text": "Do you have an existing information security program?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.3",
+      "options": [
+        "external_audit",
+        "internal_only",
+        "no"
+      ],
+      "text": "Have you undergone any privacy or security audit in the past 2 years?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.4",
+      "options": [
+        "yes_recently_updated",
+        "yes_outdated",
+        "no"
+      ],
+      "text": "Do you have a documented privacy policy published to users?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.1",
+      "options": [
+        "processes_childrens_data",
+        "healthcare_finance_critical_infra",
+        "handles_sensitive_personal_data",
+        "designated_or_likely_sdf",
+        "none"
+      ],
+      "text": "Which of the following apply to your organization?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.RISK.2",
+      "options": [
+        "under_10k",
+        "10k_to_1m",
+        "1m_to_10m",
+        "over_10m"
+      ],
+      "text": "Roughly how many data principals (individuals whose data you hold) are affected?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.3",
+      "options": [
+        "yes_reported",
+        "yes_unreported",
+        "no",
+        "unsure"
+      ],
+      "text": "In the last 2 years, have you experienced any data breach or security incident?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.1",
+      "options": [
+        "regulatory_audit_prep",
+        "investor_board_requirement",
+        "customer_due_diligence",
+        "proactive_compliance",
+        "post_incident_review"
+      ],
+      "text": "What is the primary driver for this assessment?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.2",
+      "options": [
+        "under_3_months",
+        "3_to_6_months",
+        "6_to_12_months",
+        "no_hard_deadline"
+      ],
+      "text": "What is your target compliance timeline?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.3",
+      "options": [
+        "under_10k",
+        "10k_to_50k",
+        "50k_to_150k",
+        "above_150k",
+        "not_yet_defined"
+      ],
+      "text": "What is your approximate budget band for remediation?",
+      "type": "single_select"
+    }
+  ],
+  "controls": {
+    "iso27001": [
+      {
+        "description": "A set of policies for information security shall be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties.",
+        "domain": "organizational",
+        "reference": "Annex A.5.1",
+        "requirement_id": "ISO.A5.1",
+        "section": "policies",
+        "title": "Policies for information security"
+      },
+      {
+        "description": "Information security roles and responsibilities shall be defined and allocated.",
+        "domain": "organizational",
+        "reference": "Annex A.5.2",
+        "requirement_id": "ISO.A5.2",
+        "section": "policies",
+        "title": "Information security roles and responsibilities"
+      },
+      {
+        "description": "Conflicting duties and areas of responsibility shall be segregated.",
+        "domain": "organizational",
+        "reference": "Annex A.5.3",
+        "requirement_id": "ISO.A5.3",
+        "section": "policies",
+        "title": "Segregation of duties"
+      },
+      {
+        "description": "Management shall require all personnel to apply information security in accordance with the established policies and procedures.",
+        "domain": "organizational",
+        "reference": "Annex A.5.4",
+        "requirement_id": "ISO.A5.4",
+        "section": "policies",
+        "title": "Management responsibilities"
+      },
+      {
+        "description": "Appropriate contacts with relevant authorities shall be maintained.",
+        "domain": "organizational",
+        "reference": "Annex A.5.5",
+        "requirement_id": "ISO.A5.5",
+        "section": "threat_intelligence",
+        "title": "Contact with authorities"
+      },
+      {
+        "description": "Appropriate contacts with special interest groups or other specialist security forums shall be maintained.",
+        "domain": "organizational",
+        "reference": "Annex A.5.6",
+        "requirement_id": "ISO.A5.6",
+        "section": "threat_intelligence",
+        "title": "Contact with special interest groups"
+      },
+      {
+        "description": "Information relating to information security threats shall be collected and analysed to produce threat intelligence.",
+        "domain": "organizational",
+        "reference": "Annex A.5.7",
+        "requirement_id": "ISO.A5.7",
+        "section": "threat_intelligence",
+        "title": "Threat intelligence"
+      },
+      {
+        "description": "Information security shall be integrated into project management.",
+        "domain": "organizational",
+        "reference": "Annex A.5.8",
+        "requirement_id": "ISO.A5.8",
+        "section": "threat_intelligence",
+        "title": "Information security in project management"
+      },
+      {
+        "description": "An inventory of information and other associated assets shall be identified and maintained.",
+        "domain": "organizational",
+        "reference": "Annex A.5.9",
+        "requirement_id": "ISO.A5.9",
+        "section": "threat_intelligence",
+        "title": "Inventory of information and other associated assets"
+      },
+      {
+        "description": "Rules for acceptable use and procedures for handling of information and other associated assets shall be identified, documented and implemented.",
+        "domain": "organizational",
+        "reference": "Annex A.5.10",
+        "requirement_id": "ISO.A5.10",
+        "section": "threat_intelligence",
+        "title": "Acceptable use of information and other associated assets"
+      },
+      {
+        "description": "Personnel and other interested parties shall return all organizational assets in their possession upon change or termination of employment, contract or agreement.",
+        "domain": "organizational",
+        "reference": "Annex A.5.11",
+        "requirement_id": "ISO.A5.11",
+        "section": "threat_intelligence",
+        "title": "Return of assets"
+      },
+      {
+        "description": "Information shall be classified according to the information security needs of the organization based on confidentiality, integrity, availability and relevant interested party requirements.",
+        "domain": "organizational",
+        "reference": "Annex A.5.12",
+        "requirement_id": "ISO.A5.12",
+        "section": "threat_intelligence",
+        "title": "Classification of information"
+      },
+      {
+        "description": "An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the classification scheme.",
+        "domain": "organizational",
+        "reference": "Annex A.5.13",
+        "requirement_id": "ISO.A5.13",
+        "section": "threat_intelligence",
+        "title": "Labelling of information"
+      },
+      {
+        "description": "Information transfer rules, procedures or agreements shall be in place for all types of transfer facilities.",
+        "domain": "organizational",
+        "reference": "Annex A.5.14",
+        "requirement_id": "ISO.A5.14",
+        "section": "access_identity",
+        "title": "Information transfer"
+      },
+      {
+        "description": "Rules to control physical and logical access to information and other associated assets shall be established and implemented based on business and information security requirements.",
+        "domain": "organizational",
+        "reference": "Annex A.5.15",
+        "requirement_id": "ISO.A5.15",
+        "section": "access_identity",
+        "title": "Access control"
+      },
+      {
+        "description": "The full life cycle of identities shall be managed.",
+        "domain": "organizational",
+        "reference": "Annex A.5.16",
+        "requirement_id": "ISO.A5.16",
+        "section": "access_identity",
+        "title": "Identity management"
+      },
+      {
+        "description": "Allocation and management of authentication information shall be controlled by a management process including advising personnel of appropriate handling.",
+        "domain": "organizational",
+        "reference": "Annex A.5.17",
+        "requirement_id": "ISO.A5.17",
+        "section": "access_identity",
+        "title": "Authentication information"
+      },
+      {
+        "description": "Access rights to information and other associated assets shall be provisioned, reviewed, modified and removed in accordance with the topic-specific policy and rules.",
+        "domain": "organizational",
+        "reference": "Annex A.5.18",
+        "requirement_id": "ISO.A5.18",
+        "section": "access_identity",
+        "title": "Access rights"
+      },
+      {
+        "description": "Processes and procedures shall be defined and implemented to manage the information security risks associated with the use of supplier's products or services.",
+        "domain": "organizational",
+        "reference": "Annex A.5.19",
+        "requirement_id": "ISO.A5.19",
+        "section": "supplier_relations",
+        "title": "Information security in supplier relationships"
+      },
+      {
+        "description": "Relevant information security requirements shall be established and agreed with each supplier based on the type of supplier relationship.",
+        "domain": "organizational",
+        "reference": "Annex A.5.20",
+        "requirement_id": "ISO.A5.20",
+        "section": "supplier_relations",
+        "title": "Addressing information security within supplier agreements"
+      },
+      {
+        "description": "Processes and procedures shall be defined and implemented for managing information security risks associated with the ICT products and services supply chain.",
+        "domain": "organizational",
+        "reference": "Annex A.5.21",
+        "requirement_id": "ISO.A5.21",
+        "section": "supplier_relations",
+        "title": "Managing information security in the ICT supply chain"
+      },
+      {
+        "description": "The organization shall regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+        "domain": "organizational",
+        "reference": "Annex A.5.22",
+        "requirement_id": "ISO.A5.22",
+        "section": "supplier_relations",
+        "title": "Monitoring, review and change management of supplier services"
+      },
+      {
+        "description": "Processes for acquisition, use, management and exit from cloud services shall be established in accordance with the organization's information security requirements.",
+        "domain": "organizational",
+        "reference": "Annex A.5.23",
+        "requirement_id": "ISO.A5.23",
+        "section": "supplier_relations",
+        "title": "Information security for use of cloud services"
+      },
+      {
+        "description": "The organization shall plan and prepare for managing information security incidents by defining, establishing and communicating incident management processes, roles and responsibilities.",
+        "domain": "organizational",
+        "reference": "Annex A.5.24",
+        "requirement_id": "ISO.A5.24",
+        "section": "incident_continuity",
+        "title": "Information security incident management planning and preparation"
+      },
+      {
+        "description": "The organization shall assess information security events and decide if they are to be categorized as information security incidents.",
+        "domain": "organizational",
+        "reference": "Annex A.5.25",
+        "requirement_id": "ISO.A5.25",
+        "section": "incident_continuity",
+        "title": "Assessment and decision on information security events"
+      },
+      {
+        "description": "Information security incidents shall be responded to in accordance with the documented procedures.",
+        "domain": "organizational",
+        "reference": "Annex A.5.26",
+        "requirement_id": "ISO.A5.26",
+        "section": "incident_continuity",
+        "title": "Response to information security incidents"
+      },
+      {
+        "description": "Knowledge gained from information security incidents shall be used to strengthen and improve the information security controls.",
+        "domain": "organizational",
+        "reference": "Annex A.5.27",
+        "requirement_id": "ISO.A5.27",
+        "section": "incident_continuity",
+        "title": "Learning from information security incidents"
+      },
+      {
+        "description": "The organization shall establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+        "domain": "organizational",
+        "reference": "Annex A.5.28",
+        "requirement_id": "ISO.A5.28",
+        "section": "incident_continuity",
+        "title": "Collection of evidence"
+      },
+      {
+        "description": "The organization shall plan how to maintain information security at an appropriate level during disruption.",
+        "domain": "organizational",
+        "reference": "Annex A.5.29",
+        "requirement_id": "ISO.A5.29",
+        "section": "incident_continuity",
+        "title": "Information security during disruption"
+      },
+      {
+        "description": "ICT readiness shall be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements.",
+        "domain": "organizational",
+        "reference": "Annex A.5.30",
+        "requirement_id": "ISO.A5.30",
+        "section": "incident_continuity",
+        "title": "ICT readiness for business continuity"
+      },
+      {
+        "description": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organization's approach to meet these requirements shall be identified, documented and kept up to date.",
+        "domain": "organizational",
+        "reference": "Annex A.5.31",
+        "requirement_id": "ISO.A5.31",
+        "section": "legal_compliance",
+        "title": "Legal, statutory, regulatory and contractual requirements"
+      },
+      {
+        "description": "The organization shall implement appropriate procedures to protect intellectual property rights.",
+        "domain": "organizational",
+        "reference": "Annex A.5.32",
+        "requirement_id": "ISO.A5.32",
+        "section": "legal_compliance",
+        "title": "Intellectual property rights"
+      },
+      {
+        "description": "Records shall be protected from loss, destruction, falsification, unauthorized access and unauthorized release.",
+        "domain": "organizational",
+        "reference": "Annex A.5.33",
+        "requirement_id": "ISO.A5.33",
+        "section": "legal_compliance",
+        "title": "Protection of records"
+      },
+      {
+        "description": "The organization shall identify and meet requirements regarding the preservation of privacy and protection of PII as applicable.",
+        "domain": "organizational",
+        "reference": "Annex A.5.34",
+        "requirement_id": "ISO.A5.34",
+        "section": "legal_compliance",
+        "title": "Privacy and protection of personal information"
+      },
+      {
+        "description": "The organization's approach to managing information security shall be independently reviewed at planned intervals or when significant changes occur.",
+        "domain": "organizational",
+        "reference": "Annex A.5.35",
+        "requirement_id": "ISO.A5.35",
+        "section": "legal_compliance",
+        "title": "Independent review of information security"
+      },
+      {
+        "description": "Compliance with the organization's information security policy, topic-specific policies, rules and standards shall be regularly reviewed.",
+        "domain": "organizational",
+        "reference": "Annex A.5.36",
+        "requirement_id": "ISO.A5.36",
+        "section": "legal_compliance",
+        "title": "Compliance with policies, rules and standards"
+      },
+      {
+        "description": "Operating procedures for information processing facilities shall be documented and made available to personnel who need them.",
+        "domain": "organizational",
+        "reference": "Annex A.5.37",
+        "requirement_id": "ISO.A5.37",
+        "section": "legal_compliance",
+        "title": "Documented operating procedures"
+      },
+      {
+        "description": "Background verification checks on all candidates to become personnel shall be carried out prior to joining the organization and on an ongoing basis.",
+        "domain": "people",
+        "reference": "Annex A.6.1",
+        "requirement_id": "ISO.A6.1",
+        "section": "screening_employment",
+        "title": "Screening"
+      },
+      {
+        "description": "Employment contractual agreements shall state the personnel's and the organization's responsibilities for information security.",
+        "domain": "people",
+        "reference": "Annex A.6.2",
+        "requirement_id": "ISO.A6.2",
+        "section": "screening_employment",
+        "title": "Terms and conditions of employment"
+      },
+      {
+        "description": "Personnel and relevant interested parties shall receive appropriate information security awareness, education and training and regular updates of the organization's policies and procedures.",
+        "domain": "people",
+        "reference": "Annex A.6.3",
+        "requirement_id": "ISO.A6.3",
+        "section": "screening_employment",
+        "title": "Information security awareness, education and training"
+      },
+      {
+        "description": "A disciplinary process shall be formalized and communicated to take actions against personnel who have committed an information security policy violation.",
+        "domain": "people",
+        "reference": "Annex A.6.4",
+        "requirement_id": "ISO.A6.4",
+        "section": "screening_employment",
+        "title": "Disciplinary process"
+      },
+      {
+        "description": "Information security responsibilities that remain valid after termination or change of employment shall be defined, enforced and communicated.",
+        "domain": "people",
+        "reference": "Annex A.6.5",
+        "requirement_id": "ISO.A6.5",
+        "section": "screening_employment",
+        "title": "Responsibilities after termination or change of employment"
+      },
+      {
+        "description": "Confidentiality or non-disclosure agreements reflecting the organization's needs for information protection shall be identified, documented, regularly reviewed and signed by personnel and relevant interested parties.",
+        "domain": "people",
+        "reference": "Annex A.6.6",
+        "requirement_id": "ISO.A6.6",
+        "section": "remote_work",
+        "title": "Confidentiality or non-disclosure agreements"
+      },
+      {
+        "description": "Security measures shall be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organization's premises.",
+        "domain": "people",
+        "reference": "Annex A.6.7",
+        "requirement_id": "ISO.A6.7",
+        "section": "remote_work",
+        "title": "Remote working"
+      },
+      {
+        "description": "The organization shall provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner.",
+        "domain": "people",
+        "reference": "Annex A.6.8",
+        "requirement_id": "ISO.A6.8",
+        "section": "remote_work",
+        "title": "Information security event reporting"
+      },
+      {
+        "description": "Security perimeters shall be defined and used to protect areas that contain information and other associated assets.",
+        "domain": "physical",
+        "reference": "Annex A.7.1",
+        "requirement_id": "ISO.A7.1",
+        "section": "perimeter_access",
+        "title": "Physical security perimeters"
+      },
+      {
+        "description": "Secure areas shall be protected by appropriate entry controls and access points.",
+        "domain": "physical",
+        "reference": "Annex A.7.2",
+        "requirement_id": "ISO.A7.2",
+        "section": "perimeter_access",
+        "title": "Physical entry"
+      },
+      {
+        "description": "Physical security for offices, rooms and facilities shall be designed and implemented.",
+        "domain": "physical",
+        "reference": "Annex A.7.3",
+        "requirement_id": "ISO.A7.3",
+        "section": "perimeter_access",
+        "title": "Securing offices, rooms and facilities"
+      },
+      {
+        "description": "Premises shall be continuously monitored for unauthorized physical access.",
+        "domain": "physical",
+        "reference": "Annex A.7.4",
+        "requirement_id": "ISO.A7.4",
+        "section": "perimeter_access",
+        "title": "Physical security monitoring"
+      },
+      {
+        "description": "Protection against physical and environmental threats shall be designed and implemented.",
+        "domain": "physical",
+        "reference": "Annex A.7.5",
+        "requirement_id": "ISO.A7.5",
+        "section": "perimeter_access",
+        "title": "Protecting against physical and environmental threats"
+      },
+      {
+        "description": "Security measures for working in secure areas shall be designed and implemented.",
+        "domain": "physical",
+        "reference": "Annex A.7.6",
+        "requirement_id": "ISO.A7.6",
+        "section": "perimeter_access",
+        "title": "Working in secure areas"
+      },
+      {
+        "description": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities shall be defined and appropriately enforced.",
+        "domain": "physical",
+        "reference": "Annex A.7.7",
+        "requirement_id": "ISO.A7.7",
+        "section": "perimeter_access",
+        "title": "Clear desk and clear screen"
+      },
+      {
+        "description": "Equipment shall be sited securely and protected.",
+        "domain": "physical",
+        "reference": "Annex A.7.8",
+        "requirement_id": "ISO.A7.8",
+        "section": "equipment",
+        "title": "Equipment siting and protection"
+      },
+      {
+        "description": "Off-site assets shall be protected.",
+        "domain": "physical",
+        "reference": "Annex A.7.9",
+        "requirement_id": "ISO.A7.9",
+        "section": "equipment",
+        "title": "Security of assets off-premises"
+      },
+      {
+        "description": "Storage media shall be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the classification scheme and handling requirements.",
+        "domain": "physical",
+        "reference": "Annex A.7.10",
+        "requirement_id": "ISO.A7.10",
+        "section": "equipment",
+        "title": "Storage media"
+      },
+      {
+        "description": "Information processing facilities shall be protected from power failures and other disruptions caused by failures in supporting utilities.",
+        "domain": "physical",
+        "reference": "Annex A.7.11",
+        "requirement_id": "ISO.A7.11",
+        "section": "equipment",
+        "title": "Supporting utilities"
+      },
+      {
+        "description": "Cables carrying power, data or supporting information services shall be protected from interception, interference or damage.",
+        "domain": "physical",
+        "reference": "Annex A.7.12",
+        "requirement_id": "ISO.A7.12",
+        "section": "equipment",
+        "title": "Cabling security"
+      },
+      {
+        "description": "Equipment shall be maintained correctly to ensure availability, integrity and confidentiality of information.",
+        "domain": "physical",
+        "reference": "Annex A.7.13",
+        "requirement_id": "ISO.A7.13",
+        "section": "equipment",
+        "title": "Equipment maintenance"
+      },
+      {
+        "description": "Items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+        "domain": "physical",
+        "reference": "Annex A.7.14",
+        "requirement_id": "ISO.A7.14",
+        "section": "equipment",
+        "title": "Secure disposal or re-use of equipment"
+      },
+      {
+        "description": "Information stored on, processed by or accessible via user endpoint devices shall be protected.",
+        "domain": "technological",
+        "reference": "Annex A.8.1",
+        "requirement_id": "ISO.A8.1",
+        "section": "tech_access",
+        "title": "User endpoint devices"
+      },
+      {
+        "description": "The allocation and use of privileged access rights shall be restricted and managed.",
+        "domain": "technological",
+        "reference": "Annex A.8.2",
+        "requirement_id": "ISO.A8.2",
+        "section": "tech_access",
+        "title": "Privileged access rights"
+      },
+      {
+        "description": "Access to information and other associated assets shall be restricted in accordance with the established topic-specific policy on access control.",
+        "domain": "technological",
+        "reference": "Annex A.8.3",
+        "requirement_id": "ISO.A8.3",
+        "section": "tech_access",
+        "title": "Information access restriction"
+      },
+      {
+        "description": "Read and write access to source code, development tools and software libraries shall be appropriately managed.",
+        "domain": "technological",
+        "reference": "Annex A.8.4",
+        "requirement_id": "ISO.A8.4",
+        "section": "tech_access",
+        "title": "Access to source code"
+      },
+      {
+        "description": "Secure authentication technologies and procedures shall be established and implemented based on information access restrictions and the topic-specific policy on access control.",
+        "domain": "technological",
+        "reference": "Annex A.8.5",
+        "requirement_id": "ISO.A8.5",
+        "section": "tech_access",
+        "title": "Secure authentication"
+      },
+      {
+        "description": "The use of resources shall be monitored and adjusted in line with current and expected capacity requirements.",
+        "domain": "technological",
+        "reference": "Annex A.8.6",
+        "requirement_id": "ISO.A8.6",
+        "section": "tech_operations",
+        "title": "Capacity management"
+      },
+      {
+        "description": "Protection against malware shall be implemented and supported by appropriate user awareness.",
+        "domain": "technological",
+        "reference": "Annex A.8.7",
+        "requirement_id": "ISO.A8.7",
+        "section": "tech_operations",
+        "title": "Protection against malware"
+      },
+      {
+        "description": "Information about technical vulnerabilities of information systems in use shall be obtained, the organization's exposure to such vulnerabilities shall be evaluated and appropriate measures shall be taken.",
+        "domain": "technological",
+        "reference": "Annex A.8.8",
+        "requirement_id": "ISO.A8.8",
+        "section": "tech_operations",
+        "title": "Management of technical vulnerabilities"
+      },
+      {
+        "description": "Configurations, including security configurations, of hardware, software, services and networks shall be established, documented, implemented, monitored and reviewed.",
+        "domain": "technological",
+        "reference": "Annex A.8.9",
+        "requirement_id": "ISO.A8.9",
+        "section": "tech_operations",
+        "title": "Configuration management"
+      },
+      {
+        "description": "Information stored in information systems, devices or in any other storage media shall be deleted when no longer required.",
+        "domain": "technological",
+        "reference": "Annex A.8.10",
+        "requirement_id": "ISO.A8.10",
+        "section": "tech_operations",
+        "title": "Information deletion"
+      },
+      {
+        "description": "Data masking shall be used in accordance with the organization's topic-specific policy on access control and other related policies and business requirements, taking applicable legislation into consideration.",
+        "domain": "technological",
+        "reference": "Annex A.8.11",
+        "requirement_id": "ISO.A8.11",
+        "section": "tech_operations",
+        "title": "Data masking"
+      },
+      {
+        "description": "Data leakage prevention measures shall be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+        "domain": "technological",
+        "reference": "Annex A.8.12",
+        "requirement_id": "ISO.A8.12",
+        "section": "tech_operations",
+        "title": "Data leakage prevention"
+      },
+      {
+        "description": "Backup copies of information, software and systems shall be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.",
+        "domain": "technological",
+        "reference": "Annex A.8.13",
+        "requirement_id": "ISO.A8.13",
+        "section": "tech_operations",
+        "title": "Information backup"
+      },
+      {
+        "description": "Information processing facilities shall be implemented with redundancy sufficient to meet availability requirements.",
+        "domain": "technological",
+        "reference": "Annex A.8.14",
+        "requirement_id": "ISO.A8.14",
+        "section": "tech_operations",
+        "title": "Redundancy of information processing facilities"
+      },
+      {
+        "description": "Logs that record activities, exceptions, faults and other relevant events shall be produced, stored, protected and analysed.",
+        "domain": "technological",
+        "reference": "Annex A.8.15",
+        "requirement_id": "ISO.A8.15",
+        "section": "tech_logging",
+        "title": "Logging"
+      },
+      {
+        "description": "Networks, systems and applications shall be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+        "domain": "technological",
+        "reference": "Annex A.8.16",
+        "requirement_id": "ISO.A8.16",
+        "section": "tech_logging",
+        "title": "Monitoring activities"
+      },
+      {
+        "description": "The clocks of information processing systems used by the organization shall be synchronized to approved time sources.",
+        "domain": "technological",
+        "reference": "Annex A.8.17",
+        "requirement_id": "ISO.A8.17",
+        "section": "tech_logging",
+        "title": "Clock synchronization"
+      },
+      {
+        "description": "The use of utility programs that can be capable of overriding system and application controls shall be restricted and tightly controlled.",
+        "domain": "technological",
+        "reference": "Annex A.8.18",
+        "requirement_id": "ISO.A8.18",
+        "section": "tech_logging",
+        "title": "Use of privileged utility programs"
+      },
+      {
+        "description": "Procedures and measures shall be implemented to securely manage software installation on operational systems.",
+        "domain": "technological",
+        "reference": "Annex A.8.19",
+        "requirement_id": "ISO.A8.19",
+        "section": "tech_logging",
+        "title": "Installation of software on operational systems"
+      },
+      {
+        "description": "Networks and network devices shall be secured, managed and controlled to protect information in systems and applications.",
+        "domain": "technological",
+        "reference": "Annex A.8.20",
+        "requirement_id": "ISO.A8.20",
+        "section": "tech_logging",
+        "title": "Networks security"
+      },
+      {
+        "description": "Security mechanisms, service levels and service requirements of network services shall be identified, implemented and monitored.",
+        "domain": "technological",
+        "reference": "Annex A.8.21",
+        "requirement_id": "ISO.A8.21",
+        "section": "tech_logging",
+        "title": "Security of network services"
+      },
+      {
+        "description": "Groups of information services, users and information systems shall be segregated in the organization's networks.",
+        "domain": "technological",
+        "reference": "Annex A.8.22",
+        "requirement_id": "ISO.A8.22",
+        "section": "tech_logging",
+        "title": "Segregation of networks"
+      },
+      {
+        "description": "Access to external websites shall be managed to reduce exposure to malicious content.",
+        "domain": "technological",
+        "reference": "Annex A.8.23",
+        "requirement_id": "ISO.A8.23",
+        "section": "tech_logging",
+        "title": "Web filtering"
+      },
+      {
+        "description": "Rules for the effective use of cryptography, including cryptographic key management, shall be defined and implemented.",
+        "domain": "technological",
+        "reference": "Annex A.8.24",
+        "requirement_id": "ISO.A8.24",
+        "section": "tech_logging",
+        "title": "Use of cryptography"
+      },
+      {
+        "description": "Rules for the secure development of software and systems shall be established and applied.",
+        "domain": "technological",
+        "reference": "Annex A.8.25",
+        "requirement_id": "ISO.A8.25",
+        "section": "tech_sdlc",
+        "title": "Secure development life cycle"
+      },
+      {
+        "description": "Information security requirements shall be identified, specified and approved when developing or acquiring applications.",
+        "domain": "technological",
+        "reference": "Annex A.8.26",
+        "requirement_id": "ISO.A8.26",
+        "section": "tech_sdlc",
+        "title": "Application security requirements"
+      },
+      {
+        "description": "Principles for engineering secure systems shall be established, documented, maintained and applied to any information system development activity.",
+        "domain": "technological",
+        "reference": "Annex A.8.27",
+        "requirement_id": "ISO.A8.27",
+        "section": "tech_sdlc",
+        "title": "Secure system architecture and engineering principles"
+      },
+      {
+        "description": "Secure coding principles shall be applied to software development.",
+        "domain": "technological",
+        "reference": "Annex A.8.28",
+        "requirement_id": "ISO.A8.28",
+        "section": "tech_sdlc",
+        "title": "Secure coding"
+      },
+      {
+        "description": "Security testing processes shall be defined and implemented in the development life cycle.",
+        "domain": "technological",
+        "reference": "Annex A.8.29",
+        "requirement_id": "ISO.A8.29",
+        "section": "tech_sdlc",
+        "title": "Security testing in development and acceptance"
+      },
+      {
+        "description": "The organization shall direct, monitor and review the activities related to outsourced system development.",
+        "domain": "technological",
+        "reference": "Annex A.8.30",
+        "requirement_id": "ISO.A8.30",
+        "section": "tech_sdlc",
+        "title": "Outsourced development"
+      },
+      {
+        "description": "Development, testing and production environments shall be separated and secured.",
+        "domain": "technological",
+        "reference": "Annex A.8.31",
+        "requirement_id": "ISO.A8.31",
+        "section": "tech_sdlc",
+        "title": "Separation of development, test and production environments"
+      },
+      {
+        "description": "Changes to information processing facilities and information systems shall be subject to change management procedures.",
+        "domain": "technological",
+        "reference": "Annex A.8.32",
+        "requirement_id": "ISO.A8.32",
+        "section": "tech_sdlc",
+        "title": "Change management"
+      },
+      {
+        "description": "Test information shall be appropriately selected, protected and managed.",
+        "domain": "technological",
+        "reference": "Annex A.8.33",
+        "requirement_id": "ISO.A8.33",
+        "section": "tech_sdlc",
+        "title": "Test information"
+      },
+      {
+        "description": "Audit tests and other assurance activities involving assessment of operational systems shall be planned and agreed between the tester and appropriate management.",
+        "domain": "technological",
+        "reference": "Annex A.8.34",
+        "requirement_id": "ISO.A8.34",
+        "section": "tech_sdlc",
+        "title": "Protection of information systems during audit testing"
+      }
+    ]
+  },
+  "document_categories": [
+    "privacy_policy",
+    "consent_form",
+    "data_flow_diagram",
+    "dpia",
+    "processing_records",
+    "breach_procedure",
+    "retention_policy",
+    "vendor_agreement",
+    "other"
+  ],
+  "magic_link_limits": {
+    "expires_in_days": 7,
+    "max_total_mb": 100,
+    "max_uploads": 20
+  },
+  "scope": {
+    "iso27001": [
+      {
+        "help_text": "Define which parts of the organization, business processes, and information assets are within scope.",
+        "id": "ISO.SCP.1",
+        "options": [
+          {
+            "label": "Entire organization",
+            "value": "full_org"
+          },
+          {
+            "label": "Specific business units or departments",
+            "value": "specific_units"
+          },
+          {
+            "label": "Specific products or services",
+            "value": "specific_services"
+          },
+          {
+            "label": "Not yet defined",
+            "value": "undefined"
+          }
+        ],
+        "text": "What is the scope of your Information Security Management System (ISMS)?"
+      },
+      {
+        "help_text": "Cloud services include IaaS, PaaS and SaaS (including email and file sharing). If you answer No, the cloud-services control (A.5.23) is proposed as likely not applicable for the consultant to confirm; nothing is removed automatically.",
+        "id": "ISO.SCP.2",
+        "options": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          },
+          {
+            "label": "Planning to adopt",
+            "value": "planned"
+          }
+        ],
+        "text": "Does your organization use cloud services for storing or processing information?"
+      },
+      {
+        "help_text": "If you answer No, the development-specific controls (A.8.4, A.8.25, A.8.28, A.8.30, A.8.31, A.8.33) are proposed as likely not applicable; if development is in-house only, outsourced development (A.8.30) is. The consultant confirms each one; nothing is removed automatically.",
+        "id": "ISO.SCP.3",
+        "options": [
+          {
+            "label": "Yes — in-house development",
+            "value": "inhouse"
+          },
+          {
+            "label": "Yes — outsourced development",
+            "value": "outsourced"
+          },
+          {
+            "label": "Both in-house and outsourced",
+            "value": "both"
+          },
+          {
+            "label": "No software development",
+            "value": "no"
+          }
+        ],
+        "text": "Does your organization develop software or systems (in-house or outsourced)?"
+      },
+      {
+        "help_text": "If you are fully remote with no premises, the site-related physical controls (A.7.1-A.7.6, A.7.8, A.7.11, A.7.12) are proposed as likely not applicable for the consultant to confirm. Controls that still apply to remote staff and equipment (A.7.7, A.7.9, A.7.10, A.7.13, A.7.14) stay in scope.",
+        "id": "ISO.SCP.4",
+        "options": [
+          {
+            "label": "Yes — including data center / server room",
+            "value": "yes_datacenter"
+          },
+          {
+            "label": "Yes — office only (no on-prem servers)",
+            "value": "yes_office"
+          },
+          {
+            "label": "No — fully remote / cloud-only",
+            "value": "fully_remote"
+          }
+        ],
+        "text": "Does your organization have physical premises with sensitive information processing facilities?"
+      }
+    ]
+  },
+  "screening": null
+}

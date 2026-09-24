@@ -1,0 +1,691 @@
+{
+  "sections": [
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A5.24",
+          "guidance": "The organization shall plan and prepare for managing information security incidents by defining, establishing and communicating incident management processes, roles and responsibilities.",
+          "id": "SINGLE.ISO.A5.24",
+          "status": "active",
+          "text": "Has your organization implemented information security incident management planning and preparation? (Annex A.5.24)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.1",
+          "guidance": "A set of policies for information security shall be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties.",
+          "id": "SINGLE.ISO.A5.1",
+          "status": "active",
+          "text": "Has your organization implemented policies for information security? (Annex A.5.1)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.32",
+          "guidance": "Changes to information processing facilities and information systems shall be subject to change management procedures.",
+          "id": "SINGLE.ISO.A8.32",
+          "status": "active",
+          "text": "Has your organization implemented change management? (Annex A.8.32)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.35",
+          "guidance": "The organization's approach to managing information security shall be independently reviewed at planned intervals or when significant changes occur.",
+          "id": "SINGLE.ISO.A5.35",
+          "status": "active",
+          "text": "Has your organization implemented independent review of information security? (Annex A.5.35)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.2",
+          "guidance": "Information security roles and responsibilities shall be defined and allocated.",
+          "id": "SINGLE.ISO.A5.2",
+          "status": "active",
+          "text": "Has your organization implemented information security roles and responsibilities? (Annex A.5.2)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.4",
+          "guidance": "Management shall require all personnel to apply information security in accordance with the established policies and procedures.",
+          "id": "SINGLE.ISO.A5.4",
+          "status": "active",
+          "text": "Has your organization implemented management responsibilities? (Annex A.5.4)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.3",
+          "guidance": "Conflicting duties and areas of responsibility shall be segregated.",
+          "id": "SINGLE.ISO.A5.3",
+          "status": "active",
+          "text": "Has your organization implemented segregation of duties? (Annex A.5.3)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.5",
+          "guidance": "Appropriate contacts with relevant authorities shall be maintained.",
+          "id": "SINGLE.ISO.A5.5",
+          "status": "active",
+          "text": "Has your organization implemented contact with authorities? (Annex A.5.5)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.8",
+          "guidance": "Information security shall be integrated into project management.",
+          "id": "SINGLE.ISO.A5.8",
+          "status": "active",
+          "text": "Has your organization implemented information security in project management? (Annex A.5.8)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.34",
+          "guidance": "Audit tests and other assurance activities involving assessment of operational systems shall be planned and agreed between the tester and appropriate management.",
+          "id": "SINGLE.ISO.A8.34",
+          "status": "active",
+          "text": "Has your organization implemented protection of information systems during audit testing? (Annex A.8.34)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.6",
+          "guidance": "Appropriate contacts with special interest groups or other specialist security forums shall be maintained.",
+          "id": "SINGLE.ISO.A5.6",
+          "status": "active",
+          "text": "Has your organization implemented contact with special interest groups? (Annex A.5.6)"
+        }
+      ],
+      "section_id": "governance",
+      "title": "Governance & Accountability"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A8.10",
+          "guidance": "Information stored in information systems, devices or in any other storage media shall be deleted when no longer required.",
+          "id": "SINGLE.ISO.A8.10",
+          "status": "active",
+          "text": "Has your organization implemented information deletion? (Annex A.8.10)"
+        }
+      ],
+      "section_id": "data_protection",
+      "title": "Data Protection"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A5.15",
+          "guidance": "Rules to control physical and logical access to information and other associated assets shall be established and implemented based on business and information security requirements.",
+          "id": "SINGLE.ISO.A5.15",
+          "status": "active",
+          "text": "Has your organization implemented access control? (Annex A.5.15)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.18",
+          "guidance": "Access rights to information and other associated assets shall be provisioned, reviewed, modified and removed in accordance with the topic-specific policy and rules.",
+          "id": "SINGLE.ISO.A5.18",
+          "status": "active",
+          "text": "Has your organization implemented access rights? (Annex A.5.18)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.2",
+          "guidance": "The allocation and use of privileged access rights shall be restricted and managed.",
+          "id": "SINGLE.ISO.A8.2",
+          "status": "active",
+          "text": "Has your organization implemented privileged access rights? (Annex A.8.2)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.7",
+          "guidance": "Protection against malware shall be implemented and supported by appropriate user awareness.",
+          "id": "SINGLE.ISO.A8.7",
+          "status": "active",
+          "text": "Has your organization implemented protection against malware? (Annex A.8.7)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.5",
+          "guidance": "Secure authentication technologies and procedures shall be established and implemented based on information access restrictions and the topic-specific policy on access control.",
+          "id": "SINGLE.ISO.A8.5",
+          "status": "active",
+          "text": "Has your organization implemented secure authentication? (Annex A.8.5)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.24",
+          "guidance": "Rules for the effective use of cryptography, including cryptographic key management, shall be defined and implemented.",
+          "id": "SINGLE.ISO.A8.24",
+          "status": "active",
+          "text": "Has your organization implemented use of cryptography? (Annex A.8.24)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.17",
+          "guidance": "Allocation and management of authentication information shall be controlled by a management process including advising personnel of appropriate handling.",
+          "id": "SINGLE.ISO.A5.17",
+          "status": "active",
+          "text": "Has your organization implemented authentication information? (Annex A.5.17)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.16",
+          "guidance": "The full life cycle of identities shall be managed.",
+          "id": "SINGLE.ISO.A5.16",
+          "status": "active",
+          "text": "Has your organization implemented identity management? (Annex A.5.16)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.3",
+          "guidance": "Access to information and other associated assets shall be restricted in accordance with the established topic-specific policy on access control.",
+          "id": "SINGLE.ISO.A8.3",
+          "status": "active",
+          "text": "Has your organization implemented information access restriction? (Annex A.8.3)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.2",
+          "guidance": "Secure areas shall be protected by appropriate entry controls and access points.",
+          "id": "SINGLE.ISO.A7.2",
+          "status": "active",
+          "text": "Has your organization implemented physical entry? (Annex A.7.2)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.4",
+          "guidance": "Read and write access to source code, development tools and software libraries shall be appropriately managed.",
+          "id": "SINGLE.ISO.A8.4",
+          "status": "active",
+          "text": "Has your organization implemented access to source code? (Annex A.8.4)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.18",
+          "guidance": "The use of utility programs that can be capable of overriding system and application controls shall be restricted and tightly controlled.",
+          "id": "SINGLE.ISO.A8.18",
+          "status": "active",
+          "text": "Has your organization implemented use of privileged utility programs? (Annex A.8.18)"
+        }
+      ],
+      "section_id": "security",
+      "title": "Information Security Controls"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A5.26",
+          "guidance": "Information security incidents shall be responded to in accordance with the documented procedures.",
+          "id": "SINGLE.ISO.A5.26",
+          "status": "active",
+          "text": "Has your organization implemented response to information security incidents? (Annex A.5.26)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.25",
+          "guidance": "The organization shall assess information security events and decide if they are to be categorized as information security incidents.",
+          "id": "SINGLE.ISO.A5.25",
+          "status": "active",
+          "text": "Has your organization implemented assessment and decision on information security events? (Annex A.5.25)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.8",
+          "guidance": "The organization shall provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner.",
+          "id": "SINGLE.ISO.A6.8",
+          "status": "active",
+          "text": "Has your organization implemented information security event reporting? (Annex A.6.8)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.28",
+          "guidance": "The organization shall establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+          "id": "SINGLE.ISO.A5.28",
+          "status": "active",
+          "text": "Has your organization implemented collection of evidence? (Annex A.5.28)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.27",
+          "guidance": "Knowledge gained from information security incidents shall be used to strengthen and improve the information security controls.",
+          "id": "SINGLE.ISO.A5.27",
+          "status": "active",
+          "text": "Has your organization implemented learning from information security incidents? (Annex A.5.27)"
+        }
+      ],
+      "section_id": "incident_response",
+      "title": "Incident Response & Breach Notification"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A5.14",
+          "guidance": "Information transfer rules, procedures or agreements shall be in place for all types of transfer facilities.",
+          "id": "SINGLE.ISO.A5.14",
+          "status": "active",
+          "text": "Has your organization implemented information transfer? (Annex A.5.14)"
+        }
+      ],
+      "section_id": "cross_border",
+      "title": "Cross-Border Transfers"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.ISO.A6.3",
+          "guidance": "Personnel and relevant interested parties shall receive appropriate information security awareness, education and training and regular updates of the organization's policies and procedures.",
+          "id": "SINGLE.ISO.A6.3",
+          "status": "active",
+          "text": "Has your organization implemented information security awareness, education and training? (Annex A.6.3)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.8",
+          "guidance": "Information about technical vulnerabilities of information systems in use shall be obtained, the organization's exposure to such vulnerabilities shall be evaluated and appropriate measures shall be taken.",
+          "id": "SINGLE.ISO.A8.8",
+          "status": "active",
+          "text": "Has your organization implemented management of technical vulnerabilities? (Annex A.8.8)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.20",
+          "guidance": "Networks and network devices shall be secured, managed and controlled to protect information in systems and applications.",
+          "id": "SINGLE.ISO.A8.20",
+          "status": "active",
+          "text": "Has your organization implemented networks security? (Annex A.8.20)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.34",
+          "guidance": "The organization shall identify and meet requirements regarding the preservation of privacy and protection of PII as applicable.",
+          "id": "SINGLE.ISO.A5.34",
+          "status": "active",
+          "text": "Has your organization implemented privacy and protection of personal information? (Annex A.5.34)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.20",
+          "guidance": "Relevant information security requirements shall be established and agreed with each supplier based on the type of supplier relationship.",
+          "id": "SINGLE.ISO.A5.20",
+          "status": "active",
+          "text": "Has your organization implemented addressing information security within supplier agreements? (Annex A.5.20)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.26",
+          "guidance": "Information security requirements shall be identified, specified and approved when developing or acquiring applications.",
+          "id": "SINGLE.ISO.A8.26",
+          "status": "active",
+          "text": "Has your organization implemented application security requirements? (Annex A.8.26)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.12",
+          "guidance": "Information shall be classified according to the information security needs of the organization based on confidentiality, integrity, availability and relevant interested party requirements.",
+          "id": "SINGLE.ISO.A5.12",
+          "status": "active",
+          "text": "Has your organization implemented classification of information? (Annex A.5.12)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.9",
+          "guidance": "Configurations, including security configurations, of hardware, software, services and networks shall be established, documented, implemented, monitored and reviewed.",
+          "id": "SINGLE.ISO.A8.9",
+          "status": "active",
+          "text": "Has your organization implemented configuration management? (Annex A.8.9)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.12",
+          "guidance": "Data leakage prevention measures shall be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+          "id": "SINGLE.ISO.A8.12",
+          "status": "active",
+          "text": "Has your organization implemented data leakage prevention? (Annex A.8.12)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.30",
+          "guidance": "ICT readiness shall be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements.",
+          "id": "SINGLE.ISO.A5.30",
+          "status": "active",
+          "text": "Has your organization implemented ict readiness for business continuity? (Annex A.5.30)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.13",
+          "guidance": "Backup copies of information, software and systems shall be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.",
+          "id": "SINGLE.ISO.A8.13",
+          "status": "active",
+          "text": "Has your organization implemented information backup? (Annex A.8.13)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.29",
+          "guidance": "The organization shall plan how to maintain information security at an appropriate level during disruption.",
+          "id": "SINGLE.ISO.A5.29",
+          "status": "active",
+          "text": "Has your organization implemented information security during disruption? (Annex A.5.29)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.23",
+          "guidance": "Processes for acquisition, use, management and exit from cloud services shall be established in accordance with the organization's information security requirements.",
+          "id": "SINGLE.ISO.A5.23",
+          "status": "active",
+          "text": "Has your organization implemented information security for use of cloud services? (Annex A.5.23)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.19",
+          "guidance": "Processes and procedures shall be defined and implemented to manage the information security risks associated with the use of supplier's products or services.",
+          "id": "SINGLE.ISO.A5.19",
+          "status": "active",
+          "text": "Has your organization implemented information security in supplier relationships? (Annex A.5.19)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.9",
+          "guidance": "An inventory of information and other associated assets shall be identified and maintained.",
+          "id": "SINGLE.ISO.A5.9",
+          "status": "active",
+          "text": "Has your organization implemented inventory of information and other associated assets? (Annex A.5.9)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.31",
+          "guidance": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organization's approach to meet these requirements shall be identified, documented and kept up to date.",
+          "id": "SINGLE.ISO.A5.31",
+          "status": "active",
+          "text": "Has your organization implemented legal, statutory, regulatory and contractual requirements? (Annex A.5.31)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.15",
+          "guidance": "Logs that record activities, exceptions, faults and other relevant events shall be produced, stored, protected and analysed.",
+          "id": "SINGLE.ISO.A8.15",
+          "status": "active",
+          "text": "Has your organization implemented logging? (Annex A.8.15)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.21",
+          "guidance": "Processes and procedures shall be defined and implemented for managing information security risks associated with the ICT products and services supply chain.",
+          "id": "SINGLE.ISO.A5.21",
+          "status": "active",
+          "text": "Has your organization implemented managing information security in the ict supply chain? (Annex A.5.21)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.16",
+          "guidance": "Networks, systems and applications shall be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+          "id": "SINGLE.ISO.A8.16",
+          "status": "active",
+          "text": "Has your organization implemented monitoring activities? (Annex A.8.16)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.1",
+          "guidance": "Security perimeters shall be defined and used to protect areas that contain information and other associated assets.",
+          "id": "SINGLE.ISO.A7.1",
+          "status": "active",
+          "text": "Has your organization implemented physical security perimeters? (Annex A.7.1)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.33",
+          "guidance": "Records shall be protected from loss, destruction, falsification, unauthorized access and unauthorized release.",
+          "id": "SINGLE.ISO.A5.33",
+          "status": "active",
+          "text": "Has your organization implemented protection of records? (Annex A.5.33)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.7",
+          "guidance": "Security measures shall be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organization's premises.",
+          "id": "SINGLE.ISO.A6.7",
+          "status": "active",
+          "text": "Has your organization implemented remote working? (Annex A.6.7)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.1",
+          "guidance": "Background verification checks on all candidates to become personnel shall be carried out prior to joining the organization and on an ongoing basis.",
+          "id": "SINGLE.ISO.A6.1",
+          "status": "active",
+          "text": "Has your organization implemented screening? (Annex A.6.1)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.28",
+          "guidance": "Secure coding principles shall be applied to software development.",
+          "id": "SINGLE.ISO.A8.28",
+          "status": "active",
+          "text": "Has your organization implemented secure coding? (Annex A.8.28)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.25",
+          "guidance": "Rules for the secure development of software and systems shall be established and applied.",
+          "id": "SINGLE.ISO.A8.25",
+          "status": "active",
+          "text": "Has your organization implemented secure development life cycle? (Annex A.8.25)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.14",
+          "guidance": "Items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+          "id": "SINGLE.ISO.A7.14",
+          "status": "active",
+          "text": "Has your organization implemented secure disposal or re-use of equipment? (Annex A.7.14)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.27",
+          "guidance": "Principles for engineering secure systems shall be established, documented, maintained and applied to any information system development activity.",
+          "id": "SINGLE.ISO.A8.27",
+          "status": "active",
+          "text": "Has your organization implemented secure system architecture and engineering principles? (Annex A.8.27)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.21",
+          "guidance": "Security mechanisms, service levels and service requirements of network services shall be identified, implemented and monitored.",
+          "id": "SINGLE.ISO.A8.21",
+          "status": "active",
+          "text": "Has your organization implemented security of network services? (Annex A.8.21)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.29",
+          "guidance": "Security testing processes shall be defined and implemented in the development life cycle.",
+          "id": "SINGLE.ISO.A8.29",
+          "status": "active",
+          "text": "Has your organization implemented security testing in development and acceptance? (Annex A.8.29)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.22",
+          "guidance": "Groups of information services, users and information systems shall be segregated in the organization's networks.",
+          "id": "SINGLE.ISO.A8.22",
+          "status": "active",
+          "text": "Has your organization implemented segregation of networks? (Annex A.8.22)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.31",
+          "guidance": "Development, testing and production environments shall be separated and secured.",
+          "id": "SINGLE.ISO.A8.31",
+          "status": "active",
+          "text": "Has your organization implemented separation of development, test and production environments? (Annex A.8.31)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.10",
+          "guidance": "Storage media shall be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the classification scheme and handling requirements.",
+          "id": "SINGLE.ISO.A7.10",
+          "status": "active",
+          "text": "Has your organization implemented storage media? (Annex A.7.10)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.2",
+          "guidance": "Employment contractual agreements shall state the personnel's and the organization's responsibilities for information security.",
+          "id": "SINGLE.ISO.A6.2",
+          "status": "active",
+          "text": "Has your organization implemented terms and conditions of employment? (Annex A.6.2)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.1",
+          "guidance": "Information stored on, processed by or accessible via user endpoint devices shall be protected.",
+          "id": "SINGLE.ISO.A8.1",
+          "status": "active",
+          "text": "Has your organization implemented user endpoint devices? (Annex A.8.1)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.10",
+          "guidance": "Rules for acceptable use and procedures for handling of information and other associated assets shall be identified, documented and implemented.",
+          "id": "SINGLE.ISO.A5.10",
+          "status": "active",
+          "text": "Has your organization implemented acceptable use of information and other associated assets? (Annex A.5.10)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.6",
+          "guidance": "The use of resources shall be monitored and adjusted in line with current and expected capacity requirements.",
+          "id": "SINGLE.ISO.A8.6",
+          "status": "active",
+          "text": "Has your organization implemented capacity management? (Annex A.8.6)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.7",
+          "guidance": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities shall be defined and appropriately enforced.",
+          "id": "SINGLE.ISO.A7.7",
+          "status": "active",
+          "text": "Has your organization implemented clear desk and clear screen? (Annex A.7.7)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.36",
+          "guidance": "Compliance with the organization's information security policy, topic-specific policies, rules and standards shall be regularly reviewed.",
+          "id": "SINGLE.ISO.A5.36",
+          "status": "active",
+          "text": "Has your organization implemented compliance with policies, rules and standards? (Annex A.5.36)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.6",
+          "guidance": "Confidentiality or non-disclosure agreements reflecting the organization's needs for information protection shall be identified, documented, regularly reviewed and signed by personnel and relevant interested parties.",
+          "id": "SINGLE.ISO.A6.6",
+          "status": "active",
+          "text": "Has your organization implemented confidentiality or non-disclosure agreements? (Annex A.6.6)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.11",
+          "guidance": "Data masking shall be used in accordance with the organization's topic-specific policy on access control and other related policies and business requirements, taking applicable legislation into consideration.",
+          "id": "SINGLE.ISO.A8.11",
+          "status": "active",
+          "text": "Has your organization implemented data masking? (Annex A.8.11)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.4",
+          "guidance": "A disciplinary process shall be formalized and communicated to take actions against personnel who have committed an information security policy violation.",
+          "id": "SINGLE.ISO.A6.4",
+          "status": "active",
+          "text": "Has your organization implemented disciplinary process? (Annex A.6.4)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.37",
+          "guidance": "Operating procedures for information processing facilities shall be documented and made available to personnel who need them.",
+          "id": "SINGLE.ISO.A5.37",
+          "status": "active",
+          "text": "Has your organization implemented documented operating procedures? (Annex A.5.37)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.13",
+          "guidance": "Equipment shall be maintained correctly to ensure availability, integrity and confidentiality of information.",
+          "id": "SINGLE.ISO.A7.13",
+          "status": "active",
+          "text": "Has your organization implemented equipment maintenance? (Annex A.7.13)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.8",
+          "guidance": "Equipment shall be sited securely and protected.",
+          "id": "SINGLE.ISO.A7.8",
+          "status": "active",
+          "text": "Has your organization implemented equipment siting and protection? (Annex A.7.8)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.19",
+          "guidance": "Procedures and measures shall be implemented to securely manage software installation on operational systems.",
+          "id": "SINGLE.ISO.A8.19",
+          "status": "active",
+          "text": "Has your organization implemented installation of software on operational systems? (Annex A.8.19)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.32",
+          "guidance": "The organization shall implement appropriate procedures to protect intellectual property rights.",
+          "id": "SINGLE.ISO.A5.32",
+          "status": "active",
+          "text": "Has your organization implemented intellectual property rights? (Annex A.5.32)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.13",
+          "guidance": "An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the classification scheme.",
+          "id": "SINGLE.ISO.A5.13",
+          "status": "active",
+          "text": "Has your organization implemented labelling of information? (Annex A.5.13)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.22",
+          "guidance": "The organization shall regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+          "id": "SINGLE.ISO.A5.22",
+          "status": "active",
+          "text": "Has your organization implemented monitoring, review and change management of supplier services? (Annex A.5.22)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.30",
+          "guidance": "The organization shall direct, monitor and review the activities related to outsourced system development.",
+          "id": "SINGLE.ISO.A8.30",
+          "status": "active",
+          "text": "Has your organization implemented outsourced development? (Annex A.8.30)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.4",
+          "guidance": "Premises shall be continuously monitored for unauthorized physical access.",
+          "id": "SINGLE.ISO.A7.4",
+          "status": "active",
+          "text": "Has your organization implemented physical security monitoring? (Annex A.7.4)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.5",
+          "guidance": "Protection against physical and environmental threats shall be designed and implemented.",
+          "id": "SINGLE.ISO.A7.5",
+          "status": "active",
+          "text": "Has your organization implemented protecting against physical and environmental threats? (Annex A.7.5)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.14",
+          "guidance": "Information processing facilities shall be implemented with redundancy sufficient to meet availability requirements.",
+          "id": "SINGLE.ISO.A8.14",
+          "status": "active",
+          "text": "Has your organization implemented redundancy of information processing facilities? (Annex A.8.14)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A6.5",
+          "guidance": "Information security responsibilities that remain valid after termination or change of employment shall be defined, enforced and communicated.",
+          "id": "SINGLE.ISO.A6.5",
+          "status": "active",
+          "text": "Has your organization implemented responsibilities after termination or change of employment? (Annex A.6.5)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.11",
+          "guidance": "Personnel and other interested parties shall return all organizational assets in their possession upon change or termination of employment, contract or agreement.",
+          "id": "SINGLE.ISO.A5.11",
+          "status": "active",
+          "text": "Has your organization implemented return of assets? (Annex A.5.11)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.3",
+          "guidance": "Physical security for offices, rooms and facilities shall be designed and implemented.",
+          "id": "SINGLE.ISO.A7.3",
+          "status": "active",
+          "text": "Has your organization implemented securing offices, rooms and facilities? (Annex A.7.3)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.9",
+          "guidance": "Off-site assets shall be protected.",
+          "id": "SINGLE.ISO.A7.9",
+          "status": "active",
+          "text": "Has your organization implemented security of assets off-premises? (Annex A.7.9)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.11",
+          "guidance": "Information processing facilities shall be protected from power failures and other disruptions caused by failures in supporting utilities.",
+          "id": "SINGLE.ISO.A7.11",
+          "status": "active",
+          "text": "Has your organization implemented supporting utilities? (Annex A.7.11)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.33",
+          "guidance": "Test information shall be appropriately selected, protected and managed.",
+          "id": "SINGLE.ISO.A8.33",
+          "status": "active",
+          "text": "Has your organization implemented test information? (Annex A.8.33)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.7",
+          "guidance": "Information relating to information security threats shall be collected and analysed to produce threat intelligence.",
+          "id": "SINGLE.ISO.A5.7",
+          "status": "active",
+          "text": "Has your organization implemented threat intelligence? (Annex A.5.7)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.23",
+          "guidance": "Access to external websites shall be managed to reduce exposure to malicious content.",
+          "id": "SINGLE.ISO.A8.23",
+          "status": "active",
+          "text": "Has your organization implemented web filtering? (Annex A.8.23)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.6",
+          "guidance": "Security measures for working in secure areas shall be designed and implemented.",
+          "id": "SINGLE.ISO.A7.6",
+          "status": "active",
+          "text": "Has your organization implemented working in secure areas? (Annex A.7.6)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A7.12",
+          "guidance": "Cables carrying power, data or supporting information services shall be protected from interception, interference or damage.",
+          "id": "SINGLE.ISO.A7.12",
+          "status": "active",
+          "text": "Has your organization implemented cabling security? (Annex A.7.12)"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A8.17",
+          "guidance": "The clocks of information processing systems used by the organization shall be synchronized to approved time sources.",
+          "id": "SINGLE.ISO.A8.17",
+          "status": "active",
+          "text": "Has your organization implemented clock synchronization? (Annex A.8.17)"
+        }
+      ],
+      "section_id": "other",
+      "title": "Other Controls"
+    }
+  ]
+}

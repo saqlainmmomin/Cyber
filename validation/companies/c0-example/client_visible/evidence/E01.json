@@ -1,0 +1,32 @@
+{
+  "artifact_id": "E01",
+  "filename": "quarterly-access-review.docx",
+  "category": "other",
+  "channel": "consultant_upload",
+  "magic_item": null,
+  "consultant_maps_to": [],
+  "render": {
+    "kind": "prose",
+    "format": "docx",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Quarterly Access Review",
+    "subtitle": "Operations record | Q2 2026",
+    "sections": [
+      {
+        "heading": "Review population",
+        "paragraphs": [
+          "The register lists 20 administrator accounts.",
+          "The review lead sampled accounts from the production directory."
+        ]
+      },
+      {
+        "heading": "Completion",
+        "paragraphs": [
+          "The review was approved by the operations manager on 30 June 2026."
+        ]
+      }
+    ]
+  }
+}

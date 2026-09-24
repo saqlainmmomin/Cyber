@@ -1,0 +1,23 @@
+{
+  "context": {
+    "CTX.DATA.1": ["identity", "financial"],
+    "CTX.DATA.2": ["web_forms"],
+    "CTX.DATA.3": "yes",
+    "CTX.DATA.4": "no",
+    "CTX.POSTURE.1": "part_time_shared",
+    "CTX.POSTURE.2": "internal_policy_only",
+    "CTX.POSTURE.3": "internal_only",
+    "CTX.POSTURE.4": "yes_recently_updated",
+    "CTX.RISK.1": ["none"],
+    "CTX.RISK.2": "under_10k",
+    "CTX.RISK.3": "yes"
+  },
+  "scope": {
+    "ISO.SCP.1": "full_org",
+    "ISO.SCP.2": "yes",
+    "ISO.SCP.3": "both",
+    "ISO.SCP.4": "yes_office"
+  },
+  "screening": null,
+  "magic_link_items": []
+}
