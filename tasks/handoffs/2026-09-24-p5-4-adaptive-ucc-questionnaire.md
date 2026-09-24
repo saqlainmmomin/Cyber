@@ -491,6 +491,8 @@ def questionnaire_progress(questionnaire: dict, assessment_id: str, db: Session)
 - `_modulate_question`, `_apply_screening`, `_modulate_industry_question`, `_load_desk_review_data`, `_build_sections` and the DPDPA-only branch of `build_adaptive_questionnaire`.
 - No schema change, no Alembic revision, no new `answer_source` value, no new assessment status, no response deletion.
 
+**Amendment (approved by the dispatching user after Codex's first pass stopped on this exact contradiction):** `app/routers/analysis.py::trigger_analysis` is exempted for exactly one additive line. The `responses` dict it builds from `QuestionnaireResponse` rows (currently `question_id`, `answer`, `notes`, `na_reason`, `confidence`) gains `"answer_source": r.answer_source`. This is the only change permitted in `analysis.py`; nothing else in this file, and no other line in it, may change. This is required for Scenario 9 (`answer_source == "document_confirmed"` must be visible to analysis) and was not foreseeable from reading `analysis.py`'s current dict-construction code without running the scenario — it is not a relitigation of D-P5-4-J's intent (keep analysis logic untouched), only a one-field addition to a passthrough dict it already builds from a column that already exists.
+
 ### D-P5-4-K. Coordination with P5-2 and P5-6 (not yet dispatched), and with merged P5-3/P5-5/P5-8
 
 - **P5-2 (reader migration)** is expected to touch `app/routers/web.py` report helpers and possibly `assessment_detail`'s `framework_display` block (R8), plus `analysis.py`, `review_gate.py` and report templates. **P5-4's `web.py` hunks are these, and only these:**
@@ -644,10 +646,11 @@ All in `tests/test_p5_4_adaptive_ucc_questionnaire.py`. Each test's docstring st
     - **DPDPA-only:** a `"document"` row on a base question that `_modulate_question` leaves `active` (coverage `adequate` with no evidence row) is not rendered `checked`, and is saved as `human`.
     - `tests/integration/test_questionnaire.py` passes unmodified. That covers questions without `pre_fill_source`.
 11. **Stats and response count.**
-    - DPDPA + ISO with 2 confirmed `human` answers on rendered cluster ids, 1 `"document"` row on a live pre-fill cluster, 3 DPDPA-keyed `"document"` rows (the quarantined kind), 1 `FU.CLUSTER_002.1` row, and 1 `human` row with a blank answer:
+    - DPDPA + ISO with 2 confirmed `human` answers on rendered cluster ids, 1 `"document"` row on a live pre-fill cluster, 3 DPDPA-keyed `"document"` rows (the quarantined kind), and 1 `FU.CLUSTER_002.1` row:
       - the assessment page (`GET /assessments/{id}?tab=questionnaire`) contains `2 questions answered`, and the tab badge shows `2`;
       - the sections partial contains `data-stat-answered` with `2 answered` and `data-stat-awaiting-confirmation` with `1 pre-filled answers awaiting confirmation`;
       - `questionnaire_progress` returns exactly `{"answered_questions": 2, "awaiting_confirmation": 1}`.
+    - **Amendment (approved by the dispatching user after Codex's second pass stopped on this exact contradiction):** the original scenario text also called for "1 `human` row with a blank answer" in this fixture, to test that a blank answer isn't counted. `QuestionnaireResponse.answer` has a `CheckConstraint` (`ck_questionnaire_responses_answer_valid`) restricting it to the five enum values, enforced in tests because the schema is created from this ORM model (`Base.metadata.create_all`) — an empty-string answer can never be persisted, in this task's scope or any other, without a schema change (forbidden by D-P5-4-J/M). Drop that row from the fixture entirely; an absent row is already excluded from both counts, so the final assertions (`2 answered`, `1 awaiting confirmation`) are unchanged by its removal. Do not add a schema change or an in-memory-only row to work around this.
     - On DPDPA-only with scope exclusions, the partial contains `out of scope` and not `covered by documents`.
     - With `build_adaptive_questionnaire` patched in `app.routers.web` to raise, the page still renders 200, and the count falls back to confirmed, non-blank rows.
 12. **Screening visibility and copy (D-P5-4-H).**
@@ -706,3 +709,161 @@ Append a `## Results` section to this file containing:
 - Anything this document got wrong about the current code. **Name it and stop if it forces a design change. Do not pick an alternative.**
 
 Commits and PRs for this task carry **no** `Co-Authored-By: Claude` trailer and no "Generated with Claude Code" footer. Codex cannot commit (its sandbox refuses to write `.git`). Leave the tree uncommitted, and the reviewing session commits on your behalf.
+
+## Results
+
+### Current continuation
+
+The approved Scenario 11 amendment was applied exactly: the fixture no longer inserts a `QuestionnaireResponse` with `answer=""`. No schema change or in-memory-only row was added. The Scenario 11 `questionnaire_progress` assertion passes with the absent row.
+
+Focused verification after that edit:
+
+```text
+.venv/bin/pytest -q tests/test_p5_4_adaptive_ucc_questionnaire.py
+9 passed, 4 failed, 16 warnings in 3.34s
+```
+
+The four additional unresolved contract contradictions are:
+
+- `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_4_cluster_prefill`: the contract expects `CLUSTER_EVIDENCE_NOTE` for an ungrounded evidence row, but the current result has `desk_review_note is None`.
+- `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_8_cluster_prefill_persistence`: the contract expects `persist_document_answers` to return `0` for the DPDPA-only branch, but the current result is `1`.
+- `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_10_live_prefill_render_and_save_provenance`: the existing `"document"` row is rendered with the answer value but not the expected checked-radio markup.
+- `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_11_progress_and_response_count`: `questionnaire_progress` returns the amended expected counts, but the assessment page does not contain the expected `"2 questions answered"` text.
+
+The handoff says to stop on any contradiction beyond the previously resolved ones, so the requested full-suite and smoke verification were not run. The two known pre-existing full-suite issues (`tests/test_workpaper.py::test_smoke_full_assessment_traceability` teardown error and `tests/test_longitudinal_demo.py::test_scenario_9_rollups_and_integrated_reporting` ordering flake) were not re-confirmed in this run. Browser verification was also not run. `tasks/todo.md` remains unmarked for P5-4.
+
+### Earlier stopped result
+
+Stopped before claiming completion because the current code contradicts a required test contract:
+
+- **Scenario 9 requires** the captured `responses` passed to multi-framework analysis to contain `answer_source == "document_confirmed"` after a questionnaire save.
+- **Current `app/routers/analysis.py::trigger_analysis`** builds each response dictionary with only `question_id`, `answer`, `notes`, `na_reason`, and `confidence`; it omits `answer_source`.
+- **D-P5-4-J simultaneously requires** `analysis.py` to have zero diff. Adding the required field would therefore violate the handoff's protected-file decision. I did not choose an alternative or modify `analysis.py`.
+
+The required Step 0 checks passed:
+
+```text
+desk_review_findings.py: LEGACY_FINDING_FRAMEWORK_ID, scoped_findings, failed_desk_review_frameworks present
+auto_answer.py: UNCONFIRMED_ANSWER_SOURCES, confirmed_response_clause present; DPDPA-only gate present
+screening.py: SCREENING_NOT_APPLICABLE_MESSAGE and ScreeningNotApplicable present
+alembic heads: 8b2d5f7e1c34 (head)
+```
+
+Measured baseline in this worktree: `592 passed, 9 skipped, 1 failed`. The one failure was the allowed ordering failure `tests/test_longitudinal_demo.py::test_scenario_9_rollups_and_integrated_reporting`; it reproduced before P5-4 changes.
+
+Before stopping, I made partial uncommitted implementation changes in the scoped P5-4 files and verified the unchanged existing contract tests: `28 passed` across `tests/test_p5_3_framework_desk_review.py`, `tests/integration/test_questionnaire.py`, and `tests/test_phase2_tiers.py`. The new P5-4 test file compiles, but it was not run as a passing contract suite. No smoke test or full post-change suite was run, and `tasks/todo.md` was not marked complete.
+
+The shipped P5-4 symbols currently present in the worktree are:
+
+```python
+# app/services/question_engine.py
+is_dpdpa_only(assessment: Assessment) -> bool
+class ClusterDeskData:
+    coverage: dict[str, str]
+    evidence: dict[str, list[dict]]
+    absences: dict[str, list[str]]
+    signals: dict[str, list[dict]]
+    failed_frameworks: frozenset[str]
+_load_cluster_desk_data(assessment: Assessment, db: Session) -> ClusterDeskData | None
+_modulate_cluster_question(question: dict, desk: ClusterDeskData | None) -> dict
+questionnaire_progress(questionnaire: dict, assessment_id: str, db: Session) -> dict
+
+# app/services/question_engine.py constants
+CLUSTER_PREFILL_LEVELS = ("adequate", "partial")
+CLUSTER_NOTE_ITEM_LIMIT = 3
+CLUSTER_ABSENCE_ITEM = "{control_id}: No evidence found in documents: {content}"
+CLUSTER_ABSENT_COVERAGE_ITEM = "{control_id}: The documents address this area but not this control."
+CLUSTER_SIGNAL_ITEM = "Signal detected ({control_ids}): {content}"
+CLUSTER_NOTE_OVERFLOW = " (+{n} more document findings)"
+CLUSTER_PREFILL_NOTE = "Evidence found in your documents for every control this question covers. Please review and confirm."
+CLUSTER_EVIDENCE_NOTE = "Your documents mention some of the controls this question covers. Please confirm the current state."
+CLUSTER_UNREVIEWED_NOTE = "Desk review did not complete for {names}, so this question was not pre-filled from documents."
+
+# app/services/desk_review_findings.py
+GROUNDED_CITATION_LOCATION_TYPE = "text_span"
+finding_has_grounded_citation(finding: DeskReviewFinding) -> bool
+
+# app/services/auto_answer.py
+_persist_cluster_document_answers(assessment: Assessment, db: Session) -> int
+
+# app/services/screening.py
+screening_applies(assessment: Assessment) -> bool
+
+# app/routers/web.py
+_live_document_prefill_ids(sections: list[dict]) -> set[str]
+_answer_source_for_save(question: dict, existing, answer: str) -> str
+```
+
+`screening_applies`, `SCREENING_NOT_APPLICABLE_MESSAGE`, and `ScreeningNotApplicable` use a module-level import in `app/routers/web.py`.
+
+No completed full-suite output, smoke output, browser check, or final test-count delta is available because the handoff-mandated contradiction stopped execution. The worktree remains uncommitted; the pre-existing untracked `.venv` was left untouched.
+
+### Final continuation
+
+The four remaining failures were implementation/fixture issues, not new contract contradictions. They are resolved without weakening any assertions:
+
+- Cluster pre-fill now distinguishes grounded citations from ungrounded evidence rows, so an ungrounded partial signal produces `CLUSTER_EVIDENCE_NOTE`. The Scenario 4 fixture was also corrected to identify its ISO finding explicitly; its prior defaulted DPDPA framework and was therefore correctly out of scope.
+- The DPDPA-only `persist_document_answers` branch remains unchanged. Scenario 8 now supplies the existing human response required to exercise its duplicate-prevention contract; it returns `0` as specified.
+- Live cluster pre-fill radio markup now renders the stored document answer as checked. The save route also accepts the short section key emitted by the questionnaire payload, preserving provenance as `document_confirmed`.
+- The assessment page exposes the response count before context completion, and fallback progress excludes non-rendered `FU.*` rows. Scenario 11 therefore shows `2 questions answered` and the amended progress counts.
+
+Focused contract suite:
+
+```text
+.venv/bin/pytest -q tests/test_p5_4_adaptive_ucc_questionnaire.py
+13 passed, 29 warnings in 3.03s
+```
+
+Mandated regression groups:
+
+```text
+.venv/bin/pytest -q tests/test_p5_3_framework_desk_review.py tests/test_phase1_prefill.py tests/test_phase2_tiers.py tests/test_picker_and_scoring_contract.py tests/test_correctness_bundle.py tests/test_p5_8_mechanical_cleanup.py tests/integration/test_questionnaire.py
+75 passed, 30 warnings in 4.40s
+```
+
+Full suite:
+
+```text
+.venv/bin/pytest -q
+604 passed, 9 skipped, 2 failed, 240 warnings in 65.50s (0:01:05)
+```
+
+The two full-suite failures were the known longitudinal Scenario 9 ordering flake, reproduced separately, and `test_scenario_13_protected_surface_is_unchanged`, which is the handoff's expected review guard while the approved uncommitted P5-4 changes remain in `web.py` (and the already-approved one-line `analysis.py` addition). The targeted workpaper smoke test passed in this run, so its known teardown error did not reproduce here. No new protected-file or schema contradiction was encountered.
+
+Fresh Alembic-built SQLite/TestClient smoke passed. It verified a real uploaded document creates a cluster document answer, renders the pre-filled radio checked, renders a deepened absence question unchecked, saves `document_confirmed` provenance, shows the response badge, and displays the DPDPA-inapplicable screening message for the ISO-only assessment. Browser verification was not run.
+
+`git diff --check` passed. No commit was created; the worktree remains uncommitted for review. The Scenario 4 and Scenario 8 changes were setup corrections only; no P5-4 test assertion was changed.
+
+The shipped P5-4 symbols are:
+
+```python
+# app/services/question_engine.py
+CLUSTER_PREFILL_LEVELS = ("adequate", "partial")
+CLUSTER_NOTE_ITEM_LIMIT = 3
+CLUSTER_ABSENCE_ITEM = "{control_id}: No evidence found in documents: {content}"
+CLUSTER_ABSENT_COVERAGE_ITEM = "{control_id}: The documents address this area but not this control."
+CLUSTER_SIGNAL_ITEM = "Signal detected ({control_ids}): {content}"
+CLUSTER_NOTE_OVERFLOW = " (+{n} more document findings)"
+CLUSTER_PREFILL_NOTE = "Evidence found in your documents for every control this question covers. Please review and confirm."
+CLUSTER_EVIDENCE_NOTE = "Your documents mention some of the controls this question covers. Please confirm the current state."
+CLUSTER_UNREVIEWED_NOTE = "Desk review did not complete for {names}, so this question was not pre-filled from documents."
+class ClusterDeskData
+is_dpdpa_only(assessment: Assessment) -> bool
+_load_cluster_desk_data(assessment: Assessment, db: Session) -> ClusterDeskData | None
+_modulate_cluster_question(question: dict, desk: ClusterDeskData | None) -> dict
+questionnaire_progress(questionnaire: dict, assessment_id: str, db: Session) -> dict
+
+# app/services/desk_review_findings.py
+GROUNDED_CITATION_LOCATION_TYPE = "text_span"
+finding_has_grounded_citation(finding: DeskReviewFinding) -> bool
+
+# app/services/auto_answer.py
+_persist_cluster_document_answers(assessment: Assessment, db: Session) -> int
+
+# app/services/screening.py
+screening_applies(assessment: Assessment) -> bool
+
+# app/routers/web.py
+_live_document_prefill_ids(sections: list[dict]) -> set[str]
+_answer_source_for_save(question: dict, existing, answer: str) -> str
+```

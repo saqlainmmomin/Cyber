@@ -91,9 +91,7 @@
           } %}
           {% for opt in options %}
           <label class="inline-flex items-center px-2 py-1 rounded border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors text-xs {{ option_colors[opt] }}">
-            <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}" class="sr-only"
-                   {% if existing.get(q.id, {}).get('answer') == opt %}checked
-                   {% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %}checked{% endif %}>
+            <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}" class="sr-only"{% if existing.get(q.id, {}).get('answer') == opt %} checked{% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %} checked{% endif %}>
             <span class="text-gray-600 dark:text-gray-400">{{ option_short[opt] }}</span>
           </label>
           {% endfor %}
@@ -215,10 +213,7 @@
         } %}
         {% for opt in options %}
         <label class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors {{ option_colors[opt] }}">
-          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
-                 class="sr-only"
-                 {% if existing.get(q.id, {}).get('answer') == opt %}checked
-                 {% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %}checked{% endif %}
+          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}" class="sr-only"{% if existing.get(q.id, {}).get('answer') == opt %} checked{% elif not existing.get(q.id) and q.get('pre_fill_answer') == opt %} checked{% endif %}
                  {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
                  hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
                  hx-target="#followup-{{ q.id }}"
@@ -340,9 +335,7 @@
         } %}
         {% for opt in options %}
         <label class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors {{ option_colors[opt] }}">
-          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
-                 class="sr-only"
-                 {% if existing.get(q.id, {}).get('answer') == opt %}checked{% endif %}
+          <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}" class="sr-only"{% if existing.get(q.id, {}).get('answer') == opt %} checked{% endif %}
                  {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
                  hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
                  hx-target="#followup-{{ q.id }}"

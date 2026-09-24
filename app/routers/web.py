@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import literal_column
+from sqlalchemy import func, literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -29,7 +29,13 @@ from app.services.portfolio import (
     build_engagement_card,
     framework_badges,
 )
-from app.services.question_engine import build_adaptive_questionnaire
+from app.services.auto_answer import confirmed_response_clause
+from app.services.question_engine import build_adaptive_questionnaire, questionnaire_progress
+from app.services.screening import (
+    SCREENING_NOT_APPLICABLE_MESSAGE,
+    ScreeningNotApplicable,
+    screening_applies,
+)
 from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.models.conclusion import Conclusion, ConclusionRevision
@@ -86,6 +92,34 @@ def _selected_framework_names(assessment: Assessment) -> list[str]:
         fw = FrameworkRegistry.get_or_none(fw_id)
         names.append(fw.name if fw else fw_id.upper())
     return names
+
+
+def _live_document_prefill_ids(sections: list[dict]) -> set[str]:
+    return {
+        question["id"]
+        for section in sections
+        for question in section.get("questions", [])
+        if question.get("status") == "pre_filled"
+        and question.get("pre_fill_source") == "document"
+    }
+
+
+def _answer_source_for_save(question: dict, existing, answer: str) -> str:
+    live = (
+        question.get("status") == "pre_filled"
+        and question.get("pre_fill_source") == "document"
+    )
+    if existing is None:
+        if live:
+            return "document_confirmed" if answer == question.get("pre_fill_answer") else "human_override"
+        return "human"
+    if existing.answer_source == "document":
+        if live:
+            return "document_confirmed" if answer == existing.answer else "human_override"
+        return "human"
+    if existing.answer_source in ("human", "human_override", "document_confirmed"):
+        return existing.answer_source
+    return "human"
 
 
 def _framework_display(
@@ -815,13 +849,31 @@ def assessment_detail(
         )
 
     # Check questionnaire progress
-    response_count = (
-        db.query(QuestionnaireResponse)
-        .filter(QuestionnaireResponse.assessment_id == assessment_id)
-        .count()
-    )
+    try:
+        response_count = questionnaire_progress(
+            build_adaptive_questionnaire(assessment_id, db), assessment_id, db
+        )["answered_questions"]
+    except Exception:
+        logger.warning(
+            "Questionnaire progress unavailable",
+            extra={"assessment_id": assessment_id},
+            exc_info=True,
+        )
+        response_count = (
+            db.query(QuestionnaireResponse)
+            .filter(
+                QuestionnaireResponse.assessment_id == assessment_id,
+                confirmed_response_clause(),
+            )
+            .filter(~QuestionnaireResponse.question_id.like("FU.%"))
+            .filter(func.trim(func.coalesce(QuestionnaireResponse.answer, "")) != "")
+            .count()
+        )
 
-    context_done = assessment.context_answers is not None
+    context_done = (
+        assessment.context_answers is not None
+        or assessment.context_profile is not None
+    )
     scope_done = assessment.scope_answers is not None
     screening_done = assessment.screening_status == "completed"
 
@@ -920,6 +972,8 @@ def assessment_detail(
             "context_done": context_done,
             "scope_done": scope_done,
             "screening_done": screening_done,
+            "screening_available": screening_applies(assessment),
+            "screening_unavailable_message": SCREENING_NOT_APPLICABLE_MESSAGE,
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
             "selected_frameworks": selected_frameworks_info,
@@ -1329,7 +1383,11 @@ def get_questionnaire_sections_web(
     # Build adaptive questionnaire (merges base + industry, modulated by desk review)
     result = build_adaptive_questionnaire(assessment_id, db)
     sections = result["sections"]
-    stats = result["stats"]
+    stats = {
+        **result["stats"],
+        **questionnaire_progress(result, assessment_id, db),
+    }
+    live_document_prefill_ids = _live_document_prefill_ids(sections)
 
     # Load existing responses
     existing = {}
@@ -1339,6 +1397,8 @@ def get_questionnaire_sections_web(
         .all()
     )
     for r in responses:
+        if r.answer_source == "document" and r.question_id not in live_document_prefill_ids:
+            continue
         existing[r.question_id] = {
             "answer": r.answer,
             "notes": r.notes,
@@ -1385,12 +1445,15 @@ def get_section_questions(
 
     # Load existing responses
     existing = {}
+    live_document_prefill_ids = _live_document_prefill_ids(result["sections"])
     responses = (
         db.query(QuestionnaireResponse)
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
         .all()
     )
     for r in responses:
+        if r.answer_source == "document" and r.question_id not in live_document_prefill_ids:
+            continue
         existing[r.question_id] = {
             "answer": r.answer,
             "notes": r.notes,
@@ -1430,7 +1493,9 @@ async def save_questionnaire_responses(
     result = build_adaptive_questionnaire(assessment_id, db)
     section_questions = []
     for s in result["sections"]:
-        if s["section_id"] == section_id:
+        if s["section_id"] == section_id or any(
+            q.get("section") == section_id for q in s["questions"]
+        ):
             section_questions = [q for q in s["questions"] if q.get("status") != "skipped"]
             break
 
@@ -1457,15 +1522,7 @@ async def save_questionnaire_responses(
             .first()
         )
         if existing:
-            # Track answer source provenance for audit trail
-            if existing.answer_source == "document":
-                # Human is confirming or overriding a document pre-fill
-                existing.answer_source = (
-                    "document_confirmed" if answer == existing.answer
-                    else "human_override"
-                )
-            elif existing.answer_source not in ("human", "human_override", "document_confirmed"):
-                existing.answer_source = "human"
+            existing.answer_source = _answer_source_for_save(q, existing, answer)
             existing.answer = answer
             existing.notes = notes or None
             existing.evidence_reference = evidence or None
@@ -1476,7 +1533,7 @@ async def save_questionnaire_responses(
                 answer=answer,
                 notes=notes or None,
                 evidence_reference=evidence or None,
-                answer_source="human",
+                answer_source=_answer_source_for_save(q, None, answer),
             ))
 
     # Save follow-up responses (form fields named followup_FU.{parent_id}.{n})
@@ -1606,6 +1663,7 @@ def screening_form(
 
     domains = get_domain_coverage()
     screening_done = assessment.screening_status == "completed"
+    screening_available = screening_applies(assessment)
 
     return templates.TemplateResponse(
         "partials/screening_form.html",
@@ -1614,6 +1672,8 @@ def screening_form(
             "assessment_id": assessment_id,
             "domains": domains,
             "screening_done": screening_done,
+            "screening_available": screening_available,
+            "error": SCREENING_NOT_APPLICABLE_MESSAGE if not screening_available else None,
         },
     )
 
@@ -1647,6 +1707,7 @@ async def submit_screening(
                 "domains": domains,
                 "screening_done": False,
                 "error": str(e),
+                "screening_available": not isinstance(e, ScreeningNotApplicable),
             },
         )
 

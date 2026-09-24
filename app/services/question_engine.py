@@ -1,6 +1,7 @@
 """
 Question Selection Engine — builds an adaptive questionnaire from desk review findings,
-context profile, and industry-specific question banks.
+context profile, and industry-specific question banks, and modulates UCC cluster
+questions from framework-keyed desk-review findings.
 
 The engine merges two question sources:
   1. Base DPDPA questions (41 requirements from questionnaire.py)
@@ -14,6 +15,7 @@ The output is a list of QuestionSets (sections) ready for the web UI.
 """
 
 import json
+from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
@@ -28,7 +30,24 @@ from app.frameworks.questionnaire_builder import (
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewSummary
-from app.services.desk_review_findings import scoped_findings
+from app.models.questionnaire import QuestionnaireResponse
+from app.services.auto_answer import confirmed_response_clause
+from app.services.desk_review_findings import (
+    failed_desk_review_frameworks,
+    finding_framework_id,
+    finding_has_grounded_citation,
+    scoped_findings,
+)
+
+CLUSTER_PREFILL_LEVELS = ("adequate", "partial")
+CLUSTER_NOTE_ITEM_LIMIT = 3
+CLUSTER_ABSENCE_ITEM = "{control_id}: No evidence found in documents: {content}"
+CLUSTER_ABSENT_COVERAGE_ITEM = "{control_id}: The documents address this area but not this control."
+CLUSTER_SIGNAL_ITEM = "Signal detected ({control_ids}): {content}"
+CLUSTER_NOTE_OVERFLOW = " (+{n} more document findings)"
+CLUSTER_PREFILL_NOTE = "Evidence found in your documents for every control this question covers. Please review and confirm."
+CLUSTER_EVIDENCE_NOTE = "Your documents mention some of the controls this question covers. Please confirm the current state."
+CLUSTER_UNREVIEWED_NOTE = "Desk review did not complete for {names}, so this question was not pre-filled from documents."
 
 _DOMAIN_GROUP_TITLES: dict[str, str] = {
     "data_protection": "Data Protection",
@@ -54,7 +73,208 @@ _DOMAIN_GROUP_TITLES: dict[str, str] = {
 }
 
 
-def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: list[str]) -> dict:
+@dataclass(frozen=True)
+class ClusterDeskData:
+    coverage: dict[str, str]
+    evidence: dict[str, list[dict]]
+    absences: dict[str, list[str]]
+    signals: dict[str, list[dict]]
+    failed_frameworks: frozenset[str]
+
+
+def is_dpdpa_only(assessment: Assessment) -> bool:
+    """True when the assessment uses the DPDPA-only requirement-keyed questionnaire."""
+    return assessment.frameworks == ["dpdpa"]
+
+
+def _load_cluster_desk_data(assessment: Assessment, db: Session) -> ClusterDeskData | None:
+    """Load framework-keyed desk-review findings for UCC question modulation."""
+    summary = (
+        db.query(DeskReviewSummary)
+        .filter(
+            DeskReviewSummary.assessment_id == assessment.id,
+            DeskReviewSummary.status == "completed",
+        )
+        .first()
+    )
+    if not summary:
+        return None
+
+    control_framework = {
+        control.id: framework_id
+        for framework_id in assessment.frameworks
+        for control in FrameworkRegistry.get(framework_id).all_controls()
+    }
+    try:
+        raw_coverage = json.loads(summary.coverage_summary or "{}")
+    except (json.JSONDecodeError, TypeError):
+        raw_coverage = {}
+    coverage = (
+        {
+            control_id: level
+            for control_id, level in raw_coverage.items()
+            if control_id in control_framework
+        }
+        if isinstance(raw_coverage, dict)
+        else {}
+    )
+
+    evidence: dict[str, list[dict]] = {}
+    absences: dict[str, list[str]] = {}
+    signals: dict[str, list[dict]] = {}
+    for finding in scoped_findings(db, assessment):
+        requirement_id = finding.requirement_id
+        if not requirement_id or requirement_id not in control_framework:
+            continue
+        framework_id = finding_framework_id(finding)
+        if framework_id != control_framework[requirement_id]:
+            continue
+
+        if finding.finding_type == "evidence":
+            evidence.setdefault(requirement_id, []).append({
+                "control_id": requirement_id,
+                "framework_id": control_framework[requirement_id],
+                "content": (
+                    f"{requirement_id} "
+                    f"({FrameworkRegistry.get(control_framework[requirement_id]).name})"
+                ),
+                "source_quote": finding.source_quote or "",
+                "source_location": finding.source_location or "",
+                "severity": finding.severity,
+                "grounded": finding_has_grounded_citation(finding),
+            })
+        elif finding.finding_type == "absence":
+            absences.setdefault(requirement_id, []).append(finding.content or "")
+        elif finding.finding_type == "signal":
+            signals.setdefault(requirement_id, []).append({
+                "group_key": finding.signal_group_id or f"row:{finding.id}",
+                "content": finding.content or "",
+            })
+
+    failed_frameworks = frozenset(failed_desk_review_frameworks(summary)) & set(assessment.frameworks)
+    return ClusterDeskData(
+        coverage=coverage,
+        evidence=evidence,
+        absences=absences,
+        signals=signals,
+        failed_frameworks=failed_frameworks,
+    )
+
+
+def _modulate_cluster_question(question: dict, desk: ClusterDeskData | None) -> dict:
+    """Derive a UCC question state from its member-control desk-review data."""
+    if desk is None:
+        return question
+
+    members = question["member_controls"]
+    ids = [member["control_id"] for member in members]
+    evidence_items = [
+        evidence
+        for control_id in ids
+        for evidence in desk.evidence.get(control_id, [])
+    ]
+    evidence_or_none = evidence_items or None
+
+    findings_notes: list[str] = []
+    for control_id in ids:
+        for content in desk.absences.get(control_id, []):
+            findings_notes.append(CLUSTER_ABSENCE_ITEM.format(control_id=control_id, content=content))
+        if not desk.absences.get(control_id) and desk.coverage.get(control_id) == "absent":
+            findings_notes.append(CLUSTER_ABSENT_COVERAGE_ITEM.format(control_id=control_id))
+
+    seen_signal_groups: set[str] = set()
+    for control_id in ids:
+        for signal in desk.signals.get(control_id, []):
+            group_key = signal["group_key"]
+            if group_key in seen_signal_groups:
+                continue
+            seen_signal_groups.add(group_key)
+            affected = [
+                member_id
+                for member_id in ids
+                if any(
+                    item["group_key"] == group_key
+                    for item in desk.signals.get(member_id, [])
+                )
+            ]
+            findings_notes.append(CLUSTER_SIGNAL_ITEM.format(
+                control_ids=", ".join(affected),
+                content=signal["content"],
+            ))
+
+    if findings_notes:
+        note = " ".join(findings_notes[:CLUSTER_NOTE_ITEM_LIMIT])
+        if len(findings_notes) > CLUSTER_NOTE_ITEM_LIMIT:
+            note += CLUSTER_NOTE_OVERFLOW.format(
+                n=len(findings_notes) - CLUSTER_NOTE_ITEM_LIMIT,
+            )
+        return {
+            **question,
+            "status": "deepened",
+            "follow_up_enabled": True,
+            "desk_review_note": note,
+            "desk_review_evidence": evidence_or_none,
+            "pre_fill_answer": None,
+            "pre_fill_confidence": None,
+            "pre_fill_source": None,
+            "pre_fill_evidence_summary": None,
+        }
+
+    prefillable = all(
+        member["framework_id"] not in desk.failed_frameworks
+        and desk.coverage.get(member["control_id"]) in CLUSTER_PREFILL_LEVELS
+        and any(
+            evidence["grounded"]
+            for evidence in desk.evidence.get(member["control_id"], [])
+        )
+        for member in members
+    )
+    if ids and prefillable:
+        all_adequate = all(desk.coverage[control_id] == "adequate" for control_id in ids)
+        first_grounded = [
+            next(evidence for evidence in desk.evidence[control_id] if evidence["grounded"])
+            for control_id in ids
+        ]
+        return {
+            **question,
+            "status": "pre_filled",
+            "pre_fill_source": "document",
+            "pre_fill_answer": "fully_implemented" if all_adequate else "partially_implemented",
+            "pre_fill_confidence": "high" if all_adequate else "medium",
+            "pre_fill_evidence_summary": _summarize_evidence(first_grounded),
+            "desk_review_evidence": evidence_items,
+            "desk_review_note": CLUSTER_PREFILL_NOTE,
+        }
+
+    failed_members = list(dict.fromkeys(
+        member["framework_id"]
+        for member in members
+        if member["framework_id"] in desk.failed_frameworks
+    ))
+    note_parts = []
+    if evidence_items:
+        note_parts.append(CLUSTER_EVIDENCE_NOTE)
+    if failed_members:
+        note_parts.append(CLUSTER_UNREVIEWED_NOTE.format(
+            names=", ".join(FrameworkRegistry.get(framework_id).name for framework_id in failed_members),
+        ))
+    return {
+        **question,
+        "status": "active",
+        "desk_review_evidence": evidence_or_none,
+        "desk_review_note": " ".join(note_parts) if note_parts else question["context_note"],
+        "pre_fill_answer": None,
+        "pre_fill_confidence": None,
+        "pre_fill_source": None,
+        "pre_fill_evidence_summary": None,
+    }
+
+
+def _build_multi_framework_questionnaire(
+    assessment: Assessment,
+    framework_ids: list[str],
+    db: Session,
+) -> dict:
     """
     Build and return a questionnaire for multi-framework (non-DPDPA-only) assessments
     using the Unified Control Cluster engine. Questions are normalised into the same
@@ -88,7 +308,7 @@ def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: 
             # Multi-framework metadata (shown in template if template uses them)
             "frameworks_covered": ucc_q.get("frameworks_covered", framework_ids),
             "follow_ups": ucc_q.get("follow_ups", []),
-            # Status fields — no desk-review modulation on multi-framework path yet
+            # Status fields — defaults; _modulate_cluster_question sets them (P5-4)
             "status": "active",
             "skip_reason": None,
             "desk_review_note": ucc_q.get("context_note"),
@@ -97,7 +317,11 @@ def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: 
             "source": "base",
             "follow_up_enabled": bool(ucc_q.get("follow_ups")),
             "maps_to": [c["control_id"] for c in ucc_q.get("controls", [])],
-            # Pre-fill fields (unused on multi-framework path for now)
+            "member_controls": [
+                {"framework_id": c["framework_id"], "control_id": c["control_id"]}
+                for c in ucc_q.get("controls", [])
+            ],
+            # Pre-fill fields — defaults; _modulate_cluster_question sets them (P5-4)
             "pre_fill_answer": None,
             "pre_fill_confidence": None,
             "pre_fill_source": None,
@@ -108,9 +332,14 @@ def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: 
             "answer_options": ANSWER_OPTIONS,
         })
 
+    desk = _load_cluster_desk_data(assessment, db)
+    questions = [_modulate_cluster_question(question, desk) for question in normalised]
+    risk_tier = context_profile.get("risk_tier", "MEDIUM") if context_profile else "MEDIUM"
+    assign_tiers(questions, risk_tier)
+
     # Group into sections by domain_group
     sections: dict[str, dict] = {}
-    for q in normalised:
+    for q in questions:
         sid = q["section"]
         if sid not in sections:
             sections[sid] = {
@@ -123,18 +352,18 @@ def _build_multi_framework_questionnaire(assessment: Assessment, framework_ids: 
         sections[sid]["questions"].append(q)
 
     section_list = list(sections.values())
-    total = len(normalised)
+    total = len(questions)
 
     return {
         "sections": section_list,
         "stats": {
             "total_questions": total,
             "skipped_questions": 0,
-            "pre_filled_questions": 0,
+            "pre_filled_questions": sum(q["status"] == "pre_filled" for q in questions),
             "inferred_questions": 0,
-            "deepened_questions": 0,
+            "deepened_questions": sum(q["status"] == "deepened" for q in questions),
             "industry_questions": 0,
-            "tier_counts": {"standard": total, "deep": 0, "light": 0},
+            "tier_counts": compute_tier_stats(questions),
         },
     }
 
@@ -170,18 +399,9 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     if not assessment:
         raise ValueError(f"Assessment {assessment_id} not found")
 
-    # Determine selected frameworks — default to DPDPA for legacy assessments
-    selected_frameworks: list[str] = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            selected_frameworks = json.loads(assessment.selected_frameworks)
-        except (json.JSONDecodeError, TypeError):
-            pass
-
-    # Route multi-framework assessments to the UCC-based engine
-    is_dpdpa_only = selected_frameworks == ["dpdpa"] or selected_frameworks == []
-    if not is_dpdpa_only:
-        return _build_multi_framework_questionnaire(assessment, selected_frameworks)
+    # Route non-DPDPA-only assessments to the UCC-based engine
+    if not is_dpdpa_only(assessment):
+        return _build_multi_framework_questionnaire(assessment, assessment.frameworks, db)
 
 
     context_profile = json.loads(assessment.context_profile) if assessment.context_profile else None
@@ -655,3 +875,35 @@ def _build_sections(base_questions: list[dict], industry_questions: list[dict]) 
     industry_order = [s for s in sections.values() if s["source"] == "industry"]
 
     return base_order + industry_order
+
+
+def questionnaire_progress(questionnaire: dict, assessment_id: str, db: Session) -> dict:
+    """Confirmed answers to rendered questions, and live pre-fills awaiting confirmation."""
+    rendered_questions = [
+        question
+        for section in questionnaire["sections"]
+        for question in section.get("questions", [])
+        if question.get("status") != "skipped"
+    ]
+    rendered = {question["id"] for question in rendered_questions}
+    rows = (
+        db.query(QuestionnaireResponse.question_id, QuestionnaireResponse.answer)
+        .filter(
+            QuestionnaireResponse.assessment_id == assessment_id,
+            confirmed_response_clause(),
+        )
+        .all()
+    )
+    answered = {
+        question_id
+        for question_id, answer in rows
+        if question_id in rendered and (answer or "").strip()
+    }
+    awaiting_confirmation = sum(
+        question.get("status") == "pre_filled" and question["id"] not in answered
+        for question in rendered_questions
+    )
+    return {
+        "answered_questions": len(answered),
+        "awaiting_confirmation": awaiting_confirmation,
+    }

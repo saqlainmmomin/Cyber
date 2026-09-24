@@ -16,7 +16,12 @@
 {% if not context_done %}
 <!-- Phase 1: Context Gathering -->
 <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Context Gathering</h2>
+  <div class="flex items-center justify-between gap-4 mb-2">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Context Gathering</h2>
+    {% if response_count > 0 %}
+    <span class="text-sm text-green-600 dark:text-green-400 font-medium">{{ response_count }} questions answered</span>
+    {% endif %}
+  </div>
   <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Tell us about your organization's data landscape, existing posture, and risk exposure. This shapes the compliance questionnaire.</p>
 
   <div id="context-wizard"
@@ -34,6 +39,7 @@
 </div>
 {% else %}
 <!-- Phase 3: Domain Screening (optional pre-step before detailed questionnaire) -->
+{% if screening_available %}
 <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6" id="screening-section">
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
@@ -45,7 +51,7 @@
         {% if screening_done %}
         <span class="ml-2 text-sm font-normal text-purple-600 dark:text-purple-400">✓ Complete</span>
         {% else %}
-        <span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">Optional — reduces questionnaire by ~30%</span>
+        <span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">Optional. Pre-fills high-confidence DPDPA answers for you to confirm.</span>
         {% endif %}
       </h2>
     </div>
@@ -64,7 +70,7 @@
       <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      Screening complete — high-confidence controls are pre-filled in the questionnaire below with a ✨ Inferred badge.
+      Screening complete. High-confidence answers are pre-filled in the questionnaire below with an Inferred badge. Each one counts only after you confirm it by saving its section.
     </div>
     {% else %}
     <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -74,6 +80,9 @@
     {% endif %}
   </div>
 </div>
+{% else %}
+<p data-screening-unavailable class="mb-6 text-xs text-gray-500 dark:text-gray-400">{{ screening_unavailable_message }}</p>
+{% endif %}
 
 <!-- Phase 2: Compliance Questionnaire -->
 <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6" data-shortcut-scope="questionnaire">
@@ -83,7 +92,7 @@
       <p class="text-sm text-gray-500 dark:text-gray-400">Assess your organization against compliance requirements. Complete each section.</p>
     </div>
     {% if response_count > 0 %}
-    <span class="text-sm text-green-600 dark:text-green-400 font-medium">{{ response_count }} responses saved</span>
+    <span class="text-sm text-green-600 dark:text-green-400 font-medium">{{ response_count }} questions answered</span>
     {% endif %}
   </div>
 
