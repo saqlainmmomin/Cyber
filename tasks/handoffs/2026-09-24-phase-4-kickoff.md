@@ -1,0 +1,70 @@
+# Phase 4 kickoff: AWS evidence adapter, longitudinal demo, performance benchmarks, retention/archive/purge
+
+**Read this first in a fresh session before touching Phase 4.** It is not a task spec — it is the process document. Each of P4-1 through P4-4 still needs its own detailed handoff written the way every prior task's was (see `tasks/handoffs/2026-09-23-p3-4-remediation-tracking.md` for what "done right" looks like). This file tells you how to run that process, what's already true about the codebase, and where the sharp edges are.
+
+## Where the project stands
+
+`main` tip as of 2026-09-24: Phase 1, Phase 2, and Phase 3 are all complete and merged (PRs #16 through #33). Full test suite: **502 passed** — verify this yourself with `.venv/bin/pytest -q` before trusting it; every prior handoff in this repo re-verifies the baseline rather than assuming a stated number is still true.
+
+- **Plan:** `docs/plans/2026-09-21-002-revised-implementation-plan.md`, Phase 4 section (near the end of the file) — P4-1 AWS evidence adapter, P4-2 longitudinal synthetic demo, P4-3 performance benchmarks, P4-4 retention plumbing.
+- **Decisions:** `tasks/2026-09-21-adversarial-review.md` — D10 (AWS collection scope: Config rules + Security Hub findings only, no resource inventory, read-only, manual trigger) and D11 (configurable per-client retention, default 7 years, soft-delete-then-purge, never auto-purge) are the two decisions this phase implements against.
+- **Ownership:** `tasks/agent-ownership.md`, Phase 4 table:
+  | Task | Owner |
+  |---|---|
+  | P4-1 AWS evidence adapter | Claude designs IAM/security boundary → Codex implements boto3 plumbing |
+  | P4-2 Longitudinal synthetic demo | Claude designs narrative/data shape → Codex implements seed script |
+  | P4-3 Performance benchmarks | Codex, standalone |
+  | P4-4 Retention/archive/purge | Claude designs → Codex implements, **Claude reviews** (the ownership doc calls this "the most destructive code path in the plan") |
+
+  All four are independent subsystems with no file overlap between them — the plan doc says they can run concurrently, unlike Phase 2/3's chained lanes.
+
+## Facts checked against the current code, so you don't have to re-derive them
+
+- **`boto3` is not in `requirements.txt` yet.** P4-1's handoff needs to add it and pin a version.
+- **`Client.retention_years`** already exists (`app/models/client.py`, `Integer, default=7`) — the P1-2 schema already built D11's column. P4-4 wires behavior around an existing field, not a new one.
+- **`Engagement.status`** is a free `String(50)` with no enum/check constraint — adding `"archived"` as a valid value is not a schema change, just a new string the application treats specially.
+- **`AuditEvent`** (`app/models/audit_event.py`) already exists and already has live writers (P3-2's snapshot issue/generate events, P3-4's closure/verification events) — P4-4's purge logging should almost certainly reuse this table rather than inventing a new one; check `app/services/report_snapshots.py` or `app/services/findings.py` for the exact write pattern (actor string convention, `entity_type`/`entity_id` shape) before designing P4-4's own writes.
+- **Evidence blobs** live on disk under some `uploads/`-style path (see `app/services/evidence.py`, P2-1) — P4-4's purge must delete both the DB rows and these files together, in that order or the reverse, deliberately chosen (a crash between the two must not leave an orphaned blob referenced by nothing, or a DB row pointing at a deleted file — decide which failure mode is acceptable and why, the same way P3-2's handoff reasoned about write-then-hash ordering).
+- **No performance-sensitive index audit has been done on `conclusion_revisions`, `evidence_versions`, or `audit_events`** — P4-3 is likely to find real N+1s or missing indexes on tables that grew across Phases 2-3 (P2-6's workpaper and P3-4's rollup were both explicitly reviewed as "acceptable for a single-user local SQLite app, no hard budget" — Phase 4 is where that budget gets an actual number attached and tested against).
+
+## The workflow to follow (established across Phases 1–3, don't reinvent it)
+
+1. **For each task (or a small group you're about to run in parallel), spawn an Opus 5.5 subagent** (via the `Agent` tool, `model: "opus"`) to write that task's handoff. Give it, at minimum:
+   - The relevant plan section, decision(s), and ownership line (quote them, don't make the subagent re-find them).
+   - An instruction to **read every prior Phase 2/3 handoff's `## Results` section in full**, not just skim structure — this is how the P3-4 handoff caught the P2-4-style "mandated string vs. structural grep" contradiction before it happened, and how field-stability contracts between parallel tasks got written.
+   - Explicit file paths and symbol names to read and verify against, not "look into evidence handling" — every handoff so far earns its trust by citing exact current code, and an ungrounded handoff produces a Codex implementation that has to guess.
+   - The same closing instructions every prior handoff has used: number decisions `D-P4-1-A`, `D-P4-1-B`, ... (or `D-P4-2-...` etc.), close every fork explicitly, "if the code forces a deviation, stop and report it in `## Results`, do not pick an alternative," and specify that Codex writes its own test file since no pre-written failing suite exists (grep `tests/` first to confirm this is still true before asserting it in the handoff).
+2. **Read the resulting handoff yourself before dispatching it** — spot-check at least one or two of its "verified against the code" claims the way this session has done for every prior handoff (e.g. the P3-4 remediation-router-retirement claim was independently grep-checked before being trusted).
+3. **Set up an isolated git worktree per task you're running concurrently.** Never point two `codex exec` processes at the same working directory — one will corrupt the other's in-progress edits.
+   ```bash
+   git worktree add ../dpdpa-gap-tool-p4-1 -b codex/p4-1-aws-evidence-adapter main
+   ln -s /Users/saqlainmomin/dpdpa-gap-tool/.venv /Users/saqlainmomin/dpdpa-gap-tool-p4-1/.venv
+   cp /Users/saqlainmomin/dpdpa-gap-tool/.env /Users/saqlainmomin/dpdpa-gap-tool-p4-1/.env
+   ```
+   Verify the baseline suite passes in the fresh worktree before dispatching (expect one known, pre-existing, unrelated teardown error from `tests/test_workpaper.py::test_smoke_full_assessment_traceability` in a fresh worktree — documented in every Phase 2/3 handoff, not a regression).
+4. **Dispatch to Codex with `gpt-5.6-luna` at `xhigh` reasoning effort, not `gpt-5.6-sol`.** `sol` at medium effort burned through the account's Codex usage quota twice during Phase 3's P3-1/P3-2 parallel dispatch; `luna` at `xhigh` completed P3-3/P3-4 in parallel without hitting it.
+   ```bash
+   codex exec -m gpt-5.6-luna -c model_reasoning_effort="xhigh" -s workspace-write \
+     -C /Users/saqlainmomin/dpdpa-gap-tool-p4-1 --skip-git-repo-check "$(cat /tmp/p4-1-prompt.txt)"
+   ```
+   Run each in the background (`&`, redirect to a log file) and poll or wait on the PID — don't block synchronously on a 20-40 minute implementation run.
+5. **Codex cannot commit its own work.** In every Phase 2/3 task, Codex's sandbox refused to write `.git` metadata (`Unable to create '.git/index.lock': Operation not permitted` on a live checkout, or the equivalent `.git/worktrees/.../index.lock` failure in a linked worktree). This is not a bug to work around — it's the expected end state. After Codex finishes:
+   - Verify the diff stays in scope (`git diff --stat` against every file the handoff said not to touch — this should be empty every time; it has been for every task so far).
+   - Re-run `.venv/bin/pytest -q` **yourself**, independently, before trusting any reported pass count.
+   - Commit on Codex's behalf. **Do not add a `Co-Authored-By: Claude` trailer or a "Generated with Claude Code" footer anywhere** — Saqlain asked for this to stop after PR #31, and it applies to every commit and PR from here on.
+   - If Codex also hits a usage-quota error partway through (distinct from the sandbox issue — look for `ERROR: You've hit your usage limit`), check whether the actual implementation and tests already landed before the cutoff (they usually have — the quota tends to hit right at the documentation/commit step, not mid-implementation). If so, finish the mechanical remainder yourself rather than waiting for the quota reset: write the `## Results` section from your own direct diff inspection (say so explicitly in that section — don't fabricate Codex's voice), update `tasks/todo.md`, and commit.
+6. **Launch an independent Sonnet 5 adversarial review** (`Agent` tool, `model: "sonnet"`) against the committed diff before any PR gets opened. Brief it the same way every prior review was briefed: read the handoff and its Results, read the actual diff, verify every stated invariant *by tracing the code yourself*, run the test suite independently, and actively try to break it (edge cases the tests might not cover). Every review so far has been told explicitly what NOT to flag (pre-existing style, deferred features, missing auth by design) so it doesn't waste findings on noise.
+   - **P4-4 (retention/purge) needs an extra pass beyond the standard gate**, per the ownership doc's explicit callout that this is the most destructive code path in the plan — mirror how P2-3 (immutable analysis pipeline) and P1-6 (backup/restore) got a second, more skeptical review specifically because a mistake there is unrecoverable data loss. Don't settle for one clean review on this task alone.
+7. **Only after review comes back clean**, push the branch and open the PR yourself (`git push -u origin <branch>`, `gh pr create`). No attribution footer in the PR body either. State in the PR description what was verified, matching the level of detail in PRs #30-#33 (exact test counts, exact invariants traced, exact protected-file zero-diffs confirmed) — a PR description that just says "implements P4-N" is not the standard this project has held to.
+8. **If two tasks were dispatched in parallel and both produce a PR**, merge one, then rebase the other's branch onto the new `main` before merging it. Expect conflicts only in the files both tasks' handoffs were told they might share (router registration in `app/main.py`/`app/routers/web.py`, a shared nav-link template, `tasks/todo.md`) — every task-pair handoff so far has pre-declared a coordination rule for exactly this ("if the other lands first, keep both sides," or a field-append-only contract on a shared read type), which makes the rebase mechanical. If a handoff you write doesn't anticipate this, that's a gap in the handoff, not a reason to skip the coordination step.
+9. **Update context files after each merge**: `tasks/todo.md` (mark the task done in the existing style, fix the Phase 4 summary line, fix the exit-criteria line's test count), `CLAUDE.md`'s "Current phase" line, and this project's auto-memory (`project_status.md`, `MEMORY.md` in the memory directory) — every phase's close-out in this project has been recorded there, not just in the repo.
+
+## Task-specific starting notes
+
+**P4-1 (AWS evidence adapter) — the security-boundary task, Claude-owned.** AssumeRole with an external ID, no long-lived credentials, read-only (Config rule evaluations + Security Hub findings only, per D10 — no resource inventory). This is exactly the class of task `tasks/agent-ownership.md` says Claude designs directly rather than handing the IAM/security judgment calls to Codex: "a subtle mistake is a vulnerability, not a bug." Design the exact IAM policy (least-privilege, read-only actions only) and the exact AssumeRole/external-ID flow yourself before writing the handoff; let Codex build the boto3 plumbing and Evidence-row creation against that fixed design, not invent its own IAM shape.
+
+**P4-2 (longitudinal synthetic demo) — extends `scripts/seed_test_companies.py`.** Two synthetic clients minimum per the plan's own note ("minimal per review recommendation" — don't over-build this into more clients than specified). Needs to exercise evidence reuse with age/scope warnings (check whether that warning mechanism already exists from P2-1/P2-5, or still needs building), a second assessment 6 months later on the same client (reassessment), and engagement-level reporting (P3-3's integrated report) — this task is partly a smoke test of everything built so far, so grounding it well means reading P2-1 (evidence lifecycle), P3-1 (Findings/Actions), and P3-3 (integrated reports) closely, not just the seed script.
+
+**P4-3 (performance benchmarks) — standalone, Codex owns it fully.** The plan's thresholds (< 2s on SQLite for portfolio dashboard, workpaper render, report generation, evidence search) are concrete and testable; this is the one task this phase that's fully spec-able without a Claude design pass, per the ownership doc. Still worth a Claude-written handoff for consistency, but the "Decisions" section will mostly be about exactly how to seed the benchmark dataset deterministically and exactly how to measure (wall-clock in a test, or a separate script) rather than resolving architectural forks.
+
+**P4-4 (retention/archive/purge) — the destructive one, extra scrutiny required.** Archive is reversible (soft delete, status flip) — should be a straightforward compare-and-swap-style task by now, given the CAS pattern is already established in this codebase (P2-3/P2-4/P3-1 all use the same shape). Purge is not reversible. Design the exact pre-purge checks yourself (active dependencies, retention-period-not-yet-elapsed, explicit confirmation) with the same rigor P1-6's backup/restore handoff and P2-3's immutable-pipeline handoff got, and make sure the handoff is explicit that DB-row deletion and evidence-blob deletion happen together with a defined, tested failure mode for a crash between the two steps — don't leave that as an implicit assumption for Codex to resolve on its own.
