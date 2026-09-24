@@ -1,6 +1,6 @@
-# Phase 4 cloud dispatch: execute the four task handoffs
+# Phase 4 dispatch continuation: execute the four task handoffs
 
-**Read this first.** This is a continuation handoff, not a new task — the prior local session ran low on session limits mid-Phase-4, not because of any blocker. All the design work (step 1 of the process below) is already done. Your job is to run steps 2-9: dispatch to Codex, review, merge.
+**Read this first.** This is a continuation handoff, not a new task — the prior session ran low on session limits mid-Phase-4, not because of any blocker. All the design work (step 1 of the process below) is already done. Your job is to run steps 2-9: dispatch to Codex, review, merge. This runs on the local machine (`/Users/saqlainmomin/dpdpa-gap-tool`) — it needs local filesystem access, `git worktree`, and the local `codex` CLI, exactly like Phases 1-3 did. Do not run this from a cloud/remote session that lacks those.
 
 ## Goal
 
