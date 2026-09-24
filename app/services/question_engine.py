@@ -7,7 +7,6 @@ The engine merges two question sources:
   2. Industry-specific questions (from industry_questions.py)
 
 Desk review findings modulate which questions appear:
-  - Skip: strong document evidence → question skipped with reason
   - Deepen: signals/absences found → extra context shown, follow-up probes enabled
   - Add: signal flags → targeted questions injected
 
@@ -20,8 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.services.tier_engine import assign_tiers, compute_tier_stats
 
-from app.dpdpa.framework import get_all_requirements
-from app.dpdpa.industry_questions import get_industry_questions
+from app.dpdpa.industry_questions import INDUSTRY_BANK_MAP, get_industry_questions
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, _GUIDANCE_TEXT, _QUESTION_TEXT, build_questionnaire
 from app.frameworks.questionnaire_builder import (
     build_multi_questionnaire,
@@ -203,6 +201,10 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     # 2. Get industry-specific questions
     industry_bank = get_industry_questions(industry)
     industry_qs = industry_bank["questions"]
+    industry_bank_key = INDUSTRY_BANK_MAP.get(industry, "generic")
+    industry_chapter_title = (
+        "Industry-Specific" if industry_bank_key != "generic" else "Additional Questions"
+    )
 
     # 3. Apply desk review modulation to base questions
     # Also skip questions whose requirements are outside the scoped applicable set
@@ -237,7 +239,7 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
     # 4. Apply desk review modulation to industry questions
     modulated_industry = []
     for iq in industry_qs:
-        mod = _modulate_industry_question(iq, desk_data, context_profile)
+        mod = _modulate_industry_question(iq, desk_data, context_profile, industry_chapter_title)
         if mod["status"] == "skipped":
             skipped_count += 1
         elif mod["status"] == "deepened":
@@ -246,34 +248,7 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
             pre_filled_count += 1
         modulated_industry.append(mod)
 
-    # 5. Ensure requirement coverage — every applicable requirement must appear in at least one non-skipped question
-    # pre_filled questions count as covered since they present the control to the user for confirmation
-    covered_reqs = set()
-    for q in modulated_base:
-        if q["status"] not in ("skipped",):
-            covered_reqs.add(q["id"])
-    for q in modulated_industry:
-        if q["status"] != "skipped":
-            covered_reqs.update(q.get("maps_to", []))
-
-    all_req_ids = {r["id"] for r in get_all_requirements()}
-    # Only check coverage for applicable requirements
-    required_req_ids = applicable_req_ids if applicable_req_ids is not None else all_req_ids
-    uncovered = required_req_ids - covered_reqs
-
-    # Un-skip any base question whose requirement is uncovered and in scope
-    for q in modulated_base:
-        if q["status"] == "skipped" and q["id"] in uncovered:
-            # Don't reinstate questions that were excluded by scope
-            if q.get("skip_reason") == "Not applicable per scope definition":
-                continue
-            q["status"] = "active"
-            q["skip_reason"] = None
-            q["desk_review_note"] = "Reinstated — no other question covers this requirement."
-            uncovered.discard(q["id"])
-            skipped_count -= 1
-
-    # 6. Assign assessment depth tiers
+    # 5. Assign assessment depth tiers
     assign_tiers(modulated_base, risk_tier)
     assign_tiers(modulated_industry, risk_tier)
     all_questions = modulated_base + modulated_industry
@@ -502,7 +477,12 @@ def _summarize_evidence(evidence_items: list[dict]) -> str:
     return " | ".join(quotes) if quotes else "Document evidence found."
 
 
-def _modulate_industry_question(question: dict, desk_data: dict, context_profile: dict | None) -> dict:
+def _modulate_industry_question(
+    question: dict,
+    desk_data: dict,
+    context_profile: dict | None,
+    chapter_title: str,
+) -> dict:
     """Apply desk review modulation to an industry-specific question."""
     q = {
         "id": question["id"],
@@ -523,7 +503,7 @@ def _modulate_industry_question(question: dict, desk_data: dict, context_profile
         "context_note": None,
         "skip_if": None,
         "chapter": None,
-        "chapter_title": "Industry-Specific",
+        "chapter_title": chapter_title,
         "section": question["category"],
         "section_title": _category_title(question["category"]),
         "section_ref": "",
@@ -638,7 +618,7 @@ def _build_sections(base_questions: list[dict], industry_questions: list[dict]) 
     Group questions into ordered sections.
 
     Base DPDPA questions are grouped by chapter+section (existing behavior).
-    Industry questions are grouped by category into a separate "Industry-Specific" chapter.
+    Industry questions are grouped by category into a separate chapter.
     Skipped questions are included but marked — the UI decides whether to show them.
     """
     sections = {}
@@ -662,7 +642,7 @@ def _build_sections(base_questions: list[dict], industry_questions: list[dict]) 
         if sid not in sections:
             sections[sid] = {
                 "section_id": sid,
-                "chapter_title": "Industry-Specific",
+                "chapter_title": q["chapter_title"],
                 "section_title": q["section_title"],
                 "source": "industry",
                 "questions": [],
