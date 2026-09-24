@@ -8,10 +8,11 @@ Given scope answers from the Assessment, produces:
 
 Supports multi-framework assessments via compute_scope_multi().
 DPDPA has full scope profiling (SCP.1–SCP.5 → conditional requirement exclusion).
-Other frameworks pass through all controls as applicable (scope profiling TBD).
+Other frameworks keep all controls applicable; their scope answers produce applicability proposals for consultant confirmation (never exclusions), and their evidence requests come from `FrameworkDefinition.evidence_requests`, merged across frameworks by `document_type`.
 """
 
 from app.dpdpa.framework import get_all_requirements
+from app.frameworks.schema import FrameworkDefinition
 
 # Requirements that are only active when children's data is processed
 CHILDREN_REQUIREMENT_IDS = {
@@ -56,7 +57,7 @@ def compute_scope(scope_answers: dict) -> dict:
               {"id": "CH4.SDF.1", "reason": "SDF designation: no"},
               ...
           ],
-          "evidence_checklist": [...],         # list of {document_type, label, reason, required, maps_to}
+          "evidence_checklist": [...],         # list of {document_type, label, reason, required, maps_to, frameworks}
           "flags": {...},                      # parsed boolean flags for downstream use
         }
     """
@@ -125,11 +126,12 @@ def _build_evidence_checklist(
 ) -> list[dict]:
     """
     Build an ordered evidence checklist. Each item has:
-      - document_type: machine-readable key (maps to DocumentCategory enum)
+      - document_type: stable request key, shared across frameworks for the same client document
       - label: human-readable name
       - reason: why this is required
       - required: True = must have, False = recommended
       - maps_to: list of requirement IDs this document addresses
+      - frameworks: contributing framework IDs
     """
     checklist = []
 
@@ -140,6 +142,7 @@ def _build_evidence_checklist(
             "reason": reason,
             "required": required,
             "maps_to": maps_to,
+            "frameworks": ["dpdpa"],
         })
 
     # --- Always required ---
@@ -276,15 +279,17 @@ def compute_scope_multi(
     """
     Compute applicable requirements across multiple frameworks.
 
-    DPDPA uses full scope profiling (conditional exclusion).
-    Other frameworks include all controls (scope profiling not yet implemented).
+    DPDPA uses full scope profiling (conditional exclusion). Other frameworks
+    keep all controls applicable, produce consultant-facing applicability
+    proposals, and contribute evidence requests merged by document type.
     """
     from app.frameworks.registry import FrameworkRegistry
 
     all_applicable: list[str] = []
     all_excluded: list[dict] = []
-    all_checklist: list[dict] = []
     all_flags: dict = {}
+    all_proposals: list[dict] = []
+    contributions: list[tuple[str, list[dict]]] = []
     total_count = 0
 
     for fw_id in framework_ids:
@@ -292,9 +297,10 @@ def compute_scope_multi(
             result = compute_scope(scope_answers)
             all_applicable.extend(result["applicable_requirements"])
             all_excluded.extend(result["excluded_requirements"])
-            all_checklist.extend(result["evidence_checklist"])
             all_flags.update(result["flags"])
             total_count += len(get_all_requirements())
+            dpdpa = FrameworkRegistry.get_or_none("dpdpa")
+            contributions.append((dpdpa.name if dpdpa else "DPDPA", result["evidence_checklist"]))
         else:
             fw = FrameworkRegistry.get_or_none(fw_id)
             if not fw:
@@ -302,11 +308,103 @@ def compute_scope_multi(
             controls = fw.all_controls()
             all_applicable.extend(c.id for c in controls)
             total_count += len(controls)
+            proposals = propose_not_applicable(fw, scope_answers)
+            all_proposals.extend(proposals)
+            contributions.append((fw.name, _framework_evidence_items(fw, {p["control_id"] for p in proposals})))
 
     return {
         "applicable_requirements": all_applicable,
         "excluded_requirements": all_excluded,
-        "evidence_checklist": all_checklist,
+        "evidence_checklist": _merge_evidence_items(contributions),
         "flags": all_flags,
         "total_count": total_count,
+        "has_dpdpa": "dpdpa" in framework_ids,
+        "proposed_not_applicable": all_proposals,
     }
+
+
+SCOPE_DEMOTION_NOTE = "Your scope answers suggest the related controls may not apply; provide this if it exists."
+
+
+def propose_not_applicable(fw: FrameworkDefinition, scope_answers: dict) -> list[dict]:
+    """Return consultant-facing applicability proposals for one framework."""
+    proposals: list[dict] = []
+    emitted: set[str] = set()
+    for proposal in fw.applicability_proposals:
+        answer = scope_answers.get(proposal.scope_question_id)
+        if answer not in proposal.answers:
+            continue
+        for control_id in proposal.control_ids:
+            if control_id in emitted:
+                continue
+            emitted.add(control_id)
+            proposals.append(
+                {
+                    "framework_id": fw.id,
+                    "control_id": control_id,
+                    "scope_question_id": proposal.scope_question_id,
+                    "answer": answer,
+                    "rationale": proposal.rationale,
+                }
+            )
+    return proposals
+
+
+def _framework_evidence_items(fw: FrameworkDefinition, proposed_ids: set[str]) -> list[dict]:
+    """Convert a framework's static requests to the merged item shape."""
+    items = []
+    for request in fw.evidence_requests:
+        required = request.required
+        reason = request.reason
+        if required and request.maps_to and set(request.maps_to) <= proposed_ids:
+            required = False
+            reason = f"{reason} {SCOPE_DEMOTION_NOTE}"
+        items.append(
+            {
+                "document_type": request.document_type,
+                "label": request.label,
+                "reason": reason,
+                "required": required,
+                "maps_to": list(request.maps_to),
+                "frameworks": [fw.id],
+            }
+        )
+    return items
+
+
+def _merge_evidence_items(contributions: list[tuple[str, list[dict]]]) -> list[dict]:
+    """Merge framework request contributions by their stable document type."""
+    merged: dict[str, dict] = {}
+    for framework_name, items in contributions:
+        for item in items:
+            document_type = item["document_type"]
+            if document_type not in merged:
+                merged[document_type] = {
+                    "document_type": document_type,
+                    "label": item["label"],
+                    "reason": item["reason"],
+                    "required": item["required"],
+                    "maps_to": list(item["maps_to"]),
+                    "frameworks": list(item["frameworks"]),
+                    "_reasons": [(framework_name, item["reason"])],
+                }
+                continue
+
+            current = merged[document_type]
+            current["required"] = current["required"] or item["required"]
+            for control_id in item["maps_to"]:
+                if control_id not in current["maps_to"]:
+                    current["maps_to"].append(control_id)
+            for framework_id in item["frameworks"]:
+                if framework_id not in current["frameworks"]:
+                    current["frameworks"].append(framework_id)
+            current["_reasons"].append((framework_name, item["reason"]))
+
+    result = []
+    for item in merged.values():
+        reasons = item.pop("_reasons")
+        item["reason"] = reasons[0][1] if len(reasons) == 1 else "; ".join(
+            f"{name}: {reason}" for name, reason in reasons
+        )
+        result.append(item)
+    return result

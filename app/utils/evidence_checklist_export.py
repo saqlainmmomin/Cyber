@@ -25,6 +25,9 @@ def generate_evidence_checklist_pdf(
     company_name: str,
     checklist: list[dict],
     flags: dict,
+    *,
+    has_dpdpa: bool = False,
+    framework_label: str = "",
 ) -> bytes:
     """Generate a professional evidence request PDF."""
     pdf = FPDF()
@@ -73,38 +76,48 @@ def generate_evidence_checklist_pdf(
     )
     pdf.ln(6)
 
-    # --- Scope flags ---
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(*NAVY)
-    pdf.cell(0, 6, text=S("ASSESSMENT SCOPE"), ln=True)
-    pdf.set_draw_color(*DIVIDER)
-    pdf.line(PM, pdf.get_y(), PM + CW, pdf.get_y())
-    pdf.ln(3)
+    # --- Scope ---
+    if framework_label or has_dpdpa:
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(*NAVY)
+        pdf.cell(0, 6, text=S("ASSESSMENT SCOPE"), ln=True)
+        pdf.set_draw_color(*DIVIDER)
+        pdf.line(PM, pdf.get_y(), PM + CW, pdf.get_y())
+        pdf.ln(3)
 
-    flag_labels = [
-        ("Cross-border transfers", flags.get("cross_border", False)),
-        ("Children's data", flags.get("children", False)),
-        ("SDF obligations", flags.get("sdf", False)),
-        ("Third-party processors", flags.get("processors", False)),
-    ]
-
-    pdf.set_font("Helvetica", "", 9)
-    col_w = CW / 2
-    items_per_row = 2
-    for i, (label, active) in enumerate(flag_labels):
-        if i % items_per_row == 0 and i > 0:
+        if framework_label:
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(*DARK_TEXT)
+            pdf.cell(0, 6, text=S(f"Frameworks: {framework_label}"))
             pdf.ln(7)
-        x_offset = PM + (i % items_per_row) * col_w
-        pdf.set_x(x_offset)
-        color = (39, 174, 96) if active else (189, 195, 199)
-        pdf.set_text_color(*color)
-        prefix = S("[ACTIVE]  ") if active else S("[N/A]  ")
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(20, 6, text=prefix)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.set_text_color(*DARK_TEXT)
-        pdf.cell(col_w - 25, 6, text=S(label))
-    pdf.ln(12)
+
+        if has_dpdpa:
+            flag_labels = [
+                ("Cross-border transfers", flags.get("cross_border", False)),
+                ("Children's data", flags.get("children", False)),
+                ("SDF obligations", flags.get("sdf", False)),
+                ("Third-party processors", flags.get("processors", False)),
+            ]
+
+            pdf.set_font("Helvetica", "", 9)
+            col_w = CW / 2
+            items_per_row = 2
+            for i, (label, active) in enumerate(flag_labels):
+                if i % items_per_row == 0 and i > 0:
+                    pdf.ln(7)
+                x_offset = PM + (i % items_per_row) * col_w
+                pdf.set_x(x_offset)
+                color = (39, 174, 96) if active else (189, 195, 199)
+                pdf.set_text_color(*color)
+                prefix = S("[ACTIVE]  ") if active else S("[N/A]  ")
+                pdf.set_font("Helvetica", "B", 8)
+                pdf.cell(20, 6, text=prefix)
+                pdf.set_font("Helvetica", "", 9)
+                pdf.set_text_color(*DARK_TEXT)
+                pdf.cell(col_w - 25, 6, text=S(label))
+            pdf.ln(12)
+        else:
+            pdf.ln(6)
 
     # --- Checklist ---
     required = [c for c in checklist if c["required"]]
@@ -190,6 +203,9 @@ def generate_evidence_checklist_docx(
     company_name: str,
     checklist: list[dict],
     flags: dict,
+    *,
+    has_dpdpa: bool = False,
+    framework_label: str = "",
 ) -> bytes:
     """Generate an editable DOCX evidence request document."""
     from docx import Document
@@ -228,20 +244,24 @@ def generate_evidence_checklist_docx(
 
     doc.add_paragraph()
 
-    # Scope flags
-    scope_heading = doc.add_heading("Assessment Scope", level=2)
-    flag_labels = [
-        ("Cross-border transfers", flags.get("cross_border", False)),
-        ("Children's data", flags.get("children", False)),
-        ("SDF obligations", flags.get("sdf", False)),
-        ("Third-party processors", flags.get("processors", False)),
-    ]
-    for label, active in flag_labels:
-        p = doc.add_paragraph(style="List Bullet")
-        run = p.add_run(f"{'[ACTIVE]' if active else '[Not applicable]'}  {label}")
-        run.bold = active
+    # Assessment scope
+    if framework_label or has_dpdpa:
+        doc.add_heading("Assessment Scope", level=2)
+        if framework_label:
+            doc.add_paragraph(f"Frameworks: {framework_label}")
+        if has_dpdpa:
+            flag_labels = [
+                ("Cross-border transfers", flags.get("cross_border", False)),
+                ("Children's data", flags.get("children", False)),
+                ("SDF obligations", flags.get("sdf", False)),
+                ("Third-party processors", flags.get("processors", False)),
+            ]
+            for label, active in flag_labels:
+                p = doc.add_paragraph(style="List Bullet")
+                run = p.add_run(f"{'[ACTIVE]' if active else '[Not applicable]'}  {label}")
+                run.bold = active
 
-    doc.add_paragraph()
+        doc.add_paragraph()
 
     # Checklist sections
     required = [c for c in checklist if c["required"]]
