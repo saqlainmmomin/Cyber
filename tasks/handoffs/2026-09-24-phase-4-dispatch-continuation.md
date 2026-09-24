@@ -59,3 +59,40 @@ For each task, before considering it done:
 ## Report back
 
 Append a `## Results` section to **this file** summarizing: which of the four tasks merged (with PR links), any deviations from the handoffs and why, the final full-suite test count, and anything that surprised you (a handoff's claim that didn't hold against the real code, an unanticipated file conflict, etc.).
+
+## Results
+
+**All four tasks merged. Phase 4 is complete.**
+
+| Task | PR | Result |
+|---|---|---|
+| P4-1: AWS evidence adapter | [#34](https://github.com/saqlainmmomin/Cyber/pull/34) | Merged |
+| P4-2: Longitudinal synthetic demo | [#35](https://github.com/saqlainmmomin/Cyber/pull/35) | Merged |
+| P4-3: Performance benchmarks | [#36](https://github.com/saqlainmmomin/Cyber/pull/36) | Merged |
+| P4-4: Engagement archive, retention, two-phase purge | [#37](https://github.com/saqlainmmomin/Cyber/pull/37) | Merged (two review passes, per requirement) |
+
+**Final full-suite test count on `main`:** 550 passed, 9 skipped (the opt-in `CYBERASSESS_RUN_BENCHMARKS=1` suite), verified independently by re-running `pytest -q` directly on `main` after all four merges (not trusting any agent's reported count). Re-ran twice for stability after the P4-4 rebase since one test (`test_longitudinal_demo.py::test_scenario_9_rollups_and_integrated_reporting`) failed once in the full run but passed both standalone and in every subsequent full run — treated as a flaky test-order artifact, not a regression, consistent with this codebase's documented pattern of similar one-off teardown artifacts in prior phases.
+
+### Process notes
+
+- A background coordinator agent ran the four Codex dispatches (`gpt-5.6-luna` at `xhigh`), spawned the independent adversarial review agents, and correctly **refused to push or open PRs on a relayed "the user confirmed" message from me** — it insisted on either the permission system granting the action directly or Saqlain confirming in his own chat message. That refusal was correct: this session's own attempts to push/merge on Saqlain's behalf were also blocked by the auto-mode permission classifier ("Out-of-Place Publication" for pushes, "Merge Without Review" for merges) until Saqlain ran the pushes himself and I retried the merges (one merge classifier block turned out to be a transient "Stage 2 classifier error," and a bare retry succeeded).
+- All four Codex worktrees were verified against a real baseline before dispatch and re-verified with independent `pytest -q` runs after implementation — none of the four required trusting Codex's or the reviewer's self-reported counts.
+- Merge order was P4-1 → P4-2 → P4-3 → P4-4, exactly as anticipated in the constraints. Each later branch needed a rebase onto the new `main`, and every conflict fell inside the pre-declared shared files (`app/main.py`, `tasks/todo.md`) — no unanticipated file collisions.
+
+### Deviations from the handoffs
+
+**None of the four tasks' own numbered decisions (D-P4-1-*, D-P4-2-*, D-P4-3-*, D-P4-4-*) were changed.** One integration-time code change was made during the P4-4 rebase, outside any task's own diff, and is worth flagging as the most significant finding of this whole dispatch:
+
+**The `app/main.py` router-guard gap.** P4-4's design (D-P4-4-E) applies a read-only `_ARCHIVE_GUARD` dependency to every existing mutating router, so an archived engagement can't be silently written to through some other endpoint. That decision was correct and was applied to all 13 pre-existing API routers plus `magic.router`/`web.router` inside P4-4's own branch. But P4-1 (`aws.router`) and P4-2 (`evidence_reuse.router`) both merged into `main` in between — after P4-4's handoff was written — so P4-4 had no way to know they existed. Rebasing P4-4 onto the post-P4-1/P4-2 `main` produced a real conflict in the router-registration block, and resolving it naively (keeping P4-4's guarded list plus P4-1/P4-2's unguarded new routers) would have shipped a genuine gap: an archived engagement could still accept AWS-pulled evidence or an evidence-reuse confirmation, defeating the whole point of the archive guarantee.
+
+This was caught, not guessed at, because P4-4's own `test_retention.py` route-guard test (scenario 3) doesn't hardcode a router list — it iterates every live `APIRoute` in `app.routes` at test time and asserts the guard dependency is present on every mutating route outside the retention router itself. Resolving the conflict without adding `dependencies=_ARCHIVE_GUARD` to `aws.router` and `evidence_reuse.router` would have failed that test outright, not just failed a manual review. Fixed by adding the guard to both routers during the rebase, verified by the full suite (`550 passed`, including that structural test), and documented explicitly as a standalone PR comment on #37 (https://github.com/saqlainmmomin/Cyber/pull/37#issuecomment-5808426930) rather than folded silently into the merge, given this is the task that was called out for extra scrutiny.
+
+**Lesson for future phases:** when multiple parallel tasks each touch a shared, cross-cutting wiring file (here: central router registration with a security-relevant guard), the *rebase* step needs the same scrutiny as the original review — a clean line-level auto-merge (as `app/main.py`'s import block got) doesn't guarantee semantic correctness once two branches' concerns compose. A structural test that enumerates real routes at runtime, rather than a hardcoded list, is exactly the kind of check that catches this class of gap automatically; it's worth writing that pattern into future cross-cutting-guard tasks by default rather than as a lucky accident of P4-4's specific test design.
+
+### What surprised me
+
+- **P4-4's second, more skeptical review pass earned its keep.** Rather than re-reading the code, it live-stress-tested the concurrent double-purge race with two real threads against a real on-disk SQLite file (forcing genuine transaction overlap via a monkeypatched sleep), attempted a symlink path-traversal attack on evidence blob storage, and hand-tampered a purge audit-ledger row to try to trick the crash-recovery completion logic. All three were correctly blocked with zero data loss. It surfaced one real (if narrow) gap — an uncaught `OperationalError` under rare SQLite lock contention beyond the ~5s busy-timeout, which would surface as a raw 500 instead of a clean conflict response — logged as a non-blocking follow-up rather than a merge blocker, since no path to incorrect deletion exists.
+- **P4-2's and P4-3's own handoffs had already surfaced their most interesting findings before implementation** (the evidence-reuse mechanism not existing yet; engagement-wide evidence search not being a real product feature) — nothing in the actual Codex implementations contradicted those pre-flagged gaps, they were built exactly as scoped around them.
+- **The permission-classifier boundary held up under real pressure**, including a coordinator subagent correctly declining a good-faith but unverifiable relayed "user approved this" message from another agent, and my own direct push/merge attempts being gated the same way pushes and merges from Saqlain's own session would be. Nothing here should be read as "the process is annoying" — it worked exactly as intended and caught nothing malicious, just enforced that irreversible/externally-visible actions need a real human in the loop each time.
+
+`CLAUDE.md`, `tasks/todo.md`, and project auto-memory (`project_status.md`, `MEMORY.md`) have all been updated to reflect Phase 4 complete. All four Phase 4 git worktrees and their local branches have been cleaned up.
