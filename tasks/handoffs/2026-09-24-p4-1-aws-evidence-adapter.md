@@ -694,10 +694,170 @@ All in `tests/test_aws_evidence.py`. "Nothing written" means `_snapshot(db, uplo
 
 ## Results
 
-_To be filled in by the implementer (Codex) and then the reviewing Claude session. Include:_
-- _The Step 0 output (`boto3`/`botocore` versions)._
-- _The final public API of `app/services/aws_evidence.py` copied from the code (constants, dataclasses, function signatures), and the exact `permissions_policy("111122223333")` and `trust_policy(...)` output, copied from a Python run, not from this document._
-- _Focused and full `pytest -q` output with counts (baseline measured + N)._
-- _The smoke-test outputs from Done criteria items 1–5, and the explicit status of items 6 and 7._
-- _The `git diff --stat main` output and confirmation that each protected-file diff is empty._
-- _Any deviation forced by the code, named explicitly, with the decision it touches. Per the instruction at the top: if the code forces a deviation from this design, stop and report it here; do not pick an alternative._
+### Implementation
+
+Step 0: `.venv/bin/python -c "import boto3, botocore; print(boto3.__version__, botocore.__version__)"` returned `1.43.101 1.43.101`.
+
+The adapter implements the four-operation read-only AWS flow, derived engagement external IDs, exact trust/permissions policies, Config and Security Hub collection, canonical JSON evidence, version-aware all-or-nothing persistence, sanitized errors/audits, the consultant page and origin guard, and the read models. `tests/test_aws_evidence.py` contains 22 collected tests using `botocore.stub.Stubber` and no network or emulator.
+
+The final public API, copied from an `inspect` run:
+
+```text
+AWS_OPERATIONS = (('sts', 'AssumeRole'), ('config', 'DescribeConfigRules'), ('config', 'GetComplianceDetailsByConfigRule'), ('securityhub', 'GetFindings'))
+SUPPORTED_REGIONS = frozenset of ['af-south-1', 'ap-east-1', 'ap-east-2', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-south-1', 'ap-south-2', 'ap-southeast-1', 'ap-southeast-2', 'ap-southeast-3', 'ap-southeast-4', 'ap-southeast-5', 'ap-southeast-6', 'ap-southeast-7', 'ca-central-1', 'ca-west-1', 'eu-central-1', 'eu-central-2', 'eu-north-1', 'eu-south-1', 'eu-south-2', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'il-central-1', 'me-central-1', 'me-south-1', 'mx-central-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2'] (len = 34)
+MAX_REGIONS = 4
+MAX_DESCRIBE_RULE_PAGES = 40
+MAX_CONFIG_RULES_PER_REGION = 300
+MAX_EVALUATIONS_PER_RULE = 500
+MAX_FINDINGS_PER_REGION = 2000
+PULL_DEADLINE_SECONDS = 600
+SESSION_DURATION_SECONDS = 900
+EXTERNAL_ID_VERSION = 'v1'
+MIN_EXTERNAL_ID_SECRET_CHARS = 32
+ROLE_ARN_RE = re.compile(r'arn:aws:iam::(?P<account>\d{12}):role/(?:[\w+=,.@-]+/)*[\w+=,.@-]{1,64}')
+BOTO_CONFIG = Config(connect_timeout=5, read_timeout=30, retries={'max_attempts': 5, 'mode': 'standard'})
+CONFIG_PROVENANCE_PREFIX = 'aws_config:'
+SECURITYHUB_PROVENANCE_PREFIX = 'aws_securityhub:'
+SUGGESTED_ROLE_NAME = 'ComplianceEvidenceReadOnly'
+CONSULTANT_PRINCIPAL_PLACEHOLDER = 'arn:aws:iam::<CONSULTANT_ACCOUNT_ID>:role/<CONSULTANT_ROLE_NAME>'
+EXAMPLE_ACCOUNT_ID = '111122223333'
+STEPS = ('trust_policy_check', 'assume_role', 'config', 'securityhub', 'deadline', 'write')
+Message constants = NOT_CONFIGURED, INVALID_ACCOUNT_ID, INVALID_ROLE_ARN, ROLE_ACCOUNT_MISMATCH, REGIONS_REQUIRED, TOO_MANY_REGIONS, UNKNOWN_REGION, BASE_CREDENTIALS_UNAVAILABLE, ASSUME_ROLE_DENIED, TRUST_POLICY_MISSING_EXTERNAL_ID, ASSUMED_ACCOUNT_MISMATCH, STS_REGION_DISABLED, REGION_NOT_ENABLED, PERMISSION_MISSING, SESSION_EXPIRED, DEADLINE_EXCEEDED, AWS_UNREACHABLE, AWS_ERROR, WRITE_FAILED, ORIGIN_REJECTED; each has the exact D-P4-1-J value from the module.
+
+```text
+NOT_CONFIGURED = 'AWS evidence collection is not configured. Set AWS_EXTERNAL_ID_SECRET in .env to a random value of at least 32 characters that differs from SESSION_SECRET, then restart.'
+INVALID_ACCOUNT_ID = "Enter the client's 12-digit AWS account ID."
+INVALID_ROLE_ARN = 'Enter the role ARN in the form arn:aws:iam::<account-id>:role/<role-name>.'
+ROLE_ACCOUNT_MISMATCH = 'The role ARN must belong to the AWS account ID entered.'
+REGIONS_REQUIRED = 'Enter at least one AWS region.'
+TOO_MANY_REGIONS = 'Pull at most 4 regions at a time.'
+UNKNOWN_REGION = 'Unknown or unsupported AWS region: {region}.'
+BASE_CREDENTIALS_UNAVAILABLE = 'This machine has no usable AWS credentials for the consultant identity. Sign in (for example with aws sso login) and try again. Nothing was collected.'
+ASSUME_ROLE_DENIED = "Could not assume the role. Check the role ARN, that its trust policy names your consultant principal, and that it requires this engagement's external ID. Nothing was collected."
+TRUST_POLICY_MISSING_EXTERNAL_ID = "The role can be assumed without this engagement's external ID. Add the sts:ExternalId condition shown on this page to the role's trust policy, then try again. Nothing was collected."
+ASSUMED_ACCOUNT_MISMATCH = 'The assumed role belongs to a different AWS account than the one entered. Nothing was collected.'
+STS_REGION_DISABLED = 'AWS STS is not activated in {region}. List an activated region first. Nothing was collected.'
+REGION_NOT_ENABLED = 'The temporary session is not valid in {region}; the region may not be enabled for this account. Nothing was collected.'
+PERMISSION_MISSING = 'The role is missing permission {action} in {region}. Apply the read-only permissions policy shown on this page. Nothing was collected.'
+SESSION_EXPIRED = 'The temporary AWS session expired before the pull finished. Pull fewer regions. Nothing was collected.'
+DEADLINE_EXCEEDED = 'The pull took longer than 10 minutes and was stopped. Pull fewer regions. Nothing was collected.'
+AWS_UNREACHABLE = 'Could not reach AWS. Check the network connection and try again. Nothing was collected.'
+AWS_ERROR = 'AWS returned an error ({code}) during {step}. Nothing was collected.'
+WRITE_FAILED = 'The AWS data was retrieved but could not be saved as evidence. Nothing was collected.'
+ORIGIN_REJECTED = 'Cross-site requests cannot start an AWS pull.'
+```
+
+TemporaryCredentials fields = ['access_key_id', 'secret_access_key', 'session_token', 'expiration']
+SourceSummary fields = ['source', 'region', 'status', 'items', 'created', 'versioned', 'unchanged', 'rejected', 'truncated', 'skipped_rules']
+PullResult fields = ['pull_id', 'account_id', 'regions', 'sources', 'evidence_ids', 'started_at', 'finished_at']
+
+is_configured() -> 'bool'
+external_id(engagement_id: 'str') -> 'str'
+permissions_policy(account_id: 'str') -> 'dict'
+trust_policy(external_id: 'str', consultant_principal_arn: 'str' = 'arn:aws:iam::<CONSULTANT_ACCOUNT_ID>:role/<CONSULTANT_ROLE_NAME>') -> 'dict'
+consultant_policy() -> 'dict'
+session_policy_json(account_id: 'str') -> 'str'
+canonical_json(doc: 'dict') -> 'str'
+config_rule_document(*, account_id: 'str', region: 'str', rule: 'dict', evaluations: 'list[dict]', truncated: 'bool') -> 'dict'
+securityhub_documents(*, account_id: 'str', region: 'str', findings: 'list[dict]', truncated: 'bool') -> 'list[dict]'
+evidence_filename(source: 'str', *, account_id: 'str', region: 'str', key: 'str') -> 'str'
+pull_aws_evidence(db: 'Session', *, engagement_id: 'str', account_id: 'str', role_arn: 'str', regions_raw: 'str', actor: 'str' = 'consultant') -> 'PullResult'
+aws_evidence_rows(db: 'Session', engagement_id: 'str') -> 'list[dict]'
+last_pull_inputs(db: 'Session', engagement_id: 'str') -> 'dict | None'
+page_context(db: 'Session', engagement: 'Engagement') -> 'dict'
+_now() -> 'datetime'
+_monotonic() -> 'float'
+_new_pull_id() -> 'str'
+_sts_client(region: 'str')
+_service_client(credentials: 'TemporaryCredentials', service: 'str', region: 'str')
+_call(client, service: 'str', operation: 'str', **params) -> 'dict'
+_map_error(exc, *, step: 'str', region: 'str | None', operation: 'str | None') -> 'AwsPullFailed'
+```
+
+`permissions_policy("111122223333")`, copied from a Python run:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListConfigRules",
+      "Effect": "Allow",
+      "Action": "config:DescribeConfigRules",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadConfigRuleEvaluations",
+      "Effect": "Allow",
+      "Action": "config:GetComplianceDetailsByConfigRule",
+      "Resource": "arn:aws:config:*:111122223333:config-rule/*"
+    },
+    {
+      "Sid": "ReadSecurityHubFindings",
+      "Effect": "Allow",
+      "Action": "securityhub:GetFindings",
+      "Resource": "arn:aws:securityhub:*:111122223333:hub/default"
+    }
+  ]
+}
+```
+
+`trust_policy("x" * 64, "arn:aws:iam::444455556666:role/Consultant")`, copied from a Python run:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowConsultantEvidencePull",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::444455556666:role/Consultant"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Verification
+
+The recorded baseline in the handoff was 502 passed, 126 warnings, and one known teardown error. Focused run: `22 passed, 1 warning in 4.97s`. Final full run: `524 passed, 127 warnings in 45.20s`; the known teardown error did not reproduce in this worktree.
+
+Smoke test, using a fresh temporary Alembic DB, temporary upload directory, in-process `TestClient`, and Stubber clients:
+
+```text
+GET 200 5e1a0a28 True
+POST1 200 source_rows=2 evidence_rows=4
+SELECT evidence: 4 active rows; uploaded_by values were aws_config:111122223333 (2) and aws_securityhub:111122223333 (2)
+SELECT evidence_versions: 4 rows, all version_number=1/status=active
+POST2 200 source_rows=2 evidence_rows=4
+SELECT evidence_versions after changed evaluation: one evidence has v1=superseded and v2=active; the other three remain v1=active
+Security Hub AccessDenied: HTTP 200; panel reported "The role is missing permission securityhub:GetFindings in eu-west-1. Apply the read-only permissions policy shown on this page. Nothing was collected."; evidence/version counts were unchanged at (4, 5)
+SELECT action, metadata_json for aws_evidence.%: two pull_completed rows and one pull_failed row; no external ID or credential value was present
+Secret/session/external-ID occurrence counts in DB dump plus upload files: 0
+```
+
+Real-account check: not run; no test account or role was supplied. Browser check: not run; no browser was available.
+
+`git diff --stat main` (tracked files in this uncommitted worktree) was:
+
+```text
+ .env.example                               | 3 +++
+ app/config.py                              | 1 +
+ app/main.py                                | 2 ++
+ app/services/evidence.py                   | 3 ++-
+ app/templates/pages/engagement_detail.html | 1 +
+ requirements.txt                            | 1 +
+ tasks/todo.md                              | 2 +-
+ 7 files changed, 11 insertions(+), 2 deletions(-)
+```
+
+The new implementation files are untracked because no commit was requested; they are `app/services/aws_evidence.py`, `app/routers/aws.py`, `app/templates/pages/aws_evidence.html`, `app/templates/partials/aws_evidence_panel.html`, `docs/operations/aws-evidence.md`, and `tests/test_aws_evidence.py`. Protected-file diff is empty for `app/models`, `alembic/versions`, `app/routers/web.py`, `app/routers/magic.py`, `app/services/magic_links.py`, `app/services/document_processor.py`, and `scripts`. `alembic heads` remains `4e8c1a9d2b57 (head)`, and `app/services/evidence.py` contains exactly the mandated `receive_version` parameter and `_file_type` call changes.
+
+No deviation from any D-P4-1-A through D-P4-1-R decision was forced by the implementation.

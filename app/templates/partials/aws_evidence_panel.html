@@ -1,0 +1,58 @@
+<section id="aws-evidence-panel" class="mt-8">
+  {% if configured %}
+  <form data-aws-pull-form hx-post="/engagements/{{ engagement_id }}/aws-evidence/pull" hx-target="#aws-evidence-panel" hx-swap="outerHTML" class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pull AWS evidence</h2>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Account ID
+        <input name="account_id" value="{{ form_values.account_id }}" class="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" autocomplete="off">
+      </label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Role ARN
+        <input name="role_arn" value="{{ form_values.role_arn }}" class="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" autocomplete="off">
+      </label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Regions
+        <input name="regions" value="{{ form_values.regions }}" placeholder="eu-west-1, us-east-1" class="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" autocomplete="off">
+      </label>
+    </div>
+    <button type="submit" class="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Pull AWS evidence</button>
+  </form>
+  {% endif %}
+
+  {% if error %}
+  <div data-aws-error class="mt-4 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">{{ error }}</div>
+  {% endif %}
+
+  {% if result %}
+  <div data-aws-result class="mt-5 rounded-xl border border-green-200 bg-green-50 p-5 dark:border-green-900/50 dark:bg-green-950/30">
+    <h2 class="font-semibold text-green-900 dark:text-green-200">Pull complete</h2>
+    <p class="mt-1 text-sm text-green-800 dark:text-green-300">Pull {{ result.pull_id }}</p>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead><tr class="border-b border-green-200 text-xs uppercase text-green-800 dark:border-green-900/50 dark:text-green-300"><th class="px-2 py-2">Source</th><th class="px-2 py-2">Region</th><th class="px-2 py-2">Status</th><th class="px-2 py-2">Items</th><th class="px-2 py-2">Created</th><th class="px-2 py-2">Versioned</th><th class="px-2 py-2">Unchanged</th><th class="px-2 py-2">Notes</th></tr></thead>
+        <tbody>
+        {% for source in result.sources %}
+        <tr data-aws-source-row class="border-b border-green-100 dark:border-green-900/30"><td class="px-2 py-2">{% if source.source == "aws_config" %}AWS Config{% else %}Security Hub{% endif %}</td><td class="px-2 py-2">{{ source.region }}</td><td class="px-2 py-2">{% if source.status == "not_enabled" %}Not enabled{% else %}Collected{% endif %}</td><td class="px-2 py-2">{{ source.items }}</td><td class="px-2 py-2">{{ source.created }}</td><td class="px-2 py-2">{{ source.versioned }}</td><td class="px-2 py-2">{{ source.unchanged }}</td><td class="px-2 py-2">{% if source.truncated %}Truncated{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="mt-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Collected AWS evidence</h2>
+    {% if rows %}
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead><tr class="border-b border-gray-200 text-xs uppercase text-gray-500 dark:border-gray-800 dark:text-gray-400"><th class="px-2 py-2">Evidence</th><th class="px-2 py-2">Source</th><th class="px-2 py-2">Status</th><th class="px-2 py-2">Current version</th><th class="px-2 py-2">Versions</th><th class="px-2 py-2">Last collected</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+        <tr data-aws-evidence-row class="border-b border-gray-100 dark:border-gray-800"><td class="px-2 py-2"><a class="text-brand hover:underline" href="/evidence/{{ row.id }}">{{ row.filename }}</a></td><td class="px-2 py-2">{% if row.source == "aws_config" %}AWS Config{% else %}Security Hub{% endif %}</td><td class="px-2 py-2">{{ row.status }}</td><td class="px-2 py-2">{% if row.current_version_number is not none %}v{{ row.current_version_number }}{% else %}—{% endif %}</td><td class="px-2 py-2">{{ row.version_count }}</td><td class="px-2 py-2">{% if row.last_collected_at %}{{ row.last_collected_at.strftime('%Y-%m-%d %H:%M') }} UTC{% else %}—{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">No AWS evidence collected yet.</p>
+    {% endif %}
+  </div>
+</section>

@@ -14,6 +14,7 @@ from app.config import settings
 from app.routers import (
     analysis,
     assessments,
+    aws,
     conclusions,
     desk_review,
     documents,
@@ -141,6 +142,7 @@ app.include_router(snapshots.router)
 app.include_router(integrated_reports.router)
 
 # Web portal routes
+app.include_router(aws.router)
 app.include_router(magic.router)
 app.include_router(web.router)
 
