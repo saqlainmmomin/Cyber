@@ -19,6 +19,7 @@ contains 106 subcategories, but some are consolidated for practical assessment.
 from app.frameworks.schema import (
     Control,
     Domain,
+    EvidenceRequest,
     FrameworkDefinition,
     QuestionDef,
     RedFlagPattern,
@@ -1126,7 +1127,7 @@ _NIST_CSF_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="NIST.SCP.1",
         question="Is your organization part of critical infrastructure (e.g., energy, healthcare, financial services, transportation)?",
-        help_text="NIST CSF was originally developed for critical infrastructure sectors. This determines the depth of expected controls and regulatory expectations.",
+        help_text="NIST CSF was originally developed for critical infrastructure sectors. Recorded as context for the consultant; it does not change which CSF outcomes are assessed.",
         type="single_select",
         options=[
             {"value": "yes_regulated", "label": "Yes — regulated critical infrastructure sector"},
@@ -1137,7 +1138,7 @@ _NIST_CSF_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="NIST.SCP.2",
         question="What is your organization's current CSF implementation tier?",
-        help_text="CSF 2.0 defines 4 tiers: Partial (Tier 1), Risk Informed (Tier 2), Repeatable (Tier 3), Adaptive (Tier 4). This sets the baseline for assessment.",
+        help_text="CSF 2.0 defines 4 tiers: Partial (Tier 1), Risk Informed (Tier 2), Repeatable (Tier 3), Adaptive (Tier 4). Recorded as your self-assessed starting point for the consultant; it does not change which outcomes are assessed or how they are scored.",
         type="single_select",
         options=[
             {"value": "tier1", "label": "Tier 1 — Partial (ad-hoc, reactive)"},
@@ -1150,7 +1151,7 @@ _NIST_CSF_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="NIST.SCP.3",
         question="Does your organization manage operational technology (OT) or industrial control systems (ICS)?",
-        help_text="OT/ICS environments have unique cybersecurity considerations and may require additional CSF profile customizations.",
+        help_text="OT/ICS environments have unique cybersecurity considerations. Recorded as context for the consultant; the CSF outcomes in this assessment are not OT-specific and all remain in scope.",
         type="single_select",
         options=[
             {"value": "yes", "label": "Yes — OT/ICS systems in scope"},
@@ -1170,6 +1171,33 @@ _NIST_CSF_SCOPE_QUESTIONS = [
             {"value": "no", "label": "No — no profile developed yet"},
         ],
     ),
+]
+
+_NIST_CSF_EVIDENCE_REQUESTS = [
+    EvidenceRequest("csf_profiles", "CSF Current and Target Organizational Profiles (if developed)", "Shows which CSF outcomes you have prioritised and where you are today; used as context for every conclusion.", False),
+    EvidenceRequest("risk_management_strategy", "Cybersecurity risk management strategy, including risk appetite and tolerance statements", "Evidence for organisational context (GV.OC-01, GV.OC-04, GV.OC-05) and risk management strategy (GV.RM-01 to GV.RM-04).", True, ("NIST.GV.OC.01", "NIST.GV.OC.04", "NIST.GV.OC.05", "NIST.GV.RM.01", "NIST.GV.RM.02", "NIST.GV.RM.03", "NIST.GV.RM.04")),
+    EvidenceRequest("security_policy", "Cybersecurity policy, with evidence of periodic review", "Evidence for policy establishment and review (GV.PO-01, GV.PO-02).", True, ("NIST.GV.PO.01", "NIST.GV.PO.02")),
+    EvidenceRequest("roles_responsibilities", "Cybersecurity roles, responsibilities and resourcing (organisation chart or RACI)", "Evidence for leadership accountability, roles and resourcing (GV.RR-01 to GV.RR-03).", False, ("NIST.GV.RR.01", "NIST.GV.RR.02", "NIST.GV.RR.03")),
+    EvidenceRequest("hr_security", "HR security procedures (screening, onboarding, leaver process)", "Evidence for cybersecurity in human resources practices (GV.RR-04).", False, ("NIST.GV.RR.04",)),
+    EvidenceRequest("leadership_oversight", "Leadership / board cybersecurity oversight reports and meeting minutes", "Evidence for oversight of the risk strategy and its performance (GV.OV-01 to GV.OV-03).", False, ("NIST.GV.OV.01", "NIST.GV.OV.02", "NIST.GV.OV.03")),
+    EvidenceRequest("legal_register", "Register of legal, regulatory and contractual cybersecurity requirements", "Evidence for stakeholder and legal requirements (GV.OC-02, GV.OC-03).", False, ("NIST.GV.OC.02", "NIST.GV.OC.03")),
+    EvidenceRequest("supplier_security", "Supplier security policy, supplier register and sample supplier agreements", "Evidence for supply chain risk management (GV.SC-01 to GV.SC-05), external service inventory (ID.AM-04) and provider monitoring (DE.CM-06).", True, ("NIST.GV.SC.01", "NIST.GV.SC.02", "NIST.GV.SC.03", "NIST.GV.SC.04", "NIST.GV.SC.05", "NIST.ID.AM.04", "NIST.DE.CM.06")),
+    EvidenceRequest("asset_inventory", "Hardware, software and data inventories, with classification", "Evidence for asset management (ID.AM-01, ID.AM-02, ID.AM-05, ID.AM-07, ID.AM-08).", True, ("NIST.ID.AM.01", "NIST.ID.AM.02", "NIST.ID.AM.05", "NIST.ID.AM.07", "NIST.ID.AM.08")),
+    EvidenceRequest("risk_assessment", "Cybersecurity risk assessment and risk register", "Evidence for threat identification, impact and likelihood, risk determination and response (ID.RA-03 to ID.RA-06).", True, ("NIST.ID.RA.03", "NIST.ID.RA.04", "NIST.ID.RA.05", "NIST.ID.RA.06")),
+    EvidenceRequest("vulnerability_management", "Vulnerability and patch management procedure, with recent scan reports", "Evidence for vulnerability identification (ID.RA-01), threat intelligence (ID.RA-02) and software maintenance (PR.PS-02).", True, ("NIST.ID.RA.01", "NIST.ID.RA.02", "NIST.PR.PS.02")),
+    EvidenceRequest("access_control_policy", "Access control policy and recent user access review records", "Evidence for identity, authentication and access management (PR.AA-01 to PR.AA-05).", True, ("NIST.PR.AA.01", "NIST.PR.AA.02", "NIST.PR.AA.03", "NIST.PR.AA.04", "NIST.PR.AA.05")),
+    EvidenceRequest("physical_security", "Physical access and environmental protection procedures", "Evidence for physical access management (PR.AA-06), physical environment monitoring (DE.CM-02) and asset protection (PR.IR-02).", False, ("NIST.PR.AA.06", "NIST.DE.CM.02", "NIST.PR.IR.02")),
+    EvidenceRequest("training_records", "Security awareness training programme and completion records", "Evidence for awareness and specialised-role training (PR.AT-01, PR.AT-02).", True, ("NIST.PR.AT.01", "NIST.PR.AT.02")),
+    EvidenceRequest("cryptography_policy", "Data protection and encryption standard (at rest, in transit, in use)", "Evidence for data security (PR.DS-01, PR.DS-02, PR.DS-10).", False, ("NIST.PR.DS.01", "NIST.PR.DS.02", "NIST.PR.DS.10")),
+    EvidenceRequest("backup", "Backup policy and restore test records", "Evidence for backups (PR.DS-11) and recovery integrity checks (RC.RP-03).", False, ("NIST.PR.DS.11", "NIST.RC.RP.03")),
+    EvidenceRequest("configuration_baselines", "Secure configuration / hardening baselines and software execution controls", "Evidence for configuration management, hardware maintenance and execution prevention (PR.PS-01, PR.PS-03, PR.PS-05).", False, ("NIST.PR.PS.01", "NIST.PR.PS.03", "NIST.PR.PS.05")),
+    EvidenceRequest("sdlc_policy", "Secure software development practices", "Evidence for secure software development (PR.PS-06).", False, ("NIST.PR.PS.06",)),
+    EvidenceRequest("logging_monitoring", "Logging and monitoring standard, with evidence of alert review or SIEM use", "Evidence for log generation (PR.PS-04), continuous monitoring (DE.CM-01, DE.CM-03, DE.CM-09) and adverse event analysis (DE.AE-02, DE.AE-03, DE.AE-08).", True, ("NIST.PR.PS.04", "NIST.DE.CM.01", "NIST.DE.CM.03", "NIST.DE.CM.09", "NIST.DE.AE.02", "NIST.DE.AE.03", "NIST.DE.AE.08")),
+    EvidenceRequest("network_security", "Network architecture / data flow diagram and network protection standard", "Evidence for network communication mapping (ID.AM-03) and network protection (PR.IR-01).", False, ("NIST.ID.AM.03", "NIST.PR.IR.01")),
+    EvidenceRequest("breach_procedure", "Incident response plan and escalation procedures", "Evidence for incident management, containment, eradication and internal communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident declaration (DE.AE-04, DE.AE-06).", True, ("NIST.RS.MA.01", "NIST.RS.MA.02", "NIST.RS.MA.03", "NIST.RS.MA.04", "NIST.RS.MA.05", "NIST.RS.MI.01", "NIST.RS.MI.02", "NIST.RS.CO.02", "NIST.RS.CO.03", "NIST.DE.AE.04", "NIST.DE.AE.06")),
+    EvidenceRequest("incident_log", "Incident register and post-incident reports for the last 12 months", "Evidence for incident analysis (RS.AN-03, RS.AN-06 to RS.AN-08) and improvement from execution (ID.IM-03).", False, ("NIST.RS.AN.03", "NIST.RS.AN.06", "NIST.RS.AN.07", "NIST.RS.AN.08", "NIST.ID.IM.03")),
+    EvidenceRequest("business_continuity", "Recovery and business continuity plans, with latest test results", "Evidence for recovery plan execution and communication (RC.RP-01, RC.RP-02, RC.RP-04 to RC.RP-06, RC.CO-03, RC.CO-04) and resilience mechanisms (PR.IR-03).", True, ("NIST.RC.RP.01", "NIST.RC.RP.02", "NIST.RC.RP.04", "NIST.RC.RP.05", "NIST.RC.RP.06", "NIST.RC.CO.03", "NIST.RC.CO.04", "NIST.PR.IR.03")),
+    EvidenceRequest("exercise_records", "Incident response and recovery exercise / tabletop reports, with resulting improvement actions", "Evidence for improvement from evaluations and tests (ID.IM-01, ID.IM-02).", False, ("NIST.ID.IM.01", "NIST.ID.IM.02")),
 ]
 
 # ── Question text ──────────────────────────────────────────────────────────
@@ -1254,4 +1282,5 @@ NIST_CSF_DEFINITION = FrameworkDefinition(
     scope_questions=_NIST_CSF_SCOPE_QUESTIONS,
     questions=_NIST_CSF_QUESTIONS,
     red_flag_patterns=_NIST_CSF_RED_FLAGS,
+    evidence_requests=_NIST_CSF_EVIDENCE_REQUESTS,
 )
