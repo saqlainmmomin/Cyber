@@ -2116,7 +2116,10 @@ def _analyze(http, assessment_id: str, assessment_key: str, assessment_keys: dic
 
     with patch.object(analysis, "run_multi_framework_analysis", fake):
         _expect(
-            http.post(f"/api/assessments/{assessment_id}/analyze"),
+            http.post(
+                f"/api/assessments/{assessment_id}/analyze",
+                json={"reason": "document_led", "reviewer_name": DEMO_REVIEWER},
+            ),
             200,
             f"analyze {assessment_key}",
         )

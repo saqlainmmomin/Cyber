@@ -16,7 +16,7 @@ from fpdf import FPDF
 from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.models.report import GapItem, GapReport
-from app.services.scoring import report_framework_scores
+from app.services.scoring import is_failed_framework_score, report_framework_scores
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -699,6 +699,11 @@ def generate_pdf(
             scores["overall_score"],
             scores.get("overall_rating", "N/A"),
         ))
+    failed_framework_names = [
+        framework_name
+        for framework_id, framework_name in framework_metadata
+        if is_failed_framework_score(framework_scores.get(framework_id))
+    ]
 
     # Compute summary stats
     counts = {"compliant": 0, "partially_compliant": 0, "non_compliant": 0, "not_assessed": 0}
@@ -783,6 +788,14 @@ def generate_pdf(
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*MID_TEXT)
         pdf.text(PM, 88, S(f"Frameworks assessed: {frameworks_label}"))
+    if failed_framework_names:
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(*RISK_COLORS["critical"])
+        pdf.text(
+            PM,
+            94,
+            S(f"Incomplete: analysis failed for {', '.join(failed_framework_names)}. Not scored."),
+        )
 
     # One score ring per framework; no cross-framework ring exists.
     cy = 130
@@ -850,6 +863,12 @@ def generate_pdf(
             framework_rating,
         )
         framework_bar_y += 11
+    if failed_framework_names:
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(*RISK_COLORS["critical"])
+        for framework_name in failed_framework_names:
+            pdf.text(PM, framework_bar_y, S(f"{framework_name}: analysis failed. Not scored."))
+            framework_bar_y += 11
 
     # Compliance distribution bar
     pdf.set_y(framework_bar_y + 5)

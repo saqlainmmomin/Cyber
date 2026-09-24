@@ -16,6 +16,7 @@ Answer source tracking:
 import json
 import logging
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.assessment import Assessment
@@ -23,6 +24,19 @@ from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.models.questionnaire import QuestionnaireResponse
 
 logger = logging.getLogger(__name__)
+
+UNCONFIRMED_ANSWER_SOURCES = ("document", "inferred")
+
+
+def confirmed_response_clause():
+    """Return the SQL predicate for confirmed and legacy human responses.
+
+    D-P5-F: unconfirmed machine answers are never silent analysis inputs.
+    """
+    return or_(
+        QuestionnaireResponse.answer_source.is_(None),
+        QuestionnaireResponse.answer_source.notin_(UNCONFIRMED_ANSWER_SOURCES),
+    )
 
 
 def persist_document_answers(assessment_id: str, db: Session) -> int:

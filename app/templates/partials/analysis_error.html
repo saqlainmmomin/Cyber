@@ -5,7 +5,12 @@
     </svg>
     <p class="text-sm font-medium text-red-900 dark:text-red-300">Analysis Failed</p>
   </div>
+  {% if framework_display is defined and framework_display.values() | selectattr("failed") | list %}
+  {% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list %}
+  <p data-analysis-failed-frameworks class="text-sm text-red-700 dark:text-red-400 mb-3">Analysis failed for {{ failed_names | join(", ") }}. Results for the other frameworks were saved. Run analysis again to complete the assessment.</p>
+  {% else %}
   <p class="text-sm text-red-700 dark:text-red-400 mb-3">Something went wrong during the analysis. Please try again.</p>
+  {% endif %}
   <button hx-post="/assessments/{{ assessment_id }}/run-analysis"
           hx-target="#analysis-area"
           hx-swap="innerHTML"

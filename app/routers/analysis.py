@@ -9,21 +9,80 @@ from app.database import get_db
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.questionnaire import build_questionnaire
 from app.models.assessment import Assessment
+from app.models.audit_event import AuditEvent
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.services import analysis_pipeline
+from app.services.auto_answer import confirmed_response_clause
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
+from app.services.conclusion_review import reviewer_actor
 from app.services.evidence import analysis_documents
 from app.services.scoring import (
     compute_framework_scores,
+    failed_framework_scores,
     generate_initiatives,
     generate_multi_framework_initiatives,
     namespaced_domain_scores,
 )
+from app.schemas.analysis import CompletionOverride
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}", tags=["analysis"])
 logger = logging.getLogger(__name__)
+
+COMPLETION_THRESHOLD = 0.8
+COMPLETION_GATE_MESSAGE = (
+    "Questionnaire is incomplete: {answered} of {expected} in-scope core questions answered ({pct}%). "
+    "Answer at least 80% of the in-scope questionnaire, or run analysis with a recorded consultant override. "
+    "Pre-filled answers count only after a consultant confirms them."
+)
+COMPLETION_OVERRIDE_REASONS = {
+    "document_led": "Documents are the primary evidence for this assessment",
+    "client_answers_pending": "Client answers are pending and an interim AI proposal is needed",
+    "scope_under_review": "Scope is still being confirmed with the client",
+}
+COMPLETION_OVERRIDE_EVENT = "analysis.completion_override"
+COMPLETION_OVERRIDE_SCHEMA_VERSION = 1
+
+
+class CompletionGateRefused(HTTPException):
+    def __init__(self, *, answered: int, expected: int):
+        self.answered = answered
+        self.expected = expected
+        pct = round((answered / expected) * 100) if expected else 0
+        super().__init__(
+            status_code=400,
+            detail=COMPLETION_GATE_MESSAGE.format(
+                answered=answered,
+                expected=expected,
+                pct=pct,
+            ),
+        )
+
+
+def _applicable_requirement_ids(
+    raw: str | None,
+    *,
+    assessment_id: str | None = None,
+) -> set[str] | None:
+    """None = no scope recorded (every requirement applies)."""
+    if raw is None or raw == "":
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        logger.warning(
+            "Invalid applicable_requirements for assessment gate",
+            extra={"assessment_id": assessment_id},
+        )
+        return None
+    if not isinstance(parsed, list):
+        logger.warning(
+            "Invalid applicable_requirements for assessment gate",
+            extra={"assessment_id": assessment_id},
+        )
+        return None
+    return {str(value) for value in parsed}
 
 # Build a requirement title lookup once
 _REQ_TITLES = {r["id"]: r["title"] for r in get_all_requirements()}
@@ -31,7 +90,11 @@ _REQ_CHAPTERS = {r["id"]: r["chapter"] for r in get_all_requirements()}
 
 
 @router.post("/analyze")
-def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
+def trigger_analysis(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+    override: CompletionOverride | None = None,
+):
     """Trigger DPDPA gap analysis using Claude."""
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
@@ -48,7 +111,10 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     # Gather questionnaire responses
     responses_db = (
         db.query(QuestionnaireResponse)
-        .filter(QuestionnaireResponse.assessment_id == assessment_id)
+        .filter(
+            QuestionnaireResponse.assessment_id == assessment_id,
+            confirmed_response_clause(),
+        )
         .all()
     )
     responses = [
@@ -100,6 +166,12 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
             q["id"] for q in build_questionnaire(context_profile=context_profile)
             if not q["id"].startswith(("IND.", "FU."))
         }
+        applicable_ids = _applicable_requirement_ids(
+            assessment.applicable_requirements,
+            assessment_id=assessment_id,
+        )
+        if applicable_ids is not None:
+            expected_question_ids &= applicable_ids
     answered_question_ids = {
         r.question_id
         for r in responses_db
@@ -109,28 +181,48 @@ def trigger_analysis(assessment_id: str, db: Session = Depends(get_db)):
     completion_ratio = (len(answered_question_ids) / total_expected) if total_expected else 0.0
     has_documents = bool(documents)
 
-    if total_expected and completion_ratio < 0.8:
-        completion_pct = round(completion_ratio * 100)
-        if not has_documents:
-            raise HTTPException(
-                400,
-                f"Questionnaire is incomplete: {len(answered_question_ids)} of {total_expected} core questions answered ({completion_pct}%). "
-                "Answer at least 80% of the questionnaire or upload supporting documents before running analysis.",
-            )
-        logger.warning(
-            "Allowing analysis with incomplete questionnaire because documents are available",
-            extra={
-                "assessment_id": assessment_id,
-                "answered_questions": len(answered_question_ids),
-                "total_expected_questions": total_expected,
-                "completion_ratio": completion_ratio,
-            },
+    gate_blocked = bool(total_expected) and completion_ratio < COMPLETION_THRESHOLD
+    if gate_blocked and override is None:
+        raise CompletionGateRefused(
+            answered=len(answered_question_ids),
+            expected=total_expected,
         )
+    if gate_blocked and override is not None and override.reason not in COMPLETION_OVERRIDE_REASONS:
+        raise HTTPException(400, "Choose a valid override reason.")
 
     if not responses and not documents:
         raise HTTPException(
             400,
             "Submit questionnaire responses or upload documents before running analysis.",
+        )
+
+    if gate_blocked:
+        metadata = {
+            "schema_version": COMPLETION_OVERRIDE_SCHEMA_VERSION,
+            "reason": override.reason,
+            "answered": len(answered_question_ids),
+            "expected": total_expected,
+            "completion_pct": round(completion_ratio * 100),
+            "threshold_pct": 80,
+            "framework_ids": list(_selected_fw),
+        }
+        db.add(
+            AuditEvent(
+                actor=reviewer_actor(override.reviewer_name),
+                action=COMPLETION_OVERRIDE_EVENT,
+                entity_type="assessment",
+                entity_id=assessment_id,
+                metadata_json=json.dumps(metadata, sort_keys=True),
+            )
+        )
+        logger.info(
+            "Running analysis with completion override",
+            extra={
+                "assessment_id": assessment_id,
+                "reason": override.reason,
+                "answered": len(answered_question_ids),
+                "expected": total_expected,
+            },
         )
 
     # Update status
@@ -425,8 +517,7 @@ def _persist_single_analysis(
         "report_id": report.id,
         "status": "completed",
         "per_framework_scores": {
-            fw_id: scores["overall_score"]
-            for fw_id, scores in per_fw_scores.items()
+            fw_id: scores["overall_score"] for fw_id, scores in per_fw_scores.items()
         },
         "initiatives_generated": len(initiatives_data),
         "message": "Gap analysis completed successfully",
@@ -487,6 +578,11 @@ def _run_multi_framework_analysis(
             framework_ids=failed_frameworks,
         )
     db.commit()
+
+    if len(failed_frameworks) == len(selected_frameworks):
+        assessment.status = "error"
+        db.commit()
+        raise HTTPException(500, "Analysis failed for every selected framework. Run analysis again.")
 
     try:
         return _persist_multi_framework_analysis(
@@ -576,7 +672,7 @@ def _persist_multi_framework_analysis(
         fw_result = result["frameworks"].get(fw_id)
         if not fw_result or "error" in fw_result:
             per_fw_assessments[fw_id] = []
-            per_fw_scores[fw_id] = compute_framework_scores([], fw_id)
+            per_fw_scores[fw_id] = failed_framework_scores()
             continue
 
         parsed = fw_result["parsed"]
@@ -713,16 +809,28 @@ def _persist_multi_framework_analysis(
         )
         db.add(initiative)
 
-    assessment.status = "completed"
+    failed = [
+        framework_id
+        for framework_id in selected_frameworks
+        if not result["frameworks"].get(framework_id)
+        or "error" in result["frameworks"][framework_id]
+    ]
+    assessment.status = "error" if failed else "completed"
     db.commit()
     db.refresh(report)
 
     return {
         "report_id": report.id,
-        "status": "completed",
+        "status": "incomplete" if failed else "completed",
         "frameworks_analyzed": list(per_fw_scores),
         "per_framework_scores": {fw_id: s["overall_score"] for fw_id, s in per_fw_scores.items()},
         "initiatives_generated": len(initiatives_data),
-        "message": f"Multi-framework analysis completed ({len(selected_frameworks)} frameworks)",
+        "failed_frameworks": failed,
+        "message": (
+            f"Analysis failed for {', '.join(FrameworkRegistry.get(fw_id).name for fw_id in failed)}. "
+            "Results for the other frameworks were saved. Run analysis again to complete the assessment."
+            if failed
+            else f"Multi-framework analysis completed ({len(selected_frameworks)} frameworks)"
+        ),
         "analysis_run_ids": dict(run_context.run_ids),
     }

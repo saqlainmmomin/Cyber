@@ -42,6 +42,7 @@ from app.services.citations import (
     cite_quotes,
     citable_sources,
 )
+from app.services.auto_answer import confirmed_response_clause
 from app.services.evidence import analysis_documents
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,8 @@ def _envelope(
 
     documents = analysis_documents(db, assessment_id)
     questionnaire_response_count = db.query(QuestionnaireResponse).filter(
-        QuestionnaireResponse.assessment_id == assessment_id
+        QuestionnaireResponse.assessment_id == assessment_id,
+        confirmed_response_clause(),
     ).count()
     return {
         "schema_version": CLAIMS_SCHEMA_VERSION,
