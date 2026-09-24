@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     firm_name: str = "CyberAssess"
     firm_logo_path: str | None = None
     firm_primary_hex: str = "#2563eb"
+    aws_external_id_secret: str = ""
 
     @field_validator("firm_primary_hex")
     @classmethod

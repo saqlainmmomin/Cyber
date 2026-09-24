@@ -382,6 +382,7 @@ def receive_version(
     content: bytes,
     change_reason: str,
     actor: str,
+    file_type: str | None = None,
 ) -> EvidenceVersion:
     evidence = db.get(Evidence, evidence_id)
     if evidence is None:
@@ -400,7 +401,7 @@ def receive_version(
         raise InvalidTransition("A new version is already awaiting release from quarantine.")
     if not (change_reason or "").strip():
         raise EvidenceValidationError("A change reason is required when uploading a new version.")
-    resolved_type = _file_type(filename, None)
+    resolved_type = _file_type(filename, file_type)
     if len(content) == 0:
         raise EvidenceValidationError("The uploaded file is empty.")
     digest = sha256_hex(content)

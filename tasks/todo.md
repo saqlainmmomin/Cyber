@@ -40,7 +40,7 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 **Phase 3 exit:** ✅ append-only Findings/Actions with evidence-backed closure and verification, write-once immutable report snapshots, per-framework PDF scores with citations and no blend, an engagement-level integrated report, and a fully retired legacy remediation path. Full suite: 502 passed.
 
-- [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]` — not started. P4-1/P4-2/P4-4 need a Claude-written handoff each (P4-1 is a security-boundary task, P4-4 is the most destructive code path in the plan); P4-3 is standalone Codex. All four are independent and can run concurrently. Kickoff process doc: `tasks/handoffs/2026-09-24-phase-4-kickoff.md`.
+- [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]` — P4-1 implementation complete; review Results in [`2026-09-24-p4-1-aws-evidence-adapter.md`](tasks/handoffs/2026-09-24-p4-1-aws-evidence-adapter.md). P4-2/P4-4 need a handoff each (P4-4 is the most destructive code path in the plan); P4-3 is standalone. All four are independent and can run concurrently. Kickoff process doc: `tasks/handoffs/2026-09-24-phase-4-kickoff.md`.
 
 ## Source of truth
 
