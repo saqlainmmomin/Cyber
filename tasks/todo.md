@@ -61,6 +61,11 @@ Phases 1-4 built the multi-framework, engagement-level platform on top of an ori
 - [ ] **P5-4: Adaptive questionnaire on the UCC path** — cluster-level deepen/pre-fill/tier treatment for non-DPDPA and mixed assessments, from P5-3's framework-keyed findings.
 - [x] **P5-5: Framework-aware scoping & evidence requests** — curated per-framework evidence-request definitions (30 ISO, 24 NIST), cross-framework dedup by document type, conditional scope flags/copy, ISO applicability proposals (never auto-exclusion) with corrected help text. No schema change. Implementation caught and fixed a real D4 content collision before merge. Handoff + Results: `tasks/handoffs/2026-09-24-p5-5-framework-scoping-evidence.md`. Sonnet adversarial review: MERGE AS-IS. **Merged:** [PR #39](https://github.com/saqlainmmomin/Cyber/pull/39).
 - [ ] **P5-6: RFI rebuilt** — versioned snapshot sourced from approved Conclusions + P5-5's evidence requests, issuable via magic links; retires the `GapItem`-sourced, unversioned `RFIDocument`.
+- [ ] **P5-9: End-to-end validation with blind synthetic companies** — 4 fictional companies (C1 low/DPDPA, C2 medium/DPDPA+ISO, C3 "paper moat"/all three, C4 NIST-only), each with a hidden answer key of planted gaps, decoys and clean controls; driven through the real routes with the live LLM, 3 runs each, scored deterministically against Conclusions (catch rate paired with false-positive rate, grounding, stability, cost). Plan: `docs/plans/2026-09-24-002-p5-9-end-to-end-validation-plan.md`. Harness build can start now; the baseline run waits for P5-2 + P5-4. Absorbs the never-executed v3 adversarial seed spec.
+  - [ ] **P5-9a: Harness** (Codex) — `tasks/handoffs/2026-09-24-p5-9a-validation-harness.md`.
+  - [ ] **Stage A: Author the 4 company packs** (Gemini, fairness audit by Codex/Claude) — `tasks/handoffs/2026-09-24-p5-9-authoring-brief.md`.
+  - [ ] **Stage C: Baseline run** — after P5-2 + P5-4 merge.
+  - [ ] **P5-9b: Adjudication, release/PDF invariants, oracle-score check, UI screenshots** — handoff written after P5-2 merges.
 - [ ] **P5-7 (reserved):** ISO clauses 4-10 / risk treatment / Statement of Applicability content pack — deliberately not scheduled; see the plan's deferred list.
 
 ## Source of truth

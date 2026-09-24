@@ -235,6 +235,13 @@ Deliberately not scheduled. See the deferred list. The number is reserved so tha
 **Owner:** Codex, standalone, from a short Claude handoff.
 **Depends on:** nothing. Land it first.
 
+### P5-9. End-to-end validation with blind synthetic companies (added 2026-09-24)
+
+**Goal:** measure the whole product (intake → evidence → desk review → questionnaire → analysis → Conclusions → report) against four fictional companies with hidden answer keys, on the live LLM tiers. Output a baseline of detection vs false-positive rates, and file defects found along the way.
+**Plan:** `docs/plans/2026-09-24-002-p5-9-end-to-end-validation-plan.md` (decisions D-P5-9-A to D-P5-9-J).
+**Owner:** Claude designed it. Codex builds the harness (P5-9a). Gemini authors the company packs, and a different model runs the fairness audit.
+**Depends on:** nothing to build. The baseline run depends on P5-2 and P5-4, and P5-9b (adjudication and report invariants) depends on P5-2. It changes no app code (D-P5-9-I).
+
 ### Sequencing
 
 ```
@@ -242,6 +249,7 @@ Lane 1:  P5-8 ─┐
                ├─ P5-1 ── P5-2 ──┐
 Lane 2:        └─ (P5-1) ─ P5-3 ── P5-4
 Lane 3:  P5-5 ───────────────────┴── P5-6
+Lane 4:  P5-9a (harness) + Stage A (authoring) ──── [after P5-2, P5-4] baseline run ── P5-9b
 ```
 
 - P5-8 and P5-5 can start immediately.
