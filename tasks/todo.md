@@ -1,6 +1,6 @@
 # CyberAssess implementation tracker
 
-**Updated:** 2026-09-23 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 3
+**Updated:** 2026-09-24 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 3
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
@@ -34,8 +34,8 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 ## Phase 3 — Reports & remediation `[AR: report immutability, provenance, closure verification]`
 
 - [x] **P3-1: Findings and Actions** — implemented and verified: 12 contract scenarios covered by 20 new tests (append-only history via compare-and-swap, `ACTION_TRANSITIONS` state machine, one-Finding-per-Conclusion cardinality, legacy-migration coexistence, workpaper linkage); 463 full-suite tests pass. Sonnet adversarial review found no blocking issues (append-only CAS race, eligibility rule, and migration idempotency all independently re-verified). Handoff Results: `tasks/handoffs/2026-09-23-p3-1-findings-and-actions.md#results`. **Merged: PR #30.**
-- [x] **P3-2: Write-once report snapshots** — implemented and verified: 14 contract tests cover immutable PDF/HTML artifacts, draft → issued lifecycle, newest-only atomic issue, provenance, integrity failures, cleanup, integrated-report scope and UI guards; 457 full-suite tests pass. Sonnet adversarial review found no blocking issues (true immutability, atomic issue SQL, and hash verification all independently re-verified). Handoff Results: `tasks/handoffs/2026-09-23-p3-2-report-snapshots.md#results`. **PR #31, open, not yet merged.**
-- [ ] **P3-3: PDF updates** — depends on P3-2's snapshot plumbing for final wiring; content changes (per-framework scores, citations, evidence chain, engagement-level integrated report) can start in parallel.
+- [x] **P3-2: Write-once report snapshots** — implemented and verified: 14 contract tests cover immutable PDF/HTML artifacts, draft → issued lifecycle, newest-only atomic issue, provenance, integrity failures, cleanup, integrated-report scope and UI guards; 457 full-suite tests pass. Sonnet adversarial review found no blocking issues (true immutability, atomic issue SQL, and hash verification all independently re-verified). Handoff Results: `tasks/handoffs/2026-09-23-p3-2-report-snapshots.md#results`. **Merged: PR #31.**
+- [x] **P3-3: PDF updates** — implemented and verified: 13 new contract tests cover approved Findings with citations/evidence chains, additive gap PDFs, integrated report sections, write-once lifecycle/release gates, validation, cleanup, structural guards, and sanitization. Full suite: 490 passed. Handoff Results: `tasks/handoffs/2026-09-23-p3-3-pdf-updates.md#results`.
 - [ ] **P3-4: Remediation tracking** — depends on P3-1 (`Action`/`history_json`, `ACTION_TRANSITIONS`). Handed-forward decisions are recorded in P3-1's handoff under "Handed forward to P3-4".
 - [ ] **Phase 4 — AWS & validation** `[AR: IAM/external ID, retention/purge, performance]`
 
