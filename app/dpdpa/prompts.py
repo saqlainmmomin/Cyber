@@ -210,6 +210,17 @@ Include ALL requirement IDs. Quote verbatim — do not paraphrase."""
 
 # ─── Desk Review Prompt (Call 0) ──────────────────────────────────────────
 
+DESK_REVIEW_FLAG_TYPES = (
+    "gdpr_copy_paste",
+    "template_artifact",
+    "ccpa_copy_paste",
+    "buried_consent",
+    "missing_timeline",
+    "scope_gap",
+    "data_minimization_concern",
+)
+
+
 def build_desk_review_system_prompt() -> list[dict]:
     """
     Build the system prompt for Call 0: desk review analysis.
@@ -479,7 +490,9 @@ def build_user_prompt(
             prompt += "### Red Flags Detected\n"
             for flag in desk_review_summary["signal_flags"]:
                 prompt += f"- **{flag.get('severity', 'medium').upper()}**: {flag['content']}"
-                if flag.get("requirement_id"):
+                if flag.get("requirement_ids"):
+                    prompt += f" (affects {', '.join(flag['requirement_ids'])})"
+                elif flag.get("requirement_id"):
                     prompt += f" (affects {flag['requirement_id']})"
                 prompt += "\n"
             prompt += "\n"

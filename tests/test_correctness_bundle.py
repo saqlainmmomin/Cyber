@@ -839,7 +839,7 @@ def test_p5_1_structural_guards_and_signatures():
 
     assert subprocess.run(
         ["alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
-    ).stdout.strip() == "4e8c1a9d2b57 (head)"
+    ).stdout.strip() == "8b2d5f7e1c34 (head)"
     parameter_names = list(inspect.signature(analysis._run_multi_framework_analysis).parameters)
     assert parameter_names == [
         "assessment",

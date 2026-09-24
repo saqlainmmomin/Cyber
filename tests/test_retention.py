@@ -621,7 +621,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     heads = subprocess.run(
         ["alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout
-    assert "4e8c1a9d2b57 (head)" in heads
+    assert "8b2d5f7e1c34 (head)" in heads
     assert not list(REPO_ROOT.joinpath("app/models").rglob("*.py")) or all(
         "relationship(" not in path.read_text() for path in REPO_ROOT.joinpath("app/models").rglob("*.py")
     )

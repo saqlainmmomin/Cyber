@@ -7,8 +7,15 @@ Each framework gets its own cached system prompt (persona + controls + instructi
 
 from __future__ import annotations
 
+import re
+
 from app.frameworks.registry import FrameworkRegistry
-from app.frameworks.schema import FrameworkDefinition
+from app.frameworks.schema import FrameworkDefinition, RedFlagPattern
+from app.services.desk_review_findings import LEGACY_FINDING_FRAMEWORK_ID
+
+
+CURATED_PROMPT_FRAMEWORK_ID = "dpdpa"  # keeps its hand-curated desk-review and evidence-extraction prompts (P5-3 D-P5-3-A)
+UNCLASSIFIED_FLAG_TYPE = "unclassified"
 
 
 # ── Per-framework persona templates ───────────────────────────────────────
@@ -119,6 +126,185 @@ def _build_red_flag_section(fw: FrameworkDefinition) -> str:
     for i, rf in enumerate(fw.red_flag_patterns, 1):
         lines.append(f"{i}. **{rf.pattern}** ({rf.severity} severity): {rf.description}")
     return "\n".join(lines)
+
+
+def red_flag_key(pattern: RedFlagPattern) -> str:
+    """Return the stable flag_type derived from a registry red-flag pattern."""
+    return re.sub(r"[^a-z0-9]+", "_", pattern.pattern.lower()).strip("_")
+
+
+def desk_review_flag_types(framework_id: str) -> tuple[str, ...]:
+    """Return the flag_type values a desk review for this framework may store."""
+    if framework_id == CURATED_PROMPT_FRAMEWORK_ID:
+        from app.dpdpa.prompts import DESK_REVIEW_FLAG_TYPES
+
+        return DESK_REVIEW_FLAG_TYPES
+    return tuple(
+        red_flag_key(pattern)
+        for pattern in FrameworkRegistry.get(framework_id).red_flag_patterns
+    )
+
+
+def build_framework_desk_review_system_prompt(framework_id: str) -> list[dict]:
+    """Build the registry-driven desk-review prompt for a non-curated framework."""
+    fw = FrameworkRegistry.get(framework_id)
+    persona = _FRAMEWORK_PERSONAS.get(framework_id, _DEFAULT_PERSONA)
+    controls_text = _build_controls_text(fw)
+    controls = fw.all_controls()
+    n = fw.control_count()
+    id0 = controls[0].id
+    id1 = controls[1].id
+
+    if fw.red_flag_patterns:
+        signal_lines = [
+            "Flag every instance of the following patterns. Use exactly the flag_type shown:",
+            "",
+        ]
+        signal_lines.extend(
+            f'- **{pattern.pattern}** (flag_type: "{red_flag_key(pattern)}", severity: {pattern.severity}): {pattern.description}'
+            for pattern in fw.red_flag_patterns
+        )
+        signal_lines.extend(
+            [
+                "",
+                "Use only the flag_type values listed above. Do not flag anything that fits none of them.",
+            ]
+        )
+        signal_block = "\n".join(signal_lines)
+        first_key = red_flag_key(fw.red_flag_patterns[0])
+        signal_example = (
+            f'[{{"flag_type": "{first_key}", "description": "...", "severity": "high", '
+            f'"source_quote": "...", "document": "policy.pdf", "location": "Section 2", '
+            f'"requirement_ids": ["{id0}", "{id1}"]}}]'
+        )
+    else:
+        signal_block = (
+            "This framework defines no red-flag patterns. Return an empty signal_flags list."
+        )
+        signal_example = "[]"
+
+    instructions = f"""You are performing a desk review of an organization's documents against {fw.name} ({fw.version}). This is the first step of a professional assessment: catalog what exists, map evidence to controls, identify what is missing, and flag red flags. Assess against {fw.name} only.
+
+## {fw.name} Controls Reference
+
+{controls_text}
+
+## Analysis Levels
+
+Perform ALL four analysis levels for each document:
+
+### Level 1 - Document Catalog
+For each document, identify:
+- Document type (policy, procedure, standard, register, report, contract, or other)
+- Which {fw.name} controls it covers
+- A 1-2 sentence summary of what it contains
+
+### Level 2 - Evidence Mapping
+For each control ({n} total), extract EXACT quotes from the documents that address that control. Include the document filename and approximate location (section heading, page, paragraph). Quote verbatim; do not paraphrase.
+
+### Level 3 - Absence Detection
+For each control, identify what is MISSING from the documents. Be specific: name the missing element, not a generic gap.
+
+### Level 4 - Signal Detection
+{signal_block}
+
+## Control IDs
+
+Use only the control IDs listed in the Controls Reference above, exactly as written, in evidence_map, absence_findings, signal_flags requirement_ids and coverage_summary. List every control a red flag affects in its requirement_ids.
+
+## Output Format
+
+Respond ONLY with valid JSON. No markdown fences, no commentary.
+
+{{
+  "document_catalog": [
+    {{"filename": "policy.pdf", "document_type": "Information Security Policy", "coverage_areas": ["{id0}"], "summary": "..."}}
+  ],
+  "evidence_map": {{
+    "{id0}": [{{"quote": "Exact quoted text from document...", "document": "policy.pdf", "location": "Section 3"}}]
+  }},
+  "absence_findings": [
+    {{"requirement_id": "{id1}", "description": "...", "severity": "high", "affected_documents": ["policy.pdf"]}}
+  ],
+  "signal_flags": {signal_example},
+  "coverage_summary": {{"{id0}": "adequate", "{id1}": "absent"}}
+}}
+
+Coverage levels: "adequate" (control well-addressed), "partial" (some mention but gaps), "absent" (explicitly missing despite a relevant document), "not_covered" (no relevant document uploaded).
+
+Include ALL {n} control IDs in coverage_summary. Be thorough and precise."""
+
+    return [
+        {"type": "text", "text": persona},
+        {
+            "type": "text",
+            "text": instructions,
+            "cache_control": {"type": "ephemeral"},
+        },
+    ]
+
+
+def build_framework_evidence_extraction_prompt(
+    framework_id: str,
+    documents: list[dict],
+    desk_review_findings: list[dict] | None = None,
+) -> str:
+    """Build a framework-specific prompt for grounded evidence extraction."""
+    fw = FrameworkRegistry.get(framework_id)
+    controls = fw.all_controls()
+    controls_text = _build_controls_text(fw)
+
+    docs_text = ""
+    if documents:
+        for document in documents:
+            docs_text += (
+                f"\n### Document: {document['filename']} "
+                f"(Category: {document['category']})\n\n"
+            )
+            docs_text += document["text"] + "\n\n"
+    else:
+        docs_text = "\n_No supporting documents provided._\n"
+
+    desk_review_context = ""
+    if desk_review_findings:
+        desk_review_context = "\n## Desk Review Context (from prior document analysis)\n\n"
+        desk_review_context += (
+            "The following findings were identified during desk review. "
+            "Pay special attention to these areas:\n\n"
+        )
+        for finding in desk_review_findings:
+            prefix = {
+                "evidence": "Evidence",
+                "absence": "Gap",
+                "signal": "Red Flag",
+            }.get(finding["type"], "Finding")
+            desk_review_context += (
+                f"- **{prefix}** ({finding.get('requirement_id', 'general')}): "
+                f"{finding['content']}\n"
+            )
+        desk_review_context += "\n"
+
+    return f"""## Task: Evidence Extraction
+
+For each {fw.name} ({fw.version}) control below, find and quote the EXACT language from the organization's documents that is relevant to that control. Omit controls for which no relevant language exists.
+{desk_review_context}
+## Controls
+{controls_text}
+
+## Organization Documents
+{docs_text}
+
+## Output Format
+
+Respond ONLY with valid JSON:
+
+{{
+  "evidence": {{
+    "{controls[0].id}": ["Exact quoted text from document...", "Another relevant quote..."]
+  }}
+}}
+
+Use only the control IDs listed above. Quote verbatim - do not paraphrase."""
 
 
 def build_framework_system_prompt(framework_id: str) -> list[dict]:
@@ -279,7 +465,19 @@ def build_framework_user_prompt(
         if desk_review_summary.get("signal_flags"):
             relevant_flags = [
                 f for f in desk_review_summary["signal_flags"]
-                if not f.get("requirement_id") or f["requirement_id"] in fw_control_ids
+                if (
+                    set(
+                        f.get("requirement_ids")
+                        or ([f["requirement_id"]] if f.get("requirement_id") else [])
+                    )
+                    & fw_control_ids
+                )
+                or (
+                    not f.get("requirement_ids")
+                    and not f.get("requirement_id")
+                    and (f.get("framework_id") or LEGACY_FINDING_FRAMEWORK_ID)
+                    == framework_id
+                )
             ]
             if relevant_flags:
                 prompt += "### Red Flags\n"

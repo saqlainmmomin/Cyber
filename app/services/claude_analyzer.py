@@ -222,6 +222,111 @@ def _run_evidence_extraction(
         return None
 
 
+def _run_framework_evidence_extraction(
+    framework_id: str,
+    documents: list[dict],
+    desk_review_findings: list[dict] | None = None,
+) -> dict | None:
+    """Extract grounded evidence using the selected framework's prompt."""
+    from app.frameworks.prompts import (
+        CURATED_PROMPT_FRAMEWORK_ID,
+        build_framework_evidence_extraction_prompt,
+    )
+    from app.frameworks.registry import FrameworkRegistry
+
+    if framework_id == CURATED_PROMPT_FRAMEWORK_ID:
+        return _run_evidence_extraction(documents, desk_review_findings)
+
+    framework = FrameworkRegistry.get(framework_id)
+    try:
+        response = _call_llm(
+            tier="extract",
+            max_tokens=8192,
+            temperature=0,
+            system=(
+                "You are a document analyst. Extract exact quotes from documents "
+                f"that are relevant to each {framework.name} control. Be precise and quote verbatim."
+            ),
+            messages=[
+                {
+                    "role": "user",
+                    "content": build_framework_evidence_extraction_prompt(
+                        framework_id, documents, desk_review_findings
+                    ),
+                }
+            ],
+        )
+        parsed = _parse_json_response(response["text"])
+        grounded = _ground_evidence_quotes(parsed.get("evidence", {}), documents)
+        control_ids = {control.id for control in framework.all_controls()}
+        evidence = {
+            requirement_id: quotes
+            for requirement_id, quotes in grounded.items()
+            if requirement_id in control_ids
+        }
+        logger.info(
+            "Evidence extraction (%s): found quotes for %d controls",
+            framework_id,
+            len(evidence),
+        )
+        return evidence
+    except Exception as exc:
+        logger.warning(
+            "Evidence extraction failed for %s, falling back to documents: %s",
+            framework_id,
+            exc,
+        )
+        return None
+
+
+def _collect_framework_evidence(
+    framework_ids: list[str],
+    documents: list[dict],
+    desk_review_data: dict | None,
+) -> dict | None:
+    """Collect desk-review or extracted evidence independently per framework."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    if not documents:
+        return None
+
+    evidence: dict[str, list[str]] = {}
+    desk_review_evidence = _evidence_from_desk_review(desk_review_data) or {}
+    for framework_id in framework_ids:
+        control_ids = {
+            control.id
+            for control in FrameworkRegistry.get(framework_id).all_controls()
+        }
+        reused = {
+            requirement_id: quotes
+            for requirement_id, quotes in desk_review_evidence.items()
+            if requirement_id in control_ids
+        }
+        if reused:
+            evidence.update(reused)
+            logger.info(
+                "Reusing desk review evidence for %s (%d controls)",
+                framework_id,
+                len(reused),
+            )
+            continue
+
+        framework_findings = [
+            finding
+            for finding in (desk_review_data or {}).get("findings", [])
+            if finding.get("requirement_id") in control_ids
+        ]
+        extracted = _run_framework_evidence_extraction(
+            framework_id,
+            documents,
+            framework_findings or None,
+        )
+        if extracted:
+            evidence.update(extracted)
+
+    return evidence or None
+
+
 def _truncate_documents(documents: list[dict]) -> list[dict]:
     """Enforce total document word limit across all documents."""
     max_total = settings.max_total_document_words
@@ -300,16 +405,10 @@ def run_multi_framework_analysis(
 
     truncated_docs = _truncate_documents(documents)
 
-    # Step 1: Evidence extraction (reuse desk review if available)
-    evidence = None
-    if truncated_docs:
-        dr_evidence = _evidence_from_desk_review(desk_review_data)
-        if dr_evidence:
-            evidence = dr_evidence
-            logger.info(f"Reusing desk review evidence ({len(dr_evidence)} requirements)")
-        else:
-            desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
-            evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
+    # Step 1: Evidence extraction (reuse desk review independently per framework)
+    evidence = _collect_framework_evidence(
+        framework_ids, truncated_docs, desk_review_data
+    )
 
     # Step 2: Per-framework gap analysis
     framework_results: dict[str, dict] = {}

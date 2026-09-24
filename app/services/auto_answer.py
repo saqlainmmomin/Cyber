@@ -10,7 +10,9 @@ Answer source tracking:
   - "document_confirmed"  → human confirmed the pre-filled answer
   - "human_override"      → human changed the pre-filled answer
   - "human"               → human entered from scratch (no pre-fill)
-  - "inferred"            → inferred from screening pass (Phase 3, future)
+  - "inferred"            → pre-filled from domain screening (DPDPA-only), awaiting confirmation
+
+Pre-fill runs only on DPDPA-only assessments (P5-3 D-P5-3-L).
 """
 
 import json
@@ -22,6 +24,8 @@ from sqlalchemy.orm import Session
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.models.questionnaire import QuestionnaireResponse
+from app.frameworks.registry import FrameworkRegistry
+from app.services.desk_review_findings import scoped_findings
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +58,12 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
     if not assessment:
         logger.warning(f"Auto-answer: assessment {assessment_id} not found")
         return 0
+    if assessment.frameworks != ["dpdpa"]:
+        logger.info(
+            "Auto-answer: skipped for %s, pre-fill is keyed to the DPDPA-only questionnaire",
+            assessment_id,
+        )
+        return 0
 
     # Load desk review coverage summary
     dr_summary = (
@@ -68,14 +78,17 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
         logger.info(f"Auto-answer: no completed desk review for {assessment_id}")
         return 0
 
-    coverage = json.loads(dr_summary.coverage_summary)
+    dpdpa_ids = {
+        control.id for control in FrameworkRegistry.get("dpdpa").all_controls()
+    }
+    coverage = {
+        requirement_id: level
+        for requirement_id, level in json.loads(dr_summary.coverage_summary).items()
+        if requirement_id in dpdpa_ids
+    }
 
     # Load ALL findings (evidence, signals, absences)
-    all_findings = (
-        db.query(DeskReviewFinding)
-        .filter(DeskReviewFinding.assessment_id == assessment_id)
-        .all()
-    )
+    all_findings = scoped_findings(db, assessment, framework_ids=["dpdpa"])
 
     # Index evidence by requirement_id
     evidence_by_req: dict[str, list[DeskReviewFinding]] = {}
@@ -108,9 +121,9 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
             suppressed_count += 1
             continue
 
-        # Don't overwrite human-entered responses
+        # Only a prior document pre-fill may be refreshed in place.
         existing = existing_by_qid.get(req_id)
-        if existing and existing.answer_source in ("human", "human_override", "document_confirmed"):
+        if existing and existing.answer_source != "document":
             continue
 
         # Map coverage to answer
@@ -125,7 +138,7 @@ def persist_document_answers(assessment_id: str, db: Session) -> int:
         notes = _build_evidence_notes(evidence_items)
         evidence_ref = _build_evidence_reference(evidence_items)
 
-        if existing and existing.answer_source == "document":
+        if existing:
             # Update existing document pre-fill (e.g., desk review re-run)
             existing.answer = answer
             existing.confidence = confidence

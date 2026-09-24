@@ -25,8 +25,10 @@ from app.frameworks.questionnaire_builder import (
     build_multi_questionnaire,
     compute_excluded_controls,
 )
+from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
-from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+from app.models.desk_review import DeskReviewSummary
+from app.services.desk_review_findings import scoped_findings
 
 _DOMAIN_GROUP_TITLES: dict[str, str] = {
     "data_protection": "Data Protection",
@@ -273,6 +275,10 @@ def build_adaptive_questionnaire(assessment_id: str, db: Session) -> dict:
 
 def _load_desk_review_data(assessment_id: str, db: Session) -> dict:
     """Load desk review findings into a structured dict for question modulation."""
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        return {"coverage": {}, "signals": [], "absences": [], "evidence": {}, "signal_flags": set(), "absence_req_ids": set()}
+
     dr_summary = (
         db.query(DeskReviewSummary)
         .filter(
@@ -285,13 +291,17 @@ def _load_desk_review_data(assessment_id: str, db: Session) -> dict:
     if not dr_summary:
         return {"coverage": {}, "signals": [], "absences": [], "evidence": {}, "signal_flags": set(), "absence_req_ids": set()}
 
-    coverage = json.loads(dr_summary.coverage_summary) if dr_summary.coverage_summary else {}
+    dpdpa_ids = {
+        control.id for control in FrameworkRegistry.get("dpdpa").all_controls()
+    }
+    raw_coverage = json.loads(dr_summary.coverage_summary) if dr_summary.coverage_summary else {}
+    coverage = {
+        requirement_id: level
+        for requirement_id, level in raw_coverage.items()
+        if requirement_id in dpdpa_ids
+    }
 
-    findings = (
-        db.query(DeskReviewFinding)
-        .filter(DeskReviewFinding.assessment_id == assessment_id)
-        .all()
-    )
+    findings = scoped_findings(db, assessment, framework_ids=["dpdpa"])
 
     evidence = {}  # requirement_id -> list of evidence findings
     signals = []
@@ -317,20 +327,11 @@ def _load_desk_review_data(assessment_id: str, db: Session) -> dict:
                 "requirement_id": f.requirement_id,
             })
 
-    # Extract signal flag types from signal content for matching against question deepen_if
-    signal_flags = set()
-    for s in signals:
-        content_lower = s["content"].lower()
-        if "gdpr" in content_lower or "copy" in content_lower:
-            signal_flags.add("gdpr_copy_paste")
-        if "template" in content_lower or "generic" in content_lower:
-            signal_flags.add("template_artifacts")
-        if "buried" in content_lower or "consent" in content_lower and "terms" in content_lower:
-            signal_flags.add("buried_consent")
-        if "scope" in content_lower or "gap" in content_lower:
-            signal_flags.add("scope_gaps")
-        if "timeline" in content_lower or "missing" in content_lower and "date" in content_lower:
-            signal_flags.add("missing_timelines")
+    signal_flags = {
+        finding.flag_type
+        for finding in findings
+        if finding.finding_type == "signal" and finding.flag_type
+    }
 
     return {
         "coverage": coverage,

@@ -17,6 +17,7 @@ from app.services import analysis_pipeline
 from app.services.auto_answer import confirmed_response_clause
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
 from app.services.conclusion_review import reviewer_actor
+from app.services.desk_review_findings import load_desk_review_data
 from app.services.evidence import analysis_documents
 from app.services.scoring import (
     compute_framework_scores,
@@ -230,39 +231,7 @@ def trigger_analysis(
     db.commit()
 
     # Load desk review findings if available
-    desk_review_data = None
-    from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
-    dr_summary = (
-        db.query(DeskReviewSummary)
-        .filter(DeskReviewSummary.assessment_id == assessment_id, DeskReviewSummary.status == "completed")
-        .first()
-    )
-    if dr_summary:
-        dr_findings = (
-            db.query(DeskReviewFinding)
-            .filter(DeskReviewFinding.assessment_id == assessment_id)
-            .all()
-        )
-        desk_review_data = {
-            "coverage_summary": json.loads(dr_summary.coverage_summary) if dr_summary.coverage_summary else {},
-            "findings": [
-                {
-                    "type": f.finding_type,
-                    "requirement_id": f.requirement_id,
-                    "content": f.content,
-                    "source_quote": f.source_quote,
-                }
-                for f in dr_findings
-            ],
-            "signal_flags": [
-                {"content": f.content, "severity": f.severity, "requirement_id": f.requirement_id}
-                for f in dr_findings if f.finding_type == "signal"
-            ],
-            "absence_findings": [
-                {"content": f.content, "requirement_id": f.requirement_id}
-                for f in dr_findings if f.finding_type == "absence"
-            ],
-        }
+    desk_review_data = load_desk_review_data(db, assessment)
 
     # Load applicable requirements from scope (if defined)
     applicable_requirements = None
