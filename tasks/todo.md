@@ -48,6 +48,21 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 **Phase 4 exit:** ✅ AWS Config/Security Hub evidence pull, a longitudinal two-client demo with evidence-reuse confirmation, performance benchmarks at scale (all under the 2s threshold), and engagement archive/retention/purge all working and merged to `main`.
 
+## Phase 5 — Cleanup & non-DPDPA parity `[AR: reader migration (P5-2, extra skeptical pass), correctness bundle (P5-1)]` — planned, not started
+
+Plan: `docs/plans/2026-09-24-001-cleanup-and-non-dpdpa-parity-plan.md`. Kickoff handoff for a fresh session: `tasks/handoffs/2026-09-24-phase-5-kickoff.md`.
+
+Phases 1-4 built the multi-framework, engagement-level platform on top of an original DPDPA-only core; the joins between them are incomplete. 9 known gaps (8 from `docs/architecture/data-flow-and-processes.md#gaps`, plus a live-discovered DPDPA-only evidence checklist) plus a broader audit finding — **the "reader migration" was never scheduled**: scores/PDF/release gate still read AI-proposed `GapItem`s, not consultant-approved Conclusions, contradicting PR-045/PR-052/D3. 8 tasks (P5-1 through P5-8, P5-7 reserved for ISO clauses 4-10/SoA, deliberately deferred). See the plan doc for the full gap-by-gap verdict, the broader-audit findings (including 5 untracked correctness bugs), and the explicit deferred list.
+
+- [ ] **P5-8: Mechanical cleanup** — dead reinstatement loop, unused `company_size`/`industry` params, dishonest "Industry-Specific" label, dead `/context/submit` stub, missing RFI DOCX `framework_label`. No dependencies — land first.
+- [ ] **P5-1: Correctness bundle** — DPDPA completion-gate denominator (scope-exclusion-aware), explicit audited override replacing the silent document bypass, fail-closed scoring for a failed framework analysis, per-framework requirement count in `/report/summary`, DPDPA-only penalty exposure scoping.
+- [ ] **P5-2: Reader migration** — scores/report/PDF/release gate read from approved Conclusions, not `GapItem`. The most important task in this phase; gets a second, more skeptical review pass (like P4-4).
+- [ ] **P5-3: Framework-aware desk review & signal persistence** — registry-driven desk-review/extraction prompts (root cause of P5-4's gap), lossless multi-requirement signal storage (needs an Alembic revision).
+- [ ] **P5-4: Adaptive questionnaire on the UCC path** — cluster-level deepen/pre-fill/tier treatment for non-DPDPA and mixed assessments, from P5-3's framework-keyed findings.
+- [ ] **P5-5: Framework-aware scoping & evidence requests** — curated per-framework evidence-request definitions, cross-framework dedup by document type, conditional scope flags/copy, real ISO/NIST scope-answer effects.
+- [ ] **P5-6: RFI rebuilt** — versioned snapshot sourced from approved Conclusions + P5-5's evidence requests, issuable via magic links; retires the `GapItem`-sourced, unversioned `RFIDocument`.
+- [ ] **P5-7 (reserved):** ISO clauses 4-10 / risk treatment / Statement of Applicability content pack — deliberately not scheduled; see the plan's deferred list.
+
 ## Source of truth
 
 - Implementation: `docs/plans/2026-09-21-002-revised-implementation-plan.md`.
