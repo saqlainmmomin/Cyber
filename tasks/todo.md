@@ -1,6 +1,6 @@
 # CyberAssess implementation tracker
 
-**Updated:** 2026-09-24 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 3
+**Updated:** 2026-09-24 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
@@ -74,6 +74,18 @@ Phases 1-4 built the multi-framework, engagement-level platform on top of an ori
   - [ ] **Stage C: Baseline run** — after P5-2 + P5-4 merge.
   - [ ] **P5-9b: Adjudication, release/PDF invariants, oracle-score check, UI screenshots** — handoff written after P5-2 merges.
 - [ ] **P5-7 (reserved):** ISO clauses 4-10 / risk treatment / Statement of Applicability content pack — deliberately not scheduled; see the plan's deferred list.
+
+## Phase 6 — Grounded analysis, multi-framework review, deliverables `[AR: grounding (P6-3), scoring boundary (P6-4), security (Track 4)]` — started 2026-09-25
+
+Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (decisions D-P6-A to D-P6-K taken 2026-09-25; D8 amended). Tool stays local-only: security and Bedrock `ap-south-1` residency are Track 4, after the v2 pipeline is validated, and are the gate for any real client data.
+
+- [ ] **Track 0:** P5-9 harness + packs merged to `main`, Stage C baseline on v1 **after P6-1 merges**; P6-0c dev hygiene (CI, `.python-version`, SQLite WAL); P6-0d penalty-table + DPDP Rules 2025 check; localhost guard (bind 127.0.0.1, CORS to local origin).
+- [ ] **P6-1: LLM plumbing** (Codex, Claude reviews) — timeouts/retries, provider-agnostic `response_schema`, per-call records into `AnalysisRun`, bounded per-framework concurrency, temperature 0, no LLM score in synthesis, startup recovery. Handoff: `tasks/handoffs/2026-09-25-p6-1-llm-plumbing.md`.
+- [ ] **P6-2a: DPDPA test criteria draft** (Claude drafts, Saqlain signs off) — schema + 41-requirement draft + review CSV. Handoff: `tasks/handoffs/2026-09-25-p6-2a-dpdpa-test-criteria-draft.md`. Then P6-2b (converter, after sign-off), ISO (with own-words rewrite), NIST.
+- [ ] **P6-3 / P6-4 / P6-5:** v2 claims pipeline, batched closed-set judge, A/B + default flip.
+- [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative.
+- [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
+- [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
 
 ## Source of truth
 

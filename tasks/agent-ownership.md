@@ -68,3 +68,14 @@ P3-1 and P3-2 have no file overlap — run in parallel. P3-3 depends on P3-2's s
 | P4-4 Retention/archive/purge | Claude designs → Codex implements, Claude reviews (most destructive code path in the plan) |
 
 All four are independent subsystems — run concurrently once Phase 3 lands.
+
+### Phase 6 — Grounded analysis & deliverables
+| Task | Owner |
+|---|---|
+| P6-1 LLM plumbing | Claude designs → Codex implements, Claude reviews (handoff `tasks/handoffs/2026-09-25-p6-1-llm-plumbing.md`) |
+| P6-2a/b/c Test criteria (DPDPA → ISO → NIST) | Claude drafts (regulatory judgment) → **Saqlain signs off every criterion**; P6-2b converter can go to Codex |
+| P6-3 v2 claims + grounding, P6-4 v2 judge | Claude designs + writes contract tests → Codex implements, Claude reviews |
+| P6-6..P6-10 Deliverables | Claude specs report content/layout → Codex implements |
+| P6-11..P6-14 Security, Bedrock, deploy | Claude designs security boundary → Codex implements; reviewed by a security subagent |
+
+P6-1 and P6-2a run in parallel (disjoint files). P6-3 needs P6-1; P6-4 needs P6-3 and the approved DPDPA criteria.
