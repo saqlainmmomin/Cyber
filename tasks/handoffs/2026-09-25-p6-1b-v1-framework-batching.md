@@ -435,7 +435,58 @@ Patch the seams (`claude_analyzer._call_llm`, `desk_review._call_llm`) with fake
 
 ## Results
 
-_To be filled in by the implementer: Step 0 baseline and prompt fingerprints, files changed, test counts, D-P6-1b-L pins, live smoke table (or an explicit "not run" and why), any deviation stopped on, PR link._
+### Step 0 record
+
+- Supplied baseline: `main` @ `836499a`; 699 passed, 10 skipped, 2 failed (`test_scenario_13_structural_guards`, `test_scenario_10_engagement_rollup_and_tracker_page`), and 1 error (intermittent `test_workpaper::test_smoke_full_assessment_traceability`). Step 0.1 was skipped per the orchestrator note.
+- Prompt fingerprints on the unmodified baseline, reproduced unchanged:
+
+  ```text
+  dpdpa system 3fc4f1c3ff6b62124716f6ca5ef29e1dd39461817d168fa4b047c2bef92e4ea6
+  dpdpa user de658c512943c954425ea004165af0dd1cd88ade82f7376ac98d08aa957b3751
+  iso27001 system 3c3bad7bd8818c1d5b28730e4462bbf91f2208b1eae32b89459e8e2d698116b3
+  iso27001 user 6fe08745ef96857b893c623d0f468d2abca2aa6c3395affc64145807acedfd61
+  iso27001 desk 9d2e926bae35b23030085da6e528b03df63c9352006cb0bb8948800a251222b2
+  nist_csf system c8ddf65a8220b571733a65298503f3aff65be22ca6c21413216282f982ddf121
+  nist_csf user 9fa1ded32cda08bb882873f83bb2d13e1b20a9a1b0fa84c45690569e02bb283f
+  nist_csf desk 14705771d2e67febe08ab3a58e022039aea1a4360aef37a0ae0595fa25d414ec
+  ```
+- The expected P6-1c drift was present: unbatched registry calls and evidence extraction use `settings.llm_max_output_tokens_framework` (default 65536). Applied choice for every new judge/desk-review batch and judge retry: `min(settings.llm_max_output_tokens_framework, 16384)`. Curated DPDPA, unbatched registry calls, evidence extraction, and synthesis remain unchanged.
+
+### Implementation
+
+Changed files:
+
+- `.env.example`, `app/config.py`
+- `app/frameworks/batching.py` (new), `app/frameworks/prompts.py`
+- `app/schemas/llm_output.py`
+- `app/services/claude_analyzer.py`, `app/services/desk_review.py`, `app/services/llm_client.py`
+- `tests/test_p6_1b_framework_batching.py` (new)
+- Authorized D-P6-1b-L pins in `tests/test_p6_1_llm_plumbing.py`, `tests/test_p6_1c_output_limits.py`, `tests/test_p5_3_framework_desk_review.py`, and `tests/test_p5_4_adaptive_ucc_questionnaire.py`
+- `tasks/todo.md`
+
+The deterministic batch table matches the handoff exactly for ISO 27001 and NIST CSF. DPDPA prompt fingerprints and the unbatched DPDPA request shape remain byte-identical.
+
+### Verification
+
+- `tests/test_p6_1b_framework_batching.py`: **13 passed**.
+- Required focused command (`test_p6_1b_framework_batching.py`, `test_p6_1_llm_plumbing.py`, `test_p5_3_framework_desk_review.py`, `test_golden_dpdpa.py`, `test_incomplete_assessment_e2e.py`): **47 passed**, 6 warnings.
+- `tests/test_answer_key_isolation.py`: **2 passed**.
+- Final full uncommitted-tree `.venv/bin/pytest -q`: **710 passed, 10 skipped, 3 failed**. The failures are documented: the pre-existing stale two-dot structural guard, the known hardcoded-date engagement rollup test, and `test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, which necessarily sees the authorized test pins before the orchestrator's commit. The intermittent longitudinal ordering failure and baseline workpaper error did not reproduce in this final run.
+- D-P6-1b-L pins:
+  - `tests/test_p6_1_llm_plumbing.py::test_multi_framework_analysis_is_ordered_equivalent_and_concurrent`
+  - `tests/test_p6_1_llm_plumbing.py::test_three_framework_desk_review_is_concurrent_and_order_equivalent`
+  - `tests/test_p6_1_llm_plumbing.py::test_analysis_route_persists_own_and_shared_call_records`
+  - `tests/test_p6_1c_output_limits.py::test_multi_framework_judge_and_extraction_use_setting`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_4_calls_each_framework_in_order_and_normalizes`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_6_framework_failures_are_isolated`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_8_multi_framework_evidence_extraction_is_per_framework`
+  - `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_8_cluster_prefill_persistence`
+
+### Live smoke and handoff
+
+Not run by implementer; orchestrator-run. No live call table or token totals are available yet.
+
+No deviation from the numbered design decisions was stopped on. No commit or PR was created, per orchestrator instruction; the PR link will be added by the orchestrator.
 
 ## Done criteria
 

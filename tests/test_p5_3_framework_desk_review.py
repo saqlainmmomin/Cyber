@@ -374,6 +374,7 @@ def test_scenario_3_dpdpa_request_is_byte_identical(db, texts, monkeypatch):
 
 def test_scenario_4_calls_each_framework_in_order_and_normalizes(db, texts, monkeypatch):
     """Scenario 4: one ordered call per selected framework is normalized and aggregated."""
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.services import desk_review
     from app.services.desk_review_findings import group_signal_findings
 
@@ -515,6 +516,7 @@ def test_scenario_5_multi_requirement_signal_reaches_all_consumers(db, texts, ht
 
 def test_scenario_6_framework_failures_are_isolated(db, texts, http, monkeypatch):
     """Scenario 6: partial and total desk-review failures have the specified status and messages."""
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.frameworks.registry import FrameworkRegistry
     from app.services import desk_review
     from app.services.desk_review_findings import failed_desk_review_frameworks
@@ -614,6 +616,7 @@ def test_scenario_7_signal_type_is_not_inferred_from_content(db):
 
 def test_scenario_8_multi_framework_evidence_extraction_is_per_framework(monkeypatch):
     """Scenario 8: desk evidence is reused per framework and missing evidence is extracted independently."""
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.services import claude_analyzer
 
     docs = [{"filename": "policy.pdf", "category": "policy", "text": "ISO grounded quote. NIST grounded quote."}]

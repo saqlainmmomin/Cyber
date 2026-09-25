@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 300.0
     llm_max_retries: int = 2
     llm_max_concurrency: int = 4
+    llm_batch_threshold_controls: int = 50
+    llm_batch_max_controls: int = 25
     # Output ceiling for registry-path framework calls (desk review, evidence
     # extraction, judge). A 93-control ISO judge answer needs ~16k+ tokens and
     # was truncated at the old 16,384 (live smoke 2026-09-25); DeepSeek V4 Flash

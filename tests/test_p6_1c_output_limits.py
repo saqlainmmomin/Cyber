@@ -39,6 +39,7 @@ def test_default_ceiling_is_well_above_old_cap():
 
 
 def test_multi_framework_judge_and_extraction_use_setting(monkeypatch):
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     monkeypatch.setattr(settings, "llm_max_output_tokens_framework", 40000)
     seen: list[tuple[str, int]] = []
 

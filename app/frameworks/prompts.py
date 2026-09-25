@@ -8,6 +8,7 @@ Each framework gets its own cached system prompt (persona + controls + instructi
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 
 from app.frameworks.registry import FrameworkRegistry
 from app.frameworks.schema import FrameworkDefinition, RedFlagPattern
@@ -105,10 +106,25 @@ def _expand_cluster_responses(
     return expanded
 
 
-def _build_controls_text(fw: FrameworkDefinition) -> str:
+def _scoped_controls(
+    fw: FrameworkDefinition, control_ids: Sequence[str] | None = None
+) -> list:
+    if control_ids is None:
+        return fw.all_controls()
+    scope = set(control_ids)
+    return [control for control in fw.all_controls() if control.id in scope]
+
+
+def _build_controls_text(
+    fw: FrameworkDefinition, control_ids: Sequence[str] | None = None
+) -> str:
     """Build the controls reference text for system prompts."""
     lines = []
-    for ctrl_dict in fw.all_controls_enriched():
+    enriched = fw.all_controls_enriched()
+    if control_ids is not None:
+        scope = set(control_ids)
+        enriched = [ctrl for ctrl in enriched if ctrl["id"] in scope]
+    for ctrl_dict in enriched:
         lines.append(
             f"- **{ctrl_dict['id']}** | {ctrl_dict['title']} | "
             f"{ctrl_dict['section_ref']} | Criticality: {ctrl_dict['criticality']}\n"
@@ -145,13 +161,15 @@ def desk_review_flag_types(framework_id: str) -> tuple[str, ...]:
     )
 
 
-def build_framework_desk_review_system_prompt(framework_id: str) -> list[dict]:
+def build_framework_desk_review_system_prompt(
+    framework_id: str, *, control_ids: Sequence[str] | None = None
+) -> list[dict]:
     """Build the registry-driven desk-review prompt for a non-curated framework."""
     fw = FrameworkRegistry.get(framework_id)
     persona = _FRAMEWORK_PERSONAS.get(framework_id, _DEFAULT_PERSONA)
-    controls_text = _build_controls_text(fw)
-    controls = fw.all_controls()
-    n = fw.control_count()
+    controls_text = _build_controls_text(fw, control_ids)
+    controls = _scoped_controls(fw, control_ids)
+    n = len(controls)
     id0 = controls[0].id
     id1 = controls[1].id
 
@@ -307,7 +325,9 @@ Respond ONLY with valid JSON:
 Use only the control IDs listed above. Quote verbatim - do not paraphrase."""
 
 
-def build_framework_system_prompt(framework_id: str) -> list[dict]:
+def build_framework_system_prompt(
+    framework_id: str, *, control_ids: Sequence[str] | None = None
+) -> list[dict]:
     """
     Build a cacheable system prompt for a specific framework's gap analysis.
 
@@ -315,10 +335,12 @@ def build_framework_system_prompt(framework_id: str) -> list[dict]:
     Each framework's prompt caches independently.
     """
     fw = FrameworkRegistry.get(framework_id)
-    controls_text = _build_controls_text(fw)
+    controls_text = _build_controls_text(fw, control_ids)
     persona = _FRAMEWORK_PERSONAS.get(framework_id, _DEFAULT_PERSONA)
     red_flags = _build_red_flag_section(fw)
-    ctrl_count = fw.control_count()
+    controls = _scoped_controls(fw, control_ids)
+    ctrl_count = len(controls)
+    first_control_id = controls[0].id if controls else "CTRL.1"
 
     instructions = f"""Your task is to assess an organization's compliance with {fw.name} ({fw.version}) based on their questionnaire responses, supporting documents, and organizational context.
 
@@ -355,7 +377,7 @@ Respond ONLY with valid JSON:
   "executive_summary": "3-5 sentence summary of compliance posture, strengths, and critical gaps.",
   "assessments": [
     {{{{
-      "requirement_id": "{fw.all_controls()[0].id if fw.all_controls() else 'CTRL.1'}",
+      "requirement_id": "{first_control_id}",
       "compliance_status": "partially_compliant",
       "current_state": "...",
       "gap_description": "...",
@@ -405,6 +427,8 @@ def build_framework_user_prompt(
     evidence: dict | None = None,
     desk_review_summary: dict | None = None,
     applicable_controls: list[str] | None = None,
+    *,
+    control_ids: Sequence[str] | None = None,
 ) -> str:
     """
     Build the user prompt scoped to one framework's controls.
@@ -413,6 +437,7 @@ def build_framework_user_prompt(
     """
     fw = FrameworkRegistry.get(framework_id)
     fw_control_ids = {c.id for c in fw.all_controls()}
+    scope = set(control_ids) if control_ids is not None else fw_control_ids
 
     # Expand cluster-ID-keyed responses to control-ID-keyed responses for this framework.
     # Singleton clusters: "SINGLE.ISO.A5.24" → control_id "ISO.A5.24"
@@ -437,7 +462,7 @@ def build_framework_user_prompt(
 
     # Scope exclusions
     if applicable_controls is not None:
-        excluded = sorted(fw_control_ids - set(applicable_controls))
+        excluded = sorted(scope - set(applicable_controls))
         if excluded:
             prompt += "## Scope — Controls Excluded\n"
             prompt += "Set compliance_status to 'not_applicable' for these:\n"
@@ -459,7 +484,7 @@ def build_framework_user_prompt(
         if desk_review_summary.get("coverage_summary"):
             prompt += "### Coverage\n"
             for req_id, level in desk_review_summary["coverage_summary"].items():
-                if req_id in fw_control_ids:
+                if req_id in scope:
                     prompt += f"- **{req_id}**: {level}\n"
             prompt += "\n"
         if desk_review_summary.get("signal_flags"):
@@ -470,7 +495,7 @@ def build_framework_user_prompt(
                         f.get("requirement_ids")
                         or ([f["requirement_id"]] if f.get("requirement_id") else [])
                     )
-                    & fw_control_ids
+                    & scope
                 )
                 or (
                     not f.get("requirement_ids")
@@ -486,7 +511,7 @@ def build_framework_user_prompt(
                 prompt += "\n"
 
     # Questionnaire responses (filtered to this framework)
-    fw_responses = [r for r in responses if r["question_id"] in fw_control_ids]
+    fw_responses = [r for r in responses if r["question_id"] in scope]
     prompt += "## Questionnaire Responses\n\n"
     if fw_responses:
         for r in fw_responses:
@@ -497,22 +522,50 @@ def build_framework_user_prompt(
         prompt += "_No questionnaire responses for this framework._\n"
     prompt += "\n"
 
-    # Evidence (filtered to this framework)
-    if evidence:
-        fw_evidence = {k: v for k, v in evidence.items() if k in fw_control_ids}
-        if fw_evidence:
-            prompt += "## Extracted Document Evidence\n\n"
-            for req_id, quotes in fw_evidence.items():
-                prompt += f"### {req_id}\n"
-                for quote in quotes:
-                    prompt += f"> {quote}\n"
-                prompt += "\n"
+    # Evidence (filtered to this framework and, for batches, to this scope)
+    if control_ids is None:
+        if evidence:
+            fw_evidence = {k: v for k, v in evidence.items() if k in fw_control_ids}
+            if fw_evidence:
+                prompt += "## Extracted Document Evidence\n\n"
+                for req_id, quotes in fw_evidence.items():
+                    prompt += f"### {req_id}\n"
+                    for quote in quotes:
+                        prompt += f"> {quote}\n"
+                    prompt += "\n"
+            else:
+                prompt += _documents_section(documents)
         else:
             prompt += _documents_section(documents)
     else:
-        prompt += _documents_section(documents)
+        has_framework_evidence = bool(
+            evidence
+            and any(
+                quotes
+                for requirement_id, quotes in evidence.items()
+                if requirement_id in fw_control_ids
+            )
+        )
+        if has_framework_evidence:
+            fw_evidence = {
+                k: v for k, v in evidence.items() if k in scope and v
+            }
+            prompt += "## Extracted Document Evidence\n\n"
+            if fw_evidence:
+                for req_id, quotes in fw_evidence.items():
+                    prompt += f"### {req_id}\n"
+                    for quote in quotes:
+                        prompt += f"> {quote}\n"
+                    prompt += "\n"
+            else:
+                prompt += "_No extracted quotes for the controls in this batch._\n"
+        else:
+            prompt += _documents_section(documents)
 
-    prompt += f"\n---\n\nAssess this organization against all {fw.name} controls and provide the structured JSON output."
+    if control_ids is None:
+        prompt += f"\n---\n\nAssess this organization against all {fw.name} controls and provide the structured JSON output."
+    else:
+        prompt += f"\n---\n\nAssess this organization against the {len(scope)} {fw.name} controls listed in the Controls Reference and provide the structured JSON output."
     return prompt
 
 

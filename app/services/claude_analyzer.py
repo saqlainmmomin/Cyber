@@ -16,6 +16,7 @@ import logging
 import re
 
 from app.config import settings
+from app.frameworks.batching import ControlBatch, control_batches
 from app.services import llm_client
 from app.services.parallel import run_bounded
 from app.dpdpa.framework import get_all_requirements
@@ -24,7 +25,7 @@ from app.dpdpa.prompts import (
     build_system_prompt,
     build_user_prompt,
 )
-from app.schemas.llm_output import validate_and_filter
+from app.schemas.llm_output import validate_and_filter, validate_partial
 
 logger = logging.getLogger(__name__)
 
@@ -486,9 +487,21 @@ def _run_multi_framework_analysis(
         framework_ids, truncated_docs, desk_review_data
     )
 
-    # Step 2: Per-framework gap analysis
+    # Step 2: Per-framework gap analysis. Large registry frameworks contribute
+    # deterministic batch units; all units share one bounded pool.
     framework_results: dict[str, dict] = {}
     total_usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
+
+    framework_batches: dict[str, tuple[ControlBatch, ...]] = {
+        framework_id: control_batches(framework_id) for framework_id in framework_ids
+    }
+    units: list[tuple[str, ControlBatch | None]] = []
+    for framework_id in framework_ids:
+        batches = framework_batches[framework_id]
+        if batches:
+            units.extend((framework_id, batch) for batch in batches)
+        else:
+            units.append((framework_id, None))
 
     def run_framework(fw_id: str) -> dict:
         with llm_client.call_tag(stage="judge", framework_id=fw_id):
@@ -545,28 +558,275 @@ def _run_multi_framework_analysis(
             )
             return result
 
-    framework_runs = run_bounded(
-        run_framework,
-        framework_ids,
+    def _usage(response: dict) -> dict[str, int]:
+        usage = response["usage"]
+        return {
+            "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"],
+            "cache_read_input_tokens": usage["cache_read_input_tokens"],
+            "cache_creation_input_tokens": usage["cache_creation_input_tokens"],
+        }
+
+    def run_batch_judge(
+        item: tuple[str, ControlBatch, tuple[str, ...] | None]
+    ) -> tuple[dict, frozenset[str], str, dict[str, int]]:
+        fw_id, batch, retry_ids = item
+        scoped_ids = batch.control_ids if retry_ids is None else retry_ids
+        batch_tag = batch.label if retry_ids is None else f"{batch.label}+retry"
+        with llm_client.call_tag(
+            stage="judge", framework_id=fw_id, batch=batch_tag
+        ):
+            system_blocks = build_framework_system_prompt(
+                fw_id, control_ids=scoped_ids
+            )
+            user_prompt = build_framework_user_prompt(
+                framework_id=fw_id,
+                company_name=company_name,
+                industry=industry,
+                company_size=company_size,
+                description=description,
+                responses=responses,
+                documents=truncated_docs,
+                context_profile=context_profile,
+                evidence=evidence,
+                desk_review_summary=desk_review_data,
+                applicable_controls=applicable_controls,
+                control_ids=scoped_ids,
+            )
+            response = _call_llm(
+                tier="judge",
+                stream=True,
+                max_tokens=min(settings.llm_max_output_tokens_framework, 16384),
+                temperature=0,
+                system=system_blocks,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            raw_text = response["text"]
+            usage = _usage(response)
+            try:
+                parsed = _parse_json_response(raw_text)
+            except ValueError:
+                logger.warning(
+                    "Gap analysis batch %s/%s for %s returned invalid JSON; retrying",
+                    batch.index,
+                    batch.count,
+                    fw_id,
+                )
+                return (
+                    {"executive_summary": "", "assessments": []},
+                    frozenset(scoped_ids),
+                    raw_text,
+                    usage,
+                )
+
+            validated, missing = validate_partial(parsed, set(scoped_ids))
+            return validated, missing, raw_text, usage
+
+    first_results = run_bounded(
+        lambda unit: run_framework(unit[0]) if unit[1] is None else run_batch_judge((unit[0], unit[1], None)),
+        units,
         max_workers=settings.llm_max_concurrency,
     )
-    for fw_id, (framework_result, error) in zip(framework_ids, framework_runs):
-        if error is not None:
-            logger.error(f"Gap analysis failed for {fw_id}: {error}")
-            framework_results[fw_id] = {
-                "parsed": {"executive_summary": f"Analysis failed: {error}", "assessments": []},
-                "raw": str(error),
-                "usage": {},
-                "error": str(error),
-            }
+
+    first_by_framework: dict[str, dict[int, tuple]] = {
+        framework_id: {} for framework_id in framework_ids
+    }
+    failures_by_framework: dict[str, list[tuple[int, int, str, BaseException]]] = {
+        framework_id: [] for framework_id in framework_ids
+    }
+    retry_units: list[tuple[str, ControlBatch, tuple[str, ...]]] = []
+    control_indexes = {
+        framework_id: {
+            control.id: index
+            for index, control in enumerate(
+                FrameworkRegistry.get(framework_id).all_controls()
+            )
+        }
+        for framework_id in framework_ids
+    }
+
+    for (framework_id, batch), (result, error) in zip(units, first_results):
+        if batch is None:
+            if error is not None:
+                logger.error(f"Gap analysis failed for {framework_id}: {error}")
+                framework_results[framework_id] = {
+                    "parsed": {
+                        "executive_summary": f"Analysis failed: {error}",
+                        "assessments": [],
+                    },
+                    "raw": str(error),
+                    "usage": {},
+                    "error": str(error),
+                }
+                continue
+
+            framework_results[framework_id] = result
+            usage = result["usage"]
+            total_usage["input_tokens"] += usage["input_tokens"]
+            total_usage["output_tokens"] += usage["output_tokens"]
+            total_usage["cache_read_input_tokens"] += usage["cache_read_input_tokens"]
+            total_usage["cache_creation_input_tokens"] += usage["cache_creation_input_tokens"]
             continue
 
-        framework_results[fw_id] = framework_result
-        usage = framework_result["usage"]
-        total_usage["input_tokens"] += usage["input_tokens"]
-        total_usage["output_tokens"] += usage["output_tokens"]
-        total_usage["cache_read_input_tokens"] += usage["cache_read_input_tokens"]
-        total_usage["cache_creation_input_tokens"] += usage["cache_creation_input_tokens"]
+        if error is not None:
+            failures_by_framework[framework_id].append(
+                (batch.index, 0, batch.label, error)
+            )
+            continue
+        validated, missing, raw_text, usage = result
+        first_by_framework[framework_id][batch.index] = (
+            batch,
+            validated,
+            missing,
+            raw_text,
+            usage,
+        )
+        if missing:
+            retry_ids = tuple(
+                sorted(missing, key=control_indexes[framework_id].__getitem__)
+            )
+            retry_units.append((framework_id, batch, retry_ids))
+
+    retry_results = run_bounded(
+        run_batch_judge,
+        retry_units,
+        max_workers=settings.llm_max_concurrency,
+    )
+    retries_by_framework: dict[str, dict[int, tuple]] = {
+        framework_id: {} for framework_id in framework_ids
+    }
+    for (framework_id, batch, retry_ids), (result, error) in zip(
+        retry_units, retry_results
+    ):
+        if error is not None:
+            failures_by_framework[framework_id].append(
+                (batch.index, 1, f"{batch.label}+retry", error)
+            )
+            continue
+        validated, missing, raw_text, usage = result
+        retries_by_framework[framework_id][batch.index] = (
+            batch,
+            retry_ids,
+            validated,
+            missing,
+            raw_text,
+            usage,
+        )
+
+    def build_batched_result(
+        framework_id: str, batches: tuple[ControlBatch, ...]
+    ) -> dict | None:
+        framework = FrameworkRegistry.get(framework_id)
+        first_failures = failures_by_framework[framework_id]
+        missing_batches: list[tuple[ControlBatch, frozenset[str]]] = []
+        for batch in batches:
+            first = first_by_framework[framework_id].get(batch.index)
+            if first is None:
+                continue
+            _, _, missing, _, _ = first
+            remaining = set(missing)
+            retry = retries_by_framework[framework_id].get(batch.index)
+            if retry is not None:
+                _, _, _, retry_missing, _, _ = retry
+                remaining = set(retry_missing)
+            if remaining:
+                missing_batches.append((batch, frozenset(remaining)))
+
+        if first_failures or missing_batches:
+            failures = list(first_failures)
+            if missing_batches:
+                failures.extend(
+                    (
+                        batch.index,
+                        2,
+                        batch.label,
+                        ValueError(
+                            f"Gap analysis for {framework.name} is incomplete after one retry: "
+                            f"batch {batch.label} is missing {len(missing_ids)} control(s): "
+                            f"{sorted(missing_ids)[:10]}"
+                            + ("…" if len(missing_ids) > 10 else "")
+                        ),
+                    )
+                    for batch, missing_ids in missing_batches
+                )
+            _, _, label, failure = sorted(failures, key=lambda item: (item[0], item[1]))[0]
+            error_message = str(failure)
+            if not error_message.startswith("Gap analysis for "):
+                error_message = (
+                    f"Gap analysis for {framework.name} failed in batch {label}: "
+                    f"{failure}"
+                )
+            logger.error("Gap analysis failed for %s: %s", framework_id, error_message)
+            return {
+                "parsed": {
+                    "executive_summary": f"Analysis failed: {error_message}",
+                    "assessments": [],
+                },
+                "raw": error_message,
+                "usage": {},
+                "error": error_message,
+            }
+
+        assessments_by_id: dict[str, dict] = {}
+        raw_parts: list[str] = []
+        usage_total = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        }
+
+        for batch in batches:
+            first = first_by_framework[framework_id][batch.index]
+            _, validated, _, raw_text, usage = first
+            raw_parts.append(raw_text)
+            for assessment in validated["assessments"]:
+                assessments_by_id.setdefault(assessment["requirement_id"], assessment)
+            for key in usage_total:
+                usage_total[key] += usage[key]
+
+        for batch in batches:
+            retry = retries_by_framework[framework_id].get(batch.index)
+            if retry is None:
+                continue
+            _, _, validated, _, raw_text, usage = retry
+            raw_parts.append(raw_text)
+            for assessment in validated["assessments"]:
+                assessments_by_id.setdefault(assessment["requirement_id"], assessment)
+            for key in usage_total:
+                usage_total[key] += usage[key]
+
+        assessments = sorted(
+            assessments_by_id.values(),
+            key=lambda assessment: control_indexes[framework_id][assessment["requirement_id"]],
+        )
+        assessments = _flag_unsupported_compliant_items(assessments)
+        summary = _batched_executive_summary(
+            framework,
+            assessments,
+            len(batches),
+            applicable_controls,
+        )
+        return {
+            "parsed": {"executive_summary": summary, "assessments": assessments},
+            "raw": "\n\n---\n\n".join(raw_parts),
+            "usage": usage_total,
+        }
+
+    for framework_id, batches in framework_batches.items():
+        if batches:
+            framework_results[framework_id] = build_batched_result(framework_id, batches)
+            if "error" not in framework_results[framework_id]:
+                usage = framework_results[framework_id]["usage"]
+                for key in total_usage:
+                    total_usage[key] += usage[key]
+
+    # Flattened execution can finish an unbatched later framework before a
+    # batched earlier one is merged; restore the caller's framework order for
+    # synthesis and the returned result envelope.
+    framework_results = {
+        framework_id: framework_results[framework_id] for framework_id in framework_ids
+    }
 
     # Step 3: Cross-framework synthesis (only for 2+ frameworks)
     synthesis = None
@@ -622,6 +882,41 @@ def _parse_json_response(text: str) -> dict:
         return json.loads(text)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse Claude response as JSON: {e}\nResponse: {text[:500]}")
+
+
+def _batched_executive_summary(
+    framework,
+    assessments: list[dict],
+    batch_count: int,
+    applicable_controls: list[str] | None,
+) -> str:
+    """Build the deterministic summary for a complete batched framework."""
+    counts = {
+        "compliant": 0,
+        "partially_compliant": 0,
+        "non_compliant": 0,
+        "not_assessed": 0,
+        "not_applicable": 0,
+    }
+    applicable_set = set(applicable_controls or [])
+    for assessment in assessments:
+        status = assessment.get("compliance_status", "not_assessed")
+        if applicable_controls and assessment.get("requirement_id") not in applicable_set:
+            status = "not_applicable"
+        if status not in counts:
+            status = "not_assessed"
+        counts[status] += 1
+
+    return (
+        f"{framework.name} ({framework.version}): AI-proposed outcomes for "
+        f"{framework.control_count()} controls, assessed in {batch_count} batches: "
+        f"{counts['compliant']} compliant, "
+        f"{counts['partially_compliant']} partially compliant, "
+        f"{counts['non_compliant']} non-compliant, "
+        f"{counts['not_assessed']} not assessed, "
+        f"{counts['not_applicable']} not applicable. "
+        "All outcomes are proposals pending consultant review."
+    )
 
 
 _NO_EVIDENCE_PHRASES = {"", "no relevant language found"}

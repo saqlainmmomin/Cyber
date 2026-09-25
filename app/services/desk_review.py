@@ -25,6 +25,7 @@ from app.frameworks.prompts import (
     build_framework_desk_review_system_prompt,
     desk_review_flag_types,
 )
+from app.frameworks.batching import ControlBatch, control_batches
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
@@ -113,9 +114,38 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     framework_ids = assessment.frameworks
     results: dict[str, dict] = {}
     errors: dict[str, str] = {}
+    batch_units: list[tuple[str, ControlBatch | None]] = []
+    batches_by_framework: dict[str, tuple[ControlBatch, ...]] = {}
+    for framework_id in framework_ids:
+        batches = (
+            ()
+            if framework_id == CURATED_PROMPT_FRAMEWORK_ID
+            else control_batches(framework_id)
+        )
+        batches_by_framework[framework_id] = batches
+        if batches:
+            batch_units.extend((framework_id, batch) for batch in batches)
+        else:
+            batch_units.append((framework_id, None))
+
     with llm_client.collect_calls() as llm_calls:
-        def review_framework(framework_id: str) -> dict:
-            with llm_client.call_tag(stage="desk_review", framework_id=framework_id):
+        def review_unit(unit: tuple[str, ControlBatch | None]) -> dict:
+            framework_id, batch = unit
+            if batch is None:
+                with llm_client.call_tag(stage="desk_review", framework_id=framework_id):
+                    return _normalize_result(
+                        framework_id,
+                        _desk_review_call(
+                            framework_id,
+                            documents=truncated,
+                            company_name=assessment.company_name,
+                            industry=assessment.industry,
+                        ),
+                    )
+
+            with llm_client.call_tag(
+                stage="desk_review", framework_id=framework_id, batch=batch.label
+            ):
                 return _normalize_result(
                     framework_id,
                     _desk_review_call(
@@ -123,20 +153,38 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
                         documents=truncated,
                         company_name=assessment.company_name,
                         industry=assessment.industry,
+                        control_ids=batch.control_ids,
                     ),
+                    control_ids=batch.control_ids,
                 )
 
         review_results = run_bounded(
-            review_framework,
-            framework_ids,
+            review_unit,
+            batch_units,
             max_workers=settings.llm_max_concurrency,
         )
-        for framework_id, (result, error) in zip(framework_ids, review_results):
+        unit_results: dict[str, list[dict]] = {framework_id: [] for framework_id in framework_ids}
+        for (framework_id, batch), (result, error) in zip(batch_units, review_results):
             if error is not None:
-                errors[framework_id] = str(error)
+                if batch is None:
+                    errors[framework_id] = str(error)
+                else:
+                    errors.setdefault(
+                        framework_id,
+                        f"Desk review for {FrameworkRegistry.get(framework_id).name} "
+                        f"failed in batch {batch.label}: {error}",
+                    )
                 logger.error("Desk review failed for %s: %s", framework_id, error)
             else:
-                results[framework_id] = result
+                unit_results[framework_id].append(result)
+
+        for framework_id in framework_ids:
+            if framework_id in errors:
+                continue
+            if batches_by_framework[framework_id]:
+                results[framework_id] = _merge_batch_results(unit_results[framework_id])
+            else:
+                results[framework_id] = unit_results[framework_id][0]
 
     if not results:
         summary.status = "error"
@@ -262,14 +310,22 @@ def _call_framework_desk_review(
     documents: list[dict],
     company_name: str,
     industry: str,
+    *,
+    control_ids: tuple[str, ...] | None = None,
 ) -> dict:
     """Run a registry-driven desk review for a non-curated framework."""
-    system_blocks = build_framework_desk_review_system_prompt(framework_id)
+    system_blocks = build_framework_desk_review_system_prompt(
+        framework_id, control_ids=control_ids
+    )
     user_prompt = build_desk_review_user_prompt(documents, company_name, industry)
     response = _call_llm(
         tier="judge",
         stream=True,
-        max_tokens=settings.llm_max_output_tokens_framework,
+        max_tokens=(
+            settings.llm_max_output_tokens_framework
+            if control_ids is None
+            else min(settings.llm_max_output_tokens_framework, 16384)
+        ),
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
@@ -292,6 +348,7 @@ def _desk_review_call(
     documents,
     company_name,
     industry,
+    control_ids: tuple[str, ...] | None = None,
 ) -> dict:
     """Dispatch desk review to the curated or registry-driven prompt seam."""
     if framework_id == CURATED_PROMPT_FRAMEWORK_ID:
@@ -300,16 +357,33 @@ def _desk_review_call(
             company_name=company_name,
             industry=industry,
         )
+    if control_ids is None:
+        return _call_framework_desk_review(
+            framework_id, documents, company_name, industry
+        )
     return _call_framework_desk_review(
-        framework_id, documents, company_name, industry
+        framework_id,
+        documents,
+        company_name,
+        industry,
+        control_ids=control_ids,
     )
 
 
-def _normalize_result(framework_id: str, result: dict) -> dict:
+def _normalize_result(
+    framework_id: str,
+    result: dict,
+    *,
+    control_ids: tuple[str, ...] | None = None,
+) -> dict:
     """Normalize one framework's desk-review result before persistence."""
-    control_ids = {
-        control.id for control in FrameworkRegistry.get(framework_id).all_controls()
-    }
+    valid_control_ids = (
+        {
+            control.id for control in FrameworkRegistry.get(framework_id).all_controls()
+        }
+        if control_ids is None
+        else set(control_ids)
+    )
     flag_vocab = set(desk_review_flag_types(framework_id))
     dropped = 0
 
@@ -321,7 +395,7 @@ def _normalize_result(framework_id: str, result: dict) -> dict:
     raw_evidence = result.get("evidence_map") or {}
     if isinstance(raw_evidence, dict):
         for requirement_id, items in raw_evidence.items():
-            if requirement_id not in control_ids:
+            if requirement_id not in valid_control_ids:
                 dropped += 1
                 continue
             if not isinstance(items, list):
@@ -340,7 +414,7 @@ def _normalize_result(framework_id: str, result: dict) -> dict:
             if (
                 isinstance(requirement_id, str)
                 and requirement_id
-                and requirement_id not in control_ids
+                and requirement_id not in valid_control_ids
             ):
                 dropped += 1
                 continue
@@ -354,7 +428,7 @@ def _normalize_result(framework_id: str, result: dict) -> dict:
                 continue
             valid_requirement_ids = []
             for requirement_id in item.get("requirement_ids") or []:
-                if isinstance(requirement_id, str) and requirement_id in control_ids:
+                if isinstance(requirement_id, str) and requirement_id in valid_control_ids:
                     if requirement_id not in valid_requirement_ids:
                         valid_requirement_ids.append(requirement_id)
                 elif isinstance(requirement_id, str):
@@ -372,7 +446,7 @@ def _normalize_result(framework_id: str, result: dict) -> dict:
     raw_coverage = result.get("coverage_summary") or {}
     if isinstance(raw_coverage, dict):
         for requirement_id, value in raw_coverage.items():
-            if requirement_id in control_ids:
+            if requirement_id in valid_control_ids:
                 coverage[requirement_id] = value
             else:
                 dropped += 1
@@ -417,15 +491,67 @@ def _raw_response(
     return json.dumps(response)
 
 
-def _merge_document_catalogs(
-    framework_ids: list[str],
-    results: dict[str, dict],
-) -> list[dict]:
-    """Merge successful framework catalogs by filename in framework order."""
+def _merge_batch_results(results: list[dict]) -> dict:
+    """Merge normalized desk-review slices in deterministic batch order."""
+    catalogs = [result.get("document_catalog", []) for result in results]
+    evidence_map: dict[str, list[dict]] = {}
+    signal_flags: list[dict] = []
+    signal_by_key: dict[tuple[str, str, str], dict] = {}
+    coverage_summary: dict[str, object] = {}
+
+    for result in results:
+        for requirement_id, items in result.get("evidence_map", {}).items():
+            evidence_map[requirement_id] = items
+
+        for flag in result.get("signal_flags", []):
+            normalized_quote = re.sub(
+                r"\s+", " ", str(flag.get("source_quote", ""))
+            ).strip().lower()
+            key = (
+                str(flag.get("flag_type", "")),
+                str(flag.get("document", "")),
+                normalized_quote,
+            )
+            existing = signal_by_key.get(key)
+            if existing is None:
+                existing = dict(flag)
+                existing["requirement_ids"] = list(flag.get("requirement_ids") or [])
+                signal_by_key[key] = existing
+                signal_flags.append(existing)
+                continue
+            requirement_ids = existing.setdefault("requirement_ids", [])
+            for requirement_id in flag.get("requirement_ids") or []:
+                if requirement_id not in requirement_ids:
+                    requirement_ids.append(requirement_id)
+
+        coverage_summary.update(result.get("coverage_summary", {}))
+
+    # Reconstruct the original batch-order sequence while retaining only the
+    # first copy of requirement-less findings.
+    ordered_absences: list[dict] = []
+    seen_general_absences: list[dict] = []
+    for result in results:
+        for finding in result.get("absence_findings", []):
+            if finding.get("requirement_id"):
+                ordered_absences.append(finding)
+            elif finding not in seen_general_absences:
+                seen_general_absences.append(finding)
+                ordered_absences.append(finding)
+    return {
+        "document_catalog": _merge_catalog_lists(catalogs),
+        "evidence_map": evidence_map,
+        "absence_findings": ordered_absences,
+        "signal_flags": signal_flags,
+        "coverage_summary": coverage_summary,
+    }
+
+
+def _merge_catalog_lists(lists: list[list[dict]]) -> list[dict]:
+    """Merge document catalog entries by filename, preserving first metadata."""
     catalog: list[dict] = []
     by_filename: dict[str, dict] = {}
-    for framework_id in framework_ids:
-        for entry in results[framework_id]["document_catalog"]:
+    for entries in lists:
+        for entry in entries:
             if not isinstance(entry, dict) or not entry.get("filename"):
                 catalog.append(entry)
                 continue
@@ -443,6 +569,16 @@ def _merge_document_catalogs(
                 if control_id not in coverage_areas:
                     coverage_areas.append(control_id)
     return catalog
+
+
+def _merge_document_catalogs(
+    framework_ids: list[str],
+    results: dict[str, dict],
+) -> list[dict]:
+    """Merge successful framework catalogs by filename in framework order."""
+    return _merge_catalog_lists(
+        [results[framework_id]["document_catalog"] for framework_id in framework_ids]
+    )
 
 
 def _persist_findings(

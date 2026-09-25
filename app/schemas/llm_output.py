@@ -94,7 +94,9 @@ class IncompleteAssessmentError(ValueError):
     """
 
 
-def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
+def validate_partial(
+    parsed: dict, known_requirement_ids: set[str]
+) -> tuple[dict, frozenset[str]]:
     """Validate a parsed gap-analysis response and drop unusable items.
 
     Two independent defenses, applied per item so one bad entry doesn't
@@ -109,19 +111,8 @@ def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
     (logged) — the model returning the same control twice is itself a sign of
     a malformed response, and "first wins" is at least deterministic.
 
-    After filtering and deduplication, every ID in known_requirement_ids must
-    be covered by a surviving item, or this raises IncompleteAssessmentError.
-    Rejecting the whole response is deliberate: scoring cannot distinguish
-    "not assessed because out of scope" from "not assessed because the item
-    got dropped," so a partial response must never reach persistence (see
-    IncompleteAssessmentError's docstring). Callers already treat an
-    exception from this call as a hard analysis failure
-    (`app/routers/analysis.py`'s single- and multi-framework paths both wrap
-    the analyzer call in try/except and surface it as a failed run).
-
-    Returns a plain dict in the same shape callers already consume
-    (`{"executive_summary": str, "assessments": [...]}`), so
-    app/routers/analysis.py needs no further changes.
+    Returns the filtered response and the IDs that were not covered. Callers
+    that require complete coverage can use validate_and_filter instead.
     """
     executive_summary = parsed.get("executive_summary")
     if not isinstance(executive_summary, str):
@@ -181,6 +172,16 @@ def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
         )
 
     missing_ids = known_requirement_ids - seen_ids
+    validated = GapAnalysisResponse(
+        executive_summary=executive_summary,
+        assessments=valid_items,
+    ).model_dump()
+    return validated, frozenset(missing_ids)
+
+
+def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
+    """Validate a parsed response and require complete known-ID coverage."""
+    validated, missing_ids = validate_partial(parsed, known_requirement_ids)
     if missing_ids:
         raise IncompleteAssessmentError(
             f"Gap analysis response is missing {len(missing_ids)} of "
@@ -188,8 +189,4 @@ def validate_and_filter(parsed: dict, known_requirement_ids: set[str]) -> dict:
             f"validation: {sorted(missing_ids)[:10]}"
             + ("…" if len(missing_ids) > 10 else "")
         )
-
-    return GapAnalysisResponse(
-        executive_summary=executive_summary,
-        assessments=valid_items,
-    ).model_dump()
+    return validated
