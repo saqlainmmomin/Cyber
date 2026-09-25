@@ -285,7 +285,8 @@ def render_pack(slug: str, *, validation_root: Path | None = None, output_dir: P
             image = _degrade(image, spec)
             target.parent.mkdir(parents=True, exist_ok=True)
             if spec.render.format == "jpg":
-                image.save(target, format="JPEG", quality=90, optimize=False, subsampling=0)
+                quality = {"none": 90, "scan_light": 70, "scan_heavy": 45}[spec.render.degrade]
+                image.save(target, format="JPEG", quality=quality, optimize=False, subsampling=0)
             else:
                 image.save(target, format="PNG", optimize=False, compress_level=9)
         manifest[spec.filename] = {

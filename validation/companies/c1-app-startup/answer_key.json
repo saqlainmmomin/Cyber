@@ -110,7 +110,7 @@
           "requirement_id": "CH2.MINIMIZE.3"
         }
       ],
-      "gap_class": "quantitative",
+      "gap_class": "overclaim",
       "actual_status": "partially_compliant",
       "surface_answer": "fully_implemented",
       "probing_depth": 3,
@@ -238,7 +238,7 @@
           "requirement_id": "CH2.PURPOSE.1"
         }
       ],
-      "gap_class": "overclaim",
+      "gap_class": "cross_document",
       "actual_status": "partially_compliant",
       "surface_answer": "fully_implemented",
       "probing_depth": 3,
@@ -398,7 +398,7 @@
           "requirement_id": "BN.NOTIFY.1"
         }
       ],
-      "gap_class": "cross_document",
+      "gap_class": "overclaim",
       "actual_status": "partially_compliant",
       "surface_answer": "fully_implemented",
       "probing_depth": 3,

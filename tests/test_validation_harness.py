@@ -7,9 +7,10 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from PIL import Image
 from pydantic import ValidationError
 
-from scripts.validation.export_question_pack import export_question_pack
+from scripts.validation.export_question_pack import _member_controls, export_question_pack
 from scripts.validation.lint_pack import lint_pack
 from scripts.validation.models import AnswerKey, EvidenceSpec
 from scripts.validation.paths import REPO_ROOT, VALIDATION_ROOT
@@ -19,6 +20,22 @@ from scripts.validation.run_company import run_company
 from scripts.validation.score import score_run
 
 EXAMPLE = VALIDATION_ROOT / "companies" / "c0-example"
+
+
+def test_export_maps_builder_control_ids_to_framework_refs():
+    question = {
+        "maps_to": ["ISO.A5.1", "NIST.ID.AM-1"],
+        "frameworks_covered": ["iso27001", "nist_csf"],
+    }
+    control_ids = {
+        "iso27001": {"ISO.A5.1"},
+        "nist_csf": {"NIST.ID.AM-1"},
+        "dpdpa": {"CH2.NOTICE.1"},
+    }
+    assert _member_controls(question, control_ids, ["dpdpa", "iso27001", "nist_csf"]) == [
+        {"framework_id": "iso27001", "requirement_id": "ISO.A5.1"},
+        {"framework_id": "nist_csf", "requirement_id": "NIST.ID.AM-1"},
+    ]
 
 
 def _read(path: Path):
@@ -112,6 +129,19 @@ def test_export_is_offline_and_never_touches_working_database(monkeypatch, tmp_p
     assert before == after
     assert (EXAMPLE / "question_pack.intake.json").is_file()
     assert (EXAMPLE / "question_pack.questionnaire.json").is_file()
+    questionnaire = _read(EXAMPLE / "question_pack.questionnaire.json")
+    mapped_questions = [
+        question
+        for section in questionnaire["sections"]
+        for question in section["questions"]
+        if question.get("member_controls")
+    ]
+    assert mapped_questions
+    assert all(
+        {"framework_id", "requirement_id"} <= set(control)
+        for question in mapped_questions
+        for control in question["member_controls"]
+    )
 
 
 def test_rendering_is_deterministic_and_manifest_matches_specs(tmp_path):
@@ -132,6 +162,15 @@ def test_rendering_is_deterministic_and_manifest_matches_specs(tmp_path):
         assert entry["text"] == _visible_spec_text(spec)
         assert entry["sha256"] == second[spec["filename"]]["sha256"]
     assert first["privileged-access-register.png"]["sha256"] == second["privileged-access-register.png"]["sha256"]
+
+
+def test_degraded_jpeg_retains_scan_quality(tmp_path):
+    render_pack("c1-app-startup", output_dir=tmp_path)
+    rendered_jpeg = tmp_path / "KiddieLearn-incident-channel-2026-09.jpg"
+    expected_jpeg = tmp_path / "expected-quality-70.jpg"
+    Image.new("RGB", (8, 8), "white").save(expected_jpeg, format="JPEG", quality=70, subsampling=0)
+    with Image.open(rendered_jpeg) as actual, Image.open(expected_jpeg) as expected:
+        assert actual.quantization == expected.quantization
 
 
 def test_lint_catches_unfairness_leaks_bad_trails_and_missing_answers(tmp_path):
@@ -300,8 +339,18 @@ def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):
 def test_app_files_are_untouched_by_harness():
     if not (REPO_ROOT / ".git").exists():
         pytest.skip("not a git checkout")
+    merge_base = subprocess.run(
+        ["git", "merge-base", "HEAD", "main"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
     result = subprocess.run(
-        ["git", "diff", "--name-only", "main", "--", "app", "alembic", "app/templates", "requirements.txt"],
+        [
+            "git", "diff", "--name-only", merge_base, "--",
+            "app", "alembic", "app/templates", "requirements.txt",
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

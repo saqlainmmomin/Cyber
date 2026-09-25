@@ -19,6 +19,26 @@ def _write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _member_controls(
+    question: dict,
+    control_ids_by_framework: dict[str, set[str]],
+    framework_ids: list[str],
+) -> list | None:
+    for key in ("member_controls", "controls"):
+        if key in question:
+            return question[key]
+    if "maps_to" not in question:
+        return None
+
+    covered = question.get("frameworks_covered") or framework_ids
+    return [
+        {"framework_id": framework_id, "requirement_id": requirement_id}
+        for requirement_id in question["maps_to"]
+        for framework_id in framework_ids
+        if framework_id in covered and requirement_id in control_ids_by_framework.get(framework_id, set())
+    ]
+
+
 def _form_scope_answers(http, assessment_id: str, company: CompanyMeta, answers: dict[str, str]) -> None:
     response = http.post(
         f"/assessments/{assessment_id}/scope/save",
@@ -99,6 +119,13 @@ def _run_child(slug: str, stage: str, validation_root: Path, temp_root: Path) ->
                 )
                 db.commit()
                 questionnaire = build_adaptive_questionnaire(assessment.id, db)
+                control_ids_by_framework = {
+                    framework_id: {
+                        control["id"]
+                        for control in FrameworkRegistry.get_all_controls_enriched(framework_id)
+                    }
+                    for framework_id in company.frameworks
+                }
 
         if stage == "intake":
             context = [
@@ -160,10 +187,9 @@ def _run_child(slug: str, stage: str, validation_root: Path, temp_root: Path) ->
             for key in ("cluster_id", "guidance"):
                 if key in question:
                     item[key] = question[key]
-            if "member_controls" in question:
-                item["member_controls"] = question["member_controls"]
-            elif "controls" in question:
-                item["member_controls"] = question["controls"]
+            member_controls = _member_controls(question, control_ids_by_framework, company.frameworks)
+            if member_controls is not None:
+                item["member_controls"] = member_controls
             questions.append(item)
         sections.append(
             {

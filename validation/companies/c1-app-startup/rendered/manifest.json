@@ -11,7 +11,7 @@
   },
   "KiddieLearn-incident-channel-2026-09.jpg": {
     "artifact_id": "E05",
-    "sha256": "dee80fa410aea1742f6adc5c08ee0e3100e11ebab6540c4a15329dcfe6c0cc84",
+    "sha256": "4084191631d2adb27375d00b73e7c5449b0dd198e9238aa1683a85cb3f6166c1",
     "text": "Engineering incident channel export\n2026-09-13 09:14 IST | Ananya, engineer | Export KL-843 remained in public storage for four hours before removal.\n2026-09-13 09:25 IST | Ravi, CTO | Please record affected learner IDs in incident log 2026-09-13-01.\n2026-09-13 10:07 IST | Ravi, CTO | The file was plaintext; private-bucket check did not run for this export.\n2026-09-13 14:20 IST | Ananya | Public link disabled and access keys rotated.\n2026-09-14 11:30 IST | Ravi | Parent notice draft retained with incident log; legal review pending.\n2026-10-02 16:00 IST | Ravi | Board notification decision remains open; no submission reference is recorded."
   },
   "KiddieLearn-processor-register-Q3.png": {
