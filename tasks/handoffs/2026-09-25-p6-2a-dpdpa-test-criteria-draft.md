@@ -223,6 +223,11 @@ Append `## Results` to this file with:
   - The P5-3 guard asserted `git diff main -- app/frameworks/schema.py` is empty. Any schema change, including the one this handoff requires, trips it.
   - `app/frameworks/definitions` is still fully protected. For `schema.py` the guard now asserts additive-only: no line removed or changed.
   - This is the only file outside the handoff's allowed diff list.
-- **Full suite:** 646 passed, 9 skipped. The only failures are the two known pre-existing ones (`test_scenario_10_engagement_rollup_and_tracker_page`, `test_scenario_13_structural_guards`). Intermittent flakes elsewhere are noted under the commit below.
+- **Full suite after commit:** 646 passed, 9 skipped, 3 failed. The failures are the two known pre-existing ones (`test_scenario_10_engagement_rollup_and_tracker_page`, `test_scenario_13_structural_guards`) plus the known `test_longitudinal_demo` flake.
+- **Other intermittent failures seen before the commit, each once:**
+  - `test_p5_6_rfi_rebuild::test_scenario_10_rendered_artifacts_are_frozen_and_complete`
+  - a setup error in `test_workpaper::test_smoke_full_assessment_traceability`
+  - Both pass in isolation, on main as well as on this branch.
+- **Expected before commit:** `test_retention::test_scenario_13` fails while any test file has uncommitted edits. It clears after commit.
 - Running `scripts/export_criteria_review.py` twice gives a byte-identical CSV (same md5).
 - Outside `app/frameworks/criteria/`, `dpdpa_draft` is imported only by `scripts/export_criteria_review.py` and the new test. Nothing in `app/` consumes it.
