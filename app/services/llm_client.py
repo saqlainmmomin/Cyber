@@ -1,4 +1,4 @@
-"""Shared OpenRouter-backed LLM client.
+"""Shared provider-agnostic LLM client.
 
 One call boundary for every tiered LLM request. `tier` selects the model via
 `Settings.llm_model_*` — callers never name a model directly, so swapping a
@@ -18,8 +18,16 @@ shape too — `{"type": "image_url", "image_url": {"url": "data:<media_type>;
 base64,<data>"}}` inside a message's `content` list — not Anthropic's native
 `{"type": "image", "source": {...}}`. OpenRouter translates that shape to
 whatever the underlying vision model actually needs.
+
+Callers describe structured output with a JSON schema only. This module maps
+that provider-agnostic request to OpenRouter's response_format today; the
+future Bedrock migration maps the same schema to Converse tool use.
 """
 
+import threading
+import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Literal
 
 from openai import OpenAI
@@ -57,6 +65,66 @@ _REQUEST_PREFS = {
 }
 
 _client: OpenAI | None = None
+_collector: ContextVar[list[dict] | None] = ContextVar("llm_call_collector", default=None)
+_tags: ContextVar[dict[str, str | None]] = ContextVar("llm_call_tags", default={})
+_collector_lock = threading.Lock()
+
+
+@contextmanager
+def collect_calls():
+    """Collect calls made in this context, including propagated worker contexts."""
+    calls: list[dict] = []
+    token = _collector.set(calls)
+    try:
+        yield calls
+    finally:
+        _collector.reset(token)
+
+
+@contextmanager
+def call_tag(*, stage: str | None = None, framework_id: str | None = None):
+    """Tag calls in this context; nested tags override only supplied values."""
+    tags = dict(_tags.get())
+    if stage is not None:
+        tags["stage"] = stage
+    if framework_id is not None:
+        tags["framework_id"] = framework_id
+    token = _tags.set(tags)
+    try:
+        yield
+    finally:
+        _tags.reset(token)
+
+
+def _record_call(
+    *,
+    tier: Tier,
+    model: str,
+    usage: dict[str, int] | None,
+    latency_ms: int,
+    finish_reason: str | None,
+    status: str,
+    error_type: str | None,
+) -> None:
+    collector = _collector.get()
+    if collector is None:
+        return
+    tags = _tags.get()
+    record = {
+        "tier": tier,
+        "model": model,
+        "stage": tags.get("stage"),
+        "framework_id": tags.get("framework_id"),
+        "input_tokens": usage["input_tokens"] if usage else 0,
+        "output_tokens": usage["output_tokens"] if usage else 0,
+        "cache_read_input_tokens": usage["cache_read_input_tokens"] if usage else 0,
+        "latency_ms": latency_ms,
+        "finish_reason": finish_reason,
+        "status": status,
+        "error_type": error_type,
+    }
+    with _collector_lock:
+        collector.append(record)
 
 
 def _get_client() -> OpenAI:
@@ -65,6 +133,8 @@ def _get_client() -> OpenAI:
         _client = OpenAI(
             api_key=settings.openrouter_key,
             base_url=settings.openrouter_base_url,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=settings.llm_max_retries,
         )
     return _client
 
@@ -101,6 +171,7 @@ def call_llm(
     max_tokens: int,
     temperature: float = 0,
     stream: bool = False,
+    response_schema: dict | None = None,
 ) -> dict:
     """Make one LLM request for the given tier and return a plain dict.
 
@@ -109,49 +180,84 @@ def call_llm(
     "cache_read_input_tokens", "cache_creation_input_tokens"}}
     """
     model = getattr(settings, _TIER_MODELS[tier])
-    client = _get_client()
     request_messages = [{"role": "system", "content": system}, *messages]
+    request_kwargs = {
+        "model": model,
+        "messages": request_messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+    if response_schema is None:
+        request_kwargs["extra_body"] = _REQUEST_PREFS
+    else:
+        request_kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": response_schema["name"],
+                "strict": True,
+                "schema": response_schema["schema"],
+            },
+        }
+        request_kwargs["extra_body"] = {
+            **_REQUEST_PREFS,
+            "provider": {
+                **_REQUEST_PREFS["provider"],
+                "require_parameters": True,
+            },
+        }
+    if stream:
+        request_kwargs.update(stream=True, stream_options={"include_usage": True})
 
-    if not stream:
-        response = client.chat.completions.create(
-            model=model,
-            messages=request_messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            extra_body=_REQUEST_PREFS,
-        )
-        choice = response.choices[0]
-        text = choice.message.content
-        _require_content(
-            text, tier=tier, model=model, finish_reason=getattr(choice, "finish_reason", None)
-        )
-        return {"text": text, "usage": _usage_dict(response.usage)}
-
-    chunks = client.chat.completions.create(
-        model=model,
-        messages=request_messages,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        stream=True,
-        stream_options={"include_usage": True},
-        extra_body=_REQUEST_PREFS,
-    )
-    text_parts: list[str] = []
+    started = time.monotonic()
     finish_reason = None
-    usage = None
-    for chunk in chunks:
-        if chunk.choices:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                text_parts.append(delta)
-            chunk_finish_reason = getattr(chunk.choices[0], "finish_reason", None)
-            if chunk_finish_reason:
-                finish_reason = chunk_finish_reason
-        if getattr(chunk, "usage", None) is not None:
-            usage = chunk.usage
-    text = "".join(text_parts)
-    _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
-    return {"text": text, "usage": _usage_dict(usage)}
+    try:
+        response = _get_client().chat.completions.create(**request_kwargs)
+        if not stream:
+            choice = response.choices[0]
+            finish_reason = getattr(choice, "finish_reason", None)
+            text = choice.message.content
+            _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
+            usage = _usage_dict(response.usage)
+            result = {"text": text, "usage": usage}
+        else:
+            text_parts: list[str] = []
+            usage_obj = None
+            for chunk in response:
+                if chunk.choices:
+                    delta = chunk.choices[0].delta.content
+                    if delta:
+                        text_parts.append(delta)
+                    chunk_finish_reason = getattr(chunk.choices[0], "finish_reason", None)
+                    if chunk_finish_reason:
+                        finish_reason = chunk_finish_reason
+                if getattr(chunk, "usage", None) is not None:
+                    usage_obj = chunk.usage
+            text = "".join(text_parts)
+            _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
+            usage = _usage_dict(usage_obj)
+            result = {"text": text, "usage": usage}
+    except Exception as exc:
+        _record_call(
+            tier=tier,
+            model=model,
+            usage=None,
+            latency_ms=int((time.monotonic() - started) * 1000),
+            finish_reason=finish_reason,
+            status="error",
+            error_type=type(exc).__name__,
+        )
+        raise
+
+    _record_call(
+        tier=tier,
+        model=model,
+        usage=usage,
+        latency_ms=int((time.monotonic() - started) * 1000),
+        finish_reason=finish_reason,
+        status="ok",
+        error_type=None,
+    )
+    return result
 
 
 def _require_content(text: str | None, *, tier: Tier, model: str, finish_reason: str | None) -> None:

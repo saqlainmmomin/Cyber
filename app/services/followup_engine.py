@@ -89,18 +89,19 @@ def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
 
 def _call_claude_followups(prompt: str) -> str:
     """Call the LLM for follow-up questions and return raw response text."""
-    response = _call_llm(
-        tier="extract",
-        max_tokens=512,
-        temperature=0.3,
-        system=(
-            "You are an expert DPDPA compliance auditor conducting a gap assessment. "
-            "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
-            "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
-            "Respond ONLY with valid JSON. No markdown fences, no commentary."
-        ),
-        messages=[{"role": "user", "content": prompt}],
-    )
+    with llm_client.call_tag(stage="followups"):
+        response = _call_llm(
+            tier="extract",
+            max_tokens=512,
+            temperature=0.3,
+            system=(
+                "You are an expert DPDPA compliance auditor conducting a gap assessment. "
+                "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
+                "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
+                "Respond ONLY with valid JSON. No markdown fences, no commentary."
+            ),
+            messages=[{"role": "user", "content": prompt}],
+        )
     return response["text"]
 
 

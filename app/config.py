@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     llm_model_judge: str = "deepseek/deepseek-v4-flash"
     llm_model_synthesize: str = "deepseek/deepseek-v4-flash"
     llm_model_vision: str = "anthropic/claude-sonnet-4"
+    llm_timeout_seconds: float = 300.0
+    llm_max_retries: int = 2
+    llm_max_concurrency: int = 4
+    recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"
     auditor_password: str = _DEFAULT_AUDITOR_PASSWORD

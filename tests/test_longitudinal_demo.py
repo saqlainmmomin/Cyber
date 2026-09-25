@@ -561,10 +561,11 @@ def test_scenario_12_structural_guards(db, http, demo):
 
 def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
     """Scenario 13: the full-contract protected files remain outside the diff."""
+    # P6-1: explicit llm_calls persistence (D-P6-1-E)
     protected = [
         "app/routers/web.py", "app/services/evidence.py", "app/services/magic_links.py",
         "app/services/findings.py", "app/services/remediation_rollup.py", "app/services/report_content.py",
-        "app/services/report_snapshots.py", "app/routers/analysis.py", "app/routers/magic.py",
+        "app/services/report_snapshots.py", "app/routers/magic.py",
         "app/routers/evidence.py", "scripts/backup.py", "scripts/migrate_legacy.py",
         "requirements.txt", "tests/test_phase1_prefill.py",
     ]

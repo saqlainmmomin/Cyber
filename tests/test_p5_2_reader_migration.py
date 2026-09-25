@@ -801,8 +801,9 @@ def test_scenario_19_source_and_worktree_guards(db_path):
         and not (isinstance(node, ast.Import) and any(alias.name in forbidden for alias in node.names))
         for node in ast.walk(tree)
     )
+    # P6-1: explicit llm_calls persistence (D-P6-1-E)
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/routers/analysis.py", "app/services/analysis_pipeline.py", "app/models", "alembic"],
+        ["git", "diff", "--stat", "main", "--", "app/models", "alembic"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""

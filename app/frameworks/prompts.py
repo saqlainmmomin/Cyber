@@ -572,7 +572,7 @@ Produce a unified cross-framework analysis:
 
 3. **prioritized_recommendations**: Top 5-10 remediation actions that address gaps across multiple frameworks simultaneously, ordered by impact.
 
-4. **framework_comparison**: For each framework, a 1-2 sentence posture summary and numeric score (0-100).
+4. **framework_comparison**: For each framework, a 1-2 sentence posture summary. Do not estimate or state any numeric score; scores are computed deterministically elsewhere.
 
 Respond ONLY with valid JSON:
 
@@ -583,7 +583,7 @@ Respond ONLY with valid JSON:
     {"action": "...", "frameworks_addressed": ["iso27001", "hipaa"], "priority": 1}
   ],
   "framework_comparison": {
-    "iso27001": {"summary": "...", "estimated_score": 65}
+    "iso27001": {"summary": "..."}
   }
 }"""
 
