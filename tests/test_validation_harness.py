@@ -38,6 +38,40 @@ def test_export_maps_builder_control_ids_to_framework_refs():
     ]
 
 
+def test_export_normalises_builder_member_controls_shape():
+    control_ids = {"dpdpa": {"CH2.CONSENT.1"}, "iso27001": {"ISO.A5.34"}}
+    question = {
+        "id": "CH2.CONSENT.1",
+        "maps_to": ["CH2.CONSENT.1", "ISO.A5.34"],
+        "frameworks_covered": ["dpdpa", "iso27001"],
+        "member_controls": [
+            {"framework_id": "dpdpa", "control_id": "CH2.CONSENT.1"},
+            {"framework_id": "iso27001", "control_id": "ISO.A5.34"},
+            {"framework_id": "iso27001", "control_id": "ISO.A5.34"},
+        ],
+    }
+    assert _member_controls(question, control_ids, ["dpdpa", "iso27001"]) == [
+        {"framework_id": "dpdpa", "requirement_id": "CH2.CONSENT.1"},
+        {"framework_id": "iso27001", "requirement_id": "ISO.A5.34"},
+    ]
+    assert _member_controls(
+        {"id": "legacy", "member_controls": [{"framework_id": "dpdpa", "requirement_id": "CH2.CONSENT.1"}]},
+        control_ids,
+        ["dpdpa"],
+    ) == [{"framework_id": "dpdpa", "requirement_id": "CH2.CONSENT.1"}]
+    assert _member_controls(
+        {"id": "controls", "controls": [{"framework_id": "iso27001", "control_id": "ISO.A5.34"}]},
+        control_ids,
+        ["iso27001"],
+    ) == [{"framework_id": "iso27001", "requirement_id": "ISO.A5.34"}]
+    with pytest.raises(ValueError, match="CH2.CONSENT.1"):
+        _member_controls(
+            {"id": "CH2.CONSENT.1", "member_controls": [{"framework_id": "dpdpa"}]},
+            control_ids,
+            ["dpdpa"],
+        )
+
+
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -49,8 +83,16 @@ def _write(path: Path, value) -> None:
 def _copy_example(validation_root: Path) -> Path:
     destination = validation_root / "companies" / "c0-example"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(EXAMPLE, destination)
+    shutil.copytree(EXAMPLE, destination, ignore=shutil.ignore_patterns("rendered"))
     return destination
+
+
+@pytest.fixture
+def rendered_example(tmp_path):
+    validation_root = tmp_path / "validation"
+    _copy_example(validation_root)
+    render_pack("c0-example", validation_root=validation_root)
+    return validation_root
 
 
 def _visible_spec_text(spec: dict) -> str:
@@ -123,13 +165,16 @@ def test_export_is_offline_and_never_touches_working_database(monkeypatch, tmp_p
         db_path = str(REPO_ROOT / db_path)
     db_file = Path(db_path)
     before = (db_file.stat().st_mtime_ns, db_file.stat().st_size) if db_file.is_file() else None
-    export_question_pack("c0-example", "intake", temp_parent=tmp_path)
-    export_question_pack("c0-example", "questionnaire", temp_parent=tmp_path)
+    validation_root = tmp_path / "validation"
+    _copy_example(validation_root)
+    export_question_pack("c0-example", "intake", validation_root=validation_root, temp_parent=tmp_path)
+    export_question_pack("c0-example", "questionnaire", validation_root=validation_root, temp_parent=tmp_path)
     after = (db_file.stat().st_mtime_ns, db_file.stat().st_size) if db_file.is_file() else None
     assert before == after
-    assert (EXAMPLE / "question_pack.intake.json").is_file()
-    assert (EXAMPLE / "question_pack.questionnaire.json").is_file()
-    questionnaire = _read(EXAMPLE / "question_pack.questionnaire.json")
+    example = validation_root / "companies" / "c0-example"
+    assert (example / "question_pack.intake.json").is_file()
+    assert (example / "question_pack.questionnaire.json").is_file()
+    questionnaire = _read(example / "question_pack.questionnaire.json")
     mapped_questions = [
         question
         for section in questionnaire["sections"]
@@ -138,7 +183,7 @@ def test_export_is_offline_and_never_touches_working_database(monkeypatch, tmp_p
     ]
     assert mapped_questions
     assert all(
-        {"framework_id", "requirement_id"} <= set(control)
+        set(control) == {"framework_id", "requirement_id"}
         for question in mapped_questions
         for control in question["member_controls"]
     )
@@ -173,8 +218,8 @@ def test_degraded_jpeg_retains_scan_quality(tmp_path):
         assert actual.quantization == expected.quantization
 
 
-def test_lint_catches_unfairness_leaks_bad_trails_and_missing_answers(tmp_path):
-    assert lint_pack("c0-example", require_questionnaire=True).errors == []
+def test_lint_catches_unfairness_leaks_bad_trails_and_missing_answers(tmp_path, rendered_example):
+    assert lint_pack("c0-example", require_questionnaire=True, validation_root=rendered_example).errors == []
 
     base = _copy_example(tmp_path / "unfair")
     table_path = base / "client_visible/evidence/E02.json"
@@ -207,7 +252,9 @@ def test_lint_catches_unfairness_leaks_bad_trails_and_missing_answers(tmp_path):
     base = _copy_example(tmp_path / "image-trail")
     image_path = base / "client_visible/images/whiteboard.png"
     image_path.parent.mkdir(parents=True, exist_ok=True)
-    image_path.write_bytes((EXAMPLE / "rendered/privileged-access-register.png").read_bytes())
+    image_path.write_bytes(
+        (rendered_example / "companies/c0-example/rendered/privileged-access-register.png").read_bytes()
+    )
     image_spec = {
         "artifact_id": "E04",
         "filename": "whiteboard.png",
@@ -236,7 +283,7 @@ def test_lint_catches_unfairness_leaks_bad_trails_and_missing_answers(tmp_path):
     assert any("missing answer for" in error for error in result.errors)
 
 
-def test_mock_runner_is_blind_and_completes_two_isolated_runs(tmp_path, monkeypatch):
+def test_mock_runner_is_blind_and_completes_two_isolated_runs(tmp_path, monkeypatch, rendered_example):
     from scripts.validation import run_company as runner_module
 
     source = Path(runner_module.__file__).read_text(encoding="utf-8")
@@ -256,7 +303,7 @@ def test_mock_runner_is_blind_and_completes_two_isolated_runs(tmp_path, monkeypa
     monkeypatch.setattr(builtins, "open", tracking_open)
     monkeypatch.setattr(Path, "read_text", tracking_read_text)
     out = tmp_path / "runs"
-    assert run_company("c0-example", llm="mock", runs=2, out=out) == 0
+    assert run_company("c0-example", llm="mock", runs=2, out=out, validation_root=rendered_example) == 0
     assert not any("answer_key.json" in path for path in opened)
     database_paths = []
     for index in (1, 2):
@@ -339,8 +386,16 @@ def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):
 def test_app_files_are_untouched_by_harness():
     if not (REPO_ROOT / ".git").exists():
         pytest.skip("not a git checkout")
+    comparison_ref = "origin/main"
+    if subprocess.run(
+        ["git", "rev-parse", "--verify", comparison_ref],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).returncode != 0:
+        comparison_ref = "main"
     merge_base = subprocess.run(
-        ["git", "merge-base", "HEAD", "main"],
+        ["git", "merge-base", "HEAD", comparison_ref],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

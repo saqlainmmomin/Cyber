@@ -24,9 +24,24 @@ def _member_controls(
     control_ids_by_framework: dict[str, set[str]],
     framework_ids: list[str],
 ) -> list | None:
-    for key in ("member_controls", "controls"):
-        if key in question:
-            return question[key]
+    selected_key = next((key for key in ("member_controls", "controls") if key in question), None)
+    if selected_key is not None:
+        question_id = question.get("id", "<unknown>")
+        normalised = []
+        seen = set()
+        for entry in question[selected_key]:
+            if not isinstance(entry, dict):
+                raise ValueError(f"question {question_id} has a malformed member control")
+            framework_id = entry.get("framework_id")
+            requirement_id = entry.get("requirement_id") or entry.get("control_id")
+            if not framework_id or not requirement_id:
+                raise ValueError(f"question {question_id} has a malformed member control")
+            key = (framework_id, requirement_id)
+            if key in seen:
+                continue
+            seen.add(key)
+            normalised.append({"framework_id": framework_id, "requirement_id": requirement_id})
+        return normalised
     if "maps_to" not in question:
         return None
 
