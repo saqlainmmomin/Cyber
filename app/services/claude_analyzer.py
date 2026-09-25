@@ -270,7 +270,7 @@ def _run_framework_evidence_extraction(
         with llm_client.call_tag(stage="evidence_extraction"):
             response = _call_llm(
                 tier="extract",
-                max_tokens=8192,
+                max_tokens=settings.llm_max_output_tokens_framework,
                 temperature=0,
                 system=(
                     "You are a document analyst. Extract exact quotes from documents "
@@ -513,7 +513,7 @@ def _run_multi_framework_analysis(
             response = _call_llm(
                 tier="judge",
                 stream=True,
-                max_tokens=16384,
+                max_tokens=settings.llm_max_output_tokens_framework,
                 temperature=0,
                 system=system_blocks,
                 messages=[{"role": "user", "content": user_prompt}],
