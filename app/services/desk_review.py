@@ -269,7 +269,7 @@ def _call_framework_desk_review(
     response = _call_llm(
         tier="judge",
         stream=True,
-        max_tokens=16384,
+        max_tokens=settings.llm_max_output_tokens_framework,
         temperature=0,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],

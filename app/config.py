@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 300.0
     llm_max_retries: int = 2
     llm_max_concurrency: int = 4
+    # Output ceiling for registry-path framework calls (desk review, evidence
+    # extraction, judge). A 93-control ISO judge answer needs ~16k+ tokens and
+    # was truncated at the old 16,384 (live smoke 2026-09-25); DeepSeek V4 Flash
+    # allows 384k output. The curated DPDPA single-framework path keeps its own
+    # limits so its golden recordings stay byte-identical.
+    llm_max_output_tokens_framework: int = 65536
     recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"

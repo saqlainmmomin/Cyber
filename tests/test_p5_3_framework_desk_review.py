@@ -642,7 +642,12 @@ def test_scenario_8_multi_framework_evidence_extraction_is_per_framework(monkeyp
         desk_review_data=desk_data,
     )
     extracts = [item for item in calls if item["tier"] == "extract"]
-    assert len(extracts) == 2 and all(item["max_tokens"] == 8192 for item in extracts)
+    # P6-1c: framework-path extraction uses the configurable output ceiling.
+    from app.config import settings as _settings
+
+    assert len(extracts) == 2 and all(
+        item["max_tokens"] == _settings.llm_max_output_tokens_framework for item in extracts
+    )
     assert "ISO.A5.1" in extracts[0]["messages"][0]["content"]
     assert "DPDPA" not in extracts[0]["messages"][0]["content"]
     judges = [item["messages"][0]["content"] for item in calls if item["tier"] == "judge"]
