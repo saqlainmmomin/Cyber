@@ -122,7 +122,7 @@
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Max Regulatory Exposure</p>
     {% if business_impact.has_dpdpa_exposure %}
     <p class="text-2xl font-bold text-red-600 dark:text-red-400">₹{{ business_impact.max_penalty_cr }}Cr</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">per incident under DPDPA</p>
+    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">maximum under the DPDPA 2023 Schedule</p>
     {% elif business_impact.has_gaps %}
     <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ business_impact.critical_high_count }} gaps</p>
     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">critical/high severity</p>
@@ -151,7 +151,7 @@
       {% if business_impact.has_dpdpa_exposure %}
       <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">Up to ₹{{ business_impact.max_penalty_cr }} Crore</p>
       <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-        Per-incident penalty under the DPDPA 2023 Schedule for the highest-severity violation category identified.
+        Maximum penalty the Board may impose for a significant breach under the DPDPA 2023 Schedule (s.33), for the highest-severity category identified. Penalty provisions apply from mid-May 2027.
       </p>
       {% else %}
       <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">{{ business_impact.critical_high_count }} high-severity gaps</p>
@@ -230,6 +230,9 @@
     {{ summary_text }}
   </div>
 </div>
+{% endif %}
+{% if show_dpdpa_readiness_note %}
+<p data-dpdpa-readiness-note class="-mt-3 mb-6 text-xs text-gray-500 dark:text-gray-400">{{ dpdpa_readiness_note }}</p>
 {% endif %}
 
 

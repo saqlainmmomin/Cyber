@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
+from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
 from app.models.audit_event import AuditEvent
@@ -1853,12 +1854,15 @@ def analysis_status(
 
 # --- Report helpers ---
 
-# Ordered prefix → penalty (₹ Crore) under DPDPA 2023 Schedule
+# Ordered prefix → maximum penalty (₹ Crore) under DPDPA 2023 Schedule (s.33).
+# Schedule items: 1 s.8(5) safeguards 250; 2 s.8(6) breach intimation 200;
+# 3 s.9 children 200; 4 s.10 SDF 150; 7 any other provision 50.
 _PENALTY_MAP = [
     ("CH2.SECURITY", 250),
-    ("BN.NOTIFY",    250),
+    ("BN.NOTIFY",    200),
+    ("CH2.CONSENT.5", 200),  # s.9(1) verifiable parental consent
     ("CH4.CHILD",    200),
-    ("CH4.SDF",       50),
+    ("CH4.SDF",      150),
     ("CH2.CONSENT",   50),
     ("CM.",           50),
     ("CH2.NOTICE",    50),
@@ -2045,6 +2049,9 @@ def report_summary(
     quick_wins = []
 
     has_dpdpa = "dpdpa" in assessment.frameworks
+    show_dpdpa_readiness_note = dpdpa_readiness_note_applies(
+        assessment.frameworks, datetime.now(timezone.utc).date()
+    )
 
     remediation_counts = remediation_rollup.assessment_action_counts(db, assessment_id)
 
@@ -2114,6 +2121,8 @@ def report_summary(
             "view_mode": view_mode,
             "active_framework": active_framework,
             "has_dpdpa": has_dpdpa,
+            "show_dpdpa_readiness_note": show_dpdpa_readiness_note,
+            "dpdpa_readiness_note": DPDPA_READINESS_NOTE,
             "remediation_counts": remediation_counts,
             "comparable_assessments": comparable_assessments,
             "gap_items_by_chapter": dict(gap_items_by_chapter),

@@ -34,8 +34,8 @@ from app.models.questionnaire import QuestionnaireResponse
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REVISION = "8b2d5f7e1c34"
 PREVIOUS_REVISION = "4e8c1a9d2b57"
-SYSTEM_SHA256 = "bf3dd3bb038f5651fbd225d21aba94a9c66936e2e1595a592cd7ae9ecd3544aa"
-REQUEST_KEY = "4794fafe01bfeb7a88d6dfbbf85d801c2949712872893318ccebe909ab04a902"
+SYSTEM_SHA256 = "29d363ca1044ed2064058511b5c7a596042ceca472bf97349cb5c2b7af62f35a"
+REQUEST_KEY = "cb7d282439ac193bf68e4c9e367c8de75cd9a97b87b30d1a95ecd54b39ec72f0"
 DOCS = [
     {
         "id": "d1",
@@ -801,10 +801,23 @@ def test_scenario_12_standing_guards_and_public_signatures():
     )
     assert models.returncode == 1, models.stdout
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/frameworks/schema.py", "app/frameworks/definitions"],
+        ["git", "diff", "--stat", "main", "--", "app/frameworks/schema.py", "app/frameworks/definitions",
+         ":!app/frameworks/definitions/dpdpa.py"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""
+    # P6-0e edits one red-flag description in dpdpa.py; identifiers and weights stay frozen.
+    dpdpa_diff = subprocess.run(
+        ["git", "diff", "-U0", "main", "--", "app/frameworks/definitions/dpdpa.py"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+    changed_lines = [
+        line for line in dpdpa_diff.splitlines()
+        if line[:1] in "+-" and not line.startswith(("+++", "---"))
+    ]
+    assert not any(
+        token in line for line in changed_lines for token in ("pattern=", "id=", "Control(", "weight")
+    ), changed_lines
     source = pyinspect.getsource(desk_review_findings)
     assert "llm_client" not in source and "app.services.desk_review" not in source
     assert DeskReviewFinding.__table__.c.framework_id.default is None
