@@ -1,0 +1,11 @@
+{
+  "slug": "c1-app-startup",
+  "company_name": "KiddieLearn Tech",
+  "industry": "education",
+  "company_size": "startup",
+  "engagement_name": "KiddieLearn October 2026 privacy review",
+  "description": "Bengaluru Series A learning application with 42 staff, users aged 8 to 16 and eight SaaS processors. The CTO also owns privacy and security.",
+  "frameworks": [
+    "dpdpa"
+  ]
+}

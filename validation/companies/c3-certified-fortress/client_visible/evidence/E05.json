@@ -1,0 +1,37 @@
+{
+  "artifact_id": "E05",
+  "filename": "Bharat-Consumer-Privacy-Notice-v4.docx",
+  "category": "privacy_policy",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "docx",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Consumer privacy notice v4",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Purpose",
+        "paragraphs": [
+          "Effective 2026-07-01. Wallet transaction data supports payments, fraud defence and service continuity. Optional product analytics is described in the settings page.",
+          "For behavioural marketing, the policy relies on legitimate interest under GDPR Article 6(1)(f), which the legal register marks as available to all consumer cohorts."
+        ]
+      },
+      {
+        "heading": "Retention and rights",
+        "paragraphs": [
+          "Closed wallets are removed from the primary ledger after 30 days subject to settlement obligations. Consumer rights requests are received through the app and by email. The dashboard view is available for accounts created after the 2024 migration.",
+          "A separate notice to previously collected account holders was delivered during migration wave 4, covering the accounts then in the new identity store."
+        ]
+      },
+      {
+        "heading": "Contact",
+        "paragraphs": [
+          "The India-based privacy office receives enquiries at rights@bharatfintech.example."
+        ]
+      }
+    ]
+  }
+}

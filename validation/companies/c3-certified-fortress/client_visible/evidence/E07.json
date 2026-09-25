@@ -1,0 +1,247 @@
+{
+  "artifact_id": "E07",
+  "filename": "Bharat-Consent-Ledger-September.pdf",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "September consent ledger",
+  "consultant_maps_to": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.2"
+    }
+  ],
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Consent ledger sample, September 2026",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "30 accounts sampled from the wallet release. New-cohort choices are stored individually; legacy migration receipts retain the combined confirmation."
+    ],
+    "columns": [
+      "Account",
+      "Cohort",
+      "Recorded",
+      "Preference",
+      "Proof"
+    ],
+    "rows": [
+      [
+        "BFT-00001",
+        "legacy",
+        "2026-09-02",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00002",
+        "legacy",
+        "2026-09-03",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00003",
+        "legacy",
+        "2026-09-04",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00004",
+        "legacy",
+        "2026-09-05",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00005",
+        "legacy",
+        "2026-09-06",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00006",
+        "legacy",
+        "2026-09-07",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00007",
+        "legacy",
+        "2026-09-08",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00008",
+        "legacy",
+        "2026-09-09",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00009",
+        "legacy",
+        "2026-09-10",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00010",
+        "legacy",
+        "2026-09-11",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00011",
+        "legacy",
+        "2026-09-12",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00012",
+        "legacy",
+        "2026-09-13",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00013",
+        "legacy",
+        "2026-09-14",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00014",
+        "legacy",
+        "2026-09-15",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00015",
+        "legacy",
+        "2026-09-16",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00016",
+        "legacy",
+        "2026-09-17",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00017",
+        "legacy",
+        "2026-09-18",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00018",
+        "legacy",
+        "2026-09-19",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00019",
+        "legacy",
+        "2026-09-20",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00020",
+        "legacy",
+        "2026-09-21",
+        "wallet and analytics combined",
+        "not recorded"
+      ],
+      [
+        "BFT-00021",
+        "new",
+        "2026-09-22",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00022",
+        "new",
+        "2026-09-23",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00023",
+        "new",
+        "2026-09-24",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00024",
+        "new",
+        "2026-09-25",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00025",
+        "new",
+        "2026-09-26",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00026",
+        "new",
+        "2026-09-27",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00027",
+        "new",
+        "2026-09-28",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00028",
+        "new",
+        "2026-09-01",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00029",
+        "new",
+        "2026-09-02",
+        "wallet only",
+        "separate preference saved"
+      ],
+      [
+        "BFT-00030",
+        "new",
+        "2026-09-03",
+        "wallet only",
+        "separate preference saved"
+      ]
+    ],
+    "footer": [
+      "Youth sample BF-Y-017: birth year 2011; parent challenge not recorded. BF-Y-018: birth year 2012; parent challenge not recorded."
+    ]
+  }
+}

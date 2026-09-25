@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E01",
+  "filename": "HRFlow-ISMS-Scope-v1-2.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "ISMS scope statement v1.2",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Boundary",
+        "paragraphs": [
+          "Approved 2026-07-01. Stage 1 scope covers Mumbai headquarters, corporate endpoints and staff-operated support processes.",
+          "AWS Mumbai production accounts and the customer-facing HRFlow application are excluded from the Stage 1 boundary pending cloud-control evidence reconciliation. They host the live customer service."
+        ]
+      },
+      {
+        "heading": "Ownership",
+        "paragraphs": [
+          "The three-person security team reports to the CTO. The privacy officer works two days per week and reports separately to legal."
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,494 @@
+{
+  "schema_version": 1,
+  "company_slug": "c4-healthsaas",
+  "control_truth": {
+    "nist_csf": {
+      "default": "compliant",
+      "overrides": {
+        "NIST.PR.PS.02": "partially_compliant",
+        "NIST.PR.AA.05": "partially_compliant",
+        "NIST.DE.CM.09": "partially_compliant",
+        "NIST.GV.SC.04": "partially_compliant",
+        "NIST.RC.RP.03": "partially_compliant",
+        "NIST.PR.PS.01": "partially_compliant",
+        "NIST.ID.RA.06": "partially_compliant",
+        "NIST.RS.CO.02": "partially_compliant",
+        "NIST.DE.CM.01": "partially_compliant",
+        "NIST.RC.RP.01": "partially_compliant",
+        "NIST.PR.IR.01": "compliant",
+        "NIST.ID.RA.01": "compliant",
+        "NIST.PR.DS.11": "compliant"
+      }
+    }
+  },
+  "planted_gaps": [
+    {
+      "gap_id": "G01",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.PS.02"
+        }
+      ],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "Two critical production weaknesses remain open beyond the fifteen-day remediation threshold.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "F-013"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "2026-08-04"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "F-022"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "2026-08-19"
+        }
+      ],
+      "key_facts": [
+        "F-013",
+        "2026-08-04",
+        "F-022",
+        "2026-08-19"
+      ],
+      "what_followup_should_ask": "Show closure or approved exceptions for the two critical findings."
+    },
+    {
+      "gap_id": "G02",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.AA.05"
+        }
+      ],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "A service identity has standing administrator rights and an old key despite the federated-only rule.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "svc-build-orchestrator"
+        },
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "AdministratorAccess"
+        },
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "402 days"
+        }
+      ],
+      "key_facts": [
+        "svc-build-orchestrator",
+        "AdministratorAccess",
+        "402 days"
+      ],
+      "what_followup_should_ask": "Who approved this service identity and when was its key retired?"
+    },
+    {
+      "gap_id": "G03",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.DE.CM.09"
+        }
+      ],
+      "gap_class": "scope_coverage",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "Endpoint monitoring excludes the sampled Pune contractor fleet.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "20 of 26 sampled laptops"
+        },
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "Pune contractor"
+        },
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "not enrolled"
+        }
+      ],
+      "key_facts": [
+        "20 of 26 sampled laptops",
+        "Pune contractor",
+        "not enrolled"
+      ],
+      "what_followup_should_ask": "Provide EDR check-ins for the six Pune contractor assets."
+    },
+    {
+      "gap_id": "G04",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.GV.SC.04"
+        }
+      ],
+      "gap_class": "stale_evidence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "A critical notification vendor has not been reassessed within the annual period.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "PulseRelay"
+        },
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "2025-02-01"
+        },
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "annual reassessment"
+        }
+      ],
+      "key_facts": [
+        "PulseRelay",
+        "2025-02-01",
+        "annual reassessment"
+      ],
+      "what_followup_should_ask": "Show the current assessment for PulseRelay."
+    },
+    {
+      "gap_id": "G05",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.RC.RP.03"
+        }
+      ],
+      "gap_class": "temporal",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "A v2 staging exercise predates the current continuity plan but is cited as proof of its operation.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "v3 took effect on 2026-06-01"
+        },
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "2026-01-15 exercise"
+        },
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "under plan v2"
+        }
+      ],
+      "key_facts": [
+        "v3 took effect on 2026-06-01",
+        "2026-01-15 exercise",
+        "under plan v2"
+      ],
+      "what_followup_should_ask": "Show a full production-tier exercise performed under v3."
+    },
+    {
+      "gap_id": "G06",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.PS.01"
+        }
+      ],
+      "gap_class": "quantitative",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The hardening baseline is represented as complete although only 221 of 260 endpoints pass it.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E11",
+          "locator": "record",
+          "fact": "221 of 260 production endpoints"
+        },
+        {
+          "source": "evidence:E11",
+          "locator": "record",
+          "fact": "fully deployed"
+        }
+      ],
+      "key_facts": [
+        "221 of 260 production endpoints",
+        "fully deployed"
+      ],
+      "what_followup_should_ask": "Which 39 endpoints lack the approved profile?"
+    },
+    {
+      "gap_id": "G07",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.ID.RA.06"
+        }
+      ],
+      "gap_class": "chained_dependency",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "high",
+      "description": "Risk response is marked complete without closing the two findings it depends on.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E11",
+          "locator": "record",
+          "fact": "remediation actions are complete for all critical scan findings"
+        },
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "two open critical findings"
+        }
+      ],
+      "key_facts": [
+        "remediation actions are complete for all critical scan findings",
+        "two open critical findings"
+      ],
+      "what_followup_should_ask": "Reconcile risk council closure to scanner state."
+    },
+    {
+      "gap_id": "G08",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.RS.CO.02"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "An internal stakeholder group is absent from the incident paging connector.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "Pune clinical-operations paging group is not included"
+        }
+      ],
+      "key_facts": [
+        "Pune clinical-operations paging group is not included"
+      ],
+      "what_followup_should_ask": "How is the Pune clinical team informed during a severity one event?"
+    },
+    {
+      "gap_id": "G09",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.DE.CM.01"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "A named legacy source is absent from central network detection.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "legacy-monitor-1 not connected"
+        }
+      ],
+      "key_facts": [
+        "legacy-monitor-1 not connected"
+      ],
+      "what_followup_should_ask": "Show detector telemetry for legacy-monitor-1."
+    },
+    {
+      "gap_id": "G10",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.RC.RP.01"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "planned",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "Full failover to the current recovery plan has not yet been exercised.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "production-tier v3 exercise is scheduled for 2026-11-05"
+        }
+      ],
+      "key_facts": [
+        "production-tier v3 exercise is scheduled for 2026-11-05"
+      ],
+      "what_followup_should_ask": "Show an executed full failover record under the current plan."
+    }
+  ],
+  "decoys": [
+    {
+      "decoy_id": "D01",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.IR.01"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A management firewall line is broad across a private VLAN.",
+      "why_it_is_compliant": "The source is a private VPN-only management segment with MFA and device posture checks.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "10.44.8.0/24"
+        },
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "VPN and device posture checks"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D02",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.ID.RA.01"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A historical high-severity container finding appears in the risk archive.",
+      "why_it_is_compliant": "The disconnected container was destroyed and closure verified well before the current assessment.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "destroyed on 2026-01-12"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D03",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.DS.11"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A backup sample does not exercise full continuity failover.",
+      "why_it_is_compliant": "The backup control is proven by the September checksum-verified restore; full failover is a separate recovery control.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "checksum match and signed QA validation"
+        },
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "separate full continuity exercise"
+        }
+      ]
+    }
+  ],
+  "clean_controls": [
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.RS.MA.01",
+      "supporting_artifacts": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.DS.11",
+      "supporting_artifacts": [
+        "E07",
+        "E12"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.GV.PO.01",
+      "supporting_artifacts": [
+        "E01"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.RS.MI.01",
+      "supporting_artifacts": [
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.RS.MA.02",
+      "supporting_artifacts": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.GV.RR.02",
+      "supporting_artifacts": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.AA.03",
+      "supporting_artifacts": [
+        "E12"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.DS.01",
+      "supporting_artifacts": [
+        "E07",
+        "E12"
+      ]
+    }
+  ],
+  "authoring_notes": "C4 has no Indian privacy-law content. SOC and backup practice are strong. The recovery exercise and historical test-container finding must be judged separately from current vulnerability and failover gaps."
+}

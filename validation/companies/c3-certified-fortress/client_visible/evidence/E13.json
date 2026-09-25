@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E13",
+  "filename": "Bharat-Internal-Audit-and-DPIA-Status.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Internal audit and impact-assessment status",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Assurance",
+        "paragraphs": [
+          "The August 2026 internal security audit sampled 42 control executions and closed its one minor supplier finding by 2026-09-03. A previous 2025 stale-key weakness was fixed and re-tested on 2026-01-18.",
+          "NIST access, monitoring, backup and recovery practices were independently checked against operation logs."
+        ]
+      },
+      {
+        "heading": "Privacy review",
+        "paragraphs": [
+          "The youth-wallet DPIA has an approved scope dated 2026-09-10. Fieldwork and sign-off are planned for 2026-11-30. No completed DPIA was available at the October review."
+        ]
+      }
+    ]
+  }
+}

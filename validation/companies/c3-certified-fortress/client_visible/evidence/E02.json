@@ -1,0 +1,72 @@
+{
+  "artifact_id": "E02",
+  "filename": "Bharat-Risk-Register-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Enterprise risk register, Q3 2026",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Board risk committee accepted the security residual-risk report on 2026-09-26. Consumer privacy service outcomes are tracked in a separate service log."
+    ],
+    "columns": [
+      "ID",
+      "Risk",
+      "Owner",
+      "Review",
+      "Treatment"
+    ],
+    "rows": [
+      [
+        "R-201",
+        "credential abuse",
+        "CISO",
+        "2026-09-19",
+        "JIT and phishing resistant MFA"
+      ],
+      [
+        "R-202",
+        "cloud outage",
+        "resilience lead",
+        "2026-09-18",
+        "dual-region restore"
+      ],
+      [
+        "R-203",
+        "supplier intrusion",
+        "third-party lead",
+        "2026-09-17",
+        "annual technical assurance"
+      ],
+      [
+        "R-204",
+        "youth wallet data exposure",
+        "privacy office",
+        "2026-09-20",
+        "age-gate sampling"
+      ],
+      [
+        "R-205",
+        "support export leakage",
+        "SOC lead",
+        "2026-09-21",
+        "egress alert"
+      ],
+      [
+        "R-206",
+        "legacy rights lookup",
+        "privacy office",
+        "2026-09-22",
+        "migration wave 4"
+      ]
+    ],
+    "footer": [
+      "No overdue high security risks at quarter-end."
+    ]
+  }
+}

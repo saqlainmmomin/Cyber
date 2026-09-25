@@ -1,0 +1,36 @@
+{
+  "artifact_id": "E08",
+  "filename": "HRFlow-Privacy-Notice-v3.docx",
+  "category": "privacy_policy",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "docx",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "HRFlow privacy notice v3",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Data flows",
+        "paragraphs": [
+          "We collect workforce profile and attendance data to deliver the contracted service. All customer employee data remains in India. The notice was approved on 2026-08-19.",
+          "The standard archive retains all personal data for ten years, including closed tenant exports, under the ISMS records policy."
+        ]
+      },
+      {
+        "heading": "Rights",
+        "paragraphs": [
+          "Customers may correct records through the admin console. Requests for a summary of all employee data must currently be routed to account support; an employee self-service access channel is planned for 2027."
+        ]
+      },
+      {
+        "heading": "Contacts",
+        "paragraphs": [
+          "The part-time privacy officer can be reached at privacy@hrflow.example."
+        ]
+      }
+    ]
+  }
+}

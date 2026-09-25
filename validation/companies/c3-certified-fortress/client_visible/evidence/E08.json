@@ -1,0 +1,120 @@
+{
+  "artifact_id": "E08",
+  "filename": "Bharat-Rights-Service-Log-Q3.pdf",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Consumer rights service log",
+  "consultant_maps_to": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH3.CORRECT.2"
+    }
+  ],
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Consumer rights service log",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Quarterly report: 14 erasure requests received, 14 resolved within service target."
+    ],
+    "columns": [
+      "Ticket",
+      "Received",
+      "Disposition",
+      "Cohort"
+    ],
+    "rows": [
+      [
+        "ER-001",
+        "2026-09-02",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-002",
+        "2026-09-03",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-003",
+        "2026-09-04",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-004",
+        "2026-09-05",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-005",
+        "2026-09-06",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-006",
+        "2026-09-07",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-007",
+        "2026-09-08",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-008",
+        "2026-09-09",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-009",
+        "2026-09-10",
+        "complete",
+        "new"
+      ],
+      [
+        "ER-010",
+        "2026-09-11",
+        "awaiting legacy lookup",
+        "legacy"
+      ],
+      [
+        "ER-011",
+        "2026-09-12",
+        "awaiting legacy lookup",
+        "legacy"
+      ],
+      [
+        "ER-012",
+        "2026-09-13",
+        "awaiting legacy lookup",
+        "legacy"
+      ],
+      [
+        "ER-013",
+        "2026-09-14",
+        "awaiting legacy lookup",
+        "legacy"
+      ],
+      [
+        "ER-014",
+        "2026-09-15",
+        "awaiting legacy lookup",
+        "legacy"
+      ]
+    ],
+    "footer": [
+      "The service dashboard counts closed helpdesk tickets; 5 records remain in the legacy lookup queue."
+    ]
+  }
+}

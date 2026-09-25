@@ -1,0 +1,50 @@
+{
+  "artifact_id": "E05",
+  "filename": "HRFlow-sg-prod-admin.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Production security-group export",
+  "consultant_maps_to": [
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A8.20"
+    }
+  ],
+  "render": {
+    "kind": "config",
+    "format": "png",
+    "degrade": "scan_light"
+  },
+  "content": {
+    "title": "AWS security-group inbound export",
+    "lines": [
+      "sg-prod-admin / inbound export / 2026-09-30 / region ap-south-1",
+      "Policy NET-02 section 4: management SSH only from corporate VPN 10.20.0.0/16.",
+      "rule 01 allow tcp 443 from 0.0.0.0/0 to public-alb ticket CHG-26-241",
+      "rule 02 allow tcp 8002 from 10.20.2.0/24 to internal-svc-02 ticket CHG-26-242",
+      "rule 03 allow tcp 8003 from 10.20.3.0/24 to internal-svc-03 ticket CHG-26-243",
+      "rule 04 allow tcp 8004 from 10.20.4.0/24 to internal-svc-04 ticket CHG-26-244",
+      "rule 05 allow tcp 8005 from 10.20.5.0/24 to internal-svc-05 ticket CHG-26-245",
+      "rule 06 allow tcp 8006 from 10.20.6.0/24 to internal-svc-06 ticket CHG-26-246",
+      "rule 07 allow tcp 8007 from 10.20.7.0/24 to internal-svc-07 ticket CHG-26-247",
+      "rule 08 allow tcp 8008 from 10.20.8.0/24 to internal-svc-08 ticket CHG-26-248",
+      "rule 09 allow tcp 8009 from 10.20.9.0/24 to internal-svc-09 ticket CHG-26-249",
+      "rule 10 allow tcp 8010 from 10.20.10.0/24 to internal-svc-10 ticket CHG-26-250",
+      "rule 11 allow tcp 8011 from 10.20.11.0/24 to internal-svc-11 ticket CHG-26-251",
+      "rule 12 allow tcp 8012 from 10.20.12.0/24 to internal-svc-12 ticket CHG-26-252",
+      "rule 13 allow tcp 8013 from 10.20.13.0/24 to internal-svc-13 ticket CHG-26-253",
+      "rule 14 allow tcp 8014 from 10.20.14.0/24 to internal-svc-14 ticket CHG-26-254",
+      "rule 15 allow tcp 8015 from 10.20.15.0/24 to internal-svc-15 ticket CHG-26-255",
+      "rule 16 allow tcp 8016 from 10.20.16.0/24 to internal-svc-16 ticket CHG-26-256",
+      "rule 17 allow tcp 22 from 0.0.0.0/0 to prod-bastion ticket CHG-26-257",
+      "rule 18 allow tcp 8018 from 10.20.18.0/24 to internal-svc-18 ticket CHG-26-258",
+      "rule 19 allow tcp 8019 from 10.20.19.0/24 to internal-svc-19 ticket CHG-26-259",
+      "rule 20 allow tcp 8020 from 10.20.20.0/24 to internal-svc-20 ticket CHG-26-260",
+      "rule 21 allow tcp 8021 from 10.20.21.0/24 to internal-svc-21 ticket CHG-26-261",
+      "rule 22 allow tcp 8022 from 10.20.22.0/24 to internal-svc-22 ticket CHG-26-262",
+      "rule 23 allow tcp 8023 from 10.20.23.0/24 to internal-svc-23 ticket CHG-26-263",
+      "rule 24 allow tcp 8024 from 10.20.24.0/24 to internal-svc-24 ticket CHG-26-264",
+      "rule 25 allow tcp 8025 from 10.20.25.0/24 to internal-svc-25 ticket CHG-26-265"
+    ]
+  }
+}

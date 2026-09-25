@@ -1,0 +1,278 @@
+{
+  "artifact_id": "E04",
+  "filename": "HRFlow-Q3-Privileged-Access-Review.pdf",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Q3 privileged access review",
+  "consultant_maps_to": [
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.18"
+    }
+  ],
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Q3 privileged access review",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Quarter-end snapshot 2026-09-30. Review sign-off by Mira Sen on 2026-10-02."
+    ],
+    "columns": [
+      "Principal",
+      "Role",
+      "Directory state",
+      "Reviewer",
+      "Decision",
+      "HR reconciliation"
+    ],
+    "rows": [
+      [
+        "Aarav Shah",
+        "DB administrator",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Bhavna Nair",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Chirag Mehta",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Devika Rao",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Eshan Gupta",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Farah Ali",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Girish Menon",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Hema Iyer",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Rohan Sethi",
+        "AWS administrator",
+        "active",
+        "Mira Sen",
+        "retain",
+        "HR exit 2026-08-12; account active 2026-09-30"
+      ],
+      [
+        "Jaya Das",
+        "DB administrator",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Kunal Bhat",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Leena Fernandes",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Manav Joshi",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Nisha Basu",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Omar Qureshi",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Pooja Sen",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Priya Kulkarni",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "contract ended 2026-07-31; account active 2026-09-30"
+      ],
+      [
+        "Sana Sheikh",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Tarun Bose",
+        "DB administrator",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Uma Krishnan",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Nitin Arora",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "left payroll 2026-05-02; contractor conversion 2026-05-03; sponsor approved"
+      ],
+      [
+        "Wafa Khan",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Yash Malhotra",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Zoya Dutta",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Amir Kulkarni",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Bina Patel",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Chetan Dubey",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Diya Verma",
+        "DB administrator",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Eka Reddy",
+        "security engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ],
+      [
+        "Faisal Khan",
+        "support engineer",
+        "active",
+        "Mira Sen",
+        "retain",
+        "employment verified 2026-09-28"
+      ]
+    ],
+    "footer": [
+      "JIT elevations were checked against grant expiry in the event log."
+    ]
+  }
+}

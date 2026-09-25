@@ -1,0 +1,37 @@
+{
+  "artifact_id": "E04",
+  "filename": "KiddieLearn-Security-Standard-2026.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Engineering security and retention standard",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Access and storage",
+        "paragraphs": [
+          "The production database uses service-managed encryption at rest. Production exports must use encrypted private buckets and be deleted within 24 hours. The CTO approves engineer access monthly.",
+          "The lesson feature collects learner alias, school year and parent email. The support form also stores free-text teacher notes and birth month, which are not needed for lesson delivery."
+        ]
+      },
+      {
+        "heading": "Retention",
+        "paragraphs": [
+          "Inactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed, 35 remain in the retry queue. The dashboard reports the 91 completions only.",
+          "The processor copy held by MetricTree has no deletion job yet. The next integration sprint is scheduled for November 2026."
+        ]
+      },
+      {
+        "heading": "Incident handling",
+        "paragraphs": [
+          "The CTO triages security events, keeps an incident log and calls the parent-contact owner for affected accounts. A response checklist and escalation rota were approved on 2026-07-08."
+        ]
+      }
+    ]
+  }
+}

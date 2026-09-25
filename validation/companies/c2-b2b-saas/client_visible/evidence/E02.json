@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E02",
+  "filename": "HRFlow-Draft-SoA-2026.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Draft statement of applicability extract",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Applicable controls",
+        "paragraphs": [
+          "Policies for information security, access rights, network security, supplier terms and backup are marked applicable. Control IDs appear in the internal tracker only; implementation evidence is referenced by document title here.",
+          "Quarterly privileged access review: operating. VPN-restricted production management ports: operating. September restore exercise: completed and signed."
+        ]
+      },
+      {
+        "heading": "Stage 1 preparation",
+        "paragraphs": [
+          "Stage 1 booking confirmed for 2026-11-12. This draft will be reconciled after September operating records are signed."
+        ]
+      }
+    ]
+  }
+}

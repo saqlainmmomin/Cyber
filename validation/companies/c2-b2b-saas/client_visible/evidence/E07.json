@@ -1,0 +1,72 @@
+{
+  "artifact_id": "E07",
+  "filename": "HRFlow-Supplier-Register-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Supplier register, quarter 3",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "The analytics export to PeopleSignal is enabled for enterprise tenants."
+    ],
+    "columns": [
+      "Supplier",
+      "Service",
+      "Data class",
+      "Processing region",
+      "Terms"
+    ],
+    "rows": [
+      [
+        "AWS India",
+        "hosting",
+        "employee records",
+        "Mumbai",
+        "signed 2026-02-03"
+      ],
+      [
+        "PeopleSignal",
+        "workforce analytics",
+        "employee events",
+        "Virginia, US",
+        "signed 2026-01-14"
+      ],
+      [
+        "MailSprout",
+        "mail",
+        "work email",
+        "Mumbai",
+        "signed 2026-04-08"
+      ],
+      [
+        "LedgerNest",
+        "billing",
+        "invoice contact",
+        "Mumbai",
+        "signed 2026-05-27"
+      ],
+      [
+        "ClearDesk",
+        "support",
+        "ticket extracts",
+        "Mumbai",
+        "contract review pending"
+      ],
+      [
+        "KeyLoop",
+        "SSO",
+        "staff identity",
+        "Mumbai",
+        "signed 2026-03-11"
+      ]
+    ],
+    "footer": [
+      "Supplier reassessment is due every twelve months."
+    ]
+  }
+}

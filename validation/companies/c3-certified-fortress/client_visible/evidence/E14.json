@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E14",
+  "filename": "Bharat-Youth-Wallet-Operating-Record.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Youth wallet operating record",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Population",
+        "paragraphs": [
+          "The supervised youth wallet serves 18,400 accounts. Age is checked against the verified account-holder record; parent challenge service returns a pass/fail record to the wallet app.",
+          "The September exception report lists BF-Y-017 and BF-Y-018 as approved accounts with missing parent challenge receipts. A manual follow-up request is open with customer service."
+        ]
+      },
+      {
+        "heading": "Safety",
+        "paragraphs": [
+          "No tracking, behavioural monitoring or targeted ads are enabled for youth accounts. Transaction limits and parent dashboards are active. The feature was reviewed by the child-safety committee on 2026-08-12."
+        ]
+      }
+    ]
+  }
+}

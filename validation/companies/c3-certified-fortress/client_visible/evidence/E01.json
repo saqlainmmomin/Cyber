@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E01",
+  "filename": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Certified ISMS summary",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Certification",
+        "paragraphs": [
+          "Certificate BF-ISMS-2026 covers payment processing, cloud operations and the Mumbai and Pune operations centres through 2027-03-31. The last independent surveillance found no major security nonconformities.",
+          "ISO privacy controls are supported by the security risk register, access governance and supplier-security clauses. This certification states no conclusion about the separate statutory privacy obligations of consumer-facing processing."
+        ]
+      },
+      {
+        "heading": "Operating proof",
+        "paragraphs": [
+          "Quarterly privilege reviews, encrypted backups, phishing-resistant MFA, JIT access and supplier penetration-test reports were sampled by the external auditor in August 2026. SIEM event logs are retained for 365 days and sampled weekly. Exception closure was independently checked."
+        ]
+      }
+    ]
+  }
+}

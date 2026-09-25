@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E09",
+  "filename": "Bharat-DPO-Appointment-and-Roles.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Privacy office appointment and roles",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Appointment",
+        "paragraphs": [
+          "The Board appointed Meera Rao as India-based Data Protection Officer effective 2026-04-01. She reports to the Board risk committee and has authority to request business records.",
+          "The privacy office has 1.5 FTE for rights operations, notice delivery and processing reviews. Security operations and the SOC retain their separate staffing."
+        ]
+      },
+      {
+        "heading": "Accountability",
+        "paragraphs": [
+          "The DPO signs quarterly grievance reports and consults on consent changes. The predecessor was the legal operations manager until 2026-03-31."
+        ]
+      }
+    ]
+  }
+}

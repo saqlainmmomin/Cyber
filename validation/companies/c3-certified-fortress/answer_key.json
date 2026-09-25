@@ -1,0 +1,584 @@
+{
+  "schema_version": 1,
+  "company_slug": "c3-certified-fortress",
+  "control_truth": {
+    "dpdpa": {
+      "default": "compliant",
+      "overrides": {
+        "CH2.CONSENT.1": "partially_compliant",
+        "BN.NOTIFY.1": "partially_compliant",
+        "CH2.SECURITY.3": "partially_compliant",
+        "CH2.MINIMIZE.2": "partially_compliant",
+        "CH3.ACCESS.1": "partially_compliant",
+        "CH3.GRIEVANCE.2": "partially_compliant",
+        "CH3.CORRECT.2": "partially_compliant",
+        "CH2.PURPOSE.2": "partially_compliant",
+        "CH2.CONSENT.2": "partially_compliant",
+        "CH2.NOTICE.2": "partially_compliant",
+        "CH2.CONSENT.5": "partially_compliant",
+        "CH4.SDF.3": "partially_compliant",
+        "CH3.GRIEVANCE.1": "compliant"
+      }
+    },
+    "iso27001": {
+      "default": "compliant",
+      "overrides": {
+        "ISO.A8.5": "compliant",
+        "ISO.A5.16": "compliant"
+      }
+    },
+    "nist_csf": {
+      "default": "compliant",
+      "overrides": {
+        "NIST.PR.AA.05": "compliant"
+      }
+    }
+  },
+  "planted_gaps": [
+    {
+      "gap_id": "G01",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.CONSENT.1"
+        }
+      ],
+      "gap_class": "cross_framework_divergence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "high",
+      "description": "Certified information security does not cure a bundled legacy consent action for wallet analytics.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "Legacy migration view: Continue with wallet and analytics"
+        },
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "legacy migration receipts retain the combined confirmation"
+        }
+      ],
+      "key_facts": [
+        "Legacy migration view: Continue with wallet and analytics",
+        "legacy migration receipts retain the combined confirmation"
+      ],
+      "what_followup_should_ask": "Show a legacy wallet user who declined analytics while retaining the wallet."
+    },
+    {
+      "gap_id": "G02",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "BN.NOTIFY.1"
+        }
+      ],
+      "gap_class": "cross_framework_divergence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "high",
+      "description": "Operational incident response is mature, but the statutory Board notification branch lacks an executable owner and clock.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "no Data Protection Board decision owner"
+        },
+        {
+          "source": "evidence:E11",
+          "locator": "record",
+          "fact": "Board submission was left in draft"
+        }
+      ],
+      "key_facts": [
+        "no Data Protection Board decision owner",
+        "Board submission was left in draft"
+      ],
+      "what_followup_should_ask": "Who owns Board submission and when does its clock start?"
+    },
+    {
+      "gap_id": "G03",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.SECURITY.3"
+        }
+      ],
+      "gap_class": "cross_framework_divergence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "high",
+      "description": "A supplier passed technical assurance yet the analytics contract omits processing instructions.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "processing instructions absent"
+        },
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "SignalPearl"
+        }
+      ],
+      "key_facts": [
+        "processing instructions absent",
+        "SignalPearl"
+      ],
+      "what_followup_should_ask": "Show the executed processing instructions for SignalPearl."
+    },
+    {
+      "gap_id": "G04",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.MINIMIZE.2"
+        }
+      ],
+      "gap_class": "cross_document",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 5,
+      "severity_expected": "high",
+      "description": "Primary wallet deletion leaves a shared analytics copy with no mapped expiry.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "30 days after closure"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "shared customer data lake"
+        },
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "indefinite until mapping complete"
+        }
+      ],
+      "key_facts": [
+        "30 days after closure",
+        "shared customer data lake",
+        "indefinite until mapping complete"
+      ],
+      "what_followup_should_ask": "Trace a closed legacy wallet into every downstream store."
+    },
+    {
+      "gap_id": "G05",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.ACCESS.1"
+        }
+      ],
+      "gap_class": "chained_dependency",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "The rights portal depends on identity mapping that covers only a small fraction of legacy accounts.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "dashboard view is available for accounts created after the 2024 migration"
+        },
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "identity mapping 5%"
+        }
+      ],
+      "key_facts": [
+        "dashboard view is available for accounts created after the 2024 migration",
+        "identity mapping 5%"
+      ],
+      "what_followup_should_ask": "Show a complete access summary for a pre-migration account."
+    },
+    {
+      "gap_id": "G06",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.GRIEVANCE.2"
+        }
+      ],
+      "gap_class": "temporal",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "The current officer is credited with an operating period before their appointment and queue creation.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "effective 2026-04-01"
+        },
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "38 cases closed in January-March 2026"
+        }
+      ],
+      "key_facts": [
+        "effective 2026-04-01",
+        "38 cases closed in January-March 2026"
+      ],
+      "what_followup_should_ask": "Who actually handled and measured first-quarter cases?"
+    },
+    {
+      "gap_id": "G07",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.CORRECT.2"
+        }
+      ],
+      "gap_class": "quantitative",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "Ticket closure counts erasure requests as completed while underlying legacy lookups remain open.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "14 erasure requests received, 14 resolved"
+        },
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "5 records remain in the legacy lookup queue"
+        }
+      ],
+      "key_facts": [
+        "14 erasure requests received, 14 resolved",
+        "5 records remain in the legacy lookup queue"
+      ],
+      "what_followup_should_ask": "Reconcile each closed ticket to confirmed deletion."
+    },
+    {
+      "gap_id": "G08",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.PURPOSE.2"
+        }
+      ],
+      "gap_class": "wrong_citation",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The consumer policy treats a foreign legitimate-interest ground as an Indian permitted use.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "legitimate interest under GDPR Article 6(1)(f)"
+        }
+      ],
+      "key_facts": [
+        "legitimate interest under GDPR Article 6(1)(f)"
+      ],
+      "what_followup_should_ask": "Which domestic ground permits the behavioural marketing use?"
+    },
+    {
+      "gap_id": "G09",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.CONSENT.2"
+        }
+      ],
+      "gap_class": "joint_impossibility",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "The claim of separate purpose choices cannot coexist with a single legacy confirmation and unrestricted lake feed.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "wallet and analytics combined"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "All legacy profile events are sent to the shared customer data lake"
+        }
+      ],
+      "key_facts": [
+        "wallet and analytics combined",
+        "All legacy profile events are sent to the shared customer data lake"
+      ],
+      "what_followup_should_ask": "Where is the separate legacy analytics choice recorded?"
+    },
+    {
+      "gap_id": "G10",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.NOTICE.2"
+        }
+      ],
+      "gap_class": "substance_over_form",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "medium",
+      "description": "Migration notices reached the new identity store, not the much larger pre-migration population.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "covering the accounts then in the new identity store"
+        },
+        {
+          "source": "evidence:E12",
+          "locator": "record",
+          "fact": "legacy wallet has 4.94 million customers"
+        }
+      ],
+      "key_facts": [
+        "covering the accounts then in the new identity store",
+        "legacy wallet has 4.94 million customers"
+      ],
+      "what_followup_should_ask": "Show delivery records for customers outside the new identity store."
+    },
+    {
+      "gap_id": "G11",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.CONSENT.5"
+        }
+      ],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "Two approved youth wallets lack the required parent challenge receipt.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E14",
+          "locator": "record",
+          "fact": "BF-Y-017"
+        },
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "parent challenge not recorded"
+        }
+      ],
+      "key_facts": [
+        "BF-Y-017",
+        "parent challenge not recorded"
+      ],
+      "what_followup_should_ask": "Provide the parent approval receipts for the two exception accounts."
+    },
+    {
+      "gap_id": "G12",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH4.SDF.3"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "planned",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The youth-wallet impact assessment has a scope but no completed assessment.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E13",
+          "locator": "record",
+          "fact": "No completed DPIA was available"
+        }
+      ],
+      "key_facts": [
+        "No completed DPIA was available"
+      ],
+      "what_followup_should_ask": "When was a signed impact assessment completed for the youth wallet?"
+    }
+  ],
+  "decoys": [
+    {
+      "decoy_id": "D01",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A8.5"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A historical credential weakness appears in the audit record.",
+      "why_it_is_compliant": "The corrective action was closed and independently retested before the October review.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E13",
+          "locator": "record",
+          "fact": "fixed and re-tested on 2026-01-18"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D02",
+      "requirements": [
+        {
+          "framework_id": "nist_csf",
+          "requirement_id": "NIST.PR.AA.05"
+        }
+      ],
+      "why_it_looks_like_a_gap": "Time-limited access may resemble excess production privilege.",
+      "why_it_is_compliant": "JIT grants are approved, expire and are audited under the certified access program.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "JIT access"
+        },
+        {
+          "source": "evidence:E13",
+          "locator": "record",
+          "fact": "independently checked against operation logs"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D03",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.GRIEVANCE.1"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A shared email inbox may look less formal than a dedicated portal.",
+      "why_it_is_compliant": "App and email cases receive ticket numbers and acknowledgement, and the officer has a named escalation role.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "App and email complaints receive a ticket number"
+        },
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "The DPO signs quarterly grievance reports"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D04",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.16"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A shared analytics lake may look like weak identity governance.",
+      "why_it_is_compliant": "The security identity controls govern privileged access to the lake; the privacy purpose issue is assessed separately.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "Quarterly privilege reviews"
+        },
+        {
+          "source": "evidence:E13",
+          "locator": "record",
+          "fact": "access, monitoring, backup and recovery practices"
+        }
+      ]
+    }
+  ],
+  "clean_controls": [
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.15",
+      "supporting_artifacts": [
+        "E01",
+        "E13"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.18",
+      "supporting_artifacts": [
+        "E01",
+        "E13"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A8.13",
+      "supporting_artifacts": [
+        "E03",
+        "E13"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A8.15",
+      "supporting_artifacts": [
+        "E03",
+        "E13"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.19",
+      "supporting_artifacts": [
+        "E04",
+        "E13"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.ID.RA.05",
+      "supporting_artifacts": [
+        "E02"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.RS.MA.01",
+      "supporting_artifacts": [
+        "E03"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.DS.11",
+      "supporting_artifacts": [
+        "E03"
+      ]
+    },
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.AA.03",
+      "supporting_artifacts": [
+        "E01"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH4.CHILD.1",
+      "supporting_artifacts": [
+        "E14"
+      ]
+    }
+  ],
+  "authoring_notes": "C3 deliberately has strong ISO and NIST operation. The privacy exceptions are separately scoped. The certified security program and remediated 2025 finding are genuine. No security evidence should be read as proof of a consumer privacy obligation."
+}

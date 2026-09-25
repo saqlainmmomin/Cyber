@@ -1,0 +1,84 @@
+{
+  "artifact_id": "E03",
+  "filename": "KiddieLearn-processor-register-Q3.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Processor register and agreements",
+  "consultant_maps_to": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.SECURITY.3"
+    }
+  ],
+  "render": {
+    "kind": "table",
+    "format": "png",
+    "degrade": "scan_light"
+  },
+  "content": {
+    "title": "Processor register, September 2026",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Owner: CTO. Last reconciliation 2026-09-25. Indian region is required by procurement for the listed services."
+    ],
+    "columns": [
+      "Processor",
+      "Service",
+      "Personal data",
+      "Contract status"
+    ],
+    "rows": [
+      [
+        "CloudNest India",
+        "Mumbai hosting",
+        "learner alias, progress",
+        "signed 2026-02-02"
+      ],
+      [
+        "MailSprout",
+        "transactional email",
+        "parent email",
+        "signed 2026-01-09"
+      ],
+      [
+        "PayRiver",
+        "payments",
+        "parent billing token",
+        "signed 2026-03-18"
+      ],
+      [
+        "HelpDeskly",
+        "support",
+        "ticket content",
+        "signed 2026-04-10"
+      ],
+      [
+        "ExamCanvas",
+        "lesson authoring",
+        "learner alias",
+        "signed 2026-05-19"
+      ],
+      [
+        "KidsAdNet",
+        "in-app recommendations",
+        "device identifier, lesson events",
+        "agreement in legal review"
+      ],
+      [
+        "MetricTree",
+        "product analytics",
+        "learner events",
+        "agreement in legal review"
+      ],
+      [
+        "BlueRelay",
+        "notifications",
+        "parent email",
+        "signed 2026-06-04"
+      ]
+    ],
+    "footer": [
+      "The two agreements in legal review do not contain the approved data-processing annex."
+    ]
+  }
+}

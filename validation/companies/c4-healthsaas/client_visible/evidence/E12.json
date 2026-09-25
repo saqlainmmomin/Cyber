@@ -1,0 +1,41 @@
+{
+  "artifact_id": "E12",
+  "filename": "HD-Identity-Monitoring-and-Recovery-Summary.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Identity, monitoring and recovery summary",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Identity",
+        "paragraphs": [
+          "Workforce SSO uses phishing-resistant MFA. Quarterly identity proofing samples were signed on 2026-09-20. The private management VLAN 10.44.8.0/24 reaches the bastion only after VPN and device posture checks."
+        ]
+      },
+      {
+        "heading": "Monitoring",
+        "paragraphs": [
+          "Network flow logs and cloud audit logs are retained for 365 days and reviewed by the 24x7 SOC. The 2026-09-20 parser verification succeeded for all connected production accounts."
+        ]
+      },
+      {
+        "heading": "Recovery",
+        "paragraphs": [
+          "Production patient telemetry volumes use AES-256 at rest under account-scoped KMS keys; encrypted backups run daily. The 2026-09-18 checksum-verified restore passed with 39-minute completion; a separate full continuity exercise is scheduled."
+        ]
+      },
+      {
+        "heading": "Historical exception",
+        "paragraphs": [
+          "A disconnected test container from 2025 carried a high scanner result. It was destroyed on 2026-01-12; closure evidence and the image digest are in the risk archive."
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "artifact_id": "E07",
+  "filename": "HD-BCP-DR-Test-Record-2026.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Continuity plan and restore test record",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Plan",
+        "paragraphs": [
+          "The current continuity plan v3 took effect on 2026-06-01. It requires the patient telemetry tier to recover within 60 minutes and lose at most 15 minutes of committed data.",
+          "The resilience dashboard labels the January 2026 exercise as proof of v3 operating effectiveness."
+        ]
+      },
+      {
+        "heading": "Exercise",
+        "paragraphs": [
+          "The 2026-01-15 exercise restored a staging database under plan v2. Its 48-minute result is retained as history. A production-tier v3 exercise is scheduled for 2026-11-05."
+        ]
+      },
+      {
+        "heading": "Backup sample",
+        "paragraphs": [
+          "An unrelated monthly encrypted snapshot restore on 2026-09-18 completed in 39 minutes, with checksum match and signed QA validation. This sample tested backup integrity, not the full failover runbook."
+        ]
+      }
+    ]
+  }
+}

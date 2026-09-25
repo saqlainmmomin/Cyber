@@ -1,0 +1,11 @@
+{
+  "slug": "c4-healthsaas",
+  "company_name": "HealthData Analytics",
+  "industry": "healthcare",
+  "company_size": "sme",
+  "engagement_name": "HealthData October 2026 CSF review",
+  "description": "US-headquartered remote patient monitoring analytics service with 408 staff, a Pune engineering center, AWS multi-account operations and a mature SOC 2 Type II program.",
+  "frameworks": [
+    "nist_csf"
+  ]
+}

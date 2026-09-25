@@ -1,0 +1,22 @@
+{
+  "artifact_id": "E05",
+  "filename": "KiddieLearn-incident-channel-2026-09.jpg",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "console",
+    "format": "jpg",
+    "degrade": "scan_light"
+  },
+  "content": {
+    "title": "Engineering incident channel export",
+    "lines": [
+      "2026-09-13 09:14 IST | Ananya, engineer | Export KL-843 remained in public storage for four hours before removal.",
+      "2026-09-13 09:25 IST | Ravi, CTO | Please record affected learner IDs in incident log 2026-09-13-01.",
+      "2026-09-13 10:07 IST | Ravi, CTO | The file was plaintext; private-bucket check did not run for this export.",
+      "2026-09-13 14:20 IST | Ananya | Public link disabled and access keys rotated.",
+      "2026-09-14 11:30 IST | Ravi | Parent notice draft retained with incident log; legal review pending.",
+      "2026-10-02 16:00 IST | Ravi | Board notification decision remains open; no submission reference is recorded."
+    ]
+  }
+}

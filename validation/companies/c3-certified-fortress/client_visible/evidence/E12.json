@@ -1,0 +1,65 @@
+{
+  "artifact_id": "E12",
+  "filename": "Bharat-Personal-Data-Inventory-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Customer data inventory",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Inventory refreshed 2026-09-26. New identity store has 260,000 customers; legacy wallet has 4.94 million customers."
+    ],
+    "columns": [
+      "Store",
+      "Cohort",
+      "Coverage",
+      "Owner",
+      "Retention"
+    ],
+    "rows": [
+      [
+        "wallet-core",
+        "new",
+        "100%",
+        "platform",
+        "30 days after closure"
+      ],
+      [
+        "rights-service",
+        "new",
+        "100%",
+        "privacy office",
+        "case schedule"
+      ],
+      [
+        "analytics-lake",
+        "all",
+        "legacy profiles included",
+        "data science",
+        "indefinite until mapping complete"
+      ],
+      [
+        "legacy-wallet",
+        "legacy",
+        "identity mapping 5%",
+        "migration team",
+        "unmapped"
+      ],
+      [
+        "archive",
+        "all",
+        "settlement extracts only",
+        "finance",
+        "statutory period"
+      ]
+    ],
+    "footer": [
+      "Legacy wallet mapping wave 4 is due 2026-12-15."
+    ]
+  }
+}

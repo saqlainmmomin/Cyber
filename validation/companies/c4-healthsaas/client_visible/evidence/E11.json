@@ -1,0 +1,31 @@
+{
+  "artifact_id": "E11",
+  "filename": "HD-Configuration-and-Risk-Review-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Configuration and risk review",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Configuration",
+        "paragraphs": [
+          "Baseline policy requires all managed endpoints to apply the approved hardening profile. September compliance dashboard shows 221 of 260 production endpoints passing; the steering report labels the baseline fully deployed.",
+          "Software maintenance tickets follow monthly change control; the August release review records 23 of 23 approved production changes."
+        ]
+      },
+      {
+        "heading": "Risk response",
+        "paragraphs": [
+          "The risk council met on 2026-09-25. Its decision log says remediation actions are complete for all critical scan findings, while the Security Hub dashboard retains two open critical findings.",
+          "The response selection for vulnerable telemetry export components is to patch, rather than accept or avoid."
+        ]
+      }
+    ]
+  }
+}

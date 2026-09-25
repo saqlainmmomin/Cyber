@@ -1,0 +1,376 @@
+{
+  "sections": [
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_002",
+          "guidance": "Look for an appointment record, role description, independence, reporting line, and evidence that the function is engaged in ongoing oversight rather than acting only on paper.",
+          "id": "CLUSTER_002",
+          "status": "active",
+          "text": "Has the organization formally assigned privacy and security responsibilities, including an empowered DPO or equivalent role where required?"
+        },
+        {
+          "cluster_id": "CLUSTER_001",
+          "guidance": "Look for board or management approval, named policy owners, review dates, implementation accountability, and evidence that the framework is communicated and enforced.",
+          "id": "CLUSTER_001",
+          "status": "active",
+          "text": "Does your organization maintain a documented privacy and information security governance framework, approved by leadership and reviewed on a defined cadence?"
+        },
+        {
+          "cluster_id": "CLUSTER_007",
+          "guidance": "Look for provisioning, modification, recertification, segregation of duties, and timely removal of access when users change roles or depart.",
+          "id": "CLUSTER_007",
+          "status": "active",
+          "text": "Does the organization manage identity lifecycle events and review access rights throughout joiner, mover, leaver, and role-change scenarios?"
+        },
+        {
+          "cluster_id": "CLUSTER_014",
+          "guidance": "Look for an approved response plan, roles, reporting channels, training or awareness, and evidence that employees know how to report incidents.",
+          "id": "CLUSTER_014",
+          "status": "active",
+          "text": "Does the organization maintain an incident response plan and require personnel to escalate security events through a defined reporting path?"
+        },
+        {
+          "cluster_id": "CLUSTER_022",
+          "guidance": "Look for named contact details, channel visibility, routing, triage ownership, and evidence that privacy grievances are received and logged rather than lost in general support.",
+          "id": "CLUSTER_022",
+          "status": "active",
+          "text": "Does the organization publish a usable privacy contact point and intake channel for complaints or data rights requests?"
+        },
+        {
+          "cluster_id": "CLUSTER_017",
+          "guidance": "Look for notification criteria, authority contact points, decision ownership, timelines, escalation workflow, and retained evidence of notifications made or decisions not to notify.",
+          "id": "CLUSTER_017",
+          "status": "active",
+          "text": "Can the organization determine when a breach must be reported to a regulator or supervisory authority and do so within the required timeframe?"
+        },
+        {
+          "cluster_id": "CLUSTER_035",
+          "guidance": "Look for a maintained risk register, threat intelligence sources, vulnerability identification, risk prioritization criteria, and evidence that response options are formally selected rather than ad hoc.",
+          "id": "CLUSTER_035",
+          "status": "active",
+          "text": "Does the organization maintain a formal risk register, identify threats and vulnerabilities on an ongoing basis, and select risk treatments based on documented criteria?"
+        },
+        {
+          "cluster_id": "CLUSTER_036",
+          "guidance": "Look for a training curriculum, completion tracking, role-specific content, refresher cadence, and evidence that training extends beyond a one-time onboarding event.",
+          "id": "CLUSTER_036",
+          "status": "active",
+          "text": "Does the organization run an ongoing security awareness program and provide role-based training for personnel who access systems or handle protected data?"
+        },
+        {
+          "cluster_id": "CLUSTER_033",
+          "guidance": "Look for acceptable-use rules, security responsibilities in employment terms, NDAs, acknowledgement records, and evidence that obligations are communicated before access is granted.",
+          "id": "CLUSTER_033",
+          "status": "active",
+          "text": "Are personnel and contracted users bound by documented acceptable-use, employment, and confidentiality obligations relevant to protecting information?"
+        },
+        {
+          "cluster_id": "CLUSTER_031",
+          "guidance": "Look for transfer inventories, destination mapping, contractual or legal safeguards, approved transfer routes, and restrictions on prohibited or unmanaged transfer patterns.",
+          "id": "CLUSTER_031",
+          "status": "active",
+          "text": "Does the organization know when personal data leaves the originating jurisdiction and apply documented transfer governance, safeguards, and localization controls where required?"
+        },
+        {
+          "cluster_id": "CLUSTER_004",
+          "guidance": "Look for audit plans, external or independent review reports, remediation tracking, and evidence that findings reach accountable leadership.",
+          "id": "CLUSTER_004",
+          "status": "active",
+          "text": "Does the organization perform independent assurance over its privacy and security control environment on a recurring basis?"
+        },
+        {
+          "cluster_id": "CLUSTER_051",
+          "guidance": "Look for documented organizational mission and context statements, identification of internal and external stakeholders, stated outcomes and priorities, and periodic review of whether risk management performance supports those priorities.",
+          "id": "CLUSTER_051",
+          "status": "active",
+          "text": "Does the organization understand its mission, stakeholders, and priorities well enough to direct cybersecurity risk management decisions, and is that direction reviewed for effectiveness?"
+        },
+        {
+          "cluster_id": "CLUSTER_003",
+          "guidance": "Look for project gates, DPIA criteria, completed assessments, risk treatment decisions, and evidence that privacy-by-design controls are embedded in delivery workflows.",
+          "id": "CLUSTER_003",
+          "status": "active",
+          "text": "Does the organization assess privacy risk during design and delivery of new processing activities, including conducting DPIAs where high-risk processing is identified?"
+        },
+        {
+          "cluster_id": "CLUSTER_005",
+          "guidance": "Look for a maintained asset or processing register, ownership assignments, system scope, and evidence that records are updated when processing changes.",
+          "id": "CLUSTER_005",
+          "status": "active",
+          "text": "Does the organization maintain an up-to-date inventory of processing activities, systems, and data assets that supports privacy and security governance?"
+        },
+        {
+          "cluster_id": "CLUSTER_010",
+          "guidance": "Look for onboarding due diligence, security questionnaires, risk tiering, approval criteria, and decision records for processors and suppliers.",
+          "id": "CLUSTER_010",
+          "status": "active",
+          "text": "Does the organization assess privacy and security risk before engaging processors, vendors, or suppliers that will handle personal data or support critical systems?"
+        },
+        {
+          "cluster_id": "CLUSTER_044",
+          "guidance": "Look for secure SDLC standards, code review practices, vulnerability remediation in custom software, change control records, and integrity checks on public-facing scripts.",
+          "id": "CLUSTER_044",
+          "status": "active",
+          "text": "Is security embedded throughout the software development lifecycle, including secure coding, change management, and protection of payment or customer-facing pages?"
+        }
+      ],
+      "section_id": "governance",
+      "title": "Governance & Accountability"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_020",
+          "guidance": "Look for layered notice design, intelligible language, publication points, and disclosure of identity, purposes, recipients, rights, retention, and key privacy contacts.",
+          "id": "CLUSTER_020",
+          "status": "active",
+          "text": "Does the organization provide a clear and accessible privacy notice at or before collection that explains the processing in plain language?"
+        },
+        {
+          "cluster_id": "CLUSTER_052",
+          "guidance": "Look for data minimization policies, collection justification documentation, and evidence that data fields are reviewed for necessity before collection. Check whether the organization can demonstrate that excessive or irrelevant data is not being collected.",
+          "id": "CLUSTER_052",
+          "status": "active",
+          "text": "Does the organization limit collection of personal data to what is necessary for the stated purpose, applying minimization principles at the point of data gathering?"
+        },
+        {
+          "cluster_id": "CLUSTER_021",
+          "guidance": "Look for retrospective notification workflows, indirect-collection notice triggers, timing rules, and evidence that notice reaches affected individuals when required.",
+          "id": "CLUSTER_021",
+          "status": "active",
+          "text": "Can the organization provide privacy notice when data was collected previously or obtained indirectly from another source?"
+        }
+      ],
+      "section_id": "data_protection",
+      "title": "Data Protection"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_032",
+          "guidance": "Look for age-threshold rules, parental authorization controls, child-specific restrictions, and evidence that elevated protections are enforced in practice rather than stated only in policy.",
+          "id": "CLUSTER_032",
+          "status": "active",
+          "text": "If the organization processes children's data, does it prevent harmful processing and verify age or parental authorization as required?"
+        },
+        {
+          "cluster_id": "CLUSTER_029",
+          "guidance": "Look for lawful-basis documentation, consent evidence, granular choice capture, refresh triggers, and controls preventing bundled or stale consent from being reused indefinitely.",
+          "id": "CLUSTER_029",
+          "status": "active",
+          "text": "Where consent is relied on, does the organization obtain it in a specific and granular way, keep records, and refresh or re-seek it when needed?"
+        },
+        {
+          "cluster_id": "CLUSTER_030",
+          "guidance": "Look for user-facing withdrawal controls, propagation of withdrawal, suppression of further processing, and evidence that consent preferences are synchronized rather than left fragmented.",
+          "id": "CLUSTER_030",
+          "status": "active",
+          "text": "Can individuals withdraw consent easily and, where used, is consent management implemented in an interoperable way across channels or processing contexts?"
+        },
+        {
+          "cluster_id": "CLUSTER_053",
+          "guidance": "Look for purpose-limitation policies, a register of legitimate-use cases under the relevant lawful basis, compatibility assessments for secondary uses, and evidence that processing outside the stated purpose is prevented or justified.",
+          "id": "CLUSTER_053",
+          "status": "active",
+          "text": "Does the organization ensure personal data is processed only for the purpose for which consent was obtained or a legitimate use applies, and document all legitimate-use cases?"
+        },
+        {
+          "cluster_id": "CLUSTER_023",
+          "guidance": "Look for intake, identity verification, retrieval workflow, response template, SLA tracking, and evidence that the organization can actually produce the requested information.",
+          "id": "CLUSTER_023",
+          "status": "active",
+          "text": "Can individuals request access to their personal data and receive the response through a defined, timely fulfillment process?"
+        },
+        {
+          "cluster_id": "CLUSTER_025",
+          "guidance": "Look for retention schedules, deletion triggers, technical execution steps, exception handling, system coverage, and evidence that data is deleted when no longer needed or when rights are exercised.",
+          "id": "CLUSTER_025",
+          "status": "active",
+          "text": "Does the organization enforce retention limits and execute deletion or erasure requests through documented workflows and technical controls?"
+        },
+        {
+          "cluster_id": "CLUSTER_024",
+          "guidance": "Look for correction workflow, ownership for data quality, validation steps, downstream updates, and records showing corrections are carried through affected systems.",
+          "id": "CLUSTER_024",
+          "status": "active",
+          "text": "Does the organization maintain processes to keep personal data accurate and to correct it when an individual or business owner identifies an error?"
+        },
+        {
+          "cluster_id": "CLUSTER_028",
+          "guidance": "Look for representation validation, export workflow, machine-readable output capability, and evidence that the organization can differentiate portability from ordinary access responses.",
+          "id": "CLUSTER_028",
+          "status": "active",
+          "text": "Can the organization respond when an individual or authorized representative seeks a portable copy of personal data or acts on the individual's behalf?"
+        }
+      ],
+      "section_id": "consent_rights",
+      "title": "Consent & Individual Rights"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_006",
+          "guidance": "Look for an access control policy, role definitions, approval workflow, least-privilege standards, and evidence that access is technically enforced.",
+          "id": "CLUSTER_006",
+          "status": "active",
+          "text": "Are logical access rules defined and enforced so users receive only the access needed for their role and risk profile?"
+        },
+        {
+          "cluster_id": "CLUSTER_008",
+          "guidance": "Look for password standards, MFA, secure credential storage, rotation or recovery controls, and explicit handling guidance for privileged or high-risk accounts.",
+          "id": "CLUSTER_008",
+          "status": "active",
+          "text": "Are authentication methods and credential handling practices designed to prevent unauthorized access to systems that process personal data?"
+        },
+        {
+          "cluster_id": "CLUSTER_041",
+          "guidance": "Look for encryption standards, key management practices, transmission protection, integrity verification mechanisms, and evidence that protections are applied consistently across storage and transit.",
+          "id": "CLUSTER_041",
+          "status": "active",
+          "text": "Is sensitive data protected with appropriate cryptographic controls wherever it is stored or transmitted, and are integrity controls applied to detect unauthorized alteration?"
+        },
+        {
+          "cluster_id": "CLUSTER_039",
+          "guidance": "Look for anti-malware deployment coverage, signature or behavior update cadence, anti-phishing mechanisms, and evidence that protections remain active and aren't disabled by end users.",
+          "id": "CLUSTER_039",
+          "status": "active",
+          "text": "Are anti-malware and anti-phishing controls deployed and maintained across endpoints and systems that process protected data?"
+        },
+        {
+          "cluster_id": "CLUSTER_009",
+          "guidance": "Look for privileged access criteria, break-glass control, approval and logging, source code restrictions, and controls over utility or administrative tooling.",
+          "id": "CLUSTER_009",
+          "status": "active",
+          "text": "Are privileged, administrative, and source-code-related access pathways tightly restricted, monitored, and justified?"
+        },
+        {
+          "cluster_id": "CLUSTER_045",
+          "guidance": "Look for facility access control mechanisms, visitor management, workstation physical security, and monitoring of physical access to areas holding sensitive systems or media.",
+          "id": "CLUSTER_045",
+          "status": "active",
+          "text": "Are physical access controls in place to protect facilities, workstations, and media that hold sensitive or regulated data?"
+        }
+      ],
+      "section_id": "security",
+      "title": "Information Security Controls"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_018",
+          "guidance": "Look for risk assessment, message templates, approval path, delivery channels, and records of when individual notification is triggered or suppressed with justification.",
+          "id": "CLUSTER_018",
+          "status": "active",
+          "text": "Does the organization have a process to notify affected individuals when a personal data breach creates material risk to them?"
+        },
+        {
+          "cluster_id": "CLUSTER_015",
+          "guidance": "Look for severity criteria, decision logs, containment playbooks, responder roles, and records showing that incidents move from detection to action without delay.",
+          "id": "CLUSTER_015",
+          "status": "active",
+          "text": "Does the organization triage security events promptly and execute documented response actions to contain and manage confirmed incidents?"
+        },
+        {
+          "cluster_id": "CLUSTER_019",
+          "guidance": "Look for resilience objectives, continuity plans, failover or recovery testing, and evidence that critical services can continue or recover in a controlled manner.",
+          "id": "CLUSTER_019",
+          "status": "active",
+          "text": "Are systems and processes designed to remain resilient and recoverable during security incidents or service disruptions?"
+        },
+        {
+          "cluster_id": "CLUSTER_016",
+          "guidance": "Look for incident logs, evidence preservation guidance, post-incident reviews, corrective actions, and a maintained breach or incident register.",
+          "id": "CLUSTER_016",
+          "status": "active",
+          "text": "Does the organization preserve incident evidence, maintain a breach register, and feed lessons learned back into control improvements?"
+        }
+      ],
+      "section_id": "incident_response",
+      "title": "Incident Response & Breach Notification"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "CLUSTER_046",
+          "guidance": "Look for monitoring tooling coverage, alert correlation, anomaly baselines, wireless access point discovery, and evidence that detections lead to timely follow-up.",
+          "id": "CLUSTER_046",
+          "status": "active",
+          "text": "Does the organization continuously monitor for security events, detect anomalies, and correlate signals across network, endpoint, wireless, and external-service environments?"
+        },
+        {
+          "cluster_id": "CLUSTER_042",
+          "guidance": "Look for log generation coverage, retention periods, tamper-protection, review cadence, time synchronization, and evidence that anomalies surfaced in logs are followed up.",
+          "id": "CLUSTER_042",
+          "status": "active",
+          "text": "Are audit logs generated, protected from tampering, and reviewed regularly across systems that process sensitive or regulated data?"
+        },
+        {
+          "cluster_id": "CLUSTER_040",
+          "guidance": "Look for network diagrams, segmentation boundaries, firewall/NSC rule reviews, restrictions on connections to untrusted networks, and evidence that the perimeter is actively maintained.",
+          "id": "CLUSTER_040",
+          "status": "active",
+          "text": "Are network security controls and segmentation in place to restrict access paths into environments that process sensitive or regulated data?"
+        },
+        {
+          "cluster_id": "CLUSTER_043",
+          "guidance": "Look for vulnerability scanning cadence, remediation SLAs by severity, penetration testing scope and frequency, and evidence that findings are tracked through to closure.",
+          "id": "CLUSTER_043",
+          "status": "active",
+          "text": "Does the organization identify, prioritize, and remediate vulnerabilities in systems and applications, including through recurring penetration testing?"
+        },
+        {
+          "cluster_id": "CLUSTER_034",
+          "guidance": "Look for classification scheme, labelling standards, media handling procedures, secure disposal evidence, and alignment between classification and operational handling rules.",
+          "id": "CLUSTER_034",
+          "status": "active",
+          "text": "Does the organization classify and label information appropriately and handle storage media and equipment disposal in a way that prevents unauthorized disclosure?"
+        },
+        {
+          "cluster_id": "CLUSTER_013",
+          "guidance": "Look for periodic review cadence, change notifications, performance and control monitoring, cloud governance, and reassessment of third-party security posture.",
+          "id": "CLUSTER_013",
+          "status": "active",
+          "text": "Are suppliers, cloud services, and externally managed network services monitored and reviewed throughout the relationship?"
+        },
+        {
+          "cluster_id": "CLUSTER_047",
+          "guidance": "Look for recovery plan execution records, verification steps confirming systems are fully restored, mission-function prioritization, and communications issued during and after recovery.",
+          "id": "CLUSTER_047",
+          "status": "active",
+          "text": "Does the organization execute structured recovery from incidents, verify restoration, and communicate recovery status internally and externally as needed?"
+        },
+        {
+          "cluster_id": "CLUSTER_011",
+          "guidance": "Look for DPAs or equivalent clauses covering instructions, confidentiality, safeguards, breach duties, audit rights, deletion or return, and subcontracting restrictions.",
+          "id": "CLUSTER_011",
+          "status": "active",
+          "text": "Are supplier and processor contracts documented with the privacy and security terms needed to govern personal data processing?"
+        },
+        {
+          "cluster_id": "CLUSTER_038",
+          "guidance": "Look for hardening standards, baseline configuration documents, vendor default account remediation, wireless configuration controls, and evidence baselines are kept current as systems change.",
+          "id": "CLUSTER_038",
+          "status": "active",
+          "text": "Are systems, software, and network components configured to documented secure baselines, with vendor defaults changed and unnecessary functionality removed?"
+        },
+        {
+          "cluster_id": "CLUSTER_012",
+          "guidance": "Look for approval of sub-processors, flow-down obligations, supplier chain visibility, and governance over outsourced engineering or service delivery.",
+          "id": "CLUSTER_012",
+          "status": "active",
+          "text": "Does the organization govern extended supply-chain risk, including sub-processors and outsourced development arrangements?"
+        },
+        {
+          "cluster_id": "SINGLE.ISO.A5.32",
+          "guidance": "The organization shall implement appropriate procedures to protect intellectual property rights.",
+          "id": "SINGLE.ISO.A5.32",
+          "status": "active",
+          "text": "Has your organization implemented intellectual property rights? (Annex A.5.32)"
+        }
+      ],
+      "section_id": "other",
+      "title": "Other Controls"
+    }
+  ]
+}

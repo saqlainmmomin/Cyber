@@ -1,0 +1,38 @@
+{
+  "artifact_id": "E01",
+  "filename": "KiddieLearn-Privacy-Notice-v2.docx",
+  "category": "privacy_policy",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "docx",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "KiddieLearn Privacy Notice v2",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Collection and purpose",
+        "paragraphs": [
+          "Effective 18 August 2026. We collect a learner alias, school year and parent email to deliver lessons and progress reports. The signup page presents separate lesson and optional research choices.",
+          "For optional recommendation profiling we rely on GDPR legitimate interest under Article 6(1)(f). The same basis is printed in the parent-facing notice.",
+          "We retain lesson accounts for 90 days after closure. Parent emails remain for service messages until closure. Please see the deletion register for completed purges."
+        ]
+      },
+      {
+        "heading": "Rights and contacts",
+        "paragraphs": [
+          "Parents may request correction or erasure using privacy@kiddielearn.example; the support queue records the ticket and completion date. A grievance may be sent to the same address and is acknowledged within two working days.",
+          "The access-request page says a summary of data held is returned through the parent dashboard. The dashboard export currently lists account profile fields only."
+        ]
+      },
+      {
+        "heading": "Governance",
+        "paragraphs": [
+          "A parent may request that another adult manage the account after incapacity. The release is scheduled for 15 November 2026; the current account page has no nomination field."
+        ]
+      }
+    ]
+  }
+}

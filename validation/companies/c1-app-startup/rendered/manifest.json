@@ -1,0 +1,32 @@
+{
+  "KiddieLearn-Privacy-Notice-v2.docx": {
+    "artifact_id": "E01",
+    "sha256": "2dcc8281276e1a6ec8edeaa7e68d88c4170efe72e40803812097dcb2d520a9fd",
+    "text": "KiddieLearn Privacy Notice v2\nIssued for October 2026 desk review\nCollection and purpose\nEffective 18 August 2026. We collect a learner alias, school year and parent email to deliver lessons and progress reports. The signup page presents separate lesson and optional research choices.\nFor optional recommendation profiling we rely on GDPR legitimate interest under Article 6(1)(f). The same basis is printed in the parent-facing notice.\nWe retain lesson accounts for 90 days after closure. Parent emails remain for service messages until closure. Please see the deletion register for completed purges.\nRights and contacts\nParents may request correction or erasure using privacy@kiddielearn.example; the support queue records the ticket and completion date. A grievance may be sent to the same address and is acknowledged within two working days.\nThe access-request page says a summary of data held is returned through the parent dashboard. The dashboard export currently lists account profile fields only.\nGovernance\nA parent may request that another adult manage the account after incapacity. The release is scheduled for 15 November 2026; the current account page has no nomination field."
+  },
+  "KiddieLearn-Security-Standard-2026.pdf": {
+    "artifact_id": "E04",
+    "sha256": "4c1b832017348bc57dd601798a56a391eaebf6b67b80eebb9b2a794f9ac32a27",
+    "text": "Engineering security and retention standard\nIssued for October 2026 desk review\nAccess and storage\nThe production database uses service-managed encryption at rest. Production exports must use encrypted private buckets and be deleted within 24 hours. The CTO approves engineer access monthly.\nThe lesson feature collects learner alias, school year and parent email. The support form also stores free-text teacher notes and birth month, which are not needed for lesson delivery.\nRetention\nInactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed, 35 remain in the retry queue. The dashboard reports the 91 completions only.\nThe processor copy held by MetricTree has no deletion job yet. The next integration sprint is scheduled for November 2026.\nIncident handling\nThe CTO triages security events, keeps an incident log and calls the parent-contact owner for affected accounts. A response checklist and escalation rota were approved on 2026-07-08."
+  },
+  "KiddieLearn-incident-channel-2026-09.jpg": {
+    "artifact_id": "E05",
+    "sha256": "dee80fa410aea1742f6adc5c08ee0e3100e11ebab6540c4a15329dcfe6c0cc84",
+    "text": "Engineering incident channel export\n2026-09-13 09:14 IST | Ananya, engineer | Export KL-843 remained in public storage for four hours before removal.\n2026-09-13 09:25 IST | Ravi, CTO | Please record affected learner IDs in incident log 2026-09-13-01.\n2026-09-13 10:07 IST | Ravi, CTO | The file was plaintext; private-bucket check did not run for this export.\n2026-09-13 14:20 IST | Ananya | Public link disabled and access keys rotated.\n2026-09-14 11:30 IST | Ravi | Parent notice draft retained with incident log; legal review pending.\n2026-10-02 16:00 IST | Ravi | Board notification decision remains open; no submission reference is recorded."
+  },
+  "KiddieLearn-processor-register-Q3.png": {
+    "artifact_id": "E03",
+    "sha256": "f2add4d74f1ee29480a41e75cde7b4a5cf796c40633e401328c250577518428e",
+    "text": "Processor register, September 2026\nExported for October 2026 review\nOwner: CTO. Last reconciliation 2026-09-25. Indian region is required by procurement for the listed services.\nProcessor\nService\nPersonal data\nContract status\nCloudNest India\nMumbai hosting\nlearner alias, progress\nsigned 2026-02-02\nMailSprout\ntransactional email\nparent email\nsigned 2026-01-09\nPayRiver\npayments\nparent billing token\nsigned 2026-03-18\nHelpDeskly\nsupport\nticket content\nsigned 2026-04-10\nExamCanvas\nlesson authoring\nlearner alias\nsigned 2026-05-19\nKidsAdNet\nin-app recommendations\ndevice identifier, lesson events\nagreement in legal review\nMetricTree\nproduct analytics\nlearner events\nagreement in legal review\nBlueRelay\nnotifications\nparent email\nsigned 2026-06-04\nThe two agreements in legal review do not contain the approved data-processing annex."
+  },
+  "KiddieLearn-rights-and-retention-log.pdf": {
+    "artifact_id": "E06",
+    "sha256": "52ebe84809d5ed1f68e81000c05ae220479dfc25f7cdfdb2a5fb190103937cf9",
+    "text": "Rights and retention worklist\nExported for October 2026 review\nWorklist exported 2026-10-02. Access export omits lesson events and recommendation identifiers.\nRecord\nReceived\nScope\nState\nOwner\nR-101\n2026-08-03\nparent correction\ncompleted 2026-08-05\nsupport\nR-102\n2026-08-09\naccount erasure\ncompleted 2026-08-14\nsupport\nR-103\n2026-09-02\nparent access request\nprofile export only\nsupport\nR-104\n2026-09-17\nparent access request\nprofile export only\nsupport\nR-105\n2026-09-22\ngrievance\nacknowledged 2026-09-23\nCTO\nR-106\n2026-09-30\ndeletion batch\n35 retry items open\nCTO\nA 2026-08 correction and erasure sample was rechecked against the app database."
+  },
+  "KiddieLearn-signup-consent.png": {
+    "artifact_id": "E02",
+    "sha256": "40bfc75ef68a0842c1ee4e0d14841a5df65a2b993d17459a70495ea1852e95b3",
+    "text": "KiddieLearn signup and parent verification capture\nCapture 2026-09-22 build 4.8.1; learner age entry: 9; parent email: parent@example.test\nLearner step: enter birth year; no independent age check is performed.\nParent step: one-time link to parent mailbox; link challenge 6 digits, expires after 10 minutes.\nLesson delivery [selected by parent]  Optional research [separate unchecked box]\nSession token for parent approval stored with version 4.8.1 and UTC timestamp; parent billing token is matched to the account holder.\nOptional research can be switched off in parent settings; the research SDK stops receiving new events immediately.\nAnalytics SDK: KidsAdNet child-device event stream enabled on the learner home screen.\nRequest correction and close account buttons are visible in parent settings.\nNominate another adult: planned for November release."
+  }
+}

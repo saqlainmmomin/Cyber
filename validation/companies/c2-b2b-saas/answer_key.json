@@ -1,0 +1,524 @@
+{
+  "schema_version": 1,
+  "company_slug": "c2-b2b-saas",
+  "control_truth": {
+    "dpdpa": {
+      "default": "compliant",
+      "overrides": {
+        "BN.NOTIFY.1": "partially_compliant",
+        "CB.TRANSFER.1": "partially_compliant",
+        "CH2.MINIMIZE.2": "partially_compliant",
+        "CH3.ACCESS.1": "partially_compliant"
+      }
+    },
+    "iso27001": {
+      "default": "compliant",
+      "overrides": {
+        "ISO.A5.18": "partially_compliant",
+        "ISO.A8.20": "partially_compliant",
+        "ISO.A5.7": "partially_compliant",
+        "ISO.A5.23": "partially_compliant",
+        "ISO.A5.36": "partially_compliant",
+        "ISO.A5.8": "partially_compliant",
+        "ISO.A5.11": "partially_compliant",
+        "ISO.A5.20": "partially_compliant",
+        "ISO.A5.15": "compliant",
+        "ISO.A8.2": "compliant",
+        "ISO.A5.16": "compliant"
+      }
+    }
+  },
+  "planted_gaps": [
+    {
+      "gap_id": "G01",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.18"
+        }
+      ],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "A quarterly review retained active privileged identities after documented departures.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "HR exit 2026-08-12; account active 2026-09-30"
+        },
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "contract ended 2026-07-31; account active 2026-09-30"
+        }
+      ],
+      "key_facts": [
+        "HR exit 2026-08-12; account active 2026-09-30",
+        "contract ended 2026-07-31; account active 2026-09-30"
+      ],
+      "what_followup_should_ask": "Show disablement events for the two departed principals."
+    },
+    {
+      "gap_id": "G02",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A8.20"
+        }
+      ],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "A production bastion accepts public SSH despite a VPN-only network rule.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "rule 17 allow tcp 22 from 0.0.0.0/0 to prod-bastion"
+        },
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "management SSH only from corporate VPN"
+        }
+      ],
+      "key_facts": [
+        "rule 17 allow tcp 22 from 0.0.0.0/0 to prod-bastion",
+        "management SSH only from corporate VPN"
+      ],
+      "what_followup_should_ask": "What approved exception permits the public bastion rule?"
+    },
+    {
+      "gap_id": "G03",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.7"
+        }
+      ],
+      "gap_class": "stale_evidence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The current threat-intelligence conclusion rests on a 2024 review carried into the 2026 register.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "2024-04-15"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "without a fresh analysis"
+        }
+      ],
+      "key_facts": [
+        "2024-04-15",
+        "without a fresh analysis"
+      ],
+      "what_followup_should_ask": "Provide the 2026 threat-intelligence reassessment."
+    },
+    {
+      "gap_id": "G04",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.23"
+        }
+      ],
+      "gap_class": "scope_coverage",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "Cloud-service security oversight covers corporate systems but omits the live production accounts.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "AWS Mumbai production accounts"
+        },
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "excluded from the Stage 1 boundary"
+        }
+      ],
+      "key_facts": [
+        "AWS Mumbai production accounts",
+        "excluded from the Stage 1 boundary"
+      ],
+      "what_followup_should_ask": "Show the cloud-control review covering the production accounts."
+    },
+    {
+      "gap_id": "G05",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "BN.NOTIFY.1"
+        }
+      ],
+      "gap_class": "chained_dependency",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The incident procedure delegates statutory decisions to an unavailable matrix.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "Breach Notification Matrix BNM-02"
+        },
+        {
+          "source": "evidence:E09",
+          "locator": "record",
+          "fact": "awaiting owner approval"
+        }
+      ],
+      "key_facts": [
+        "Breach Notification Matrix BNM-02",
+        "awaiting owner approval"
+      ],
+      "what_followup_should_ask": "Show the approved matrix and the last decision made under it."
+    },
+    {
+      "gap_id": "G06",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CB.TRANSFER.1"
+        }
+      ],
+      "gap_class": "cross_document",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "A live US analytics flow contradicts the notice’s India-only data statement.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "Virginia, US"
+        },
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "All customer employee data remains in India"
+        }
+      ],
+      "key_facts": [
+        "Virginia, US",
+        "All customer employee data remains in India"
+      ],
+      "what_followup_should_ask": "Which employee fields are sent to PeopleSignal and on what transfer basis?"
+    },
+    {
+      "gap_id": "G07",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.36"
+        }
+      ],
+      "gap_class": "temporal",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The recorded September compliance review names a reviewer before their appointment began.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "2026-09-20"
+        },
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "appointment took effect on 2026-10-03"
+        }
+      ],
+      "key_facts": [
+        "2026-09-20",
+        "appointment took effect on 2026-10-03"
+      ],
+      "what_followup_should_ask": "Who actually performed the September review?"
+    },
+    {
+      "gap_id": "G08",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.MINIMIZE.2"
+        }
+      ],
+      "gap_class": "cross_framework_divergence",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 4,
+      "severity_expected": "high",
+      "description": "A security records retention rule is being applied wholesale to personal data after tenant closure.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "retains all personal data for ten years"
+        },
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "including closed tenant exports"
+        }
+      ],
+      "key_facts": [
+        "retains all personal data for ten years",
+        "including closed tenant exports"
+      ],
+      "what_followup_should_ask": "What purpose or legal basis supports ten years for closed tenant exports?"
+    },
+    {
+      "gap_id": "G09",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.ACCESS.1"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "The access request path has no employee self-service channel and relies on ad hoc account support.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E08",
+          "locator": "record",
+          "fact": "employee self-service access channel is planned for 2027"
+        }
+      ],
+      "key_facts": [
+        "employee self-service access channel is planned for 2027"
+      ],
+      "what_followup_should_ask": "Show an employee request and the complete summary returned."
+    },
+    {
+      "gap_id": "G10",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.8"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "A production project launched before its required security review.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "went live on 2026-07-12"
+        },
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "deferred until 2026-11-15"
+        }
+      ],
+      "key_facts": [
+        "went live on 2026-07-12",
+        "deferred until 2026-11-15"
+      ],
+      "what_followup_should_ask": "Show the pre-launch security review for Project Beacon."
+    },
+    {
+      "gap_id": "G11",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.11"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "One departing employee’s assigned device has not been returned.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "The eighth, departure 2026-09-26, remains pending"
+        }
+      ],
+      "key_facts": [
+        "The eighth, departure 2026-09-26, remains pending"
+      ],
+      "what_followup_should_ask": "Where is the last departing employee’s device?"
+    },
+    {
+      "gap_id": "G12",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.20"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "A supplier with support access has terms awaiting review.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E07",
+          "locator": "record",
+          "fact": "contract review pending"
+        }
+      ],
+      "key_facts": [
+        "contract review pending"
+      ],
+      "what_followup_should_ask": "What executed security terms cover ClearDesk?"
+    }
+  ],
+  "decoys": [
+    {
+      "decoy_id": "D01",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.15"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A temporary production-admin grant could appear to bypass standing access policy.",
+      "why_it_is_compliant": "The policy expressly allows time-limited approved elevation and the event record confirms its expiry.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "JIT elevation is permitted"
+        },
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "expired after 60 minutes"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D02",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A8.2"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A named engineer received production admin privileges.",
+      "why_it_is_compliant": "A grant was individually approved, time-limited and logged rather than being standing access.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "JIT production-admin grant"
+        },
+        {
+          "source": "evidence:E10",
+          "locator": "record",
+          "fact": "SIEM retained the approval event"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D03",
+      "requirements": [
+        {
+          "framework_id": "iso27001",
+          "requirement_id": "ISO.A5.16"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A principal who left payroll remains present in the review.",
+      "why_it_is_compliant": "The same row records immediate contractor conversion and an approved sponsor, so the identity remains authorised.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "contractor conversion 2026-05-03; sponsor approved"
+        }
+      ]
+    }
+  ],
+  "clean_controls": [
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A8.13",
+      "supporting_artifacts": [
+        "E10"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A8.24",
+      "supporting_artifacts": [
+        "E10"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.24",
+      "supporting_artifacts": [
+        "E09"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.25",
+      "supporting_artifacts": [
+        "E09"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.26",
+      "supporting_artifacts": [
+        "E09"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.5",
+      "supporting_artifacts": [
+        "E09"
+      ]
+    },
+    {
+      "framework_id": "iso27001",
+      "requirement_id": "ISO.A5.9",
+      "supporting_artifacts": [
+        "E10"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.NOTICE.3",
+      "supporting_artifacts": [
+        "E08"
+      ]
+    }
+  ],
+  "authoring_notes": "C2 is preparing for a real Stage 1 review. The backup restoration is complete; do not infer a gap from every exception-looking row. Access leavers and a documented contractor conversion are distinct."
+}

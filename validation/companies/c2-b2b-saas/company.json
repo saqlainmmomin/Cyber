@@ -1,0 +1,12 @@
+{
+  "slug": "c2-b2b-saas",
+  "company_name": "HRFlow India",
+  "industry": "it_services",
+  "company_size": "sme",
+  "engagement_name": "HRFlow October 2026 dual-framework review",
+  "description": "Mumbai HR workflow SaaS with 254 staff and a three-person security team. AWS Mumbai production, a part-time privacy officer and a Stage 1 ISO audit booked for November 2026.",
+  "frameworks": [
+    "dpdpa",
+    "iso27001"
+  ]
+}

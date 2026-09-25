@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E03",
+  "filename": "Bharat-SOC-Runbook-and-Metrics.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "SOC incident runbook v5",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Execution",
+        "paragraphs": [
+          "The 24x7 SOC triages high-severity alerts in 11 minutes median, confirms containment in 42 minutes median and preserves forensic hashes. The 2026-08 ransomware tabletop met all NIST response steps.",
+          "The external communications branch opens a customer-communications ticket after legal approves language. The runbook has no Data Protection Board decision owner or board-notification clock."
+        ]
+      },
+      {
+        "heading": "Recovery",
+        "paragraphs": [
+          "A monthly recovery sample restores encrypted production snapshots and verifies record counts and checksums. September sample BF-09 restored in 38 minutes against a 60-minute target."
+        ]
+      }
+    ]
+  }
+}

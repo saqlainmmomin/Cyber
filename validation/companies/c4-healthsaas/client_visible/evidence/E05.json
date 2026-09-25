@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E05",
+  "filename": "HD-Incident-Response-Plan-v3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Incident response plan v3",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Detection and escalation",
+        "paragraphs": [
+          "The SOC triages high-confidence alerts within 20 minutes and opens a commander bridge for severity one events. The commander, forensic lead, clinical operations liaison and communications lead have named duties. Patient-safety and customer operations leads are paged after severity confirmation.",
+          "The incident commander records scope, containment, evidence hashes and hand-off to recovery. Tabletop observations feed the next monthly control review."
+        ]
+      },
+      {
+        "heading": "Communication",
+        "paragraphs": [
+          "The internal call tree is tested quarterly. External messages use approved customer communication templates. The Pune clinical-operations paging group is not included in the current internal notification connector."
+        ]
+      }
+    ]
+  }
+}

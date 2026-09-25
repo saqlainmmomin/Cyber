@@ -1,0 +1,65 @@
+{
+  "artifact_id": "E06",
+  "filename": "HRFlow-Risk-and-Threat-Register.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Risk and threat register extract",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Risk register approved 2026-09-25. Threat-intelligence row T-03 is carried forward without a fresh analysis."
+    ],
+    "columns": [
+      "ID",
+      "Description",
+      "Owner",
+      "Last reviewed",
+      "Response"
+    ],
+    "rows": [
+      [
+        "R-01",
+        "AWS account compromise",
+        "Mira Sen",
+        "2026-09-22",
+        "MFA and JIT"
+      ],
+      [
+        "R-02",
+        "HR data export",
+        "Mira Sen",
+        "2026-09-22",
+        "egress alert"
+      ],
+      [
+        "T-03",
+        "credential-stuffing campaign",
+        "SOC lead",
+        "2024-04-15",
+        "monthly watch"
+      ],
+      [
+        "R-04",
+        "supplier outage",
+        "Ops lead",
+        "2026-08-03",
+        "restore drill"
+      ],
+      [
+        "R-05",
+        "unauthorised access",
+        "Mira Sen",
+        "2026-09-19",
+        "access review"
+      ]
+    ],
+    "footer": [
+      "Security committee meets monthly."
+    ]
+  }
+}
