@@ -619,6 +619,22 @@ def _run_multi_framework_analysis(
                     usage,
                 )
 
+            if not isinstance(parsed, dict) or not isinstance(
+                parsed.get("assessments"), list
+            ):
+                logger.warning(
+                    "Gap analysis batch %s/%s for %s returned an invalid response shape; retrying",
+                    batch.index,
+                    batch.count,
+                    fw_id,
+                )
+                return (
+                    {"executive_summary": "", "assessments": []},
+                    frozenset(scoped_ids),
+                    raw_text,
+                    usage,
+                )
+
             validated, missing = validate_partial(parsed, set(scoped_ids))
             return validated, missing, raw_text, usage
 

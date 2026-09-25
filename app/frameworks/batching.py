@@ -1,4 +1,11 @@
-"""Deterministic control batching for large registry-defined frameworks."""
+"""Deterministic control batching for large registry-defined frameworks.
+
+Sections are packed within each domain first. After that pass, any singleton
+batch is merged into the preceding batch even when that crosses a domain
+boundary; a singleton first batch is merged into the following batch instead.
+This keeps every usable batch large enough for the desk-review prompt while
+preserving framework-definition control order and deterministic labels.
+"""
 
 from __future__ import annotations
 
@@ -32,6 +39,33 @@ def _merge_batches(first: dict, second: dict) -> dict:
         "section_keys": section_keys,
         "control_ids": first["control_ids"] + second["control_ids"],
     }
+
+
+def _prepend_batch(singleton: dict, following: dict) -> dict:
+    section_keys = list(singleton["section_keys"])
+    for section_key in following["section_keys"]:
+        if section_key not in section_keys:
+            section_keys.append(section_key)
+    return {
+        "domain_key": following["domain_key"],
+        "section_keys": section_keys,
+        "control_ids": singleton["control_ids"] + following["control_ids"],
+    }
+
+
+def _merge_singleton_batches(batches: list[dict]) -> list[dict]:
+    index = 0
+    while index < len(batches):
+        if len(batches[index]["control_ids"]) != 1 or len(batches) == 1:
+            index += 1
+            continue
+        if index == 0:
+            batches[index + 1] = _prepend_batch(batches[index], batches[index + 1])
+            batches.pop(index)
+        else:
+            batches[index - 1] = _merge_batches(batches[index - 1], batches[index])
+            batches.pop(index)
+    return batches
 
 
 def _domain_batches(domain_key: str, sections, max_controls: int) -> list[dict]:
@@ -68,22 +102,6 @@ def _domain_batches(domain_key: str, sections, max_controls: int) -> list[dict]:
     if current:
         batches.append(current)
 
-    # A singleton batch is not usable by the desk-review prompt. Keep the
-    # merge within this domain so batches never cross a domain boundary.
-    index = 0
-    while index < len(batches):
-        if len(batches[index]["control_ids"]) != 1 or len(batches) == 1:
-            index += 1
-            continue
-        if index > 0:
-            batches[index - 1] = _merge_batches(batches[index - 1], batches[index])
-            batches.pop(index)
-        elif index + 1 < len(batches):
-            batches[index + 1] = _merge_batches(batches[index], batches[index + 1])
-            batches.pop(index)
-        else:
-            index += 1
-
     return batches
 
 
@@ -100,6 +118,7 @@ def control_batches(framework_id: str) -> tuple[ControlBatch, ...]:
     raw_batches: list[dict] = []
     for domain_key, domain in framework.domains.items():
         raw_batches.extend(_domain_batches(domain_key, domain.sections, max_controls))
+    raw_batches = _merge_singleton_batches(raw_batches)
 
     count = len(raw_batches)
     return tuple(

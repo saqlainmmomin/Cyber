@@ -140,6 +140,16 @@ def test_threshold_call_counts_and_full_coverage(monkeypatch):
     assert len(control_batches("dpdpa")) > 1
 
 
+def test_default_threshold_batches_only_large_frameworks():
+    assert settings.llm_batch_threshold_controls == 90
+    assert control_batches("iso27001")
+    assert control_batches("nist_csf")
+    assert control_batches("dpdpa") == ()
+    assert control_batches("gdpr") == ()
+    assert control_batches("hipaa") == ()
+    assert control_batches("pci_dss") == ()
+
+
 def test_unbatched_prompt_fingerprints_and_dpdpa_request_shape(monkeypatch):
     from app.frameworks import prompts
 
@@ -183,7 +193,7 @@ def test_unbatched_prompt_fingerprints_and_dpdpa_request_shape(monkeypatch):
     _run_analysis(monkeypatch, fake, framework_ids=("dpdpa",))
     first = seen[0][1]
     seen.clear()
-    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 50)
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 90)
     _run_analysis(monkeypatch, fake, framework_ids=("dpdpa",))
     assert first == seen[0][1]
 
@@ -240,8 +250,74 @@ def test_deterministic_batch_table_and_synthetic_split(monkeypatch):
         batches = control_batches("synthetic_p6_1b")
         assert [len(batch.control_ids) for batch in batches] == [25, 6]
         assert batches[1].section_keys == ("large", "one")
+
+        def domain(domain_key, section_key, domain_controls):
+            return Domain(
+                domain_key,
+                domain_key,
+                1.0,
+                {section_key: Section(section_key, section_key, 1.0, domain_controls)},
+            )
+
+        short_controls = [Control(f"SYN.SHORT.{i}", f"C{i}", "d", "r", "low") for i in range(5)]
+        previous_merge = FrameworkDefinition(
+            id="synthetic_p6_1b_previous",
+            name="Synthetic previous",
+            version="1",
+            domains={
+                "first": domain("first", "four", short_controls[:4]),
+                "second": domain("second", "one", short_controls[4:]),
+            },
+        )
+        following_merge = FrameworkDefinition(
+            id="synthetic_p6_1b_following",
+            name="Synthetic following",
+            version="1",
+            domains={
+                "first": domain("first", "one", short_controls[:1]),
+                "second": domain("second", "four", short_controls[1:]),
+            },
+        )
+        in_domain_controls = [
+            Control(f"SYN.IN_DOMAIN.{i}", f"C{i}", "d", "r", "low")
+            for i in range(26)
+        ]
+        in_domain_singleton = FrameworkDefinition(
+            id="synthetic_p6_1b_in_domain",
+            name="Synthetic in-domain",
+            version="1",
+            domains={
+                "domain": Domain(
+                    "domain",
+                    "Domain",
+                    1.0,
+                    {
+                        "large": Section("large", "Large", 0.5, in_domain_controls[:25]),
+                        "one": Section("one", "One", 0.5, in_domain_controls[25:]),
+                    },
+                )
+            },
+        )
+        FrameworkRegistry.register(previous_merge)
+        FrameworkRegistry.register(following_merge)
+        FrameworkRegistry.register(in_domain_singleton)
+        previous = control_batches("synthetic_p6_1b_previous")
+        following = control_batches("synthetic_p6_1b_following")
+        in_domain = control_batches("synthetic_p6_1b_in_domain")
+        assert len(previous) == len(following) == len(in_domain) == 1
+        assert previous[0].domain_key == "first"
+        assert previous[0].section_keys == ("four", "one")
+        assert previous[0].control_ids == tuple(control.id for control in short_controls)
+        assert following[0].domain_key == "second"
+        assert following[0].section_keys == ("one", "four")
+        assert following[0].control_ids == tuple(control.id for control in short_controls)
+        assert in_domain[0].section_keys == ("large", "one")
+        assert in_domain[0].control_ids == tuple(control.id for control in in_domain_controls)
     finally:
         FrameworkRegistry._frameworks.pop("synthetic_p6_1b", None)
+        FrameworkRegistry._frameworks.pop("synthetic_p6_1b_previous", None)
+        FrameworkRegistry._frameworks.pop("synthetic_p6_1b_following", None)
+        FrameworkRegistry._frameworks.pop("synthetic_p6_1b_in_domain", None)
 
 
 def test_merge_order_is_definition_order_under_jitter(monkeypatch):
@@ -261,6 +337,7 @@ def test_missing_ids_retry_invalid_json_and_unbatched_fail_closed(monkeypatch):
     batches = control_batches("iso27001")
     batch_two = set(batches[1].control_ids)
     calls = []
+    retry_prompt_texts = []
     omitted = False
 
     @contextmanager
@@ -276,6 +353,8 @@ def test_missing_ids_retry_invalid_json_and_unbatched_fail_closed(monkeypatch):
         nonlocal omitted
         ids = _prompt_control_ids(system)
         calls.append((tier, ids))
+        if len(ids) == 2:
+            retry_prompt_texts.append(_system_text(system))
         if set(ids) == batch_two and not omitted:
             omitted = True
             ids = ids[:-2]
@@ -287,6 +366,8 @@ def test_missing_ids_retry_invalid_json_and_unbatched_fail_closed(monkeypatch):
     assert any(tag.get("batch") == "2/6+retry" for kind, tag in calls if kind == "tag")
     retry_prompts = [ids for kind, ids in calls if kind == "judge" and len(ids) == 2]
     assert retry_prompts == [list(batches[1].control_ids)[-2:]]
+    assert len(retry_prompt_texts) == 1
+    assert "(2 total)" in retry_prompt_texts[0]
 
     invalid_calls = []
     invalid_done = False
@@ -315,6 +396,37 @@ def test_missing_ids_retry_invalid_json_and_unbatched_fail_closed(monkeypatch):
     with pytest.raises(IncompleteAssessmentError, match="missing 40 of 41"):
         claude_analyzer.run_gap_analysis("Acme", "saas", "sme", None, [], [])
     assert dpdpa_calls == ["judge"]
+
+    multi_calls = []
+
+    def incomplete_multi(*, tier, **_kwargs):
+        multi_calls.append(tier)
+        return {"text": _response(["CH2.CONSENT.1"]), "usage": _usage()}
+
+    result = _run_analysis(monkeypatch, incomplete_multi, framework_ids=("dpdpa",))
+    assert multi_calls == ["judge"]
+    assert "error" in result["frameworks"]["dpdpa"]
+    assert "missing 40 of 41" in result["frameworks"]["dpdpa"]["error"]
+
+
+@pytest.mark.parametrize("invalid_response", ["[]", '{"assessments": {}}'])
+def test_batched_non_object_or_non_list_response_retries_once(monkeypatch, invalid_response):
+    batch = control_batches("iso27001")[0]
+    calls = []
+    invalid_sent = False
+
+    def fake(*, tier, system, **_kwargs):
+        nonlocal invalid_sent
+        ids = _prompt_control_ids(system)
+        calls.append(ids)
+        if set(ids) == set(batch.control_ids) and not invalid_sent:
+            invalid_sent = True
+            return {"text": invalid_response, "usage": _usage()}
+        return {"text": _response(ids), "usage": _usage()}
+
+    result = _run_analysis(monkeypatch, fake, framework_ids=("iso27001",))
+    assert "error" not in result["frameworks"]["iso27001"]
+    assert calls.count(list(batch.control_ids)) == 2
 
 
 def test_failure_semantics_keep_other_frameworks_and_synthesis(monkeypatch):
@@ -348,14 +460,17 @@ def test_failure_semantics_keep_other_frameworks_and_synthesis(monkeypatch):
 
     def raising_fake(*, tier, system, **_kwargs):
         ids = _prompt_control_ids(system)
+        raising_calls.append(ids)
         if ids and set(ids) == set(batches[2].control_ids):
             raise RuntimeError("transport down")
         if tier == "synthesize":
             return {"text": '{"unified_executive_summary": "survivors"}', "usage": _usage()}
         return {"text": _response(ids), "usage": _usage()}
 
+    raising_calls = []
     result = _run_analysis(monkeypatch, raising_fake, framework_ids=("iso27001",))
     assert "failed in batch 3/6" in result["frameworks"]["iso27001"]["error"]
+    assert raising_calls.count(list(batches[2].control_ids)) == 1
 
 
 def test_route_marks_failed_framework_and_keeps_batch_call_records(monkeypatch, tmp_path):
@@ -420,7 +535,12 @@ def test_route_marks_failed_framework_and_keeps_batch_call_records(monkeypatch, 
     runs = {run.framework_id: run for run in db.query(AnalysisRun).filter_by(assessment_id=assessment.id).all()}
     assert runs["iso27001"].status == "failed"
     assert json.loads(runs["iso27001"].claims_json)["error"] == {"type": "FrameworkAnalysisError"}
-    assert all(call.get("batch") for call in json.loads(runs["iso27001"].claims_json)["llm_calls"])
+    iso_calls = json.loads(runs["iso27001"].claims_json)["llm_calls"]
+    assert len(iso_calls) == 7
+    assert {call["batch"] for call in iso_calls} == {
+        "1/6", "2/6", "3/6", "4/6", "5/6", "6/6", "2/6+retry"
+    }
+    assert all(call["stage"] == "judge" and call["framework_id"] == "iso27001" for call in iso_calls)
     db.close()
 
 
@@ -489,17 +609,48 @@ def _desk_db(tmp_path, frameworks):
     return db, assessment
 
 
+def test_dpdpa_desk_review_never_batches_at_any_threshold(monkeypatch, tmp_path):
+    db, assessment = _desk_db(tmp_path, ["dpdpa"])
+    curated_calls = []
+
+    def curated(**_kwargs):
+        curated_calls.append(True)
+        return _desk_result([])
+
+    def unexpected_registry_call(*_args, **_kwargs):
+        pytest.fail("DPDPA must stay on the curated desk-review path")
+
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 1)
+    monkeypatch.setattr(desk_review, "_call_claude_desk_review", curated)
+    monkeypatch.setattr(
+        desk_review, "_call_framework_desk_review", unexpected_registry_call
+    )
+    summary = desk_review.run_desk_review(assessment.id, db)
+    assert summary.status == "completed"
+    assert len(curated_calls) == 1
+    db.close()
+
+
 def test_desk_review_batch_merge_persistence_and_partial_failure(monkeypatch, tmp_path):
     db, assessment = _desk_db(tmp_path, ["dpdpa", "iso27001"])
     iso_batches = control_batches("iso27001")
     seen = []
+    curated_calls = []
 
-    monkeypatch.setattr(desk_review, "_call_claude_desk_review", lambda **_kwargs: _desk_result([]))
+    def curated(**_kwargs):
+        curated_calls.append(True)
+        return _desk_result([])
+
+    monkeypatch.setattr(desk_review, "_call_claude_desk_review", curated)
 
     def generic(framework_id, *_args, **kwargs):
         ids = list(kwargs["control_ids"])
         seen.append(ids)
-        return _desk_result(ids)
+        result = _desk_result(ids)
+        result["signal_flags"][0]["source_quote"] = [
+            "Same  quote", " same quote ", "SAME\nQUOTE", "Same\tQuote", "same quote", " SAME quote "
+        ][len(seen) - 1]
+        return result
 
     monkeypatch.setattr(desk_review, "_call_framework_desk_review", generic)
     summary = desk_review.run_desk_review(assessment.id, db)
@@ -514,7 +665,9 @@ def test_desk_review_batch_merge_persistence_and_partial_failure(monkeypatch, tm
     assert "ISO.OUTSIDE" not in merged["evidence_map"]
     from app.models.desk_review import DeskReviewFinding
 
-    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="iso27001").count() > 0
+    assert len(curated_calls) == 1
+    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="iso27001").count() == 19
+    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="dpdpa").count() == 2
 
     def failing(framework_id, *_args, **kwargs):
         ids = list(kwargs["control_ids"])
@@ -523,13 +676,16 @@ def test_desk_review_batch_merge_persistence_and_partial_failure(monkeypatch, tm
         return _desk_result(ids)
 
     monkeypatch.setattr(desk_review, "_call_framework_desk_review", failing)
+    curated_calls.clear()
     summary = desk_review.run_desk_review(assessment.id, db)
     raw = json.loads(summary.raw_ai_response)
     assert summary.status == "completed"
-    assert "Desk review failed for ISO 27001" in summary.error_message
+    assert summary.error_message == desk_review.DESK_REVIEW_PARTIAL_MESSAGE.format(names="ISO 27001")
     assert raw["frameworks"]["iso27001"]["status"] == "error"
     assert raw["frameworks"]["dpdpa"]["status"] == "completed"
-    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="dpdpa").count() > 0
+    assert len(curated_calls) == 1
+    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="dpdpa").count() == 2
+    assert db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id, framework_id="iso27001").count() == 0
     db.close()
 
 
@@ -593,7 +749,7 @@ def test_call_record_tags_are_optional_and_batch_visible(monkeypatch):
         "cache_read_input_tokens", "latency_ms", "finish_reason", "status", "error_type",
     }
 
-    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 50)
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 90)
     with llm_client.collect_calls() as calls:
         claude_analyzer.run_multi_framework_analysis(
             ["iso27001"], "Acme", "saas", "sme", None, [], []
