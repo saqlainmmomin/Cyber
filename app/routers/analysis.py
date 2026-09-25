@@ -14,6 +14,7 @@ from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.services import analysis_pipeline
+from app.services import llm_client
 from app.services.auto_answer import confirmed_response_clause
 from app.services.claude_analyzer import run_gap_analysis, run_multi_framework_analysis
 from app.services.conclusion_review import reviewer_actor
@@ -274,19 +275,25 @@ def trigger_analysis(
     )
     db.commit()
     try:
-        result = run_gap_analysis(
-            company_name=assessment.company_name,
-            industry=assessment.industry,
-            company_size=assessment.company_size,
-            description=assessment.description,
-            responses=responses,
-            documents=documents,
-            context_profile=context_profile,
-            desk_review_data=desk_review_data,
-            applicable_requirements=applicable_requirements,
-        )
+        with llm_client.collect_calls() as calls:
+            result = run_gap_analysis(
+                company_name=assessment.company_name,
+                industry=assessment.industry,
+                company_size=assessment.company_size,
+                description=assessment.description,
+                responses=responses,
+                documents=documents,
+                context_profile=context_profile,
+                desk_review_data=desk_review_data,
+                applicable_requirements=applicable_requirements,
+            )
     except Exception as e:
-        analysis_pipeline.fail_runs(db, run_context, error_type=type(e).__name__)
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type=type(e).__name__,
+            llm_calls=calls or None,
+        )
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, f"Analysis failed: {str(e)}")
@@ -296,7 +303,12 @@ def trigger_analysis(
 
     assessments = parsed.get("assessments")
     if not assessments:
-        analysis_pipeline.fail_runs(db, run_context, error_type="EmptyAssessment")
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type="EmptyAssessment",
+            llm_calls=calls or None,
+        )
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, "Claude returned an empty or malformed assessment. Try running analysis again.")
@@ -315,10 +327,16 @@ def trigger_analysis(
             has_documents=has_documents,
             db=db,
             run_context=run_context,
+            llm_calls=calls or None,
         )
     except Exception as exc:
         db.rollback()
-        analysis_pipeline.fail_runs(db, run_context, error_type=type(exc).__name__)
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type=type(exc).__name__,
+            llm_calls=calls or None,
+        )
         assessment.status = "error"
         db.commit()
         raise HTTPException(
@@ -341,6 +359,7 @@ def _persist_single_analysis(
     has_documents: bool,
     db: Session,
     run_context: analysis_pipeline.RunContext,
+    llm_calls: list[dict] | None = None,
 ) -> dict:
     # Server-side scope enforcement: ensure out-of-scope requirements are not_applicable
     if applicable_requirements:
@@ -410,6 +429,7 @@ def _persist_single_analysis(
         assessments=assessments,
         desk_review_data=desk_review_data,
         gap_report_id=report.id,
+        llm_calls=llm_calls or None,
     )
 
     # Build evidence confidence lookup
@@ -515,20 +535,26 @@ def _run_multi_framework_analysis(
     )
     db.commit()
     try:
-        result = run_multi_framework_analysis(
-            framework_ids=selected_frameworks,
-            company_name=assessment.company_name,
-            industry=assessment.industry,
-            company_size=assessment.company_size,
-            description=assessment.description,
-            responses=responses,
-            documents=documents,
-            context_profile=context_profile,
-            desk_review_data=desk_review_data,
-            applicable_controls=applicable_requirements,
-        )
+        with llm_client.collect_calls() as calls:
+            result = run_multi_framework_analysis(
+                framework_ids=selected_frameworks,
+                company_name=assessment.company_name,
+                industry=assessment.industry,
+                company_size=assessment.company_size,
+                description=assessment.description,
+                responses=responses,
+                documents=documents,
+                context_profile=context_profile,
+                desk_review_data=desk_review_data,
+                applicable_controls=applicable_requirements,
+            )
     except Exception as e:
-        analysis_pipeline.fail_runs(db, run_context, error_type=type(e).__name__)
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type=type(e).__name__,
+            llm_calls=calls or None,
+        )
         assessment.status = "error"
         db.commit()
         raise HTTPException(500, f"Multi-framework analysis failed: {str(e)}")
@@ -546,6 +572,7 @@ def _run_multi_framework_analysis(
             run_context,
             error_type="FrameworkAnalysisError",
             framework_ids=failed_frameworks,
+            llm_calls=calls or None,
         )
     db.commit()
 
@@ -568,10 +595,16 @@ def _run_multi_framework_analysis(
             db=db,
             result=result,
             run_context=run_context,
+            llm_calls=calls or None,
         )
     except Exception as exc:
         db.rollback()
-        analysis_pipeline.fail_runs(db, run_context, error_type=type(exc).__name__)
+        analysis_pipeline.fail_runs(
+            db,
+            run_context,
+            error_type=type(exc).__name__,
+            llm_calls=calls or None,
+        )
         assessment.status = "error"
         db.commit()
         raise HTTPException(
@@ -593,6 +626,7 @@ def _persist_multi_framework_analysis(
     db: Session,
     result: dict,
     run_context: analysis_pipeline.RunContext,
+    llm_calls: list[dict] | None = None,
 ) -> dict:
     """Persist the multi-framework report and append-only analysis records."""
     from app.frameworks.registry import FrameworkRegistry
@@ -709,6 +743,7 @@ def _persist_multi_framework_analysis(
                 assessments=per_fw_assessments[framework_id],
                 desk_review_data=desk_review_data,
                 gap_report_id=report.id,
+                llm_calls=llm_calls or None,
             )
 
     # Build evidence confidence lookup

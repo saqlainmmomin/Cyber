@@ -221,6 +221,53 @@ In `app/frameworks/prompts.py` `build_synthesis_prompt`:
    - If no key is available, say so explicitly. Do not claim a live check.
 3. **Restart smoke.** Start uvicorn, trigger desk review, kill the process mid-run, restart. The assessment shows the error state and the "run desk review again" message instead of a spinner. Record what you observed.
 
+## Results
+
+### Baseline
+
+- Branch/worktree were already prepared by the orchestrator: `codex/p6-1-llm-plumbing`, based on `main @ dc64829`; no additional worktree was created.
+- Step 0 baseline: **642 passed, 9 skipped, 2 failed**.
+- The baseline failures were left untouched: `tests/test_remediation_tracking.py::test_scenario_10_engagement_rollup_and_tracker_page` (hardcoded `2026-09-24` versus `date.today()`), and `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_13_structural_guards` (post-merge git-diff guard).
+
+### Implementation
+
+- Added configurable LLM timeout/retry/concurrency/startup-recovery settings and `.env.example` documentation.
+- Added provider-agnostic `response_schema` handling, nested call collection with stage/framework tags, per-call token/latency/status records, and bounded parallel execution in `app/services/parallel.py`.
+- Added explicit analyzer call collection in `app/routers/analysis.py`, with `llm_calls` passed into `record_framework_run` and `fail_runs`; `app/services/analysis_call_persistence.py` and all pending-analysis/flush-hook machinery were removed.
+- Added shared failed-run mutation in `app/services/run_state.py`; the pipeline attaches framework-tagged records only to their run and untagged shared records only to the first run under `shared_llm_calls`.
+- Added startup recovery in `app/services/run_recovery.py`, wired into lifespan with the configured database guard.
+- Added per-framework concurrency and stable ordering to analyzer and desk-review paths for every framework count, temperature `0` for screening/vision, stage tags for remaining LLM call sites, and synthesis-prompt removal of numeric scoring language.
+- Added `tests/test_p6_1_llm_plumbing.py` covering the handoff scenarios. No changes were made under `validation/`, `tests/fixtures/`, or `tests/support/`.
+
+### Verification
+
+- P6-1 suite: **13 passed**. Focused regression set (P6-1, immutable pipeline, and P5-3 desk review): **54 passed, 6 warnings**.
+- Protected regression set (P6-1, correctness bundle, no-blended-scoring, golden DPDPA, P5-2 guard, and longitudinal protected-surface guard): **42 passed, 12 warnings**.
+- Full suite: **653 passed, 9 skipped, 4 failed, 274 warnings**. Failures are the known longitudinal ordering intermittent (`tests/test_longitudinal_demo.py::test_scenario_9_rollups_and_integrated_reporting`), the untouched P5-4 post-merge guard, the known hardcoded-date remediation test, and the retention guard that rejects the explicitly authorized existing-test edits.
+- The named `tests/test_validation_harness.py::test_app_files_are_untouched_by_harness` is not present in this worktree, so it was not runnable. The local `main` ref is still the orchestrator's stale comparison base; the orchestrator will rebase against moved `main`.
+- ASGI smoke using a temporary database returned `GET /health` => `200 {"status": "ok"}`. Startup migrations completed when uvicorn was attempted, but the environment denied the localhost bind.
+- `OPENROUTER_KEY` is present in `.env`, but DNS/network access to `openrouter.ai` was unavailable. No live LLM smoke was claimed or performed. Recovery behavior was verified by the P6-1 recovery tests, including idempotent second-run counts and the disabled-setting lifespan path; an actual kill-and-restart smoke was not possible because the local server could not bind.
+- `git diff --check` is clean; `git diff --stat main -- tests/fixtures tests/support` is empty.
+
+### Design after orchestration review
+
+- The router owns `collect_calls()` around both analyzer invocations. `record_framework_run` and `fail_runs` accept explicit optional `llm_calls`; `None` preserves the prior envelope byte-for-byte. Framework calls are filtered to their own run, and frameworkless calls are written only to the first run's `shared_llm_calls`.
+- There is no SQLAlchemy `before_flush` listener, claims JSON query, pending analysis context, or analyzer-owned persistence hook. `run_state.mark_run_failed` is shared by ordinary failure handling and startup recovery.
+- Desk review uses `settings.llm_max_concurrency` for any number of selected frameworks. The added three-framework test proves max in-flight greater than one and equality with the sequential result; the P5-3 order/normalization contract test is explicitly pinned to one worker.
+- The startup engine/settings URL guard remains. Its docstring records that it prevents recovery from touching a developer database when tests swap `DATABASE_URL` after the database engine is imported.
+
+### Test files edited
+
+- `tests/test_p6_1_llm_plumbing.py` — replaced deleted persistence-scope coverage with explicit pipeline call passing and added the required three-framework desk-review concurrency/equivalence case.
+- `tests/test_p5_2_reader_migration.py` — authorized merge-time guard exclusion for `analysis.py` and `analysis_pipeline.py`, with the required D-P6-1-E comment.
+- `tests/test_longitudinal_demo.py` — authorized merge-time protected-surface exclusion for `analysis.py`, with the required D-P6-1-E comment.
+- `tests/test_p5_3_framework_desk_review.py` — authorized the scenario-4 sequential contract by setting `llm_max_concurrency=1` with a comment.
+
+- The two Step 0 baseline failures were not modified. `tests/test_p5_4_adaptive_ucc_questionnaire.py` was not touched.
+- No commit, push, or PR was created. Changes are intentionally uncommitted for the orchestrator to review, commit, and open the PR.
+
+PR: **Not opened — orchestrator owns commit/push/PR.**
+
 ## Done criteria
 
 - Every scenario passes.

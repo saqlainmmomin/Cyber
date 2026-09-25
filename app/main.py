@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
+from app import database
 from app.routers import (
     analysis,
     assessments,
@@ -31,6 +32,7 @@ from app.routers import (
     web,
 )
 from app.services.magic_links import MagicTokenRedactionFilter
+from app.services.run_recovery import recover_interrupted_work
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,11 @@ for _logger_name in ("uvicorn.access", "uvicorn.error"):
 
 APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
+
+
+def _database_engine_matches_settings() -> bool:
+    """Avoid recovery touching a developer DB after tests swap ``DATABASE_URL``."""
+    return database.engine.url.render_as_string(hide_password=False) == settings.database_url
 
 
 def _run_alembic_upgrade():
@@ -107,6 +114,8 @@ async def lifespan(app: FastAPI):
     _run_alembic_upgrade()
     _register_frameworks()
     _assert_framework_catalog_complete()
+    if settings.recover_interrupted_on_startup and _database_engine_matches_settings():
+        recover_interrupted_work()
     yield
 
 

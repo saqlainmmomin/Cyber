@@ -178,44 +178,42 @@ def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
 
 def _call_claude_vision(image_data: str, media_type: str) -> str:
     """Call the vision model for an encoded image and return raw response text."""
-    response = _call_llm(
-        tier="vision",
-        max_tokens=1500,
-        # No temperature was set on the original Anthropic call, which
-        # defaults to 1.0 — preserve that instead of `llm_client`'s
-        # temperature=0 default so this migration doesn't quietly change
-        # the vision call's output distribution.
-        temperature=1,
-        system=(
-            "You are a compliance document analyst. When shown a screenshot or image, "
-            "extract and transcribe all visible text exactly as it appears. Then add a "
-            "brief structured summary of what the image shows in the context of data "
-            "protection compliance (e.g. consent screen, privacy policy excerpt, cookie "
-            "banner, breach log, data flow diagram). Format: first transcribe the text "
-            "verbatim under 'VISIBLE TEXT:', then add 'SUMMARY:' with 2-3 sentences "
-            "describing what compliance-relevant controls or gaps the image reveals."
-        ),
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{media_type};base64,{image_data}",
+    with llm_client.call_tag(stage="vision"):
+        response = _call_llm(
+            tier="vision",
+            max_tokens=1500,
+            # 0: vision feeds OCR; run-to-run stability is measured by P5-9 (P6-1).
+            temperature=0,
+            system=(
+                "You are a compliance document analyst. When shown a screenshot or image, "
+                "extract and transcribe all visible text exactly as it appears. Then add a "
+                "brief structured summary of what the image shows in the context of data "
+                "protection compliance (e.g. consent screen, privacy policy excerpt, cookie "
+                "banner, breach log, data flow diagram). Format: first transcribe the text "
+                "verbatim under 'VISIBLE TEXT:', then add 'SUMMARY:' with 2-3 sentences "
+                "describing what compliance-relevant controls or gaps the image reveals."
+            ),
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{media_type};base64,{image_data}",
+                            },
                         },
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            "Please transcribe all visible text from this image and provide "
-                            "a compliance-focused summary of what it shows."
-                        ),
-                    },
-                ],
-            }
-        ],
-    )
+                        {
+                            "type": "text",
+                            "text": (
+                                "Please transcribe all visible text from this image and provide "
+                                "a compliance-focused summary of what it shows."
+                            ),
+                        },
+                    ],
+                }
+            ],
+        )
     return response["text"]
 
 

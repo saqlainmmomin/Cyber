@@ -49,18 +49,19 @@ def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
 
 def _call_claude_context_profile(prompt: str) -> str:
     """Call the LLM for a context profile and return the raw response text."""
-    response = _call_llm(
-        tier="extract",
-        max_tokens=1024,
-        temperature=0,
-        system=(
-            "You are an expert compliance advisor covering DPDPA, ISO 27001, GDPR, HIPAA, "
-            "NIST CSF, and PCI-DSS. Given an organization's context, produce a risk profile "
-            "that will guide an adaptive compliance assessment. "
-            "Respond ONLY with valid JSON matching the requested schema. No markdown, no commentary."
-        ),
-        messages=[{"role": "user", "content": prompt}],
-    )
+    with llm_client.call_tag(stage="context_profile"):
+        response = _call_llm(
+            tier="extract",
+            max_tokens=1024,
+            temperature=0,
+            system=(
+                "You are an expert compliance advisor covering DPDPA, ISO 27001, GDPR, HIPAA, "
+                "NIST CSF, and PCI-DSS. Given an organization's context, produce a risk profile "
+                "that will guide an adaptive compliance assessment. "
+                "Respond ONLY with valid JSON matching the requested schema. No markdown, no commentary."
+            ),
+            messages=[{"role": "user", "content": prompt}],
+        )
     return response["text"]
 
 

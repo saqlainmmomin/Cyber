@@ -29,6 +29,7 @@ from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.services import llm_client
+from app.services.parallel import run_bounded
 from app.services.citations import (
     CitableSource,
     cite_quotes,
@@ -112,20 +113,30 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     framework_ids = assessment.frameworks
     results: dict[str, dict] = {}
     errors: dict[str, str] = {}
-    for framework_id in framework_ids:
-        try:
-            results[framework_id] = _normalize_result(
-                framework_id,
-                _desk_review_call(
+    with llm_client.collect_calls() as llm_calls:
+        def review_framework(framework_id: str) -> dict:
+            with llm_client.call_tag(stage="desk_review", framework_id=framework_id):
+                return _normalize_result(
                     framework_id,
-                    documents=truncated,
-                    company_name=assessment.company_name,
-                    industry=assessment.industry,
-                ),
-            )
-        except Exception as exc:
-            errors[framework_id] = str(exc)
-            logger.error("Desk review failed for %s: %s", framework_id, exc)
+                    _desk_review_call(
+                        framework_id,
+                        documents=truncated,
+                        company_name=assessment.company_name,
+                        industry=assessment.industry,
+                    ),
+                )
+
+        review_results = run_bounded(
+            review_framework,
+            framework_ids,
+            max_workers=settings.llm_max_concurrency,
+        )
+        for framework_id, (result, error) in zip(framework_ids, review_results):
+            if error is not None:
+                errors[framework_id] = str(error)
+                logger.error("Desk review failed for %s: %s", framework_id, error)
+            else:
+                results[framework_id] = result
 
     if not results:
         summary.status = "error"
@@ -137,7 +148,9 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
                 for framework_id in framework_ids
             )
             summary.error_message = DESK_REVIEW_ALL_FAILED_MESSAGE.format(names=names)
-        summary.raw_ai_response = _raw_response(framework_ids, results, errors)
+        summary.raw_ai_response = _raw_response(
+            framework_ids, results, errors, llm_calls=llm_calls
+        )
         assessment.desk_review_status = "error"
         db.commit()
         return summary
@@ -171,7 +184,9 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
 
         summary.document_catalog = json.dumps(catalog)
         summary.coverage_summary = json.dumps(merged_coverage)
-        summary.raw_ai_response = _raw_response(framework_ids, results, errors)
+        summary.raw_ai_response = _raw_response(
+            framework_ids, results, errors, llm_calls=llm_calls
+        )
         summary.status = "completed"
         summary.error_message = None
         if errors:
@@ -382,21 +397,24 @@ def _raw_response(
     framework_ids: list[str],
     results: dict[str, dict],
     errors: dict[str, str],
+    *,
+    llm_calls: list[dict] | None = None,
 ) -> str:
     """Serialize the versioned per-framework raw desk-review response."""
-    return json.dumps(
-        {
-            "schema_version": RAW_RESPONSE_SCHEMA_VERSION,
-            "frameworks": {
-                framework_id: (
-                    {"status": "completed", "result": results[framework_id]}
-                    if framework_id in results
-                    else {"status": "error", "error": errors[framework_id]}
-                )
-                for framework_id in framework_ids
-            },
-        }
-    )
+    response = {
+        "schema_version": RAW_RESPONSE_SCHEMA_VERSION,
+        "frameworks": {
+            framework_id: (
+                {"status": "completed", "result": results[framework_id]}
+                if framework_id in results
+                else {"status": "error", "error": errors[framework_id]}
+            )
+            for framework_id in framework_ids
+        },
+    }
+    if llm_calls is not None:
+        response["llm_calls"] = llm_calls
+    return json.dumps(response)
 
 
 def _merge_document_catalogs(

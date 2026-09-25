@@ -103,21 +103,19 @@ def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
 
 def _call_claude_screening(system_blocks, user_prompt: str) -> str:
     """Call the LLM for screening and return the raw response text."""
-    response = _call_llm(
-        tier="judge",
-        # Was 4096 (the original Anthropic call's value) — bumped after a live
-        # smoke test hit finish_reason="length" with empty content: 41
-        # requirements' worth of {status, confidence, reasoning} JSON can
-        # exceed 4096 tokens on its own, even with hidden reasoning excluded.
-        max_tokens=8192,
-        # No temperature was set on the original Anthropic call, which
-        # defaults to 1.0 — preserve that instead of `llm_client`'s
-        # temperature=0 default so this migration doesn't quietly change
-        # screening's output distribution.
-        temperature=1,
-        system=system_blocks,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
+    with llm_client.call_tag(stage="screening"):
+        response = _call_llm(
+            tier="judge",
+            # Was 4096 (the original Anthropic call's value) — bumped after a live
+            # smoke test hit finish_reason="length" with empty content: 41
+            # requirements' worth of {status, confidence, reasoning} JSON can
+            # exceed 4096 tokens on its own, even with hidden reasoning excluded.
+            max_tokens=8192,
+            # 0: screening feeds pre-fill; run-to-run stability is measured by P5-9 (P6-1).
+            temperature=0,
+            system=system_blocks,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
     return response["text"]
 
 

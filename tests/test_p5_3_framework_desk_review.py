@@ -408,6 +408,8 @@ def test_scenario_4_calls_each_framework_in_order_and_normalizes(db, texts, monk
         )
 
     monkeypatch.setattr(desk_review, "_call_framework_desk_review", generic)
+    # P6-1: sequential order + normalization contract is independent of concurrency.
+    monkeypatch.setattr(settings, "llm_max_concurrency", 1)
     summary = desk_review.run_desk_review(assessment.id, db)
     assert seen == ["dpdpa", "iso27001", "nist_csf"]
     rows = db.query(DeskReviewFinding).filter_by(assessment_id=assessment.id).all()

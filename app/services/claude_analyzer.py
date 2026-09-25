@@ -17,6 +17,7 @@ import re
 
 from app.config import settings
 from app.services import llm_client
+from app.services.parallel import run_bounded
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.prompts import (
     build_evidence_extraction_prompt,
@@ -60,6 +61,30 @@ def run_gap_analysis(
         Dict with "parsed" (structured assessment) and "raw" (Claude's text),
         plus "usage" with token stats including cache info.
     """
+    return _run_gap_analysis(
+        company_name=company_name,
+        industry=industry,
+        company_size=company_size,
+        description=description,
+        responses=responses,
+        documents=documents,
+        context_profile=context_profile,
+        desk_review_data=desk_review_data,
+        applicable_requirements=applicable_requirements,
+    )
+
+
+def _run_gap_analysis(
+    company_name: str,
+    industry: str,
+    company_size: str,
+    description: str | None,
+    responses: list[dict],
+    documents: list[dict],
+    context_profile: dict | None = None,
+    desk_review_data: dict | None = None,
+    applicable_requirements: list[str] | None = None,
+) -> dict:
     truncated_docs = _truncate_documents(documents)
 
     # Call 1: Evidence extraction — skip if desk review already extracted evidence.
@@ -76,7 +101,8 @@ def run_gap_analysis(
             )
         else:
             desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
-            evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
+            with llm_client.call_tag(stage="evidence_extraction", framework_id="dpdpa"):
+                evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
 
     # Call 2: Gap analysis with cached system prompt
     system_blocks = build_system_prompt()
@@ -93,13 +119,14 @@ def run_gap_analysis(
         applicable_requirements=applicable_requirements,
     )
 
-    response = _call_llm(
-        tier="judge",
-        max_tokens=16384,
-        temperature=0,
-        system=system_blocks,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
+    with llm_client.call_tag(stage="judge", framework_id="dpdpa"):
+        response = _call_llm(
+            tier="judge",
+            max_tokens=16384,
+            temperature=0,
+            system=system_blocks,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
 
     raw_text = response["text"]
     parsed = _parse_json_response(raw_text)
@@ -202,13 +229,14 @@ def _run_evidence_extraction(
     prompt = build_evidence_extraction_prompt(documents, desk_review_findings)
 
     try:
-        response = _call_llm(
-            tier="extract",
-            max_tokens=8192,
-            temperature=0,
-            system="You are a document analyst. Extract exact quotes from documents that are relevant to each compliance requirement. Be precise and quote verbatim.",
-            messages=[{"role": "user", "content": prompt}],
-        )
+        with llm_client.call_tag(stage="evidence_extraction"):
+            response = _call_llm(
+                tier="extract",
+                max_tokens=8192,
+                temperature=0,
+                system="You are a document analyst. Extract exact quotes from documents that are relevant to each compliance requirement. Be precise and quote verbatim.",
+                messages=[{"role": "user", "content": prompt}],
+            )
 
         raw = response["text"]
         parsed = _parse_json_response(raw)
@@ -239,23 +267,24 @@ def _run_framework_evidence_extraction(
 
     framework = FrameworkRegistry.get(framework_id)
     try:
-        response = _call_llm(
-            tier="extract",
-            max_tokens=8192,
-            temperature=0,
-            system=(
-                "You are a document analyst. Extract exact quotes from documents "
-                f"that are relevant to each {framework.name} control. Be precise and quote verbatim."
-            ),
-            messages=[
-                {
-                    "role": "user",
-                    "content": build_framework_evidence_extraction_prompt(
-                        framework_id, documents, desk_review_findings
-                    ),
-                }
-            ],
-        )
+        with llm_client.call_tag(stage="evidence_extraction"):
+            response = _call_llm(
+                tier="extract",
+                max_tokens=8192,
+                temperature=0,
+                system=(
+                    "You are a document analyst. Extract exact quotes from documents "
+                    f"that are relevant to each {framework.name} control. Be precise and quote verbatim."
+                ),
+                messages=[
+                    {
+                        "role": "user",
+                        "content": build_framework_evidence_extraction_prompt(
+                            framework_id, documents, desk_review_findings
+                        ),
+                    }
+                ],
+            )
         parsed = _parse_json_response(response["text"])
         grounded = _ground_evidence_quotes(parsed.get("evidence", {}), documents)
         control_ids = {control.id for control in framework.all_controls()}
@@ -291,7 +320,9 @@ def _collect_framework_evidence(
         return None
 
     evidence: dict[str, list[str]] = {}
+    evidence_by_framework: dict[str, dict[str, list[str]]] = {}
     desk_review_evidence = _evidence_from_desk_review(desk_review_data) or {}
+    extraction_items: list[tuple[str, list[dict] | None]] = []
     for framework_id in framework_ids:
         control_ids = {
             control.id
@@ -303,7 +334,7 @@ def _collect_framework_evidence(
             if requirement_id in control_ids
         }
         if reused:
-            evidence.update(reused)
+            evidence_by_framework[framework_id] = reused
             logger.info(
                 "Reusing desk review evidence for %s (%d controls)",
                 framework_id,
@@ -316,13 +347,32 @@ def _collect_framework_evidence(
             for finding in (desk_review_data or {}).get("findings", [])
             if finding.get("requirement_id") in control_ids
         ]
-        extracted = _run_framework_evidence_extraction(
-            framework_id,
-            documents,
-            framework_findings or None,
-        )
+        extraction_items.append((framework_id, framework_findings or None))
+
+    def extract_framework(item: tuple[str, list[dict] | None]):
+        framework_id, framework_findings = item
+        with llm_client.call_tag(framework_id=framework_id):
+            return _run_framework_evidence_extraction(
+                framework_id,
+                documents,
+                framework_findings,
+            )
+
+    extraction_results = run_bounded(
+        extract_framework,
+        extraction_items,
+        max_workers=settings.llm_max_concurrency,
+    )
+    for (framework_id, _), (extracted, error) in zip(extraction_items, extraction_results):
+        if error is not None:
+            logger.warning("Evidence extraction failed for %s: %s", framework_id, error)
+            continue
         if extracted:
-            evidence.update(extracted)
+            evidence_by_framework[framework_id] = extracted
+
+    for framework_id in framework_ids:
+        if framework_id in evidence_by_framework:
+            evidence.update(evidence_by_framework[framework_id])
 
     return evidence or None
 
@@ -395,6 +445,32 @@ def run_multi_framework_analysis(
             "total_usage": {...},
         }
     """
+    return _run_multi_framework_analysis(
+        framework_ids=framework_ids,
+        company_name=company_name,
+        industry=industry,
+        company_size=company_size,
+        description=description,
+        responses=responses,
+        documents=documents,
+        context_profile=context_profile,
+        desk_review_data=desk_review_data,
+        applicable_controls=applicable_controls,
+    )
+
+
+def _run_multi_framework_analysis(
+    framework_ids: list[str],
+    company_name: str,
+    industry: str,
+    company_size: str,
+    description: str | None,
+    responses: list[dict],
+    documents: list[dict],
+    context_profile: dict | None = None,
+    desk_review_data: dict | None = None,
+    applicable_controls: list[str] | None = None,
+) -> dict:
     from app.frameworks.prompts import (
         build_framework_system_prompt,
         build_framework_user_prompt,
@@ -414,9 +490,9 @@ def run_multi_framework_analysis(
     framework_results: dict[str, dict] = {}
     total_usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
 
-    for fw_id in framework_ids:
-        logger.info(f"Running gap analysis for framework: {fw_id}")
-        try:
+    def run_framework(fw_id: str) -> dict:
+        with llm_client.call_tag(stage="judge", framework_id=fw_id):
+            logger.info(f"Running gap analysis for framework: {fw_id}")
             system_blocks = build_framework_system_prompt(fw_id)
             user_prompt = build_framework_user_prompt(
                 framework_id=fw_id,
@@ -453,7 +529,7 @@ def run_multi_framework_analysis(
             cache_read = usage["cache_read_input_tokens"]
             cache_create = usage["cache_creation_input_tokens"]
 
-            framework_results[fw_id] = {
+            result = {
                 "parsed": parsed,
                 "raw": raw_text,
                 "usage": {
@@ -463,25 +539,34 @@ def run_multi_framework_analysis(
                     "cache_creation_input_tokens": cache_create,
                 },
             }
-
-            total_usage["input_tokens"] += usage["input_tokens"]
-            total_usage["output_tokens"] += usage["output_tokens"]
-            total_usage["cache_read_input_tokens"] += cache_read
-            total_usage["cache_creation_input_tokens"] += cache_create
-
             logger.info(
                 f"{fw_id} analysis complete — input: {usage['input_tokens']}, "
                 f"output: {usage['output_tokens']}, cache_read: {cache_read}"
             )
+            return result
 
-        except Exception as e:
-            logger.error(f"Gap analysis failed for {fw_id}: {e}")
+    framework_runs = run_bounded(
+        run_framework,
+        framework_ids,
+        max_workers=settings.llm_max_concurrency,
+    )
+    for fw_id, (framework_result, error) in zip(framework_ids, framework_runs):
+        if error is not None:
+            logger.error(f"Gap analysis failed for {fw_id}: {error}")
             framework_results[fw_id] = {
-                "parsed": {"executive_summary": f"Analysis failed: {e}", "assessments": []},
-                "raw": str(e),
+                "parsed": {"executive_summary": f"Analysis failed: {error}", "assessments": []},
+                "raw": str(error),
                 "usage": {},
-                "error": str(e),
+                "error": str(error),
             }
+            continue
+
+        framework_results[fw_id] = framework_result
+        usage = framework_result["usage"]
+        total_usage["input_tokens"] += usage["input_tokens"]
+        total_usage["output_tokens"] += usage["output_tokens"]
+        total_usage["cache_read_input_tokens"] += usage["cache_read_input_tokens"]
+        total_usage["cache_creation_input_tokens"] += usage["cache_creation_input_tokens"]
 
     # Step 3: Cross-framework synthesis (only for 2+ frameworks)
     synthesis = None
@@ -495,14 +580,15 @@ def run_multi_framework_analysis(
             synthesis_prompt = build_synthesis_prompt(per_fw_parsed, company_name, industry)
             synthesis_system = build_synthesis_system_prompt()
 
-            response = _call_llm(
-                tier="synthesize",
-                stream=True,
-                max_tokens=4096,
-                temperature=0,
-                system=synthesis_system,
-                messages=[{"role": "user", "content": synthesis_prompt}],
-            )
+            with llm_client.call_tag(stage="synthesis"):
+                response = _call_llm(
+                    tier="synthesize",
+                    stream=True,
+                    max_tokens=4096,
+                    temperature=0,
+                    system=synthesis_system,
+                    messages=[{"role": "user", "content": synthesis_prompt}],
+                )
             raw_text = response["text"]
 
             synthesis = {

@@ -44,6 +44,7 @@ from app.services.citations import (
 )
 from app.services.auto_answer import confirmed_response_clause
 from app.services.evidence import analysis_documents
+from app.services.run_state import mark_run_failed
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,32 @@ class ConclusionState:
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _attach_llm_calls(
+    envelope: dict[str, Any],
+    context: RunContext,
+    *,
+    framework_id: str,
+    llm_calls: list[dict] | None,
+) -> None:
+    """Attach explicit call records to this run's envelope.
+
+    Framework-tagged records belong only to their framework run. Records with
+    no framework tag are shared work and belong only to the first framework's
+    envelope under ``shared_llm_calls``. The LLM cost of one trigger is the
+    sum over its runs of ``llm_calls`` plus ``shared_llm_calls``.
+    """
+    if llm_calls is None:
+        return
+
+    envelope["llm_calls"] = [
+        call for call in llm_calls if call.get("framework_id") == framework_id
+    ]
+    first_framework_id = next(iter(context.run_ids), None)
+    shared_calls = [call for call in llm_calls if call.get("framework_id") is None]
+    if framework_id == first_framework_id and shared_calls:
+        envelope["shared_llm_calls"] = shared_calls
 
 
 def _envelope(
@@ -187,8 +214,13 @@ def fail_runs(
     *,
     error_type: str,
     framework_ids: list[str] | None = None,
+    llm_calls: list[dict] | None = None,
 ) -> None:
-    """Close targeted running rows with a type-only durable error."""
+    """Close targeted running rows with a type-only durable error.
+
+    ``llm_calls`` is explicit request data; it is never discovered through an
+    ORM event or implicit session state.
+    """
     targets = framework_ids if framework_ids is not None else list(context.run_ids)
     for framework_id in targets:
         run_id = context.run_ids.get(framework_id)
@@ -197,11 +229,14 @@ def fail_runs(
         run = db.get(AnalysisRun, run_id)
         if run is None or run.status != "running":
             continue
+        mark_run_failed(run, error_type=error_type, completed_at=_utcnow())
         envelope = json.loads(run.claims_json)
-        envelope["claims"] = []
-        envelope["error"] = {"type": error_type}
-        run.status = "failed"
-        run.completed_at = _utcnow()
+        _attach_llm_calls(
+            envelope,
+            context,
+            framework_id=framework_id,
+            llm_calls=llm_calls,
+        )
         run.claims_json = json.dumps(envelope, sort_keys=True)
     db.flush()
 
@@ -302,8 +337,14 @@ def record_framework_run(
     assessments: list[dict],
     desk_review_data: dict | None,
     gap_report_id: str,
+    llm_calls: list[dict] | None = None,
 ) -> AnalysisRun:
-    """Persist claims, conclusions, revisions, and the completed run."""
+    """Persist claims, conclusions, revisions, and the completed run.
+
+    When ``llm_calls`` is omitted, the envelope remains byte-identical to the
+    pre-P6-1 shape. When supplied, records are split by framework and shared
+    records follow the rule documented in ``_attach_llm_calls``.
+    """
     run = db.get(AnalysisRun, context.run_ids[framework_id])
     if run is None:
         raise AnalysisPipelineError(f"Analysis run for {framework_id} was not found.")
@@ -416,6 +457,12 @@ def record_framework_run(
     envelope["gap_report_id"] = gap_report_id
     envelope["desk_review_used"] = desk_review_data is not None
     envelope["error"] = None
+    _attach_llm_calls(
+        envelope,
+        context,
+        framework_id=framework_id,
+        llm_calls=llm_calls,
+    )
     run.status = "completed"
     run.completed_at = _utcnow()
     run.claims_json = json.dumps(envelope, sort_keys=True)
