@@ -1,10 +1,10 @@
 # Phase 6 Plan: Grounded Analysis, Multi-Framework Review, and Deliverables
 
-**Status:** Decisions taken 2026-09-25 (see Part F). Handoffs written: P6-1 (`tasks/handoffs/2026-09-25-p6-1-llm-plumbing.md`) and P6-2a (`tasks/handoffs/2026-09-25-p6-2a-dpdpa-test-criteria-draft.md`).
+**Status:** Decisions taken 2026-09-25 (see Part F). Handoffs written: P6-1 (`tasks/handoffs/2026-09-25-p6-1-llm-plumbing.md`, merged PR #54), P6-1b (`tasks/handoffs/2026-09-25-p6-1b-v1-framework-batching.md`) and P6-2a (`tasks/handoffs/2026-09-25-p6-2a-dpdpa-test-criteria-draft.md`). Amended 2026-09-25: P6-1b added, and P6-4 no longer waits for test criteria (D-P6-L).
 **Date:** 2026-09-25
 **Builds on:** Phase 5 (complete on `main` at `e0fbb52`, PRs #38-#46). Every file:line reference below was read against `origin/main` at that commit.
 **Product contract:** `docs/product/2026-09-21-cyberassess-product-requirements.md`
-**Decisions log:** `tasks/2026-09-21-adversarial-review.md` (D1-D11). This plan adds D-P6-A to D-P6-K. It amends D8 (D-P6-C, approved by Saqlain 2026-09-25) and otherwise reopens nothing.
+**Decisions log:** `tasks/2026-09-21-adversarial-review.md` (D1-D11). This plan adds D-P6-A to D-P6-L. It amends D8 (D-P6-C, approved by Saqlain 2026-09-25) and otherwise reopens nothing.
 **Ownership rules:** `tasks/agent-ownership.md`
 **Measurement:** P5-9 harness (`docs/plans/2026-09-24-002-p5-9-end-to-end-validation-plan.md`). The Stage C baseline on today's pipeline is the gate for this whole plan.
 
@@ -47,6 +47,7 @@ This plan does four things:
 ### A1. Analysis call shape
 
 - **One judge call per framework**, streaming, `max_tokens=16384` (`app/services/claude_analyzer.py:436-444`). The ISO (93 controls) and NIST (94) outputs of 12 fields each run close to that ceiling.
+  - **Confirmed live on 2026-09-25** (P5-9 harness, ISO-only example pack, `deepseek/deepseek-v4-flash`). The ISO judge produced 8,051 in / **16,384 out**, `finish_reason=length`, so the JSON was truncated and the framework failed. ISO desk review produced 15,901 of 16,384 output tokens. That works out to about 170 output tokens per control. **P6-1b** batches large frameworks on v1 so the baseline can complete.
 - **A missing control fails the whole framework.** `validate_and_filter` raises when any control ID is missing (`app/schemas/llm_output.py` ~L183-190). P5-1 made scoring fail closed, so one truncated response loses every verdict for that framework.
 - **Frameworks run sequentially** in analysis (`claude_analyzer.py:417`) and in desk review (`app/services/desk_review.py:115`).
 - **No structured-output mode.** The code relies on "Respond ONLY with valid JSON" plus regex fence-stripping (`claude_analyzer.py:_parse_json_response`). There is no retry.
@@ -103,7 +104,7 @@ v2 runs behind a setting (`analysis_pipeline_version: "v1" | "v2"`, default `v1`
 ### Stage 2: Requirement judgment (judge tier, parallel by batch)
 
 - **Inputs per requirement batch:**
-  - requirement references and **test criteria** (Part B.1)
+  - requirement references and **test criteria** (Part B.1), or the implicit fallback criterion when none are approved yet (D-P6-L)
   - verified claims tagged to those requirements, by claim ID
   - the confirmed questionnaire response and its provenance (human, document pre-fill or inferred)
   - relevant desk-review absence signals
@@ -141,6 +142,7 @@ v2 runs behind a setting (`analysis_pipeline_version: "v1" | "v2"`, default `v1`
 - **Licensing (D4).** Criteria are *assessment guidance in our own words*, referencing clause numbers, never reproduced standard text. This is the same rule as `EvidenceRequest.reason`.
 - **Authoring.** An LLM drafts from public guidance and our existing descriptions and red flags. A human curates. Criteria are versioned in the pack and live in Python like the existing definitions.
 - **Order:** DPDPA (41) → ISO Annex A (93) → NIST CSF (94). GDPR, HIPAA and PCI stay disabled.
+- **Criteria are not a prerequisite for v2 (D-P6-L).** When a requirement has no approved criteria, the Stage 2 judge falls back to the control description as a single implicit criterion `{criterion_id: "<requirement_id>.IMPLICIT", statement: <control description>, kind: "design"}`. The run records `criteria_source: "approved" | "fallback"` for each requirement. The existing code checks apply to the implicit criterion unchanged: `compliant` needs it `met` with at least one verified claim. Approved criteria replace the fallback requirement by requirement as sign-off lands, and each one is a pack-version bump.
 - **Side benefits.** Criteria give PR-022's design vs operating-effectiveness split for free. They also give consultants a reusable audit programme, and they become the consultant card's checklist.
 
 ### B.2 Reliability and plumbing
@@ -357,7 +359,7 @@ Saqlain confirmed these on 2026-09-25. Entries marked *proposed, not objected to
 | D-P6-A | AI outcome vocabulary | The PRD's five outcomes, including `insufficient_evidence`. Maturity, timeline, effort and root cause are removed from AI output. *(Proposed, not objected to)* | Principles 3 and 4; PR-042 |
 | D-P6-B | Citation model | Closed-set: the judge references verified claim IDs only, and every claim passes locate + support check. *(Proposed, not objected to)* | Principle 2; PR-021/041 |
 | D-P6-C | **Amend D8. APPROVED** | Verified claims are extracted once and tagged to requirements across all in-scope frameworks as *system suggestions*. The consultant still confirms each Conclusion's evidence set. Conclusions stay per framework. UCC stays questions-only for the questionnaire | Read once, judge consistently. Accepted cost: a mis-tagged claim can repeat across frameworks. Each framework's judge applying its own test criteria, plus per-Conclusion consultant review, is the mitigation. |
-| D-P6-D | Test criteria | Added to packs, own words, reference-only (D4), versioned. **Saqlain signs off every criterion.** An LLM drafts them for review | Principle 6 |
+| D-P6-D | Test criteria | Added to packs, own words, reference-only (D4), versioned. **Saqlain signs off every criterion.** An LLM drafts them for review. *Amended by D-P6-L:* criteria improve v2's quality; they do not gate it | Principle 6 |
 | D-P6-E | Rollout | v2 behind `analysis_pipeline_version`. The default flips only after P5-9 shows catch rate ≥ baseline, FP ≤ baseline, stability ≥ baseline, cost reported. *(Proposed, not objected to)* | Principle 7 |
 | D-P6-F | Narrative | Executive and cross-framework narrative is generated only from approved Findings at report-draft time, cites Finding IDs, and is consultant-edited. *(Proposed, not objected to)* | No unreviewed LLM text in a client document |
 | D-P6-G | Period and cut-off | Assessment period and evidence cut-off are required before any Conclusion can be approved, and are printed on every deliverable. *(Proposed, not objected to)* | PRD invariant 4; PR-012/050/053 |
@@ -365,6 +367,7 @@ Saqlain confirmed these on 2026-09-25. Entries marked *proposed, not objected to
 | D-P6-I | **Security sequencing. APPROVED** | The tool runs locally only. Auth, encryption in transit and at rest, CSRF/CORS and upload hardening move to **Track 4, after the v2 pipeline is implemented and validated**. The gate is unchanged: no non-localhost use and no real client data before Track 4 merges | Saqlain, 2026-09-25 |
 | D-P6-J | ISO content | Rewrite ISO control descriptions in our own words, with references only, done together with the ISO test criteria (P6-2). *(Proposed, not objected to)* | E-C5, D4 |
 | D-P6-K | **LLM provider. APPROVED** | Move from OpenRouter to **AWS Bedrock in `ap-south-1` (Mumbai)** so client data stays in India. This replaces the redaction question (E-H5). Done in Track 4 | Data residency for a DPDPA-selling firm |
+| D-P6-L | **v2 judge runs without test criteria** (2026-09-25) | P6-4 does not depend on P6-2. A requirement with no approved criteria is judged against its control description as one implicit criterion (B.1). Each requirement records `criteria_source: "approved" \| "fallback"` in the run envelope. The consultant card shows "Judged against the control description; no approved test criteria yet" for fallback requirements, and the P5-9 report splits catch-rate, false-positive and stability metrics by `criteria_source`. The D-P6-E flip gate is unchanged | Get ISO and NIST onto the grounded pipeline (closed-set citation, `insufficient_evidence`, batching) as soon as possible. Criteria sign-off is the bottleneck: about 700-900 criteria, reviewed by one person. Grounding and the outcome vocabulary deliver most of v2's value without criteria. Criteria then raise consistency requirement by requirement instead of blocking whole frameworks |
 
 ### Test criteria lifecycle (D-P6-D)
 
@@ -376,7 +379,7 @@ Saqlain confirmed these on 2026-09-25. Entries marked *proposed, not objected to
 - **Changing any criterion bumps the pack version.** Approved Conclusions keep the pack version they were judged against. New analysis runs use the new version. A PR-026-style impact list shows affected drafts.
 - **Size.** About 228 requirements across DPDPA (41), ISO Annex A (93) and NIST CSF (94), at 2-5 criteria each, is roughly 700-900 criteria.
 - **Review process.** An LLM drafts them from public guidance and our existing descriptions. Saqlain reviews one domain at a time in a sheet (approve / edit / reject per criterion). The approved sheet is converted into pack code.
-- **Order.** DPDPA first, so v2 can be built and tested on it. ISO and NIST follow while Stage 2 is in development.
+- **Order.** DPDPA first, so v2 can be tested with real criteria on at least one pack. ISO and NIST follow while Stage 2 is in development. Under D-P6-L they are not a prerequisite: until their criteria are approved, ISO and NIST run on the fallback and are reported as such.
 - **Independence rule.** Criteria are written from the standards and regulations only. **The drafting agent never sees `validation/companies/`.** The reviewer should sign off without reference to the P5-9 answer keys, or the harness measures the criteria against themselves.
 
 ---
@@ -387,7 +390,7 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
 
 ### Track 0: Now (no dependency on the redesign)
 
-- **P5-9 Stage C: baseline run on v1, after P6-1 merges.** Running it after P6-1 means the v1 baseline already has timeouts, temperature 0 and cost records, so the later v1 → v2 comparison measures only the pipeline redesign. Before that: merge the P5-9a harness (`codex/p5-9a-validation-harness`) and the packs (`codex/p5-9-stage-a-packs`) to `main`, clean up the stray `fix_*.py` scripts and `*_backup/` pack directories, and finish the pack fairness audit. **Gate for the Track 1 default flip.**
+- **P5-9 Stage C: baseline run on v1, after P6-1, P6-1b and P6-1c merge.** Running it after P6-1 means the v1 baseline already has timeouts, temperature 0 and cost records, so the later v1 → v2 comparison measures only the pipeline redesign. Running it after P6-1b is also required: without batching, v1 ISO and NIST analysis truncates and fails (A1, live 2026-09-25), so the baseline would have no ISO or NIST numbers to compare against. P6-1c raises the framework ceiling to `llm_max_output_tokens_framework` so the baseline can measure actual production bottlenecks (see P6-1c notes). Before that: merge the P5-9a harness (`codex/p5-9a-validation-harness`) and the packs (`codex/p5-9-stage-a-packs`) to `main`, clean up the stray `fix_*.py` scripts and `*_backup/` pack directories, and finish the pack fairness audit. **Gate for the Track 1 default flip.**
 - **P6-0c Dev hygiene (only the parts the pipeline work needs)**
   - GitHub Actions running pytest
   - dev requirements, `.python-version`
@@ -408,7 +411,16 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
   - durable jobs with restart recovery
   - remove `estimated_score`
   - untrusted-content delimiters (a quality concern: prompt injection distorts proposals even locally)
-- **P6-2 Test criteria content.** DPDPA first (41), then ISO (93, with the own-words rewrite), then NIST (94). Saqlain signs off each domain sheet. This is the critical path.
+- **P6-1b v1 framework batching** `[AR]` (handoff `tasks/handoffs/2026-09-25-p6-1b-v1-framework-batching.md`). Frameworks with more than 50 controls (ISO, NIST) are split into deterministic domain/section batches of at most 25 controls for desk review and the judge:
+  - one flattened concurrency pool
+  - one retry covering only the missing IDs
+  - the framework still fails closed if coverage is incomplete
+  - a deterministic executive summary
+  - batch-tagged call records
+
+  DPDPA (41) is byte-identical. This is v1 only and is not a v2 substitute. It exists so the P5-9 baseline and P6-5 have ISO and NIST numbers.
+- **P6-1c: configurable output ceiling** (PR #56) — framework desk review, framework evidence extraction and the multi-framework judge use `llm_max_output_tokens_framework` (default 65536) instead of a hard-coded 16,384; the curated DPDPA path is unchanged. Live smoke 2026-09-25 (ISO, `c0-example`): desk review then produced 24,591 tokens in 1,032 s (`stop`) — it would have been truncated under the old cap — but the single ISO judge call dropped with `APIConnectionError` after 354 s. At ~24 tokens/s a full ISO judge answer is ~20 minutes in one stream, so batching (P6-1b) is required for reliability and latency, not only for the token limit; P6-1c is headroom.
+- **P6-2 Test criteria content.** DPDPA first (41), then ISO (93, with the own-words rewrite), then NIST (94). Saqlain signs off each domain sheet. Under D-P6-L this improves v2's quality but no longer blocks it.
 - **P6-3 v2 Stages 0-1** `[AR: grounding]`
   - chunking with offset maps
   - document metadata
@@ -418,6 +430,7 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
   - desk-review adapter so P5-4 pre-fill keeps working
 - **P6-4 v2 Stage 2** `[AR: scoring boundary]`
   - batched judge
+  - **runs without test criteria (D-P6-L):** falls back to the control description as one implicit criterion, and records `criteria_source` for each requirement. Approved criteria are used wherever they exist
   - closed-set citation
   - deterministic consistency checks
   - `insufficient_evidence` end to end
@@ -482,9 +495,10 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
 ### Dependency sketch
 
 ```
+P6-1 ──► P6-1b ──► P5-9 baseline (v1)
 P5-9 baseline ──────────────────────────────────┐
 P6-1 ──► P6-3 ──► P6-4 ──► P6-5 (flip) ◄────────┘ ──► Track 3
-P6-2 (DPDPA) ──► P6-4 ;  P6-2 (ISO, NIST) ──► P6-5
+P6-2 (DPDPA, ISO, NIST) ···► P6-4/P6-5 quality (not a blocker, D-P6-L)
 P6-4 ──► P6-7 ;  P6-6 ──► P6-8 ──► P6-9 ;  P6-4 + P6-6 ──► P6-10
 P6-5 ──► Track 4 (P6-11..14) ──► first real client data
 ```
