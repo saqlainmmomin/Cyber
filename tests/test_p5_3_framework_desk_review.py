@@ -801,7 +801,7 @@ def test_scenario_12_standing_guards_and_public_signatures():
     )
     assert models.returncode == 1, models.stdout
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/frameworks/schema.py", "app/frameworks/definitions",
+        ["git", "diff", "--stat", "main", "--", "app/frameworks/definitions",
          ":!app/frameworks/definitions/dpdpa.py"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
@@ -818,6 +818,14 @@ def test_scenario_12_standing_guards_and_public_signatures():
     assert not any(
         token in line for line in changed_lines for token in ("pattern=", "id=", "Control(", "weight")
     ), changed_lines
+    # schema.py may grow (P6-2a added TestCriterion / Control.test_criteria) but
+    # must stay additive: no existing line removed or changed.
+    schema_diff = subprocess.run(
+        ["git", "diff", "-U0", "main", "--", "app/frameworks/schema.py"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    )
+    removed = [l for l in schema_diff.stdout.splitlines() if l.startswith("-") and not l.startswith("---")]
+    assert removed == [], removed
     source = pyinspect.getsource(desk_review_findings)
     assert "llm_client" not in source and "app.services.desk_review" not in source
     assert DeskReviewFinding.__table__.c.framework_id.default is None

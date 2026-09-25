@@ -11,6 +11,22 @@ from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
+class TestCriterion:
+    """One explicit, own-words audit test for a control (D-P6-D).
+
+    Reference-only (D4): `statement` paraphrases the obligation and
+    `source_basis` cites the clause; neither reproduces standard text."""
+
+    __test__ = False  # not a pytest test class, despite the name
+
+    id: str            # "<control_id>.TC<n>", e.g. "CH2.CONSENT.3.TC1"
+    statement: str     # own words; one observable, checkable condition
+    kind: str          # "design" | "operating"
+    evidence_hint: str # document_type key(s) or evidence form that would show it
+    source_basis: str  # e.g. "DPDPA s.6(4)" / "DPDP Rules 2025 r.7(2)" / "practice"
+
+
+@dataclass(frozen=True)
 class Control:
     """Single assessable control/requirement within a framework."""
 
@@ -20,6 +36,7 @@ class Control:
     reference: str  # legislative/standard section ref
     criticality: str  # critical | high | medium | low
     tags: list[str] = field(default_factory=list)
+    test_criteria: tuple[TestCriterion, ...] = ()  # attached only after sign-off (P6-2b)
 
 
 @dataclass(frozen=True)
