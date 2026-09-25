@@ -6,8 +6,8 @@
   },
   "KiddieLearn-Security-Standard-2026.pdf": {
     "artifact_id": "E04",
-    "sha256": "4c1b832017348bc57dd601798a56a391eaebf6b67b80eebb9b2a794f9ac32a27",
-    "text": "Engineering security and retention standard\nIssued for October 2026 desk review\nAccess and storage\nThe production database uses service-managed encryption at rest. Production exports must use encrypted private buckets and be deleted within 24 hours. The CTO approves engineer access monthly.\nThe lesson feature collects learner alias, school year and parent email. The support form also stores free-text teacher notes and birth month, which are not needed for lesson delivery.\nRetention\nInactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed, 35 remain in the retry queue. The dashboard reports the 91 completions only.\nThe processor copy held by MetricTree has no deletion job yet. The next integration sprint is scheduled for November 2026.\nIncident handling\nThe CTO triages security events, keeps an incident log and calls the parent-contact owner for affected accounts. A response checklist and escalation rota were approved on 2026-07-08."
+    "sha256": "4fc6ec37c262c82f717ae2c263f97194a236dc41bd1fc8ccd1828c526d190281",
+    "text": "Engineering security and retention standard\nIssued for October 2026 desk review\nAccess and storage\nThe production database uses service-managed encryption at rest. Production exports must use encrypted private buckets and be deleted within 24 hours. The CTO approves engineer access monthly.\nThe lesson feature collects learner alias, school year and parent email. The support form also stores free-text teacher notes and birth month, which are not needed for lesson delivery.\nRetention\nInactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed. The dashboard reports completed purges; any closure that fails is carried as a retry item on the rights and retention worklist.\nThe processor copy held by MetricTree has no deletion job yet. The next integration sprint is scheduled for November 2026.\nIncident handling\nThe CTO triages security events, keeps an incident log and calls the parent-contact owner for affected accounts. A response checklist and escalation rota were approved on 2026-07-08."
   },
   "KiddieLearn-incident-channel-2026-09.jpg": {
     "artifact_id": "E05",
@@ -21,8 +21,8 @@
   },
   "KiddieLearn-rights-and-retention-log.pdf": {
     "artifact_id": "E06",
-    "sha256": "52ebe84809d5ed1f68e81000c05ae220479dfc25f7cdfdb2a5fb190103937cf9",
-    "text": "Rights and retention worklist\nExported for October 2026 review\nWorklist exported 2026-10-02. Access export omits lesson events and recommendation identifiers.\nRecord\nReceived\nScope\nState\nOwner\nR-101\n2026-08-03\nparent correction\ncompleted 2026-08-05\nsupport\nR-102\n2026-08-09\naccount erasure\ncompleted 2026-08-14\nsupport\nR-103\n2026-09-02\nparent access request\nprofile export only\nsupport\nR-104\n2026-09-17\nparent access request\nprofile export only\nsupport\nR-105\n2026-09-22\ngrievance\nacknowledged 2026-09-23\nCTO\nR-106\n2026-09-30\ndeletion batch\n35 retry items open\nCTO\nA 2026-08 correction and erasure sample was rechecked against the app database."
+    "sha256": "4b01ff30e51f313fcd891d82212231e6564a6952e5a721a3225a88d873559020",
+    "text": "Rights and retention worklist\nExported for October 2026 review\nWorklist exported 2026-10-02. Access export omits lesson events and recommendation identifiers.\nRecord\nReceived\nScope\nState\nOwner\nR-101\n2026-08-03\nparent correction\ncompleted 2026-08-05\nsupport\nR-102\n2026-08-09\naccount erasure\ncompleted 2026-08-14\nsupport\nR-103\n2026-09-02\nparent access request\nprofile export only\nsupport\nR-104\n2026-09-17\nparent access request\nprofile export only\nsupport\nR-105\n2026-09-22\ngrievance\nacknowledged 2026-09-23\nCTO\nR-106\n2026-09-30\ndeletion batch\n14 retry items open\nCTO\nA 2026-08 correction and erasure sample was rechecked against the app database."
   },
   "KiddieLearn-signup-consent.png": {
     "artifact_id": "E02",

@@ -110,12 +110,12 @@
           "requirement_id": "CH2.MINIMIZE.3"
         }
       ],
-      "gap_class": "overclaim",
+      "gap_class": "quantitative",
       "actual_status": "partially_compliant",
       "surface_answer": "fully_implemented",
       "probing_depth": 3,
       "severity_expected": "high",
-      "description": "The closure schedule does not cover 35 accounts in a retry queue and a processor copy remains outside deletion automation.",
+      "description": "Only 91 of 126 requested closures were purged, yet the worklist tracks just 14 open retry items, so 21 closures sit in neither record; an analytics processor copy also lacks deletion automation.",
       "evidence_trail": [
         {
           "source": "evidence:E04",
@@ -128,15 +128,15 @@
           "fact": "91 purges completed"
         },
         {
-          "source": "evidence:E04",
+          "source": "evidence:E06",
           "locator": "record",
-          "fact": "35 remain in the retry queue"
+          "fact": "14 retry items open"
         }
       ],
       "key_facts": [
         "126 closures requested",
         "91 purges completed",
-        "35 remain in the retry queue"
+        "14 retry items open"
       ],
       "what_followup_should_ask": "Show the disposition of every closure in the September cohort."
     },

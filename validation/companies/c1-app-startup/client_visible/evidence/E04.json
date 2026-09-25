@@ -22,7 +22,7 @@
       {
         "heading": "Retention",
         "paragraphs": [
-          "Inactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed, 35 remain in the retry queue. The dashboard reports the 91 completions only.",
+          "Inactive accounts are reviewed weekly; 30 September 2026 cohort: 126 closures requested, 91 purges completed. The dashboard reports completed purges; any closure that fails is carried as a retry item on the rights and retention worklist.",
           "The processor copy held by MetricTree has no deletion job yet. The next integration sprint is scheduled for November 2026."
         ]
       },
