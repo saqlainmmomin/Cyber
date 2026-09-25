@@ -1,0 +1,50 @@
+{
+  "context": {
+    "CTX.DATA.1": [
+      "identity",
+      "behavioral",
+      "childrens"
+    ],
+    "CTX.DATA.2": [
+      "mobile_app",
+      "automated_tracking"
+    ],
+    "CTX.DATA.3": "yes",
+    "CTX.DATA.4": "no",
+    "CTX.DATA.4a": "Not applicable",
+    "CTX.POSTURE.1": "no",
+    "CTX.POSTURE.2": "internal_policy_only",
+    "CTX.POSTURE.3": "no",
+    "CTX.POSTURE.4": "yes_recently_updated",
+    "CTX.RISK.1": [
+      "processes_childrens_data"
+    ],
+    "CTX.RISK.2": "10k_to_1m",
+    "CTX.RISK.3": "yes_unreported",
+    "CTX.INIT.1": "post_incident_review",
+    "CTX.INIT.2": "under_3_months",
+    "CTX.INIT.3": "10k_to_50k"
+  },
+  "scope": {
+    "SCP.1": "no",
+    "SCP.2": "yes",
+    "SCP.3": "no",
+    "SCP.4": "customer",
+    "SCP.5": "yes"
+  },
+  "screening": {
+    "SD.CONSENT": "Parent verification and separate lesson/research choices operate, but recommendation events do not use a separate preference. Parent settings support withdrawal of optional research.",
+    "SD.NOTICE": "Notice v2 is displayed at signup and covers data and purposes; recommendation text still uses a foreign legal-basis citation.",
+    "SD.PURPOSE": "A deletion schedule and weekly closure batch exist; the September retry queue and analytics processor deletion job remain open.",
+    "SD.ACCURACY": "Parents can correct account fields through settings; support checks corrections against the app record.",
+    "SD.SECURITY": "Cloud encryption and monthly access review operate. Two processor agreements await annex signature, and an export bypassed private storage.",
+    "SD.BREACH": "The CTO keeps an incident log and response checklist. A September public-export event remains under legal review for external notice.",
+    "SD.RIGHTS": "Parents can correct, erase and complain using the support queue. Access exports cover profile fields; nomination is planned for November.",
+    "SD.GOVERNANCE": "The CTO owns privacy. Parent mailbox challenge operates; the age value is self-entered and child-device recommendations remain active.",
+    "SD.CROSSBORDER": "No personal data transfer outside India is in current scope."
+  },
+  "magic_link_items": [
+    "Signup and parental-consent capture",
+    "Processor register and agreements"
+  ]
+}

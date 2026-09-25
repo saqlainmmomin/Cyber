@@ -1,0 +1,35 @@
+{
+  "artifact_id": "E09",
+  "filename": "HRFlow-Incident-Procedure-v2.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Incident response procedure v2",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Triage",
+        "paragraphs": [
+          "The on-call analyst classifies incidents within 30 minutes, preserves event records and invokes containment runbooks. The September phishing exercise was closed in 22 minutes after mailbox isolation, token revocation and verification."
+        ]
+      },
+      {
+        "heading": "Notifications",
+        "paragraphs": [
+          "For personal-data incidents, legal follows Breach Notification Matrix BNM-02 for regulator and customer decisions. The document register lists BNM-02 as awaiting owner approval and unavailable in the published repository."
+        ]
+      },
+      {
+        "heading": "Authority contact",
+        "paragraphs": [
+          "The security manager maintains the sector authority contact list, including the national incident coordination desk; it was checked on 2026-09-12."
+        ]
+      }
+    ]
+  }
+}

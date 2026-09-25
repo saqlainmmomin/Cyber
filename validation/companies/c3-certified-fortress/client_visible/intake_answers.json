@@ -1,0 +1,53 @@
+{
+  "context": {
+    "CTX.DATA.1": [
+      "identity",
+      "financial",
+      "behavioral",
+      "childrens"
+    ],
+    "CTX.DATA.2": [
+      "mobile_app",
+      "third_party_apis",
+      "automated_tracking"
+    ],
+    "CTX.DATA.3": "yes",
+    "CTX.DATA.4": "no",
+    "CTX.DATA.4a": "Not applicable",
+    "CTX.POSTURE.1": "full_time",
+    "CTX.POSTURE.2": "iso_27001_certified",
+    "CTX.POSTURE.3": "external_audit",
+    "CTX.POSTURE.4": "yes_recently_updated",
+    "CTX.RISK.1": [
+      "processes_childrens_data",
+      "healthcare_finance_critical_infra",
+      "designated_or_likely_sdf"
+    ],
+    "CTX.RISK.2": "1m_to_10m",
+    "CTX.RISK.3": "no",
+    "CTX.INIT.1": "regulatory_audit_prep",
+    "CTX.INIT.2": "3_to_6_months",
+    "CTX.INIT.3": "above_150k"
+  },
+  "scope": {
+    "SCP.1": "no",
+    "SCP.2": "yes",
+    "SCP.3": "yes",
+    "SCP.4": "customer",
+    "SCP.5": "yes",
+    "ISO.SCP.1": "full_org",
+    "ISO.SCP.2": "yes",
+    "ISO.SCP.3": "inhouse",
+    "ISO.SCP.4": "yes_datacenter",
+    "NIST.SCP.1": "yes_regulated",
+    "NIST.SCP.2": "tier3",
+    "NIST.SCP.3": "no",
+    "NIST.SCP.4": "both"
+  },
+  "screening": null,
+  "magic_link_items": [
+    "Wallet consent settings capture",
+    "September consent ledger",
+    "Consumer rights service log"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E11",
+  "filename": "Bharat-Breach-Notification-Procedure.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Privacy event notification procedure",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Decision chain",
+        "paragraphs": [
+          "SOC confirms a personal-data event and opens the legal decision ticket. The privacy office drafts a Board submission and consumer message from the affected-customer list.",
+          "The affected-customer list is generated from the customer data inventory. Release to the Board and to users follows the decision owner entered in the incident ticket."
+        ]
+      },
+      {
+        "heading": "September rehearsal",
+        "paragraphs": [
+          "A 2026-09-14 drill produced a complete SOC timeline and public statement draft. The Board submission was left in draft because the customer inventory could not resolve pre-migration IDs."
+        ]
+      }
+    ]
+  }
+}

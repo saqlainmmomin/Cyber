@@ -1,0 +1,42 @@
+{
+  "artifact_id": "E04",
+  "filename": "HD-edge-fw-01-running-config.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "config",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Edge firewall running configuration",
+    "lines": [
+      "edge-fw-01 running export 2026-09-30",
+      "Management VLAN 10.44.8.0/24 via VPN and MFA",
+      "line 01 permit tcp source 0.0.0.0/0 port 443 destination service-1",
+      "line 02 permit tcp source 10.44.2.0/24 port 9002 destination service-2",
+      "line 03 permit tcp source 10.44.3.0/24 port 9003 destination service-3",
+      "line 04 permit tcp source 10.44.4.0/24 port 9004 destination service-4",
+      "line 05 permit tcp source 10.44.5.0/24 port 9005 destination service-5",
+      "line 06 permit tcp source 10.44.6.0/24 port 9006 destination service-6",
+      "line 07 permit tcp source 10.44.7.0/24 port 9007 destination service-7",
+      "line 08 permit tcp source 10.44.8.0/24 port 9008 destination service-8",
+      "line 09 permit tcp source 10.44.9.0/24 port 9009 destination service-9",
+      "line 10 permit tcp source 10.44.10.0/24 port 9010 destination service-10",
+      "line 11 permit tcp source 10.44.11.0/24 port 9011 destination service-11",
+      "line 12 permit tcp source 10.44.12.0/24 port 9012 destination service-12",
+      "line 13 permit tcp source 10.44.13.0/24 port 9013 destination service-13",
+      "line 14 permit tcp source 10.44.8.0/24 port 22 destination mgmt-bastion",
+      "line 15 permit tcp source 10.44.15.0/24 port 9015 destination service-15",
+      "line 16 permit tcp source 10.44.16.0/24 port 9016 destination service-16",
+      "line 17 permit tcp source 10.44.17.0/24 port 9017 destination service-17",
+      "line 18 permit tcp source 10.44.18.0/24 port 9018 destination service-18",
+      "line 19 permit tcp source 10.44.19.0/24 port 9019 destination service-19",
+      "line 20 permit tcp source 10.44.20.0/24 port 9020 destination service-20",
+      "line 21 permit tcp source 10.44.21.0/24 port 9021 destination service-21",
+      "line 22 permit tcp source 10.44.22.0/24 port 9022 destination service-22",
+      "line 23 permit tcp source 10.44.23.0/24 port 9023 destination service-23",
+      "line 24 permit tcp source 10.44.24.0/24 port 9024 destination service-24"
+    ]
+  }
+}

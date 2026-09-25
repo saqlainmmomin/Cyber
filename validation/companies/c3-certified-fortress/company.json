@@ -1,0 +1,13 @@
+{
+  "slug": "c3-certified-fortress",
+  "company_name": "Bharat Fintech",
+  "industry": "fintech",
+  "company_size": "large",
+  "engagement_name": "Bharat Fintech October 2026 integrated review",
+  "description": "Indian consumer payments platform with 5.2 million users, an Indian privacy office and mature certified security operations. Selected as a significant data fiduciary; its consumer app includes a supervised youth wallet.",
+  "frameworks": [
+    "dpdpa",
+    "iso27001",
+    "nist_csf"
+  ]
+}

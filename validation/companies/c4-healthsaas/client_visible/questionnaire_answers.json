@@ -1,0 +1,474 @@
+{
+  "answers": {
+    "SINGLE.NIST.GV.PO.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.PO.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OC.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.OC.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.RR.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.RR.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.RM.01": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.RR.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.RR.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OC.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.OC.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.RR.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.RR.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OC.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.OC.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.PO.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.PO.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.RM.02": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.RM.03": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.OV.01": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.SC.01": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.RR.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.RR.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OC.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.OC.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OV.03": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.OC.05": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.GV.OC.05 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.OV.02": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.RM.04": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.PR.AA.05": {
+      "answer": "fully_implemented",
+      "notes": "Service access is reviewed quarterly and the AWS credential report lists the current effective policies.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf; HD-IAM-Credential-Report-2026-09.png"
+    },
+    "SINGLE.NIST.PR.AA.03": {
+      "answer": "fully_implemented",
+      "notes": "Workforce identity uses phishing-resistant MFA and quarterly reviews; the credential report lists service accounts.",
+      "evidence_reference": "HD-IAM-Credential-Report-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.DS.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.DS.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.DS.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.DS.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.AA.01": {
+      "answer": "fully_implemented",
+      "notes": "Workforce identity uses phishing-resistant MFA and quarterly reviews; the credential report lists service accounts.",
+      "evidence_reference": "HD-IAM-Credential-Report-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.AA.04": {
+      "answer": "fully_implemented",
+      "notes": "Workforce identity uses phishing-resistant MFA and quarterly reviews; the credential report lists service accounts.",
+      "evidence_reference": "HD-IAM-Credential-Report-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.AA.02": {
+      "answer": "fully_implemented",
+      "notes": "Workforce identity uses phishing-resistant MFA and quarterly reviews; the credential report lists service accounts.",
+      "evidence_reference": "HD-IAM-Credential-Report-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.AA.06": {
+      "answer": "fully_implemented",
+      "notes": "Workforce identity uses phishing-resistant MFA and quarterly reviews; the credential report lists service accounts.",
+      "evidence_reference": "HD-IAM-Credential-Report-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.DE.CM.09": {
+      "answer": "fully_implemented",
+      "notes": "Our endpoint operations dashboard covers managed laptops in the US and Pune.",
+      "evidence_reference": "HD-Asset-and-EDR-Inventory-2026-09.pdf"
+    },
+    "SINGLE.NIST.RS.MI.01": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.MI.02": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.MA.01": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge and verified isolation, scope and customer operations escalation.",
+      "evidence_reference": "HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.PR.IR.01": {
+      "answer": "fully_implemented",
+      "notes": "Management access comes from the private VPN segment and requires MFA and device posture checks.",
+      "evidence_reference": "HD-edge-fw-01-running-config.pdf; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.DE.CM.01": {
+      "answer": "partially_implemented",
+      "notes": "Central network logs cover production AWS accounts; a legacy monitoring source is awaiting connection.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.RC.RP.01": {
+      "answer": "planned",
+      "notes": "The full production failover exercise under continuity plan v3 is scheduled for November.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.ID.RA.05": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.ID.RA.01": {
+      "answer": "fully_implemented",
+      "notes": "The scan and Security Hub find production vulnerabilities, including the two critical September records.",
+      "evidence_reference": "HD-Vulnerability-Scan-2026-09.pdf; HD-Security-Hub-2026-09.png"
+    },
+    "SINGLE.NIST.DE.AE.08": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.ID.AM.05": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.05 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.DS.11": {
+      "answer": "fully_implemented",
+      "notes": "Daily encrypted backups are sampled monthly; September’s restore matched its source checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.PS.01": {
+      "answer": "fully_implemented",
+      "notes": "A standard endpoint hardening profile is deployed and measured in the September configuration dashboard.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf"
+    },
+    "SINGLE.NIST.ID.AM.07": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.07 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.DS.10": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.DS.10 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.DE.AE.03": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.DE.AE.02": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.DE.CM.06": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.ID.AM.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.RA.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.RA.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.DE.AE.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.DE.AE.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.RS.MA.03": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.AN.07": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.DE.AE.06": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.MA.04": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.AN.08": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.MA.02": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.PR.PS.05": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.RS.CO.02": {
+      "answer": "partially_implemented",
+      "notes": "The internal call tree is tested, while the Pune clinical-operations paging connector is being updated.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf"
+    },
+    "SINGLE.NIST.PR.PS.04": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.RC.RP.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.RC.RP.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.DE.CM.03": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.PR.AT.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.AT.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.RC.RP.02": {
+      "answer": "fully_implemented",
+      "notes": "The continuity record separates monthly backup restore from full failover; the September sample matched its checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.RC.CO.03": {
+      "answer": "fully_implemented",
+      "notes": "The continuity record separates monthly backup restore from full failover; the September sample matched its checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.RC.RP.05": {
+      "answer": "fully_implemented",
+      "notes": "The continuity record separates monthly backup restore from full failover; the September sample matched its checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.RC.RP.03": {
+      "answer": "fully_implemented",
+      "notes": "Continuity test results are retained with the current plan and monthly restore sample.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.PR.IR.03": {
+      "answer": "fully_implemented",
+      "notes": "The continuity record separates monthly backup restore from full failover; the September sample matched its checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.ID.RA.06": {
+      "answer": "fully_implemented",
+      "notes": "The risk council selected patch treatment and signed the September decision log for critical findings.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf"
+    },
+    "SINGLE.NIST.RS.AN.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.RS.AN.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.PS.06": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.PS.06 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.AT.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.AT.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.AM.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.PS.02": {
+      "answer": "fully_implemented",
+      "notes": "Our monthly maintenance process and 15-day critical patch target are documented in policy; the September scan is the operating record.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.SC.04": {
+      "answer": "fully_implemented",
+      "notes": "Critical supplier reassessments are scheduled annually in the supply-security register.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.02": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.05": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.ID.RA.03": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.PR.IR.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.IR.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.RC.RP.06": {
+      "answer": "fully_implemented",
+      "notes": "The continuity record separates monthly backup restore from full failover; the September sample matched its checksum.",
+      "evidence_reference": "HD-BCP-DR-Test-Record-2026.pdf"
+    },
+    "SINGLE.NIST.ID.AM.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.PS.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.PR.PS.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.IM.01": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.IM.01 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.IM.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.IM.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.IM.02": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.IM.02 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.RS.MA.05": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.CO.03": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.RS.AN.06": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.RS.AN.06 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.AM.03": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.03 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.DE.CM.02": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.RC.CO.04": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.RC.CO.04 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.GV.SC.03": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.ID.AM.08": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.AM.08 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.PR.IR.02": {
+      "answer": "fully_implemented",
+      "notes": "The 24x7 SOC reviews cloud findings and retains network and cloud audit logs for 365 days.",
+      "evidence_reference": "HD-Security-Hub-2026-09.png; HD-Identity-Monitoring-and-Recovery-Summary.pdf"
+    },
+    "SINGLE.NIST.DE.AE.07": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.ID.RA.02": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.RS.CO.04": {
+      "answer": "fully_implemented",
+      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    }
+  }
+}

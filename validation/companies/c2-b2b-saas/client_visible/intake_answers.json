@@ -1,0 +1,43 @@
+{
+  "context": {
+    "CTX.DATA.1": [
+      "identity",
+      "financial"
+    ],
+    "CTX.DATA.2": [
+      "web_forms",
+      "third_party_apis"
+    ],
+    "CTX.DATA.3": "yes",
+    "CTX.DATA.4": "yes",
+    "CTX.DATA.4a": "United States analytics region for enterprise tenant events",
+    "CTX.POSTURE.1": "part_time_shared",
+    "CTX.POSTURE.2": "internal_policy_only",
+    "CTX.POSTURE.3": "internal_only",
+    "CTX.POSTURE.4": "yes_recently_updated",
+    "CTX.RISK.1": [
+      "none"
+    ],
+    "CTX.RISK.2": "1m_to_10m",
+    "CTX.RISK.3": "no",
+    "CTX.INIT.1": "regulatory_audit_prep",
+    "CTX.INIT.2": "3_to_6_months",
+    "CTX.INIT.3": "50k_to_150k"
+  },
+  "scope": {
+    "SCP.1": "yes",
+    "SCP.2": "no",
+    "SCP.3": "no",
+    "SCP.4": "both",
+    "SCP.5": "yes",
+    "ISO.SCP.1": "specific_units",
+    "ISO.SCP.2": "yes",
+    "ISO.SCP.3": "inhouse",
+    "ISO.SCP.4": "yes_office"
+  },
+  "screening": null,
+  "magic_link_items": [
+    "Q3 privileged access review",
+    "Production security-group export"
+  ]
+}

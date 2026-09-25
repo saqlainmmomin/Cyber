@@ -1,0 +1,29 @@
+{
+  "artifact_id": "E06",
+  "filename": "Bharat-wallet-consent-settings.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Wallet consent settings capture",
+  "consultant_maps_to": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.1"
+    }
+  ],
+  "render": {
+    "kind": "console",
+    "format": "png",
+    "degrade": "scan_light"
+  },
+  "content": {
+    "title": "Wallet consent settings capture",
+    "lines": [
+      "Build 9.14.2 / 2026-09-27 / customer cohort new",
+      "Wallet processing: required for service; analytics: optional and separately saved.",
+      "Legacy migration view: Continue with wallet and analytics [single confirmation].",
+      "Withdrawal: wallet optional analytics can be disabled in one action; event receipt retained.",
+      "All legacy profile events are sent to the shared customer data lake after confirmation.",
+      "Youth wallet entry asks for birth year and parent mailbox challenge."
+    ]
+  }
+}

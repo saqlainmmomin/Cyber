@@ -1,0 +1,72 @@
+{
+  "artifact_id": "E06",
+  "filename": "KiddieLearn-rights-and-retention-log.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Rights and retention worklist",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Worklist exported 2026-10-02. Access export omits lesson events and recommendation identifiers."
+    ],
+    "columns": [
+      "Record",
+      "Received",
+      "Scope",
+      "State",
+      "Owner"
+    ],
+    "rows": [
+      [
+        "R-101",
+        "2026-08-03",
+        "parent correction",
+        "completed 2026-08-05",
+        "support"
+      ],
+      [
+        "R-102",
+        "2026-08-09",
+        "account erasure",
+        "completed 2026-08-14",
+        "support"
+      ],
+      [
+        "R-103",
+        "2026-09-02",
+        "parent access request",
+        "profile export only",
+        "support"
+      ],
+      [
+        "R-104",
+        "2026-09-17",
+        "parent access request",
+        "profile export only",
+        "support"
+      ],
+      [
+        "R-105",
+        "2026-09-22",
+        "grievance",
+        "acknowledged 2026-09-23",
+        "CTO"
+      ],
+      [
+        "R-106",
+        "2026-09-30",
+        "deletion batch",
+        "14 retry items open",
+        "CTO"
+      ]
+    ],
+    "footer": [
+      "A 2026-08 correction and erasure sample was rechecked against the app database."
+    ]
+  }
+}

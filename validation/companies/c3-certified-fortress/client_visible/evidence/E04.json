@@ -1,0 +1,65 @@
+{
+  "artifact_id": "E04",
+  "filename": "Bharat-Supplier-Assurance-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Supplier assurance and contract schedule",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Procurement reviews every supplier for technical controls and resilience under the certified ISMS."
+    ],
+    "columns": [
+      "Supplier",
+      "Purpose",
+      "Technical assurance",
+      "Contract annex",
+      "Last review"
+    ],
+    "rows": [
+      [
+        "CloudNest",
+        "hosting",
+        "ISO report current",
+        "security schedule signed",
+        "2026-08-22"
+      ],
+      [
+        "SignalPearl",
+        "wallet analytics",
+        "pen test current",
+        "security schedule signed; processing instructions absent",
+        "2026-07-19"
+      ],
+      [
+        "KeyLoop",
+        "identity",
+        "SOC report current",
+        "security schedule signed",
+        "2026-09-02"
+      ],
+      [
+        "PayRail",
+        "settlement",
+        "ISO report current",
+        "security schedule signed",
+        "2026-08-04"
+      ],
+      [
+        "MailSprout",
+        "notifications",
+        "SOC report current",
+        "security schedule signed",
+        "2026-06-14"
+      ]
+    ],
+    "footer": [
+      "The privacy office receives contract schedules after procurement signature."
+    ]
+  }
+}

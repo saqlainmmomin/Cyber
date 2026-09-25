@@ -1,0 +1,72 @@
+{
+  "Bharat-Breach-Notification-Procedure.pdf": {
+    "artifact_id": "E11",
+    "sha256": "ff57d343ea18f2f5857d9b4c67ec1b566de40c3908775c7be21388bacf18fcdf",
+    "text": "Privacy event notification procedure\nIssued for October 2026 desk review\nDecision chain\nSOC confirms a personal-data event and opens the legal decision ticket. The privacy office drafts a Board submission and consumer message from the affected-customer list.\nThe affected-customer list is generated from the customer data inventory. Release to the Board and to users follows the decision owner entered in the incident ticket.\nSeptember rehearsal\nA 2026-09-14 drill produced a complete SOC timeline and public statement draft. The Board submission was left in draft because the customer inventory could not resolve pre-migration IDs."
+  },
+  "Bharat-Consent-Ledger-September.pdf": {
+    "artifact_id": "E07",
+    "sha256": "15529312f00cad8580d73312837679557553f71ed7c37ab17e79a8b37e54a5e8",
+    "text": "Consent ledger sample, September 2026\nExported for October 2026 review\n30 accounts sampled from the wallet release. New-cohort choices are stored individually; legacy migration receipts retain the combined confirmation.\nAccount\nCohort\nRecorded\nPreference\nProof\nBFT-00001\nlegacy\n2026-09-02\nwallet and analytics combined\nnot recorded\nBFT-00002\nlegacy\n2026-09-03\nwallet and analytics combined\nnot recorded\nBFT-00003\nlegacy\n2026-09-04\nwallet and analytics combined\nnot recorded\nBFT-00004\nlegacy\n2026-09-05\nwallet and analytics combined\nnot recorded\nBFT-00005\nlegacy\n2026-09-06\nwallet and analytics combined\nnot recorded\nBFT-00006\nlegacy\n2026-09-07\nwallet and analytics combined\nnot recorded\nBFT-00007\nlegacy\n2026-09-08\nwallet and analytics combined\nnot recorded\nBFT-00008\nlegacy\n2026-09-09\nwallet and analytics combined\nnot recorded\nBFT-00009\nlegacy\n2026-09-10\nwallet and analytics combined\nnot recorded\nBFT-00010\nlegacy\n2026-09-11\nwallet and analytics combined\nnot recorded\nBFT-00011\nlegacy\n2026-09-12\nwallet and analytics combined\nnot recorded\nBFT-00012\nlegacy\n2026-09-13\nwallet and analytics combined\nnot recorded\nBFT-00013\nlegacy\n2026-09-14\nwallet and analytics combined\nnot recorded\nBFT-00014\nlegacy\n2026-09-15\nwallet and analytics combined\nnot recorded\nBFT-00015\nlegacy\n2026-09-16\nwallet and analytics combined\nnot recorded\nBFT-00016\nlegacy\n2026-09-17\nwallet and analytics combined\nnot recorded\nBFT-00017\nlegacy\n2026-09-18\nwallet and analytics combined\nnot recorded\nBFT-00018\nlegacy\n2026-09-19\nwallet and analytics combined\nnot recorded\nBFT-00019\nlegacy\n2026-09-20\nwallet and analytics combined\nnot recorded\nBFT-00020\nlegacy\n2026-09-21\nwallet and analytics combined\nnot recorded\nBFT-00021\nnew\n2026-09-22\nwallet only\nseparate preference saved\nBFT-00022\nnew\n2026-09-23\nwallet only\nseparate preference saved\nBFT-00023\nnew\n2026-09-24\nwallet only\nseparate preference saved\nBFT-00024\nnew\n2026-09-25\nwallet only\nseparate preference saved\nBFT-00025\nnew\n2026-09-26\nwallet only\nseparate preference saved\nBFT-00026\nnew\n2026-09-27\nwallet only\nseparate preference saved\nBFT-00027\nnew\n2026-09-28\nwallet only\nseparate preference saved\nBFT-00028\nnew\n2026-09-01\nwallet only\nseparate preference saved\nBFT-00029\nnew\n2026-09-02\nwallet only\nseparate preference saved\nBFT-00030\nnew\n2026-09-03\nwallet only\nseparate preference saved\nYouth sample BF-Y-017: birth year 2011; parent challenge not recorded. BF-Y-018: birth year 2012; parent challenge not recorded."
+  },
+  "Bharat-Consumer-Privacy-Notice-v4.docx": {
+    "artifact_id": "E05",
+    "sha256": "925a03953b9f3247e7c855e1917e93c342554ee08f2aeff3232611988c858a67",
+    "text": "Consumer privacy notice v4\nIssued for October 2026 desk review\nPurpose\nEffective 2026-07-01. Wallet transaction data supports payments, fraud defence and service continuity. Optional product analytics is described in the settings page.\nFor behavioural marketing, the policy relies on legitimate interest under GDPR Article 6(1)(f), which the legal register marks as available to all consumer cohorts.\nRetention and rights\nClosed wallets are removed from the primary ledger after 30 days subject to settlement obligations. Consumer rights requests are received through the app and by email. The dashboard view is available for accounts created after the 2024 migration.\nA separate notice to previously collected account holders was delivered during migration wave 4, covering the accounts then in the new identity store.\nContact\nThe India-based privacy office receives enquiries at rights@bharatfintech.example."
+  },
+  "Bharat-DPO-Appointment-and-Roles.pdf": {
+    "artifact_id": "E09",
+    "sha256": "6671dd71f71ace9a540d17e7f439d4781a6d75701dd6efa43c4fcb0e0e992066",
+    "text": "Privacy office appointment and roles\nIssued for October 2026 desk review\nAppointment\nThe Board appointed Meera Rao as India-based Data Protection Officer effective 2026-04-01. She reports to the Board risk committee and has authority to request business records.\nThe privacy office has 1.5 FTE for rights operations, notice delivery and processing reviews. Security operations and the SOC retain their separate staffing.\nAccountability\nThe DPO signs quarterly grievance reports and consults on consent changes. The predecessor was the legal operations manager until 2026-03-31."
+  },
+  "Bharat-Grievance-Procedure-and-Metrics.pdf": {
+    "artifact_id": "E10",
+    "sha256": "ef1bff946f388af03045efda7e1f66bd6f33480f3b60327ea7509159f6316f6d",
+    "text": "Grievance procedure v3\nIssued for October 2026 desk review\nRouting\nApp and email complaints receive a ticket number and a 24-hour acknowledgement. The DPO is the named escalation owner for unresolved complaints.\nMeasures\nThe DPO-operated grievance queue reports 38 cases closed in January-March 2026 with a median four-day resolution. The queue was established on 2026-04-01, when the current DPO took office.\nFrom April to September the queue closed 82 cases; sample evidence and response letters were filed monthly."
+  },
+  "Bharat-ISMS-Certificate-and-SoA-Summary.pdf": {
+    "artifact_id": "E01",
+    "sha256": "1d3998456281d370a60229d3593c5b2af2d9966133b0f13109f09634257e79a7",
+    "text": "Certified ISMS summary\nIssued for October 2026 desk review\nCertification\nCertificate BF-ISMS-2026 covers payment processing, cloud operations and the Mumbai and Pune operations centres through 2027-03-31. The last independent surveillance found no major security nonconformities.\nISO privacy controls are supported by the security risk register, access governance and supplier-security clauses. This certification states no conclusion about the separate statutory privacy obligations of consumer-facing processing.\nOperating proof\nQuarterly privilege reviews, encrypted backups, phishing-resistant MFA, JIT access and supplier penetration-test reports were sampled by the external auditor in August 2026. SIEM event logs are retained for 365 days and sampled weekly. Exception closure was independently checked."
+  },
+  "Bharat-Internal-Audit-and-DPIA-Status.pdf": {
+    "artifact_id": "E13",
+    "sha256": "3d30f9ffe5e128bcf1882776cde3790bb122219383e021b7e8d0a6b318f0efdf",
+    "text": "Internal audit and impact-assessment status\nIssued for October 2026 desk review\nAssurance\nThe August 2026 internal security audit sampled 42 control executions and closed its one minor supplier finding by 2026-09-03. A previous 2025 stale-key weakness was fixed and re-tested on 2026-01-18.\nNIST access, monitoring, backup and recovery practices were independently checked against operation logs.\nPrivacy review\nThe youth-wallet DPIA has an approved scope dated 2026-09-10. Fieldwork and sign-off are planned for 2026-11-30. No completed DPIA was available at the October review."
+  },
+  "Bharat-Personal-Data-Inventory-Q3.pdf": {
+    "artifact_id": "E12",
+    "sha256": "5e50561b2d7d79668e0886d618877e9cd060c9086fbcbe180e60d857039c643a",
+    "text": "Customer data inventory\nExported for October 2026 review\nInventory refreshed 2026-09-26. New identity store has 260,000 customers; legacy wallet has 4.94 million customers.\nStore\nCohort\nCoverage\nOwner\nRetention\nwallet-core\nnew\n100%\nplatform\n30 days after closure\nrights-service\nnew\n100%\nprivacy office\ncase schedule\nanalytics-lake\nall\nlegacy profiles included\ndata science\nindefinite until mapping complete\nlegacy-wallet\nlegacy\nidentity mapping 5%\nmigration team\nunmapped\narchive\nall\nsettlement extracts only\nfinance\nstatutory period\nLegacy wallet mapping wave 4 is due 2026-12-15."
+  },
+  "Bharat-Rights-Service-Log-Q3.pdf": {
+    "artifact_id": "E08",
+    "sha256": "4f3c85734cee3d3725efa29f154fda483535f1a66f28e0bc52a70b3f6a70ba4e",
+    "text": "Consumer rights service log\nExported for October 2026 review\nQuarterly report: 14 erasure requests received, 14 resolved within service target.\nTicket\nReceived\nDisposition\nCohort\nER-001\n2026-09-02\ncomplete\nnew\nER-002\n2026-09-03\ncomplete\nnew\nER-003\n2026-09-04\ncomplete\nnew\nER-004\n2026-09-05\ncomplete\nnew\nER-005\n2026-09-06\ncomplete\nnew\nER-006\n2026-09-07\ncomplete\nnew\nER-007\n2026-09-08\ncomplete\nnew\nER-008\n2026-09-09\ncomplete\nnew\nER-009\n2026-09-10\ncomplete\nnew\nER-010\n2026-09-11\nawaiting legacy lookup\nlegacy\nER-011\n2026-09-12\nawaiting legacy lookup\nlegacy\nER-012\n2026-09-13\nawaiting legacy lookup\nlegacy\nER-013\n2026-09-14\nawaiting legacy lookup\nlegacy\nER-014\n2026-09-15\nawaiting legacy lookup\nlegacy\nThe service dashboard counts closed helpdesk tickets; 5 records remain in the legacy lookup queue."
+  },
+  "Bharat-Risk-Register-Q3.pdf": {
+    "artifact_id": "E02",
+    "sha256": "f0297ef27ef7a2b4dd81c9502e29a0710be09f419bc99df7eae0095898d3c756",
+    "text": "Enterprise risk register, Q3 2026\nExported for October 2026 review\nBoard risk committee accepted the security residual-risk report on 2026-09-26. Consumer privacy service outcomes are tracked in a separate service log.\nID\nRisk\nOwner\nReview\nTreatment\nR-201\ncredential abuse\nCISO\n2026-09-19\nJIT and phishing resistant MFA\nR-202\ncloud outage\nresilience lead\n2026-09-18\ndual-region restore\nR-203\nsupplier intrusion\nthird-party lead\n2026-09-17\nannual technical assurance\nR-204\nyouth wallet data exposure\nprivacy office\n2026-09-20\nage-gate sampling\nR-205\nsupport export leakage\nSOC lead\n2026-09-21\negress alert\nR-206\nlegacy rights lookup\nprivacy office\n2026-09-22\nmigration wave 4\nNo overdue high security risks at quarter-end."
+  },
+  "Bharat-SOC-Runbook-and-Metrics.pdf": {
+    "artifact_id": "E03",
+    "sha256": "088f815910a8d50a15f1510b6185c123c3b35e439e13fe83f1be90c8e57324f7",
+    "text": "SOC incident runbook v5\nIssued for October 2026 desk review\nExecution\nThe 24x7 SOC triages high-severity alerts in 11 minutes median, confirms containment in 42 minutes median and preserves forensic hashes. The 2026-08 ransomware tabletop met all NIST response steps.\nThe external communications branch opens a customer-communications ticket after legal approves language. The runbook has no Data Protection Board decision owner or board-notification clock.\nRecovery\nA monthly recovery sample restores encrypted production snapshots and verifies record counts and checksums. September sample BF-09 restored in 38 minutes against a 60-minute target."
+  },
+  "Bharat-Supplier-Assurance-Q3.pdf": {
+    "artifact_id": "E04",
+    "sha256": "a5a4c757866b1793179b1eda39584e3f4ea296c83d054e47f9b6bfcd7e68f775",
+    "text": "Supplier assurance and contract schedule\nExported for October 2026 review\nProcurement reviews every supplier for technical controls and resilience under the certified ISMS.\nSupplier\nPurpose\nTechnical assurance\nContract annex\nLast review\nCloudNest\nhosting\nISO report current\nsecurity schedule signed\n2026-08-22\nSignalPearl\nwallet analytics\npen test current\nsecurity schedule signed; processing instructions absent\n2026-07-19\nKeyLoop\nidentity\nSOC report current\nsecurity schedule signed\n2026-09-02\nPayRail\nsettlement\nISO report current\nsecurity schedule signed\n2026-08-04\nMailSprout\nnotifications\nSOC report current\nsecurity schedule signed\n2026-06-14\nThe privacy office receives contract schedules after procurement signature."
+  },
+  "Bharat-Youth-Wallet-Operating-Record.pdf": {
+    "artifact_id": "E14",
+    "sha256": "c79f4fc8dfa4d0a2bc31332198fddb28bbf5dc5b3cc9861c6ac681a6a379e045",
+    "text": "Youth wallet operating record\nIssued for October 2026 desk review\nPopulation\nThe supervised youth wallet serves 18,400 accounts. Age is checked against the verified account-holder record; parent challenge service returns a pass/fail record to the wallet app.\nThe September exception report lists BF-Y-017 and BF-Y-018 as approved accounts with missing parent challenge receipts. A manual follow-up request is open with customer service.\nSafety\nNo tracking, behavioural monitoring or targeted ads are enabled for youth accounts. Transaction limits and parent dashboards are active. The feature was reviewed by the child-safety committee on 2026-08-12."
+  },
+  "Bharat-wallet-consent-settings.png": {
+    "artifact_id": "E06",
+    "sha256": "08b34d639cae006f3c075a512b42a81651e966be2ed4943dfb2ed5834ffbc0c3",
+    "text": "Wallet consent settings capture\nBuild 9.14.2 / 2026-09-27 / customer cohort new\nWallet processing: required for service; analytics: optional and separately saved.\nLegacy migration view: Continue with wallet and analytics [single confirmation].\nWithdrawal: wallet optional analytics can be disabled in one action; event receipt retained.\nAll legacy profile events are sent to the shared customer data lake after confirmation.\nYouth wallet entry asks for birth year and parent mailbox challenge."
+  }
+}

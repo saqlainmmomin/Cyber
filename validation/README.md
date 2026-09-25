@@ -1,0 +1,59 @@
+# Validation packs
+
+Each directory under `companies/` is a self-contained synthetic company pack. `company.json`, `client_visible/`, exported question packs, and rendered evidence are client-visible inputs. Keep the held-out truth in `answer_key.json`; the route runner reads only the client-visible allow-list, while lint and scoring inspect the key.
+
+## Authoring sequence
+
+1. Add `company.json` with the company profile and enabled framework ids.
+2. Export intake questions and the selected frameworks' registry controls:
+
+   ```bash
+   python -m scripts.validation.export_question_pack <slug> --stage intake
+   ```
+
+3. Author `client_visible/intake_answers.json` and `answer_key.json` using real exported ids.
+4. Export the adaptive questionnaire from those intake and scope answers:
+
+   ```bash
+   python -m scripts.validation.export_question_pack <slug> --stage questionnaire
+   ```
+
+5. Author an answer for each non-skipped question in `client_visible/questionnaire_answers.json`, then add structured specs under `client_visible/evidence/`.
+6. Render and lint before running:
+
+   ```bash
+   python -m scripts.validation.render_evidence <slug>
+   python -m scripts.validation.lint_pack <slug> --require-questionnaire
+   ```
+
+7. Run one or more isolated assessments, score each run, then build the summary:
+
+   ```bash
+   python -m scripts.validation.run_company <slug> --runs 1 --llm live
+   python -m scripts.validation.score validation/runs/<timestamp>/<slug>/run-*
+   python -m scripts.validation.report validation/runs/<timestamp>
+   ```
+
+Use `--llm mock` for offline smoke runs. They are stamped `MOCK`; live runs without `--baseline` are stamped `SMOKE`. Only use `--baseline` after the planned product prerequisites have merged and every run used the live model.
+
+## Pack layout
+
+```text
+validation/companies/<slug>/
+  company.json
+  client_visible/
+    intake_answers.json
+    questionnaire_answers.json
+    evidence/<artifact_id>.json
+    images/                 # realism-only images, when needed
+  answer_key.json           # held out from the runner
+  question_pack.intake.json
+  question_pack.questionnaire.json
+  rendered/                 # generated and ignored by Git
+```
+
+Evidence specs use structured prose, table, config, or console data. `external_image` is for realism-only images with a transcript; it cannot carry a planted gap or be cited in a gap trail. The renderer fixes document metadata and seeds scan degradation so identical specs produce identical files.
+
+## Held-out rule
+
+The answer keys are a held-out evaluation set. No task that changes prompts, the analyzer or the desk review may read `validation/companies/*/answer_key.json` or tune against a specific planted gap. Tuning against the set turns it into a training set and makes the numbers meaningless. If prompt work needs examples, author a separate dev company.

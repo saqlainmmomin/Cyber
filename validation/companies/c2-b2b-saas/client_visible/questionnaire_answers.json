@@ -1,0 +1,224 @@
+{
+  "answers": {
+    "CLUSTER_031": {
+      "answer": "fully_implemented",
+      "notes": "Our supplier register records the PeopleSignal processing region and legal reviews overseas routes each quarter.",
+      "evidence_reference": "HRFlow-Supplier-Register-Q3.pdf; HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_001": {
+      "answer": "fully_implemented",
+      "notes": "Our access, network and compliance standards are versioned and reviewed by the security team for Stage 1.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Draft-SoA-2026.pdf"
+    },
+    "CLUSTER_007": {
+      "answer": "fully_implemented",
+      "notes": "The quarterly privileged-access review includes HR reconciliation, reviewer sign-off and JIT grant checks.",
+      "evidence_reference": "HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_014": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_022": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_017": {
+      "answer": "fully_implemented",
+      "notes": "Legal uses the incident matrix referenced by our response procedure to make regulatory notification decisions.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_036": {
+      "answer": "fully_implemented",
+      "notes": "Quarterly account review and time-limited elevation operate under the access standard.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_033": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_002": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_004": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_005": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_044": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_003": {
+      "answer": "partially_implemented",
+      "notes": "Security joins project gates, although Project Beacon’s sign-off was deferred until after release.",
+      "evidence_reference": "HRFlow-Restore-and-Change-Record-Q3.pdf"
+    },
+    "CLUSTER_035": {
+      "answer": "fully_implemented",
+      "notes": "Our September register includes risks and a threat-intelligence item carried into the committee pack.",
+      "evidence_reference": "HRFlow-Risk-and-Threat-Register.pdf"
+    },
+    "CLUSTER_020": {
+      "answer": "fully_implemented",
+      "notes": "Quarterly account review and time-limited elevation operate under the access standard.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_052": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_021": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_029": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_030": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_053": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_023": {
+      "answer": "partially_implemented",
+      "notes": "Account support currently handles employee summaries; a self-service route is on next year’s product plan.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_025": {
+      "answer": "fully_implemented",
+      "notes": "Our published archive period is ten years and account support processes erasure requests against that schedule.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_024": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_028": {
+      "answer": "partially_implemented",
+      "notes": "Our current notice and support route describe workforce processing and customer contacts.",
+      "evidence_reference": "HRFlow-Privacy-Notice-v3.docx"
+    },
+    "CLUSTER_006": {
+      "answer": "fully_implemented",
+      "notes": "Quarterly account review and time-limited elevation operate under the access standard.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_008": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_041": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_039": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_009": {
+      "answer": "fully_implemented",
+      "notes": "Quarterly account review and time-limited elevation operate under the access standard.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_045": {
+      "answer": "fully_implemented",
+      "notes": "Quarterly account review and time-limited elevation operate under the access standard.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-Q3-Privileged-Access-Review.pdf"
+    },
+    "CLUSTER_018": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_015": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_019": {
+      "answer": "fully_implemented",
+      "notes": "The September encrypted-snapshot restore met the RTO and checksum target with two signatories.",
+      "evidence_reference": "HRFlow-Restore-and-Change-Record-Q3.pdf"
+    },
+    "CLUSTER_016": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_040": {
+      "answer": "fully_implemented",
+      "notes": "The network standard limits production management to our VPN; the September security-group export is the implementation record.",
+      "evidence_reference": "HRFlow-Access-and-Network-Standard-v2.pdf; HRFlow-sg-prod-admin.png"
+    },
+    "CLUSTER_043": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_034": {
+      "answer": "fully_implemented",
+      "notes": "Our on-call procedure captures triage, containment and retained event records, with legal review for notifications.",
+      "evidence_reference": "HRFlow-Incident-Procedure-v2.pdf"
+    },
+    "CLUSTER_042": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "CLUSTER_013": {
+      "answer": "fully_implemented",
+      "notes": "Cloud and supplier services are reviewed under the Stage 1 preparation programme; account and supplier records are in the scope pack.",
+      "evidence_reference": "HRFlow-ISMS-Scope-v1-2.pdf; HRFlow-Supplier-Register-Q3.pdf"
+    },
+    "CLUSTER_010": {
+      "answer": "partially_implemented",
+      "notes": "Procurement tracks six suppliers with regions and executed terms; renewals move through legal review.",
+      "evidence_reference": "HRFlow-Supplier-Register-Q3.pdf"
+    },
+    "CLUSTER_011": {
+      "answer": "partially_implemented",
+      "notes": "Most supplier security terms are executed; ClearDesk remains in contract review.",
+      "evidence_reference": "HRFlow-Supplier-Register-Q3.pdf"
+    },
+    "CLUSTER_038": {
+      "answer": "partially_implemented",
+      "notes": "Procurement tracks six suppliers with regions and executed terms; renewals move through legal review.",
+      "evidence_reference": "HRFlow-Supplier-Register-Q3.pdf"
+    },
+    "CLUSTER_012": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    },
+    "SINGLE.ISO.A5.32": {
+      "answer": "fully_implemented",
+      "notes": "The security team maintains versioned control documents and records implementation in its Stage 1 evidence pack.",
+      "evidence_reference": "HRFlow-Draft-SoA-2026.pdf; HRFlow-Access-and-Network-Standard-v2.pdf"
+    }
+  }
+}

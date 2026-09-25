@@ -1,0 +1,192 @@
+{
+  "artifact_id": "E03",
+  "filename": "HD-IAM-Credential-Report-2026-09.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "September IAM credential report",
+  "consultant_maps_to": [
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.PR.AA.05"
+    }
+  ],
+  "render": {
+    "kind": "table",
+    "format": "png",
+    "degrade": "scan_light"
+  },
+  "content": {
+    "title": "IAM credential report",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "All AWS accounts included. Export 2026-09-30; human access uses identity federation."
+    ],
+    "columns": [
+      "Principal",
+      "Effective policy",
+      "Key age",
+      "Last review"
+    ],
+    "rows": [
+      [
+        "svc-workload-01",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-02",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-03",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-04",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-05",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-06",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-07",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-08",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-09",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-10",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-11",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-12",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-13",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-14",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-15",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-16",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-17",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-18",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-build-orchestrator",
+        "AdministratorAccess",
+        "402 days",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-20",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-21",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-22",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-23",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-24",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-25",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ],
+      [
+        "svc-workload-26",
+        "ReadOnlyTelemetry",
+        "federated",
+        "2026-09-25"
+      ]
+    ],
+    "footer": [
+      "Next review due 2026-12-31."
+    ]
+  }
+}

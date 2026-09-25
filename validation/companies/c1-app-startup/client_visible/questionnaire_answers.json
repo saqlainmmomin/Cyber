@@ -1,0 +1,199 @@
+{
+  "answers": {
+    "CH2.CONSENT.1": {
+      "answer": "fully_implemented",
+      "notes": "The parent step records a six-digit mailbox challenge and a versioned receipt before lesson delivery begins.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH2.CONSENT.2": {
+      "answer": "fully_implemented",
+      "notes": "Lessons and optional research are presented as separate choices; the research box starts unchecked.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH2.CONSENT.3": {
+      "answer": "fully_implemented",
+      "notes": "Parent settings allow optional research to be switched off immediately; the research SDK stops new events on that action.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH2.CONSENT.4": {
+      "answer": "not_applicable",
+      "notes": "We operate our own consent screen and do not use a third-party Consent Manager.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH2.CONSENT.5": {
+      "answer": "fully_implemented",
+      "notes": "The parent mailbox challenge is checked against the billing holder and stores a dated approval receipt.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH2.NOTICE.1": {
+      "answer": "fully_implemented",
+      "notes": "Notice v2 is linked before the parent confirms signup and explains our collection and product uses.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx"
+    },
+    "CH2.NOTICE.2": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH2.NOTICE.3": {
+      "answer": "fully_implemented",
+      "notes": "The published privacy mailbox is handled by our CTO and support queue; a September complaint was acknowledged the next day.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH2.PURPOSE.1": {
+      "answer": "fully_implemented",
+      "notes": "We use learning account information for lessons and related recommendations described in notice v2.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx; KiddieLearn-signup-consent.png"
+    },
+    "CH2.PURPOSE.2": {
+      "answer": "fully_implemented",
+      "notes": "Notice v2 records the basis used for recommendation profiling; legal reviewed its wording for the current release.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx"
+    },
+    "CH2.MINIMIZE.1": {
+      "answer": "fully_implemented",
+      "notes": "The lesson flow requests only learner alias, year and parent contact; support fields are handled under the same engineering standard.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf"
+    },
+    "CH2.MINIMIZE.2": {
+      "answer": "partially_implemented",
+      "notes": "The primary account closes on a 90-day schedule; we are still reconciling downstream analytics copies.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx; KiddieLearn-Security-Standard-2026.pdf"
+    },
+    "CH2.MINIMIZE.3": {
+      "answer": "fully_implemented",
+      "notes": "Weekly purges are scheduled and the dashboard reports completed closures for the September cohort.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH2.ACCURACY.1": {
+      "answer": "fully_implemented",
+      "notes": "Parent settings permit corrections and support checks the changed value in the account database.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH2.SECURITY.1": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH2.SECURITY.2": {
+      "answer": "partially_implemented",
+      "notes": "Our database is encrypted and engineer access is approved monthly. We are reviewing the September export handling event.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-incident-channel-2026-09.jpg"
+    },
+    "CH2.SECURITY.3": {
+      "answer": "partially_implemented",
+      "notes": "Six of eight processor terms are signed; the remaining two annexes are with legal.",
+      "evidence_reference": "KiddieLearn-processor-register-Q3.png"
+    },
+    "CH3.ACCESS.1": {
+      "answer": "fully_implemented",
+      "notes": "Parents can request a data summary; support delivered the September profile exports through the parent dashboard.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH3.CORRECT.1": {
+      "answer": "partially_implemented",
+      "notes": "Support records each parent request and links it to the account before response.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH3.CORRECT.2": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH3.GRIEVANCE.1": {
+      "answer": "partially_implemented",
+      "notes": "Support records each parent request and links it to the account before response.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH3.GRIEVANCE.2": {
+      "answer": "partially_implemented",
+      "notes": "Support records each parent request and links it to the account before response.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CH3.NOMINATE.1": {
+      "answer": "fully_implemented",
+      "notes": "The account settings roadmap includes adult nomination and the notice describes the request route.",
+      "evidence_reference": "KiddieLearn-Privacy-Notice-v2.docx"
+    },
+    "CH4.CHILD.1": {
+      "answer": "not_implemented",
+      "notes": "Child-device recommendation events are still enabled while the product team redesigns this feature.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CH4.CHILD.2": {
+      "answer": "fully_implemented",
+      "notes": "Our lesson flow has parent supervision, support escalation and a child-safety review with the CTO.",
+      "evidence_reference": "KiddieLearn-signup-consent.png; KiddieLearn-Security-Standard-2026.pdf"
+    },
+    "CH4.CHILD.3": {
+      "answer": "partially_implemented",
+      "notes": "The product uses birth year to select the child path and a parent mailbox challenge for approval.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CM.RECORDS.1": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CM.RECORDS.2": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "CM.GRANULAR.1": {
+      "answer": "fully_implemented",
+      "notes": "Lessons and optional research have separate controls on the current signup capture.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "CM.GRANULAR.2": {
+      "answer": "fully_implemented",
+      "notes": "The research option starts unchecked and is not required to start lessons.",
+      "evidence_reference": "KiddieLearn-signup-consent.png"
+    },
+    "BN.NOTIFY.1": {
+      "answer": "fully_implemented",
+      "notes": "The CTO keeps the incident decision in our response log and routes external submissions through legal.",
+      "evidence_reference": "KiddieLearn-incident-channel-2026-09.jpg"
+    },
+    "BN.NOTIFY.2": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "BN.NOTIFY.3": {
+      "answer": "fully_implemented",
+      "notes": "A response checklist and named escalation rota were approved in July and used for the September event.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-incident-channel-2026-09.jpg"
+    },
+    "BN.NOTIFY.4": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "IND.GEN.1": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "IND.GEN.2": {
+      "answer": "partially_implemented",
+      "notes": "The CTO maintains an eight-service register with contract status and data categories.",
+      "evidence_reference": "KiddieLearn-processor-register-Q3.png"
+    },
+    "IND.GEN.3": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "IND.GEN.4": {
+      "answer": "partially_implemented",
+      "notes": "Support records each parent request and links it to the account before response.",
+      "evidence_reference": "KiddieLearn-rights-and-retention-log.pdf"
+    },
+    "IND.GEN.5": {
+      "answer": "partially_implemented",
+      "notes": "The CTO follows the July engineering standard and records each operational exception in the support or incident worklist.",
+      "evidence_reference": "KiddieLearn-Security-Standard-2026.pdf; KiddieLearn-rights-and-retention-log.pdf"
+    }
+  }
+}

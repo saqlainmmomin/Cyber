@@ -1,0 +1,11 @@
+{
+  "company_name": "Northstar Cloud Services",
+  "company_size": "sme",
+  "description": "A synthetic Indian cloud services company with a small operations team.",
+  "engagement_name": "Northstar Cloud Readiness",
+  "frameworks": [
+    "iso27001"
+  ],
+  "industry": "it_services",
+  "slug": "c0-example"
+}

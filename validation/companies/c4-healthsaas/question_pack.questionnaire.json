@@ -1,0 +1,1244 @@
+{
+  "sections": [
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.NIST.GV.PO.01",
+          "guidance": "A policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities and is communicated and enforced.",
+          "id": "SINGLE.NIST.GV.PO.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.PO.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented cybersecurity policy? (GV.PO-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OC.03",
+          "guidance": "Legal, regulatory, and contractual requirements regarding cybersecurity — including privacy and civil liberties obligations — are understood and managed.",
+          "id": "SINGLE.NIST.GV.OC.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OC.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented legal and regulatory requirements? (GV.OC-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RR.01",
+          "guidance": "Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture of cybersecurity risk awareness.",
+          "id": "SINGLE.NIST.GV.RR.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RR.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented organizational leadership responsibility? (GV.RR-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RM.01",
+          "guidance": "Risk management objectives are established and agreed to by organizational stakeholders.",
+          "id": "SINGLE.NIST.GV.RM.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk management objectives? (GV.RM-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RR.03",
+          "guidance": "Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies.",
+          "id": "SINGLE.NIST.GV.RR.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RR.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented adequate resourcing? (GV.RR-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OC.04",
+          "guidance": "Critical objectives, capabilities, and services that stakeholders depend on or expect are determined and communicated.",
+          "id": "SINGLE.NIST.GV.OC.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OC.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented critical objectives and dependencies? (GV.OC-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RR.02",
+          "guidance": "Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced.",
+          "id": "SINGLE.NIST.GV.RR.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RR.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented cybersecurity roles and responsibilities? (GV.RR-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OC.01",
+          "guidance": "The organizational mission is understood and informs cybersecurity risk management.",
+          "id": "SINGLE.NIST.GV.OC.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OC.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented organizational mission understanding? (GV.OC-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.PO.02",
+          "guidance": "Policy is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission.",
+          "id": "SINGLE.NIST.GV.PO.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.PO.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented policy review and update? (GV.PO-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RM.02",
+          "guidance": "Risk appetite and risk tolerance statements are established, communicated, and maintained.",
+          "id": "SINGLE.NIST.GV.RM.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk appetite and tolerance? (GV.RM-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RM.03",
+          "guidance": "Cybersecurity risk management activities and outcomes are included in enterprise risk management processes.",
+          "id": "SINGLE.NIST.GV.RM.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk management activities? (GV.RM-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OV.01",
+          "guidance": "Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction.",
+          "id": "SINGLE.NIST.GV.OV.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OV.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk management strategy review? (GV.OV-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.SC.01",
+          "guidance": "A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders.",
+          "id": "SINGLE.NIST.GV.SC.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented supply chain risk management program? (GV.SC-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RR.04",
+          "guidance": "Cybersecurity is included in human resources practices.",
+          "id": "SINGLE.NIST.GV.RR.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RR.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented cybersecurity in hr practices? (GV.RR-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OC.02",
+          "guidance": "Internal and external stakeholders are determined, and their needs and expectations regarding cybersecurity risk management are understood.",
+          "id": "SINGLE.NIST.GV.OC.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OC.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented internal and external stakeholders? (GV.OC-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OV.03",
+          "guidance": "Organizational cybersecurity risk management is improved based on lessons learned and assessments.",
+          "id": "SINGLE.NIST.GV.OV.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OV.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented organizational risk management adjustments? (GV.OV-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OC.05",
+          "guidance": "Outcomes, capabilities, and services that the organization depends on are determined and prioritized.",
+          "id": "SINGLE.NIST.GV.OC.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OC.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented outcomes and priorities? (GV.OC-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.OV.02",
+          "guidance": "The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks.",
+          "id": "SINGLE.NIST.GV.OV.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.OV.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk management performance? (GV.OV-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.RM.04",
+          "guidance": "Strategic direction that describes appropriate risk response options is established and communicated.",
+          "id": "SINGLE.NIST.GV.RM.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented strategic risk direction? (GV.RM-04)"
+        }
+      ],
+      "section_id": "governance",
+      "title": "Governance & Accountability"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.05",
+          "guidance": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties.",
+          "id": "SINGLE.NIST.PR.AA.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented access permissions and authorizations? (PR.AA-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.03",
+          "guidance": "Users, services, and hardware are authenticated.",
+          "id": "SINGLE.NIST.PR.AA.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented authentication? (PR.AA-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.DS.01",
+          "guidance": "The confidentiality, integrity, and availability of data-at-rest are protected.",
+          "id": "SINGLE.NIST.PR.DS.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.DS.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented data-at-rest protection? (PR.DS-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.DS.02",
+          "guidance": "The confidentiality, integrity, and availability of data-in-transit are protected.",
+          "id": "SINGLE.NIST.PR.DS.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.DS.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented data-in-transit protection? (PR.DS-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.01",
+          "guidance": "Identities and credentials for authorized users, services, and hardware are managed by the organization.",
+          "id": "SINGLE.NIST.PR.AA.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented identity and credential management? (PR.AA-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.04",
+          "guidance": "Identity assertions are protected, conveyed, and verified.",
+          "id": "SINGLE.NIST.PR.AA.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented identity assertions? (PR.AA-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.02",
+          "guidance": "Identities are proofed and bound to credentials based on the context of interactions.",
+          "id": "SINGLE.NIST.PR.AA.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented identity proofing? (PR.AA-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AA.06",
+          "guidance": "Physical access to assets is managed, monitored, and enforced commensurate with risk.",
+          "id": "SINGLE.NIST.PR.AA.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented physical access management? (PR.AA-06)"
+        }
+      ],
+      "section_id": "security",
+      "title": "Information Security Controls"
+    },
+    {
+      "questions": [
+        {
+          "cluster_id": "SINGLE.NIST.DE.CM.09",
+          "guidance": "Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events.",
+          "id": "SINGLE.NIST.DE.CM.09",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.CM.09"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented computing hardware and software monitoring? (DE.CM-09)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MI.01",
+          "guidance": "Incidents are contained.",
+          "id": "SINGLE.NIST.RS.MI.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MI.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident containment? (RS.MI-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MI.02",
+          "guidance": "Incidents are eradicated.",
+          "id": "SINGLE.NIST.RS.MI.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MI.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident eradication? (RS.MI-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MA.01",
+          "guidance": "The incident response plan is executed in coordination with relevant third parties once an incident is declared.",
+          "id": "SINGLE.NIST.RS.MA.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MA.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident response plan execution? (RS.MA-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.IR.01",
+          "guidance": "Networks and environments are protected from unauthorized logical access and usage.",
+          "id": "SINGLE.NIST.PR.IR.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented network and environment protection? (PR.IR-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.CM.01",
+          "guidance": "Networks and network services are monitored to find potentially adverse events.",
+          "id": "SINGLE.NIST.DE.CM.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.CM.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented network monitoring? (DE.CM-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.01",
+          "guidance": "The recovery portion of the incident response plan is executed once initiated from the incident response process.",
+          "id": "SINGLE.NIST.RC.RP.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented recovery plan execution? (RC.RP-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.05",
+          "guidance": "Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization.",
+          "id": "SINGLE.NIST.ID.RA.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk determination? (ID.RA-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.01",
+          "guidance": "Vulnerabilities in assets are identified, validated, and recorded.",
+          "id": "SINGLE.NIST.ID.RA.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented vulnerability identification? (ID.RA-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.08",
+          "guidance": "Incidents are declared when adverse events meet the defined incident criteria.",
+          "id": "SINGLE.NIST.DE.AE.08",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.08"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented anomaly detection? (DE.AE-08)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.05",
+          "guidance": "Assets are prioritized based on classification, criticality, resources, and impact on the mission.",
+          "id": "SINGLE.NIST.ID.AM.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented asset prioritization? (ID.AM-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.DS.11",
+          "guidance": "Backups of data are created, protected, maintained, and tested.",
+          "id": "SINGLE.NIST.PR.DS.11",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.DS.11"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented backup management? (PR.DS-11)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.01",
+          "guidance": "The configuration of network infrastructure is established, applied, and reviewed incorporating security principles.",
+          "id": "SINGLE.NIST.PR.PS.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented configuration management practices? (PR.PS-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.07",
+          "guidance": "Inventories of data and corresponding metadata for designated data types are maintained.",
+          "id": "SINGLE.NIST.ID.AM.07",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.07"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented data inventory and classification? (ID.AM-07)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.DS.10",
+          "guidance": "The confidentiality, integrity, and availability of data-in-use are protected.",
+          "id": "SINGLE.NIST.PR.DS.10",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.DS.10"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented data-in-use protection? (PR.DS-10)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.03",
+          "guidance": "Information is correlated from multiple sources.",
+          "id": "SINGLE.NIST.DE.AE.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented event aggregation? (DE.AE-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.02",
+          "guidance": "Potentially adverse events are analyzed to better understand associated activities.",
+          "id": "SINGLE.NIST.DE.AE.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented event correlation? (DE.AE-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.CM.06",
+          "guidance": "External service provider activities and services are monitored to find potentially adverse events.",
+          "id": "SINGLE.NIST.DE.CM.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.CM.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented external service provider monitoring? (DE.CM-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.01",
+          "guidance": "Inventories of hardware managed by the organization are maintained.",
+          "id": "SINGLE.NIST.ID.AM.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented hardware asset inventory? (ID.AM-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.04",
+          "guidance": "Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded.",
+          "id": "SINGLE.NIST.ID.RA.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented impact and likelihood assessment? (ID.RA-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.04",
+          "guidance": "The estimated impact and scope of adverse events are understood.",
+          "id": "SINGLE.NIST.DE.AE.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented impact estimation? (DE.AE-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MA.03",
+          "guidance": "Incidents are categorized and prioritized.",
+          "id": "SINGLE.NIST.RS.MA.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MA.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident categorization and prioritization? (RS.MA-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.AN.07",
+          "guidance": "Incident data and metadata are collected and their integrity and provenance are preserved.",
+          "id": "SINGLE.NIST.RS.AN.07",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.AN.07"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident data collection and analysis? (RS.AN-07)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.06",
+          "guidance": "Information on adverse events is provided to authorized staff and tools.",
+          "id": "SINGLE.NIST.DE.AE.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident declaration? (DE.AE-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MA.04",
+          "guidance": "Incidents are escalated or elevated as needed.",
+          "id": "SINGLE.NIST.RS.MA.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MA.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident escalation? (RS.MA-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.AN.08",
+          "guidance": "An incident's magnitude is estimated and validated.",
+          "id": "SINGLE.NIST.RS.AN.08",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.AN.08"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident scope estimation? (RS.AN-08)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MA.02",
+          "guidance": "Incident reports are triaged and validated.",
+          "id": "SINGLE.NIST.RS.MA.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MA.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident triage and prioritization? (RS.MA-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.05",
+          "guidance": "Installation and execution of unauthorized software is prevented.",
+          "id": "SINGLE.NIST.PR.PS.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented installation and execution prevention? (PR.PS-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.CO.02",
+          "guidance": "Internal and external stakeholders are notified of incidents.",
+          "id": "SINGLE.NIST.RS.CO.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.CO.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented internal stakeholder notification? (RS.CO-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.04",
+          "guidance": "Log records are generated and made available for continuous monitoring.",
+          "id": "SINGLE.NIST.PR.PS.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented log record generation? (PR.PS-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.04",
+          "guidance": "Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms.",
+          "id": "SINGLE.NIST.RC.RP.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented mission function consideration? (RC.RP-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.CM.03",
+          "guidance": "Personnel activity and technology usage are monitored to find potentially adverse events.",
+          "id": "SINGLE.NIST.DE.CM.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.CM.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented personnel activity monitoring? (DE.CM-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AT.02",
+          "guidance": "Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind.",
+          "id": "SINGLE.NIST.PR.AT.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AT.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented privileged user training? (PR.AT-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.02",
+          "guidance": "Recovery actions are selected, scoped, prioritized, and performed.",
+          "id": "SINGLE.NIST.RC.RP.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented recovery action selection? (RC.RP-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.CO.03",
+          "guidance": "Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders.",
+          "id": "SINGLE.NIST.RC.CO.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.CO.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented recovery activity communication? (RC.CO-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.05",
+          "guidance": "The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed.",
+          "id": "SINGLE.NIST.RC.RP.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented recovery completeness verification? (RC.RP-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.03",
+          "guidance": "The integrity of backups and other restoration assets is verified before using them for restoration.",
+          "id": "SINGLE.NIST.RC.RP.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented recovery verification? (RC.RP-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.IR.03",
+          "guidance": "Mechanisms are implemented to achieve resilience requirements in normal and adverse situations.",
+          "id": "SINGLE.NIST.PR.IR.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented resilience mechanisms? (PR.IR-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.06",
+          "guidance": "Risk responses are chosen, prioritized, planned, tracked, and communicated.",
+          "id": "SINGLE.NIST.ID.RA.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented risk response selection? (ID.RA-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.AN.03",
+          "guidance": "Analysis is performed to determine what has taken place during an incident and the root cause of the incident.",
+          "id": "SINGLE.NIST.RS.AN.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.AN.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented root cause analysis? (RS.AN-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.06",
+          "guidance": "Secure software development practices are integrated, and their performance is monitored throughout the software development life cycle.",
+          "id": "SINGLE.NIST.PR.PS.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented secure software development? (PR.PS-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.AT.01",
+          "guidance": "Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind.",
+          "id": "SINGLE.NIST.PR.AT.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AT.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented security awareness? (PR.AT-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.02",
+          "guidance": "Inventories of software, services, and systems managed by the organization are maintained.",
+          "id": "SINGLE.NIST.ID.AM.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented software asset inventory? (ID.AM-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.02",
+          "guidance": "Software is maintained, replaced, and removed commensurate with risk.",
+          "id": "SINGLE.NIST.PR.PS.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented software maintenance? (PR.PS-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.SC.04",
+          "guidance": "Suppliers are known and prioritized by criticality.",
+          "id": "SINGLE.NIST.GV.SC.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented supplier assessment? (GV.SC-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.SC.02",
+          "guidance": "Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally.",
+          "id": "SINGLE.NIST.GV.SC.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented supplier cybersecurity requirements? (GV.SC-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.SC.05",
+          "guidance": "Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties.",
+          "id": "SINGLE.NIST.GV.SC.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented supply chain requirements in contracts? (GV.SC-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.03",
+          "guidance": "Internal and external threats to the organization are identified and recorded.",
+          "id": "SINGLE.NIST.ID.RA.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented threat identification? (ID.RA-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.IR.04",
+          "guidance": "Adequate resource capacity to ensure availability is maintained.",
+          "id": "SINGLE.NIST.PR.IR.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented adequate resource capacity? (PR.IR-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.RP.06",
+          "guidance": "The end of incident recovery is declared based on criteria, and incident-related documentation is completed.",
+          "id": "SINGLE.NIST.RC.RP.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.RP.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented end of recovery declaration? (RC.RP-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.04",
+          "guidance": "Inventories of services provided by suppliers are maintained.",
+          "id": "SINGLE.NIST.ID.AM.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented external service inventory? (ID.AM-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.PS.03",
+          "guidance": "Hardware is maintained, replaced, and removed commensurate with risk.",
+          "id": "SINGLE.NIST.PR.PS.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.PS.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented hardware maintenance? (PR.PS-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.IM.01",
+          "guidance": "Improvements are identified from evaluations.",
+          "id": "SINGLE.NIST.ID.IM.01",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.IM.01"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented improvement from evaluations? (ID.IM-01)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.IM.03",
+          "guidance": "Improvements are identified from execution of operational processes, procedures, and activities.",
+          "id": "SINGLE.NIST.ID.IM.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.IM.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented improvement from execution? (ID.IM-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.IM.02",
+          "guidance": "Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties.",
+          "id": "SINGLE.NIST.ID.IM.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.IM.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented improvement from testing? (ID.IM-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.MA.05",
+          "guidance": "The criteria for initiating incident recovery are applied.",
+          "id": "SINGLE.NIST.RS.MA.05",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.MA.05"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident criteria application? (RS.MA-05)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.CO.03",
+          "guidance": "Information is shared with designated internal and external stakeholders.",
+          "id": "SINGLE.NIST.RS.CO.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.CO.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented incident information sharing? (RS.CO-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.AN.06",
+          "guidance": "Actions performed during an investigation are recorded, and the records' integrity and provenance are preserved.",
+          "id": "SINGLE.NIST.RS.AN.06",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.AN.06"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented investigation actions? (RS.AN-06)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.03",
+          "guidance": "Representations of the organization's authorized network communication and internal and external network data flows are maintained.",
+          "id": "SINGLE.NIST.ID.AM.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented network communication mapping? (ID.AM-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.CM.02",
+          "guidance": "The physical environment is monitored to find potentially adverse events.",
+          "id": "SINGLE.NIST.DE.CM.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.CM.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented physical environment monitoring? (DE.CM-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RC.CO.04",
+          "guidance": "Public updates on incident recovery are shared using approved methods and messaging.",
+          "id": "SINGLE.NIST.RC.CO.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RC.CO.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented public update communication? (RC.CO-04)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.GV.SC.03",
+          "guidance": "Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes.",
+          "id": "SINGLE.NIST.GV.SC.03",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.03"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented supply chain integration? (GV.SC-03)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.AM.08",
+          "guidance": "Systems, hardware, software, services, and data are managed throughout their life cycles.",
+          "id": "SINGLE.NIST.ID.AM.08",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.AM.08"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented systems and services in scope? (ID.AM-08)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.PR.IR.02",
+          "guidance": "The organization's technology assets are protected from environmental threats.",
+          "id": "SINGLE.NIST.PR.IR.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented technology asset protection? (PR.IR-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.DE.AE.07",
+          "guidance": "Cyber threat intelligence and other contextual information are integrated into the analysis.",
+          "id": "SINGLE.NIST.DE.AE.07",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.DE.AE.07"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented threat information integration? (DE.AE-07)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.ID.RA.02",
+          "guidance": "Cyber threat intelligence is received from information sharing forums and sources.",
+          "id": "SINGLE.NIST.ID.RA.02",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.02"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented threat intelligence receipt? (ID.RA-02)"
+        },
+        {
+          "cluster_id": "SINGLE.NIST.RS.CO.04",
+          "guidance": "Incident information is shared with designees consistent with response plans and information sharing agreements.",
+          "id": "SINGLE.NIST.RS.CO.04",
+          "member_controls": [
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.RS.CO.04"
+            }
+          ],
+          "status": "active",
+          "text": "Has your organization implemented voluntary incident information sharing? (RS.CO-04)"
+        }
+      ],
+      "section_id": "other",
+      "title": "Other Controls"
+    }
+  ]
+}

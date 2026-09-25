@@ -1,0 +1,31 @@
+{
+  "artifact_id": "E10",
+  "filename": "HD-Security-Hub-2026-09.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Security Hub findings summary",
+  "consultant_maps_to": [
+    {
+      "framework_id": "nist_csf",
+      "requirement_id": "NIST.DE.CM.01"
+    }
+  ],
+  "render": {
+    "kind": "console",
+    "format": "png",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "AWS Security Hub findings summary",
+    "lines": [
+      "Snapshot 2026-09-30 UTC / organization administrator account",
+      "Accounts connected: 12; expected production accounts: 12",
+      "Critical findings: 2; High findings: 6; Medium findings: 20",
+      "Critical finding 1: aws-prod-2 F-013; state open",
+      "Critical finding 2: aws-prod-5 F-022; state open",
+      "High findings acknowledged within 1 business day: 6/6",
+      "Custom log source legacy-monitor-1 not connected to central detector.",
+      "Analyst notes refer to September scan and incident queue."
+    ]
+  }
+}

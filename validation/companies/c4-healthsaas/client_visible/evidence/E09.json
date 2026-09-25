@@ -1,0 +1,212 @@
+{
+  "artifact_id": "E09",
+  "filename": "HD-Asset-and-EDR-Inventory-2026-09.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Managed endpoint inventory extract",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Operations summary: EDR healthy on 20 of 26 sampled laptops; all US laptops healthy."
+    ],
+    "columns": [
+      "Asset",
+      "Location",
+      "Class",
+      "EDR state",
+      "Inventory date"
+    ],
+    "rows": [
+      [
+        "HD-LT-001",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-002",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-003",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-004",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-005",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-006",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-007",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-008",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-009",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-010",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-011",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-012",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-013",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-014",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-015",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-016",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-017",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-018",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-019",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-020",
+        "US",
+        "managed laptop",
+        "healthy",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-021",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-022",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-023",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-024",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-025",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ],
+      [
+        "HD-LT-026",
+        "Pune contractor",
+        "managed laptop",
+        "not enrolled",
+        "2026-09-30"
+      ]
+    ],
+    "footer": [
+      "Pune contractor enrollment is assigned to workplace technology."
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "artifact_id": "E01",
+  "filename": "HD-Cybersecurity-Policy-v4.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Cybersecurity policy v4",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Operating rules",
+        "paragraphs": [
+          "The policy applies to US production accounts and the Pune engineering center. Critical vulnerabilities must be remediated within 15 calendar days of discovery. The exception board may approve a dated compensating control before the deadline.",
+          "Administrative service identities may use only federated short-lived credentials; static access keys and standing AdministratorAccess are forbidden. Quarterly IAM review is signed by a second approver."
+        ]
+      },
+      {
+        "heading": "Monitoring",
+        "paragraphs": [
+          "EDR must report healthy for every managed endpoint, including contractor devices. The SOC ingests AWS Security Hub findings and records triage each shift."
+        ]
+      },
+      {
+        "heading": "Continuity",
+        "paragraphs": [
+          "The recovery tier for patient telemetry has a 60-minute RTO and 15-minute RPO. Monthly restore tests and annual tabletop exercises are required."
+        ]
+      }
+    ]
+  }
+}

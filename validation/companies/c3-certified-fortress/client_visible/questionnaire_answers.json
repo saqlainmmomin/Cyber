@@ -1,0 +1,244 @@
+{
+  "answers": {
+    "CLUSTER_002": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_001": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_007": {
+      "answer": "fully_implemented",
+      "notes": "Certified identity processes include quarterly reviews and privileged-grant samples.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Internal-Audit-and-DPIA-Status.pdf"
+    },
+    "CLUSTER_014": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_022": {
+      "answer": "fully_implemented",
+      "notes": "The rights mailbox and app both issue case IDs, with escalation to our India-based privacy office.",
+      "evidence_reference": "Bharat-Grievance-Procedure-and-Metrics.pdf; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_017": {
+      "answer": "fully_implemented",
+      "notes": "The SOC opens a legal decision ticket and the privacy office prepares the Board package from the affected-customer list.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf; Bharat-Breach-Notification-Procedure.pdf"
+    },
+    "CLUSTER_035": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_036": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_033": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_031": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_004": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_051": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_003": {
+      "answer": "planned",
+      "notes": "A youth-wallet impact assessment has an approved scope and November completion date.",
+      "evidence_reference": "Bharat-Internal-Audit-and-DPIA-Status.pdf"
+    },
+    "CLUSTER_005": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_010": {
+      "answer": "fully_implemented",
+      "notes": "Procurement checks current technical assurance and annual renewals in the supplier schedule.",
+      "evidence_reference": "Bharat-Supplier-Assurance-Q3.pdf"
+    },
+    "CLUSTER_044": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_020": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_052": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_021": {
+      "answer": "fully_implemented",
+      "notes": "Migration wave 4 included prior-account notice delivery using the new identity store.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx"
+    },
+    "CLUSTER_032": {
+      "answer": "fully_implemented",
+      "notes": "The youth wallet requires an age check and parent challenge; the September exception sample is with customer service.",
+      "evidence_reference": "Bharat-Youth-Wallet-Operating-Record.pdf; Bharat-Consent-Ledger-September.pdf"
+    },
+    "CLUSTER_029": {
+      "answer": "fully_implemented",
+      "notes": "The wallet settings show separate preferences for new customers; migration receipts are retained in the consent ledger.",
+      "evidence_reference": "Bharat-wallet-consent-settings.png; Bharat-Consent-Ledger-September.pdf"
+    },
+    "CLUSTER_030": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_053": {
+      "answer": "fully_implemented",
+      "notes": "The current notice describes wallet, fraud and product uses; the legal register holds the processing basis.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx"
+    },
+    "CLUSTER_023": {
+      "answer": "fully_implemented",
+      "notes": "Consumers use the app or email route for account summaries; the dashboard serves accounts on the current identity store.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-Personal-Data-Inventory-Q3.pdf"
+    },
+    "CLUSTER_025": {
+      "answer": "fully_implemented",
+      "notes": "The closed-wallet schedule is thirty days and our September service dashboard records all erasure tickets as resolved.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-Rights-Service-Log-Q3.pdf"
+    },
+    "CLUSTER_024": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_028": {
+      "answer": "fully_implemented",
+      "notes": "The privacy office publishes consumer notices and logs app and email requests under named ownership.",
+      "evidence_reference": "Bharat-Consumer-Privacy-Notice-v4.docx; Bharat-DPO-Appointment-and-Roles.pdf"
+    },
+    "CLUSTER_006": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_008": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_041": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_039": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_009": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_045": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_018": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_015": {
+      "answer": "fully_implemented",
+      "notes": "The staffed SOC met its triage and containment targets and retained the September rehearsal timeline.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf; Bharat-Breach-Notification-Procedure.pdf"
+    },
+    "CLUSTER_019": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_016": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_046": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_042": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_040": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_043": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "CLUSTER_034": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_013": {
+      "answer": "fully_implemented",
+      "notes": "Procurement checks current technical assurance and annual renewals in the supplier schedule.",
+      "evidence_reference": "Bharat-Supplier-Assurance-Q3.pdf"
+    },
+    "CLUSTER_047": {
+      "answer": "fully_implemented",
+      "notes": "Our 24x7 SOC records triage and containment times and tests encrypted recovery each month.",
+      "evidence_reference": "Bharat-SOC-Runbook-and-Metrics.pdf"
+    },
+    "CLUSTER_011": {
+      "answer": "fully_implemented",
+      "notes": "Procurement obtains technical assurance and signed supplier schedules before annual renewal.",
+      "evidence_reference": "Bharat-Supplier-Assurance-Q3.pdf"
+    },
+    "CLUSTER_038": {
+      "answer": "fully_implemented",
+      "notes": "Procurement checks current technical assurance and annual renewals in the supplier schedule.",
+      "evidence_reference": "Bharat-Supplier-Assurance-Q3.pdf"
+    },
+    "CLUSTER_012": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    },
+    "SINGLE.ISO.A5.32": {
+      "answer": "fully_implemented",
+      "notes": "The certified ISMS and September risk committee pack record operating samples and independent review.",
+      "evidence_reference": "Bharat-ISMS-Certificate-and-SoA-Summary.pdf; Bharat-Risk-Register-Q3.pdf"
+    }
+  }
+}

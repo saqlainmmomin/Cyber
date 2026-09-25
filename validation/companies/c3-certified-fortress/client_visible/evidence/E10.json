@@ -1,0 +1,30 @@
+{
+  "artifact_id": "E10",
+  "filename": "Bharat-Grievance-Procedure-and-Metrics.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Grievance procedure v3",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Routing",
+        "paragraphs": [
+          "App and email complaints receive a ticket number and a 24-hour acknowledgement. The DPO is the named escalation owner for unresolved complaints."
+        ]
+      },
+      {
+        "heading": "Measures",
+        "paragraphs": [
+          "The DPO-operated grievance queue reports 38 cases closed in January-March 2026 with a median four-day resolution. The queue was established on 2026-04-01, when the current DPO took office.",
+          "From April to September the queue closed 82 cases; sample evidence and response letters were filed monthly."
+        ]
+      }
+    ]
+  }
+}

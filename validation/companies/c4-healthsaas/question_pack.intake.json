@@ -1,0 +1,1032 @@
+{
+  "context": [
+    {
+      "id": "CTX.DATA.1",
+      "options": [
+        "identity",
+        "financial",
+        "health",
+        "biometric",
+        "location",
+        "behavioral",
+        "childrens",
+        "other"
+      ],
+      "text": "What categories of personal data does your organization collect?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.2",
+      "options": [
+        "web_forms",
+        "mobile_app",
+        "third_party_apis",
+        "physical_forms",
+        "automated_tracking"
+      ],
+      "text": "What is your primary mechanism for collecting personal data?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.3",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you use third-party data processors or SaaS vendors who handle personal data on your behalf?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you transfer personal data across international borders?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4a",
+      "options": [],
+      "text": "If yes, which regions do you transfer data to?",
+      "type": "text"
+    },
+    {
+      "id": "CTX.POSTURE.1",
+      "options": [
+        "full_time",
+        "part_time_shared",
+        "no"
+      ],
+      "text": "Do you have a dedicated privacy or Data Protection Officer function?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.2",
+      "options": [
+        "iso_27001_certified",
+        "soc2",
+        "internal_policy_only",
+        "none"
+      ],
+      "text": "Do you have an existing information security program?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.3",
+      "options": [
+        "external_audit",
+        "internal_only",
+        "no"
+      ],
+      "text": "Have you undergone any privacy or security audit in the past 2 years?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.4",
+      "options": [
+        "yes_recently_updated",
+        "yes_outdated",
+        "no"
+      ],
+      "text": "Do you have a documented privacy policy published to users?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.1",
+      "options": [
+        "processes_childrens_data",
+        "healthcare_finance_critical_infra",
+        "handles_sensitive_personal_data",
+        "designated_or_likely_sdf",
+        "none"
+      ],
+      "text": "Which of the following apply to your organization?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.RISK.2",
+      "options": [
+        "under_10k",
+        "10k_to_1m",
+        "1m_to_10m",
+        "over_10m"
+      ],
+      "text": "Roughly how many data principals (individuals whose data you hold) are affected?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.3",
+      "options": [
+        "yes_reported",
+        "yes_unreported",
+        "no",
+        "unsure"
+      ],
+      "text": "In the last 2 years, have you experienced any data breach or security incident?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.1",
+      "options": [
+        "regulatory_audit_prep",
+        "investor_board_requirement",
+        "customer_due_diligence",
+        "proactive_compliance",
+        "post_incident_review"
+      ],
+      "text": "What is the primary driver for this assessment?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.2",
+      "options": [
+        "under_3_months",
+        "3_to_6_months",
+        "6_to_12_months",
+        "no_hard_deadline"
+      ],
+      "text": "What is your target compliance timeline?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.3",
+      "options": [
+        "under_10k",
+        "10k_to_50k",
+        "50k_to_150k",
+        "above_150k",
+        "not_yet_defined"
+      ],
+      "text": "What is your approximate budget band for remediation?",
+      "type": "single_select"
+    }
+  ],
+  "controls": {
+    "nist_csf": [
+      {
+        "description": "The organizational mission is understood and informs cybersecurity risk management.",
+        "domain": "govern",
+        "reference": "GV.OC-01",
+        "requirement_id": "NIST.GV.OC.01",
+        "section": "gv_oc",
+        "title": "Organizational mission understanding"
+      },
+      {
+        "description": "Internal and external stakeholders are determined, and their needs and expectations regarding cybersecurity risk management are understood.",
+        "domain": "govern",
+        "reference": "GV.OC-02",
+        "requirement_id": "NIST.GV.OC.02",
+        "section": "gv_oc",
+        "title": "Internal and external stakeholders"
+      },
+      {
+        "description": "Legal, regulatory, and contractual requirements regarding cybersecurity — including privacy and civil liberties obligations — are understood and managed.",
+        "domain": "govern",
+        "reference": "GV.OC-03",
+        "requirement_id": "NIST.GV.OC.03",
+        "section": "gv_oc",
+        "title": "Legal and regulatory requirements"
+      },
+      {
+        "description": "Critical objectives, capabilities, and services that stakeholders depend on or expect are determined and communicated.",
+        "domain": "govern",
+        "reference": "GV.OC-04",
+        "requirement_id": "NIST.GV.OC.04",
+        "section": "gv_oc",
+        "title": "Critical objectives and dependencies"
+      },
+      {
+        "description": "Outcomes, capabilities, and services that the organization depends on are determined and prioritized.",
+        "domain": "govern",
+        "reference": "GV.OC-05",
+        "requirement_id": "NIST.GV.OC.05",
+        "section": "gv_oc",
+        "title": "Outcomes and priorities"
+      },
+      {
+        "description": "Risk management objectives are established and agreed to by organizational stakeholders.",
+        "domain": "govern",
+        "reference": "GV.RM-01",
+        "requirement_id": "NIST.GV.RM.01",
+        "section": "gv_rm",
+        "title": "Risk management objectives"
+      },
+      {
+        "description": "Risk appetite and risk tolerance statements are established, communicated, and maintained.",
+        "domain": "govern",
+        "reference": "GV.RM-02",
+        "requirement_id": "NIST.GV.RM.02",
+        "section": "gv_rm",
+        "title": "Risk appetite and tolerance"
+      },
+      {
+        "description": "Cybersecurity risk management activities and outcomes are included in enterprise risk management processes.",
+        "domain": "govern",
+        "reference": "GV.RM-03",
+        "requirement_id": "NIST.GV.RM.03",
+        "section": "gv_rm",
+        "title": "Risk management activities"
+      },
+      {
+        "description": "Strategic direction that describes appropriate risk response options is established and communicated.",
+        "domain": "govern",
+        "reference": "GV.RM-04",
+        "requirement_id": "NIST.GV.RM.04",
+        "section": "gv_rm",
+        "title": "Strategic risk direction"
+      },
+      {
+        "description": "Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture of cybersecurity risk awareness.",
+        "domain": "govern",
+        "reference": "GV.RR-01",
+        "requirement_id": "NIST.GV.RR.01",
+        "section": "gv_rr",
+        "title": "Organizational leadership responsibility"
+      },
+      {
+        "description": "Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced.",
+        "domain": "govern",
+        "reference": "GV.RR-02",
+        "requirement_id": "NIST.GV.RR.02",
+        "section": "gv_rr",
+        "title": "Cybersecurity roles and responsibilities"
+      },
+      {
+        "description": "Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies.",
+        "domain": "govern",
+        "reference": "GV.RR-03",
+        "requirement_id": "NIST.GV.RR.03",
+        "section": "gv_rr",
+        "title": "Adequate resourcing"
+      },
+      {
+        "description": "Cybersecurity is included in human resources practices.",
+        "domain": "govern",
+        "reference": "GV.RR-04",
+        "requirement_id": "NIST.GV.RR.04",
+        "section": "gv_rr",
+        "title": "Cybersecurity in HR practices"
+      },
+      {
+        "description": "A policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities and is communicated and enforced.",
+        "domain": "govern",
+        "reference": "GV.PO-01",
+        "requirement_id": "NIST.GV.PO.01",
+        "section": "gv_po",
+        "title": "Cybersecurity policy"
+      },
+      {
+        "description": "Policy is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission.",
+        "domain": "govern",
+        "reference": "GV.PO-02",
+        "requirement_id": "NIST.GV.PO.02",
+        "section": "gv_po",
+        "title": "Policy review and update"
+      },
+      {
+        "description": "Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction.",
+        "domain": "govern",
+        "reference": "GV.OV-01",
+        "requirement_id": "NIST.GV.OV.01",
+        "section": "gv_ov",
+        "title": "Risk management strategy review"
+      },
+      {
+        "description": "The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks.",
+        "domain": "govern",
+        "reference": "GV.OV-02",
+        "requirement_id": "NIST.GV.OV.02",
+        "section": "gv_ov",
+        "title": "Risk management performance"
+      },
+      {
+        "description": "Organizational cybersecurity risk management is improved based on lessons learned and assessments.",
+        "domain": "govern",
+        "reference": "GV.OV-03",
+        "requirement_id": "NIST.GV.OV.03",
+        "section": "gv_ov",
+        "title": "Organizational risk management adjustments"
+      },
+      {
+        "description": "A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders.",
+        "domain": "govern",
+        "reference": "GV.SC-01",
+        "requirement_id": "NIST.GV.SC.01",
+        "section": "gv_sc",
+        "title": "Supply chain risk management program"
+      },
+      {
+        "description": "Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally.",
+        "domain": "govern",
+        "reference": "GV.SC-02",
+        "requirement_id": "NIST.GV.SC.02",
+        "section": "gv_sc",
+        "title": "Supplier cybersecurity requirements"
+      },
+      {
+        "description": "Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes.",
+        "domain": "govern",
+        "reference": "GV.SC-03",
+        "requirement_id": "NIST.GV.SC.03",
+        "section": "gv_sc",
+        "title": "Supply chain integration"
+      },
+      {
+        "description": "Suppliers are known and prioritized by criticality.",
+        "domain": "govern",
+        "reference": "GV.SC-04",
+        "requirement_id": "NIST.GV.SC.04",
+        "section": "gv_sc",
+        "title": "Supplier assessment"
+      },
+      {
+        "description": "Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties.",
+        "domain": "govern",
+        "reference": "GV.SC-05",
+        "requirement_id": "NIST.GV.SC.05",
+        "section": "gv_sc",
+        "title": "Supply chain requirements in contracts"
+      },
+      {
+        "description": "Inventories of hardware managed by the organization are maintained.",
+        "domain": "identify",
+        "reference": "ID.AM-01",
+        "requirement_id": "NIST.ID.AM.01",
+        "section": "id_am",
+        "title": "Hardware asset inventory"
+      },
+      {
+        "description": "Inventories of software, services, and systems managed by the organization are maintained.",
+        "domain": "identify",
+        "reference": "ID.AM-02",
+        "requirement_id": "NIST.ID.AM.02",
+        "section": "id_am",
+        "title": "Software asset inventory"
+      },
+      {
+        "description": "Representations of the organization's authorized network communication and internal and external network data flows are maintained.",
+        "domain": "identify",
+        "reference": "ID.AM-03",
+        "requirement_id": "NIST.ID.AM.03",
+        "section": "id_am",
+        "title": "Network communication mapping"
+      },
+      {
+        "description": "Inventories of services provided by suppliers are maintained.",
+        "domain": "identify",
+        "reference": "ID.AM-04",
+        "requirement_id": "NIST.ID.AM.04",
+        "section": "id_am",
+        "title": "External service inventory"
+      },
+      {
+        "description": "Assets are prioritized based on classification, criticality, resources, and impact on the mission.",
+        "domain": "identify",
+        "reference": "ID.AM-05",
+        "requirement_id": "NIST.ID.AM.05",
+        "section": "id_am",
+        "title": "Asset prioritization"
+      },
+      {
+        "description": "Inventories of data and corresponding metadata for designated data types are maintained.",
+        "domain": "identify",
+        "reference": "ID.AM-07",
+        "requirement_id": "NIST.ID.AM.07",
+        "section": "id_am",
+        "title": "Data inventory and classification"
+      },
+      {
+        "description": "Systems, hardware, software, services, and data are managed throughout their life cycles.",
+        "domain": "identify",
+        "reference": "ID.AM-08",
+        "requirement_id": "NIST.ID.AM.08",
+        "section": "id_am",
+        "title": "Systems and services in scope"
+      },
+      {
+        "description": "Vulnerabilities in assets are identified, validated, and recorded.",
+        "domain": "identify",
+        "reference": "ID.RA-01",
+        "requirement_id": "NIST.ID.RA.01",
+        "section": "id_ra",
+        "title": "Vulnerability identification"
+      },
+      {
+        "description": "Cyber threat intelligence is received from information sharing forums and sources.",
+        "domain": "identify",
+        "reference": "ID.RA-02",
+        "requirement_id": "NIST.ID.RA.02",
+        "section": "id_ra",
+        "title": "Threat intelligence receipt"
+      },
+      {
+        "description": "Internal and external threats to the organization are identified and recorded.",
+        "domain": "identify",
+        "reference": "ID.RA-03",
+        "requirement_id": "NIST.ID.RA.03",
+        "section": "id_ra",
+        "title": "Threat identification"
+      },
+      {
+        "description": "Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded.",
+        "domain": "identify",
+        "reference": "ID.RA-04",
+        "requirement_id": "NIST.ID.RA.04",
+        "section": "id_ra",
+        "title": "Impact and likelihood assessment"
+      },
+      {
+        "description": "Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization.",
+        "domain": "identify",
+        "reference": "ID.RA-05",
+        "requirement_id": "NIST.ID.RA.05",
+        "section": "id_ra",
+        "title": "Risk determination"
+      },
+      {
+        "description": "Risk responses are chosen, prioritized, planned, tracked, and communicated.",
+        "domain": "identify",
+        "reference": "ID.RA-06",
+        "requirement_id": "NIST.ID.RA.06",
+        "section": "id_ra",
+        "title": "Risk response selection"
+      },
+      {
+        "description": "Improvements are identified from evaluations.",
+        "domain": "identify",
+        "reference": "ID.IM-01",
+        "requirement_id": "NIST.ID.IM.01",
+        "section": "id_im",
+        "title": "Improvement from evaluations"
+      },
+      {
+        "description": "Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties.",
+        "domain": "identify",
+        "reference": "ID.IM-02",
+        "requirement_id": "NIST.ID.IM.02",
+        "section": "id_im",
+        "title": "Improvement from testing"
+      },
+      {
+        "description": "Improvements are identified from execution of operational processes, procedures, and activities.",
+        "domain": "identify",
+        "reference": "ID.IM-03",
+        "requirement_id": "NIST.ID.IM.03",
+        "section": "id_im",
+        "title": "Improvement from execution"
+      },
+      {
+        "description": "Identities and credentials for authorized users, services, and hardware are managed by the organization.",
+        "domain": "protect",
+        "reference": "PR.AA-01",
+        "requirement_id": "NIST.PR.AA.01",
+        "section": "pr_aa",
+        "title": "Identity and credential management"
+      },
+      {
+        "description": "Identities are proofed and bound to credentials based on the context of interactions.",
+        "domain": "protect",
+        "reference": "PR.AA-02",
+        "requirement_id": "NIST.PR.AA.02",
+        "section": "pr_aa",
+        "title": "Identity proofing"
+      },
+      {
+        "description": "Users, services, and hardware are authenticated.",
+        "domain": "protect",
+        "reference": "PR.AA-03",
+        "requirement_id": "NIST.PR.AA.03",
+        "section": "pr_aa",
+        "title": "Authentication"
+      },
+      {
+        "description": "Identity assertions are protected, conveyed, and verified.",
+        "domain": "protect",
+        "reference": "PR.AA-04",
+        "requirement_id": "NIST.PR.AA.04",
+        "section": "pr_aa",
+        "title": "Identity assertions"
+      },
+      {
+        "description": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties.",
+        "domain": "protect",
+        "reference": "PR.AA-05",
+        "requirement_id": "NIST.PR.AA.05",
+        "section": "pr_aa",
+        "title": "Access permissions and authorizations"
+      },
+      {
+        "description": "Physical access to assets is managed, monitored, and enforced commensurate with risk.",
+        "domain": "protect",
+        "reference": "PR.AA-06",
+        "requirement_id": "NIST.PR.AA.06",
+        "section": "pr_aa",
+        "title": "Physical access management"
+      },
+      {
+        "description": "Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind.",
+        "domain": "protect",
+        "reference": "PR.AT-01",
+        "requirement_id": "NIST.PR.AT.01",
+        "section": "pr_at",
+        "title": "Security awareness"
+      },
+      {
+        "description": "Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind.",
+        "domain": "protect",
+        "reference": "PR.AT-02",
+        "requirement_id": "NIST.PR.AT.02",
+        "section": "pr_at",
+        "title": "Privileged user training"
+      },
+      {
+        "description": "The confidentiality, integrity, and availability of data-at-rest are protected.",
+        "domain": "protect",
+        "reference": "PR.DS-01",
+        "requirement_id": "NIST.PR.DS.01",
+        "section": "pr_ds",
+        "title": "Data-at-rest protection"
+      },
+      {
+        "description": "The confidentiality, integrity, and availability of data-in-transit are protected.",
+        "domain": "protect",
+        "reference": "PR.DS-02",
+        "requirement_id": "NIST.PR.DS.02",
+        "section": "pr_ds",
+        "title": "Data-in-transit protection"
+      },
+      {
+        "description": "The confidentiality, integrity, and availability of data-in-use are protected.",
+        "domain": "protect",
+        "reference": "PR.DS-10",
+        "requirement_id": "NIST.PR.DS.10",
+        "section": "pr_ds",
+        "title": "Data-in-use protection"
+      },
+      {
+        "description": "Backups of data are created, protected, maintained, and tested.",
+        "domain": "protect",
+        "reference": "PR.DS-11",
+        "requirement_id": "NIST.PR.DS.11",
+        "section": "pr_ds",
+        "title": "Backup management"
+      },
+      {
+        "description": "The configuration of network infrastructure is established, applied, and reviewed incorporating security principles.",
+        "domain": "protect",
+        "reference": "PR.PS-01",
+        "requirement_id": "NIST.PR.PS.01",
+        "section": "pr_ps",
+        "title": "Configuration management practices"
+      },
+      {
+        "description": "Software is maintained, replaced, and removed commensurate with risk.",
+        "domain": "protect",
+        "reference": "PR.PS-02",
+        "requirement_id": "NIST.PR.PS.02",
+        "section": "pr_ps",
+        "title": "Software maintenance"
+      },
+      {
+        "description": "Hardware is maintained, replaced, and removed commensurate with risk.",
+        "domain": "protect",
+        "reference": "PR.PS-03",
+        "requirement_id": "NIST.PR.PS.03",
+        "section": "pr_ps",
+        "title": "Hardware maintenance"
+      },
+      {
+        "description": "Log records are generated and made available for continuous monitoring.",
+        "domain": "protect",
+        "reference": "PR.PS-04",
+        "requirement_id": "NIST.PR.PS.04",
+        "section": "pr_ps",
+        "title": "Log record generation"
+      },
+      {
+        "description": "Installation and execution of unauthorized software is prevented.",
+        "domain": "protect",
+        "reference": "PR.PS-05",
+        "requirement_id": "NIST.PR.PS.05",
+        "section": "pr_ps",
+        "title": "Installation and execution prevention"
+      },
+      {
+        "description": "Secure software development practices are integrated, and their performance is monitored throughout the software development life cycle.",
+        "domain": "protect",
+        "reference": "PR.PS-06",
+        "requirement_id": "NIST.PR.PS.06",
+        "section": "pr_ps",
+        "title": "Secure software development"
+      },
+      {
+        "description": "Networks and environments are protected from unauthorized logical access and usage.",
+        "domain": "protect",
+        "reference": "PR.IR-01",
+        "requirement_id": "NIST.PR.IR.01",
+        "section": "pr_ir",
+        "title": "Network and environment protection"
+      },
+      {
+        "description": "The organization's technology assets are protected from environmental threats.",
+        "domain": "protect",
+        "reference": "PR.IR-02",
+        "requirement_id": "NIST.PR.IR.02",
+        "section": "pr_ir",
+        "title": "Technology asset protection"
+      },
+      {
+        "description": "Mechanisms are implemented to achieve resilience requirements in normal and adverse situations.",
+        "domain": "protect",
+        "reference": "PR.IR-03",
+        "requirement_id": "NIST.PR.IR.03",
+        "section": "pr_ir",
+        "title": "Resilience mechanisms"
+      },
+      {
+        "description": "Adequate resource capacity to ensure availability is maintained.",
+        "domain": "protect",
+        "reference": "PR.IR-04",
+        "requirement_id": "NIST.PR.IR.04",
+        "section": "pr_ir",
+        "title": "Adequate resource capacity"
+      },
+      {
+        "description": "Networks and network services are monitored to find potentially adverse events.",
+        "domain": "detect",
+        "reference": "DE.CM-01",
+        "requirement_id": "NIST.DE.CM.01",
+        "section": "de_cm",
+        "title": "Network monitoring"
+      },
+      {
+        "description": "The physical environment is monitored to find potentially adverse events.",
+        "domain": "detect",
+        "reference": "DE.CM-02",
+        "requirement_id": "NIST.DE.CM.02",
+        "section": "de_cm",
+        "title": "Physical environment monitoring"
+      },
+      {
+        "description": "Personnel activity and technology usage are monitored to find potentially adverse events.",
+        "domain": "detect",
+        "reference": "DE.CM-03",
+        "requirement_id": "NIST.DE.CM.03",
+        "section": "de_cm",
+        "title": "Personnel activity monitoring"
+      },
+      {
+        "description": "External service provider activities and services are monitored to find potentially adverse events.",
+        "domain": "detect",
+        "reference": "DE.CM-06",
+        "requirement_id": "NIST.DE.CM.06",
+        "section": "de_cm",
+        "title": "External service provider monitoring"
+      },
+      {
+        "description": "Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events.",
+        "domain": "detect",
+        "reference": "DE.CM-09",
+        "requirement_id": "NIST.DE.CM.09",
+        "section": "de_cm",
+        "title": "Computing hardware and software monitoring"
+      },
+      {
+        "description": "Potentially adverse events are analyzed to better understand associated activities.",
+        "domain": "detect",
+        "reference": "DE.AE-02",
+        "requirement_id": "NIST.DE.AE.02",
+        "section": "de_ae",
+        "title": "Event correlation"
+      },
+      {
+        "description": "Information is correlated from multiple sources.",
+        "domain": "detect",
+        "reference": "DE.AE-03",
+        "requirement_id": "NIST.DE.AE.03",
+        "section": "de_ae",
+        "title": "Event aggregation"
+      },
+      {
+        "description": "The estimated impact and scope of adverse events are understood.",
+        "domain": "detect",
+        "reference": "DE.AE-04",
+        "requirement_id": "NIST.DE.AE.04",
+        "section": "de_ae",
+        "title": "Impact estimation"
+      },
+      {
+        "description": "Information on adverse events is provided to authorized staff and tools.",
+        "domain": "detect",
+        "reference": "DE.AE-06",
+        "requirement_id": "NIST.DE.AE.06",
+        "section": "de_ae",
+        "title": "Incident declaration"
+      },
+      {
+        "description": "Cyber threat intelligence and other contextual information are integrated into the analysis.",
+        "domain": "detect",
+        "reference": "DE.AE-07",
+        "requirement_id": "NIST.DE.AE.07",
+        "section": "de_ae",
+        "title": "Threat information integration"
+      },
+      {
+        "description": "Incidents are declared when adverse events meet the defined incident criteria.",
+        "domain": "detect",
+        "reference": "DE.AE-08",
+        "requirement_id": "NIST.DE.AE.08",
+        "section": "de_ae",
+        "title": "Anomaly detection"
+      },
+      {
+        "description": "The incident response plan is executed in coordination with relevant third parties once an incident is declared.",
+        "domain": "respond",
+        "reference": "RS.MA-01",
+        "requirement_id": "NIST.RS.MA.01",
+        "section": "rs_ma",
+        "title": "Incident response plan execution"
+      },
+      {
+        "description": "Incident reports are triaged and validated.",
+        "domain": "respond",
+        "reference": "RS.MA-02",
+        "requirement_id": "NIST.RS.MA.02",
+        "section": "rs_ma",
+        "title": "Incident triage and prioritization"
+      },
+      {
+        "description": "Incidents are categorized and prioritized.",
+        "domain": "respond",
+        "reference": "RS.MA-03",
+        "requirement_id": "NIST.RS.MA.03",
+        "section": "rs_ma",
+        "title": "Incident categorization and prioritization"
+      },
+      {
+        "description": "Incidents are escalated or elevated as needed.",
+        "domain": "respond",
+        "reference": "RS.MA-04",
+        "requirement_id": "NIST.RS.MA.04",
+        "section": "rs_ma",
+        "title": "Incident escalation"
+      },
+      {
+        "description": "The criteria for initiating incident recovery are applied.",
+        "domain": "respond",
+        "reference": "RS.MA-05",
+        "requirement_id": "NIST.RS.MA.05",
+        "section": "rs_ma",
+        "title": "Incident criteria application"
+      },
+      {
+        "description": "Analysis is performed to determine what has taken place during an incident and the root cause of the incident.",
+        "domain": "respond",
+        "reference": "RS.AN-03",
+        "requirement_id": "NIST.RS.AN.03",
+        "section": "rs_an",
+        "title": "Root cause analysis"
+      },
+      {
+        "description": "Actions performed during an investigation are recorded, and the records' integrity and provenance are preserved.",
+        "domain": "respond",
+        "reference": "RS.AN-06",
+        "requirement_id": "NIST.RS.AN.06",
+        "section": "rs_an",
+        "title": "Investigation actions"
+      },
+      {
+        "description": "Incident data and metadata are collected and their integrity and provenance are preserved.",
+        "domain": "respond",
+        "reference": "RS.AN-07",
+        "requirement_id": "NIST.RS.AN.07",
+        "section": "rs_an",
+        "title": "Incident data collection and analysis"
+      },
+      {
+        "description": "An incident's magnitude is estimated and validated.",
+        "domain": "respond",
+        "reference": "RS.AN-08",
+        "requirement_id": "NIST.RS.AN.08",
+        "section": "rs_an",
+        "title": "Incident scope estimation"
+      },
+      {
+        "description": "Internal and external stakeholders are notified of incidents.",
+        "domain": "respond",
+        "reference": "RS.CO-02",
+        "requirement_id": "NIST.RS.CO.02",
+        "section": "rs_co",
+        "title": "Internal stakeholder notification"
+      },
+      {
+        "description": "Information is shared with designated internal and external stakeholders.",
+        "domain": "respond",
+        "reference": "RS.CO-03",
+        "requirement_id": "NIST.RS.CO.03",
+        "section": "rs_co",
+        "title": "Incident information sharing"
+      },
+      {
+        "description": "Incident information is shared with designees consistent with response plans and information sharing agreements.",
+        "domain": "respond",
+        "reference": "RS.CO-04",
+        "requirement_id": "NIST.RS.CO.04",
+        "section": "rs_co",
+        "title": "Voluntary incident information sharing"
+      },
+      {
+        "description": "Incidents are contained.",
+        "domain": "respond",
+        "reference": "RS.MI-01",
+        "requirement_id": "NIST.RS.MI.01",
+        "section": "rs_mi",
+        "title": "Incident containment"
+      },
+      {
+        "description": "Incidents are eradicated.",
+        "domain": "respond",
+        "reference": "RS.MI-02",
+        "requirement_id": "NIST.RS.MI.02",
+        "section": "rs_mi",
+        "title": "Incident eradication"
+      },
+      {
+        "description": "The recovery portion of the incident response plan is executed once initiated from the incident response process.",
+        "domain": "recover",
+        "reference": "RC.RP-01",
+        "requirement_id": "NIST.RC.RP.01",
+        "section": "rc_rp",
+        "title": "Recovery plan execution"
+      },
+      {
+        "description": "Recovery actions are selected, scoped, prioritized, and performed.",
+        "domain": "recover",
+        "reference": "RC.RP-02",
+        "requirement_id": "NIST.RC.RP.02",
+        "section": "rc_rp",
+        "title": "Recovery action selection"
+      },
+      {
+        "description": "The integrity of backups and other restoration assets is verified before using them for restoration.",
+        "domain": "recover",
+        "reference": "RC.RP-03",
+        "requirement_id": "NIST.RC.RP.03",
+        "section": "rc_rp",
+        "title": "Recovery verification"
+      },
+      {
+        "description": "Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms.",
+        "domain": "recover",
+        "reference": "RC.RP-04",
+        "requirement_id": "NIST.RC.RP.04",
+        "section": "rc_rp",
+        "title": "Mission function consideration"
+      },
+      {
+        "description": "The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed.",
+        "domain": "recover",
+        "reference": "RC.RP-05",
+        "requirement_id": "NIST.RC.RP.05",
+        "section": "rc_rp",
+        "title": "Recovery completeness verification"
+      },
+      {
+        "description": "The end of incident recovery is declared based on criteria, and incident-related documentation is completed.",
+        "domain": "recover",
+        "reference": "RC.RP-06",
+        "requirement_id": "NIST.RC.RP.06",
+        "section": "rc_rp",
+        "title": "End of recovery declaration"
+      },
+      {
+        "description": "Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders.",
+        "domain": "recover",
+        "reference": "RC.CO-03",
+        "requirement_id": "NIST.RC.CO.03",
+        "section": "rc_co",
+        "title": "Recovery activity communication"
+      },
+      {
+        "description": "Public updates on incident recovery are shared using approved methods and messaging.",
+        "domain": "recover",
+        "reference": "RC.CO-04",
+        "requirement_id": "NIST.RC.CO.04",
+        "section": "rc_co",
+        "title": "Public update communication"
+      }
+    ]
+  },
+  "document_categories": [
+    "privacy_policy",
+    "consent_form",
+    "data_flow_diagram",
+    "dpia",
+    "processing_records",
+    "breach_procedure",
+    "retention_policy",
+    "vendor_agreement",
+    "other"
+  ],
+  "magic_link_limits": {
+    "expires_in_days": 7,
+    "max_total_mb": 100,
+    "max_uploads": 20
+  },
+  "scope": {
+    "nist_csf": [
+      {
+        "help_text": "NIST CSF was originally developed for critical infrastructure sectors. Recorded as context for the consultant; it does not change which CSF outcomes are assessed.",
+        "id": "NIST.SCP.1",
+        "options": [
+          {
+            "label": "Yes — regulated critical infrastructure sector",
+            "value": "yes_regulated"
+          },
+          {
+            "label": "Yes — but CSF adoption is voluntary",
+            "value": "yes_voluntary"
+          },
+          {
+            "label": "No — not critical infrastructure",
+            "value": "no"
+          }
+        ],
+        "text": "Is your organization part of critical infrastructure (e.g., energy, healthcare, financial services, transportation)?"
+      },
+      {
+        "help_text": "CSF 2.0 defines 4 tiers: Partial (Tier 1), Risk Informed (Tier 2), Repeatable (Tier 3), Adaptive (Tier 4). Recorded as your self-assessed starting point for the consultant; it does not change which outcomes are assessed or how they are scored.",
+        "id": "NIST.SCP.2",
+        "options": [
+          {
+            "label": "Tier 1 — Partial (ad-hoc, reactive)",
+            "value": "tier1"
+          },
+          {
+            "label": "Tier 2 — Risk Informed (some risk awareness, not org-wide)",
+            "value": "tier2"
+          },
+          {
+            "label": "Tier 3 — Repeatable (formal policies, org-wide)",
+            "value": "tier3"
+          },
+          {
+            "label": "Tier 4 — Adaptive (continuous improvement, lessons learned)",
+            "value": "tier4"
+          },
+          {
+            "label": "Unknown / not yet assessed",
+            "value": "unknown"
+          }
+        ],
+        "text": "What is your organization's current CSF implementation tier?"
+      },
+      {
+        "help_text": "OT/ICS environments have unique cybersecurity considerations. Recorded as context for the consultant; the CSF outcomes in this assessment are not OT-specific and all remain in scope.",
+        "id": "NIST.SCP.3",
+        "options": [
+          {
+            "label": "Yes — OT/ICS systems in scope",
+            "value": "yes"
+          },
+          {
+            "label": "No — IT systems only",
+            "value": "no"
+          },
+          {
+            "label": "Yes — converged IT/OT environment",
+            "value": "converged"
+          }
+        ],
+        "text": "Does your organization manage operational technology (OT) or industrial control systems (ICS)?"
+      },
+      {
+        "help_text": "A CSF profile aligns framework outcomes with business requirements, risk tolerance, and resources.",
+        "id": "NIST.SCP.4",
+        "options": [
+          {
+            "label": "Yes — both current and target profiles",
+            "value": "both"
+          },
+          {
+            "label": "Yes — current profile only",
+            "value": "current_only"
+          },
+          {
+            "label": "Yes — target profile only",
+            "value": "target_only"
+          },
+          {
+            "label": "No — no profile developed yet",
+            "value": "no"
+          }
+        ],
+        "text": "Has your organization developed a CSF organizational profile (current or target)?"
+      }
+    ]
+  },
+  "screening": null
+}

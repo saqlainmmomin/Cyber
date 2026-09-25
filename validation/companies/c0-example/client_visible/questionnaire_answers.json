@@ -1,0 +1,469 @@
+{
+  "answers": {
+    "SINGLE.ISO.A5.1": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.10": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.11": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.12": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.13": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.14": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.15": {
+      "answer": "partially_implemented",
+      "evidence_reference": "Quarterly Access Review",
+      "notes": "Ten temporary accounts were excluded from that review."
+    },
+    "SINGLE.ISO.A5.16": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.17": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.18": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.19": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.2": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.20": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.21": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.22": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.23": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.24": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.25": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.26": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.27": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.28": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.29": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.3": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.30": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.31": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.32": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.33": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.34": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.35": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.36": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.37": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.4": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.5": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.6": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.7": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.8": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A5.9": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.1": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.2": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.3": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.4": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.5": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.6": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.7": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A6.8": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.1": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.10": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.11": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.12": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.13": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.14": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.2": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.3": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.4": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.5": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.6": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.7": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.8": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A7.9": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.1": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.10": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.11": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.12": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.13": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.14": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.15": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.16": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.17": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.18": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.19": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.2": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.20": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.21": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.22": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.23": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.24": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.25": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.26": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.27": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.28": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.29": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.3": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.30": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.31": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.32": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.33": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.34": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.4": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.5": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.6": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.7": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.8": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    },
+    "SINGLE.ISO.A8.9": {
+      "answer": "fully_implemented",
+      "evidence_reference": "",
+      "notes": ""
+    }
+  }
+}

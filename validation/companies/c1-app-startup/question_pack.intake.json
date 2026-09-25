@@ -1,0 +1,721 @@
+{
+  "context": [
+    {
+      "id": "CTX.DATA.1",
+      "options": [
+        "identity",
+        "financial",
+        "health",
+        "biometric",
+        "location",
+        "behavioral",
+        "childrens",
+        "other"
+      ],
+      "text": "What categories of personal data does your organization collect?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.2",
+      "options": [
+        "web_forms",
+        "mobile_app",
+        "third_party_apis",
+        "physical_forms",
+        "automated_tracking"
+      ],
+      "text": "What is your primary mechanism for collecting personal data?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.DATA.3",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you use third-party data processors or SaaS vendors who handle personal data on your behalf?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "text": "Do you transfer personal data across international borders?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.DATA.4a",
+      "options": [],
+      "text": "If yes, which regions do you transfer data to?",
+      "type": "text"
+    },
+    {
+      "id": "CTX.POSTURE.1",
+      "options": [
+        "full_time",
+        "part_time_shared",
+        "no"
+      ],
+      "text": "Do you have a dedicated privacy or Data Protection Officer function?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.2",
+      "options": [
+        "iso_27001_certified",
+        "soc2",
+        "internal_policy_only",
+        "none"
+      ],
+      "text": "Do you have an existing information security program?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.3",
+      "options": [
+        "external_audit",
+        "internal_only",
+        "no"
+      ],
+      "text": "Have you undergone any privacy or security audit in the past 2 years?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.POSTURE.4",
+      "options": [
+        "yes_recently_updated",
+        "yes_outdated",
+        "no"
+      ],
+      "text": "Do you have a documented privacy policy published to users?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.1",
+      "options": [
+        "processes_childrens_data",
+        "healthcare_finance_critical_infra",
+        "handles_sensitive_personal_data",
+        "designated_or_likely_sdf",
+        "none"
+      ],
+      "text": "Which of the following apply to your organization?",
+      "type": "multi_select"
+    },
+    {
+      "id": "CTX.RISK.2",
+      "options": [
+        "under_10k",
+        "10k_to_1m",
+        "1m_to_10m",
+        "over_10m"
+      ],
+      "text": "Roughly how many data principals (individuals whose data you hold) are affected?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.RISK.3",
+      "options": [
+        "yes_reported",
+        "yes_unreported",
+        "no",
+        "unsure"
+      ],
+      "text": "In the last 2 years, have you experienced any data breach or security incident?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.1",
+      "options": [
+        "regulatory_audit_prep",
+        "investor_board_requirement",
+        "customer_due_diligence",
+        "proactive_compliance",
+        "post_incident_review"
+      ],
+      "text": "What is the primary driver for this assessment?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.2",
+      "options": [
+        "under_3_months",
+        "3_to_6_months",
+        "6_to_12_months",
+        "no_hard_deadline"
+      ],
+      "text": "What is your target compliance timeline?",
+      "type": "single_select"
+    },
+    {
+      "id": "CTX.INIT.3",
+      "options": [
+        "under_10k",
+        "10k_to_50k",
+        "50k_to_150k",
+        "above_150k",
+        "not_yet_defined"
+      ],
+      "text": "What is your approximate budget band for remediation?",
+      "type": "single_select"
+    }
+  ],
+  "controls": {
+    "dpdpa": [
+      {
+        "description": "Organization obtains consent that is free, specific, informed, unconditional, and unambiguous with a clear affirmative action. Consent request is presented in clear, plain language with specified purpose.",
+        "domain": "chapter_2",
+        "reference": "Section 6(1)-(2)",
+        "requirement_id": "CH2.CONSENT.1",
+        "section": "consent",
+        "title": "Lawful basis for processing with free, specific, informed consent"
+      },
+      {
+        "description": "When personal data is processed for multiple purposes, consent is obtained separately for each purpose, allowing the Data Principal to give or withhold consent for each.",
+        "domain": "chapter_2",
+        "reference": "Section 6(3)",
+        "requirement_id": "CH2.CONSENT.2",
+        "section": "consent",
+        "title": "Itemised consent for multiple purposes"
+      },
+      {
+        "description": "Data Principals can withdraw consent with the same ease as giving it. Organization ceases processing upon withdrawal unless retention is required by law.",
+        "domain": "chapter_2",
+        "reference": "Section 6(6)-(7)",
+        "requirement_id": "CH2.CONSENT.3",
+        "section": "consent",
+        "title": "Consent withdrawal mechanism"
+      },
+      {
+        "description": "If a Consent Manager is used, it is registered with the Data Protection Board and provides an accessible, transparent platform for managing consent.",
+        "domain": "chapter_2",
+        "reference": "Section 6(8)-(9)",
+        "requirement_id": "CH2.CONSENT.4",
+        "section": "consent",
+        "title": "Consent Manager registration and interoperability"
+      },
+      {
+        "description": "Verifiable consent of a parent or lawful guardian is obtained before processing personal data of children (under 18) or persons with disabilities.",
+        "domain": "chapter_2",
+        "reference": "Section 9(1)",
+        "requirement_id": "CH2.CONSENT.5",
+        "section": "consent",
+        "title": "Verifiable parental consent for children's data"
+      },
+      {
+        "description": "A clear notice is given to the Data Principal at or before the time of collection, describing the personal data being collected and the purpose of processing.",
+        "domain": "chapter_2",
+        "reference": "Section 5(1)",
+        "requirement_id": "CH2.NOTICE.1",
+        "section": "notice",
+        "title": "Notice at or before collection of personal data"
+      },
+      {
+        "description": "For personal data collected before the Act, a notice is provided as soon as reasonably practicable describing the data held and the processing purposes.",
+        "domain": "chapter_2",
+        "reference": "Section 5(2)",
+        "requirement_id": "CH2.NOTICE.2",
+        "section": "notice",
+        "title": "Notice for previously collected data"
+      },
+      {
+        "description": "The notice includes contact information for the Data Protection Officer or person responsible for addressing Data Principal queries.",
+        "domain": "chapter_2",
+        "reference": "Section 5(1)",
+        "requirement_id": "CH2.NOTICE.3",
+        "section": "notice",
+        "title": "Notice contains contact details of DPO or grievance officer"
+      },
+      {
+        "description": "Personal data is processed only for the purpose for which consent was given or which is deemed legitimate under the Act.",
+        "domain": "chapter_2",
+        "reference": "Section 4(1)",
+        "requirement_id": "CH2.PURPOSE.1",
+        "section": "purpose_limitation",
+        "title": "Processing only for stated purpose"
+      },
+      {
+        "description": "Where processing occurs without consent (Section 7 — voluntary provision, state functions, employment, etc.), the legitimate use basis is documented and appropriate.",
+        "domain": "chapter_2",
+        "reference": "Section 7",
+        "requirement_id": "CH2.PURPOSE.2",
+        "section": "purpose_limitation",
+        "title": "Legitimate uses without consent properly identified"
+      },
+      {
+        "description": "Only personal data that is necessary for the specified purpose is collected. No excessive or irrelevant data is gathered.",
+        "domain": "chapter_2",
+        "reference": "Section 4(1)",
+        "requirement_id": "CH2.MINIMIZE.1",
+        "section": "data_minimization",
+        "title": "Collection limited to what is necessary"
+      },
+      {
+        "description": "Personal data is erased when the purpose for which it was collected is no longer being served and retention is not necessary for legal purposes.",
+        "domain": "chapter_2",
+        "reference": "Section 8(7)",
+        "requirement_id": "CH2.MINIMIZE.2",
+        "section": "data_minimization",
+        "title": "Data retention limited to purpose fulfilment"
+      },
+      {
+        "description": "Organization maintains documented retention schedules and automated or systematic procedures for erasing personal data upon purpose completion or consent withdrawal.",
+        "domain": "chapter_2",
+        "reference": "Section 8(7)",
+        "requirement_id": "CH2.MINIMIZE.3",
+        "section": "data_minimization",
+        "title": "Retention schedule and deletion procedures"
+      },
+      {
+        "description": "Organization makes reasonable efforts to ensure that personal data is complete, accurate, and not misleading, especially where data is used for decisions affecting the Data Principal or shared with other Fiduciaries.",
+        "domain": "chapter_2",
+        "reference": "Section 8(3)",
+        "requirement_id": "CH2.ACCURACY.1",
+        "section": "accuracy",
+        "title": "Reasonable efforts to ensure data accuracy"
+      },
+      {
+        "description": "Organization implements reasonable security safeguards to protect personal data, including prevention of personal data breaches. This includes technical and organizational measures.",
+        "domain": "chapter_2",
+        "reference": "Section 8(4)",
+        "requirement_id": "CH2.SECURITY.1",
+        "section": "security",
+        "title": "Reasonable security safeguards implemented"
+      },
+      {
+        "description": "Personal data is encrypted at rest and in transit. Access controls ensure only authorized personnel can access personal data based on the principle of least privilege.",
+        "domain": "chapter_2",
+        "reference": "Section 8(4)",
+        "requirement_id": "CH2.SECURITY.2",
+        "section": "security",
+        "title": "Encryption and access controls"
+      },
+      {
+        "description": "When engaging a Data Processor, the organization has a valid contract ensuring the Processor implements appropriate security safeguards and processes data only as instructed.",
+        "domain": "chapter_2",
+        "reference": "Section 8(2)",
+        "requirement_id": "CH2.SECURITY.3",
+        "section": "security",
+        "title": "Data Processor contractual safeguards"
+      },
+      {
+        "description": "Data Principals can obtain a summary of their personal data being processed and the processing activities undertaken, including identities of other Fiduciaries and Processors with whom data has been shared.",
+        "domain": "chapter_3",
+        "reference": "Section 11(1)",
+        "requirement_id": "CH3.ACCESS.1",
+        "section": "right_to_access",
+        "title": "Summary of personal data and processing activities"
+      },
+      {
+        "description": "Data Principals can request correction of inaccurate or misleading personal data and completion of incomplete data.",
+        "domain": "chapter_3",
+        "reference": "Section 12(1)",
+        "requirement_id": "CH3.CORRECT.1",
+        "section": "right_to_correction",
+        "title": "Mechanism for correction and completion of data"
+      },
+      {
+        "description": "Data Principals can request erasure of personal data that is no longer necessary for the purpose for which it was collected.",
+        "domain": "chapter_3",
+        "reference": "Section 12(2)",
+        "requirement_id": "CH3.CORRECT.2",
+        "section": "right_to_correction",
+        "title": "Mechanism for erasure of personal data"
+      },
+      {
+        "description": "Organization provides an accessible mechanism for Data Principals to register grievances. A designated person or officer handles these grievances.",
+        "domain": "chapter_3",
+        "reference": "Section 13(1)",
+        "requirement_id": "CH3.GRIEVANCE.1",
+        "section": "grievance_redressal",
+        "title": "Grievance redressal mechanism available"
+      },
+      {
+        "description": "Grievances are responded to within a reasonable timeframe. If unresolved, Data Principals are informed of their right to approach the Data Protection Board.",
+        "domain": "chapter_3",
+        "reference": "Section 13(2)",
+        "requirement_id": "CH3.GRIEVANCE.2",
+        "section": "grievance_redressal",
+        "title": "Timely response to grievances"
+      },
+      {
+        "description": "Data Principals can nominate another individual to exercise their rights in the event of death or incapacity.",
+        "domain": "chapter_3",
+        "reference": "Section 14",
+        "requirement_id": "CH3.NOMINATE.1",
+        "section": "nomination",
+        "title": "Nomination mechanism for death or incapacity"
+      },
+      {
+        "description": "Organization does not undertake tracking, behavioural monitoring, or targeted advertising directed at children.",
+        "domain": "chapter_4",
+        "reference": "Section 9(2)",
+        "requirement_id": "CH4.CHILD.1",
+        "section": "children_data",
+        "title": "No tracking or behavioural monitoring of children"
+      },
+      {
+        "description": "Processing of children's personal data does not have a detrimental effect on their well-being.",
+        "domain": "chapter_4",
+        "reference": "Section 9(3)",
+        "requirement_id": "CH4.CHILD.2",
+        "section": "children_data",
+        "title": "No processing detrimental to child's well-being"
+      },
+      {
+        "description": "Organization has mechanisms to verify the age of users and identify children to apply appropriate protections and obtain parental consent.",
+        "domain": "chapter_4",
+        "reference": "Section 9",
+        "requirement_id": "CH4.CHILD.3",
+        "section": "children_data",
+        "title": "Age verification mechanism"
+      },
+      {
+        "description": "If designated as a Significant Data Fiduciary, a Data Protection Officer based in India has been appointed who represents the organization to the Board and Data Principals.",
+        "domain": "chapter_4",
+        "reference": "Section 10(2)(a)",
+        "requirement_id": "CH4.SDF.1",
+        "section": "significant_data_fiduciary",
+        "title": "Data Protection Officer (DPO) appointed"
+      },
+      {
+        "description": "An independent Data Auditor has been appointed to evaluate compliance with the Act.",
+        "domain": "chapter_4",
+        "reference": "Section 10(2)(b)",
+        "requirement_id": "CH4.SDF.2",
+        "section": "significant_data_fiduciary",
+        "title": "Independent Data Auditor appointed"
+      },
+      {
+        "description": "Periodic Data Protection Impact Assessments are conducted to evaluate processing activities and associated risks to Data Principals.",
+        "domain": "chapter_4",
+        "reference": "Section 10(2)(c)",
+        "requirement_id": "CH4.SDF.3",
+        "section": "significant_data_fiduciary",
+        "title": "Data Protection Impact Assessment (DPIA) conducted"
+      },
+      {
+        "description": "Periodic audits of data processing activities and compliance posture are conducted as prescribed.",
+        "domain": "chapter_4",
+        "reference": "Section 10(2)(d)",
+        "requirement_id": "CH4.SDF.4",
+        "section": "significant_data_fiduciary",
+        "title": "Periodic audit completed"
+      },
+      {
+        "description": "Organization maintains auditable records of when, how, and for what purpose consent was obtained from each Data Principal.",
+        "domain": "consent_management",
+        "reference": "Section 6",
+        "requirement_id": "CM.RECORDS.1",
+        "section": "consent_records",
+        "title": "Consent records maintained"
+      },
+      {
+        "description": "Organization has a process to refresh or re-obtain consent when purposes change or after a reasonable period.",
+        "domain": "consent_management",
+        "reference": "Section 6",
+        "requirement_id": "CM.RECORDS.2",
+        "section": "consent_records",
+        "title": "Consent refresh and re-validation process"
+      },
+      {
+        "description": "Data Principals can provide or withhold consent at a granular level (per-purpose) rather than being forced into all-or-nothing consent.",
+        "domain": "consent_management",
+        "reference": "Section 6(3)",
+        "requirement_id": "CM.GRANULAR.1",
+        "section": "granular_consent",
+        "title": "Granular consent options available"
+      },
+      {
+        "description": "Access to services is not conditional on consent to processing that is not necessary for the service. No dark patterns used in consent collection.",
+        "domain": "consent_management",
+        "reference": "Section 6(1)",
+        "requirement_id": "CM.GRANULAR.2",
+        "section": "granular_consent",
+        "title": "No consent bundling with service access"
+      },
+      {
+        "description": "Personal data is transferred outside India only to countries or territories not restricted by the Central Government. Organization maintains an inventory of cross-border data flows.",
+        "domain": "cross_border",
+        "reference": "Section 16(1)",
+        "requirement_id": "CB.TRANSFER.1",
+        "section": "transfer_controls",
+        "title": "Data transfers only to non-restricted jurisdictions"
+      },
+      {
+        "description": "Appropriate contractual or legal safeguards are in place for data transferred outside India, including obligations on the receiving party.",
+        "domain": "cross_border",
+        "reference": "Section 16",
+        "requirement_id": "CB.TRANSFER.2",
+        "section": "transfer_controls",
+        "title": "Contractual safeguards for cross-border transfers"
+      },
+      {
+        "description": "Where the Central Government mandates that certain categories of personal data must be stored in India, the organization complies with such localisation requirements.",
+        "domain": "cross_border",
+        "reference": "Section 16",
+        "requirement_id": "CB.TRANSFER.3",
+        "section": "transfer_controls",
+        "title": "Data localisation where required"
+      },
+      {
+        "description": "Organization has procedures to notify the Data Protection Board of India of any personal data breach in the prescribed form and manner.",
+        "domain": "breach_notification",
+        "reference": "Section 8(6)",
+        "requirement_id": "BN.NOTIFY.1",
+        "section": "incident_management",
+        "title": "Breach notification to Data Protection Board"
+      },
+      {
+        "description": "Organization has procedures to notify affected Data Principals of a personal data breach in the prescribed form and manner.",
+        "domain": "breach_notification",
+        "reference": "Section 8(6)",
+        "requirement_id": "BN.NOTIFY.2",
+        "section": "incident_management",
+        "title": "Breach notification to affected Data Principals"
+      },
+      {
+        "description": "A documented incident response plan exists covering detection, containment, investigation, notification, and remediation of personal data breaches.",
+        "domain": "breach_notification",
+        "reference": "Section 8(4)-(6)",
+        "requirement_id": "BN.NOTIFY.3",
+        "section": "incident_management",
+        "title": "Incident response plan documented"
+      },
+      {
+        "description": "Organization maintains a register of all personal data breaches including facts, effects, and remedial actions taken.",
+        "domain": "breach_notification",
+        "reference": "Section 8(6)",
+        "requirement_id": "BN.NOTIFY.4",
+        "section": "incident_management",
+        "title": "Breach register maintained"
+      }
+    ]
+  },
+  "document_categories": [
+    "privacy_policy",
+    "consent_form",
+    "data_flow_diagram",
+    "dpia",
+    "processing_records",
+    "breach_procedure",
+    "retention_policy",
+    "vendor_agreement",
+    "other"
+  ],
+  "magic_link_limits": {
+    "expires_in_days": 7,
+    "max_total_mb": 100,
+    "max_uploads": 20
+  },
+  "scope": {
+    "dpdpa": [
+      {
+        "help_text": "Includes data stored on foreign cloud servers, shared with overseas subsidiaries, or processed by vendors headquartered outside India.",
+        "id": "SCP.1",
+        "options": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          },
+          {
+            "label": "Not sure",
+            "value": "unsure"
+          }
+        ],
+        "text": "Does your organisation transfer personal data outside India?"
+      },
+      {
+        "help_text": "Includes consumer apps, edtech, gaming, or any service where minors may create accounts or have their data collected.",
+        "id": "SCP.2",
+        "options": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          },
+          {
+            "label": "Not sure",
+            "value": "unsure"
+          }
+        ],
+        "text": "Does your organisation process personal data of children (under 18)?"
+      },
+      {
+        "help_text": "SDFs are large-scale processors of sensitive data designated by the Central Government. If unsure, select 'Possibly' — we'll assess the likelihood.",
+        "id": "SCP.3",
+        "options": [
+          {
+            "label": "Yes — already designated",
+            "value": "yes"
+          },
+          {
+            "label": "Possibly — we meet the likely criteria",
+            "value": "possibly"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          }
+        ],
+        "text": "Has your organisation been designated (or is likely to be designated) as a Significant Data Fiduciary (SDF)?"
+      },
+      {
+        "help_text": "This shapes which compliance obligations are most relevant.",
+        "id": "SCP.4",
+        "options": [
+          {
+            "label": "Customer / user data (B2C or B2B product)",
+            "value": "customer"
+          },
+          {
+            "label": "Employee / HR data only",
+            "value": "employee"
+          },
+          {
+            "label": "Both customer and employee data",
+            "value": "both"
+          },
+          {
+            "label": "We process data on behalf of clients (Data Processor)",
+            "value": "vendor"
+          }
+        ],
+        "text": "What is the primary context of your personal data processing?"
+      },
+      {
+        "help_text": "Examples: CRM software, analytics platforms, payment processors, cloud infrastructure providers.",
+        "id": "SCP.5",
+        "options": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          },
+          {
+            "label": "Not sure",
+            "value": "unsure"
+          }
+        ],
+        "text": "Do you use third-party vendors or cloud services that process personal data on your behalf?"
+      }
+    ]
+  },
+  "screening": [
+    {
+      "covers": [
+        "CH2.CONSENT.1",
+        "CH2.CONSENT.2",
+        "CH2.CONSENT.3",
+        "CH2.CONSENT.4",
+        "CM.RECORD.1",
+        "CM.RECORD.2"
+      ],
+      "id": "SD.CONSENT",
+      "question": "How mature is your consent management process? Describe how users give, withdraw, and manage consent for personal data processing. Include whether you obtain separate consent per purpose, support easy withdrawal, and use any consent management platform.",
+      "title": "Consent Management"
+    },
+    {
+      "covers": [
+        "CH2.NOTICE.1",
+        "CH2.NOTICE.2",
+        "CH2.NOTICE.3"
+      ],
+      "id": "SD.NOTICE",
+      "question": "How and when do you inform Data Principals (individuals) about what personal data you collect and why? Describe your privacy notice, where it appears, what it covers, and whether existing customers have been notified.",
+      "title": "Notice & Transparency"
+    },
+    {
+      "covers": [
+        "CH2.PURPOSE.1",
+        "CH2.PURPOSE.2",
+        "CH2.MINIMIZE.1",
+        "CH2.MINIMIZE.2",
+        "CH2.MINIMIZE.3"
+      ],
+      "id": "SD.PURPOSE",
+      "question": "Do you enforce purpose limitation — using data only for the purpose it was collected for? Describe your data inventory/mapping, how you ensure only necessary data is collected, and any automated or documented deletion process once the purpose is served.",
+      "title": "Purpose Limitation & Data Minimization"
+    },
+    {
+      "covers": [
+        "CH2.ACCURACY.1"
+      ],
+      "id": "SD.ACCURACY",
+      "question": "What mechanisms do you have to ensure personal data you hold is accurate and up to date? Describe any self-service update features, periodic data verification processes, and how you handle inaccurate data reported by users.",
+      "title": "Data Accuracy"
+    },
+    {
+      "covers": [
+        "CH2.SECURITY.1",
+        "CH2.SECURITY.2",
+        "CH2.SECURITY.3",
+        "CH2.SECURITY.4",
+        "CH2.SECURITY.5"
+      ],
+      "id": "SD.SECURITY",
+      "question": "What technical and organizational security controls protect personal data? Include encryption at rest and in transit, access controls, vendor/third-party data processor agreements, security testing cadence, and any certifications such as ISO 27001 or SOC 2.",
+      "title": "Data Security"
+    },
+    {
+      "covers": [
+        "BN.NOTIFY.1",
+        "BN.NOTIFY.2",
+        "BN.NOTIFY.3"
+      ],
+      "id": "SD.BREACH",
+      "question": "Do you have a tested data breach detection and notification process? Describe your incident response playbook, how quickly you can detect and assess a breach, and your process for notifying the Data Protection Board of India and affected individuals.",
+      "title": "Breach Notification"
+    },
+    {
+      "covers": [
+        "CH3.ACCESS.1",
+        "CH3.CORRECT.1",
+        "CH3.ERASE.1",
+        "CH3.GRIEVANCE.1",
+        "CH3.NOMINATE.1"
+      ],
+      "id": "SD.RIGHTS",
+      "question": "Can Data Principals exercise their rights? Describe how users can access their data, correct inaccuracies, request erasure, and nominate a person to exercise their rights. Include your current response time and whether you have a self-service portal or manual process.",
+      "title": "Data Subject Rights"
+    },
+    {
+      "covers": [
+        "CH4.SDF.1",
+        "CH4.SDF.2",
+        "CH4.SDF.3",
+        "CH4.CHILD.1",
+        "CH4.CHILD.2",
+        "CH4.CHILD.3",
+        "CH2.CONSENT.5"
+      ],
+      "id": "SD.GOVERNANCE",
+      "question": "What governance structures are in place for data protection? Include whether you have a Data Protection Officer or privacy lead, whether you are (or expect to be) classified as a Significant Data Fiduciary, and how you handle processing personal data of children (under 18) including parental consent verification.",
+      "title": "Governance, SDF & Children's Data"
+    },
+    {
+      "covers": [
+        "CB.TRANSFER.1",
+        "CB.TRANSFER.2",
+        "CB.TRANSFER.3"
+      ],
+      "id": "SD.CROSSBORDER",
+      "question": "Do you transfer personal data outside India (to servers, cloud providers, or partners in other countries)? If yes, describe which countries, what data categories are involved, and what legal safeguards you have in place (e.g., standard contractual clauses, adequacy decisions, data localisation measures).",
+      "title": "Cross-Border Data Transfers"
+    }
+  ]
+}

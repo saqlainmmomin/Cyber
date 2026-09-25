@@ -1,0 +1,41 @@
+{
+  "artifact_id": "E10",
+  "filename": "HRFlow-Restore-and-Change-Record-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "prose",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Backup restore and project record",
+    "subtitle": "Issued for October 2026 desk review",
+    "sections": [
+      {
+        "heading": "Restore exercise",
+        "paragraphs": [
+          "On 2026-09-18, the operations lead restored production tenant Cobalt-17 from an encrypted daily snapshot to the isolated recovery account. RTO 45 minutes against 60-minute target; checksum 8a42 matched the source manifest. Security and the customer success lead signed the test on 2026-09-19."
+        ]
+      },
+      {
+        "heading": "Project gate",
+        "paragraphs": [
+          "Project Beacon went live on 2026-07-12. Its security review ticket is marked deferred until 2026-11-15, although project policy requires review before production launch."
+        ]
+      },
+      {
+        "heading": "Asset returns",
+        "paragraphs": [
+          "The CMDB reconciled 254 staff laptops, 14 AWS accounts, 83 code repositories and six SaaS vendors on 2026-09-30. Seven departing staff returned assigned laptops in September. The eighth, departure 2026-09-26, remains pending in the asset-return queue."
+        ]
+      },
+      {
+        "heading": "Access exception",
+        "paragraphs": [
+          "The JIT production-admin grant to Devika Rao on 2026-09-21 expired after 60 minutes and the SIEM retained the approval event."
+        ]
+      }
+    ]
+  }
+}

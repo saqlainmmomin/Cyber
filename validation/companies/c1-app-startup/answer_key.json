@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "company_slug": "c1-app-startup",
+  "control_truth": {
+    "dpdpa": {
+      "default": "compliant",
+      "overrides": {
+        "CH2.NOTICE.1": "partially_compliant",
+        "CH4.CHILD.1": "non_compliant",
+        "CH4.CHILD.3": "partially_compliant",
+        "CH2.MINIMIZE.3": "partially_compliant",
+        "CH2.SECURITY.2": "partially_compliant",
+        "CH2.SECURITY.3": "partially_compliant",
+        "CH3.NOMINATE.1": "non_compliant",
+        "CH2.PURPOSE.1": "partially_compliant",
+        "CH3.ACCESS.1": "partially_compliant",
+        "CH2.PURPOSE.2": "partially_compliant",
+        "CM.GRANULAR.1": "partially_compliant",
+        "CH2.MINIMIZE.1": "partially_compliant",
+        "BN.NOTIFY.1": "partially_compliant",
+        "CH2.CONSENT.5": "compliant",
+        "CH2.NOTICE.3": "compliant"
+      }
+    }
+  },
+  "planted_gaps": [
+    {
+      "gap_id": "G01",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.NOTICE.1"
+        }
+      ],
+      "gap_class": "wrong_citation",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 2,
+      "severity_expected": "high",
+      "description": "The parent-facing notice imports a GDPR legal basis for profiling instead of accurately describing the Indian processing basis.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "GDPR legitimate interest under Article 6(1)(f)"
+        }
+      ],
+      "key_facts": [
+        "GDPR legitimate interest under Article 6(1)(f)"
+      ],
+      "what_followup_should_ask": "What specific Indian basis covers recommendation profiling?"
+    },
+    {
+      "gap_id": "G02",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH4.CHILD.1"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "non_compliant",
+      "surface_answer": "not_implemented",
+      "probing_depth": 1,
+      "severity_expected": "high",
+      "description": "Behavioural analytics run on child accounts and the team acknowledges that monitoring is active.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "KidsAdNet child-device event stream enabled"
+        }
+      ],
+      "key_facts": [
+        "KidsAdNet child-device event stream enabled"
+      ],
+      "what_followup_should_ask": "Can the child-device event stream be disabled for all minors?"
+    },
+    {
+      "gap_id": "G03",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH4.CHILD.3"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 1,
+      "severity_expected": "medium",
+      "description": "Birth year is self-entered without an age verification step.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "no independent age check is performed"
+        }
+      ],
+      "key_facts": [
+        "no independent age check is performed"
+      ],
+      "what_followup_should_ask": "How is a claimed age verified before a child flow is selected?"
+    },
+    {
+      "gap_id": "G04",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.MINIMIZE.3"
+        }
+      ],
+      "gap_class": "quantitative",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "high",
+      "description": "Only 91 of 126 requested closures were purged, yet the worklist tracks just 14 open retry items, so 21 closures sit in neither record; an analytics processor copy also lacks deletion automation.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "126 closures requested"
+        },
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "91 purges completed"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "14 retry items open"
+        }
+      ],
+      "key_facts": [
+        "126 closures requested",
+        "91 purges completed",
+        "14 retry items open"
+      ],
+      "what_followup_should_ask": "Show the disposition of every closure in the September cohort."
+    },
+    {
+      "gap_id": "G05",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.SECURITY.2"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "high",
+      "description": "An unencrypted public export bypassed the stated production export safeguard.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "The file was plaintext"
+        }
+      ],
+      "key_facts": [
+        "The file was plaintext"
+      ],
+      "what_followup_should_ask": "What check enforces encryption and private storage for every export?"
+    },
+    {
+      "gap_id": "G06",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.SECURITY.3"
+        }
+      ],
+      "gap_class": "honest_gap",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "Two active processors still lack the approved data-processing annex.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "agreement in legal review"
+        },
+        {
+          "source": "evidence:E03",
+          "locator": "record",
+          "fact": "do not contain the approved data-processing annex"
+        }
+      ],
+      "key_facts": [
+        "agreement in legal review",
+        "do not contain the approved data-processing annex"
+      ],
+      "what_followup_should_ask": "Which signed terms cover KidsAdNet and MetricTree?"
+    },
+    {
+      "gap_id": "G07",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.NOMINATE.1"
+        }
+      ],
+      "gap_class": "overclaim",
+      "actual_status": "non_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "Nomination has been promised in a future release, but users cannot nominate today.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "scheduled for 15 November 2026"
+        },
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "no nomination field"
+        }
+      ],
+      "key_facts": [
+        "scheduled for 15 November 2026",
+        "no nomination field"
+      ],
+      "what_followup_should_ask": "Show a nomination made on a current account."
+    },
+    {
+      "gap_id": "G08",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.PURPOSE.1"
+        }
+      ],
+      "gap_class": "cross_document",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "Recommendation profiling continues even though lesson delivery is the stated core use.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "optional recommendation profiling"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "learner home screen"
+        }
+      ],
+      "key_facts": [
+        "optional recommendation profiling",
+        "learner home screen"
+      ],
+      "what_followup_should_ask": "Which consent choice authorises recommendations for the affected accounts?"
+    },
+    {
+      "gap_id": "G09",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH3.ACCESS.1"
+        }
+      ],
+      "gap_class": "overclaim",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The parent export covers only profile fields, omitting processing activity identifiers.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "profile export only"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "omits lesson events"
+        }
+      ],
+      "key_facts": [
+        "profile export only",
+        "omits lesson events"
+      ],
+      "what_followup_should_ask": "Provide a complete response to one September access request."
+    },
+    {
+      "gap_id": "G10",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.PURPOSE.2"
+        }
+      ],
+      "gap_class": "cross_document",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The claimed legitimate use is contradicted by the product flow and foreign-law citation.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "GDPR legitimate interest under Article 6(1)(f)"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "KidsAdNet child-device event stream enabled"
+        }
+      ],
+      "key_facts": [
+        "GDPR legitimate interest under Article 6(1)(f)",
+        "KidsAdNet child-device event stream enabled"
+      ],
+      "what_followup_should_ask": "Which permitted use under the selected framework authorises this event stream?"
+    },
+    {
+      "gap_id": "G11",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CM.GRANULAR.1"
+        }
+      ],
+      "gap_class": "scope_coverage",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "Purpose-specific choices cover lessons and research but omit the recommendation stream.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "Lesson delivery [selected by parent]"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "Optional research [separate unchecked box]"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "KidsAdNet child-device event stream enabled"
+        }
+      ],
+      "key_facts": [
+        "Lesson delivery [selected by parent]",
+        "Optional research [separate unchecked box]",
+        "KidsAdNet child-device event stream enabled"
+      ],
+      "what_followup_should_ask": "Show how the recommendation stream respects the consent preference."
+    },
+    {
+      "gap_id": "G12",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.MINIMIZE.1"
+        }
+      ],
+      "gap_class": "overclaim",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 2,
+      "severity_expected": "medium",
+      "description": "The support form collects extra child attributes with no demonstrated lesson necessity.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E04",
+          "locator": "record",
+          "fact": "teacher notes and birth month"
+        }
+      ],
+      "key_facts": [
+        "teacher notes and birth month"
+      ],
+      "what_followup_should_ask": "Why must the support form retain birth month and teacher notes?"
+    },
+    {
+      "gap_id": "G13",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "BN.NOTIFY.1"
+        }
+      ],
+      "gap_class": "overclaim",
+      "actual_status": "partially_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The incident checklist operates, but a known public exposure has no recorded Board notification decision.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "Board notification decision remains open"
+        },
+        {
+          "source": "evidence:E05",
+          "locator": "record",
+          "fact": "no submission reference is recorded"
+        }
+      ],
+      "key_facts": [
+        "Board notification decision remains open",
+        "no submission reference is recorded"
+      ],
+      "what_followup_should_ask": "Where is the Board notification decision for the September exposure?"
+    }
+  ],
+  "decoys": [
+    {
+      "decoy_id": "D01",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.CONSENT.5"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A child account is approved through email rather than a paper signature.",
+      "why_it_is_compliant": "The separate parent-mailbox challenge produces a versioned, timestamped approval record.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "one-time link to parent mailbox"
+        },
+        {
+          "source": "evidence:E02",
+          "locator": "record",
+          "fact": "Session token for parent approval stored"
+        }
+      ]
+    },
+    {
+      "decoy_id": "D02",
+      "requirements": [
+        {
+          "framework_id": "dpdpa",
+          "requirement_id": "CH2.NOTICE.3"
+        }
+      ],
+      "why_it_looks_like_a_gap": "A shared mailbox is used instead of a named privacy officer.",
+      "why_it_is_compliant": "The published mailbox routes requests to an accountable CTO and has actual acknowledged tickets.",
+      "evidence_trail": [
+        {
+          "source": "evidence:E01",
+          "locator": "record",
+          "fact": "privacy@kiddielearn.example"
+        },
+        {
+          "source": "evidence:E06",
+          "locator": "record",
+          "fact": "acknowledged 2026-09-23"
+        }
+      ]
+    }
+  ],
+  "clean_controls": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.1",
+      "supporting_artifacts": [
+        "E02"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.2",
+      "supporting_artifacts": [
+        "E02"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.3",
+      "supporting_artifacts": [
+        "E02"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH3.CORRECT.1",
+      "supporting_artifacts": [
+        "E01",
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH3.GRIEVANCE.1",
+      "supporting_artifacts": [
+        "E01",
+        "E06"
+      ]
+    },
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.ACCURACY.1",
+      "supporting_artifacts": [
+        "E06"
+      ]
+    }
+  ],
+  "authoring_notes": "C1 is a small, uneven operator. Assess each cited control on its own evidence; the parent-mailbox challenge is genuinely effective despite other children-data weaknesses."
+}

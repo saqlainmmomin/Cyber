@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "company_slug": "c0-example",
+  "control_truth": {
+    "iso27001": {
+      "default": "compliant",
+      "overrides": {
+        "ISO.A5.15": "partially_compliant",
+        "ISO.A8.2": "non_compliant",
+        "ISO.A5.24": "compliant"
+      }
+    }
+  },
+  "planted_gaps": [
+    {
+      "gap_id": "G01",
+      "requirements": [{"framework_id": "iso27001", "requirement_id": "ISO.A8.2"}],
+      "gap_class": "artifact_discrepancy",
+      "actual_status": "non_compliant",
+      "surface_answer": "fully_implemented",
+      "probing_depth": 2,
+      "severity_expected": "high",
+      "description": "An operational register conflicts with the stated privileged-access posture.",
+      "evidence_trail": [
+        {"source": "evidence:E02", "locator": "footer", "fact": "Four privileged accounts remain outside MFA."}
+      ],
+      "key_facts": ["Four privileged accounts remain outside MFA."],
+      "what_followup_should_ask": "What is the plan and owner for the accounts without MFA?"
+    },
+    {
+      "gap_id": "G02",
+      "requirements": [{"framework_id": "iso27001", "requirement_id": "ISO.A5.15"}],
+      "gap_class": "quantitative",
+      "actual_status": "partially_compliant",
+      "surface_answer": "partially_implemented",
+      "probing_depth": 3,
+      "severity_expected": "medium",
+      "description": "The recorded monthly population exceeds the entries included in sampling.",
+      "evidence_trail": [
+        {"source": "evidence:E01", "locator": "Review population", "fact": "The register lists 20 administrator accounts."},
+        {"source": "answer:SINGLE.ISO.A5.15", "locator": "notes", "fact": "Ten temporary accounts were excluded from that review."}
+      ],
+      "key_facts": [
+        "The register lists 20 administrator accounts.",
+        "Ten temporary accounts were excluded from that review."
+      ],
+      "what_followup_should_ask": "How were excluded temporary accounts reviewed?"
+    }
+  ],
+  "decoys": [
+    {
+      "decoy_id": "D01",
+      "requirements": [{"framework_id": "iso27001", "requirement_id": "ISO.A5.24"}],
+      "why_it_looks_like_a_gap": "A tabletop exercise has fewer participants than a live response team.",
+      "why_it_is_compliant": "The exercise scope is a deliberate discussion format with the designated incident roles represented.",
+      "evidence_trail": [
+        {"source": "evidence:E03", "locator": "exercise.participants", "fact": "exercise.participants = 5"}
+      ]
+    }
+  ],
+  "clean_controls": [
+    {"framework_id": "iso27001", "requirement_id": "ISO.A5.1", "supporting_artifacts": ["E03"]},
+    {"framework_id": "iso27001", "requirement_id": "ISO.A8.32", "supporting_artifacts": ["E03"]}
+  ],
+  "authoring_notes": "Synthetic material for deterministic toolchain checks; no production records are represented."
+}

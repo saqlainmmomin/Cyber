@@ -1,0 +1,32 @@
+{
+  "artifact_id": "E02",
+  "filename": "KiddieLearn-signup-consent.png",
+  "category": "other",
+  "channel": "magic_link",
+  "magic_item": "Signup and parental-consent capture",
+  "consultant_maps_to": [
+    {
+      "framework_id": "dpdpa",
+      "requirement_id": "CH2.CONSENT.1"
+    }
+  ],
+  "render": {
+    "kind": "console",
+    "format": "png",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "KiddieLearn signup and parent verification capture",
+    "lines": [
+      "Capture 2026-09-22 build 4.8.1; learner age entry: 9; parent email: parent@example.test",
+      "Learner step: enter birth year; no independent age check is performed.",
+      "Parent step: one-time link to parent mailbox; link challenge 6 digits, expires after 10 minutes.",
+      "Lesson delivery [selected by parent]  Optional research [separate unchecked box]",
+      "Session token for parent approval stored with version 4.8.1 and UTC timestamp; parent billing token is matched to the account holder.",
+      "Optional research can be switched off in parent settings; the research SDK stops receiving new events immediately.",
+      "Analytics SDK: KidsAdNet child-device event stream enabled on the learner home screen.",
+      "Request correction and close account buttons are visible in parent settings.",
+      "Nominate another adult: planned for November release."
+    ]
+  }
+}

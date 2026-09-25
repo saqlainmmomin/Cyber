@@ -1,0 +1,72 @@
+{
+  "artifact_id": "E08",
+  "filename": "HD-Supplier-Assurance-Q3.pdf",
+  "category": "other",
+  "channel": "consultant_upload",
+  "render": {
+    "kind": "table",
+    "format": "pdf",
+    "degrade": "none"
+  },
+  "content": {
+    "title": "Supplier assurance register",
+    "subtitle": "Exported for October 2026 review",
+    "preamble": [
+      "Critical suppliers require annual reassessment. Risk owner: supply security."
+    ],
+    "columns": [
+      "Vendor",
+      "Service",
+      "Tier",
+      "Last reassessment",
+      "Disposition"
+    ],
+    "rows": [
+      [
+        "CloudNest",
+        "hosting",
+        "critical",
+        "2026-09-01",
+        "approved"
+      ],
+      [
+        "PulseRelay",
+        "notification delivery",
+        "critical",
+        "2025-02-01",
+        "pending renewal"
+      ],
+      [
+        "KeyLoop",
+        "identity",
+        "critical",
+        "2026-08-19",
+        "approved"
+      ],
+      [
+        "DataHarbor",
+        "analytics",
+        "high",
+        "2026-09-11",
+        "approved"
+      ],
+      [
+        "CareRoute",
+        "support",
+        "high",
+        "2026-07-06",
+        "approved"
+      ],
+      [
+        "PaperGate",
+        "printing",
+        "low",
+        "2026-09-20",
+        "approved"
+      ]
+    ],
+    "footer": [
+      "Contract monitoring continues during renewal."
+    ]
+  }
+}
