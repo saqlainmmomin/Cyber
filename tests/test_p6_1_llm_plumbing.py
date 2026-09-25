@@ -758,7 +758,9 @@ def test_golden_surfaces_and_harness_wrapper(monkeypatch):
     from app.services import llm_client
 
     diff = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "tests/fixtures", "tests/support"],
+        # Three-dot diff: only this branch's own changes since it left main, so the
+        # guard stays true after merge instead of going stale.
+        ["git", "diff", "--stat", "main...HEAD", "--", "tests/fixtures", "tests/support"],
         capture_output=True,
         text=True,
         check=True,
