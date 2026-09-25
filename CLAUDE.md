@@ -48,5 +48,5 @@ pytest
 - **PDF sections are additive-only** — don't rewrite existing pages.
 - **No auth** (single-user MVP); JSON stored as TEXT columns, no native JSON type.
 - **Framework-specific copy must be conditional** (e.g. `has_dpdpa`), never a default.
-- **`validation/companies/*/answer_key.json` is a held-out evaluation set** — never read it while changing prompts/analyzer/desk review, and never tune against a specific planted gap (D-P5-9-C).
+- **`validation/companies/*/answer_key.json` is a held-out evaluation set** — never read it while changing prompts/analyzer/desk review, and never tune against a specific planted gap (D-P5-9-C). Code paths are enforced by `tests/test_answer_key_isolation.py`.
 - **Non-DPDPA scope profiling isn't implemented** — questionnaire exclusion is a no-op for ISO/GDPR/HIPAA/NIST/PCI.
