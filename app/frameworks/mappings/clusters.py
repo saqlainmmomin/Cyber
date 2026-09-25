@@ -358,7 +358,7 @@ CONTROL_CLUSTERS: list[dict[str, object]] = [
             _control("gdpr", "GDPR.ART33.2", "GDPR requires breach documentation sufficient to demonstrate compliance."),
             _control("nist_csf", "NIST.RS.AN.03", "NIST expects root cause analysis to be performed."),
             _control("nist_csf", "NIST.RS.AN.06", "NIST also expects investigation actions to be taken and documented."),
-            _control("nist_csf", "NIST.RS.AN.07", "NIST expects incident data to be collected and analyzed."),
+            _control("nist_csf", "NIST.RS.AN.07", "NIST expects incident data and metadata to be collected with their integrity and provenance preserved."),
             _control("nist_csf", "NIST.RS.AN.08", "NIST expects incident magnitude and scope to be estimated."),
             _control("nist_csf", "NIST.ID.IM.01", "NIST expects improvements to be identified from evaluations such as assessments and audits."),
             _control("nist_csf", "NIST.ID.IM.02", "NIST also expects improvements identified from security tests and exercises."),
@@ -937,7 +937,7 @@ CONTROL_CLUSTERS: list[dict[str, object]] = [
         "Does the organization execute structured recovery from incidents, verify restoration, and communicate recovery status internally and externally as needed?",
         "Look for recovery plan execution records, verification steps confirming systems are fully restored, mission-function prioritization, and communications issued during and after recovery.",
         [
-            _control("nist_csf", "NIST.RC.CO.03", "NIST expects recovery activities to be communicated to internal stakeholders."),
+            _control("nist_csf", "NIST.RC.CO.03", "NIST expects recovery progress to be communicated to designated internal and external stakeholders."),
             _control("nist_csf", "NIST.RC.CO.04", "NIST expects public updates to be issued about recovery as appropriate."),
         ],
         tags=['incident_response', 'recovery', 'business-continuity', 'communications'],

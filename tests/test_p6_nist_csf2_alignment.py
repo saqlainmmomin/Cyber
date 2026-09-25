@@ -132,7 +132,7 @@ def test_pack_shape_content_and_weights():
     for control in controls:
         _, function, category, number = control.id.split(".")
         assert control.reference == f"{function}.{category}-{number}"
-    assert "106" in NIST_CSF_DEFINITION.__class__.__module__ or "106" in __import__("app.frameworks.definitions.nist_csf", fromlist=["__doc__"]).__doc__
+    assert "106" in __import__("app.frameworks.definitions.nist_csf", fromlist=["__doc__"]).__doc__
     assert "82 subcategory" not in __import__("app.frameworks.definitions.nist_csf", fromlist=["__doc__"]).__doc__
 
     main = _main_namespace("app/frameworks/definitions/nist_csf.py")["NIST_CSF_DEFINITION"]
@@ -202,6 +202,8 @@ EXPECTED_CLUSTER_DELTAS = {
     "NIST.GV.OC.05": ("CLUSTER_051", "NIST expects the outcomes, capabilities and services the organization depends on to be understood and communicated."),
     "NIST.GV.OV.02": ("CLUSTER_051", "NIST expects the risk strategy to be reviewed and adjusted so it covers organizational requirements and risks."),
     "NIST.GV.OV.03": ("CLUSTER_051", "NIST expects risk management performance to be evaluated and reviewed for needed adjustments."),
+    "NIST.RC.CO.03": ("CLUSTER_047", "NIST expects recovery progress to be communicated to designated internal and external stakeholders."),
+    "NIST.RS.AN.07": ("CLUSTER_016", "NIST expects incident data and metadata to be collected with their integrity and provenance preserved."),
 }
 
 
@@ -228,6 +230,20 @@ def test_clusters_are_complete_and_nist_only_changes_are_exact():
         assert current_non_nist == old_non_nist
 
 
+# Snapshot of the nine D-NIST-G changes (label, reason, required, maps_to), verified against the handoff in review.
+EXPECTED_CHANGED_EVIDENCE = {
+    'risk_management_strategy': ('Cybersecurity risk management strategy, including risk appetite and tolerance statements', 'Evidence for organisational context (GV.OC-01, GV.OC-04, GV.OC-05) and risk management strategy, risk communication and opportunity handling (GV.RM-01 to GV.RM-05, GV.RM-07).', True, ('NIST.GV.OC.01', 'NIST.GV.OC.04', 'NIST.GV.OC.05', 'NIST.GV.RM.01', 'NIST.GV.RM.02', 'NIST.GV.RM.03', 'NIST.GV.RM.04', 'NIST.GV.RM.05', 'NIST.GV.RM.07')),
+    'supplier_security': ('Supplier security policy, supplier register and sample supplier agreements', 'Evidence for supply chain risk management across the supplier life cycle (GV.SC-01 to GV.SC-10), critical-supplier assessment before acquisition (ID.RA-10), external service inventory (ID.AM-04) and provider monitoring (DE.CM-06).', True, ('NIST.GV.SC.01', 'NIST.GV.SC.02', 'NIST.GV.SC.03', 'NIST.GV.SC.04', 'NIST.GV.SC.05', 'NIST.GV.SC.06', 'NIST.GV.SC.07', 'NIST.GV.SC.08', 'NIST.GV.SC.09', 'NIST.GV.SC.10', 'NIST.ID.RA.10', 'NIST.ID.AM.04', 'NIST.DE.CM.06')),
+    'risk_assessment': ('Cybersecurity risk assessment and risk register', "Evidence for threat identification, impact and likelihood, risk determination and response (ID.RA-03 to ID.RA-06) and the organisation's standard risk method (GV.RM-06).", True, ('NIST.ID.RA.03', 'NIST.ID.RA.04', 'NIST.ID.RA.05', 'NIST.ID.RA.06', 'NIST.GV.RM.06')),
+    'vulnerability_management': ('Vulnerability and patch management procedure, with recent scan reports', 'Evidence for vulnerability identification (ID.RA-01), threat intelligence (ID.RA-02), vulnerability disclosure handling (ID.RA-08) and software maintenance (PR.PS-02).', True, ('NIST.ID.RA.01', 'NIST.ID.RA.02', 'NIST.ID.RA.08', 'NIST.PR.PS.02')),
+    'configuration_baselines': ('Secure configuration / hardening baselines, software execution controls and integrity checks for acquired hardware and software', 'Evidence for configuration management, hardware maintenance and execution prevention (PR.PS-01, PR.PS-03, PR.PS-05) and authenticity and integrity checks before hardware and software are used (ID.RA-09).', False, ('NIST.PR.PS.01', 'NIST.PR.PS.03', 'NIST.PR.PS.05', 'NIST.ID.RA.09')),
+    'change_management': ('Change management procedure, sample change records and the exception (risk acceptance) register', 'Evidence for change and exception management (ID.RA-07).', False, ('NIST.ID.RA.07',)),
+    'logging_monitoring': ('Logging and monitoring standard, with evidence of alert review or SIEM use', 'Evidence for log generation (PR.PS-04), continuous monitoring (DE.CM-01, DE.CM-03, DE.CM-09) and adverse event analysis, correlation, distribution and threat context (DE.AE-02, DE.AE-03, DE.AE-06, DE.AE-07).', True, ('NIST.PR.PS.04', 'NIST.DE.CM.01', 'NIST.DE.CM.03', 'NIST.DE.CM.09', 'NIST.DE.AE.02', 'NIST.DE.AE.03', 'NIST.DE.AE.06', 'NIST.DE.AE.07')),
+    'breach_procedure': ('Incident response plan and escalation procedures', 'Evidence for the incident response plan (ID.IM-04), incident management, containment, eradication and stakeholder communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident impact and declaration (DE.AE-04, DE.AE-08).', True, ('NIST.ID.IM.04', 'NIST.RS.MA.01', 'NIST.RS.MA.02', 'NIST.RS.MA.03', 'NIST.RS.MA.04', 'NIST.RS.MA.05', 'NIST.RS.MI.01', 'NIST.RS.MI.02', 'NIST.RS.CO.02', 'NIST.RS.CO.03', 'NIST.DE.AE.04', 'NIST.DE.AE.08')),
+    'business_continuity': ('Recovery and business continuity plans, with latest test results', 'Evidence for recovery plan execution and communication (RC.RP-01, RC.RP-02, RC.RP-04 to RC.RP-06, RC.CO-03, RC.CO-04) and resilience mechanisms and capacity (PR.IR-03, PR.IR-04).', True, ('NIST.RC.RP.01', 'NIST.RC.RP.02', 'NIST.RC.RP.04', 'NIST.RC.RP.05', 'NIST.RC.RP.06', 'NIST.RC.CO.03', 'NIST.RC.CO.04', 'NIST.PR.IR.03', 'NIST.PR.IR.04')),
+}
+
+
 def test_evidence_requests_cover_every_control_and_merge_change_management():
     expected_types = [
         "csf_profiles", "risk_management_strategy", "security_policy", "roles_responsibilities", "hr_security", "leadership_oversight", "legal_register", "supplier_security", "asset_inventory", "risk_assessment", "vulnerability_management", "access_control_policy", "physical_security", "training_records", "cryptography_policy", "backup", "configuration_baselines", "change_management", "sdlc_policy", "logging_monitoring", "network_security", "breach_procedure", "incident_log", "business_continuity", "exercise_records",
@@ -237,6 +253,15 @@ def test_evidence_requests_cover_every_control_and_merge_change_management():
     assert len({control_id for request in requests for control_id in request.maps_to}) == 106
     assert {control_id for request in requests for control_id in request.maps_to} == {control.id for control in NIST_CSF_DEFINITION.all_controls()}
     request_map = {request.document_type: request for request in requests}
+    main_requests = {
+        request.document_type: request
+        for request in _main_namespace("app/frameworks/definitions/nist_csf.py")["NIST_CSF_DEFINITION"].evidence_requests
+    }
+    for document_type, request in request_map.items():
+        if document_type in EXPECTED_CHANGED_EVIDENCE:
+            assert (request.label, request.reason, request.required, tuple(request.maps_to)) == EXPECTED_CHANGED_EVIDENCE[document_type], document_type
+        else:
+            assert request == main_requests[document_type], document_type
     assert request_map["change_management"].required is False
     assert request_map["change_management"].maps_to == ("NIST.ID.RA.07",)
     assert request_map["configuration_baselines"].label == "Secure configuration / hardening baselines, software execution controls and integrity checks for acquired hardware and software"

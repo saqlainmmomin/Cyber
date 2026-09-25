@@ -605,3 +605,16 @@ New file `tests/test_p6_nist_csf2_alignment.py`. Expected content is written int
 1. **Existing NIST data:** demo only. No migration and no scope-refresh step.
 2. **`nist-csf-criteria-v1.csv`:** no review decisions entered yet. Regenerating the sheet is safe.
 3. **Own-words rewrite:** limited to the new and corrected controls named in this handoff. Leave all other NIST descriptions unchanged.
+
+### Review fixes (orchestrator, 2026-09-25)
+An adversarial review found nothing blocking. The orchestrator applied these fixes directly:
+
+1. **RC.CO.03 cluster delta** (CLUSTER_047). It was left at the `main` text. It now reads as D-NIST-F step 4 specifies: "recovery progress … designated internal and external stakeholders".
+2. **RS.AN.07 cluster delta** (CLUSTER_016). This corrects an error in the handoff: D-NIST-D renamed the control to "Incident data collection and preservation", but D-NIST-F never updated its delta. The delta now reads "incident data and metadata … integrity and provenance preserved", which matches CSF 2.0 RS.AN-07.
+3. **`EXPECTED_CLUSTER_DELTAS`** now includes both of these rows. Scenario 4 had left RC.CO.03 out.
+4. **Scenario 5 is stronger.**
+   - The nine D-NIST-G evidence requests are pinned on label, reason, required and `maps_to`.
+   - Every other NIST evidence request must equal `main`.
+5. **Test fix.** Removed an always-false clause from the docstring-count assertion.
+
+**Independence disclosure.** The reviewer grepped `scripts/` for NIST ids, which matched the forbidden `scripts/seed_test_companies.py` and printed 7 bare ids. The reviewer used none of that output, and no content or test was shaped by it.
