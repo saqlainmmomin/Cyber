@@ -15,6 +15,7 @@ from app.frameworks.criteria.iso27001_draft import (
     ISO27001_OWN_WORDS_DRAFT,
 )
 from app.frameworks.criteria.nist_csf_draft import (
+    CRITERIA_PENDING_IDS,
     NIST_CSF_CRITERIA_DRAFT,
     NIST_CSF_CRITERIA_REVIEW_META,
 )
@@ -60,8 +61,17 @@ def test_iso_covers_every_annex_a_control_and_the_clauses_in_order():
 
 
 def test_nist_covers_every_pack_requirement_in_order():
-    assert len(NIST_IDS) == 94
-    assert list(NIST_CSF_CRITERIA_DRAFT) == NIST_IDS
+    assert len(NIST_IDS) == 106
+    assert CRITERIA_PENDING_IDS == frozenset({
+        "NIST.GV.RM.05", "NIST.GV.RM.06", "NIST.GV.RM.07",
+        "NIST.GV.SC.06", "NIST.GV.SC.07", "NIST.GV.SC.08", "NIST.GV.SC.09", "NIST.GV.SC.10",
+        "NIST.ID.RA.07", "NIST.ID.RA.08", "NIST.ID.RA.09", "NIST.ID.RA.10",
+        "NIST.ID.IM.04",
+    })
+    assert CRITERIA_PENDING_IDS <= set(NIST_IDS)
+    assert list(NIST_CSF_CRITERIA_DRAFT) == [
+        requirement_id for requirement_id in NIST_IDS if requirement_id not in CRITERIA_PENDING_IDS
+    ]
 
 
 def test_iso_clause_requirements_are_complete():

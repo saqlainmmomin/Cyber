@@ -690,7 +690,7 @@ def test_requirement_counts_are_registry_driven(db, http):
     """Scenario 8: report summary counts the selected frameworks' controls."""
     expected = {
         "iso27001": 93,
-        "nist_csf": 94,
+        "nist_csf": 106,
         "dpdpa": 41,
         "dpdpa_iso": 134,
     }

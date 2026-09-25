@@ -39,11 +39,6 @@ HIGH, MED, LOW = "high", "medium", "low"
 
 # ── Version notes ─────────────────────────────────────────────────────────
 
-_RSCO04 = (
-    "RS.CO-04 was withdrawn in CSF 2.0 (CPRT: 'Incorporated into RS.MA-01, RS.MA-04'). "
-    "The pack's text is closer to CSF 1.1 RS.CO-05 (voluntary sharing), which CSF 2.0 "
-    "folded into RS.CO-03."
-)
 _PRPS01 = (
     "CSF 2.0 PR.PS-01 covers configuration management generally; the pack's narrower "
     "'network infrastructure ... reviewed ... security principles' wording resembles "
@@ -52,6 +47,16 @@ _PRPS01 = (
 
 # criterion_id -> (drafter_confidence, in_force_note). Review-sheet metadata only.
 NIST_CSF_CRITERIA_REVIEW_META: dict[str, tuple[str, str]] = {}
+
+# Pack ids added by the CSF 2.0 alignment (P6-NIST) whose criteria are not drafted yet.
+# The orchestrator drafts them in the P6-2c follow-up and empties this set; nothing else
+# may be added to it (tests/test_p6_2c_iso_nist_criteria.py pins it exactly).
+CRITERIA_PENDING_IDS: frozenset[str] = frozenset({
+    "NIST.GV.RM.05", "NIST.GV.RM.06", "NIST.GV.RM.07",
+    "NIST.GV.SC.06", "NIST.GV.SC.07", "NIST.GV.SC.08", "NIST.GV.SC.09", "NIST.GV.SC.10",
+    "NIST.ID.RA.07", "NIST.ID.RA.08", "NIST.ID.RA.09", "NIST.ID.RA.10",
+    "NIST.ID.IM.04",
+})
 
 
 def _criteria(req_id: str, *rows: tuple[str, str, str, str, str, str]) -> tuple[TestCriterion, ...]:
@@ -937,17 +942,6 @@ NIST_CSF_CRITERIA_DRAFT: dict[str, tuple[TestCriterion, ...]] = {
          "incident_log; leadership_oversight", "NIST CSF 2.0 RS.CO-03; CSF 2.0 IE RS.CO-03 Ex4", MED, ""),
         (O, "Information shared externally in the period (e.g. with an ISAC or suppliers) followed the agreed rules (sensitive data removed, per agreement).",
          "incident_log", "NIST CSF 2.0 RS.CO-03; CSF 2.0 IE RS.CO-03 Ex2, Ex5", MED, ""),
-    ),
-    "NIST.RS.CO.04": _criteria(
-        "NIST.RS.CO.04",
-        (D, "Information-sharing agreements or rules define what incident information may be shared with designated external parties.",
-         "breach_procedure (no pack evidence request maps RS.CO.04)",
-         "[repo says RS.CO-04 'incident information is shared with designees consistent with response plans and information sharing agreements'; CSF 2.0 withdrew RS.CO-04, and this content is covered by RS.CO-03 (IE Ex1)]",
-         LOW, _RSCO04),
-        (O, "Records show incident information shared in the period went only to designees named in those agreements.",
-         "incident_log",
-         "[repo says RS.CO-04; withdrawn in CSF 2.0, content covered by RS.CO-03]",
-         LOW, _RSCO04),
     ),
     # ── RS.MI Incident Mitigation ─────────────────────────────────────────
     "NIST.RS.MI.01": _criteria(

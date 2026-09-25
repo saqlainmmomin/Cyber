@@ -104,9 +104,12 @@ def build_rows(module_name: str | None = None, framework: str = "dpdpa") -> list
     module = importlib.import_module(module_name or default_module)
     draft = getattr(module, draft_attr)
     meta = getattr(module, meta_attr)
+    pending = getattr(module, "CRITERIA_PENDING_IDS", frozenset())
 
     rows: list[dict[str, str]] = []
     for req in _requirements(framework, module):
+        if req["id"] in pending:
+            continue
         for tc in draft[req["id"]]:
             confidence, in_force_note = meta[tc.id]
             rows.append(

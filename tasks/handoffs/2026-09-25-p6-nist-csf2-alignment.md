@@ -565,16 +565,23 @@ New file `tests/test_p6_nist_csf2_alignment.py`. Expected content is written int
 
 ## Results
 
-_To be filled in by the implementer:_
-- Step 0 baseline counts and `main` commit
-- fingerprints before and after
-- fact-check outcomes
-- files changed
-- test counts
-- every D-NIST-L edit
-- the CSV diff summary
-- any deviation stopped on
-- PR link (added by the orchestrator)
+- Step 0 baseline: `main` was `9cd32088e9fbd0575017ae29541a4c6e0fcb6f58`. The direct baseline run reported **731 passed, 10 skipped, 3 failed, 1 teardown error**. The accepted orchestrator baseline is **732 passed, 10 skipped, 2 failed**, plus the intermittent workpaper teardown error and flaky longitudinal scenario 9. The two documented failures were `test_scenario_13_structural_guards` and `test_scenario_10_engagement_rollup_and_tracker_page`; the direct run also caught the known-flaky RFI byte-stability test, which passed on targeted rerun. A targeted rerun of longitudinal scenario 9 reproduced its documented flake. The generated empty `data/dpdpa.db` was removed from the checkout after suite runs.
+- Step 0 fingerprints before edits:
+  - `dpdpa system` `3fc4f1c3ff6b62124716f6ca5ef29e1dd39461817d168fa4b047c2bef92e4ea6`
+  - `dpdpa user` `de658c512943c954425ea004165af0dd1cd88ade82f7376ac98d08aa957b3751`
+  - `iso27001 system` `3c3bad7bd8818c1d5b28730e4462bbf91f2208b1eae32b89459e8e2d698116b3`
+  - `iso27001 user` `6fe08745ef96857b893c623d0f468d2abca2aa6c3395affc64145807acedfd61`
+  - `iso27001 desk` `9d2e926bae35b23030085da6e528b03df63c9352006cb0bb8948800a251222b2`
+  - `nist_csf system` `c8ddf65a8220b571733a65298503f3aff65be22ca6c21413216282f982ddf121`
+  - `nist_csf user` `9fa1ded32cda08bb882873f83bb2d13e1b20a9a1b0fa84c45690569e02bb283f`
+  - `nist_csf desk` `14705771d2e67febe08ab3a58e022039aea1a4360aef37a0ae0595fa25d414ec`
+- Step 0 fact checks: all ten facts were true on `main`; no stop condition was triggered. The post-edit pack has 106 controls, domain counts 31/21/22/11/13/8, 106/106 unique cluster coverage, 25 evidence requests with no unmapped controls, 93 retained draft requirements plus the exact 13 pending ids, and seven batches at thresholds 90/25.
+- Fingerprints after edits: DPDPA and ISO are unchanged. New NIST values are `system` `f4da05c97a385ffc41969e29c0757ed8c67449b26a2dfc95998b5437afc12028`, `user` `9fa1ded32cda08bb882873f83bb2d13e1b20a9a1b0fa84c45690569e02bb283f`, and `desk` `01f83bd2c8c707e37ae7df65b68127e20a96debb9079163d5c1fe9992ee1a4f4`.
+- Files changed: `app/frameworks/definitions/nist_csf.py`, `app/frameworks/mappings/clusters.py`, `app/frameworks/criteria/nist_csf_draft.py`, `scripts/export_criteria_review.py`, `tasks/criteria-review/nist-csf-criteria-v1.csv`, the five authorised existing test files in D-NIST-L, and new `tests/test_p6_nist_csf2_alignment.py`. This Results section is the only handoff-file change.
+- Focused verification: **127 passed, 35 warnings** using the exact command in Verification 3. Full uncommitted-tree verification: **739 passed, 10 skipped, 3 failed, 1 teardown error**. No new functional failure was found. The failures are the known structural/date guards plus `test_scenario_13_only_new_retention_test_file_changes`, which intentionally sees the authorised existing-test edits before commit; the teardown is the known workpaper database leak. The three-dot protected-surface guard is only authoritative after the orchestrator commits: `git diff main...HEAD` currently sees only the already-committed handoff, not these uncommitted implementation edits.
+- D-NIST-L edits: correctness bundle count `94` → `106`; P5-5 NIST document types gained `change_management`, the request count became `25`, and the breach request pin was replaced; P6-1b received the seven-batch NIST table, per-framework labels, NIST judge count `6` → `7`, three new NIST fingerprints, and the NIST definition exclusion in the guard; P5-3 received the matching NIST definition exclusion; P6-2c now pins the exact pending set and filtered draft order; the NIST CSV was regenerated. No DPDPA or ISO test/sheet was changed.
+- CSV diff: 312 rows → 310 rows; the two `NIST.RS.CO.04` rows were removed. Requirement titles changed for 17 existing ids: `GV.OC.05`, `GV.OV.02`, `GV.OV.03`, `GV.SC.02`, `GV.SC.04`, `ID.AM.08`, `PR.AT.02`, `PR.IR.02`, `DE.AE.02`, `DE.AE.03`, `DE.AE.06`, `DE.AE.08`, `RS.MA.02`, `RS.MA.05`, `RS.AN.07`, `RS.CO.02`, and `RC.RP.03`. No criteria content was authored.
+- Deviations stopped on: none. No commit or PR was created, per orchestrator instructions. PR link: _to be added by the orchestrator_.
 
 **Open question for Saqlain (orchestrator carries it to the PR):**
 1. Are there any **non-demo** NIST assessments in your database that will be re-analysed? If so, re-save their Scope tab first (D-NIST-I).

@@ -1,19 +1,15 @@
 """
 NIST Cybersecurity Framework (CSF) 2.0 definition.
 
-Based on NIST CSF 2.0 (February 2024), organized by 6 functions:
-  - Govern (20 controls)     — NEW in CSF 2.0
-  - Identify (13 controls)
-  - Protect (21 controls)
-  - Detect (9 controls)
-  - Respond (12 controls)
-  - Recover (7 controls)
+Covers the complete CSF 2.0 Core (NIST CSWP 29, February 2024, Appendix A):
+106 subcategories across 6 functions and 22 categories.
+  - Govern (31)   - Identify (21)   - Protect (22)
+  - Detect (11)   - Respond (13)    - Recover (8)
 
-Total: 82 subcategory controls mapped to key CSF 2.0 outcomes.
-
-Note: CSF 2.0 subcategories are outcome-based statements. Control counts here
-reflect the key subcategories selected for assessment — the full CSF 2.0
-contains 106 subcategories, but some are consolidated for practical assessment.
+Ids follow NIST.<FUNCTION>.<CATEGORY>.<NN>; `reference` carries the CSF
+identifier (e.g. GV.RM-05). Gaps in numbering are CSF 2.0's own (subcategories
+relocated from CSF 1.1). Titles and descriptions are the pack's own wording and
+reference the CSF outcome rather than reproduce it.
 """
 
 from app.frameworks.schema import (
@@ -47,7 +43,7 @@ _GV_OC = Section(
         Control(
             id="NIST.GV.OC.02",
             title="Internal and external stakeholders",
-            description="Internal and external stakeholders are determined, and their needs and expectations regarding cybersecurity risk management are understood.",
+            description="Internal and external stakeholders are understood, and their needs and expectations about cybersecurity risk management are understood and taken into account.",
             reference="GV.OC-02",
             criticality="medium",
             tags=["governance", "stakeholders", "requirements"],
@@ -63,15 +59,15 @@ _GV_OC = Section(
         Control(
             id="NIST.GV.OC.04",
             title="Critical objectives and dependencies",
-            description="Critical objectives, capabilities, and services that stakeholders depend on or expect are determined and communicated.",
+            description="Critical objectives, capabilities and services that external stakeholders rely on or expect from the organization are understood and communicated.",
             reference="GV.OC-04",
             criticality="high",
             tags=["governance", "critical-services", "dependencies", "business-impact"],
         ),
         Control(
             id="NIST.GV.OC.05",
-            title="Outcomes and priorities",
-            description="Outcomes, capabilities, and services that the organization depends on are determined and prioritized.",
+            title="Organizational dependencies",
+            description="The outcomes, capabilities and services that the organization itself relies on are understood and communicated.",
             reference="GV.OC-05",
             criticality="medium",
             tags=["governance", "priorities", "risk-appetite"],
@@ -116,6 +112,30 @@ _GV_RM = Section(
             criticality="medium",
             tags=["governance", "risk-response", "strategy"],
         ),
+        Control(
+            id="NIST.GV.RM.05",
+            title="Risk communication lines",
+            description="Defined channels exist across the organization for raising and escalating cybersecurity risk, including risk that originates with suppliers and other third parties.",
+            reference="GV.RM-05",
+            criticality="medium",
+            tags=["governance", "risk-communication", "escalation", "third-party"],
+        ),
+        Control(
+            id="NIST.GV.RM.06",
+            title="Standardized risk method",
+            description="Cybersecurity risks are calculated, recorded, categorized and prioritized using one documented method that is shared across the organization.",
+            reference="GV.RM-06",
+            criticality="high",
+            tags=["governance", "risk-methodology", "risk-scoring", "prioritization"],
+        ),
+        Control(
+            id="NIST.GV.RM.07",
+            title="Positive risk consideration",
+            description="Opportunities (positive risks) are described and brought into the organization's cybersecurity risk discussions alongside threats.",
+            reference="GV.RM-07",
+            criticality="low",
+            tags=["governance", "risk-management", "opportunities"],
+        ),
     ],
 )
 
@@ -127,7 +147,7 @@ _GV_RR = Section(
         Control(
             id="NIST.GV.RR.01",
             title="Organizational leadership responsibility",
-            description="Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture of cybersecurity risk awareness.",
+            description="Leaders own and answer for cybersecurity risk, and build a culture that is risk-aware, ethical and committed to continual improvement.",
             reference="GV.RR-01",
             criticality="critical",
             tags=["governance", "leadership", "accountability", "culture"],
@@ -198,19 +218,19 @@ _GV_OV = Section(
         ),
         Control(
             id="NIST.GV.OV.02",
-            title="Risk management performance",
+            title="Risk strategy coverage review",
             description="The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks.",
             reference="GV.OV-02",
             criticality="medium",
-            tags=["governance", "oversight", "performance-measurement"],
+            tags=["governance", "oversight", "strategy-review"],
         ),
         Control(
             id="NIST.GV.OV.03",
-            title="Organizational risk management adjustments",
-            description="Organizational cybersecurity risk management is improved based on lessons learned and assessments.",
+            title="Risk management performance evaluation",
+            description="The performance of organizational cybersecurity risk management is evaluated and reviewed to identify adjustments that are needed.",
             reference="GV.OV-03",
             criticality="medium",
-            tags=["governance", "continuous-improvement", "lessons-learned"],
+            tags=["governance", "oversight", "performance-measurement"],
         ),
     ],
 )
@@ -230,7 +250,7 @@ _GV_SC = Section(
         ),
         Control(
             id="NIST.GV.SC.02",
-            title="Supplier cybersecurity requirements",
+            title="Supply chain roles and responsibilities",
             description="Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally.",
             reference="GV.SC-02",
             criticality="high",
@@ -246,7 +266,7 @@ _GV_SC = Section(
         ),
         Control(
             id="NIST.GV.SC.04",
-            title="Supplier assessment",
+            title="Supplier criticality prioritization",
             description="Suppliers are known and prioritized by criticality.",
             reference="GV.SC-04",
             criticality="high",
@@ -259,6 +279,46 @@ _GV_SC = Section(
             reference="GV.SC-05",
             criticality="high",
             tags=["supply-chain", "contracts", "third-party", "due-diligence"],
+        ),
+        Control(
+            id="NIST.GV.SC.06",
+            title="Supplier pre-engagement due diligence",
+            description="Before a formal relationship with a supplier or other third party begins, the organization plans for it and performs due diligence to reduce the associated risk.",
+            reference="GV.SC-06",
+            criticality="high",
+            tags=["supply-chain", "due-diligence", "onboarding", "third-party"],
+        ),
+        Control(
+            id="NIST.GV.SC.07",
+            title="Supplier risk management over the relationship",
+            description="Risks from each supplier, its products and services, and other third parties are identified, recorded, prioritized, assessed, treated and monitored for as long as the relationship lasts.",
+            reference="GV.SC-07",
+            criticality="high",
+            tags=["supply-chain", "third-party", "supplier-monitoring", "risk-assessment"],
+        ),
+        Control(
+            id="NIST.GV.SC.08",
+            title="Suppliers in incident planning and recovery",
+            description="Relevant suppliers and other third parties take part in the organization's incident planning, response and recovery activities.",
+            reference="GV.SC-08",
+            criticality="medium",
+            tags=["supply-chain", "incident-response", "recovery", "third-party"],
+        ),
+        Control(
+            id="NIST.GV.SC.09",
+            title="Supply chain security across the life cycle",
+            description="Supply chain security practices form part of the cybersecurity and enterprise risk programs, and how well they perform is monitored across the life cycle of technology products and services.",
+            reference="GV.SC-09",
+            criticality="medium",
+            tags=["supply-chain", "lifecycle-management", "performance-monitoring"],
+        ),
+        Control(
+            id="NIST.GV.SC.10",
+            title="Supplier exit provisions",
+            description="Supply chain risk management plans cover what must happen when a partnership or service agreement ends.",
+            reference="GV.SC-10",
+            criticality="medium",
+            tags=["supply-chain", "offboarding", "contracts", "termination"],
         ),
     ],
 )
@@ -320,7 +380,7 @@ _ID_AM = Section(
         ),
         Control(
             id="NIST.ID.AM.08",
-            title="Systems and services in scope",
+            title="Asset life-cycle management",
             description="Systems, hardware, software, services, and data are managed throughout their life cycles.",
             reference="ID.AM-08",
             criticality="medium",
@@ -382,6 +442,38 @@ _ID_RA = Section(
             criticality="high",
             tags=["risk-assessment", "risk-response", "risk-treatment"],
         ),
+        Control(
+            id="NIST.ID.RA.07",
+            title="Change and exception management",
+            description="Changes and exceptions are controlled, evaluated for their effect on risk, recorded and tracked to closure.",
+            reference="ID.RA-07",
+            criticality="high",
+            tags=["risk-assessment", "change-management", "exceptions", "risk-acceptance"],
+        ),
+        Control(
+            id="NIST.ID.RA.08",
+            title="Vulnerability disclosure handling",
+            description="Established processes exist to receive, analyze and respond to vulnerabilities reported to the organization.",
+            reference="ID.RA-08",
+            criticality="medium",
+            tags=["risk-assessment", "vulnerability-disclosure", "vulnerability-management"],
+        ),
+        Control(
+            id="NIST.ID.RA.09",
+            title="Hardware and software integrity verification",
+            description="Hardware and software are checked for authenticity and integrity before they are acquired and put into use.",
+            reference="ID.RA-09",
+            criticality="medium",
+            tags=["risk-assessment", "integrity", "authenticity", "acquisition"],
+        ),
+        Control(
+            id="NIST.ID.RA.10",
+            title="Critical supplier pre-acquisition assessment",
+            description="Suppliers judged critical are assessed before their products or services are acquired.",
+            reference="ID.RA-10",
+            criticality="high",
+            tags=["risk-assessment", "supply-chain", "critical-suppliers", "acquisition"],
+        ),
     ],
 )
 
@@ -413,6 +505,14 @@ _ID_IM = Section(
             reference="ID.IM-03",
             criticality="medium",
             tags=["improvement", "operational-feedback", "process-optimization"],
+        ),
+        Control(
+            id="NIST.ID.IM.04",
+            title="Incident response and operational cyber plans",
+            description="Incident response plans and other cybersecurity plans that affect operations exist and are communicated, kept current and improved.",
+            reference="ID.IM-04",
+            criticality="critical",
+            tags=["improvement", "incident-response-plan", "planning", "business-continuity"],
         ),
     ],
 )
@@ -490,7 +590,7 @@ _PR_AT = Section(
         ),
         Control(
             id="NIST.PR.AT.02",
-            title="Privileged user training",
+            title="Specialized role training",
             description="Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind.",
             reference="PR.AT-02",
             criticality="high",
@@ -547,7 +647,7 @@ _PR_PS = Section(
         Control(
             id="NIST.PR.PS.01",
             title="Configuration management practices",
-            description="The configuration of network infrastructure is established, applied, and reviewed incorporating security principles.",
+            description="Configuration management practices are defined and applied across the organization's hardware, software and platforms.",
             reference="PR.PS-01",
             criticality="high",
             tags=["platform-security", "configuration-management", "hardening"],
@@ -610,7 +710,7 @@ _PR_IR = Section(
         ),
         Control(
             id="NIST.PR.IR.02",
-            title="Technology asset protection",
+            title="Environmental threat protection",
             description="The organization's technology assets are protected from environmental threats.",
             reference="PR.IR-02",
             criticality="medium",
@@ -692,19 +792,19 @@ _DE_AE = Section(
     controls=[
         Control(
             id="NIST.DE.AE.02",
-            title="Event correlation",
+            title="Adverse event analysis",
             description="Potentially adverse events are analyzed to better understand associated activities.",
             reference="DE.AE-02",
             criticality="high",
-            tags=["detection", "event-analysis", "correlation", "siem"],
+            tags=["detection", "event-analysis", "siem"],
         ),
         Control(
             id="NIST.DE.AE.03",
-            title="Event aggregation",
+            title="Event correlation",
             description="Information is correlated from multiple sources.",
             reference="DE.AE-03",
             criticality="high",
-            tags=["detection", "event-aggregation", "log-correlation"],
+            tags=["detection", "correlation", "log-correlation"],
         ),
         Control(
             id="NIST.DE.AE.04",
@@ -716,11 +816,11 @@ _DE_AE = Section(
         ),
         Control(
             id="NIST.DE.AE.06",
-            title="Incident declaration",
+            title="Adverse event information distribution",
             description="Information on adverse events is provided to authorized staff and tools.",
             reference="DE.AE-06",
             criticality="high",
-            tags=["detection", "incident-declaration", "alerting", "notification"],
+            tags=["detection", "alerting", "information-distribution"],
         ),
         Control(
             id="NIST.DE.AE.07",
@@ -732,11 +832,11 @@ _DE_AE = Section(
         ),
         Control(
             id="NIST.DE.AE.08",
-            title="Anomaly detection",
+            title="Incident declaration",
             description="Incidents are declared when adverse events meet the defined incident criteria.",
             reference="DE.AE-08",
             criticality="high",
-            tags=["detection", "anomaly-detection", "incident-criteria", "thresholds"],
+            tags=["detection", "incident-declaration", "incident-criteria", "thresholds"],
         ),
     ],
 )
@@ -758,7 +858,7 @@ _RS_MA = Section(
         ),
         Control(
             id="NIST.RS.MA.02",
-            title="Incident triage and prioritization",
+            title="Incident triage and validation",
             description="Incident reports are triaged and validated.",
             reference="RS.MA-02",
             criticality="high",
@@ -782,7 +882,7 @@ _RS_MA = Section(
         ),
         Control(
             id="NIST.RS.MA.05",
-            title="Incident criteria application",
+            title="Recovery initiation criteria",
             description="The criteria for initiating incident recovery are applied.",
             reference="RS.MA-05",
             criticality="medium",
@@ -814,7 +914,7 @@ _RS_AN = Section(
         ),
         Control(
             id="NIST.RS.AN.07",
-            title="Incident data collection and analysis",
+            title="Incident data collection and preservation",
             description="Incident data and metadata are collected and their integrity and provenance are preserved.",
             reference="RS.AN-07",
             criticality="high",
@@ -838,7 +938,7 @@ _RS_CO = Section(
     controls=[
         Control(
             id="NIST.RS.CO.02",
-            title="Internal stakeholder notification",
+            title="Stakeholder incident notification",
             description="Internal and external stakeholders are notified of incidents.",
             reference="RS.CO-02",
             criticality="high",
@@ -851,14 +951,6 @@ _RS_CO = Section(
             reference="RS.CO-03",
             criticality="medium",
             tags=["response", "information-sharing", "coordination"],
-        ),
-        Control(
-            id="NIST.RS.CO.04",
-            title="Voluntary incident information sharing",
-            description="Incident information is shared with designees consistent with response plans and information sharing agreements.",
-            reference="RS.CO-04",
-            criticality="medium",
-            tags=["response", "voluntary-sharing", "isac", "community"],
         ),
     ],
 )
@@ -912,7 +1004,7 @@ _RC_RP = Section(
         ),
         Control(
             id="NIST.RC.RP.03",
-            title="Recovery verification",
+            title="Restoration asset integrity verification",
             description="The integrity of backups and other restoration assets is verified before using them for restoration.",
             reference="RC.RP-03",
             criticality="high",
@@ -1050,6 +1142,11 @@ _NIST_CSF_DEPENDENCIES: dict[str, list[str]] = {
     "NIST.GV.OV.01": ["NIST.GV.RM.01"],  # Oversight needs risk strategy
     "NIST.GV.SC.05": ["NIST.GV.SC.01"],  # Contract requirements need SCRM program
     "NIST.GV.SC.04": ["NIST.GV.SC.01"],  # Supplier assessment needs SCRM program
+    "NIST.GV.RM.06": ["NIST.GV.RM.01"],  # Standard risk method needs risk objectives
+    "NIST.GV.SC.06": ["NIST.GV.SC.01"],  # Supplier due diligence needs SCRM program
+    "NIST.GV.SC.07": ["NIST.GV.SC.04"],  # Ongoing supplier risk needs supplier criticality
+    "NIST.GV.SC.10": ["NIST.GV.SC.05"],  # Supplier exit needs contractual requirements
+    "NIST.ID.RA.10": ["NIST.GV.SC.04"],  # Critical supplier assessment needs supplier criticality
     # Risk assessment chain
     "NIST.ID.RA.04": ["NIST.ID.RA.01", "NIST.ID.RA.03"],  # Impact/likelihood needs vulns + threats
     "NIST.ID.RA.05": ["NIST.ID.RA.04"],  # Risk determination needs impact/likelihood
@@ -1061,9 +1158,9 @@ _NIST_CSF_DEPENDENCIES: dict[str, list[str]] = {
     "NIST.PR.AA.03": ["NIST.PR.AA.01"],  # Authentication needs identity management
     "NIST.PR.AA.04": ["NIST.PR.AA.03"],  # Identity assertions need authentication
     # Detection feeds response
-    "NIST.DE.AE.04": ["NIST.DE.AE.02"],  # Impact estimation needs event correlation
-    "NIST.DE.AE.08": ["NIST.DE.AE.02"],  # Anomaly detection needs correlation
-    "NIST.RS.MA.01": ["NIST.DE.AE.08"],  # IR plan execution needs incident declaration
+    "NIST.DE.AE.04": ["NIST.DE.AE.02"],  # Impact estimation needs event analysis
+    "NIST.DE.AE.08": ["NIST.DE.AE.02"],  # Incident declaration needs event analysis
+    "NIST.RS.MA.01": ["NIST.DE.AE.08", "NIST.ID.IM.04"],  # IR plan execution needs incident declaration and plan
     # Response chain
     "NIST.RS.MA.03": ["NIST.RS.MA.02"],  # Categorization needs triage
     "NIST.RS.MA.04": ["NIST.RS.MA.03"],  # Escalation needs categorization
@@ -1100,6 +1197,7 @@ _NIST_CSF_ROOT_CAUSE_CLUSTERS: dict[str, dict] = {
         "typical_requirements": [
             "NIST.ID.RA.05", "NIST.ID.RA.06", "NIST.RS.MA.01",
             "NIST.RS.MA.02", "NIST.RC.RP.01", "NIST.ID.AM.05",
+            "NIST.ID.IM.04", "NIST.ID.RA.07",
         ],
     },
     "technology": {
@@ -1175,28 +1273,29 @@ _NIST_CSF_SCOPE_QUESTIONS = [
 
 _NIST_CSF_EVIDENCE_REQUESTS = [
     EvidenceRequest("csf_profiles", "CSF Current and Target Organizational Profiles (if developed)", "Shows which CSF outcomes you have prioritised and where you are today; used as context for every conclusion.", False),
-    EvidenceRequest("risk_management_strategy", "Cybersecurity risk management strategy, including risk appetite and tolerance statements", "Evidence for organisational context (GV.OC-01, GV.OC-04, GV.OC-05) and risk management strategy (GV.RM-01 to GV.RM-04).", True, ("NIST.GV.OC.01", "NIST.GV.OC.04", "NIST.GV.OC.05", "NIST.GV.RM.01", "NIST.GV.RM.02", "NIST.GV.RM.03", "NIST.GV.RM.04")),
+    EvidenceRequest("risk_management_strategy", "Cybersecurity risk management strategy, including risk appetite and tolerance statements", "Evidence for organisational context (GV.OC-01, GV.OC-04, GV.OC-05) and risk management strategy, risk communication and opportunity handling (GV.RM-01 to GV.RM-05, GV.RM-07).", True, ("NIST.GV.OC.01", "NIST.GV.OC.04", "NIST.GV.OC.05", "NIST.GV.RM.01", "NIST.GV.RM.02", "NIST.GV.RM.03", "NIST.GV.RM.04", "NIST.GV.RM.05", "NIST.GV.RM.07")),
     EvidenceRequest("security_policy", "Cybersecurity policy, with evidence of periodic review", "Evidence for policy establishment and review (GV.PO-01, GV.PO-02).", True, ("NIST.GV.PO.01", "NIST.GV.PO.02")),
     EvidenceRequest("roles_responsibilities", "Cybersecurity roles, responsibilities and resourcing (organisation chart or RACI)", "Evidence for leadership accountability, roles and resourcing (GV.RR-01 to GV.RR-03).", False, ("NIST.GV.RR.01", "NIST.GV.RR.02", "NIST.GV.RR.03")),
     EvidenceRequest("hr_security", "HR security procedures (screening, onboarding, leaver process)", "Evidence for cybersecurity in human resources practices (GV.RR-04).", False, ("NIST.GV.RR.04",)),
     EvidenceRequest("leadership_oversight", "Leadership / board cybersecurity oversight reports and meeting minutes", "Evidence for oversight of the risk strategy and its performance (GV.OV-01 to GV.OV-03).", False, ("NIST.GV.OV.01", "NIST.GV.OV.02", "NIST.GV.OV.03")),
     EvidenceRequest("legal_register", "Register of legal, regulatory and contractual cybersecurity requirements", "Evidence for stakeholder and legal requirements (GV.OC-02, GV.OC-03).", False, ("NIST.GV.OC.02", "NIST.GV.OC.03")),
-    EvidenceRequest("supplier_security", "Supplier security policy, supplier register and sample supplier agreements", "Evidence for supply chain risk management (GV.SC-01 to GV.SC-05), external service inventory (ID.AM-04) and provider monitoring (DE.CM-06).", True, ("NIST.GV.SC.01", "NIST.GV.SC.02", "NIST.GV.SC.03", "NIST.GV.SC.04", "NIST.GV.SC.05", "NIST.ID.AM.04", "NIST.DE.CM.06")),
+    EvidenceRequest("supplier_security", "Supplier security policy, supplier register and sample supplier agreements", "Evidence for supply chain risk management across the supplier life cycle (GV.SC-01 to GV.SC-10), critical-supplier assessment before acquisition (ID.RA-10), external service inventory (ID.AM-04) and provider monitoring (DE.CM-06).", True, ("NIST.GV.SC.01", "NIST.GV.SC.02", "NIST.GV.SC.03", "NIST.GV.SC.04", "NIST.GV.SC.05", "NIST.GV.SC.06", "NIST.GV.SC.07", "NIST.GV.SC.08", "NIST.GV.SC.09", "NIST.GV.SC.10", "NIST.ID.RA.10", "NIST.ID.AM.04", "NIST.DE.CM.06")),
     EvidenceRequest("asset_inventory", "Hardware, software and data inventories, with classification", "Evidence for asset management (ID.AM-01, ID.AM-02, ID.AM-05, ID.AM-07, ID.AM-08).", True, ("NIST.ID.AM.01", "NIST.ID.AM.02", "NIST.ID.AM.05", "NIST.ID.AM.07", "NIST.ID.AM.08")),
-    EvidenceRequest("risk_assessment", "Cybersecurity risk assessment and risk register", "Evidence for threat identification, impact and likelihood, risk determination and response (ID.RA-03 to ID.RA-06).", True, ("NIST.ID.RA.03", "NIST.ID.RA.04", "NIST.ID.RA.05", "NIST.ID.RA.06")),
-    EvidenceRequest("vulnerability_management", "Vulnerability and patch management procedure, with recent scan reports", "Evidence for vulnerability identification (ID.RA-01), threat intelligence (ID.RA-02) and software maintenance (PR.PS-02).", True, ("NIST.ID.RA.01", "NIST.ID.RA.02", "NIST.PR.PS.02")),
+    EvidenceRequest("risk_assessment", "Cybersecurity risk assessment and risk register", "Evidence for threat identification, impact and likelihood, risk determination and response (ID.RA-03 to ID.RA-06) and the organisation's standard risk method (GV.RM-06).", True, ("NIST.ID.RA.03", "NIST.ID.RA.04", "NIST.ID.RA.05", "NIST.ID.RA.06", "NIST.GV.RM.06")),
+    EvidenceRequest("vulnerability_management", "Vulnerability and patch management procedure, with recent scan reports", "Evidence for vulnerability identification (ID.RA-01), threat intelligence (ID.RA-02), vulnerability disclosure handling (ID.RA-08) and software maintenance (PR.PS-02).", True, ("NIST.ID.RA.01", "NIST.ID.RA.02", "NIST.ID.RA.08", "NIST.PR.PS.02")),
     EvidenceRequest("access_control_policy", "Access control policy and recent user access review records", "Evidence for identity, authentication and access management (PR.AA-01 to PR.AA-05).", True, ("NIST.PR.AA.01", "NIST.PR.AA.02", "NIST.PR.AA.03", "NIST.PR.AA.04", "NIST.PR.AA.05")),
     EvidenceRequest("physical_security", "Physical access and environmental protection procedures", "Evidence for physical access management (PR.AA-06), physical environment monitoring (DE.CM-02) and asset protection (PR.IR-02).", False, ("NIST.PR.AA.06", "NIST.DE.CM.02", "NIST.PR.IR.02")),
     EvidenceRequest("training_records", "Security awareness training programme and completion records", "Evidence for awareness and specialised-role training (PR.AT-01, PR.AT-02).", True, ("NIST.PR.AT.01", "NIST.PR.AT.02")),
     EvidenceRequest("cryptography_policy", "Data protection and encryption standard (at rest, in transit, in use)", "Evidence for data security (PR.DS-01, PR.DS-02, PR.DS-10).", False, ("NIST.PR.DS.01", "NIST.PR.DS.02", "NIST.PR.DS.10")),
     EvidenceRequest("backup", "Backup policy and restore test records", "Evidence for backups (PR.DS-11) and recovery integrity checks (RC.RP-03).", False, ("NIST.PR.DS.11", "NIST.RC.RP.03")),
-    EvidenceRequest("configuration_baselines", "Secure configuration / hardening baselines and software execution controls", "Evidence for configuration management, hardware maintenance and execution prevention (PR.PS-01, PR.PS-03, PR.PS-05).", False, ("NIST.PR.PS.01", "NIST.PR.PS.03", "NIST.PR.PS.05")),
+    EvidenceRequest("configuration_baselines", "Secure configuration / hardening baselines, software execution controls and integrity checks for acquired hardware and software", "Evidence for configuration management, hardware maintenance and execution prevention (PR.PS-01, PR.PS-03, PR.PS-05) and authenticity and integrity checks before hardware and software are used (ID.RA-09).", False, ("NIST.PR.PS.01", "NIST.PR.PS.03", "NIST.PR.PS.05", "NIST.ID.RA.09")),
+    EvidenceRequest("change_management", "Change management procedure, sample change records and the exception (risk acceptance) register", "Evidence for change and exception management (ID.RA-07).", False, ("NIST.ID.RA.07",)),
     EvidenceRequest("sdlc_policy", "Secure software development practices", "Evidence for secure software development (PR.PS-06).", False, ("NIST.PR.PS.06",)),
-    EvidenceRequest("logging_monitoring", "Logging and monitoring standard, with evidence of alert review or SIEM use", "Evidence for log generation (PR.PS-04), continuous monitoring (DE.CM-01, DE.CM-03, DE.CM-09) and adverse event analysis (DE.AE-02, DE.AE-03, DE.AE-08).", True, ("NIST.PR.PS.04", "NIST.DE.CM.01", "NIST.DE.CM.03", "NIST.DE.CM.09", "NIST.DE.AE.02", "NIST.DE.AE.03", "NIST.DE.AE.08")),
+    EvidenceRequest("logging_monitoring", "Logging and monitoring standard, with evidence of alert review or SIEM use", "Evidence for log generation (PR.PS-04), continuous monitoring (DE.CM-01, DE.CM-03, DE.CM-09) and adverse event analysis, correlation, distribution and threat context (DE.AE-02, DE.AE-03, DE.AE-06, DE.AE-07).", True, ("NIST.PR.PS.04", "NIST.DE.CM.01", "NIST.DE.CM.03", "NIST.DE.CM.09", "NIST.DE.AE.02", "NIST.DE.AE.03", "NIST.DE.AE.06", "NIST.DE.AE.07")),
     EvidenceRequest("network_security", "Network architecture / data flow diagram and network protection standard", "Evidence for network communication mapping (ID.AM-03) and network protection (PR.IR-01).", False, ("NIST.ID.AM.03", "NIST.PR.IR.01")),
-    EvidenceRequest("breach_procedure", "Incident response plan and escalation procedures", "Evidence for incident management, containment, eradication and internal communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident declaration (DE.AE-04, DE.AE-06).", True, ("NIST.RS.MA.01", "NIST.RS.MA.02", "NIST.RS.MA.03", "NIST.RS.MA.04", "NIST.RS.MA.05", "NIST.RS.MI.01", "NIST.RS.MI.02", "NIST.RS.CO.02", "NIST.RS.CO.03", "NIST.DE.AE.04", "NIST.DE.AE.06")),
+    EvidenceRequest("breach_procedure", "Incident response plan and escalation procedures", "Evidence for the incident response plan (ID.IM-04), incident management, containment, eradication and stakeholder communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident impact and declaration (DE.AE-04, DE.AE-08).", True, ("NIST.ID.IM.04", "NIST.RS.MA.01", "NIST.RS.MA.02", "NIST.RS.MA.03", "NIST.RS.MA.04", "NIST.RS.MA.05", "NIST.RS.MI.01", "NIST.RS.MI.02", "NIST.RS.CO.02", "NIST.RS.CO.03", "NIST.DE.AE.04", "NIST.DE.AE.08")),
     EvidenceRequest("incident_log", "Incident register and post-incident reports for the last 12 months", "Evidence for incident analysis (RS.AN-03, RS.AN-06 to RS.AN-08) and improvement from execution (ID.IM-03).", False, ("NIST.RS.AN.03", "NIST.RS.AN.06", "NIST.RS.AN.07", "NIST.RS.AN.08", "NIST.ID.IM.03")),
-    EvidenceRequest("business_continuity", "Recovery and business continuity plans, with latest test results", "Evidence for recovery plan execution and communication (RC.RP-01, RC.RP-02, RC.RP-04 to RC.RP-06, RC.CO-03, RC.CO-04) and resilience mechanisms (PR.IR-03).", True, ("NIST.RC.RP.01", "NIST.RC.RP.02", "NIST.RC.RP.04", "NIST.RC.RP.05", "NIST.RC.RP.06", "NIST.RC.CO.03", "NIST.RC.CO.04", "NIST.PR.IR.03")),
+    EvidenceRequest("business_continuity", "Recovery and business continuity plans, with latest test results", "Evidence for recovery plan execution and communication (RC.RP-01, RC.RP-02, RC.RP-04 to RC.RP-06, RC.CO-03, RC.CO-04) and resilience mechanisms and capacity (PR.IR-03, PR.IR-04).", True, ("NIST.RC.RP.01", "NIST.RC.RP.02", "NIST.RC.RP.04", "NIST.RC.RP.05", "NIST.RC.RP.06", "NIST.RC.CO.03", "NIST.RC.CO.04", "NIST.PR.IR.03", "NIST.PR.IR.04")),
     EvidenceRequest("exercise_records", "Incident response and recovery exercise / tabletop reports, with resulting improvement actions", "Evidence for improvement from evaluations and tests (ID.IM-01, ID.IM-02).", False, ("NIST.ID.IM.01", "NIST.ID.IM.02")),
 ]
 

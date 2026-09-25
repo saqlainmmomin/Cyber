@@ -73,7 +73,7 @@ NIST_DOCUMENT_TYPES = [
     "hr_security", "leadership_oversight", "legal_register", "supplier_security",
     "asset_inventory", "risk_assessment", "vulnerability_management", "access_control_policy",
     "physical_security", "training_records", "cryptography_policy", "backup",
-    "configuration_baselines", "sdlc_policy", "logging_monitoring", "network_security",
+    "configuration_baselines", "change_management", "sdlc_policy", "logging_monitoring", "network_security",
     "breach_procedure", "incident_log", "business_continuity", "exercise_records",
 ]
 
@@ -230,7 +230,7 @@ def test_content_pins_and_iso_additions_do_not_reproduce_control_descriptions():
     assert [request.document_type for request in ISO27001_DEFINITION.evidence_requests] == ISO_DOCUMENT_TYPES
     assert [request.document_type for request in NIST_CSF_DEFINITION.evidence_requests] == NIST_DOCUMENT_TYPES
     assert len(ISO27001_DEFINITION.evidence_requests) == 30
-    assert len(NIST_CSF_DEFINITION.evidence_requests) == 24
+    assert len(NIST_CSF_DEFINITION.evidence_requests) == 25
     assert {request.document_type: request for request in ISO27001_DEFINITION.evidence_requests}["sdlc_policy"] == EvidenceRequest(
         "sdlc_policy",
         "Secure development lifecycle policy, secure coding standard and environment separation",
@@ -248,9 +248,9 @@ def test_content_pins_and_iso_additions_do_not_reproduce_control_descriptions():
     assert {request.document_type: request for request in NIST_CSF_DEFINITION.evidence_requests}["breach_procedure"] == EvidenceRequest(
         "breach_procedure",
         "Incident response plan and escalation procedures",
-        "Evidence for incident management, containment, eradication and internal communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident declaration (DE.AE-04, DE.AE-06).",
+        "Evidence for the incident response plan (ID.IM-04), incident management, containment, eradication and stakeholder communication (RS.MA-01 to RS.MA-05, RS.MI-01, RS.MI-02, RS.CO-02, RS.CO-03) and incident impact and declaration (DE.AE-04, DE.AE-08).",
         True,
-        ("NIST.RS.MA.01", "NIST.RS.MA.02", "NIST.RS.MA.03", "NIST.RS.MA.04", "NIST.RS.MA.05", "NIST.RS.MI.01", "NIST.RS.MI.02", "NIST.RS.CO.02", "NIST.RS.CO.03", "NIST.DE.AE.04", "NIST.DE.AE.06"),
+        ("NIST.ID.IM.04", "NIST.RS.MA.01", "NIST.RS.MA.02", "NIST.RS.MA.03", "NIST.RS.MA.04", "NIST.RS.MA.05", "NIST.RS.MI.01", "NIST.RS.MI.02", "NIST.RS.CO.02", "NIST.RS.CO.03", "NIST.DE.AE.04", "NIST.DE.AE.08"),
     )
 
     additions = [
