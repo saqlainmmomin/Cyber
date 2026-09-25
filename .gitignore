@@ -22,3 +22,5 @@ app/static/css/tailwind.css
 
 validation/runs/
 validation/companies/*/rendered/
+# match the directory and a symlink to it (worktrees symlink .venv)
+.venv
