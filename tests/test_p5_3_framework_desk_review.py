@@ -34,8 +34,8 @@ from app.models.questionnaire import QuestionnaireResponse
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REVISION = "8b2d5f7e1c34"
 PREVIOUS_REVISION = "4e8c1a9d2b57"
-SYSTEM_SHA256 = "29d363ca1044ed2064058511b5c7a596042ceca472bf97349cb5c2b7af62f35a"
-REQUEST_KEY = "cb7d282439ac193bf68e4c9e367c8de75cd9a97b87b30d1a95ecd54b39ec72f0"
+SYSTEM_SHA256 = "21b365d6eac8d3ad2171ac86773567dcee0306b3968a6da993ee67a8bd4e1d93"
+REQUEST_KEY = "3e7f8d2a1c9ce76110f25d26e4c7ae86e52b633b441746d5d4d16b82438f1c86"
 DOCS = [
     {
         "id": "d1",

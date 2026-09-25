@@ -11,7 +11,7 @@ from app.dpdpa.framework import (
     ROOT_CAUSE_CLUSTERS,
 )
 from app.dpdpa.questionnaire import _GUIDANCE_TEXT, _QUESTION_TEXT
-from app.dpdpa.scope_questions import SCOPE_QUESTIONS
+from app.dpdpa.scope_questions import APPLICABILITY_PROPOSALS, SCOPE_QUESTIONS
 from app.frameworks.schema import (
     Control,
     Domain,
@@ -172,6 +172,7 @@ def _build_dpdpa_definition() -> FrameworkDefinition:
         scope_questions=scope_qs,
         questions=questions,
         red_flag_patterns=_RED_FLAG_PATTERNS,
+        applicability_proposals=APPLICABILITY_PROPOSALS,
     )
 
 

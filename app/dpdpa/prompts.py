@@ -296,7 +296,7 @@ Flag every instance of the following. Do not give benefit of the doubt:
 - No "without delay" intimation of a breach to the Board and to affected Data Principals (Section 8(6); DPDP Rules 2025 r.7(1)-(2)(a))
 - No 72-hour detailed follow-up report to the Board (DPDP Rules 2025 r.7(2)(b))
 - No reasonable timeframe for data principal rights responses
-- Vague language like "as soon as possible" or "without undue delay" without specific timeframes
+- Vague language like "as soon as possible" without specific timeframes (do not flag "without delay": DPDP Rules 2025 r.7 itself sets that standard for the initial intimation)
 
 **Scope gaps** (flag_type: "scope_gap"):
 - Policy covers some data types but ignores others the organization likely processes given their industry

@@ -7,7 +7,7 @@ Given scope answers from the Assessment, produces:
   - evidence_checklist: list of document types the client should provide, with justification
 
 Supports multi-framework assessments via compute_scope_multi().
-DPDPA has full scope profiling (SCP.1–SCP.5 → conditional requirement exclusion).
+DPDPA has full scope profiling (SCP.1–SCP.5 → conditional requirement exclusion; SCP.6 → applicability proposals only).
 Other frameworks keep all controls applicable; their scope answers produce applicability proposals for consultant confirmation (never exclusions), and their evidence requests come from `FrameworkDefinition.evidence_requests`, merged across frameworks by `document_type`.
 """
 
@@ -300,6 +300,12 @@ def compute_scope_multi(
             all_flags.update(result["flags"])
             total_count += len(get_all_requirements())
             dpdpa = FrameworkRegistry.get_or_none("dpdpa")
+            if dpdpa:
+                excluded_ids = {e["id"] for e in result["excluded_requirements"]}
+                all_proposals.extend(
+                    p for p in propose_not_applicable(dpdpa, scope_answers)
+                    if p["control_id"] not in excluded_ids
+                )
             contributions.append((dpdpa.name if dpdpa else "DPDPA", result["evidence_checklist"]))
         else:
             fw = FrameworkRegistry.get_or_none(fw_id)

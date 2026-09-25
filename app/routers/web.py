@@ -1858,6 +1858,9 @@ def analysis_status(
 # Schedule items: 1 s.8(5) safeguards 250; 2 s.8(6) breach intimation 200;
 # 3 s.9 children 200; 4 s.10 SDF 150; 7 any other provision 50.
 _PENALTY_MAP = [
+    # Processor contracts are read strictly under s.8(2): residual item 7. Must
+    # precede the CH2.SECURITY prefix, because the lookup takes the first match.
+    ("CH2.SECURITY.3", 50),
     ("CH2.SECURITY", 250),
     ("BN.NOTIFY",    200),
     ("CH2.CONSENT.5", 200),  # s.9(1) verifiable parental consent
