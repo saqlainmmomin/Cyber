@@ -104,15 +104,15 @@ Add these to `app/config.py`, and document them commented-out in `.env.example` 
 
 | Setting | Type | Default | Meaning |
 |---|---|---|---|
-| `llm_batch_threshold_controls` | int | `50` | A framework with **more** controls than this is batched in desk review and judge. At or under it, one call, exactly as today |
+| `llm_batch_threshold_controls` | int | `90` | A framework with **more** controls than this is batched in desk review and judge. At or under it, one call, exactly as today |
 | `llm_batch_max_controls` | int | `25` | Upper bound on controls per batch (D-P6-1b-B) |
 
-**Why 50.**
-- Observed cost is about 170 output tokens per control, for both the judge (16,384 truncated at 93 controls) and desk review (15,901 at 93).
-  - 50 controls ≈ 8.5k tokens, about half the 16,384 ceiling. That leaves roughly 2× headroom for a more verbose run or model.
-  - DPDPA at 41 ≈ 7k stays a single call, so its behaviour and every recording are untouched.
-  - ISO (93) and NIST (94) are well over the threshold.
-- Anything between 42 and about 60 would give the same result today. 50 is a round number in that band.
+**Amended 2026-09-25: 90, so GDPR/HIPAA/PCI stay on the single-call path.**
+
+**Why 90.**
+- ISO (93) and NIST CSF (94) are the only current frameworks above the threshold and remain batched.
+  GDPR (54), HIPAA (54), and PCI-DSS (64) stay on the single-call path alongside DPDPA (41).
+- The threshold is still below the two frameworks whose single responses were truncated in live evidence, while avoiding batching the smaller registry frameworks.
 
 **Why 25.** 25 × 170 ≈ 4.3k output tokens per batch, about 26% of the ceiling. It is small enough that a truncated batch would be surprising. It is large enough that each batch covers one whole Annex A theme or NIST function in most cases, which keeps related controls in the same prompt.
 
@@ -435,7 +435,102 @@ Patch the seams (`claude_analyzer._call_llm`, `desk_review._call_llm`) with fake
 
 ## Results
 
-_To be filled in by the implementer: Step 0 baseline and prompt fingerprints, files changed, test counts, D-P6-1b-L pins, live smoke table (or an explicit "not run" and why), any deviation stopped on, PR link._
+### Step 0 record
+
+- Supplied baseline: `main` @ `836499a`; 699 passed, 10 skipped, 2 failed (`test_scenario_13_structural_guards`, `test_scenario_10_engagement_rollup_and_tracker_page`), and 1 error (intermittent `test_workpaper::test_smoke_full_assessment_traceability`). Step 0.1 was skipped per the orchestrator note.
+- Prompt fingerprints on the unmodified baseline, reproduced unchanged:
+
+  ```text
+  dpdpa system 3fc4f1c3ff6b62124716f6ca5ef29e1dd39461817d168fa4b047c2bef92e4ea6
+  dpdpa user de658c512943c954425ea004165af0dd1cd88ade82f7376ac98d08aa957b3751
+  iso27001 system 3c3bad7bd8818c1d5b28730e4462bbf91f2208b1eae32b89459e8e2d698116b3
+  iso27001 user 6fe08745ef96857b893c623d0f468d2abca2aa6c3395affc64145807acedfd61
+  iso27001 desk 9d2e926bae35b23030085da6e528b03df63c9352006cb0bb8948800a251222b2
+  nist_csf system c8ddf65a8220b571733a65298503f3aff65be22ca6c21413216282f982ddf121
+  nist_csf user 9fa1ded32cda08bb882873f83bb2d13e1b20a9a1b0fa84c45690569e02bb283f
+  nist_csf desk 14705771d2e67febe08ab3a58e022039aea1a4360aef37a0ae0595fa25d414ec
+  ```
+- The expected P6-1c drift was present: unbatched registry calls and evidence extraction use `settings.llm_max_output_tokens_framework` (default 65536). Applied choice for every new judge/desk-review batch and judge retry: `min(settings.llm_max_output_tokens_framework, 16384)`. Curated DPDPA, unbatched registry calls, evidence extraction, and synthesis remain unchanged.
+
+### Implementation
+
+Changed files:
+
+- `.env.example`, `app/config.py`
+- `app/frameworks/batching.py` (new), `app/frameworks/prompts.py`
+- `app/schemas/llm_output.py`
+- `app/services/claude_analyzer.py`, `app/services/desk_review.py`, `app/services/llm_client.py`
+- `tests/test_p6_1b_framework_batching.py` (new)
+- Authorized D-P6-1b-L pins in `tests/test_p6_1_llm_plumbing.py`, `tests/test_p6_1c_output_limits.py`, `tests/test_p5_3_framework_desk_review.py`, and `tests/test_p5_4_adaptive_ucc_questionnaire.py`
+- `tasks/todo.md`
+
+The deterministic batch table matches the handoff exactly for ISO 27001 and NIST CSF. DPDPA prompt fingerprints and the unbatched DPDPA request shape remain byte-identical.
+
+### Verification
+
+- `tests/test_p6_1b_framework_batching.py`: **13 passed**.
+- Required focused command (`test_p6_1b_framework_batching.py`, `test_p6_1_llm_plumbing.py`, `test_p5_3_framework_desk_review.py`, `test_golden_dpdpa.py`, `test_incomplete_assessment_e2e.py`): **47 passed**, 6 warnings.
+- `tests/test_answer_key_isolation.py`: **2 passed**.
+- Final full uncommitted-tree `.venv/bin/pytest -q`: **710 passed, 10 skipped, 3 failed**. The failures are documented: the pre-existing stale two-dot structural guard, the known hardcoded-date engagement rollup test, and `test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, which necessarily sees the authorized test pins before the orchestrator's commit. The intermittent longitudinal ordering failure and baseline workpaper error did not reproduce in this final run.
+- D-P6-1b-L pins:
+  - `tests/test_p6_1_llm_plumbing.py::test_multi_framework_analysis_is_ordered_equivalent_and_concurrent`
+  - `tests/test_p6_1_llm_plumbing.py::test_three_framework_desk_review_is_concurrent_and_order_equivalent`
+  - `tests/test_p6_1_llm_plumbing.py::test_analysis_route_persists_own_and_shared_call_records`
+  - `tests/test_p6_1c_output_limits.py::test_multi_framework_judge_and_extraction_use_setting`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_4_calls_each_framework_in_order_and_normalizes`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_6_framework_failures_are_isolated`
+  - `tests/test_p5_3_framework_desk_review.py::test_scenario_8_multi_framework_evidence_extraction_is_per_framework`
+  - `tests/test_p5_4_adaptive_ucc_questionnaire.py::test_scenario_8_cluster_prefill_persistence`
+
+### Live smoke and handoff
+
+Not run by implementer. Orchestrator-run results below (ISO path; the round-1 threshold change does not affect ISO).
+
+**Live smoke (orchestrator, 2026-09-25, commit af462a0, `c0-example`, ISO only, `deepseek/deepseek-v4-flash`)**
+
+**Result: PASS.** Desk review `completed` (0 failed frameworks, 166 findings). ISO `AnalysisRun` `completed`, no `FrameworkAnalysisError`. All 12 recorded calls finished `stop`, and no missing-ID retry was needed.
+
+| Stage | Batch | Input | Output | Latency (s) | Finish |
+|---|---|---|---|---|---|
+| desk_review | 1/6 | 2,302 | 6,451 | 109.3 | stop |
+| desk_review | 2/6 | 1,906 | 1,819 | 28.1 | stop |
+| desk_review | 3/6 | 1,642 | 2,437 | 17.5 | stop |
+| desk_review | 4/6 | 1,847 | 2,344 | 41.9 | stop |
+| desk_review | 5/6 | 2,345 | 5,540 | 98.1 | stop |
+| desk_review | 6/6 | 1,660 | 2,065 | 43.9 | stop |
+| judge | 1/6 | 2,823 | 8,009 | 89.3 | stop |
+| judge | 2/6 | 2,120 | 3,456 | 108.9 | stop |
+| judge | 3/6 | 1,624 | 2,546 | 58.7 | stop |
+| judge | 4/6 | 2,101 | 6,887 | 327.4 | stop |
+| judge | 5/6 | 2,837 | 4,593 | 98.7 | stop |
+| judge | 6/6 | 2,024 | 8,665 | 395.9 | stop |
+
+**Totals, against the single-call runs recorded in "Why" and the P6-1c update:**
+
+| | Calls | Input | Output | Wall-clock |
+|---|---|---|---|---|
+| Desk review | 6 | 11,702 | 20,656 | 116 s stage. Was 1 call: 24,591 output, 1,032 s |
+| Judge | 6 | 13,529 | 34,156 | 485 s analysis stage. Was 1 call: dropped (`APIConnectionError`) at 354 s, or truncated at 16,384 |
+
+- **Why the judge takes 485 s:** batches run 4 at a time, and the slowest batch (6/6, 396 s) sets the time.
+- **Judge output per control:** about 367 tokens (34,156 / 93). That is higher than the ~170 per control seen on the truncated single call, which was being cut short.
+
+**Evidence extraction (D-P6-1b-I):** no framework evidence-extraction call appears in the analysis records or in `llm_usage.jsonl`, so the judge ran on its document fallback.
+
+**Unrelated failure, still to investigate:** an `extract`-tier call failed after 45 s during the context stage (ok=false, 0 tokens). The stage still completed with 11 answers.
+
+**Also noted:** `validate_and_filter` logged "Unexpected compliance_status None for ISO.A8.3", which was treated as `not_assessed`.
+
+
+No deviation from the numbered design decisions was stopped on. No commit or PR was created, per orchestrator instruction; the PR link will be added by the orchestrator.
+
+### Review fixes (round 1)
+
+- Raised the default batch threshold from 50 to 90 in `app/config.py` and `.env.example`; default batch coverage is now ISO 27001 and NIST CSF only. The handoff records the amendment in D-P6-1b-A.
+- Applied framework-wide singleton repair after domain packing, including cross-domain preceding merges and first-batch merges into the following batch; documented and covered `[4], [1]`, `[1], [4]`, and an in-domain `[25], [1]` split.
+- Batched judge responses whose top level is not an object or whose `assessments` is not a list now count as full-batch missing coverage and receive the existing single retry; unbatched paths remain unchanged.
+- Closed the requested Scenario 1/5/6/8/10 gaps, including curated DPDPA call counts, no retry after a raised batch, retry prompt totals, duplicate signal collapse, exact persisted finding counts (19 ISO and 2 DPDPA in the merge case), exact partial-failure text, and the ISO route envelope's 6 batch records plus 1 retry record.
+- Verification: `tests/test_p6_1b_framework_batching.py` **16 passed**; Verification step 2 focused command **51 passed, 6 warnings**; answer-key isolation **2 passed**; full `.venv/bin/pytest -q` **713 passed, 10 skipped, 4 failed**. The failures were the known stale/dirty-tree guards (`test_scenario_13_structural_guards`, `test_scenario_10_engagement_rollup_and_tracker_page`, `test_scenario_13_only_new_retention_test_file_changes`) plus the known intermittent longitudinal ordering test; that test passed on an isolated rerun.
 
 ## Done criteria
 

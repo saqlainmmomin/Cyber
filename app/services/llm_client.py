@@ -22,6 +22,9 @@ whatever the underlying vision model actually needs.
 Callers describe structured output with a JSON schema only. This module maps
 that provider-agnostic request to OpenRouter's response_format today; the
 future Bedrock migration maps the same schema to Converse tool use.
+
+Calls may also carry an optional batch tag in their records when a large
+framework is split into deterministic analysis units.
 """
 
 import threading
@@ -82,13 +85,20 @@ def collect_calls():
 
 
 @contextmanager
-def call_tag(*, stage: str | None = None, framework_id: str | None = None):
+def call_tag(
+    *,
+    stage: str | None = None,
+    framework_id: str | None = None,
+    batch: str | None = None,
+):
     """Tag calls in this context; nested tags override only supplied values."""
     tags = dict(_tags.get())
     if stage is not None:
         tags["stage"] = stage
     if framework_id is not None:
         tags["framework_id"] = framework_id
+    if batch is not None:
+        tags["batch"] = batch
     token = _tags.set(tags)
     try:
         yield
@@ -106,6 +116,7 @@ def _record_call(
     status: str,
     error_type: str | None,
 ) -> None:
+    """Record one call, adding the optional batch key only for batched work."""
     collector = _collector.get()
     if collector is None:
         return
@@ -123,6 +134,8 @@ def _record_call(
         "status": status,
         "error_type": error_type,
     }
+    if tags.get("batch") is not None:
+        record["batch"] = tags["batch"]
     with _collector_lock:
         collector.append(record)
 

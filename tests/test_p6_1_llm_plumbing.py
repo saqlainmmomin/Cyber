@@ -324,6 +324,7 @@ def _run_multi(monkeypatch, concurrency: int, *, fail_iso: bool = False):
 
 
 def test_multi_framework_analysis_is_ordered_equivalent_and_concurrent(monkeypatch):
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     sequential, sequential_max = _run_multi(monkeypatch, 1)
     concurrent, concurrent_max = _run_multi(monkeypatch, 4)
     assert sequential == concurrent
@@ -407,6 +408,7 @@ def test_desk_review_preserves_partial_failure_and_records_calls(monkeypatch, tm
 
 
 def test_three_framework_desk_review_is_concurrent_and_order_equivalent(monkeypatch, tmp_path):
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.models.assessment import Assessment, AssessmentDocument
     from app.services import desk_review
 
@@ -576,6 +578,7 @@ def test_analysis_pipeline_explicitly_splits_framework_and_shared_call_records(m
 
 
 def test_analysis_route_persists_own_and_shared_call_records(monkeypatch, tmp_path):
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.models.assessment import Assessment
     from app.models.analysis_run import AnalysisRun
     from app.routers import analysis as analysis_router

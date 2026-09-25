@@ -569,6 +569,7 @@ def test_scenario_7_tiering_reuses_unchanged_engine(db):
 
 def test_scenario_8_cluster_prefill_persistence(db, engine, texts, monkeypatch):
     """Scenario 8: desk review writes and refreshes cluster-keyed document pre-fills."""
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)  # P6-1b: pins the unbatched call shape this test characterises (D-P6-1b-L)
     from app.services import desk_review
     from app.services.auto_answer import persist_document_answers
     from app.services import question_engine
