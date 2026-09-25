@@ -164,3 +164,20 @@ def test_11_security_3_penalty_is_residual_50():
     assert impact("CH2.SECURITY.3") == 50
     assert impact("CH2.SECURITY.1") == 250
     assert impact("CH2.SECURITY.2") == 250
+
+
+def test_soa_copy_only_when_iso_proposals_present():
+    """Framework-specific copy is conditional: the SoA clause needs an ISO proposal."""
+    from app.routers.web import templates
+
+    template = templates.env.get_template("partials/scope_complete.html")
+    source = template.environment.loader.get_source(template.environment, "partials/scope_complete.html")[0]
+    assert '{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %}' in source
+
+    dpdpa_only = [{"framework_id": "dpdpa", "control_id": "CH2.NOTICE.1"}]
+    iso = [{"framework_id": "iso27001", "control_id": "ISO.A5.1"}]
+    snippet = templates.env.from_string(
+        '{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %}SOA{% endif %}'
+    )
+    assert snippet.render(proposed_not_applicable=dpdpa_only) == ""
+    assert snippet.render(proposed_not_applicable=iso) == "SOA"
