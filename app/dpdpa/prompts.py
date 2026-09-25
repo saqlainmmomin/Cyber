@@ -255,8 +255,8 @@ For each DPDPA requirement ({req_count} total), extract EXACT quotes from the do
 
 ### Level 3 — Absence Detection
 For each DPDPA requirement, identify what is MISSING from the documents. Be specific:
-- NOT "lacks consent mechanism" but "no mention of consent withdrawal process per Section 6(6)"
-- NOT "missing breach notification" but "no 72-hour notification timeline specified per Section 8(6)"
+- NOT "lacks consent mechanism" but "no mention of consent withdrawal process per Section 6(4)"
+- NOT "missing breach notification" but "no 'without delay' intimation to the Board and affected Data Principals, or no 72-hour detailed report to the Board per DPDP Rules 2025 r.7(2)(b)"
 
 ### Level 4 — Signal Detection (CRITICAL — be aggressive, flag EVERY instance)
 
@@ -293,7 +293,8 @@ Flag every instance of the following. Do not give benefit of the doubt:
 - Pre-checked consent boxes or consent-by-default patterns
 
 **Missing DPDPA-specific timelines** (flag_type: "missing_timeline"):
-- No 72-hour breach notification timeline per Section 8(6)
+- No "without delay" intimation of a breach to the Board and to affected Data Principals (Section 8(6); DPDP Rules 2025 r.7(1)-(2)(a))
+- No 72-hour detailed follow-up report to the Board (DPDP Rules 2025 r.7(2)(b))
 - No reasonable timeframe for data principal rights responses
 - Vague language like "as soon as possible" or "without undue delay" without specific timeframes
 
@@ -351,7 +352,7 @@ Respond ONLY with valid JSON. No markdown fences, no commentary.
   "absence_findings": [
     {{{{
       "requirement_id": "CH2.CONSENT.3",
-      "description": "No consent withdrawal mechanism described. Section 6(6) requires...",
+      "description": "No consent withdrawal mechanism described. Section 6(4) requires...",
       "severity": "high",
       "affected_documents": ["privacy_policy.pdf"]
     }}}}

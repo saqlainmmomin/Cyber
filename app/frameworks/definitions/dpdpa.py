@@ -94,7 +94,7 @@ _RED_FLAG_PATTERNS = [
     ),
     RedFlagPattern(
         pattern="Missing DPDPA timelines",
-        description="No mention of 72-hour breach notification, no specific Indian regulatory references.",
+        description="No 'without delay' breach intimation to the Board and affected Data Principals, no 72-hour detailed report to the Board (DPDP Rules 2025 r.7), or no specific Indian regulatory references.",
         severity="medium",
     ),
     RedFlagPattern(

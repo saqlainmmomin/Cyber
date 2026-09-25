@@ -14,6 +14,7 @@ from types import SimpleNamespace
 from fpdf import FPDF
 
 from app.config import settings
+from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.frameworks.registry import FrameworkRegistry
 from app.services.scoring import is_failed_framework_score, report_framework_scores
 
@@ -1260,7 +1261,8 @@ def generate_pdf(
     _page_header(pdf, "Scope & Limitations")
     _section_title(pdf, "Scope & Limitations")
 
-    assessment_date = datetime.now(timezone.utc).strftime("%B %d, %Y")
+    scope_as_of = datetime.now(timezone.utc)
+    assessment_date = scope_as_of.strftime("%B %d, %Y")
 
     if dpdpa_only:
         scope_of_coverage = (
@@ -1338,6 +1340,9 @@ Recommended Follow-On Actions:
 
 Confidentiality:
 This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. {settings.firm_name} and the named organization are the intended recipients of this report."""
+
+    if dpdpa_readiness_note_applies(selected_frameworks, scope_as_of.date()):
+        scope_text += f"\n\nRegulatory Commencement:\n{DPDPA_READINESS_NOTE}"
 
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*DARK_TEXT)
@@ -1474,7 +1479,10 @@ def generate_integrated_pdf(report_data) -> bytes:
     pdf.text(PM, 29, "Integrated Engagement Report")
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(180, 180, 210)
-    pdf.text(PM, 42, datetime.now(timezone.utc).strftime("%B %d, %Y"))
+    report_as_of = datetime.now(timezone.utc)
+    pdf.text(PM, 42, report_as_of.strftime("%B %d, %Y"))
+    dpdpa_framework = FrameworkRegistry.get_or_none("dpdpa")
+    dpdpa_name = dpdpa_framework.name if dpdpa_framework else "DPDPA"
 
     pdf.set_font("Helvetica", "B", 18)
     pdf.set_text_color(*DARK_TEXT)
@@ -1530,6 +1538,12 @@ def generate_integrated_pdf(report_data) -> bytes:
         for line in scope_lines:
             pdf.set_x(PM)
             pdf.multi_cell(CW, 4, text=S(line), new_x="LMARGIN")
+        if dpdpa_name in {name for name, _version in section.frameworks} and (
+            dpdpa_readiness_note_applies(["dpdpa"], report_as_of.date())
+        ):
+            pdf.ln(1)
+            pdf.set_x(PM)
+            pdf.multi_cell(CW, 4, text=S(DPDPA_READINESS_NOTE), new_x="LMARGIN")
         pdf.ln(3)
         _section_title(pdf, "Framework Scores (this assessment only)")
         if section.scores:

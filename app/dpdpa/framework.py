@@ -6,6 +6,23 @@ Each requirement has an ID, title, description, DPDPA section reference, and cri
 Weights determine scoring contribution.
 """
 
+from datetime import date
+
+# G.S.R. 843(E) cl.(c) and DPDP Rules 2025 r.1(4): 18 months after Gazette publication dated 13 Nov 2025.
+DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE = date(2027, 5, 13)
+
+DPDPA_READINESS_NOTE = (
+    "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in "
+    "mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a "
+    "readiness assessment, not a determination of current non-compliance."
+)
+
+
+def dpdpa_readiness_note_applies(frameworks, as_of: date) -> bool:
+    """True when DPDPA is in scope and the report's as-of date precedes commencement."""
+    return "dpdpa" in (frameworks or ()) and as_of < DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE
+
+
 DPDPA_FRAMEWORK = {
     "chapter_2": {
         "title": "Obligations of Data Fiduciary",
@@ -19,21 +36,21 @@ DPDPA_FRAMEWORK = {
                         "id": "CH2.CONSENT.1",
                         "title": "Lawful basis for processing with free, specific, informed consent",
                         "description": "Organization obtains consent that is free, specific, informed, unconditional, and unambiguous with a clear affirmative action. Consent request is presented in clear, plain language with specified purpose.",
-                        "section_ref": "Section 6(1)-(2)",
+                        "section_ref": "Section 6(1), 6(3)",
                         "criticality": "critical",
                     },
                     {
                         "id": "CH2.CONSENT.2",
                         "title": "Itemised consent for multiple purposes",
                         "description": "When personal data is processed for multiple purposes, consent is obtained separately for each purpose, allowing the Data Principal to give or withhold consent for each.",
-                        "section_ref": "Section 6(3)",
+                        "section_ref": "Section 6(1)",
                         "criticality": "high",
                     },
                     {
                         "id": "CH2.CONSENT.3",
                         "title": "Consent withdrawal mechanism",
                         "description": "Data Principals can withdraw consent with the same ease as giving it. Organization ceases processing upon withdrawal unless retention is required by law.",
-                        "section_ref": "Section 6(6)-(7)",
+                        "section_ref": "Section 6(4), 6(6)",
                         "criticality": "critical",
                     },
                     {
@@ -58,8 +75,8 @@ DPDPA_FRAMEWORK = {
                 "requirements": [
                     {
                         "id": "CH2.NOTICE.1",
-                        "title": "Notice at or before collection of personal data",
-                        "description": "A clear notice is given to the Data Principal at or before the time of collection, describing the personal data being collected and the purpose of processing.",
+                        "title": "Notice accompanying the consent request",
+                        "description": "Every request for consent is accompanied or preceded by a notice that states the personal data and the purpose of processing, how the Data Principal can withdraw consent and exercise her rights, and how she can complain to the Board. The DPDP Rules 2025 (r.3) set its content and form.",
                         "section_ref": "Section 5(1)",
                         "criticality": "critical",
                     },
@@ -74,7 +91,7 @@ DPDPA_FRAMEWORK = {
                         "id": "CH2.NOTICE.3",
                         "title": "Notice contains contact details of DPO or grievance officer",
                         "description": "The notice includes contact information for the Data Protection Officer or person responsible for addressing Data Principal queries.",
-                        "section_ref": "Section 5(1)",
+                        "section_ref": "Section 5(1), 8(9); DPDP Rules 2025 r.3, r.9",
                         "criticality": "medium",
                     },
                 ],
@@ -107,7 +124,7 @@ DPDPA_FRAMEWORK = {
                         "id": "CH2.MINIMIZE.1",
                         "title": "Collection limited to what is necessary",
                         "description": "Only personal data that is necessary for the specified purpose is collected. No excessive or irrelevant data is gathered.",
-                        "section_ref": "Section 4(1)",
+                        "section_ref": "Section 6(1)",
                         "criticality": "high",
                     },
                     {
@@ -132,8 +149,8 @@ DPDPA_FRAMEWORK = {
                 "requirements": [
                     {
                         "id": "CH2.ACCURACY.1",
-                        "title": "Reasonable efforts to ensure data accuracy",
-                        "description": "Organization makes reasonable efforts to ensure that personal data is complete, accurate, and not misleading, especially where data is used for decisions affecting the Data Principal or shared with other Fiduciaries.",
+                        "title": "Data accuracy ensured for decision-making and onward disclosure",
+                        "description": "Where personal data is likely to be used to make a decision that affects the Data Principal, or to be disclosed to another Data Fiduciary, the organization ensures that the data is complete, accurate and consistent.",
                         "section_ref": "Section 8(3)",
                         "criticality": "medium",
                     },
@@ -147,14 +164,14 @@ DPDPA_FRAMEWORK = {
                         "id": "CH2.SECURITY.1",
                         "title": "Reasonable security safeguards implemented",
                         "description": "Organization implements reasonable security safeguards to protect personal data, including prevention of personal data breaches. This includes technical and organizational measures.",
-                        "section_ref": "Section 8(4)",
+                        "section_ref": "Section 8(5)",
                         "criticality": "critical",
                     },
                     {
                         "id": "CH2.SECURITY.2",
                         "title": "Encryption and access controls",
                         "description": "Personal data is encrypted at rest and in transit. Access controls ensure only authorized personnel can access personal data based on the principle of least privilege.",
-                        "section_ref": "Section 8(4)",
+                        "section_ref": "Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b)",
                         "criticality": "critical",
                     },
                     {
@@ -199,8 +216,8 @@ DPDPA_FRAMEWORK = {
                     {
                         "id": "CH3.CORRECT.2",
                         "title": "Mechanism for erasure of personal data",
-                        "description": "Data Principals can request erasure of personal data that is no longer necessary for the purpose for which it was collected.",
-                        "section_ref": "Section 12(2)",
+                        "description": "Data Principals can request erasure of personal data they consented to, and the organization erases it on request unless retention is necessary for the specified purpose or for compliance with law.",
+                        "section_ref": "Section 12(3)",
                         "criticality": "high",
                     },
                 ],
@@ -252,14 +269,14 @@ DPDPA_FRAMEWORK = {
                         "id": "CH4.CHILD.1",
                         "title": "No tracking or behavioural monitoring of children",
                         "description": "Organization does not undertake tracking, behavioural monitoring, or targeted advertising directed at children.",
-                        "section_ref": "Section 9(2)",
+                        "section_ref": "Section 9(3)",
                         "criticality": "critical",
                     },
                     {
                         "id": "CH4.CHILD.2",
                         "title": "No processing detrimental to child's well-being",
                         "description": "Processing of children's personal data does not have a detrimental effect on their well-being.",
-                        "section_ref": "Section 9(3)",
+                        "section_ref": "Section 9(2)",
                         "criticality": "critical",
                     },
                     {
@@ -293,14 +310,14 @@ DPDPA_FRAMEWORK = {
                         "id": "CH4.SDF.3",
                         "title": "Data Protection Impact Assessment (DPIA) conducted",
                         "description": "Periodic Data Protection Impact Assessments are conducted to evaluate processing activities and associated risks to Data Principals.",
-                        "section_ref": "Section 10(2)(c)",
+                        "section_ref": "Section 10(2)(c)(i)",
                         "criticality": "high",
                     },
                     {
                         "id": "CH4.SDF.4",
                         "title": "Periodic audit completed",
                         "description": "Periodic audits of data processing activities and compliance posture are conducted as prescribed.",
-                        "section_ref": "Section 10(2)(d)",
+                        "section_ref": "Section 10(2)(c)(ii)",
                         "criticality": "high",
                     },
                 ],
@@ -339,7 +356,7 @@ DPDPA_FRAMEWORK = {
                         "id": "CM.GRANULAR.1",
                         "title": "Granular consent options available",
                         "description": "Data Principals can provide or withhold consent at a granular level (per-purpose) rather than being forced into all-or-nothing consent.",
-                        "section_ref": "Section 6(3)",
+                        "section_ref": "Section 6(1)",
                         "criticality": "high",
                     },
                     {
@@ -398,14 +415,14 @@ DPDPA_FRAMEWORK = {
                         "id": "BN.NOTIFY.1",
                         "title": "Breach notification to Data Protection Board",
                         "description": "Organization has procedures to notify the Data Protection Board of India of any personal data breach in the prescribed form and manner.",
-                        "section_ref": "Section 8(6)",
+                        "section_ref": "Section 8(6); DPDP Rules 2025 r.7(2)",
                         "criticality": "critical",
                     },
                     {
                         "id": "BN.NOTIFY.2",
                         "title": "Breach notification to affected Data Principals",
                         "description": "Organization has procedures to notify affected Data Principals of a personal data breach in the prescribed form and manner.",
-                        "section_ref": "Section 8(6)",
+                        "section_ref": "Section 8(6); DPDP Rules 2025 r.7(1)",
                         "criticality": "critical",
                     },
                     {

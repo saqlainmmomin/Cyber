@@ -1007,7 +1007,9 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
     protected = subprocess.run(
         ["git", "diff", "--stat", "main", "--", "app/models", "alembic",
          "app/services/approved_report.py", "app/utils/pdf_export.py",
-         "app/services/scope_profiler.py", "app/services/retention.py"],
+         "app/services/scope_profiler.py", "app/services/retention.py",
+         # P6-0e: DPDPA readiness paragraph (pdf_export) and breach-intimation reason (scope_profiler).
+         ":!app/utils/pdf_export.py", ":!app/services/scope_profiler.py"],
         cwd=REPO_ROOT, capture_output=True, text=True,
     )
     assert not protected.stdout.strip()

@@ -170,7 +170,7 @@ def _build_evidence_checklist(
     _add(
         "breach_procedure",
         "Breach notification procedure / incident response plan",
-        "Assessed against breach notification obligations (Section 8(6))",
+        "Assessed against breach intimation obligations (Section 8(6); DPDP Rules 2025 r.7)",
         True,
         ["BN.NOTIFY.1", "BN.NOTIFY.2", "BN.NOTIFY.3"],
     )
