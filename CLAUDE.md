@@ -11,7 +11,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase:** Phase 1 complete (PRs #16-#23). Phase 2 (Evidence & Conclusions) complete (PRs #24-#29). Phase 3 (Reports & Remediation) complete: P3-1 through P3-4 merged (PRs #30-#33). Phase 4 (AWS & Validation) complete: P4-1 through P4-4 merged (PRs #34-#37). **Phase 5 (Cleanup & non-DPDPA parity) complete:** P5-8, P5-1, P5-5, P5-3, P5-4, P5-2, P5-6 merged (PRs #38-#41, #44, #45, #46); P5-7 deliberately unscheduled — plan: `docs/plans/2026-09-24-001-cleanup-and-non-dpdpa-parity-plan.md`; kickoff: `tasks/handoffs/2026-09-24-phase-5-kickoff.md`. P5-9 (end-to-end validation, plan `docs/plans/2026-09-24-002-p5-9-end-to-end-validation-plan.md`) is separate and not part of Phase 5's completion. See `tasks/todo.md`.
+**Current phase:** Phases 1-5 complete (PRs #16-#46). **Phase 6 (grounded analysis, multi-framework review, deliverables) started 2026-09-25** — plan `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (decisions D-P6-A..K; D8 amended). Local-only until Track 4 (auth, encryption, Bedrock `ap-south-1`). P5-9 baseline runs after P6-1 merges. See `tasks/todo.md`.
 **Pre-work sprint:** Completed (PW-1 through PW-5).
 
 ## Running
