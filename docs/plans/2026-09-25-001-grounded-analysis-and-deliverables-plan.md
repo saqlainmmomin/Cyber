@@ -390,7 +390,7 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
 
 ### Track 0: Now (no dependency on the redesign)
 
-- **P5-9 Stage C: baseline run on v1, after P6-1 and P6-1b merge.** Running it after P6-1 means the v1 baseline already has timeouts, temperature 0 and cost records, so the later v1 → v2 comparison measures only the pipeline redesign. Running it after P6-1b is also required: without batching, v1 ISO and NIST analysis truncates and fails (A1, live 2026-09-25), so the baseline would have no ISO or NIST numbers to compare against. Before that: merge the P5-9a harness (`codex/p5-9a-validation-harness`) and the packs (`codex/p5-9-stage-a-packs`) to `main`, clean up the stray `fix_*.py` scripts and `*_backup/` pack directories, and finish the pack fairness audit. **Gate for the Track 1 default flip.**
+- **P5-9 Stage C: baseline run on v1, after P6-1, P6-1b and P6-1c merge.** Running it after P6-1 means the v1 baseline already has timeouts, temperature 0 and cost records, so the later v1 → v2 comparison measures only the pipeline redesign. Running it after P6-1b is also required: without batching, v1 ISO and NIST analysis truncates and fails (A1, live 2026-09-25), so the baseline would have no ISO or NIST numbers to compare against. P6-1c raises the framework ceiling to `llm_max_output_tokens_framework` so the baseline can measure actual production bottlenecks (see P6-1c notes). Before that: merge the P5-9a harness (`codex/p5-9a-validation-harness`) and the packs (`codex/p5-9-stage-a-packs`) to `main`, clean up the stray `fix_*.py` scripts and `*_backup/` pack directories, and finish the pack fairness audit. **Gate for the Track 1 default flip.**
 - **P6-0c Dev hygiene (only the parts the pipeline work needs)**
   - GitHub Actions running pytest
   - dev requirements, `.python-version`
@@ -419,6 +419,7 @@ Owners are assigned per `tasks/agent-ownership.md` when handoffs are written. `[
   - batch-tagged call records
 
   DPDPA (41) is byte-identical. This is v1 only and is not a v2 substitute. It exists so the P5-9 baseline and P6-5 have ISO and NIST numbers.
+- **P6-1c: configurable output ceiling** (PR #56) — framework desk review, framework evidence extraction and the multi-framework judge use `llm_max_output_tokens_framework` (default 65536) instead of a hard-coded 16,384; the curated DPDPA path is unchanged. Live smoke 2026-09-25 (ISO, `c0-example`): desk review then produced 24,591 tokens in 1,032 s (`stop`) — it would have been truncated under the old cap — but the single ISO judge call dropped with `APIConnectionError` after 354 s. At ~24 tokens/s a full ISO judge answer is ~20 minutes in one stream, so batching (P6-1b) is required for reliability and latency, not only for the token limit; P6-1c is headroom.
 - **P6-2 Test criteria content.** DPDPA first (41), then ISO (93, with the own-words rewrite), then NIST (94). Saqlain signs off each domain sheet. Under D-P6-L this improves v2's quality but no longer blocks it.
 - **P6-3 v2 Stages 0-1** `[AR: grounding]`
   - chunking with offset maps

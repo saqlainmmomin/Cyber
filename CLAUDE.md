@@ -11,7 +11,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase:** Phases 1-5 complete (PRs #16-#46). **Phase 6 (grounded analysis, multi-framework review, deliverables) started 2026-09-25** — plan `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (decisions D-P6-A..L; D8 amended). Local-only until Track 4 (auth, encryption, Bedrock `ap-south-1`). P5-9 baseline runs after P6-1 and P6-1b merge. See `tasks/todo.md`.
+**Current phase:** Phases 1-5 complete (PRs #16-#46). **Phase 6 (grounded analysis, multi-framework review, deliverables) started 2026-09-25** — plan `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (decisions D-P6-A..L; D8 amended). P6-1 LLM plumbing merged (#54). Open: #55 (P6-1b batching handoff + D-P6-L fallback), #56 (P6-1c output ceiling). Local-only until Track 4 (auth, encryption, Bedrock `ap-south-1`). P5-9 baseline runs after P6-1, P6-1b and P6-1c merge. Next session: start from `tasks/handoffs/2026-09-25-next-session-kickoff.md`.
 **Pre-work sprint:** Completed (PW-1 through PW-5).
 
 ## Running
