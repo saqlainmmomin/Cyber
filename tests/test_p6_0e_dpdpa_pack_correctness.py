@@ -96,6 +96,9 @@ MAIN_REQUIREMENTS = {
 TITLE_CHANGES = {
     "CH2.ACCURACY.1": "Data accuracy ensured for decision-making and onward disclosure",
     "CH2.NOTICE.1": "Notice accompanying the consent request",
+    # P6-0f
+    "CB.TRANSFER.2": "Transfers comply with s.16 restrictions and stricter sectoral law",
+    "CM.RECORDS.2": "Fresh consent for a new or changed purpose",
 }
 MAIN_CHAPTER_WEIGHTS = {
     "chapter_2": 0.3, "chapter_3": 0.2, "chapter_4": 0.2,
@@ -118,7 +121,7 @@ def test_1_section_refs_corrected():
         "CH2.CONSENT.2": "Section 6(1)",
         "CM.GRANULAR.1": "Section 6(1)",
         "CH2.CONSENT.3": "Section 6(4), 6(6)",
-        "CH2.NOTICE.3": "Section 5(1), 8(9); DPDP Rules 2025 r.3, r.9",
+        "CH2.NOTICE.3": "Section 6(3), 8(9); DPDP Rules 2025 r.9",  # P6-0f decision 8
         "CH2.MINIMIZE.1": "Section 6(1)",
         "CH2.SECURITY.1": "Section 8(5)",
         "CH3.CORRECT.2": "Section 12(3)",

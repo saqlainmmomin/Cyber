@@ -221,7 +221,8 @@ def test_registered_framework_content_is_valid_and_control_ids_are_global():
 
     assert len(all_control_ids) == len(set(all_control_ids))
     assert DPDPA_DEFINITION.evidence_requests == []
-    assert DPDPA_DEFINITION.applicability_proposals == []
+    # P6-0f adds the one DPDPA proposal: SCP.6 (s.17(3) notification) -> yes.
+    assert [(p.scope_question_id, p.answers) for p in DPDPA_DEFINITION.applicability_proposals] == [("SCP.6", ("yes",))]
     assert NIST_CSF_DEFINITION.applicability_proposals == []
 
 

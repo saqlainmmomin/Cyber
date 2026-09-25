@@ -14,7 +14,9 @@ DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE = date(2027, 5, 13)
 DPDPA_READINESS_NOTE = (
     "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in "
     "mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a "
-    "readiness assessment, not a determination of current non-compliance."
+    "readiness assessment, not a determination of current non-compliance. Until then, "
+    "obligations under the Information Technology Act, 2000, s.43A and the SPDI Rules, 2011 "
+    "continue to apply and were not assessed."
 )
 
 
@@ -42,7 +44,7 @@ DPDPA_FRAMEWORK = {
                     {
                         "id": "CH2.CONSENT.2",
                         "title": "Itemised consent for multiple purposes",
-                        "description": "When personal data is processed for multiple purposes, consent is obtained separately for each purpose, allowing the Data Principal to give or withhold consent for each.",
+                        "description": "When personal data is processed for multiple purposes, the consent request itemises each purpose separately, and the organization records consent against each specific purpose (not one blanket consent). The controls the Data Principal uses to choose purposes are assessed under CM.GRANULAR.1.",
                         "section_ref": "Section 6(1)",
                         "criticality": "high",
                     },
@@ -76,8 +78,8 @@ DPDPA_FRAMEWORK = {
                     {
                         "id": "CH2.NOTICE.1",
                         "title": "Notice accompanying the consent request",
-                        "description": "Every request for consent is accompanied or preceded by a notice that states the personal data and the purpose of processing, how the Data Principal can withdraw consent and exercise her rights, and how she can complain to the Board. The DPDP Rules 2025 (r.3) set its content and form.",
-                        "section_ref": "Section 5(1)",
+                        "description": "Every request for consent is accompanied or preceded by a notice that states the personal data and the purpose of processing, how the Data Principal can withdraw consent and exercise her rights, and how she can complain to the Board. The notice is presented so that it is understandable on its own, independently of any other information the organization has made available (DPDP Rules 2025 r.3(a)); r.3 also sets its other content and form.",
+                        "section_ref": "Section 5(1); DPDP Rules 2025 r.3",
                         "criticality": "critical",
                     },
                     {
@@ -91,7 +93,7 @@ DPDPA_FRAMEWORK = {
                         "id": "CH2.NOTICE.3",
                         "title": "Notice contains contact details of DPO or grievance officer",
                         "description": "The notice includes contact information for the Data Protection Officer or person responsible for addressing Data Principal queries.",
-                        "section_ref": "Section 5(1), 8(9); DPDP Rules 2025 r.3, r.9",
+                        "section_ref": "Section 6(3), 8(9); DPDP Rules 2025 r.9",
                         "criticality": "medium",
                     },
                 ],
@@ -137,8 +139,8 @@ DPDPA_FRAMEWORK = {
                     {
                         "id": "CH2.MINIMIZE.3",
                         "title": "Retention schedule and deletion procedures",
-                        "description": "Organization maintains documented retention schedules and automated or systematic procedures for erasing personal data upon purpose completion or consent withdrawal.",
-                        "section_ref": "Section 8(7)",
+                        "description": "Organization maintains documented retention schedules and automated or systematic procedures for erasing personal data upon purpose completion or consent withdrawal. The schedules also retain personal data, associated traffic data and other logs of processing for at least one year from the date of processing, for the purposes specified in the Seventh Schedule to the DPDP Rules 2025, before erasure (r.8(3)).",
+                        "section_ref": "Section 8(7); DPDP Rules 2025 r.8(3)",
                         "criticality": "medium",
                     },
                 ],
@@ -341,9 +343,9 @@ DPDPA_FRAMEWORK = {
                     },
                     {
                         "id": "CM.RECORDS.2",
-                        "title": "Consent refresh and re-validation process",
-                        "description": "Organization has a process to refresh or re-obtain consent when purposes change or after a reasonable period.",
-                        "section_ref": "Section 6",
+                        "title": "Fresh consent for a new or changed purpose",
+                        "description": "Before personal data is processed for a new or changed purpose, the organization obtains fresh consent for that purpose, because consent is specific to the specified purpose. Existing consent is not relied on for the new purpose.",
+                        "section_ref": "Section 6(1)",
                         "criticality": "medium",
                     },
                 ],
@@ -355,7 +357,7 @@ DPDPA_FRAMEWORK = {
                     {
                         "id": "CM.GRANULAR.1",
                         "title": "Granular consent options available",
-                        "description": "Data Principals can provide or withhold consent at a granular level (per-purpose) rather than being forced into all-or-nothing consent.",
+                        "description": "The Data Principal has working controls to give or withhold consent per purpose (for example, per-purpose toggles), and partial consent is actually possible rather than all-or-nothing. How the consent request itemises purposes and how consent is recorded per purpose are assessed under CH2.CONSENT.2.",
                         "section_ref": "Section 6(1)",
                         "criticality": "high",
                     },
@@ -387,8 +389,8 @@ DPDPA_FRAMEWORK = {
                     },
                     {
                         "id": "CB.TRANSFER.2",
-                        "title": "Contractual safeguards for cross-border transfers",
-                        "description": "Appropriate contractual or legal safeguards are in place for data transferred outside India, including obligations on the receiving party.",
+                        "title": "Transfers comply with s.16 restrictions and stricter sectoral law",
+                        "description": "Personal data is not transferred for processing to any country or territory outside India that the Central Government has restricted by notification under s.16(1), and the organization tracks such notifications. Where a sectoral law in force in India provides a higher degree of protection for, or restriction on, transfer outside India (s.16(2)), that law is complied with.",
                         "section_ref": "Section 16",
                         "criticality": "high",
                     },
