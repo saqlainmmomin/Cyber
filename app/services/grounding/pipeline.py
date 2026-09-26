@@ -14,7 +14,7 @@ from typing import Sequence
 from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.services import llm_client
-from app.services.citations import MAX_EXCERPT_CHARS, locate_excerpt, normalize_with_offsets
+from app.services.citations import MAX_EXCERPT_CHARS, normalize_with_offsets
 from app.services.grounding import prompts
 from app.services.grounding.batches import RequirementBatch, extraction_batches, requirement_order
 from app.services.grounding.claims import (
@@ -27,7 +27,7 @@ from app.services.grounding.claims import (
     _statement_norm,
     claim_id,
 )
-from app.services.grounding.chunking import Chunk, chunk_sources
+from app.services.grounding.chunking import Chunk, _is_heading, chunk_sources
 from app.services.grounding.metadata import extract_metadata
 from app.services.grounding.schemas import (
     ExtractionItem,
@@ -293,6 +293,32 @@ def _fold(value: str) -> str:
     return unicodedata.normalize("NFKC", value).casefold()
 
 
+def _locate_in_normalized(
+    normalized_text: str, offsets: Sequence[int], normalized_excerpt: str
+) -> tuple[int, int] | None:
+    if not normalized_excerpt:
+        return None
+    index = normalized_text.find(normalized_excerpt)
+    if index == -1:
+        return None
+    return offsets[index], offsets[index + len(normalized_excerpt) - 1] + 1
+
+
+def _contains_normalized_value(normalized_slice: str, normalized_value: str) -> bool:
+    if len(normalized_value) < 3:
+        return False
+    start = normalized_slice.find(normalized_value)
+    while start != -1:
+        before = normalized_slice[start - 1] if start else ""
+        end = start + len(normalized_value)
+        after = normalized_slice[end] if end < len(normalized_slice) else ""
+        if not before.isalnum() and not after.isalnum():
+            return True
+        next_start = start + 1
+        start = normalized_slice.find(normalized_value, next_start)
+    return False
+
+
 def _marker_overlaps(text: str, start: int, end: int) -> bool:
     return any(match.start() < end and match.end() > start for match in _TRUNCATION_MARKER.finditer(text))
 
@@ -302,6 +328,8 @@ def _verify_items(
     items: Sequence[dict],
     unit: _ExtractionUnit,
     source_by_id: dict[str, SourceDocument],
+    normalized_sources: dict[str, tuple[str, list[int]]],
+    normalized_chunks: dict[str, tuple[str, list[int]]],
     order: dict[str, tuple[int, int]],
     metrics: dict[str, object],
     rejected: list[RejectedClaim],
@@ -341,7 +369,7 @@ def _verify_items(
                 requirement_ids=raw.get("requirement_ids", ()) if isinstance(raw.get("requirement_ids", ()), list) else (),
             )
             continue
-        if not parsed.statement or len(parsed.statement) > 500:
+        if not parsed.statement.strip() or len(parsed.statement) > 500:
             _reject(
                 rejected,
                 metrics,
@@ -385,18 +413,23 @@ def _verify_items(
             _reject(rejected, metrics, reason="quote_too_short", source_id=unit.source.source_id, chunk_id=unit.chunk.chunk_id, batch=unit.batch.label, model_quote=parsed.quote, statement=parsed.statement, requirement_ids=parsed.requirement_ids)
             continue
 
-        chunk_text = unit.source.text[unit.chunk.start:unit.chunk.end]
-        local_span = locate_excerpt(chunk_text, parsed.quote)
+        normalized_chunk, chunk_offsets = normalized_chunks[unit.chunk.chunk_id]
+        local_span = _locate_in_normalized(normalized_chunk, chunk_offsets, normalized_quote)
         if local_span is None:
-            if locate_excerpt(unit.source.text, parsed.quote) is not None:
+            normalized_source, source_offsets = normalized_sources[unit.source.source_id]
+            if _locate_in_normalized(normalized_source, source_offsets, normalized_quote) is not None:
                 reason = "quote_outside_chunk"
             elif any(
-                locate_excerpt(other.text, parsed.quote) is not None
-                for source_id, other in source_by_id.items()
+                _locate_in_normalized(
+                    normalized_sources[source_id][0],
+                    normalized_sources[source_id][1],
+                    normalized_quote,
+                ) is not None
+                for source_id in source_by_id
                 if source_id != unit.source.source_id
             ):
                 reason = "quote_in_other_document"
-            elif _fold(normalized_quote) in _fold(normalize_with_offsets(chunk_text)[0]):
+            elif _fold(normalized_quote) in _fold(normalized_chunk):
                 reason = "quote_unicode_mismatch"
             else:
                 reason = "quote_not_found"
@@ -413,11 +446,19 @@ def _verify_items(
             continue
 
         raw_slice = unit.source.text[start:end]
+        normalized_slice = normalize_with_offsets(raw_slice)[0]
+        if normalized_slice != normalized_quote:
+            _reject(rejected, metrics, reason="quote_unicode_mismatch", source_id=unit.source.source_id, chunk_id=unit.chunk.chunk_id, batch=unit.batch.label, model_quote=parsed.quote, statement=parsed.statement, requirement_ids=parsed.requirement_ids)
+            continue
+        if _is_heading(raw_slice) or len(raw_slice.split()) < 5:
+            _reject(rejected, metrics, reason="quote_too_short", source_id=unit.source.source_id, chunk_id=unit.chunk.chunk_id, batch=unit.batch.label, model_quote=parsed.quote, statement=parsed.statement, requirement_ids=parsed.requirement_ids)
+            continue
         stated_period = parsed.stated_period
         stated_owner = parsed.stated_owner
         for attribute in ("stated_period", "stated_owner"):
             value = getattr(parsed, attribute)
-            if value is not None and locate_excerpt(raw_slice, value) is None:
+            normalized_value = normalize_with_offsets(value)[0] if value is not None else ""
+            if value is not None and not _contains_normalized_value(normalized_slice, normalized_value):
                 metrics["unverified_attributes_dropped"] += 1
                 if attribute == "stated_period":
                     stated_period = None
@@ -460,8 +501,15 @@ def _merge_into(existing: _Candidate, incoming: _Candidate, order: dict[str, tup
     if incoming.kind != existing.kind:
         existing.kind_conflict = True
     existing.kind_conflict = existing.kind_conflict or incoming.kind_conflict
-    if existing.original_statement is None:
-        existing.original_statement = incoming.original_statement
+    if existing.support == "partial" or incoming.support == "partial":
+        if existing.support != "partial":
+            existing.original_statement = incoming.original_statement
+        elif existing.original_statement is None:
+            existing.original_statement = incoming.original_statement
+        existing.support = "partial"
+        existing.needs_review = True
+    else:
+        existing.original_statement = None
     existing.needs_review = existing.needs_review or incoming.needs_review
     metrics["merged_duplicates"] += 1
 
@@ -498,6 +546,13 @@ def _support_map(items: Sequence[dict], unit: _SupportUnit, metrics: dict[str, o
     refs = {f"c{index}" for index in range(1, len(unit.candidates) + 1)}
     result: dict[str, SupportItem] = {}
     for raw_item in items:
+        if isinstance(raw_item, dict):
+            raw_item = dict(raw_item)
+            if isinstance(raw_item.get("ref"), str):
+                raw_item["ref"] = raw_item["ref"].strip().strip("[]").strip().lower()
+            if isinstance(raw_item.get("verdict"), str):
+                raw_item["verdict"] = raw_item["verdict"].strip().lower()
+            raw_item.setdefault("supported_statement", None)
         try:
             item = SupportItem.model_validate(raw_item)
         except Exception:
@@ -527,7 +582,7 @@ def _apply_support(
         return False
     if verdict.verdict == "partial":
         supported = verdict.supported_statement
-        if not supported or len(supported) > 500:
+        if not supported or not supported.strip() or len(supported) > 500:
             metrics["support"]["unusable"] += 1
             _reject(rejected, metrics, reason="support_partial_unusable", source_id=candidate.source.source_id, chunk_id=candidate.chunk.chunk_id, batch=None, model_quote=candidate.model_quote, statement=candidate.statement, requirement_ids=candidate.requirement_ids)
             return False
@@ -556,6 +611,7 @@ def _final_claims(
         if identifier in seen_ids:
             raise AssertionError(f"duplicate claim id {identifier}")
         seen_ids.add(identifier)
+        assert candidate.support in {"yes", "partial"}
         claim_frameworks = tuple(
             framework_id
             for framework_id in framework_ids
@@ -590,7 +646,7 @@ def _final_claims(
                 requirement_ids=candidate.requirement_ids,
                 framework_ids=claim_frameworks,
                 tag_status="suggested",
-                support=candidate.support or "yes",
+                support=candidate.support,
                 needs_review=candidate.needs_review or candidate.kind_conflict or candidate.source.derived_from_image,
                 kind_conflict=candidate.kind_conflict,
                 derived_from_image=candidate.source.derived_from_image,
@@ -654,6 +710,16 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
     chunks_by_source: dict[str, tuple[Chunk, ...]] = {
         source.source_id: tuple(chunk for chunk in chunks if chunk.source_id == source.source_id)
         for source in sources
+    }
+    normalized_sources = {
+        source.source_id: normalize_with_offsets(source.text)
+        for source in sources
+    }
+    normalized_chunks = {
+        chunk.chunk_id: normalize_with_offsets(
+            source_by_id[chunk.source_id].text[chunk.start:chunk.end]
+        )
+        for chunk in chunks
     }
     order = requirement_order(framework_ids)
     requirement_frameworks = _framework_requirement_map(framework_ids)
@@ -742,6 +808,8 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
                     items=result,
                     unit=unit,
                     source_by_id=source_by_id,
+                    normalized_sources=normalized_sources,
+                    normalized_chunks=normalized_chunks,
                     order=order,
                     metrics=metrics,
                     rejected=rejected,
@@ -806,6 +874,18 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
                 failed_support_ids.update(id(candidate) for candidate in missing)
                 continue
             mapped = _support_map(result, retry_unit, metrics)
+            if not mapped:
+                failed_units.append(
+                    FailedUnit(
+                        stage="claim_support",
+                        label=retry_unit.label + "+missing",
+                        chunk_id=retry_unit.chunk.chunk_id,
+                        requirement_ids=tuple(sorted({rid for candidate in missing for rid in candidate.requirement_ids}, key=order.__getitem__)),
+                        error="parse_failure",
+                    )
+                )
+                failed_support_ids.update(id(candidate) for candidate in missing)
+                continue
             for index, candidate in enumerate(missing, start=1):
                 if f"c{index}" in mapped:
                     verdicts[id(candidate)] = mapped[f"c{index}"]

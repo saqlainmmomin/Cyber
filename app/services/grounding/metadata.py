@@ -108,20 +108,13 @@ def _date_iso(value: str) -> str | None:
 
 
 def _window_lines(text: str) -> list[tuple[int, str]]:
-    if len(text) <= 6000:
-        windows = [(0, len(text))]
-    else:
-        windows = [(0, 4000), (len(text) - 2000, len(text))]
     result: list[tuple[int, str]] = []
-    for start, end in windows:
-        for match in re.finditer(r".*(?:\r\n|\r|\n|\Z)", text[start:end]):
-            line = match.group(0)
-            if not line:
-                continue
-            actual_start = start + match.start()
-            if actual_start == start and start > 0 and text[start - 1] not in "\r\n\u2028\u2029":
-                continue
-            result.append((actual_start, line))
+    tail_start = max(0, len(text) - 2000)
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        if offset < 4000 or offset >= tail_start:
+            result.append((offset, line))
+        offset += len(line)
     return result
 
 

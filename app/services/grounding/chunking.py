@@ -30,13 +30,6 @@ class Chunk:
     text_sha256: str
 
 
-def _line_body(line: str) -> str:
-    end = len(line)
-    while end and line[end - 1] in "\r\n\v\f\x1c\x1d\x1e\x1f\x85\u2028\u2029":
-        end -= 1
-    return line[:end]
-
-
 def _is_heading(line: str) -> bool:
     stripped = line.strip()
     return len(stripped.split()) <= 12 and bool(_HEADING.fullmatch(stripped))
@@ -78,11 +71,9 @@ def _hard_split_line(line: str, start: int, max_words: int) -> list[tuple[int, i
 
 
 def _heading_for(text: str, start: int, end: int) -> str | None:
-    offset = start
     for line in text[start:end].splitlines(keepends=True):
         if _is_heading(line):
             return line.strip()[:120]
-        offset += len(line)
     return None
 
 

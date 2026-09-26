@@ -219,6 +219,18 @@ def claim_set_is_current(
         return False
     if claim_set.settings != _setting_snapshot():
         return False
-    expected_sources = [(source.source_id, source.text_sha256) for source in sources]
-    actual_sources = [(source["source_id"], source["text_sha256"]) for source in claim_set.sources]
+    expected_sources = [
+        (source.source_id, source.text_sha256, source.filename, source.category, source.mime_type)
+        for source in sources
+    ]
+    actual_sources = [
+        (
+            source["source_id"],
+            source["text_sha256"],
+            source["filename"],
+            source["category"],
+            source["mime_type"],
+        )
+        for source in claim_set.sources
+    ]
     return expected_sources == actual_sources

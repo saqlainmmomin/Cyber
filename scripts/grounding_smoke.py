@@ -15,6 +15,7 @@ from app.config import settings
 from app.frameworks.registry import FrameworkRegistry
 from app.services.grounding import SourceDocument, run_stages_0_1
 from app.services.grounding.claims import claim_id
+from app.main import _register_frameworks
 
 
 def _arguments() -> argparse.Namespace:
@@ -54,6 +55,7 @@ def main() -> int:
     if not settings.openrouter_key:
         print("OPENROUTER_KEY is required for the live grounding smoke", file=sys.stderr)
         return 2
+    _register_frameworks()
     if args.no_structured:
         settings.v2_structured_output = False
     framework_ids = tuple(item.strip() for item in args.frameworks.split(",") if item.strip())
