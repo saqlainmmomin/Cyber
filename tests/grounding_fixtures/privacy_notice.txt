@@ -1,0 +1,27 @@
+KESTREL LEDGER PRIVACY NOTICE
+
+Date: 2025-01-20
+
+This notice explains how Kestrel Ledger Pvt Ltd collects and uses personal data when merchants and their customers use the Kestrel payments platform and merchant dashboard.
+
+We collect the name, email address, mobile number and business details of merchant representatives when they sign up. We collect card and transaction details from cardholders only to process payments on behalf of merchants.
+
+We ask for your consent before we send marketing messages. You can withdraw your consent at any time from the settings page of the merchant dashboard or by replying STOP to any marketing message, and withdrawal is as easy as giving consent.
+
+We use personal data to provide the payments service, to prevent fraud, to meet our legal obligations under banking and tax law, and to respond to your requests. We do not sell personal data to anyone.
+
+We share personal data with banks and card networks that process payments, with cloud hosting providers under written contracts, and with authorities when the law requires it. Each service provider may use the data only on our instructions.
+
+Transaction records are kept for eight years to meet financial record-keeping obligations. Merchant account data is deleted within ninety days after the account is closed, unless the law requires us to keep it longer.
+
+You may ask us for a summary of the personal data we hold about you, ask us to correct or complete it, or ask us to erase it where we no longer need it. We respond to such requests within thirty days.
+
+If you have a complaint about how we handle your personal data, please write to our Grievance Officer at grievance@kestrelledger.example. The Grievance Officer acknowledges each complaint within two working days and aims to resolve it within thirty days.
+
+If you are not satisfied with our response, you may raise the matter with the relevant data protection authority. We will cooperate with any such enquiry.
+
+We protect personal data with encryption, access controls and monitoring, as described in our information security policy. When a personal data breach occurs, we inform affected individuals and the relevant authority as required by law.
+
+Children may not open a merchant account. If we learn that we hold data about a child without verifiable parental consent, we delete it.
+
+We may update this notice from time to time. The latest version is always available on our website, and we notify merchants by email of any material change.
