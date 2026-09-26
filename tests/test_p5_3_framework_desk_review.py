@@ -812,7 +812,8 @@ def test_scenario_12_standing_guards_and_public_signatures():
     assert models.returncode == 1, models.stdout
     protected = subprocess.run(
         ["git", "diff", "--stat", "main", "--", "app/frameworks/definitions",
-         ":!app/frameworks/definitions/dpdpa.py"],
+         ":!app/frameworks/definitions/dpdpa.py",
+         ":!app/frameworks/definitions/nist_csf.py"],  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""

@@ -121,7 +121,7 @@ def test_threshold_call_counts_and_full_coverage(monkeypatch):
     judge_calls = [ids for tier, ids in calls if tier == "judge"]
     assert [_framework_for_ids(ids) for ids in judge_calls].count("dpdpa") == 1
     assert [_framework_for_ids(ids) for ids in judge_calls].count("iso27001") == 6
-    assert [_framework_for_ids(ids) for ids in judge_calls].count("nist_csf") == 6
+    assert [_framework_for_ids(ids) for ids in judge_calls].count("nist_csf") == 7
     assert sum(tier == "synthesize" for tier, _ in calls) == 1
     for framework_id in ("dpdpa", "iso27001", "nist_csf"):
         expected = {c.id for c in FrameworkRegistry.get(framework_id).all_controls()}
@@ -171,9 +171,9 @@ def test_unbatched_prompt_fingerprints_and_dpdpa_request_shape(monkeypatch):
         ("iso27001", "system"): "3c3bad7bd8818c1d5b28730e4462bbf91f2208b1eae32b89459e8e2d698116b3",
         ("iso27001", "user"): "6fe08745ef96857b893c623d0f468d2abca2aa6c3395affc64145807acedfd61",
         ("iso27001", "desk"): "9d2e926bae35b23030085da6e528b03df63c9352006cb0bb8948800a251222b2",
-        ("nist_csf", "system"): "c8ddf65a8220b571733a65298503f3aff65be22ca6c21413216282f982ddf121",
+        ("nist_csf", "system"): "f4da05c97a385ffc41969e29c0757ed8c67449b26a2dfc95998b5437afc12028",
         ("nist_csf", "user"): "9fa1ded32cda08bb882873f83bb2d13e1b20a9a1b0fa84c45690569e02bb283f",
-        ("nist_csf", "desk"): "14705771d2e67febe08ab3a58e022039aea1a4360aef37a0ae0595fa25d414ec",
+        ("nist_csf", "desk"): "01f83bd2c8c707e37ae7df65b68127e20a96debb9079163d5c1fe9992ee1a4f4",
     }
     digest = lambda value: hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
     for framework_id in ("dpdpa", "iso27001", "nist_csf"):
@@ -209,11 +209,12 @@ def test_deterministic_batch_table_and_synthetic_split(monkeypatch):
             ("technological", ("tech_sdlc",), 10, "ISO.A8.25", "ISO.A8.34"),
         ],
         "nist_csf": [
-            ("govern", ("gv_oc", "gv_rm", "gv_rr", "gv_po", "gv_ov", "gv_sc"), 23, "NIST.GV.OC.01", "NIST.GV.SC.05"),
-            ("identify", ("id_am", "id_ra", "id_im"), 16, "NIST.ID.AM.01", "NIST.ID.IM.03"),
+            ("govern", ("gv_oc", "gv_rm", "gv_rr", "gv_po", "gv_ov"), 21, "NIST.GV.OC.01", "NIST.GV.OV.03"),
+            ("govern", ("gv_sc",), 10, "NIST.GV.SC.01", "NIST.GV.SC.10"),
+            ("identify", ("id_am", "id_ra", "id_im"), 21, "NIST.ID.AM.01", "NIST.ID.IM.04"),
             ("protect", ("pr_aa", "pr_at", "pr_ds", "pr_ps", "pr_ir"), 22, "NIST.PR.AA.01", "NIST.PR.IR.04"),
             ("detect", ("de_cm", "de_ae"), 11, "NIST.DE.CM.01", "NIST.DE.AE.08"),
-            ("respond", ("rs_ma", "rs_an", "rs_co", "rs_mi"), 14, "NIST.RS.MA.01", "NIST.RS.MI.02"),
+            ("respond", ("rs_ma", "rs_an", "rs_co", "rs_mi"), 13, "NIST.RS.MA.01", "NIST.RS.MI.02"),
             ("recover", ("rc_rp", "rc_co"), 8, "NIST.RC.RP.01", "NIST.RC.CO.04"),
         ],
     }
@@ -223,7 +224,7 @@ def test_deterministic_batch_table_and_synthetic_split(monkeypatch):
             (b.domain_key, b.section_keys, len(b.control_ids), b.control_ids[0], b.control_ids[-1])
             for b in batches
         ] == rows
-        assert [b.label for b in batches] == [f"{i}/6" for i in range(1, 7)]
+        assert [b.label for b in batches] == [f"{i}/{len(rows)}" for i in range(1, len(rows) + 1)]
         controls = [c.id for c in FrameworkRegistry.get(framework_id).all_controls()]
         assert [control_id for b in batches for control_id in b.control_ids] == controls
         assert control_batches(framework_id) == control_batches(framework_id)
@@ -764,7 +765,9 @@ def test_protected_surface_guard_uses_three_dot_diff():
         [
             "git", "diff", "--stat", "main...HEAD", "--",
             "tests/fixtures", "tests/support", "app/dpdpa", "app/frameworks/schema.py",
-            "app/frameworks/definitions", "app/services/scoring.py",
+            "app/frameworks/definitions",
+            ":(exclude)app/frameworks/definitions/nist_csf.py",  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
+            "app/services/scoring.py",
         ],
         check=True,
         capture_output=True,
