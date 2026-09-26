@@ -59,10 +59,11 @@ def _desk_data(requirement_id, quote):
     }
 
 
-def _run(monkeypatch, framework_ids, desk_data, extract_result):
+def _run(monkeypatch, framework_ids, desk_data, extract_result, *, batched=False):
     from app.services import claude_analyzer
 
-    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)
+    if not batched:
+        monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)
     calls = []
 
     def llm(**kwargs):
@@ -110,17 +111,63 @@ def test_registry_extraction_runs_despite_desk_review_evidence_and_merges(monkey
     assert "invented quote" not in prompt
 
 
-def test_registry_extraction_failure_keeps_desk_review_evidence(monkeypatch):
+def test_extracted_quotes_dedupe_against_desk_quotes_after_normalization(monkeypatch):
+    _, judges = _run(
+        monkeypatch,
+        ["iso27001"],
+        _desk_data("ISO.A5.1", "Desk quote about policy."),
+        {"evidence": {"ISO.A5.1": ["desk  QUOTE about\npolicy.", "Extracted quote about access."]}},
+    )
+
+    (prompt,) = judges
+    iso_a51 = prompt.split("### ISO.A5.1\n", 1)[1].split("\n\n", 1)[0]
+    assert iso_a51 == "> Desk quote about policy.\n> Extracted quote about access."
+
+
+@pytest.mark.parametrize(
+    "extract_result", [RuntimeError("extract down"), {"evidence": {}}], ids=["raises", "empty"]
+)
+def test_registry_extraction_failure_falls_back_to_documents(monkeypatch, extract_result):
     extracts, judges = _run(
         monkeypatch,
         ["iso27001"],
         _desk_data("ISO.A5.1", "Desk quote about policy."),
-        RuntimeError("extract down"),
+        extract_result,
     )
 
     assert len(extracts) == 1
     (prompt,) = judges
-    assert "### ISO.A5.1\n> Desk quote about policy." in prompt
+    assert "## Supporting Documents" in prompt
+    assert "## Extracted Document Evidence" not in prompt
+
+
+def test_batched_judge_falls_back_to_documents_when_extraction_fails(monkeypatch):
+    _, judges = _run(
+        monkeypatch,
+        ["iso27001"],
+        _desk_data("ISO.A5.1", "Desk quote about policy."),
+        RuntimeError("extract down"),
+        batched=True,
+    )
+
+    assert len(judges) > 1
+    assert all("## Supporting Documents" in prompt for prompt in judges)
+    assert not any("## Extracted Document Evidence" in prompt for prompt in judges)
+
+
+def test_batched_judge_gets_merged_evidence(monkeypatch):
+    _, judges = _run(
+        monkeypatch,
+        ["iso27001"],
+        _desk_data("ISO.A5.1", "Desk quote about policy."),
+        {"evidence": {"ISO.A5.1": ["Extracted quote about access."]}},
+        batched=True,
+    )
+
+    assert len(judges) > 1
+    assert not any("## Supporting Documents" in prompt for prompt in judges)
+    (with_quotes,) = [prompt for prompt in judges if "### ISO.A5.1\n" in prompt]
+    assert "### ISO.A5.1\n> Desk quote about policy.\n> Extracted quote about access." in with_quotes
 
 
 def test_curated_dpdpa_still_skips_extraction_when_desk_review_found_evidence(monkeypatch):
@@ -186,3 +233,27 @@ def test_context_profile_and_framework_extraction_send_reasoning_off(monkeypatch
 
     assert len(captured) == 2
     assert all(call["extra_body"] == REASONING_OFF_PREFS for call in captured)
+
+
+def test_reported_reasoning_tokens_are_recorded(monkeypatch):
+    from app.services import llm_client
+
+    choice = SimpleNamespace(message=SimpleNamespace(content="ok"), finish_reason="stop")
+    usage = SimpleNamespace(
+        prompt_tokens=3,
+        completion_tokens=5,
+        prompt_tokens_details=None,
+        completion_tokens_details=SimpleNamespace(reasoning_tokens=4),
+    )
+    response = SimpleNamespace(choices=[choice], usage=usage)
+    monkeypatch.setattr(
+        llm_client,
+        "_client",
+        SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **_k: response))),
+    )
+
+    with llm_client.collect_calls() as calls:
+        result = llm_client.call_llm("extract", system="s", messages=[], max_tokens=10)
+
+    assert result["usage"]["reasoning_tokens"] == 4
+    assert calls[0]["reasoning_tokens"] == 4

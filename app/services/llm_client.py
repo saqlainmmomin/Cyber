@@ -119,7 +119,8 @@ def _record_call(
     status: str,
     error_type: str | None,
 ) -> None:
-    """Record one call, adding the optional batch key only for batched work."""
+    """Record one call, adding the optional batch key only for batched work
+    and reasoning_tokens only when the provider reports it."""
     collector = _collector.get()
     if collector is None:
         return
@@ -139,6 +140,8 @@ def _record_call(
     }
     if tags.get("batch") is not None:
         record["batch"] = tags["batch"]
+    if usage and "reasoning_tokens" in usage:
+        record["reasoning_tokens"] = usage["reasoning_tokens"]
     with _collector_lock:
         collector.append(record)
 
@@ -166,7 +169,7 @@ def _usage_dict(usage) -> dict[str, int]:
         }
     details = getattr(usage, "prompt_tokens_details", None)
     cache_read = getattr(details, "cached_tokens", 0) or 0
-    return {
+    result = {
         "input_tokens": usage.prompt_tokens,
         "output_tokens": usage.completion_tokens,
         "cache_read_input_tokens": cache_read,
@@ -177,6 +180,14 @@ def _usage_dict(usage) -> dict[str, int]:
         # on this for cost accounting.
         "cache_creation_input_tokens": 0,
     }
+    # Reasoning is turned off on every request; surface any that still gets
+    # billed so a provider ignoring that shows up in the call records.
+    reasoning = getattr(
+        getattr(usage, "completion_tokens_details", None), "reasoning_tokens", None
+    )
+    if reasoning is not None:
+        result["reasoning_tokens"] = reasoning
+    return result
 
 
 def call_llm(

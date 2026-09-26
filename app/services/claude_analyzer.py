@@ -189,6 +189,14 @@ _QUOTE_NORMALIZE_TABLE = str.maketrans(
 )
 
 
+def _normalize_quote(text: str) -> str:
+    # De-hyphenate a word wrapped across a line break (e.g.
+    # "authoriza-\ntion") before whitespace collapsing erases the break.
+    text = re.sub(r"-\s*\n\s*", "", text)
+    text = text.translate(_QUOTE_NORMALIZE_TABLE)
+    return " ".join(text.split()).lower()
+
+
 def _ground_evidence_quotes(evidence: dict, documents: list[dict]) -> dict:
     """Drop extracted quotes that don't actually appear in the source documents.
 
@@ -198,18 +206,11 @@ def _ground_evidence_quotes(evidence: dict, documents: list[dict]) -> dict:
     of which model produced it.
     """
 
-    def normalize(text: str) -> str:
-        # De-hyphenate a word wrapped across a line break (e.g.
-        # "authoriza-\ntion") before whitespace collapsing erases the break.
-        text = re.sub(r"-\s*\n\s*", "", text)
-        text = text.translate(_QUOTE_NORMALIZE_TABLE)
-        return " ".join(text.split()).lower()
-
-    source_text = normalize(" ".join(doc.get("text", "") for doc in documents))
+    source_text = _normalize_quote(" ".join(doc.get("text", "") for doc in documents))
     grounded: dict[str, list[str]] = {}
     dropped = 0
     for req_id, quotes in evidence.items():
-        kept = [q for q in quotes if normalize(q) in source_text]
+        kept = [q for q in quotes if _normalize_quote(q) in source_text]
         dropped += len(quotes) - len(kept)
         if kept:
             grounded[req_id] = kept
@@ -320,8 +321,10 @@ def _collect_framework_evidence(
     registry framework always runs extraction: its judge prompt drops the raw
     documents once any quote exists, so desk-review quotes alone (sparse,
     covering a fraction of the controls) would leave every other control with
-    no document text at all. Desk-review quotes are merged in first, and are
-    what survives if extraction fails.
+    no document text at all. Extracted quotes are merged onto the desk-review
+    quotes. If extraction fails or finds nothing, the framework gets no
+    evidence, so its judge falls back to the full documents (which contain the
+    desk-review quotes anyway).
     """
     from app.frameworks.prompts import CURATED_PROMPT_FRAMEWORK_ID
     from app.frameworks.registry import FrameworkRegistry
@@ -377,12 +380,21 @@ def _collect_framework_evidence(
     for (framework_id, _), (extracted, error) in zip(extraction_items, extraction_results):
         if error is not None:
             logger.warning("Evidence extraction failed for %s: %s", framework_id, error)
+        if error is not None or not extracted:
+            evidence_by_framework.pop(framework_id, None)
             continue
-        if extracted:
-            merged = evidence_by_framework.setdefault(framework_id, {})
-            for requirement_id, quotes in extracted.items():
-                existing = merged.setdefault(requirement_id, [])
-                existing.extend(quote for quote in quotes if quote not in existing)
+        merged = evidence_by_framework.get(framework_id)
+        if merged is None:
+            evidence_by_framework[framework_id] = extracted
+            continue
+        for requirement_id, quotes in extracted.items():
+            existing = merged.setdefault(requirement_id, [])
+            seen = {_normalize_quote(quote) for quote in existing}
+            for quote in quotes:
+                key = _normalize_quote(quote)
+                if key not in seen:
+                    seen.add(key)
+                    existing.append(quote)
 
     for framework_id in framework_ids:
         if framework_id in evidence_by_framework:
