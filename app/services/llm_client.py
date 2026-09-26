@@ -54,17 +54,20 @@ _TIER_MODELS: dict[Tier, str] = {
 # combination that can't honor it should fail the request, not silently fall
 # back to one that retains data.
 #
-# `reasoning: {"exclude": True}` turns off hidden chain-of-thought tokens on
-# reasoning models (the `judge` tier's deepseek-v4-pro is one). Discovered
-# live: without this, deepseek-v4-pro spent up to ~94% of a 4096-token budget
-# on invisible reasoning before writing any answer, hitting finish_reason
-# "length" with truncated or entirely empty `content` in 2 of 3 real calls
-# against the actual screening prompt (see tasks/handoffs/ for the smoke-test
-# session that found this). Harmless to send on non-reasoning models — they
-# just ignore it.
+# `reasoning: {"enabled": False}` turns hidden chain-of-thought off. The
+# earlier `{"exclude": True}` only hid it from the response; the model still
+# reasoned and billed it against max_tokens. Found live twice: deepseek-v4-pro
+# (then the judge tier) spent up to ~94% of a 4096-token screening budget on
+# invisible reasoning; and on 2026-09-26 deepseek-v4-flash (every text tier)
+# still reasoned on some OpenRouter providers under `exclude` - 6 of 8
+# identical context-profile calls exhausted a 1,024-token budget with no
+# usable content, one 8,192-token call reasoned for all 8,192 tokens (342 s),
+# and an ISO desk-review and a judge batch each ended "length" on hidden
+# reasoning. With `enabled: False`, 16 of 16 calls used 0 reasoning tokens.
+# No call site in this app wants hidden reasoning.
 _REQUEST_PREFS = {
     "provider": {"data_collection": "deny", "zdr": True},
-    "reasoning": {"exclude": True},
+    "reasoning": {"enabled": False},
 }
 
 _client: OpenAI | None = None
@@ -116,7 +119,8 @@ def _record_call(
     status: str,
     error_type: str | None,
 ) -> None:
-    """Record one call, adding the optional batch key only for batched work."""
+    """Record one call, adding the optional batch key only for batched work
+    and reasoning_tokens only when the provider reports it."""
     collector = _collector.get()
     if collector is None:
         return
@@ -136,6 +140,8 @@ def _record_call(
     }
     if tags.get("batch") is not None:
         record["batch"] = tags["batch"]
+    if usage and "reasoning_tokens" in usage:
+        record["reasoning_tokens"] = usage["reasoning_tokens"]
     with _collector_lock:
         collector.append(record)
 
@@ -163,7 +169,7 @@ def _usage_dict(usage) -> dict[str, int]:
         }
     details = getattr(usage, "prompt_tokens_details", None)
     cache_read = getattr(details, "cached_tokens", 0) or 0
-    return {
+    result = {
         "input_tokens": usage.prompt_tokens,
         "output_tokens": usage.completion_tokens,
         "cache_read_input_tokens": cache_read,
@@ -174,6 +180,14 @@ def _usage_dict(usage) -> dict[str, int]:
         # on this for cost accounting.
         "cache_creation_input_tokens": 0,
     }
+    # Reasoning is turned off on every request; surface any that still gets
+    # billed so a provider ignoring that shows up in the call records.
+    reasoning = getattr(
+        getattr(usage, "completion_tokens_details", None), "reasoning_tokens", None
+    )
+    if reasoning is not None:
+        result["reasoning_tokens"] = reasoning
+    return result
 
 
 def call_llm(

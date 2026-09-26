@@ -214,14 +214,14 @@ def test_analyzer_call_seam_normalizes_create_and_stream(monkeypatch):
     # and streaming call sites — otherwise client documents can be routed to
     # a provider that stores or trains on them with nothing recording it.
     #
-    # `reasoning.exclude` (added after a live smoke test found deepseek-v4-pro
-    # burning its whole max_tokens budget on hidden reasoning, see llm_client.py)
-    # must also be set on both call sites.
+    # `reasoning.enabled = False` (hidden reasoning burned whole max_tokens
+    # budgets live on deepseek-v4-pro and, despite `exclude`, on
+    # deepseek-v4-flash; see llm_client.py) must also be set on both call sites.
     assert len(captured_kwargs) == 2
     for call_kwargs in captured_kwargs:
         assert call_kwargs["extra_body"] == {
             "provider": {"data_collection": "deny", "zdr": True},
-            "reasoning": {"exclude": True},
+            "reasoning": {"enabled": False},
         }
 
 
