@@ -5,7 +5,6 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from fastapi import Depends, FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -127,13 +126,6 @@ app = FastAPI(
 )
 
 app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
 

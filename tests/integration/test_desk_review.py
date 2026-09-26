@@ -36,7 +36,8 @@ def test_trigger_desk_review(client, db_session):
         db.commit()
         return summary
 
-    with patch("app.services.desk_review.run_desk_review", mock_run_desk_review):
+    with patch("app.services.desk_review.run_desk_review", mock_run_desk_review), \
+         patch("app.database.SessionLocal", return_value=db_session):
         response = client.post(f"/assessments/{assessment_id}/run-desk-review")
 
     assert response.status_code == 200
@@ -45,4 +46,4 @@ def test_trigger_desk_review(client, db_session):
         DeskReviewSummary.assessment_id == assessment_id
     ).first()
     assert summary is not None
-    assert summary.status in ("analyzing", "completed")
+    assert summary.status == "completed"

@@ -4,6 +4,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+import shutil
 
 import app.models  # noqa: F401 - register ORM tables
 import pytest
@@ -174,3 +175,70 @@ def test_restore_preserves_live_data_when_database_safety_copy_fails_partway(tmp
 
     assert _company_name(db_path) == "Mutated Co"
     assert upload_file.read_text() == "mutated evidence"
+
+
+def _install_crash_left_wal(db_path: Path, scratch_dir: Path) -> None:
+    connection = sqlite3.connect(db_path)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA wal_autocheckpoint=0")
+    connection.execute("CREATE TABLE wal_rows (value TEXT NOT NULL)")
+    connection.execute("INSERT INTO wal_rows (value) VALUES ('X')")
+    connection.commit()
+    wal_path = Path(f"{db_path}-wal")
+    assert wal_path.is_file() and wal_path.stat().st_size > 0
+    scratch_dir.mkdir()
+    shutil.copy2(db_path, scratch_dir / db_path.name)
+    shutil.copy2(wal_path, scratch_dir / wal_path.name)
+    connection.close()
+    db_path.unlink()
+    shutil.copy2(scratch_dir / db_path.name, db_path)
+    shutil.copy2(scratch_dir / wal_path.name, wal_path)
+
+
+def test_restore_checkpoints_crash_left_wal_before_safety_copy(tmp_path):
+    live_db = tmp_path / "live.db"
+    _install_crash_left_wal(live_db, tmp_path / "crash-snapshot")
+    backup_source = tmp_path / "backup-source.db"
+    _seed_database(backup_source)
+    backup_dir = create_backup(backup_source, tmp_path / "backup-uploads", tmp_path / "backups")
+
+    safety_dir = restore_backup(backup_dir, live_db, tmp_path / "uploads", force=True)
+
+    with sqlite3.connect(safety_dir / live_db.name) as connection:
+        assert connection.execute("SELECT value FROM wal_rows").fetchone() == ("X",)
+    with sqlite3.connect(live_db) as connection:
+        assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    assert _company_name(live_db) == "Backup Co"
+    restored_wal = Path(f"{live_db}-wal")
+    assert not restored_wal.exists() or restored_wal.stat().st_size == 0
+
+
+def test_restore_rejects_active_wal_before_creating_safety_copy(tmp_path, monkeypatch):
+    live_db = tmp_path / "live.db"
+    _install_crash_left_wal(live_db, tmp_path / "crash-snapshot")
+    backup_source = tmp_path / "backup-source.db"
+    _seed_database(backup_source)
+    backup_dir = create_backup(backup_source, tmp_path / "backup-uploads", tmp_path / "backups")
+    before_db = live_db.read_bytes()
+    before_wal = Path(f"{live_db}-wal").read_bytes()
+
+    monkeypatch.setattr(restore_script, "_checkpoint_wal", lambda _path: None)
+    with pytest.raises(RuntimeError, match="active write-ahead log"):
+        restore_backup(backup_dir, live_db, tmp_path / "uploads", force=True)
+
+    assert live_db.read_bytes() == before_db
+    assert Path(f"{live_db}-wal").read_bytes() == before_wal
+    assert list(tmp_path.glob("pre-restore-*")) == []
+
+
+def test_restore_allows_corrupt_live_database_without_wal_and_copies_raw_bytes(tmp_path):
+    live_db = tmp_path / "live.db"
+    live_db.write_bytes(b"garbage bytes")
+    backup_source = tmp_path / "backup-source.db"
+    _seed_database(backup_source)
+    backup_dir = create_backup(backup_source, tmp_path / "backup-uploads", tmp_path / "backups")
+
+    safety_dir = restore_backup(backup_dir, live_db, tmp_path / "uploads", force=True)
+
+    assert _company_name(live_db) == "Backup Co"
+    assert (safety_dir / live_db.name).read_bytes() == b"garbage bytes"

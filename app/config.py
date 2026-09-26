@@ -31,13 +31,13 @@ class Settings(BaseSettings):
     # model id against OpenRouter's current catalog before relying on it.
     #
     # `judge` was DeepSeek Pro (a reasoning model) until a live smoke test
-    # found `reasoning: {"exclude": true}` (see llm_client.py) unreliably
-    # honored by it: 5 identical calls against the real screening prompt
-    # returned reasoning-token usage of 0, 0, 4292, 6573, and 8192 (i.e. the
-    # entire budget) — a 60% failure rate (empty/truncated JSON) that more
-    # max_tokens didn't fix, since reasoning simply expanded to fill whatever
-    # budget was given. Flash is not a reasoning model and doesn't have this
-    # failure mode.
+    # found `reasoning: {"exclude": true}` unreliably honored by it: 5
+    # identical calls against the real screening prompt returned
+    # reasoning-token usage of 0, 0, 4292, 6573, and 8192 (i.e. the entire
+    # budget). Flash turned out to reason too on some OpenRouter providers
+    # (live, 2026-09-26): `exclude` only hides reasoning, it doesn't stop it,
+    # and reasoning expands to fill whatever max_tokens allows. llm_client.py
+    # therefore sends `reasoning: {"enabled": false}` on every call.
     llm_model_extract: str = "deepseek/deepseek-v4-flash"
     llm_model_judge: str = "deepseek/deepseek-v4-flash"
     llm_model_synthesize: str = "deepseek/deepseek-v4-flash"

@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 8000
 
+# 0.0.0.0 is container-internal; docker-compose publishes it on 127.0.0.1 only.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

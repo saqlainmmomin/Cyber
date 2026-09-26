@@ -70,9 +70,9 @@ A JSON API (`app/routers/assessments.py`, `questionnaire.py`, `analysis.py`, `re
 ## Running
 
 ```bash
-cp .env.example .env        # add ANTHROPIC_API_KEY
-pip install -r requirements.txt
-uvicorn app.main:app --reload   # needs Python 3.13 — see Gotchas
+cp .env.example .env        # add OPENROUTER_KEY
+pip install -r requirements-dev.txt
+uvicorn app.main:app --host 127.0.0.1 --reload   # needs Python 3.13 — see Gotchas
 pytest
 # Web portal at http://localhost:8000
 # API docs at http://localhost:8000/docs
