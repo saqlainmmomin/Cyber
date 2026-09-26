@@ -11,6 +11,7 @@ from __future__ import annotations
 import inspect as pyinspect
 import json
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import call
 
@@ -811,7 +812,7 @@ def test_scenario_12_standing_guards_and_public_signatures():
     )
     assert models.returncode == 1, models.stdout
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/frameworks/definitions",
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/frameworks/definitions",
          ":!app/frameworks/definitions/dpdpa.py",
          ":!app/frameworks/definitions/nist_csf.py"],  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
@@ -819,7 +820,7 @@ def test_scenario_12_standing_guards_and_public_signatures():
     assert protected.stdout == ""
     # P6-0e edits one red-flag description in dpdpa.py; identifiers and weights stay frozen.
     dpdpa_diff = subprocess.run(
-        ["git", "diff", "-U0", "main", "--", "app/frameworks/definitions/dpdpa.py"],
+        ["git", "diff", "-U0", "main...HEAD", "--", "app/frameworks/definitions/dpdpa.py"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     ).stdout
     changed_lines = [
@@ -832,7 +833,7 @@ def test_scenario_12_standing_guards_and_public_signatures():
     # schema.py may grow (P6-2a added TestCriterion / Control.test_criteria) but
     # must stay additive: no existing line removed or changed.
     schema_diff = subprocess.run(
-        ["git", "diff", "-U0", "main", "--", "app/frameworks/schema.py"],
+        ["git", "diff", "-U0", "main...HEAD", "--", "app/frameworks/schema.py"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     removed = [l for l in schema_diff.stdout.splitlines() if l.startswith("-") and not l.startswith("---")]

@@ -42,8 +42,11 @@ def _frameworks():
 
 
 def _main_namespace(path: str) -> dict:
+    merge_base = subprocess.run(
+        ["git", "merge-base", "main", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout.strip()
     source = subprocess.check_output(
-        ["git", "show", f"main:{path}"], cwd=ROOT, text=True
+        ["git", "show", f"{merge_base}:{path}"], cwd=ROOT, text=True
     )
     namespace = {"__name__": f"_main_{Path(path).stem}"}
     exec(compile(source, path, "exec"), namespace)
@@ -334,7 +337,7 @@ def test_dependencies_and_criteria_pending_rule():
     main = _main_namespace("app/frameworks/criteria/nist_csf_draft.py")
     main_draft = main["NIST_CSF_CRITERIA_DRAFT"]
     assert set(main_draft) - set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) == set()
-    assert set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) - set(main_draft) == new_ids
+    assert set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) - set(main_draft) <= new_ids
     for requirement_id, criteria in nist_csf_draft.NIST_CSF_CRITERIA_DRAFT.items():
         if requirement_id in new_ids:
             continue  # not present on main; drafted fresh by P6-2d

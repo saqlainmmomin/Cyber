@@ -22,12 +22,21 @@ CANONICAL_FIXTURE = Path(__file__).parent / "fixtures" / "canonical_dpdpa"
 _DEV_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "dpdpa.db"
 
 
-def _dev_db_fingerprint() -> tuple[int, int, str] | None:
-    if not _DEV_DB_PATH.exists():
-        return None
-    stat = _DEV_DB_PATH.stat()
-    digest = hashlib.sha256(_DEV_DB_PATH.read_bytes()).hexdigest()
-    return (stat.st_mtime_ns, stat.st_size, digest)
+def _sidecar_fingerprint(path: Path) -> tuple[bool, int]:
+    return (path.exists(), path.stat().st_size if path.exists() else 0)
+
+
+def _dev_db_fingerprint() -> tuple[tuple[int, int, str] | None, tuple[bool, int], tuple[bool, int]]:
+    database_fingerprint = None
+    if _DEV_DB_PATH.exists():
+        stat = _DEV_DB_PATH.stat()
+        digest = hashlib.sha256(_DEV_DB_PATH.read_bytes()).hexdigest()
+        database_fingerprint = (stat.st_mtime_ns, stat.st_size, digest)
+    return (
+        database_fingerprint,
+        _sidecar_fingerprint(Path(f"{_DEV_DB_PATH}-wal")),
+        _sidecar_fingerprint(Path(f"{_DEV_DB_PATH}-shm")),
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)

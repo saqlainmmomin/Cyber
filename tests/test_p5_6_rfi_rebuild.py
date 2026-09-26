@@ -9,6 +9,7 @@ import io
 import json
 import re
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1005,16 +1006,16 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
     )
     assert model_check.returncode == 1 and not model_check.stdout
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/models", "alembic",
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic",
          "app/services/approved_report.py", "app/utils/pdf_export.py",
          "app/services/scope_profiler.py", "app/services/retention.py",
          # P6-0e: DPDPA readiness paragraph (pdf_export) and breach-intimation reason (scope_profiler).
          ":!app/utils/pdf_export.py", ":!app/services/scope_profiler.py"],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert not protected.stdout.strip()
     heads = subprocess.run(
-        [str(REPO_ROOT / ".venv/bin/alembic"), "heads"],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        [sys.executable, "-m", "alembic", "heads"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert heads.returncode == 0 and "8b2d5f7e1c34" in heads.stdout

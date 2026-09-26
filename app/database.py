@@ -1,10 +1,13 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine, event
-from sqlalchemy.engine import make_url
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
+
+
+SQLITE_BUSY_TIMEOUT_MS = 30_000
 
 
 def ensure_sqlite_parent_dir(url: str) -> None:
@@ -25,19 +28,30 @@ def ensure_sqlite_parent_dir(url: str) -> None:
     Path(database).parent.mkdir(parents=True, exist_ok=True)
 
 
-ensure_sqlite_parent_dir(settings.database_url)
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False},
-)
-SessionLocal = sessionmaker(bind=engine)
-
-
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
+def _configure_sqlite_connection(dbapi_connection, connection_record) -> None:
+    """Per-connection pragmas. WAL + busy_timeout only for file-backed databases."""
     cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    try:
+        cursor.execute("PRAGMA foreign_keys=ON")
+        main_file = next(
+            row[2] for row in cursor.execute("PRAGMA database_list") if row[1] == "main"
+        )
+        if main_file:  # "" for in-memory and temporary databases
+            cursor.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS}")
+            cursor.execute("PRAGMA journal_mode=WAL")
+    finally:
+        cursor.close()
+
+
+def create_app_engine(url: str) -> Engine:
+    engine = create_engine(url, connect_args={"check_same_thread": False})
+    event.listen(engine, "connect", _configure_sqlite_connection)
+    return engine
+
+
+ensure_sqlite_parent_dir(settings.database_url)
+engine = create_app_engine(settings.database_url)
+SessionLocal = sessionmaker(bind=engine)
 
 
 class Base(DeclarativeBase):

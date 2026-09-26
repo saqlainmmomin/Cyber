@@ -10,13 +10,13 @@ description: Run the CyberAssess app locally to see or verify a change working. 
 
 ## Setup (first run)
 ```bash
-cp .env.example .env   # add ANTHROPIC_API_KEY
-pip install -r requirements.txt
+cp .env.example .env   # add OPENROUTER_KEY
+pip install -r requirements-dev.txt
 ```
 
 ## Run
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --host 127.0.0.1 --reload
 ```
 Web portal is Jinja2 + HTMX served by the same FastAPI app.
 

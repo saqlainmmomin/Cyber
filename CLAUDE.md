@@ -17,8 +17,8 @@ All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-0
 ## Running
 ```bash
 cp .env.example .env   # add OPENROUTER_KEY
-pip install -r requirements.txt
-uvicorn app.main:app --reload   # needs Python 3.13, see gotchas
+pip install -r requirements-dev.txt
+uvicorn app.main:app --host 127.0.0.1 --reload   # needs Python 3.13, see gotchas
 pytest
 ```
 

@@ -6,6 +6,7 @@ import copy
 import inspect
 import json
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -850,7 +851,7 @@ def test_p5_1_structural_guards_and_signatures():
     assert "'" not in gate_partial
 
     assert subprocess.run(
-        ["alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+        [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout.strip() == "8b2d5f7e1c34 (head)"
     parameter_names = list(inspect.signature(analysis._run_multi_framework_analysis).parameters)
     assert parameter_names == [
