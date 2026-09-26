@@ -314,7 +314,16 @@ def _collect_framework_evidence(
     documents: list[dict],
     desk_review_data: dict | None,
 ) -> dict | None:
-    """Collect desk-review or extracted evidence independently per framework."""
+    """Collect desk-review and extracted evidence independently per framework.
+
+    Curated DPDPA keeps its skip-when-desk-review-found-evidence rule. A
+    registry framework always runs extraction: its judge prompt drops the raw
+    documents once any quote exists, so desk-review quotes alone (sparse,
+    covering a fraction of the controls) would leave every other control with
+    no document text at all. Desk-review quotes are merged in first, and are
+    what survives if extraction fails.
+    """
+    from app.frameworks.prompts import CURATED_PROMPT_FRAMEWORK_ID
     from app.frameworks.registry import FrameworkRegistry
 
     if not documents:
@@ -330,7 +339,7 @@ def _collect_framework_evidence(
             for control in FrameworkRegistry.get(framework_id).all_controls()
         }
         reused = {
-            requirement_id: quotes
+            requirement_id: list(quotes)
             for requirement_id, quotes in desk_review_evidence.items()
             if requirement_id in control_ids
         }
@@ -341,7 +350,8 @@ def _collect_framework_evidence(
                 framework_id,
                 len(reused),
             )
-            continue
+            if framework_id == CURATED_PROMPT_FRAMEWORK_ID:
+                continue
 
         framework_findings = [
             finding
@@ -369,7 +379,10 @@ def _collect_framework_evidence(
             logger.warning("Evidence extraction failed for %s: %s", framework_id, error)
             continue
         if extracted:
-            evidence_by_framework[framework_id] = extracted
+            merged = evidence_by_framework.setdefault(framework_id, {})
+            for requirement_id, quotes in extracted.items():
+                existing = merged.setdefault(requirement_id, [])
+                existing.extend(quote for quote in quotes if quote not in existing)
 
     for framework_id in framework_ids:
         if framework_id in evidence_by_framework:
