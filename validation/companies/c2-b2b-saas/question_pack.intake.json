@@ -169,15 +169,15 @@
       {
         "description": "Organization obtains consent that is free, specific, informed, unconditional, and unambiguous with a clear affirmative action. Consent request is presented in clear, plain language with specified purpose.",
         "domain": "chapter_2",
-        "reference": "Section 6(1)-(2)",
+        "reference": "Section 6(1), 6(3)",
         "requirement_id": "CH2.CONSENT.1",
         "section": "consent",
         "title": "Lawful basis for processing with free, specific, informed consent"
       },
       {
-        "description": "When personal data is processed for multiple purposes, consent is obtained separately for each purpose, allowing the Data Principal to give or withhold consent for each.",
+        "description": "When personal data is processed for multiple purposes, the consent request itemises each purpose separately, and the organization records consent against each specific purpose (not one blanket consent). The controls the Data Principal uses to choose purposes are assessed under CM.GRANULAR.1.",
         "domain": "chapter_2",
-        "reference": "Section 6(3)",
+        "reference": "Section 6(1)",
         "requirement_id": "CH2.CONSENT.2",
         "section": "consent",
         "title": "Itemised consent for multiple purposes"
@@ -185,7 +185,7 @@
       {
         "description": "Data Principals can withdraw consent with the same ease as giving it. Organization ceases processing upon withdrawal unless retention is required by law.",
         "domain": "chapter_2",
-        "reference": "Section 6(6)-(7)",
+        "reference": "Section 6(4), 6(6)",
         "requirement_id": "CH2.CONSENT.3",
         "section": "consent",
         "title": "Consent withdrawal mechanism"
@@ -207,12 +207,12 @@
         "title": "Verifiable parental consent for children's data"
       },
       {
-        "description": "A clear notice is given to the Data Principal at or before the time of collection, describing the personal data being collected and the purpose of processing.",
+        "description": "Every request for consent is accompanied or preceded by a notice that states the personal data and the purpose of processing, how the Data Principal can withdraw consent and exercise her rights, and how she can complain to the Board. The notice is presented so that it is understandable on its own, independently of any other information the organization has made available (DPDP Rules 2025 r.3(a)); r.3 also sets its other content and form.",
         "domain": "chapter_2",
-        "reference": "Section 5(1)",
+        "reference": "Section 5(1); DPDP Rules 2025 r.3",
         "requirement_id": "CH2.NOTICE.1",
         "section": "notice",
-        "title": "Notice at or before collection of personal data"
+        "title": "Notice accompanying the consent request"
       },
       {
         "description": "For personal data collected before the Act, a notice is provided as soon as reasonably practicable describing the data held and the processing purposes.",
@@ -225,7 +225,7 @@
       {
         "description": "The notice includes contact information for the Data Protection Officer or person responsible for addressing Data Principal queries.",
         "domain": "chapter_2",
-        "reference": "Section 5(1)",
+        "reference": "Section 6(3), 8(9); DPDP Rules 2025 r.9",
         "requirement_id": "CH2.NOTICE.3",
         "section": "notice",
         "title": "Notice contains contact details of DPO or grievance officer"
@@ -249,7 +249,7 @@
       {
         "description": "Only personal data that is necessary for the specified purpose is collected. No excessive or irrelevant data is gathered.",
         "domain": "chapter_2",
-        "reference": "Section 4(1)",
+        "reference": "Section 6(1)",
         "requirement_id": "CH2.MINIMIZE.1",
         "section": "data_minimization",
         "title": "Collection limited to what is necessary"
@@ -263,25 +263,25 @@
         "title": "Data retention limited to purpose fulfilment"
       },
       {
-        "description": "Organization maintains documented retention schedules and automated or systematic procedures for erasing personal data upon purpose completion or consent withdrawal.",
+        "description": "Organization maintains documented retention schedules and automated or systematic procedures for erasing personal data upon purpose completion or consent withdrawal. The schedules also retain personal data, associated traffic data and other logs of processing for at least one year from the date of processing, for the purposes specified in the Seventh Schedule to the DPDP Rules 2025, before erasure (r.8(3)).",
         "domain": "chapter_2",
-        "reference": "Section 8(7)",
+        "reference": "Section 8(7); DPDP Rules 2025 r.8(3)",
         "requirement_id": "CH2.MINIMIZE.3",
         "section": "data_minimization",
         "title": "Retention schedule and deletion procedures"
       },
       {
-        "description": "Organization makes reasonable efforts to ensure that personal data is complete, accurate, and not misleading, especially where data is used for decisions affecting the Data Principal or shared with other Fiduciaries.",
+        "description": "Where personal data is likely to be used to make a decision that affects the Data Principal, or to be disclosed to another Data Fiduciary, the organization ensures that the data is complete, accurate and consistent.",
         "domain": "chapter_2",
         "reference": "Section 8(3)",
         "requirement_id": "CH2.ACCURACY.1",
         "section": "accuracy",
-        "title": "Reasonable efforts to ensure data accuracy"
+        "title": "Data accuracy ensured for decision-making and onward disclosure"
       },
       {
         "description": "Organization implements reasonable security safeguards to protect personal data, including prevention of personal data breaches. This includes technical and organizational measures.",
         "domain": "chapter_2",
-        "reference": "Section 8(4)",
+        "reference": "Section 8(5)",
         "requirement_id": "CH2.SECURITY.1",
         "section": "security",
         "title": "Reasonable security safeguards implemented"
@@ -289,7 +289,7 @@
       {
         "description": "Personal data is encrypted at rest and in transit. Access controls ensure only authorized personnel can access personal data based on the principle of least privilege.",
         "domain": "chapter_2",
-        "reference": "Section 8(4)",
+        "reference": "Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b)",
         "requirement_id": "CH2.SECURITY.2",
         "section": "security",
         "title": "Encryption and access controls"
@@ -319,9 +319,9 @@
         "title": "Mechanism for correction and completion of data"
       },
       {
-        "description": "Data Principals can request erasure of personal data that is no longer necessary for the purpose for which it was collected.",
+        "description": "Data Principals can request erasure of personal data they consented to, and the organization erases it on request unless retention is necessary for the specified purpose or for compliance with law.",
         "domain": "chapter_3",
-        "reference": "Section 12(2)",
+        "reference": "Section 12(3)",
         "requirement_id": "CH3.CORRECT.2",
         "section": "right_to_correction",
         "title": "Mechanism for erasure of personal data"
@@ -353,7 +353,7 @@
       {
         "description": "Organization does not undertake tracking, behavioural monitoring, or targeted advertising directed at children.",
         "domain": "chapter_4",
-        "reference": "Section 9(2)",
+        "reference": "Section 9(3)",
         "requirement_id": "CH4.CHILD.1",
         "section": "children_data",
         "title": "No tracking or behavioural monitoring of children"
@@ -361,7 +361,7 @@
       {
         "description": "Processing of children's personal data does not have a detrimental effect on their well-being.",
         "domain": "chapter_4",
-        "reference": "Section 9(3)",
+        "reference": "Section 9(2)",
         "requirement_id": "CH4.CHILD.2",
         "section": "children_data",
         "title": "No processing detrimental to child's well-being"
@@ -393,7 +393,7 @@
       {
         "description": "Periodic Data Protection Impact Assessments are conducted to evaluate processing activities and associated risks to Data Principals.",
         "domain": "chapter_4",
-        "reference": "Section 10(2)(c)",
+        "reference": "Section 10(2)(c)(i)",
         "requirement_id": "CH4.SDF.3",
         "section": "significant_data_fiduciary",
         "title": "Data Protection Impact Assessment (DPIA) conducted"
@@ -401,7 +401,7 @@
       {
         "description": "Periodic audits of data processing activities and compliance posture are conducted as prescribed.",
         "domain": "chapter_4",
-        "reference": "Section 10(2)(d)",
+        "reference": "Section 10(2)(c)(ii)",
         "requirement_id": "CH4.SDF.4",
         "section": "significant_data_fiduciary",
         "title": "Periodic audit completed"
@@ -415,17 +415,17 @@
         "title": "Consent records maintained"
       },
       {
-        "description": "Organization has a process to refresh or re-obtain consent when purposes change or after a reasonable period.",
+        "description": "Before personal data is processed for a new or changed purpose, the organization obtains fresh consent for that purpose, because consent is specific to the specified purpose. Existing consent is not relied on for the new purpose.",
         "domain": "consent_management",
-        "reference": "Section 6",
+        "reference": "Section 6(1)",
         "requirement_id": "CM.RECORDS.2",
         "section": "consent_records",
-        "title": "Consent refresh and re-validation process"
+        "title": "Fresh consent for a new or changed purpose"
       },
       {
-        "description": "Data Principals can provide or withhold consent at a granular level (per-purpose) rather than being forced into all-or-nothing consent.",
+        "description": "The Data Principal has working controls to give or withhold consent per purpose (for example, per-purpose toggles), and partial consent is actually possible rather than all-or-nothing. How the consent request itemises purposes and how consent is recorded per purpose are assessed under CH2.CONSENT.2.",
         "domain": "consent_management",
-        "reference": "Section 6(3)",
+        "reference": "Section 6(1)",
         "requirement_id": "CM.GRANULAR.1",
         "section": "granular_consent",
         "title": "Granular consent options available"
@@ -447,12 +447,12 @@
         "title": "Data transfers only to non-restricted jurisdictions"
       },
       {
-        "description": "Appropriate contractual or legal safeguards are in place for data transferred outside India, including obligations on the receiving party.",
+        "description": "Personal data is not transferred for processing to any country or territory outside India that the Central Government has restricted by notification under s.16(1), and the organization tracks such notifications. Where a sectoral law in force in India provides a higher degree of protection for, or restriction on, transfer outside India (s.16(2)), that law is complied with.",
         "domain": "cross_border",
         "reference": "Section 16",
         "requirement_id": "CB.TRANSFER.2",
         "section": "transfer_controls",
-        "title": "Contractual safeguards for cross-border transfers"
+        "title": "Transfers comply with s.16 restrictions and stricter sectoral law"
       },
       {
         "description": "Where the Central Government mandates that certain categories of personal data must be stored in India, the organization complies with such localisation requirements.",
@@ -465,7 +465,7 @@
       {
         "description": "Organization has procedures to notify the Data Protection Board of India of any personal data breach in the prescribed form and manner.",
         "domain": "breach_notification",
-        "reference": "Section 8(6)",
+        "reference": "Section 8(6); DPDP Rules 2025 r.7(2)",
         "requirement_id": "BN.NOTIFY.1",
         "section": "incident_management",
         "title": "Breach notification to Data Protection Board"
@@ -473,7 +473,7 @@
       {
         "description": "Organization has procedures to notify affected Data Principals of a personal data breach in the prescribed form and manner.",
         "domain": "breach_notification",
-        "reference": "Section 8(6)",
+        "reference": "Section 8(6); DPDP Rules 2025 r.7(1)",
         "requirement_id": "BN.NOTIFY.2",
         "section": "incident_management",
         "title": "Breach notification to affected Data Principals"
@@ -1358,6 +1358,25 @@
           }
         ],
         "text": "Do you use third-party vendors or cloud services that process personal data on your behalf?"
+      },
+      {
+        "help_text": "A s.17(3) notification can exempt named Data Fiduciaries or classes of them from s.5, s.8(3), s.8(7), s.10 and s.11. Answering yes only proposes the related requirements as likely not applicable; the consultant confirms each one against the notification. Nothing is excluded automatically.",
+        "id": "SCP.6",
+        "options": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          },
+          {
+            "label": "Not sure",
+            "value": "unsure"
+          }
+        ],
+        "text": "Has your organisation been notified by the Central Government under s.17(3) of the DPDP Act (for example, as a startup exempted from certain provisions)?"
       }
     ],
     "iso27001": [

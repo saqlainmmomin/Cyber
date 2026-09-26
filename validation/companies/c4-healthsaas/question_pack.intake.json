@@ -175,7 +175,7 @@
         "title": "Organizational mission understanding"
       },
       {
-        "description": "Internal and external stakeholders are determined, and their needs and expectations regarding cybersecurity risk management are understood.",
+        "description": "Internal and external stakeholders are understood, and their needs and expectations about cybersecurity risk management are understood and taken into account.",
         "domain": "govern",
         "reference": "GV.OC-02",
         "requirement_id": "NIST.GV.OC.02",
@@ -191,7 +191,7 @@
         "title": "Legal and regulatory requirements"
       },
       {
-        "description": "Critical objectives, capabilities, and services that stakeholders depend on or expect are determined and communicated.",
+        "description": "Critical objectives, capabilities and services that external stakeholders rely on or expect from the organization are understood and communicated.",
         "domain": "govern",
         "reference": "GV.OC-04",
         "requirement_id": "NIST.GV.OC.04",
@@ -199,12 +199,12 @@
         "title": "Critical objectives and dependencies"
       },
       {
-        "description": "Outcomes, capabilities, and services that the organization depends on are determined and prioritized.",
+        "description": "The outcomes, capabilities and services that the organization itself relies on are understood and communicated.",
         "domain": "govern",
         "reference": "GV.OC-05",
         "requirement_id": "NIST.GV.OC.05",
         "section": "gv_oc",
-        "title": "Outcomes and priorities"
+        "title": "Organizational dependencies"
       },
       {
         "description": "Risk management objectives are established and agreed to by organizational stakeholders.",
@@ -239,7 +239,31 @@
         "title": "Strategic risk direction"
       },
       {
-        "description": "Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture of cybersecurity risk awareness.",
+        "description": "Defined channels exist across the organization for raising and escalating cybersecurity risk, including risk that originates with suppliers and other third parties.",
+        "domain": "govern",
+        "reference": "GV.RM-05",
+        "requirement_id": "NIST.GV.RM.05",
+        "section": "gv_rm",
+        "title": "Risk communication lines"
+      },
+      {
+        "description": "Cybersecurity risks are calculated, recorded, categorized and prioritized using one documented method that is shared across the organization.",
+        "domain": "govern",
+        "reference": "GV.RM-06",
+        "requirement_id": "NIST.GV.RM.06",
+        "section": "gv_rm",
+        "title": "Standardized risk method"
+      },
+      {
+        "description": "Opportunities (positive risks) are described and brought into the organization's cybersecurity risk discussions alongside threats.",
+        "domain": "govern",
+        "reference": "GV.RM-07",
+        "requirement_id": "NIST.GV.RM.07",
+        "section": "gv_rm",
+        "title": "Positive risk consideration"
+      },
+      {
+        "description": "Leaders own and answer for cybersecurity risk, and build a culture that is risk-aware, ethical and committed to continual improvement.",
         "domain": "govern",
         "reference": "GV.RR-01",
         "requirement_id": "NIST.GV.RR.01",
@@ -300,15 +324,15 @@
         "reference": "GV.OV-02",
         "requirement_id": "NIST.GV.OV.02",
         "section": "gv_ov",
-        "title": "Risk management performance"
+        "title": "Risk strategy coverage review"
       },
       {
-        "description": "Organizational cybersecurity risk management is improved based on lessons learned and assessments.",
+        "description": "The performance of organizational cybersecurity risk management is evaluated and reviewed to identify adjustments that are needed.",
         "domain": "govern",
         "reference": "GV.OV-03",
         "requirement_id": "NIST.GV.OV.03",
         "section": "gv_ov",
-        "title": "Organizational risk management adjustments"
+        "title": "Risk management performance evaluation"
       },
       {
         "description": "A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders.",
@@ -324,7 +348,7 @@
         "reference": "GV.SC-02",
         "requirement_id": "NIST.GV.SC.02",
         "section": "gv_sc",
-        "title": "Supplier cybersecurity requirements"
+        "title": "Supply chain roles and responsibilities"
       },
       {
         "description": "Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes.",
@@ -340,7 +364,7 @@
         "reference": "GV.SC-04",
         "requirement_id": "NIST.GV.SC.04",
         "section": "gv_sc",
-        "title": "Supplier assessment"
+        "title": "Supplier criticality prioritization"
       },
       {
         "description": "Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties.",
@@ -349,6 +373,46 @@
         "requirement_id": "NIST.GV.SC.05",
         "section": "gv_sc",
         "title": "Supply chain requirements in contracts"
+      },
+      {
+        "description": "Before a formal relationship with a supplier or other third party begins, the organization plans for it and performs due diligence to reduce the associated risk.",
+        "domain": "govern",
+        "reference": "GV.SC-06",
+        "requirement_id": "NIST.GV.SC.06",
+        "section": "gv_sc",
+        "title": "Supplier pre-engagement due diligence"
+      },
+      {
+        "description": "Risks from each supplier, its products and services, and other third parties are identified, recorded, prioritized, assessed, treated and monitored for as long as the relationship lasts.",
+        "domain": "govern",
+        "reference": "GV.SC-07",
+        "requirement_id": "NIST.GV.SC.07",
+        "section": "gv_sc",
+        "title": "Supplier risk management over the relationship"
+      },
+      {
+        "description": "Relevant suppliers and other third parties take part in the organization's incident planning, response and recovery activities.",
+        "domain": "govern",
+        "reference": "GV.SC-08",
+        "requirement_id": "NIST.GV.SC.08",
+        "section": "gv_sc",
+        "title": "Suppliers in incident planning and recovery"
+      },
+      {
+        "description": "Supply chain security practices form part of the cybersecurity and enterprise risk programs, and how well they perform is monitored across the life cycle of technology products and services.",
+        "domain": "govern",
+        "reference": "GV.SC-09",
+        "requirement_id": "NIST.GV.SC.09",
+        "section": "gv_sc",
+        "title": "Supply chain security across the life cycle"
+      },
+      {
+        "description": "Supply chain risk management plans cover what must happen when a partnership or service agreement ends.",
+        "domain": "govern",
+        "reference": "GV.SC-10",
+        "requirement_id": "NIST.GV.SC.10",
+        "section": "gv_sc",
+        "title": "Supplier exit provisions"
       },
       {
         "description": "Inventories of hardware managed by the organization are maintained.",
@@ -404,7 +468,7 @@
         "reference": "ID.AM-08",
         "requirement_id": "NIST.ID.AM.08",
         "section": "id_am",
-        "title": "Systems and services in scope"
+        "title": "Asset life-cycle management"
       },
       {
         "description": "Vulnerabilities in assets are identified, validated, and recorded.",
@@ -455,6 +519,38 @@
         "title": "Risk response selection"
       },
       {
+        "description": "Changes and exceptions are controlled, evaluated for their effect on risk, recorded and tracked to closure.",
+        "domain": "identify",
+        "reference": "ID.RA-07",
+        "requirement_id": "NIST.ID.RA.07",
+        "section": "id_ra",
+        "title": "Change and exception management"
+      },
+      {
+        "description": "Established processes exist to receive, analyze and respond to vulnerabilities reported to the organization.",
+        "domain": "identify",
+        "reference": "ID.RA-08",
+        "requirement_id": "NIST.ID.RA.08",
+        "section": "id_ra",
+        "title": "Vulnerability disclosure handling"
+      },
+      {
+        "description": "Hardware and software are checked for authenticity and integrity before they are acquired and put into use.",
+        "domain": "identify",
+        "reference": "ID.RA-09",
+        "requirement_id": "NIST.ID.RA.09",
+        "section": "id_ra",
+        "title": "Hardware and software integrity verification"
+      },
+      {
+        "description": "Suppliers judged critical are assessed before their products or services are acquired.",
+        "domain": "identify",
+        "reference": "ID.RA-10",
+        "requirement_id": "NIST.ID.RA.10",
+        "section": "id_ra",
+        "title": "Critical supplier pre-acquisition assessment"
+      },
+      {
         "description": "Improvements are identified from evaluations.",
         "domain": "identify",
         "reference": "ID.IM-01",
@@ -477,6 +573,14 @@
         "requirement_id": "NIST.ID.IM.03",
         "section": "id_im",
         "title": "Improvement from execution"
+      },
+      {
+        "description": "Incident response plans and other cybersecurity plans that affect operations exist and are communicated, kept current and improved.",
+        "domain": "identify",
+        "reference": "ID.IM-04",
+        "requirement_id": "NIST.ID.IM.04",
+        "section": "id_im",
+        "title": "Incident response and operational cyber plans"
       },
       {
         "description": "Identities and credentials for authorized users, services, and hardware are managed by the organization.",
@@ -540,7 +644,7 @@
         "reference": "PR.AT-02",
         "requirement_id": "NIST.PR.AT.02",
         "section": "pr_at",
-        "title": "Privileged user training"
+        "title": "Specialized role training"
       },
       {
         "description": "The confidentiality, integrity, and availability of data-at-rest are protected.",
@@ -575,7 +679,7 @@
         "title": "Backup management"
       },
       {
-        "description": "The configuration of network infrastructure is established, applied, and reviewed incorporating security principles.",
+        "description": "Configuration management practices are defined and applied across the organization's hardware, software and platforms.",
         "domain": "protect",
         "reference": "PR.PS-01",
         "requirement_id": "NIST.PR.PS.01",
@@ -636,7 +740,7 @@
         "reference": "PR.IR-02",
         "requirement_id": "NIST.PR.IR.02",
         "section": "pr_ir",
-        "title": "Technology asset protection"
+        "title": "Environmental threat protection"
       },
       {
         "description": "Mechanisms are implemented to achieve resilience requirements in normal and adverse situations.",
@@ -700,7 +804,7 @@
         "reference": "DE.AE-02",
         "requirement_id": "NIST.DE.AE.02",
         "section": "de_ae",
-        "title": "Event correlation"
+        "title": "Adverse event analysis"
       },
       {
         "description": "Information is correlated from multiple sources.",
@@ -708,7 +812,7 @@
         "reference": "DE.AE-03",
         "requirement_id": "NIST.DE.AE.03",
         "section": "de_ae",
-        "title": "Event aggregation"
+        "title": "Event correlation"
       },
       {
         "description": "The estimated impact and scope of adverse events are understood.",
@@ -724,7 +828,7 @@
         "reference": "DE.AE-06",
         "requirement_id": "NIST.DE.AE.06",
         "section": "de_ae",
-        "title": "Incident declaration"
+        "title": "Adverse event information distribution"
       },
       {
         "description": "Cyber threat intelligence and other contextual information are integrated into the analysis.",
@@ -740,7 +844,7 @@
         "reference": "DE.AE-08",
         "requirement_id": "NIST.DE.AE.08",
         "section": "de_ae",
-        "title": "Anomaly detection"
+        "title": "Incident declaration"
       },
       {
         "description": "The incident response plan is executed in coordination with relevant third parties once an incident is declared.",
@@ -756,7 +860,7 @@
         "reference": "RS.MA-02",
         "requirement_id": "NIST.RS.MA.02",
         "section": "rs_ma",
-        "title": "Incident triage and prioritization"
+        "title": "Incident triage and validation"
       },
       {
         "description": "Incidents are categorized and prioritized.",
@@ -780,7 +884,7 @@
         "reference": "RS.MA-05",
         "requirement_id": "NIST.RS.MA.05",
         "section": "rs_ma",
-        "title": "Incident criteria application"
+        "title": "Recovery initiation criteria"
       },
       {
         "description": "Analysis is performed to determine what has taken place during an incident and the root cause of the incident.",
@@ -804,7 +908,7 @@
         "reference": "RS.AN-07",
         "requirement_id": "NIST.RS.AN.07",
         "section": "rs_an",
-        "title": "Incident data collection and analysis"
+        "title": "Incident data collection and preservation"
       },
       {
         "description": "An incident's magnitude is estimated and validated.",
@@ -820,7 +924,7 @@
         "reference": "RS.CO-02",
         "requirement_id": "NIST.RS.CO.02",
         "section": "rs_co",
-        "title": "Internal stakeholder notification"
+        "title": "Stakeholder incident notification"
       },
       {
         "description": "Information is shared with designated internal and external stakeholders.",
@@ -829,14 +933,6 @@
         "requirement_id": "NIST.RS.CO.03",
         "section": "rs_co",
         "title": "Incident information sharing"
-      },
-      {
-        "description": "Incident information is shared with designees consistent with response plans and information sharing agreements.",
-        "domain": "respond",
-        "reference": "RS.CO-04",
-        "requirement_id": "NIST.RS.CO.04",
-        "section": "rs_co",
-        "title": "Voluntary incident information sharing"
       },
       {
         "description": "Incidents are contained.",
@@ -876,7 +972,7 @@
         "reference": "RC.RP-03",
         "requirement_id": "NIST.RC.RP.03",
         "section": "rc_rp",
-        "title": "Recovery verification"
+        "title": "Restoration asset integrity verification"
       },
       {
         "description": "Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms.",
