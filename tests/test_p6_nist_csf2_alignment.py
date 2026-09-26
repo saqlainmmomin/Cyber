@@ -429,8 +429,9 @@ def test_removed_control_remains_readable_in_legacy_rows(legacy_environment):
 def test_protected_surface_guard_uses_three_dot_diff():
     # P6-1d excludes: reasoning-off request prefs (llm_client, config comment) and
     # registry evidence extraction alongside desk-review reuse (claude_analyzer).
+    # P6-3a exclude: the new, dormant v2 grounding package (app/services/grounding).
     result = subprocess.run(
-        ["git", "diff", "--stat", "main...HEAD", "--", "app/dpdpa", "tests/fixtures", "tests/support", "app/frameworks/schema.py", "app/frameworks/prompts.py", "app/frameworks/batching.py", "app/frameworks/compat.py", "app/frameworks/registry.py", "app/services", "app/routers", "app/models", "alembic", "app/config.py", ":(exclude)app/config.py", ":(exclude)app/services/claude_analyzer.py", ":(exclude)app/services/llm_client.py", "app/frameworks/definitions", ":(exclude)app/frameworks/definitions/nist_csf.py", "app/frameworks/criteria/dpdpa_draft.py", "app/frameworks/criteria/iso27001_draft.py", "tasks/criteria-review/dpdpa-criteria-v1.csv", "tasks/criteria-review/iso27001-criteria-v1.csv", "tasks/criteria-review/iso27001-descriptions-v1.csv"],
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/dpdpa", "tests/fixtures", "tests/support", "app/frameworks/schema.py", "app/frameworks/prompts.py", "app/frameworks/batching.py", "app/frameworks/compat.py", "app/frameworks/registry.py", "app/services", "app/routers", "app/models", "alembic", "app/config.py", ":(exclude)app/config.py", ":(exclude)app/services/claude_analyzer.py", ":(exclude)app/services/llm_client.py", ":(exclude)app/services/grounding", "app/frameworks/definitions", ":(exclude)app/frameworks/definitions/nist_csf.py", "app/frameworks/criteria/dpdpa_draft.py", "app/frameworks/criteria/iso27001_draft.py", "tasks/criteria-review/dpdpa-criteria-v1.csv", "tasks/criteria-review/iso27001-criteria-v1.csv", "tasks/criteria-review/iso27001-descriptions-v1.csv"],
         cwd=ROOT, capture_output=True, text=True, check=True,
     )
     assert result.stdout == ""
