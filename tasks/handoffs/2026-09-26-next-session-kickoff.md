@@ -215,7 +215,7 @@ Handoff: `tasks/handoffs/2026-09-26-p6-0c-dev-hygiene.md`. An adversarial review
 - **Live smoke:** `complete`, 42/42 calls `stop`, 162 verified claims, `grounding_failure_rate` 0.076. The injection line was never quoted.
 
 ### Needs Saqlain
-- Answer Q1–Q6 in the P6-3 handoff (#64 is merged).
+- ~~Answer Q1–Q6 in the P6-3 handoff~~ — answered 2026-09-26.
 - Confirm the committed c1–c3 packs are intended. Then delete the stale untracked `validation/companies/c*` copies, the `*_backup` dirs and the `fix_*.py`/`super_fix.py` scripts in the primary checkout.
 - Update c4's answer files for NIST CSF 2.0.
 - Still pending from before: criteria review CSV (P6-2b), ISO clause titles, Track 4 security.
