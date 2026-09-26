@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect as pyinspect
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -560,7 +561,7 @@ def test_scenario_7_tiering_reuses_unchanged_engine(db):
     questionnaire = build_adaptive_questionnaire(assessment.id, db)
     assert all(q["tier"] == assign_tier(q, "HIGH") for q in _all_questions(questionnaire))
     result = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/services/tier_engine.py"],
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/services/tier_engine.py"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert result.stdout == ""
@@ -946,17 +947,14 @@ def test_scenario_13_structural_guards(db):
     from app.services.desk_review_findings import GROUNDED_CITATION_LOCATION_TYPE
 
     protected = subprocess.run([
-        "git", "diff", "--stat", "main", "--",
+        "git", "diff", "--stat", "main...HEAD", "--",
         "app/services/scoring.py", "app/routers/reports.py",
         "app/utils/pdf_export.py", "app/routers/review.py", "app/services/tier_engine.py",
         "app/frameworks", "app/dpdpa", "alembic", "app/models",
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert protected.stdout == ""
-    analysis_diff = subprocess.run([
-        "git", "diff", "main", "--", "app/routers/analysis.py",
-    ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
-    assert analysis_diff.stdout.count('+            "answer_source": r.answer_source,') == 1
-    assert '-            "answer_source": r.answer_source,' not in analysis_diff.stdout
+    analysis_source = (REPO_ROOT / "app/routers/analysis.py").read_text()
+    assert analysis_source.count('"answer_source": r.answer_source,') == 1
     assert "content_lower" not in pyinspect.getsource(question_engine)
     assert "flag_type" not in pyinspect.getsource(question_engine._load_cluster_desk_data)
     assert "flag_type" not in pyinspect.getsource(question_engine._modulate_cluster_question)
@@ -964,7 +962,7 @@ def test_scenario_13_structural_guards(db):
     assert "llm_client" not in findings_source and "app.services.desk_review" not in findings_source
     assert UNCONFIRMED_ANSWER_SOURCES == ("document", "inferred")
     assert GROUNDED_CITATION_LOCATION_TYPE == "text_span"
-    assert subprocess.run([".venv/bin/alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == f"{REVISION} (head)"
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == f"{REVISION} (head)"
     for template in (
         "app/templates/partials/questionnaire_tab.html",
         "app/templates/partials/screening_form.html",

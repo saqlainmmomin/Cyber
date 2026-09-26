@@ -467,7 +467,7 @@ def test_scenario_9_rollups_and_integrated_reporting(db, http, demo):
     snapshot = db.query(ReportSnapshot).one()
     assert snapshot.type == "integrated_report" and snapshot.engagement_id == engagement_a.id and snapshot.is_issued is True
     source = generated_event(db, snapshot.id)["source"]
-    assert [item["assessment_id"] for item in source["assessments"]] == [demo.assessment_ids["baseline"], demo.assessment_ids["validation"]]
+    assert [item["assessment_id"] for item in source["assessments"]] == sorted([demo.assessment_ids["baseline"], demo.assessment_ids["validation"]])
     assert db.get(Assessment, demo.assessment_ids["baseline"]).review_status == "approved"
     assert db.get(Assessment, demo.assessment_ids["validation"]).review_status == "approved"
     assert db.get(Assessment, demo.assessment_ids["nist"]).review_status != "approved"

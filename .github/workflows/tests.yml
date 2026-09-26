@@ -1,0 +1,47 @@
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # guard tests run `git diff main...HEAD` and `git merge-base`
+      - name: Provide a local main ref for guard tests
+        run: |
+          git show-ref --verify --quiet refs/heads/main || git branch main origin/main
+          git rev-parse main HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run tests
+        env:
+          OPENROUTER_KEY: ""
+          OPENROUTER_BASE_URL: "http://127.0.0.1:9/api/v1"   # any unstubbed LLM call fails fast
+          HTTP_PROXY: "http://127.0.0.1:9"
+          HTTPS_PROXY: "http://127.0.0.1:9"
+          NO_PROXY: "localhost,127.0.0.1,testserver"
+        run: python -m pytest -q
+      - name: Suite must not create the developer database
+        run: test ! -e data/dpdpa.db

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import shutil
+import sqlite3
 import sys
 
 if __package__ in {None, ""}:
@@ -52,6 +53,20 @@ def _copy_database_for_safety(db_path: Path, safety_db: Path) -> None:
     if partial_db.stat().st_size != db_path.stat().st_size:
         raise RuntimeError("Pre-restore database safety copy size does not match the live database")
     partial_db.replace(safety_db)
+
+
+def _checkpoint_wal(db_path: Path) -> None:
+    connection = sqlite3.connect(db_path)
+    try:
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    finally:
+        connection.close()
+
+
+def _assert_wal_empty(db_path: Path) -> None:
+    wal_path = Path(f"{db_path}-wal")
+    if wal_path.exists() and wal_path.stat().st_size > 0:
+        raise RuntimeError("Live database has an active write-ahead log; stop the app and retry the restore")
 
 
 def _copy_uploads_for_safety(upload_dir: Path, safety_uploads: Path) -> None:
@@ -130,6 +145,10 @@ def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: 
         if answer.lower() not in {"y", "yes"}:
             raise RuntimeError("Restore cancelled")
 
+    if db_path.exists():
+        _checkpoint_wal(db_path)
+        _assert_wal_empty(db_path)
+
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     safety_dir = backup_dir.parent / f"pre-restore-{timestamp}"
     db_live_existed = db_path.exists()
@@ -152,6 +171,10 @@ def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: 
             _copy_database_for_safety(db_path, safety_db)
             db_safety_copy_verified = True
             db_path.unlink()
+            for suffix in ("-wal", "-shm"):
+                sidecar_path = Path(f"{db_path}{suffix}")
+                if sidecar_path.exists():
+                    sidecar_path.unlink()
             db_moved_aside = True
         if upload_live_existed:
             safety_uploads = safety_dir / "uploads"

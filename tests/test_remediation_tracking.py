@@ -919,8 +919,9 @@ def test_scenario_10_engagement_rollup_and_tracker_page(db, http, gate, monkeypa
 
     a_open = a_rows[0][1]
     a_closed = a_rows[1][1]
+    today = datetime.now(timezone.utc).date()
     a_open.owner = "Asha"
-    a_open.target_date = datetime.combine(date.today() - timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+    a_open.target_date = datetime.combine(today - timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
     db.commit()
     a_extra_response = http.post(
         f"/api/assessments/{a.id}/findings/{a_rows[0][0].id}/actions",
@@ -934,7 +935,7 @@ def test_scenario_10_engagement_rollup_and_tracker_page(db, http, gate, monkeypa
     a_verified = db.query(Action).filter(Action.finding_id == a_rows[1][0].id).one()
     b_open = b_rows[0][1]
     b_open.owner = "Asha"
-    b_open.target_date = datetime.combine(date.today() + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+    b_open.target_date = datetime.combine(today + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
     db.commit()
     b_extra_response = http.post(
         f"/api/assessments/{b.id}/findings/{b_rows[0][0].id}/actions",
@@ -946,7 +947,6 @@ def test_scenario_10_engagement_rollup_and_tracker_page(db, http, gate, monkeypa
     b_verified.owner = "Asha"
     db.commit()
 
-    today = date(2026, 9, 24)
     rollup = remediation_rollup.engagement_rollup(db, engagement, today=today)
     assert rollup.counts == {
         "open": 2,
