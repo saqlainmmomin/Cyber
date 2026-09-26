@@ -182,7 +182,7 @@ Also update `tasks/todo.md` and the auto-memory project status.
 |---|---|---|
 | [#62](https://github.com/saqlainmmomin/Cyber/pull/62) | P6-0c dev hygiene: CI runs pytest on 3.13 for every PR, `.python-version` and `requirements-dev.txt`, SQLite WAL with `busy_timeout`, CORS middleware removed, run docs bound to 127.0.0.1, the 5 known-failing tests fixed | Merged. CI green. Suite 754 passed, 0 failed, and `data/dpdpa.db` is no longer created. |
 | [#63](https://github.com/saqlainmmomin/Cyber/pull/63) | P6-1d: `reasoning: {enabled: false}` on every LLM call; registry frameworks always run evidence extraction and merge with desk-review quotes; a failed extraction falls back to the documents | Merged. CI green. Suite 764 passed. |
-| [#64](https://github.com/saqlainmmomin/Cyber/pull/64) | P6-3a: the v2 grounding core, Stages 0–1, dormant (`app/services/grounding/`) | **Open. Needs Saqlain's review and merge.** Suite 886 passed, 0 failed. |
+| [#64](https://github.com/saqlainmmomin/Cyber/pull/64) | P6-3a: the v2 grounding core, Stages 0–1, dormant (`app/services/grounding/`) | Merged. Suite 886 passed, 0 failed. |
 
 ### (1) Evidence extraction and the context `extract` failure
 - **Root cause of the missing extraction:** `_collect_framework_evidence` skipped extraction whenever desk review produced at least one quote. Once evidence exists, the batched judge prompt drops the documents, so about 65 ISO controls saw no document text.
@@ -215,7 +215,7 @@ Handoff: `tasks/handoffs/2026-09-26-p6-0c-dev-hygiene.md`. An adversarial review
 - **Live smoke:** `complete`, 42/42 calls `stop`, 162 verified claims, `grounding_failure_rate` 0.076. The injection line was never quoted.
 
 ### Needs Saqlain
-- Review and merge #64, and answer Q1–Q6 in the P6-3 handoff.
+- Answer Q1–Q6 in the P6-3 handoff (#64 is merged).
 - Confirm the committed c1–c3 packs are intended. Then delete the stale untracked `validation/companies/c*` copies, the `*_backup` dirs and the `fix_*.py`/`super_fix.py` scripts in the primary checkout.
 - Update c4's answer files for NIST CSF 2.0.
 - Still pending from before: criteria review CSV (P6-2b), ISO clause titles, Track 4 security.
