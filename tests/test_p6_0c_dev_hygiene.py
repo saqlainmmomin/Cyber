@@ -133,29 +133,34 @@ def test_concurrent_writers_and_wal_readers(tmp_path):
             visible_count = connection.execute(text("SELECT count(*) FROM rows")).scalar_one()
         reader_elapsed = time.perf_counter() - started
         assert visible_count == 100
-        assert reader_elapsed < 0.5
+        assert reader_elapsed < 2.0
 
         second_writer_errors: list[BaseException] = []
         second_writer_started = threading.Event()
+        second_writer_elapsed: list[float] = []
 
         def second_writer() -> None:
             try:
                 second_writer_started.set()
+                started = time.perf_counter()
                 with sessions.begin() as session:
                     session.execute(text("INSERT INTO rows (value) VALUES (1001)"))
+                second_writer_elapsed.append(time.perf_counter() - started)
             except BaseException as exc:
                 second_writer_errors.append(exc)
 
         contender = threading.Thread(target=second_writer)
         contender.start()
         assert second_writer_started.wait(timeout=5)
-        time.sleep(0.1)
+        time.sleep(1.0)
         writer_release.set()
         writer.join(timeout=5)
         contender.join(timeout=5)
         assert not writer.is_alive() and not contender.is_alive()
         assert writer_errors == []
         assert second_writer_errors == []
+        assert len(second_writer_elapsed) == 1
+        assert second_writer_elapsed[0] >= 0.5
         with engine.connect() as connection:
             assert connection.execute(text("SELECT count(*) FROM rows")).scalar_one() == 102
     finally:

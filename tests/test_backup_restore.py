@@ -229,3 +229,16 @@ def test_restore_rejects_active_wal_before_creating_safety_copy(tmp_path, monkey
     assert live_db.read_bytes() == before_db
     assert Path(f"{live_db}-wal").read_bytes() == before_wal
     assert list(tmp_path.glob("pre-restore-*")) == []
+
+
+def test_restore_allows_corrupt_live_database_without_wal_and_copies_raw_bytes(tmp_path):
+    live_db = tmp_path / "live.db"
+    live_db.write_bytes(b"garbage bytes")
+    backup_source = tmp_path / "backup-source.db"
+    _seed_database(backup_source)
+    backup_dir = create_backup(backup_source, tmp_path / "backup-uploads", tmp_path / "backups")
+
+    safety_dir = restore_backup(backup_dir, live_db, tmp_path / "uploads", force=True)
+
+    assert _company_name(live_db) == "Backup Co"
+    assert (safety_dir / live_db.name).read_bytes() == b"garbage bytes"

@@ -56,11 +56,14 @@ def _copy_database_for_safety(db_path: Path, safety_db: Path) -> None:
 
 
 def _checkpoint_wal(db_path: Path) -> None:
-    connection = sqlite3.connect(db_path)
     try:
-        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-    finally:
-        connection.close()
+        connection = sqlite3.connect(db_path)
+        try:
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        finally:
+            connection.close()
+    except sqlite3.DatabaseError:
+        return
 
 
 def _assert_wal_empty(db_path: Path) -> None:
@@ -219,7 +222,9 @@ def restore_backup(backup_dir: Path, db_path: Path, upload_dir: Path, *, force: 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Restore a verified CyberAssess backup.")
+    parser = argparse.ArgumentParser(
+        description="Restore a verified CyberAssess backup. Stop the app before restoring."
+    )
     parser.add_argument("backup_dir", help="Timestamped backup directory to restore")
     parser.add_argument("--force", action="store_true", help="Skip the overwrite confirmation prompt")
     args = parser.parse_args()

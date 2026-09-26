@@ -408,17 +408,17 @@ All scenarios go in `tests/test_p6_0c_dev_hygiene.py` unless stated. None may co
 
 ## Results
 
-Step 0 record:
+Committed-state record:
 
-- `HEAD`: `beeacf993b5ca69d40cea5b14804a45d6694cae2`.
+- `HEAD`: `10fb129cb25879e72fe69dafa062140f503d02ef`.
 - `main`: `beeacf993b5ca69d40cea5b14804a45d6694cae2`.
 - `origin/main`: `beeacf993b5ca69d40cea5b14804a45d6694cae2`.
-- Baseline after starting without `data/`: 3 failed, 739 passed, 10 skipped, 1 error. The intermittent longitudinal scenario passed on this run, so the designer's expected 4 failed / 738 passed baseline differed only by that nondeterministic test.
-- The Step 0 facts were re-verified. No source-of-truth fact differed; the `.agents/` write restriction below is an environment limitation, not a code fact.
+- The orchestrator applied the `.agents/skills/run/SKILL.md` edit.
+- The committed suite was 753 passed, 10 skipped, 0 failed.
 
 Files changed:
 
-- `.github/workflows/tests.yml`, `.python-version`, `requirements-dev.txt`.
+- `.gitignore`, `.github/workflows/tests.yml`, `.python-version`, `requirements-dev.txt`.
 - `.claude/launch.json`, `.claude/skills/run/SKILL.md`, `README.md`, `CLAUDE.md`, `AGENTS.md`, `Dockerfile`, `docker-compose.yml`.
 - `app/database.py`, `app/main.py`, `scripts/restore.py`, `tests/conftest.py`, `tasks/todo.md`.
 - `tests/test_backup_restore.py`, `tests/test_p6_0c_dev_hygiene.py`, `tests/integration/test_desk_review.py`, `tests/test_longitudinal_demo.py`, `tests/test_remediation_tracking.py`.
@@ -427,25 +427,19 @@ Files changed:
 
 Scenario notes:
 
-- Scenarios 1–6, 8 and 9 pass in `tests/test_p6_0c_dev_hygiene.py` (the launch-point check in scenario 10 is the single focused failure caused by the read-only `.agents/` file).
-- Scenario 7 is in `tests/test_backup_restore.py`; both crash-left-WAL and active-WAL refusal cases pass.
-- The four listed existing failures, the CI-only Alembic guard, and the full regression suite pass apart from the two worktree/environment failures recorded below.
-- The longitudinal scenario passed 10 consecutive runs.
+- Scenarios 1–10 pass in `tests/test_p6_0c_dev_hygiene.py`, including a contender that waits on the SQLite busy timeout for a held writer lock.
+- Scenario 7 is in `tests/test_backup_restore.py`; crash-left-WAL, active-WAL refusal, and corrupt-live-database raw-byte safety-copy cases pass.
 
 Verification:
 
-1. `.venv/bin/python -m pytest -q -p no:cacheprovider` and the exact `.venv/bin/python -m pytest -q` both ended with `2 failed, 751 passed, 10 skipped, 0 errors`.
-2. Fresh-checkout leak run ended with the same test tail and `NO_DEV_DB`; `data/dpdpa.db` was absent afterwards.
-3. The longitudinal flake loop returned 10 lines beginning `1 passed`.
-4. The CI-parity environment run ended with `2 failed, 751 passed, 10 skipped, 0 errors`; no live LLM or network call occurred.
-5. All three required grep commands produced empty output.
-6. `actionlint` was not available on `PATH`; it was not installed.
-7. The server started through application startup, then the sandbox refused the bind with `operation not permitted`; the attempted curl health status was `000`, the CORS header grep was empty, and SQLite reported `wal`. The in-process TestClient health/CORS checks passed. Generated `data/` scratch was moved out of the worktree, leaving no `data/dpdpa.db`.
+1. The focused review set (`tests/test_backup_restore.py` and `tests/test_p6_0c_dev_hygiene.py`) ended with `18 passed`.
+2. The exact `.venv/bin/python -m pytest -q` run ended with `1 failed, 753 passed, 10 skipped, 0 errors`; the only failure was `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, which detects these intentionally uncommitted test edits. After the orchestrator commits this review delta, the expected full-suite count is `754 passed, 10 skipped, 0 failed`.
+3. Re-running the exact suite with a temporary clean Git work-tree view, without writing `.git`, ended with `754 passed, 10 skipped, 0 failed`.
+4. `data/dpdpa.db` was absent after both full-suite runs.
 
 Deviations and reasons:
 
-- `.agents/skills/run/SKILL.md` could not be edited because the active filesystem policy exposes `.agents/` as read-only. It still contains the stale install comment and unqualified bind, so scenario 10 fails once and the suite has one corresponding failure. The orchestrator must apply the exact handoff edit in an environment with write access before CI.
-- `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes` fails as designed while the test files are uncommitted; it is expected to pass after the orchestrator commits.
+- The retention guard is expected to pass after the orchestrator commits the review changes; no commit or `.git` write was performed here.
 - No commit, staging, ref movement, or other `.git` write was performed.
 
 ## Done criteria
