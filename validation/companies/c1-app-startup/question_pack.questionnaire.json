@@ -15,7 +15,7 @@
           "text": "Does your organization obtain free, specific, informed, and unambiguous consent from data principals before processing their personal data?"
         },
         {
-          "guidance": "Section 6 requires separate consent for each distinct processing purpose. Look for itemised consent prompts that clearly distinguish purposes, evidence that bundled or combined consent is not used, and records showing which specific purposes each Data Principal consented to.",
+          "guidance": "Section 6(1) requires consent to be specific to the specified purpose and limited to the personal data necessary for it. This question covers the consent request and the consent record: look for consent requests that itemise and clearly distinguish each purpose, evidence that one blanket consent is not used for several purposes, and records showing which specific purposes each Data Principal consented to. The per-purpose controls themselves are covered by CM.GRANULAR.1.",
           "id": "CH2.CONSENT.2",
           "member_controls": [
             {
@@ -24,10 +24,10 @@
             }
           ],
           "status": "active",
-          "text": "When processing data for multiple purposes, do you obtain separate (itemised) consent for each purpose?"
+          "text": "When processing data for multiple purposes, does your consent request itemise each purpose separately, and do you record consent against each specific purpose?"
         },
         {
-          "guidance": "Section 6(6) mandates that withdrawal of consent must be as easy as giving consent.",
+          "guidance": "Section 6(4) requires that withdrawing consent is comparable in ease to giving it, and Section 6(6) requires processing (including by Data Processors) to cease within a reasonable time after withdrawal unless the law requires or authorises it.",
           "id": "CH2.CONSENT.3",
           "member_controls": [
             {
@@ -39,7 +39,7 @@
           "text": "Can data principals withdraw their consent as easily as they gave it, and do you stop processing upon withdrawal?"
         },
         {
-          "guidance": "Section 6(6) and the Consent Manager framework expect that where a Consent Manager is used, it is registered with the Data Protection Board. Look for evidence of registration, platform transparency, and that the Consent Manager provides mechanisms for Data Principals to give, withdraw, and manage consent.",
+          "guidance": "Sections 6(7)-(9) let a Data Principal give, manage, review or withdraw consent through a Consent Manager, which must be registered with the Data Protection Board (DPDP Rules 2025 r.4). Look for evidence of registration, platform transparency, and that the Consent Manager provides mechanisms for Data Principals to give, withdraw, and manage consent.",
           "id": "CH2.CONSENT.4",
           "member_controls": [
             {
@@ -69,7 +69,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 5 requires a notice describing data collected, purpose, and how to exercise rights.",
+          "guidance": "Section 5(1) requires every consent request to be accompanied or preceded by a notice stating the personal data and purpose, how to withdraw consent and exercise rights, and how to complain to the Board. DPDP Rules 2025 r.3 sets its content and form; r.3(a) requires the notice to be presented and understandable independently of any other information the Data Fiduciary makes available, so a notice that only works by cross-reference to a general privacy policy or terms does not meet it.",
           "id": "CH2.NOTICE.1",
           "member_controls": [
             {
@@ -78,7 +78,7 @@
             }
           ],
           "status": "active",
-          "text": "Do you provide a clear privacy notice to data principals at or before the time of collecting their personal data, describing what data is collected and why?"
+          "text": "Is every consent request accompanied or preceded by a notice, understandable on its own, that describes the personal data and purpose, how to withdraw consent and exercise rights, and how to complain to the Data Protection Board?"
         },
         {
           "guidance": "Section 5 expects retrospective notice for personal data collected before the DPDPA came into effect. Look for a process to identify pre-Act data, notification mechanisms, and evidence that notice was issued to affected Data Principals within the prescribed timeframe.",
@@ -93,7 +93,7 @@
           "text": "For personal data collected before the DPDPA came into effect, have you provided a retrospective notice to data principals?"
         },
         {
-          "guidance": "Section 5 requires the privacy notice to include contact details of a Data Protection Officer or designated grievance officer. Look for a named individual, published contact details, and evidence that the notice is accessible at the point of collection.",
+          "guidance": "Section 6(3) requires the consent request to give contact details of the Data Protection Officer, where applicable, or another authorised person, and Section 8(9) with DPDP Rules 2025 r.9 requires those business contact details to be published prominently on the website or app. Look for a named individual, published contact details, and evidence that they appear alongside the notice and consent request.",
           "id": "CH2.NOTICE.3",
           "member_controls": [
             {
@@ -141,7 +141,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 8(2) requires that collection of personal data is limited to what is necessary for the stated purpose. Look for data collection forms and fields justified against purpose, evidence of unnecessary fields being removed, and minimization reviews when processing scope changes.",
+          "guidance": "Section 6(1) limits consent to the personal data necessary for the specified purpose. Look for data collection forms and fields justified against purpose, evidence of unnecessary fields being removed, and minimization reviews when processing scope changes.",
           "id": "CH2.MINIMIZE.1",
           "member_controls": [
             {
@@ -153,7 +153,7 @@
           "text": "Do you limit the collection of personal data to only what is necessary for the stated purpose?"
         },
         {
-          "guidance": "Section 8(2) requires erasure of personal data once the purpose for which it was collected is no longer being served. Look for retention-to-purpose mapping, automated deletion triggers, and evidence that data is actually removed when the retention period expires.",
+          "guidance": "Section 8(7) requires erasure of personal data on withdrawal of consent or once the specified purpose is no longer being served, unless the law requires retention. Look for retention-to-purpose mapping, automated deletion triggers, and evidence that data is actually removed when the retention period expires.",
           "id": "CH2.MINIMIZE.2",
           "member_controls": [
             {
@@ -165,7 +165,7 @@
           "text": "Is personal data erased once the purpose for which it was collected is no longer being served?"
         },
         {
-          "guidance": "Section 8(2) expects documented data retention schedules with systematic deletion procedures. Look for a retention policy defining retention periods per data category, deletion workflows, and evidence that schedules are reviewed and approved.",
+          "guidance": "Section 8(7) requires erasure once the purpose is served; documented retention schedules with systematic deletion procedures are how that is met. DPDP Rules 2025 r.8(3) also requires personal data, associated traffic data and other processing logs to be retained for at least one year from the date of processing, for the purposes in the Rules' Seventh Schedule, before they are erased. Look for a retention policy defining retention periods per data category that reflects the one-year minimum, deletion workflows, and evidence that schedules are reviewed and approved.",
           "id": "CH2.MINIMIZE.3",
           "member_controls": [
             {
@@ -174,7 +174,7 @@
             }
           ],
           "status": "active",
-          "text": "Do you maintain documented data retention schedules with systematic deletion procedures?"
+          "text": "Do you maintain documented data retention schedules with systematic deletion procedures, including retention of personal data, traffic data and processing logs for at least one year where the DPDP Rules require it?"
         }
       ],
       "section_id": "chapter_2.data_minimization",
@@ -183,7 +183,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 8(3) requires the Data Fiduciary to make reasonable efforts to ensure personal data is complete, accurate, and not misleading. Look for data quality controls, validation checks at collection, periodic reviews, and mechanisms to correct data when inaccuracies are identified.",
+          "guidance": "Section 8(3) requires the Data Fiduciary to ensure personal data is complete, accurate and consistent where it is likely to be used to make a decision affecting the Data Principal or disclosed to another Data Fiduciary. Look for data quality controls, validation checks at collection, periodic reviews, and mechanisms to correct data when inaccuracies are identified.",
           "id": "CH2.ACCURACY.1",
           "member_controls": [
             {
@@ -192,7 +192,7 @@
             }
           ],
           "status": "active",
-          "text": "Do you make reasonable efforts to ensure personal data remains complete, accurate, and not misleading?"
+          "text": "Where personal data is likely to be used to make a decision affecting the data principal, or disclosed to another Data Fiduciary, do you ensure it is complete, accurate, and consistent?"
         }
       ],
       "section_id": "chapter_2.accuracy",
@@ -201,7 +201,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 8(4) requires 'reasonable security safeguards' — this includes both technical measures (encryption, access controls) and organizational measures (policies, training).",
+          "guidance": "Section 8(5) and DPDP Rules 2025 r.6 require 'reasonable security safeguards' to prevent personal data breach — this includes both technical measures (encryption, access controls) and organizational measures (policies, training).",
           "id": "CH2.SECURITY.1",
           "member_controls": [
             {
@@ -213,7 +213,7 @@
           "text": "Have you implemented reasonable technical and organizational security safeguards to protect personal data from breaches?"
         },
         {
-          "guidance": "Section 8(4) expects encryption of personal data at rest and in transit, with access controls based on least privilege. Look for encryption standards and algorithms, key management practices, role-based access enforcement, and evidence that access is reviewed periodically.",
+          "guidance": "Section 8(5) and DPDP Rules 2025 r.6(1)(a)-(b) expect data security measures such as encryption and controls on access to computer resources; encryption at rest and in transit with least-privilege access is the usual way to meet them. Look for encryption standards and algorithms, key management practices, role-based access enforcement, and evidence that access is reviewed periodically.",
           "id": "CH2.SECURITY.2",
           "member_controls": [
             {
@@ -225,7 +225,7 @@
           "text": "Is personal data encrypted at rest and in transit, with access controls based on the principle of least privilege?"
         },
         {
-          "guidance": "Section 8(5) requires valid contracts with Data Processors that include security safeguards and processing instructions. Look for executed processor agreements, defined security obligations, audit rights, and evidence that processor compliance is verified.",
+          "guidance": "Section 8(2) allows a Data Processor to be engaged only under a valid contract, and DPDP Rules 2025 r.6(1)(f) requires that contract to provide for reasonable security safeguards. Look for executed processor agreements, defined security obligations, audit rights, and evidence that processor compliance is verified.",
           "id": "CH2.SECURITY.3",
           "member_controls": [
             {
@@ -273,7 +273,7 @@
           "text": "Can data principals request correction of inaccurate or misleading personal data and completion of incomplete data?"
         },
         {
-          "guidance": "Section 12 includes the right to erasure of personal data that is no longer necessary for the original purpose. Look for erasure request handling, technical deletion procedures, and evidence that data is removed from both primary and backup systems.",
+          "guidance": "Section 12(3) lets a Data Principal request erasure of her personal data, and the Data Fiduciary must erase it unless retention is necessary for the specified purpose or for compliance with law. Look for erasure request handling, technical deletion procedures, and evidence that data is removed from both primary and backup systems.",
           "id": "CH3.CORRECT.2",
           "member_controls": [
             {
@@ -282,7 +282,7 @@
             }
           ],
           "status": "active",
-          "text": "Can data principals request erasure of personal data that is no longer necessary for the original purpose?"
+          "text": "Can data principals request erasure of the personal data they consented to at any time, and do you erase it unless retention is necessary for the specified purpose or for compliance with law?"
         }
       ],
       "section_id": "chapter_3.right_to_correction",
@@ -321,7 +321,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 12 allows Data Principals to nominate another individual to exercise their rights in the event of death or incapacity. Look for a nomination mechanism, validation of nominee identity, and evidence that nominations are recorded and honoured.",
+          "guidance": "Section 14 allows Data Principals to nominate another individual to exercise their rights in the event of death or incapacity. Look for a nomination mechanism, validation of nominee identity, and evidence that nominations are recorded and honoured.",
           "id": "CH3.NOMINATE.1",
           "member_controls": [
             {
@@ -339,7 +339,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 9(2) explicitly prohibits tracking and behavioural monitoring of children.",
+          "guidance": "Section 9(3) prohibits tracking or behavioural monitoring of children and targeted advertising directed at children.",
           "id": "CH4.CHILD.1",
           "member_controls": [
             {
@@ -351,7 +351,7 @@
           "text": "Does your organization refrain from tracking, behavioural monitoring, or targeted advertising directed at children?"
         },
         {
-          "guidance": "Section 9(3) requires that processing of children's personal data does not have a detrimental effect on their well-being. Look for impact assessments specific to children's data, safeguards preventing harmful processing, and evidence that processing decisions consider the child's best interest.",
+          "guidance": "Section 9(2) requires that processing of children's personal data does not have a detrimental effect on their well-being. Look for impact assessments specific to children's data, safeguards preventing harmful processing, and evidence that processing decisions consider the child's best interest.",
           "id": "CH4.CHILD.2",
           "member_controls": [
             {
@@ -363,7 +363,7 @@
           "text": "Do you ensure that processing of children's personal data does not have a detrimental effect on their well-being?"
         },
         {
-          "guidance": "Section 9(1) requires age verification mechanisms to identify children before processing their data. Look for age-gate controls, verification methods, and evidence that children's data is flagged and handled with elevated protections.",
+          "guidance": "Section 9(1) requires verifiable consent of the parent before processing a child's personal data, and DPDP Rules 2025 r.10 requires due diligence that the person identifying as the parent is an identifiable adult. Neither prescribes a specific age check of the child, so look for how the organisation identifies that a user is a child, how it verifies the parent, and evidence that children's data is flagged and handled with elevated protections.",
           "id": "CH4.CHILD.3",
           "member_controls": [
             {
@@ -423,7 +423,7 @@
           "text": "Do you maintain auditable records of when, how, and for what purpose consent was obtained from each data principal?"
         },
         {
-          "guidance": "Section 6 expects a process to refresh or re-obtain consent when processing purposes change. Look for triggers that detect purpose changes, re-consent workflows, and evidence that stale consent is not relied upon for new processing.",
+          "guidance": "Section 6(1) makes consent specific to the specified purpose, so processing for a new or changed purpose needs fresh consent for that purpose. Look for triggers that detect new or changed purposes, re-consent workflows that run before the new processing starts, and evidence that existing consent is not relied upon for the new purpose.",
           "id": "CM.RECORDS.2",
           "member_controls": [
             {
@@ -432,7 +432,7 @@
             }
           ],
           "status": "active",
-          "text": "Do you have a process to refresh or re-obtain consent when processing purposes change?"
+          "text": "Before processing personal data for a new or changed purpose, do you obtain fresh consent for that purpose?"
         }
       ],
       "section_id": "consent_management.consent_records",
@@ -441,7 +441,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 6 expects consent to be granular, allowing Data Principals to provide or withhold consent at a per-purpose level. Look for per-purpose consent toggles in the interface, evidence that purposes are clearly separated, and that partial consent does not block essential processing.",
+          "guidance": "Section 6(1) requires consent to be specific to each specified purpose. This question covers the controls the Data Principal uses: look for per-purpose consent toggles or equivalent choices in the interface, evidence that a Data Principal can consent to some purposes and decline others, and that partial consent does not block the processing she did consent to. How the consent request itemises purposes and how consent is recorded are covered by CH2.CONSENT.2.",
           "id": "CM.GRANULAR.1",
           "member_controls": [
             {
@@ -450,7 +450,7 @@
             }
           ],
           "status": "active",
-          "text": "Can data principals provide or withhold consent at a granular per-purpose level?"
+          "text": "Do data principals have working controls (for example, per-purpose toggles) to give or withhold consent for each purpose, so that partial consent is actually possible?"
         },
         {
           "guidance": "Section 6 prohibits consent bundling and dark patterns. Look for evidence that access to services is not conditioned on consent for non-essential processing, that consent interfaces are free of manipulative design, and that Data Principals can decline non-essential processing without losing core service access.",
@@ -477,10 +477,10 @@
           "text": "Do you transfer personal data only to countries not restricted by the Central Government, and maintain an inventory of cross-border data flows?"
         },
         {
-          "guidance": "Section 16 requires contractual or legal safeguards for personal data transferred outside India. Look for data transfer agreements, standard contractual clauses, or other approved mechanisms, and evidence that safeguards are reviewed when transfer destinations change.",
+          "guidance": "Section 16(1) lets the Central Government restrict, by notification, transfers of personal data to a country or territory outside India, and Section 16(2) preserves any law in force in India that gives a higher degree of protection for, or restriction on, such transfers (for example, sectoral rules from a financial or other regulator). Look for a process to track s.16(1) notifications against the inventory of transfer destinations, identification of the sectoral laws that apply to the organisation, and evidence that transfers are checked against both. Data transfer agreements are supporting evidence only; the Act does not require them.",
           "id": "CB.TRANSFER.2",
           "status": "skipped",
-          "text": "Do you have contractual or legal safeguards in place for data transferred outside India?"
+          "text": "Do you ensure that no personal data is transferred to a country or territory restricted by Central Government notification under Section 16(1), and that any stricter sectoral law on transfers outside India is complied with?"
         },
         {
           "guidance": "Section 16 empowers the Central Government to notify countries or categories of personal data that must remain in India. Look for awareness of applicable localisation requirements, data residency controls, and evidence that storage location is validated against the current negative list.",
@@ -495,7 +495,7 @@
     {
       "questions": [
         {
-          "guidance": "Section 8(6) mandates notification to the Board in prescribed form and manner for every personal data breach.",
+          "guidance": "Section 8(6) requires intimation of every personal data breach to the Board. DPDP Rules 2025 r.7(2) requires an initial intimation without delay and a detailed report within 72 hours of becoming aware (or longer if the Board allows).",
           "id": "BN.NOTIFY.1",
           "member_controls": [
             {
@@ -507,7 +507,7 @@
           "text": "Do you have procedures to notify the Data Protection Board of India in case of a personal data breach?"
         },
         {
-          "guidance": "Section 8(6) requires the Data Fiduciary to notify affected Data Principals of a personal data breach. Look for documented notification procedures, message templates, and evidence of timely communication to affected individuals.",
+          "guidance": "Section 8(6) requires the Data Fiduciary to intimate each affected Data Principal of a personal data breach. DPDP Rules 2025 r.7(1) requires this without delay, in clear and plain language, covering the breach, its likely consequences, mitigation, protective steps and a contact person. Look for documented notification procedures, message templates, and evidence of timely communication to affected individuals.",
           "id": "BN.NOTIFY.2",
           "member_controls": [
             {
@@ -519,7 +519,7 @@
           "text": "Do you have procedures to notify affected data principals in case of a personal data breach?"
         },
         {
-          "guidance": "Section 8(5) expects the Data Fiduciary to maintain an incident response plan covering detection, containment, investigation, notification, and remediation. Look for an approved plan, defined roles, escalation paths, and evidence of periodic testing or tabletop exercises.",
+          "guidance": "Section 8(5) (reasonable security safeguards, including detection, investigation and remediation under DPDP Rules 2025 r.6(1)(c)) and the intimation duties in Section 8(6) and r.7 are met through an incident response plan covering detection, containment, investigation, notification, and remediation. Look for an approved plan, defined roles, escalation paths, and evidence of periodic testing or tabletop exercises.",
           "id": "BN.NOTIFY.3",
           "member_controls": [
             {
@@ -531,7 +531,7 @@
           "text": "Do you have a documented incident response plan covering detection, containment, investigation, notification, and remediation?"
         },
         {
-          "guidance": "Section 8(5) expects a breach register documenting facts, effects, and remedial actions for every personal data breach. Look for a maintained register with entries capturing breach description, affected data categories, mitigation steps, and dates of notification to the Board and Data Principals.",
+          "guidance": "Section 8(6) and DPDP Rules 2025 r.7(2)(b) require the Board to receive the facts, circumstances, mitigation and remedial measures for each personal data breach; a breach register is how those are kept ready. Look for a maintained register with entries capturing breach description, affected data categories, mitigation steps, and dates of notification to the Board and Data Principals.",
           "id": "BN.NOTIFY.4",
           "member_controls": [
             {

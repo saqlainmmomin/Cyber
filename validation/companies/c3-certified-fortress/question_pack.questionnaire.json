@@ -136,7 +136,7 @@
             },
             {
               "framework_id": "nist_csf",
-              "requirement_id": "NIST.PR.IR.02"
+              "requirement_id": "NIST.ID.IM.04"
             }
           ],
           "status": "active",
@@ -183,10 +183,6 @@
             {
               "framework_id": "nist_csf",
               "requirement_id": "NIST.RS.CO.03"
-            },
-            {
-              "framework_id": "nist_csf",
-              "requirement_id": "NIST.RS.CO.04"
             }
           ],
           "status": "active",
@@ -236,6 +232,18 @@
             {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A5.7"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.05"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.06"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.RM.07"
             }
           ],
           "status": "active",
@@ -444,6 +452,14 @@
             {
               "framework_id": "nist_csf",
               "requirement_id": "NIST.GV.SC.04"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.06"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.10"
             }
           ],
           "status": "active",
@@ -489,6 +505,10 @@
             {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A8.33"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.07"
             }
           ],
           "status": "active",
@@ -741,10 +761,6 @@
               "requirement_id": "NIST.PR.AA.05"
             },
             {
-              "framework_id": "nist_csf",
-              "requirement_id": "NIST.PR.AA.06"
-            },
-            {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A6.7"
             }
@@ -904,6 +920,14 @@
             {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A7.13"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.AA.06"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.02"
             }
           ],
           "status": "active",
@@ -1029,6 +1053,10 @@
             {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A8.14"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.PR.IR.03"
             }
           ],
           "status": "active",
@@ -1082,6 +1110,39 @@
           ],
           "status": "active",
           "text": "Does the organization preserve incident evidence, maintain a breach register, and feed lessons learned back into control improvements?"
+        },
+        {
+          "cluster_id": "CLUSTER_012",
+          "guidance": "Look for approval of sub-processors, flow-down obligations, supplier chain visibility, and governance over outsourced engineering or service delivery.",
+          "id": "CLUSTER_012",
+          "member_controls": [
+            {
+              "framework_id": "iso27001",
+              "requirement_id": "ISO.A5.21"
+            },
+            {
+              "framework_id": "iso27001",
+              "requirement_id": "ISO.A8.30"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.03"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.08"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.09"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.09"
+            }
+          ],
+          "status": "active",
+          "text": "Does the organization govern extended supply-chain risk, including sub-processors and outsourced development arrangements?"
         }
       ],
       "section_id": "incident_response",
@@ -1173,10 +1234,6 @@
               "requirement_id": "NIST.PR.IR.01"
             },
             {
-              "framework_id": "nist_csf",
-              "requirement_id": "NIST.PR.IR.03"
-            },
-            {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A8.20"
             },
@@ -1196,6 +1253,10 @@
             {
               "framework_id": "iso27001",
               "requirement_id": "ISO.A8.8"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.ID.RA.08"
             }
           ],
           "status": "active",
@@ -1249,7 +1310,7 @@
             },
             {
               "framework_id": "nist_csf",
-              "requirement_id": "NIST.GV.SC.02"
+              "requirement_id": "NIST.GV.SC.07"
             }
           ],
           "status": "active",
@@ -1284,6 +1345,14 @@
             {
               "framework_id": "nist_csf",
               "requirement_id": "NIST.GV.SC.05"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.10"
+            },
+            {
+              "framework_id": "nist_csf",
+              "requirement_id": "NIST.GV.SC.02"
             }
           ],
           "status": "active",
@@ -1329,27 +1398,6 @@
           ],
           "status": "active",
           "text": "Are systems, software, and network components configured to documented secure baselines, with vendor defaults changed and unnecessary functionality removed?"
-        },
-        {
-          "cluster_id": "CLUSTER_012",
-          "guidance": "Look for approval of sub-processors, flow-down obligations, supplier chain visibility, and governance over outsourced engineering or service delivery.",
-          "id": "CLUSTER_012",
-          "member_controls": [
-            {
-              "framework_id": "iso27001",
-              "requirement_id": "ISO.A5.21"
-            },
-            {
-              "framework_id": "iso27001",
-              "requirement_id": "ISO.A8.30"
-            },
-            {
-              "framework_id": "nist_csf",
-              "requirement_id": "NIST.GV.SC.03"
-            }
-          ],
-          "status": "active",
-          "text": "Does the organization govern extended supply-chain risk, including sub-processors and outsourced development arrangements?"
         },
         {
           "cluster_id": "SINGLE.ISO.A5.32",
