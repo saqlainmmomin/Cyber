@@ -328,20 +328,39 @@ def test_dependencies_and_criteria_pending_rule():
     assert {"NIST.ID.IM.04", "NIST.ID.RA.07"} <= set(NIST_CSF_DEFINITION.root_cause_clusters["process"]["typical_requirements"])
 
     pending = nist_csf_draft.CRITERIA_PENDING_IDS
-    assert pending == frozenset(NEW_CONTROLS)
+    new_ids = frozenset(NEW_CONTROLS)
+    # P6-2d drafted the 13 pending ids and emptied CRITERIA_PENDING_IDS.
+    assert pending == frozenset()
     main = _main_namespace("app/frameworks/criteria/nist_csf_draft.py")
     main_draft = main["NIST_CSF_CRITERIA_DRAFT"]
-    assert set(main_draft) - set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) == {"NIST.RS.CO.04"}
-    assert set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) - set(main_draft) == set()
+    assert set(main_draft) - set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) == set()
+    assert set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) - set(main_draft) == new_ids
     for requirement_id, criteria in nist_csf_draft.NIST_CSF_CRITERIA_DRAFT.items():
+        if requirement_id in new_ids:
+            continue  # not present on main; drafted fresh by P6-2d
         assert [(c.statement, c.evidence_hint, c.source_basis, c.kind) for c in criteria] == [(c.statement, c.evidence_hint, c.source_basis, c.kind) for c in main_draft[requirement_id]]
         for criterion in criteria:
             assert nist_csf_draft.NIST_CSF_CRITERIA_REVIEW_META[criterion.id] == main["NIST_CSF_CRITERIA_REVIEW_META"][criterion.id]
+    # The 13 new ids now have their own 2-5 drafted criteria, at least one design.
+    all_ids = {control.id for control in NIST_CSF_DEFINITION.all_controls()}
+    assert new_ids <= all_ids
+    for requirement_id in new_ids:
+        criteria = nist_csf_draft.NIST_CSF_CRITERIA_DRAFT[requirement_id]
+        assert 2 <= len(criteria) <= 5, requirement_id
+        assert any(c.kind == "design" for c in criteria), requirement_id
+        for criterion in criteria:
+            assert nist_csf_draft.NIST_CSF_CRITERIA_REVIEW_META[criterion.id][0] in {"high", "medium", "low"}
+    # All 106 pack ids now have drafted criteria, and export covers exactly them.
+    assert set(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT) == all_ids
     rows = export_criteria_review.build_rows(framework="nist_csf")
-    assert not {row["requirement_id"] for row in rows} & (set(pending) | {"NIST.RS.CO.04"})
+    assert {row["requirement_id"] for row in rows} == all_ids
+    assert not {row["requirement_id"] for row in rows} & {"NIST.RS.CO.04"}
+    # A pack id genuinely missing from the draft still raises KeyError.
     with pytest.raises(KeyError):
         with pytest.MonkeyPatch.context() as monkeypatch:
-            monkeypatch.setattr(nist_csf_draft, "CRITERIA_PENDING_IDS", frozenset())
+            trimmed_draft = dict(nist_csf_draft.NIST_CSF_CRITERIA_DRAFT)
+            del trimmed_draft["NIST.GV.OC.01"]
+            monkeypatch.setattr(nist_csf_draft, "NIST_CSF_CRITERIA_DRAFT", trimmed_draft)
             export_criteria_review.build_rows(framework="nist_csf")
 
 

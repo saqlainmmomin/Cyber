@@ -5,7 +5,8 @@ A P6-2b-style converter turns the *approved* review sheet
 (tasks/criteria-review/nist-csf-criteria-v1.csv) into pack code. Until then
 these criteria must not reach an LLM.
 
-Sources (primary, retrieved 2026-09-25):
+Sources (primary, retrieved 2026-09-25; the P6-2d follow-up re-read the same PDF
+on 2026-09-26 for the 13 subcategories below):
 - NIST CSWP 29, The NIST Cybersecurity Framework (CSF) 2.0, 26 Feb 2024
   (Appendix A, CSF Core), https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf
 - CSF 2.0 Core with Implementation Examples, withdrawn-subcategory reasons and
@@ -14,6 +15,10 @@ Sources (primary, retrieved 2026-09-25):
   (the CPRT export links CSF 2.0 subcategories to SP 800-53 Rev. 5 at control
   family level only; control numbers cited below are the drafter's reading of
   SP 800-53r5 within those families and are support only).
+
+P6-2d (2026-09-26) drafted the 13 subcategories GV.RM-05..07, GV.SC-06..10,
+ID.RA-07..10 and ID.IM-04, added by the CSF 2.0 alignment (PR #59), and emptied
+CRITERIA_PENDING_IDS. No other criterion in this module was touched.
 
 House style (D4 and P6-2a rules 1-6, P6-2c NIST rules):
 - Own words, references only. `source_basis` cites the subcategory outcome
@@ -48,15 +53,10 @@ _PRPS01 = (
 # criterion_id -> (drafter_confidence, in_force_note). Review-sheet metadata only.
 NIST_CSF_CRITERIA_REVIEW_META: dict[str, tuple[str, str]] = {}
 
-# Pack ids added by the CSF 2.0 alignment (P6-NIST) whose criteria are not drafted yet.
-# The orchestrator drafts them in the P6-2c follow-up and empties this set; nothing else
-# may be added to it (tests/test_p6_2c_iso_nist_criteria.py pins it exactly).
-CRITERIA_PENDING_IDS: frozenset[str] = frozenset({
-    "NIST.GV.RM.05", "NIST.GV.RM.06", "NIST.GV.RM.07",
-    "NIST.GV.SC.06", "NIST.GV.SC.07", "NIST.GV.SC.08", "NIST.GV.SC.09", "NIST.GV.SC.10",
-    "NIST.ID.RA.07", "NIST.ID.RA.08", "NIST.ID.RA.09", "NIST.ID.RA.10",
-    "NIST.ID.IM.04",
-})
+# Pack ids added by the CSF 2.0 alignment (P6-NIST) whose criteria were not drafted at
+# first (P6-2c). The P6-2d follow-up drafted all 13 (below) and emptied this set.
+# tests/test_p6_2c_iso_nist_criteria.py pins it exactly (now empty).
+CRITERIA_PENDING_IDS: frozenset[str] = frozenset()
 
 
 def _criteria(req_id: str, *rows: tuple[str, str, str, str, str, str]) -> tuple[TestCriterion, ...]:
@@ -171,6 +171,33 @@ NIST_CSF_CRITERIA_DRAFT: dict[str, tuple[TestCriterion, ...]] = {
          "risk_management_strategy; supplier_security", "NIST CSF 2.0 GV.RM-04; CSF 2.0 IE GV.RM-04 Ex3", MED, ""),
         (O, "The risk response direction has been communicated to the people who make risk decisions (e.g. distributed risk procedure, briefing record).",
          "risk_management_strategy (distribution record)", "NIST CSF 2.0 GV.RM-04 ('communicated')", HIGH, ""),
+    ),
+    "NIST.GV.RM.05": _criteria(
+        "NIST.GV.RM.05",
+        (D, "A document or org chart names the channel(s) through which cybersecurity risk is raised and escalated across the organisation, e.g. from staff to management to leadership.",
+         "risk_management_strategy; roles_responsibilities", "NIST CSF 2.0 GV.RM-05", HIGH, ""),
+        (D, "The defined channels explicitly cover risk that originates with suppliers or other third parties, naming who receives and acts on such reports.",
+         "risk_management_strategy; supplier_security", "NIST CSF 2.0 GV.RM-05", HIGH, ""),
+        (O, "At least one cybersecurity risk in the period was escalated through the defined channel and reached the intended recipient.",
+         "risk_management_strategy (escalation record); leadership_oversight", "NIST CSF 2.0 GV.RM-05; practice (evidence of use)", MED, ""),
+    ),
+    "NIST.GV.RM.06": _criteria(
+        "NIST.GV.RM.06",
+        (D, "One documented method for calculating cybersecurity risk exists and states how likelihood and impact combine into a rating.",
+         "risk_assessment (methodology)", "NIST CSF 2.0 GV.RM-06", HIGH, ""),
+        (D, "The method defines how risks are categorised and how their priority order is determined.",
+         "risk_assessment (methodology)", "NIST CSF 2.0 GV.RM-06", HIGH, ""),
+        (O, "The risk register shows the same rating, category and priority fields actually populated for recorded risks, rather than a mix of ad hoc scales.",
+         "risk_assessment (risk register)", "NIST CSF 2.0 GV.RM-06 ('documented')", HIGH, ""),
+        (D, "The method is communicated to the people who apply it, e.g. referenced in a risk assessment procedure or covered in training.",
+         "risk_management_strategy; training_records", "NIST CSF 2.0 GV.RM-06 ('communicated')", MED, ""),
+    ),
+    "NIST.GV.RM.07": _criteria(
+        "NIST.GV.RM.07",
+        (D, "The risk management strategy or methodology defines opportunity (positive risk) as a category to be considered alongside threats.",
+         "risk_management_strategy", "NIST CSF 2.0 GV.RM-07", MED, ""),
+        (O, "At least one risk discussion or risk register entry in the period records a characterised opportunity, not only threats.",
+         "risk_management_strategy (risk register or minutes); leadership_oversight", "NIST CSF 2.0 GV.RM-07", MED, ""),
     ),
     # ── GV.RR Roles, Responsibilities, and Authorities ────────────────────
     "NIST.GV.RR.01": _criteria(
@@ -326,6 +353,45 @@ NIST_CSF_CRITERIA_DRAFT: dict[str, tuple[TestCriterion, ...]] = {
         (D, "Critical-supplier contracts require the supplier to notify the organisation of security incidents affecting it within a stated time.",
          "supplier_security (sample agreements)", "NIST CSF 2.0 GV.SC-05; CSF 2.0 IE GV.SC-05 Ex3; practice (stated time)", MED, ""),
     ),
+    "NIST.GV.SC.06": _criteria(
+        "NIST.GV.SC.06",
+        (D, "A documented supplier onboarding or due-diligence procedure requires a cybersecurity risk assessment before a contract or relationship is formalised.",
+         "supplier_security", "NIST CSF 2.0 GV.SC-06", HIGH, ""),
+        (D, "The due-diligence step includes planning for the relationship (e.g. defining the scope of access or data the supplier will have) as well as risk screening.",
+         "supplier_security", "NIST CSF 2.0 GV.SC-06; practice (planning content)", MED, ""),
+        (O, "For a sample of suppliers onboarded in the period, due-diligence records (e.g. a completed questionnaire or assessment) exist and are dated before the relationship began.",
+         "supplier_security (due-diligence records, sample)", "NIST CSF 2.0 GV.SC-06 ('performed')", HIGH, ""),
+    ),
+    "NIST.GV.SC.07": _criteria(
+        "NIST.GV.SC.07",
+        (D, "A supplier risk register or equivalent records the risk posed by each active supplier and its products or services, and its priority.",
+         "supplier_security", "NIST CSF 2.0 GV.SC-07", HIGH, ""),
+        (D, "A defined response is recorded against each supplier's risk (e.g. mitigation asked of the supplier, or accepted risk with a named owner).",
+         "supplier_security", "NIST CSF 2.0 GV.SC-07 ('responded to')", HIGH, ""),
+        (O, "At least one active supplier's risk was reassessed or reviewed after the relationship began, not only at onboarding, evidencing monitoring for as long as the relationship lasts.",
+         "supplier_security (periodic review records)", "NIST CSF 2.0 GV.SC-07 ('monitored ... over the course of the relationship')", HIGH, ""),
+    ),
+    "NIST.GV.SC.08": _criteria(
+        "NIST.GV.SC.08",
+        (D, "The incident response or recovery plan names which suppliers or other third parties are relevant participants and what role each plays.",
+         "breach_procedure; supplier_security", "NIST CSF 2.0 GV.SC-08", HIGH, ""),
+        (O, "Records of at least one incident response exercise, tabletop or real incident in the period show a relevant supplier's participation.",
+         "exercise_records; supplier_security", "NIST CSF 2.0 GV.SC-08 ('included in ... activities')", MED, ""),
+    ),
+    "NIST.GV.SC.09": _criteria(
+        "NIST.GV.SC.09",
+        (D, "Supply chain security requirements or practices are referenced within the cybersecurity risk management programme rather than run as a separate, unconnected process.",
+         "supplier_security; risk_management_strategy", "NIST CSF 2.0 GV.SC-09", MED, ""),
+        (O, "A recorded metric, review or audit shows supply chain security performance being tracked at more than one point in a supplier's product or service life cycle, e.g. at onboarding and again later.",
+         "supplier_security (performance reviews)", "NIST CSF 2.0 GV.SC-09 ('monitored ... throughout the ... life cycle')", MED, ""),
+    ),
+    "NIST.GV.SC.10": _criteria(
+        "NIST.GV.SC.10",
+        (D, "Supplier contracts or the supply chain risk management plan specify what must happen when the relationship ends (e.g. data return or destruction, access revocation, transition support).",
+         "supplier_security (contract templates, exit clauses)", "NIST CSF 2.0 GV.SC-10", HIGH, ""),
+        (O, "For a supplier relationship that ended in the period, evidence shows the exit provisions were followed (e.g. access revoked, data returned or destroyed), or a record confirms none ended.",
+         "supplier_security (offboarding records)", "NIST CSF 2.0 GV.SC-10; practice (evidence of execution)", MED, ""),
+    ),
     # ══ IDENTIFY (ID) ═════════════════════════════════════════════════════
     # ── ID.AM Asset Management ────────────────────────────────────────────
     "NIST.ID.AM.01": _criteria(
@@ -462,6 +528,42 @@ NIST_CSF_CRITERIA_DRAFT: dict[str, tuple[TestCriterion, ...]] = {
         (O, "Planned risk responses were communicated to affected stakeholders (e.g. risk report to owners or leadership).",
          "leadership_oversight; risk_assessment", "NIST CSF 2.0 ID.RA-06 ('communicated')", HIGH, ""),
     ),
+    "NIST.ID.RA.07": _criteria(
+        "NIST.ID.RA.07",
+        (D, "A change management procedure requires that changes be assessed for their cybersecurity risk impact before approval.",
+         "change_management", "NIST CSF 2.0 ID.RA-07", HIGH, ""),
+        (D, "An exception (risk acceptance) process exists for departures from policy, with defined approval and an expiry or review date.",
+         "change_management", "NIST CSF 2.0 ID.RA-07", HIGH, ""),
+        (O, "A sample of change records from the period shows the risk assessment step actually completed and the change tracked to closure.",
+         "change_management (sample change records)", "NIST CSF 2.0 ID.RA-07 ('recorded, and tracked')", HIGH, ""),
+        (O, "The exception register shows open exceptions with a named owner and a review or expiry date, not open-ended waivers.",
+         "change_management (exception register)", "NIST CSF 2.0 ID.RA-07; practice (register hygiene)", MED, ""),
+    ),
+    "NIST.ID.RA.08": _criteria(
+        "NIST.ID.RA.08",
+        (D, "A documented process (e.g. a vulnerability disclosure policy or a responsible-disclosure channel) lets external parties report vulnerabilities.",
+         "vulnerability_management", "NIST CSF 2.0 ID.RA-08", HIGH, ""),
+        (D, "The process defines how a received disclosure is analysed and how a response or remediation decision is reached.",
+         "vulnerability_management", "NIST CSF 2.0 ID.RA-08", HIGH, ""),
+        (O, "At least one vulnerability disclosure received in the period (or a tested/simulated one) has a recorded analysis and response.",
+         "vulnerability_management (disclosure log)", "NIST CSF 2.0 ID.RA-08 ('responding to')", MED, ""),
+    ),
+    "NIST.ID.RA.09": _criteria(
+        "NIST.ID.RA.09",
+        (D, "A procedure requires checking the authenticity of hardware or software (e.g. verifying supplier legitimacy, checking for counterfeit indicators) before acquisition.",
+         "configuration_baselines", "NIST CSF 2.0 ID.RA-09", HIGH, ""),
+        (D, "A procedure requires an integrity check (e.g. checksum, digital signature or hash verification) before software is put into use.",
+         "configuration_baselines", "NIST CSF 2.0 ID.RA-09", HIGH, ""),
+        (O, "A sample of recently acquired hardware or software shows the authenticity or integrity check was actually performed and recorded before deployment.",
+         "configuration_baselines (acquisition or integrity records)", "NIST CSF 2.0 ID.RA-09 ('assessed prior to acquisition and use')", MED, ""),
+    ),
+    "NIST.ID.RA.10": _criteria(
+        "NIST.ID.RA.10",
+        (D, "Suppliers are classified by criticality and the process requires that suppliers judged critical undergo an assessment before their product or service is acquired.",
+         "supplier_security", "NIST CSF 2.0 ID.RA-10", HIGH, ""),
+        (O, "For a critical supplier acquired or renewed in the period, a completed pre-acquisition assessment exists, dated before the acquisition decision.",
+         "supplier_security (assessment records, sample)", "NIST CSF 2.0 ID.RA-10 ('assessed prior to acquisition')", HIGH, ""),
+    ),
     # ── ID.IM Improvement ─────────────────────────────────────────────────
     "NIST.ID.IM.01": _criteria(
         "NIST.ID.IM.01",
@@ -491,6 +593,19 @@ NIST_CSF_CRITERIA_DRAFT: dict[str, tuple[TestCriterion, ...]] = {
          "incident_log (post-incident reports)", "NIST CSF 2.0 ID.IM-03 ('improvements are identified')", HIGH, ""),
         (O, "At least one policy, process or procedure was updated in the period to reflect a lesson learned.",
          "security_policy change log; incident_log", "NIST CSF 2.0 ID.IM-03; CSF 2.0 IE ID.IM-03 Ex2", MED, ""),
+    ),
+    "NIST.ID.IM.04": _criteria(
+        "NIST.ID.IM.04",
+        (D, "A written incident response plan exists, naming roles, escalation steps and response phases.",
+         "breach_procedure", "NIST CSF 2.0 ID.IM-04", HIGH, ""),
+        (D, "Other cybersecurity plans that affect operations (e.g. business continuity or disaster recovery) exist alongside the incident response plan.",
+         "breach_procedure; business_continuity", "NIST CSF 2.0 ID.IM-04 ('other cybersecurity plans that affect operations')", HIGH, ""),
+        (D, "The plan(s) have been communicated to the people who would execute them (e.g. distributed, referenced in onboarding, or covered in training).",
+         "breach_procedure; training_records", "NIST CSF 2.0 ID.IM-04 ('communicated')", HIGH, ""),
+        (O, "The plan carries a version history or review date showing it is kept current, not a one-time document.",
+         "breach_procedure (version history)", "NIST CSF 2.0 ID.IM-04 ('maintained')", HIGH, ""),
+        (O, "At least one improvement to the plan in the period traces to a lesson learned from an exercise or an incident.",
+         "breach_procedure; exercise_records", "NIST CSF 2.0 ID.IM-04 ('improved')", MED, ""),
     ),
     # ══ PROTECT (PR) ══════════════════════════════════════════════════════
     # ── PR.AA Identity Management, Authentication, and Access Control ─────
