@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -619,7 +620,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     assert ".commit(" in inspect.getsource(retention.purge_engagement)
     assert ".commit(" in inspect.getsource(retention._finish_blob_removal)
     heads = subprocess.run(
-        ["alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+        [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout
     assert "8b2d5f7e1c34 (head)" in heads
     assert not list(REPO_ROOT.joinpath("app/models").rglob("*.py")) or all(

@@ -10,6 +10,7 @@ import json
 import random
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -803,8 +804,8 @@ def test_scenario_19_source_and_worktree_guards(db_path):
     )
     # P6-1: explicit llm_calls persistence (D-P6-1-E)
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main", "--", "app/models", "alembic"],
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""
-    assert subprocess.run(["alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "8b2d5f7e1c34 (head)"
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "8b2d5f7e1c34 (head)"
