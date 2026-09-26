@@ -53,6 +53,17 @@ class Settings(BaseSettings):
     # allows 384k output. The curated DPDPA single-framework path keeps its own
     # limits so its golden recordings stay byte-identical.
     llm_max_output_tokens_framework: int = 65536
+    v2_chunk_min_words: int = 800
+    v2_chunk_max_words: int = 1500
+    v2_extraction_batch_max_requirements: int = 20
+    v2_max_claims_per_call: int = 25
+    v2_support_batch_max_claims: int = 25
+    v2_min_quote_chars: int = 20
+    v2_max_quote_chars: int = 600
+    v2_max_extraction_calls: int = 600
+    v2_extraction_max_tokens: int = 8192
+    v2_support_max_tokens: int = 4096
+    v2_structured_output: bool = True
     recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"
