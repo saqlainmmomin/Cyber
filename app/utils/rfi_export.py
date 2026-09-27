@@ -6,6 +6,7 @@ DOCX: Editable format using python-docx.
 """
 
 import json
+import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -409,4 +410,24 @@ def generate_rfi_docx(
 
     buffer = BytesIO()
     doc.save(buffer)
-    return buffer.getvalue()
+    return _stamp_zip_entries(buffer.getvalue(), generated_at)
+
+
+def _stamp_zip_entries(content: bytes, generated_at: datetime | None) -> bytes:
+    """Pin every zip entry's timestamp so re-rendering a DOCX is byte-identical.
+
+    python-docx stamps each member with the wall-clock second of the save, so two
+    downloads of the same frozen RFI version differed whenever they straddled a
+    second boundary.
+    """
+    stamp = (generated_at or datetime(1980, 1, 1)).timetuple()[:6]
+    stamp = max(stamp, (1980, 1, 1, 0, 0, 0))
+    source = zipfile.ZipFile(BytesIO(content))
+    output = BytesIO()
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as target:
+        for info in source.infolist():
+            pinned = zipfile.ZipInfo(info.filename, date_time=stamp)
+            pinned.compress_type = info.compress_type
+            pinned.external_attr = info.external_attr
+            target.writestr(pinned, source.read(info))
+    return output.getvalue()
