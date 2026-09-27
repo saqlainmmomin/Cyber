@@ -50,19 +50,19 @@ def _usage():
     return SimpleNamespace(prompt_tokens=10, completion_tokens=5, prompt_tokens_details=None)
 
 
-def _reply(text, stream):
+def _reply(text, stream, finish_reason="stop"):
     if stream:
         return iter(
             [
                 SimpleNamespace(
-                    choices=[SimpleNamespace(delta=SimpleNamespace(content=text), finish_reason="stop")],
+                    choices=[SimpleNamespace(delta=SimpleNamespace(content=text), finish_reason=finish_reason)],
                     usage=None,
                 ),
                 SimpleNamespace(choices=[], usage=_usage()),
             ]
         )
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason="stop")],
+        choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason=finish_reason)],
         usage=_usage(),
     )
 
@@ -130,12 +130,39 @@ def test_persistent_markdown_raises_after_one_retry(monkeypatch):
 
     captured = _install(monkeypatch, [MARKDOWN])
     with llm_client.collect_calls() as calls:
-        with pytest.raises(llm_client.LLMOutputParseError, match="not valid JSON after 2 attempts"):
+        with pytest.raises(llm_client.LLMOutputParseError, match=r"not valid JSON after 2 attempt\(s\)"):
             llm_client.call_llm("extract", system="s", messages=[], max_tokens=10, json_output=True)
 
     assert len(captured) == 2
     assert [call["status"] for call in calls] == ["parse_error", "parse_error"]
     assert isinstance(llm_client.LLMOutputParseError("x"), ValueError)
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_truncated_json_is_not_retried(monkeypatch, stream):
+    """finish_reason="length" means max_tokens cut the JSON off; the identical
+    request would truncate again, so it fails after one recorded attempt."""
+    from app.services import llm_client
+
+    captured: list[dict] = []
+
+    def create(**kwargs):
+        captured.append(kwargs)
+        return _reply('{"evidence": {"A.1": ["cut', kwargs.get("stream", False), "length")
+
+    monkeypatch.setattr(
+        llm_client,
+        "_client",
+        SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create))),
+    )
+    with llm_client.collect_calls() as calls:
+        with pytest.raises(llm_client.LLMOutputParseError, match=r"after 1 attempt\(s\).*'length'"):
+            llm_client.call_llm(
+                "judge", system="s", messages=[], max_tokens=10, stream=stream, json_output=True
+            )
+
+    assert len(captured) == 1
+    assert [(c["status"], c["finish_reason"]) for c in calls] == [("parse_error", "length")]
 
 
 def test_fenced_json_is_not_a_parse_failure_and_plain_calls_are_not_checked(monkeypatch):
@@ -249,6 +276,6 @@ def test_stored_desk_review_call_records_show_the_parse_failure(monkeypatch, tmp
     raw = json.loads(summary.raw_ai_response)
 
     assert summary.status == "error"
-    assert "not valid JSON after 2 attempts" in raw["frameworks"]["dpdpa"]["error"]
+    assert "not valid JSON after 2 attempt(s)" in raw["frameworks"]["dpdpa"]["error"]
     assert [call["status"] for call in raw["llm_calls"]] == ["parse_error", "parse_error"]
     assert all(call["error_type"] == "JSONDecodeError" for call in raw["llm_calls"])

@@ -243,10 +243,12 @@ def call_llm(
     {"text": str, "usage": {"input_tokens", "output_tokens",
     "cache_read_input_tokens", "cache_creation_input_tokens"}}
 
-    `json_output=True` asks for a JSON object (see `_json_object_request`) and
+    `json_output=True` asks for a JSON object (see `_JSON_OBJECT_FORMAT`) and
     checks the returned text parses as JSON. A reply that does not parse is
     recorded with `status="parse_error"` and retried once; if the retry does
-    not parse either, `LLMOutputParseError` is raised.
+    not parse either, `LLMOutputParseError` is raised. A reply truncated at
+    `max_tokens` (finish_reason="length") is not retried: the identical
+    request would truncate again at double the cost.
     """
     model = getattr(settings, _TIER_MODELS[tier])
     request_messages = [{"role": "system", "content": system}, *messages]
@@ -298,6 +300,8 @@ def call_llm(
         )
         if parse_ok:
             return result
+        if finish_reason == "length":
+            break
         logger.warning(
             "LLM reply for tier=%s model=%s was not JSON (finish_reason=%r, attempt %d/%d): %.200r",
             tier,
@@ -309,7 +313,7 @@ def call_llm(
         )
     raise LLMOutputParseError(
         f"LLM reply for tier={tier!r} model={model!r} was not valid JSON after "
-        f"{attempts} attempts (finish_reason={finish_reason!r}). "
+        f"{attempt} attempt(s) (finish_reason={finish_reason!r}). "
         f"Last reply starts: {result['text'][:300]!r}"
     )
 
