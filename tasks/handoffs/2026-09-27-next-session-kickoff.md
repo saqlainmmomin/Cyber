@@ -173,7 +173,7 @@ Also update `tasks/todo.md` and the auto-memory project status. Commit this file
 
 ## Results
 
-Session run 2026-09-27 by the Claude orchestrator. Codex (gpt-5.6-luna, xhigh) implemented, Opus subagents designed and reviewed, and a separate Sonnet agent did the harness fix. Every PR has CI green (#67–#69 confirmed; #70 was just opened). None is merged: Saqlain merges.
+Session run 2026-09-27 by the Claude orchestrator. Codex (gpt-5.6-luna, xhigh) implemented, Opus subagents designed and reviewed, and a separate Sonnet agent did the harness fix. All four PRs have CI green. None is merged: Saqlain merges.
 
 ### PRs
 | PR | Task | State |
@@ -181,7 +181,7 @@ Session run 2026-09-27 by the Claude orchestrator. Codex (gpt-5.6-luna, xhigh) i
 | [#67](https://github.com/saqlainmmomin/Cyber/pull/67) | (C4) Harness: screening 303 counts as success; README `rendered/` note corrected | open, CI green |
 | [#68](https://github.com/saqlainmmomin/Cyber/pull/68) | (B) LLM JSON reliability. Also carries this file | open, CI green |
 | [#69](https://github.com/saqlainmmomin/Cyber/pull/69) | (C1–C3) batched status retry, grounded desk-review quotes, profiler ID cap | open, CI green |
-| [#70](https://github.com/saqlainmmomin/Cyber/pull/70) | (A) P6-3b: v2 flag, desk-review adapter, claim-set persistence | open |
+| [#70](https://github.com/saqlainmmomin/Cyber/pull/70) | (A) P6-3b: v2 flag, desk-review adapter, claim-set persistence | open, CI green |
 
 **Merge order.** Any order works. #68, #69 and #70 each add `:(exclude)` entries to the same lines in `tests/test_p6_3a_grounding.py` and `tests/test_p6_nist_csf2_alignment.py`. #67 also touches the first of those files. Whichever PR merges later needs a keep-both resolution, done by merging `origin/main` into the branch (never a rebase).
 
