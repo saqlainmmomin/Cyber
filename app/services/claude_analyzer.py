@@ -236,6 +236,7 @@ def _run_evidence_extraction(
                 tier="extract",
                 max_tokens=8192,
                 temperature=0,
+                json_output=True,
                 system="You are a document analyst. Extract exact quotes from documents that are relevant to each compliance requirement. Be precise and quote verbatim.",
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -274,6 +275,7 @@ def _run_framework_evidence_extraction(
                 tier="extract",
                 max_tokens=settings.llm_max_output_tokens_framework,
                 temperature=0,
+                json_output=True,
                 system=(
                     "You are a document analyst. Extract exact quotes from documents "
                     f"that are relevant to each {framework.name} control. Be precise and quote verbatim."

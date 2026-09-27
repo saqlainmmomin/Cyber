@@ -27,6 +27,23 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# Stages whose routes redirect (303) on success rather than returning 2xx.
+REDIRECT_OK_STAGES = {"hierarchy", "context", "scope", "screening"}
+
+
+def _non_success_rows(stage: str, rows: list[dict]) -> list[dict]:
+    """Return the response rows for `stage` that should count as failures.
+
+    A 2xx status always passes. A 303 also passes for stages in
+    REDIRECT_OK_STAGES, since those routes redirect on success.
+    """
+    return [
+        row for row in rows
+        if not 200 <= row["status"] < 300
+        and not (stage in REDIRECT_OK_STAGES and row["status"] == 303)
+    ]
+
+
 def _json_write(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -268,11 +285,7 @@ def _child_run(slug: str, out_dir: Path, validation_root: Path, llm_mode: str, s
         try:
             detail = action()
             new_responses = response_log[before_logs:]
-            non_success = [
-                row for row in new_responses
-                if not 200 <= row["status"] < 300
-                and not (stage in {"hierarchy", "context", "scope"} and row["status"] == 303)
-            ]
+            non_success = _non_success_rows(stage, new_responses)
             ok = not non_success or stage == "format_probes"
             if non_success:
                 detail = {"detail": detail, "non_success": [{"path": row["path"], "status": row["status"]} for row in non_success]}
