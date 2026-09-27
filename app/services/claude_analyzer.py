@@ -314,6 +314,8 @@ def _collect_framework_evidence(
     framework_ids: list[str],
     documents: list[dict],
     desk_review_data: dict | None,
+    *,
+    grounding_documents: list[dict] | None = None,
 ) -> dict | None:
     """Collect desk-review and extracted evidence independently per framework.
 
@@ -325,12 +327,19 @@ def _collect_framework_evidence(
     quotes. If extraction fails or finds nothing, the framework gets no
     evidence, so its judge falls back to the full documents (which contain the
     desk-review quotes anyway).
+
+    ``grounding_documents`` is the original, untruncated document set used
+    only to verify reused desk-review quotes; extraction still receives
+    ``documents``.
     """
     from app.frameworks.prompts import CURATED_PROMPT_FRAMEWORK_ID
     from app.frameworks.registry import FrameworkRegistry
 
     if not documents:
         return None
+    grounding_documents = (
+        documents if grounding_documents is None else grounding_documents
+    )
 
     evidence: dict[str, list[str]] = {}
     evidence_by_framework: dict[str, dict[str, list[str]]] = {}
@@ -347,7 +356,7 @@ def _collect_framework_evidence(
             if requirement_id in control_ids
         }
         if framework_id != CURATED_PROMPT_FRAMEWORK_ID:
-            reused = _ground_evidence_quotes(reused, documents)
+            reused = _ground_evidence_quotes(reused, grounding_documents)
         if reused:
             evidence_by_framework[framework_id] = reused
             logger.info(
@@ -511,7 +520,10 @@ def _run_multi_framework_analysis(
 
     # Step 1: Evidence extraction (reuse desk review independently per framework)
     evidence = _collect_framework_evidence(
-        framework_ids, truncated_docs, desk_review_data
+        framework_ids,
+        truncated_docs,
+        desk_review_data,
+        grounding_documents=documents,
     )
 
     # Step 2: Per-framework gap analysis. Large registry frameworks contribute
@@ -665,7 +677,8 @@ def _run_multi_framework_analysis(
             validated, missing = validate_partial(
                 parsed,
                 set(scoped_ids),
-                treat_invalid_status_as_missing=True,
+                treat_invalid_status_as_missing=retry_ids is None,
+                normalize_status=True,
             )
             return validated, missing, raw_text, usage
 

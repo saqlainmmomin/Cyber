@@ -451,6 +451,140 @@ def test_invalid_compliance_status_retries_and_uses_retry_item(
     assert "ISO.A8.3" in caplog.text and repr(invalid_status) in caplog.text
 
 
+def test_batched_status_normalizes_case_and_whitespace_without_retry(monkeypatch):
+    target_id = "ISO.A8.3"
+    calls = []
+
+    def fake(*, tier, system, **_kwargs):
+        ids = _prompt_control_ids(system)
+        calls.append(ids)
+        payload = json.loads(_response(ids))
+        if target_id in ids:
+            target = next(
+                item for item in payload["assessments"]
+                if item["requirement_id"] == target_id
+            )
+            target["compliance_status"] = " Compliant "
+        return {"text": json.dumps(payload), "usage": _usage()}
+
+    result = _run_analysis(monkeypatch, fake, framework_ids=("iso27001",))
+
+    iso = result["frameworks"]["iso27001"]
+    assert "error" not in iso
+    target = next(
+        item for item in iso["parsed"]["assessments"]
+        if item["requirement_id"] == target_id
+    )
+    assert target["compliance_status"] == "compliant"
+    assert [ids for ids in calls if ids == [target_id]] == []
+
+
+def test_batched_invalid_status_on_retry_becomes_not_assessed(monkeypatch, caplog):
+    target_id = "ISO.A8.3"
+    calls = []
+    first_response = True
+
+    def fake(*, tier, system, **_kwargs):
+        nonlocal first_response
+        ids = _prompt_control_ids(system)
+        calls.append(ids)
+        payload = json.loads(_response(ids))
+        if target_id in ids and first_response:
+            first_response = False
+            target = next(
+                item for item in payload["assessments"]
+                if item["requirement_id"] == target_id
+            )
+            target.pop("compliance_status")
+        elif ids == [target_id]:
+            target = payload["assessments"][0]
+            target.pop("compliance_status")
+        return {"text": json.dumps(payload), "usage": _usage()}
+
+    with caplog.at_level("WARNING"):
+        result = _run_analysis(monkeypatch, fake, framework_ids=("iso27001",))
+
+    iso = result["frameworks"]["iso27001"]
+    assert "error" not in iso
+    target = next(
+        item for item in iso["parsed"]["assessments"]
+        if item["requirement_id"] == target_id
+    )
+    assert target["compliance_status"] == "not_assessed"
+    assert calls.count([target_id]) == 1
+    assert "treating it as missing for retry" in caplog.text
+    assert "invalid-status" in caplog.text
+    assert "Coercing compliance_status None to not_assessed" in caplog.text
+
+
+def test_desk_review_quote_grounding_uses_full_documents(monkeypatch):
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)
+    monkeypatch.setattr(settings, "max_total_document_words", 3)
+    documents = [
+        {
+            "filename": "first.txt",
+            "category": "other",
+            "text": "visible early quote",
+        },
+        {
+            "filename": "late.txt",
+            "category": "other",
+            "text": "late desk review quote",
+        },
+    ]
+    truncated_documents = claude_analyzer._truncate_documents(documents)
+    assert all(
+        "late desk review quote" not in document["text"]
+        for document in truncated_documents
+    )
+    desk_review_data = {
+        "findings": [
+            {
+                "type": "evidence",
+                "requirement_id": "ISO.A5.1",
+                "source_quote": "late desk review quote",
+            }
+        ],
+        "coverage_summary": {},
+        "signal_flags": [],
+        "absence_findings": [],
+    }
+    extraction_documents = []
+
+    def fake_extraction(_framework_id, extraction_docs, _findings):
+        extraction_documents.append(extraction_docs)
+        return {"ISO.A5.2": ["visible early quote"]}
+
+    monkeypatch.setattr(
+        claude_analyzer,
+        "_run_framework_evidence_extraction",
+        fake_extraction,
+    )
+    judge_prompts = []
+
+    def fake(*, tier, system, messages, **_kwargs):
+        assert tier == "judge"
+        judge_prompts.append(messages[0]["content"])
+        ids = _prompt_control_ids(system)
+        return {"text": _response(ids), "usage": _usage()}
+
+    monkeypatch.setattr(claude_analyzer, "_call_llm", fake)
+    result = claude_analyzer.run_multi_framework_analysis(
+        ["iso27001"],
+        "Acme",
+        "saas",
+        "sme",
+        None,
+        [],
+        documents,
+        desk_review_data=desk_review_data,
+    )
+
+    assert "error" not in result["frameworks"]["iso27001"]
+    assert extraction_documents == [truncated_documents]
+    assert "late desk review quote" in judge_prompts[0]
+
+
 def test_unbatched_missing_compliance_status_stays_not_assessed(monkeypatch):
     from app.dpdpa.framework import get_all_requirements
 

@@ -100,6 +100,7 @@ def validate_partial(
     known_requirement_ids: set[str],
     *,
     treat_invalid_status_as_missing: bool = False,
+    normalize_status: bool = False,
 ) -> tuple[dict, frozenset[str]]:
     """Validate a parsed gap-analysis response and drop unusable items.
 
@@ -118,7 +119,8 @@ def validate_partial(
     Returns the filtered response and the IDs that were not covered. Callers
     that require complete coverage can use validate_and_filter instead. Batched
     callers can opt into treating an item with a missing or unknown raw
-    compliance_status as missing so the caller's retry can cover that ID.
+    compliance_status as missing so the caller's retry can cover that ID, and
+    can normalize status casing/whitespace before validation.
     """
     executive_summary = parsed.get("executive_summary")
     if not isinstance(executive_summary, str):
@@ -129,6 +131,7 @@ def validate_partial(
     dropped_malformed = 0
     dropped_unknown_id = 0
     dropped_duplicate = 0
+    dropped_invalid_status = 0
 
     for index, raw_item in enumerate(parsed.get("assessments", [])):
         raw_status = (
@@ -136,8 +139,29 @@ def validate_partial(
             if isinstance(raw_item, dict)
             else None
         )
+        item_for_validation = raw_item
+        status_for_check = raw_status
+        if normalize_status and isinstance(raw_status, str):
+            status_for_check = raw_status.strip().lower()
+            if isinstance(raw_item, dict):
+                item_for_validation = {
+                    **raw_item,
+                    "compliance_status": status_for_check,
+                }
+        invalid_status = treat_invalid_status_as_missing and (
+            not isinstance(status_for_check, str)
+            or status_for_check not in KNOWN_STATUSES
+        )
+        if invalid_status and isinstance(item_for_validation, dict):
+            # Validate the rest of the item without letting the permissive
+            # schema validator emit its normal coercion warning. The item is
+            # dropped below so the retry can cover its requirement ID.
+            item_for_validation = {
+                **item_for_validation,
+                "compliance_status": "not_assessed",
+            }
         try:
-            item = GapAssessmentItem.model_validate(raw_item)
+            item = GapAssessmentItem.model_validate(item_for_validation)
         except ValidationError as exc:
             dropped_malformed += 1
             # exc.errors(include_input=False) omits the rejected field values —
@@ -161,10 +185,14 @@ def validate_partial(
                 item.requirement_id,
             )
             continue
-        if (
-            treat_invalid_status_as_missing
-            and (not isinstance(raw_status, str) or raw_status not in KNOWN_STATUSES)
-        ):
+        if invalid_status:
+            dropped_invalid_status += 1
+            logger.warning(
+                "Dropping assessment item for requirement_id %r with invalid "
+                "compliance_status %r; treating it as missing for retry",
+                item.requirement_id,
+                raw_status,
+            )
             continue
         if item.requirement_id in seen_ids:
             dropped_duplicate += 1
@@ -177,13 +205,20 @@ def validate_partial(
         seen_ids.add(item.requirement_id)
         valid_items.append(item)
 
-    if dropped_malformed or dropped_unknown_id or dropped_duplicate:
+    if (
+        dropped_malformed
+        or dropped_unknown_id
+        or dropped_duplicate
+        or dropped_invalid_status
+    ):
         logger.warning(
             "Gap analysis response validation dropped %d malformed, %d "
-            "unknown-requirement-id, and %d duplicate item(s) out of %d",
+            "unknown-requirement-id, %d duplicate, and %d invalid-status "
+            "item(s) out of %d",
             dropped_malformed,
             dropped_unknown_id,
             dropped_duplicate,
+            dropped_invalid_status,
             len(parsed.get("assessments", [])),
         )
 
