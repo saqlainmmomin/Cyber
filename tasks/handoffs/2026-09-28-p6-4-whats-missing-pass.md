@@ -547,3 +547,14 @@ Implemented the P6-4 what's-missing pass exactly within the permitted applicatio
 - Live smoke: not run; the configured OpenRouter endpoint was unreachable from the sandbox, so no live result is claimed.
 
 Changed only `app/services/grounding/missing.py`, `app/services/desk_review_v2.py`, `app/config.py`, `.env.example`, this Results section, and the corresponding Phase 6 tracker entry. No tests or protected modules were edited, and no commit was made.
+
+### Orchestrator verification (2026-09-27)
+- Full suite (committed): 1042 passed, 10 skipped. Contract tests 28/28, unedited.
+- **Cloud review (Sonnet):** no blocking or should-fix findings. All seven checks were clean: flag-off parity, closed set, suppression wiring, fail-open, call records, injection and scope. Its adversarial probes held (duplicate IDs are first-wins; red flags with unknown keys or no valid claim are dropped).
+- **Live flag-on smoke** (real OpenRouter, `tests/grounding_fixtures/` only; script at `~/cyberassess-runs/2026-09-28-p6-4-missing-smoke/`): every check passed.
+  - DPDPA run: 23 requirements sent and 23 returned, 21 flagged, 27 missing items and 3 red flags, 0 dropped IDs.
+  - DPDPA+ISO run: 25 sent and 25 flagged, 33 missing items and 11 red flags, 0 dropped IDs; no non-DPDPA rows.
+  - Calls: 2 per run, all `stop`/`ok`, no parse errors, 0 reasoning tokens; peak output 2,378 tokens against the 8,192 ceiling.
+  - The pass's calls are kept out of the claim set's `llm_calls`.
+  - Before/after: `CH2.CONSENT.1` is pre-filled from the document with the flag off, and not pre-filled with it on.
+- **Product signal for Saqlain:** the suppression rate is high, 91% (DPDPA) and 100% (DPDPA+ISO). The synthetic fixtures are thin, so this may overstate real documents. Turned on, the pass would suppress almost all v2 DPDPA pre-fill. `v2_missing_pass` stays off by default. Decide at P6-5 (A/B on the P5-9 packs) whether to enable it, tighten the prompt, or suppress only on red flags.
