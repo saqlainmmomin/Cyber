@@ -1542,8 +1542,10 @@ def generate_pdf(
         not_covered_text = (
             "This assessment does not include technical penetration testing, source code review, "
             "network security assessment, or any form of independent technical verification. "
-            "Findings in areas where the organization provided limited or no evidence are based on "
-            "stated intent and disclosed posture only."
+            "Where the selected framework(s) include physical or environmental controls, findings "
+            "on those controls are based on disclosed information and submitted documents, not on "
+            "an on-site inspection. Findings in areas where the organization provided limited or no "
+            "evidence are based on stated intent and disclosed posture only."
         )
 
     scope_text = f"""{chr(10).join(_basis_lines(basis, generated))}
