@@ -1616,6 +1616,10 @@ PROTECTED_PATHS = [
     "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/__init__.py",
     "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "app/routers", "app/templates",
     "alembic", "tests/fixtures", "tests/support", "validation", "scripts/validation",
+    # LLM JSON reliability (claude/llm-json-enforcement): JSON mode, parse-failure
+    # records and one retry for desk review and evidence extraction.
+    ":(exclude)app/services/llm_client.py", ":(exclude)app/services/claude_analyzer.py",
+    ":(exclude)app/services/desk_review.py",
 ]
 
 

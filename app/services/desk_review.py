@@ -287,6 +287,7 @@ def _call_claude_desk_review(
         tier="judge",
         max_tokens=16000,
         temperature=0,
+        json_output=True,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
     )
@@ -327,6 +328,7 @@ def _call_framework_desk_review(
             else min(settings.llm_max_output_tokens_framework, 16384)
         ),
         temperature=0,
+        json_output=True,
         system=system_blocks,
         messages=[{"role": "user", "content": user_prompt}],
     )
