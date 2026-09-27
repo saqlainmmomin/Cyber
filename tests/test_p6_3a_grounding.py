@@ -1616,7 +1616,15 @@ PROTECTED_PATHS = [
     "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/__init__.py",
     "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "app/routers", "app/templates",
     "alembic", "tests/fixtures", "tests/support", "validation", "scripts/validation",
+    # P6-3b (tasks/handoffs/2026-09-27-p6-3b-v2-flag-and-adapter.md) adds the v2
+    # branch and the precomputed-citation path to desk_review.py; its own suite
+    # (tests/test_p6_3b_v2_flag.py) guards that only lines there are added.
+    ":(exclude)app/services/desk_review.py",
 ]
+
+# P6-3b adds the package's first and only importer outside it: the v2
+# desk-review module. Any other importer still fails the dormancy scan.
+P6_3B_GROUNDING_IMPORTERS = {"app/services/desk_review_v2.py"}
 
 
 def _git(*args) -> str:
@@ -1635,6 +1643,8 @@ def test_scenario_17_package_is_dormant():
     offenders = []
     for path in (REPO_ROOT / "app").rglob("*.py"):
         if (REPO_ROOT / "app" / "services" / "grounding") in path.parents:
+            continue
+        if path.relative_to(REPO_ROOT).as_posix() in P6_3B_GROUNDING_IMPORTERS:
             continue
         source = path.read_text(encoding="utf-8", errors="ignore")
         if "services.grounding" in source or re.search(r"from app\.services import[^\n]*\bgrounding\b", source):
