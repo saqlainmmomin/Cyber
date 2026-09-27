@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     v2_max_concurrency: int = 6
     # Whether v2 fills regex-missed document metadata with a verified LLM pass.
     v2_metadata_fallback: bool = True
+    # Bounded, deterministic settings for the v2 Stage 2 requirement judge.
+    v2_judge_batch_max_requirements: int = 15
+    v2_judge_max_tokens: int = 8192
+    v2_judge_max_claims_per_requirement: int = 25
     recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"

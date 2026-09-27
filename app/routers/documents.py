@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment, AssessmentDocument
-from app.schemas.assessment import DocumentCategory, DocumentResponse
+from app.schemas.assessment import DocumentResponse
 from app.services import evidence as evidence_service
+from app.services.document_categories import document_categories
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}/documents", tags=["documents"])
+UNKNOWN_CATEGORY_MESSAGE = "Unknown document category '{category}' for this assessment's frameworks."
 
 
 def _document_response(row: dict, assessment_id: str) -> DocumentResponse:
@@ -29,17 +31,22 @@ def _raise_service_error(exc: evidence_service.EvidenceError):
 @router.post("", response_model=DocumentResponse, status_code=201)
 async def upload_document(
     assessment_id: str,
-    category: DocumentCategory = Form(...),
+    category: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
+    if category not in document_categories(assessment.frameworks):
+        raise HTTPException(422, UNKNOWN_CATEGORY_MESSAGE.format(category=category[:50]))
     try:
         result = evidence_service.ingest_upload(
             db,
             assessment_id=assessment_id,
             filename=file.filename or "document",
             content=await file.read(),
-            category=category.value,
+            category=category,
         )
         if not result.released:
             raise HTTPException(422, evidence_service.SCAN_REJECTED_MESSAGE)

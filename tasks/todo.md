@@ -93,6 +93,7 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
   - [x] **Review-fix round:** source-load failure mapping, best-effort metadata fallback, and v1 citation fallback. Verified: 3 new regression tests and the golden DPDPA suite pass; broader suites were blocked at collection by missing `boto3`.
 - [ ] **Lift the 5,000-word upload cap** (Q4) — schedule with P6-4.
 - [ ] **P6-3 / P6-4 / P6-5:** v2 claims pipeline, batched closed-set judge, A/B + default flip. P6-4 runs without test criteria: it falls back to the control description and records `criteria_source` (D-P6-L), so ISO and NIST are not blocked on criteria sign-off.
+- [x] **P6-4: v2 Stage 2 batched requirement judge** — implemented from `tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md`; contract, parity/P6-3 regression set, and full suite verified.
 - [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
 - [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
