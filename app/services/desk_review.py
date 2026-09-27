@@ -602,8 +602,9 @@ def _persist_findings(
             doc_filename = item.get("document", "")
             quote = item.get("quote", "")
             citations = (
-                [item["citation"]]
-                if isinstance(item.get("citation"), dict)
+                ([item["citation"]] if item["citation"] else [])
+                if "citation" in item
+                and (item["citation"] is None or isinstance(item["citation"], dict))
                 else cite_quotes(sources, [quote], preferred_filename=doc_filename)
                 if quote.strip()
                 else [
