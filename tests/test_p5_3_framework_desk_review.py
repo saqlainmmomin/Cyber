@@ -36,7 +36,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REVISION = "8b2d5f7e1c34"
 PREVIOUS_REVISION = "4e8c1a9d2b57"
 SYSTEM_SHA256 = "21b365d6eac8d3ad2171ac86773567dcee0306b3968a6da993ee67a8bd4e1d93"
-REQUEST_KEY = "3e7f8d2a1c9ce76110f25d26e4c7ae86e52b633b441746d5d4d16b82438f1c86"
+# LLM JSON reliability (claude/llm-json-enforcement): the DPDPA desk-review
+# request deliberately gained `json_output=True` (JSON mode + parse-failure
+# retry; 4 of 148 live calls returned Markdown). PRE_JSON_REQUEST_KEY is the
+# previous pin: the request minus that one flag must still hash to it, so the
+# prompt, tier, token budget and every other request byte are unchanged.
+PRE_JSON_REQUEST_KEY = "3e7f8d2a1c9ce76110f25d26e4c7ae86e52b633b441746d5d4d16b82438f1c86"
+REQUEST_KEY = "6b1bba755fd6f075a4f2acf960121a18b76b07ff4d109b7089788769c64f2a0b"
 DOCS = [
     {
         "id": "d1",
@@ -360,6 +366,9 @@ def test_scenario_3_dpdpa_request_is_byte_identical(db, texts, monkeypatch):
     monkeypatch.setattr(desk_review, "_call_llm", fake_llm)
     desk_review._call_claude_desk_review(DOCS, "Acme", "saas")
     assert analyzer_request_key((), captured) == REQUEST_KEY
+    assert captured["json_output"] is True
+    pre_json = {key: value for key, value in captured.items() if key != "json_output"}
+    assert analyzer_request_key((), pre_json) == PRE_JSON_REQUEST_KEY
 
     assessment = _seed(db)
     _upload(db, texts, assessment)
