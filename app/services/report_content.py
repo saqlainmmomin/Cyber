@@ -16,6 +16,7 @@ from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.evidence import EvidenceVersion
 from app.services import findings as finding_service
+from app.services import report_basis
 from app.services import report_snapshots
 from app.services.approved_report import build_approved_report, is_released
 from app.services.workpaper import anchor_for
@@ -106,6 +107,8 @@ class IntegratedSection:
     scope_label: str
     scores: list[ScoreLine]
     findings: AssessmentFindings
+    framework_ids: tuple[str, ...] = ()
+    basis: report_basis.ReportBasis | None = None
 
 
 @dataclass(frozen=True)
@@ -328,6 +331,8 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
                 scope_label=_scope_label(assessment),
                 scores=scores,
                 findings=assessment_findings(db, assessment),
+                framework_ids=tuple(assessment.frameworks),
+                basis=report_basis.current_basis(db, assessment),
             )
         )
 

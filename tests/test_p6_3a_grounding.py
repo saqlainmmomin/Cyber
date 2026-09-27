@@ -1632,6 +1632,15 @@ PROTECTED_PATHS = [
     # v2 analysis branch (analysis.py; additive-only, guarded by
     # tests/test_p6_4_v2_judge.py) and framework-aware upload categories (documents.py).
     ":(exclude)app/routers/analysis.py", ":(exclude)app/routers/documents.py",
+    # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report routes,
+    # templates and the re-recorded golden PDF text hash and page count.
+    ":(exclude)app/routers/reports.py", ":(exclude)app/routers/review.py",
+    ":(exclude)app/routers/web.py", ":(exclude)app/templates/pages/conclusions.html",
+    ":(exclude)app/templates/pages/workpaper.html",
+    ":(exclude)app/templates/partials/report_basis_panel.html",
+    ":(exclude)app/templates/partials/report_summary.html",
+    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
+    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
@@ -1653,6 +1662,12 @@ def test_scenario_17_protected_files_unchanged():
     exclusions = [
         ":(exclude)scripts/validation/run_company.py",
         ":(exclude)validation/README.md",
+        # claude/harness-usage-status: llm_usage.jsonl rows gain status/
+        # finish_reason/attempt (run_company.py already excluded above), plus
+        # a trivial non-ok call count surfaced through score.py's cost
+        # aggregation and report.py's per-run cost line.
+        ":(exclude)scripts/validation/score.py",
+        ":(exclude)scripts/validation/report.py",
     ]
     committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
     uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)

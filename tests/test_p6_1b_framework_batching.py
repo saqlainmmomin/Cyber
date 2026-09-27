@@ -973,6 +973,10 @@ def test_protected_surface_guard_uses_three_dot_diff():
             "app/frameworks/definitions",
             ":(exclude)app/frameworks/definitions/nist_csf.py",  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
             "app/services/scoring.py",
+            # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md) re-records the
+            # golden PDF text hash and page count after fixing the D0 report defects.
+            ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
+            ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json",
         ],
         check=True,
         capture_output=True,
