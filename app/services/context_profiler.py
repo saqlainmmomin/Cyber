@@ -6,8 +6,14 @@ framing that guides the adaptive Phase 2 questionnaire and gap analysis.
 """
 
 import json
+import logging
 
+from app.frameworks.definitions.dpdpa import DPDPA_DEFINITION
 from app.services import llm_client
+
+logger = logging.getLogger(__name__)
+
+MAX_LIKELY_NOT_APPLICABLE = 20
 
 
 def derive_risk_profile(context_answers: list[dict], industry: str, company_size: str) -> dict:
@@ -20,7 +26,10 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     signals = _extract_signals(context_answers)
 
     # Build a focused prompt for risk profiling
-    prompt = _build_profile_prompt(context_answers, industry, company_size, signals)
+    known_requirement_ids = _known_requirement_ids()
+    prompt = _build_profile_prompt(
+        context_answers, industry, company_size, signals, known_requirement_ids
+    )
 
     raw = _call_claude_context_profile(prompt)
 
@@ -38,8 +47,34 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     profile["processes_children_data"] = signals["processes_children_data"]
     profile["cross_border_transfers"] = signals["cross_border_transfers"]
     profile["has_breach_response"] = signals["has_breach_response"]
+    profile["likely_not_applicable"] = _filter_likely_not_applicable(
+        profile.get("likely_not_applicable", []), known_requirement_ids
+    )
 
     return profile
+
+
+def _known_requirement_ids() -> set[str]:
+    """The profile's signals are DPDPA-specific (SDF, children's data), so
+    likely_not_applicable is always a list of DPDPA requirement IDs."""
+    return {control.id for control in DPDPA_DEFINITION.all_controls()}
+
+
+def _filter_likely_not_applicable(
+    proposed_ids: list[object], known_requirement_ids: set[str]
+) -> list[str]:
+    filtered: list[str] = []
+    for requirement_id in proposed_ids if isinstance(proposed_ids, list) else []:
+        if (
+            not isinstance(requirement_id, str)
+            or requirement_id not in known_requirement_ids
+        ):
+            logger.warning(
+                "Dropping unknown likely_not_applicable ID %r", requirement_id
+            )
+            continue
+        filtered.append(requirement_id)
+    return filtered[:MAX_LIKELY_NOT_APPLICABLE]
 
 
 def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
@@ -105,7 +140,11 @@ def _extract_signals(answers: list[dict]) -> dict:
 
 
 def _build_profile_prompt(
-    answers: list[dict], industry: str, company_size: str, signals: dict
+    answers: list[dict],
+    industry: str,
+    company_size: str,
+    signals: dict,
+    known_requirement_ids: set[str],
 ) -> str:
     """Build the prompt for risk profile generation."""
     answers_text = "\n".join(
@@ -141,4 +180,5 @@ Rules:
 - priority_chapters: Order the DPDPA chapters by relevance. Always include chapter_2 first.
 - likely_not_applicable: List requirement IDs that are probably not applicable (e.g., SDF requirements for non-SDF orgs, children's data requirements if no children's data).
 - timeline_pressure: Map from the assessment timeline answer (under_3_months=HIGH, 3_to_6=MEDIUM, else LOW).
-- framing_notes: What should the assessor focus on? What's the biggest risk area?"""
+- framing_notes: What should the assessor focus on? What's the biggest risk area?
+- likely_not_applicable must use only these IDs, at most {MAX_LIKELY_NOT_APPLICABLE}, and must not be padded: {", ".join(sorted(known_requirement_ids))}"""

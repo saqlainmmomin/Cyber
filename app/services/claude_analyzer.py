@@ -346,6 +346,8 @@ def _collect_framework_evidence(
             for requirement_id, quotes in desk_review_evidence.items()
             if requirement_id in control_ids
         }
+        if framework_id != CURATED_PROMPT_FRAMEWORK_ID:
+            reused = _ground_evidence_quotes(reused, documents)
         if reused:
             evidence_by_framework[framework_id] = reused
             logger.info(
@@ -660,7 +662,11 @@ def _run_multi_framework_analysis(
                     usage,
                 )
 
-            validated, missing = validate_partial(parsed, set(scoped_ids))
+            validated, missing = validate_partial(
+                parsed,
+                set(scoped_ids),
+                treat_invalid_status_as_missing=True,
+            )
             return validated, missing, raw_text, usage
 
     first_results = run_bounded(

@@ -63,10 +63,11 @@ class GapAssessmentItem(BaseModel):
             for key, value in data.items()
             if not (value is None and key in cls._OPTIONAL_FIELDS_WITH_DEFAULTS)
         }
-        if data.get("compliance_status") not in KNOWN_STATUSES:
+        raw_status = data.get("compliance_status")
+        if not isinstance(raw_status, str) or raw_status not in KNOWN_STATUSES:
             logger.warning(
-                "Unexpected compliance_status %r for %s — treating as not_assessed",
-                data.get("compliance_status"),
+                "Coercing compliance_status %r to not_assessed for requirement_id %r",
+                raw_status,
                 data.get("requirement_id", "<unknown>"),
             )
             data["compliance_status"] = "not_assessed"
@@ -95,7 +96,10 @@ class IncompleteAssessmentError(ValueError):
 
 
 def validate_partial(
-    parsed: dict, known_requirement_ids: set[str]
+    parsed: dict,
+    known_requirement_ids: set[str],
+    *,
+    treat_invalid_status_as_missing: bool = False,
 ) -> tuple[dict, frozenset[str]]:
     """Validate a parsed gap-analysis response and drop unusable items.
 
@@ -112,7 +116,9 @@ def validate_partial(
     a malformed response, and "first wins" is at least deterministic.
 
     Returns the filtered response and the IDs that were not covered. Callers
-    that require complete coverage can use validate_and_filter instead.
+    that require complete coverage can use validate_and_filter instead. Batched
+    callers can opt into treating an item with a missing or unknown raw
+    compliance_status as missing so the caller's retry can cover that ID.
     """
     executive_summary = parsed.get("executive_summary")
     if not isinstance(executive_summary, str):
@@ -125,6 +131,11 @@ def validate_partial(
     dropped_duplicate = 0
 
     for index, raw_item in enumerate(parsed.get("assessments", [])):
+        raw_status = (
+            raw_item.get("compliance_status")
+            if isinstance(raw_item, dict)
+            else None
+        )
         try:
             item = GapAssessmentItem.model_validate(raw_item)
         except ValidationError as exc:
@@ -149,6 +160,11 @@ def validate_partial(
                 "Dropping assessment item with unknown requirement_id %r",
                 item.requirement_id,
             )
+            continue
+        if (
+            treat_invalid_status_as_missing
+            and (not isinstance(raw_status, str) or raw_status not in KNOWN_STATUSES)
+        ):
             continue
         if item.requirement_id in seen_ids:
             dropped_duplicate += 1
