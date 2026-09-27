@@ -142,6 +142,24 @@ def test_context_profile_malformed_json_raises_json_decode_error():
             context_profiler.derive_risk_profile([], "saas", "sme")
 
 
+def test_context_profile_filters_unknown_ids_and_caps_likely_not_applicable(caplog):
+    from app.frameworks.definitions.dpdpa import DPDPA_DEFINITION
+    from app.services import context_profiler
+
+    valid_id = DPDPA_DEFINITION.all_controls()[0].id
+    proposed_ids = [valid_id] * (context_profiler.MAX_LIKELY_NOT_APPLICABLE + 1)
+    proposed_ids.append("CH4.SDF.100")
+    raw = json.dumps({"likely_not_applicable": proposed_ids})
+
+    with patch.object(context_profiler, "_call_claude_context_profile", return_value=raw):
+        with caplog.at_level("WARNING"):
+            result = context_profiler.derive_risk_profile([], "saas", "sme")
+
+    assert len(result["likely_not_applicable"]) == context_profiler.MAX_LIKELY_NOT_APPLICABLE
+    assert set(result["likely_not_applicable"]) == {valid_id}
+    assert "CH4.SDF.100" in caplog.text
+
+
 def test_followup_generation_tags_and_caps_questions():
     from app.services import followup_engine
 

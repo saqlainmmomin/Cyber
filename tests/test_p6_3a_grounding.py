@@ -1623,6 +1623,11 @@ PROTECTED_PATHS = [
     # branch and the precomputed-citation path to desk_review.py; its own suite
     # (tests/test_p6_3b_v2_flag.py) guards that only lines there are added.
     ":(exclude)app/services/desk_review.py",
+    # Small follow-ups (claude/p6-small-followups): batched status retry
+    # (llm_output), grounded desk-review quotes (claude_analyzer), profiler ID
+    # filter and cap (context_profiler).
+    ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
+    ":(exclude)app/services/context_profiler.py",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
