@@ -504,3 +504,9 @@ The suite uses an Alembic-`head` SQLite database per test, the real FastAPI app 
 
 ## Results
 
+- Implemented P6-6 within D-P6-6-K, plus the authorised longitudinal-demo-only seed edit and D-P6-6-L test/fixture updates. No commits or `.git` writes were made.
+- Contract tests: `18 passed`. Golden DPDPA tests: `8 passed`. P6-6 smoke subset: `6 passed`. Required parity suite: `181 passed`.
+- Longitudinal demo: `12 passed, 1 failed`; all functional scenarios pass. Scenario 13 reports the two allowlisted modified files (`app/routers/web.py`, `app/services/report_content.py`) as uncommitted, which cannot be resolved without committing or changing the protected test.
+- Full suite: `954 passed, 10 skipped, 2 failed`. The second failure is the expected retention guard while the authorised existing test/fixture edits are uncommitted; the longitudinal protected-surface failure is described above.
+- Canonical DPDPA PDF fixture re-recorded: page count `16 -> 17`, text SHA-256 `b0420ce4697a6859c0a3b86794cd66f0905afae3b65208a43745451c599c8ac2 -> c6b1139b70029aecde63b3c2e419737e27c413d9c24e3b20026a6bb9cdf16e02`.
+- Baseline before implementation was `939 passed, 10 skipped, 17 failed`; the count differs from the historical handoff estimate because the committed designer files keep the retention guard clean.

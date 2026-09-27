@@ -52,9 +52,10 @@ from app.services import (
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
 from app.services.magic_links import client_upload_rows, magic_link_rows
-from app.services import approved_report, conclusion_review
+from app.services import approved_report, conclusion_review, report_basis
 from app.services.conclusion_review import conclusion_cards
 from app.services.scoring import compute_delta
+from app.utils.http_headers import attachment_disposition
 from app.utils.review_gate import require_review_approval
 
 from app.template_config import configure_templates
@@ -1119,7 +1120,7 @@ def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(ge
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": attachment_disposition(filename)},
     )
 
 
@@ -1151,7 +1152,7 @@ def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(g
     return Response(
         content=docx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": attachment_disposition(filename)},
     )
 
 
@@ -1891,15 +1892,6 @@ _DOMAIN_MAP = [
     ("CH2.ACCURACY","Data Accuracy"),
 ]
 
-_ROOT_CAUSE_LABELS = {
-    "policy":     "Policy & Documentation",
-    "people":     "People & Training",
-    "process":    "Process & Operations",
-    "technology": "Technology & Controls",
-    "governance": "Governance & Oversight",
-}
-
-
 def _compute_chapter_status_counts(gap_items) -> dict:
     """Per-chapter breakdown of compliance statuses for stacked bar chart."""
     counts: dict[str, dict] = {}
@@ -1950,28 +1942,6 @@ def _compute_business_impact(gap_items) -> dict:
             for item in gap_items
         ),
         "has_dpdpa_exposure": max_penalty > 0,
-    }
-
-
-def _compute_root_cause_counts(gap_items) -> dict:
-    """Count non-compliant/partial gaps by root cause category, with relative bar widths."""
-    raw: dict[str, int] = {}
-    for item in gap_items:
-        if item.compliance_status not in ("non_compliant", "partially_compliant"):
-            continue
-        rc = item.root_cause_category
-        if rc:
-            raw[rc] = raw.get(rc, 0) + 1
-    if not raw:
-        return {}
-    max_count = max(raw.values())
-    return {
-        rc: {
-            "count": count,
-            "label": _ROOT_CAUSE_LABELS.get(rc, rc.title()),
-            "pct": round(count / max_count * 100),
-        }
-        for rc, count in sorted(raw.items(), key=lambda x: -x[1])
     }
 
 
@@ -2038,8 +2008,6 @@ def report_summary(
     # Derived visualisation data
     chapter_status_counts = _compute_chapter_status_counts(gap_items)
     business_impact = _compute_business_impact(gap_items)
-    root_cause_counts = {}
-
     # Critical findings: non/partial, risk=critical|high, sorted by priority then severity
     _severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     critical_findings = sorted(
@@ -2115,7 +2083,6 @@ def report_summary(
             "status_counts": status_counts,
             "chapter_status_counts": chapter_status_counts,
             "business_impact": business_impact,
-            "root_cause_counts": root_cause_counts,
             "critical_findings": critical_findings,
             "quick_wins": quick_wins,
             "quick_wins_available": False,
@@ -2209,6 +2176,8 @@ def conclusions_page(
             "counts": counts,
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
             "release": release,
+            "report_basis": report_basis.current_basis(db, assessment),
+            "period_locked": report_basis.period_locked(db, assessment),
         },
     )
 

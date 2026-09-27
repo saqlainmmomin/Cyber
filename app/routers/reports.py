@@ -11,6 +11,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.schemas.report import ChapterScore, GapItemOut, ReportOut, ReportSummary
 from app.services import approved_report, report_content
 from app.services.scoring import compute_delta
+from app.utils.http_headers import attachment_disposition
 from app.utils.pdf_export import generate_pdf
 from app.utils.review_gate import require_review_approval
 
@@ -224,7 +225,7 @@ def _download_pdf_response(
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": attachment_disposition(filename)},
     )
 
 

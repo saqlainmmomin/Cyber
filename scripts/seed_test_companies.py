@@ -1684,7 +1684,7 @@ from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links
-from app.services import approved_report
+from app.services import approved_report, report_basis
 from scripts.backup import create_backup, database_path
 
 DEMO_CLIENT_A = "Meridian Ledger Technologies Pvt Ltd"
@@ -2139,6 +2139,18 @@ def _analyze(db, http, assessment_id: str, assessment_key: str, assessment_keys:
 
 def _approve_conclusions(db, http, assessment_id: str, assessment_key: str):
     db.expire_all()
+    assessment = db.get(Assessment, assessment_id)
+    report_basis.update_report_basis(
+        db,
+        assessment,
+        period_start=date(2026, 1, 1),
+        period_end=date(2026, 3, 31),
+        evidence_cutoff=date(2026, 4, 15),
+        prepared_by=DEMO_REVIEWER,
+        reviewed_by=None,
+        actor=f"consultant:{DEMO_REVIEWER}",
+    )
+    db.commit()
     rows = db.query(Conclusion).filter(Conclusion.assessment_id == assessment_id).all()
     by_key = {(row.framework_id, row.requirement_id): row for row in rows}
     for framework_id in ITEMS[assessment_key]:

@@ -548,7 +548,7 @@ def test_scenario_10_pdf_uses_approved_rows_and_conditional_framework_copy(db, h
     text_value = _pdf_text(http.get(f"/api/assessments/{assessment.id}/report/pdf").content)
     assert "Scoring Basis:" in text_value
     assert "insufficient evidence" in text_value.lower()
-    assert "Remediation Timeline (not estimated)" in text_value
+    assert "Remediation Timeline" not in text_value  # P6-6 (D0 #7): card replaced by Insufficient Evidence
     assert "~0 weeks" not in text_value and "Strategic Initiatives" not in text_value
     assert list(inspect.signature(reports.generate_pdf).parameters) == [
         "report", "gap_items", "company_name", "initiatives", "answer_source_map",

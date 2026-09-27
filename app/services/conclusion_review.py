@@ -13,7 +13,7 @@ from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.report import GapItem, GapReport
-from app.services import analysis_pipeline
+from app.services import analysis_pipeline, report_basis
 from app.services.analysis_pipeline import ConclusionConflict
 from app.services.citations import loads_citations, resolve_citations
 
@@ -230,6 +230,13 @@ def decide(
             f"The {action} action is not allowed while this conclusion is {decision_state}."
         )
 
+    if action in analysis_pipeline.LOCKING_ACTIONS:
+        period_blocker = report_basis.approval_blocker(
+            db, db.get(Assessment, conclusion.assessment_id)
+        )
+        if period_blocker:
+            raise InvalidDecision(period_blocker)
+
     latest_proposal = _latest_proposal(revisions)
     values: dict[str, str | bool] = {}
     if action == "approved":
@@ -413,6 +420,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
         for item in legacy_items
     }
     titles = _requirement_titles({row.framework_id for row in ordered})
+    period_blocker = report_basis.approval_blocker(db, assessment)
 
     cards: list[ConclusionCard] = []
     for conclusion in ordered:
@@ -430,7 +438,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
             db,
             latest_proposal.citations_json if latest_proposal else None,
         )
-        blocker = _approval_blocker(_content(conclusion), latest_proposal)
+        blocker = period_blocker or _approval_blocker(_content(conclusion), latest_proposal)
         last_decision = None
         if latest_human is not None:
             actor_display = latest_human.actor
