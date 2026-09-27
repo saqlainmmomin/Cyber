@@ -1620,6 +1620,11 @@ PROTECTED_PATHS = [
     # records and one retry for desk review and evidence extraction.
     ":(exclude)app/services/llm_client.py", ":(exclude)app/services/claude_analyzer.py",
     ":(exclude)app/services/desk_review.py",
+    # Small follow-ups (claude/p6-small-followups): batched status retry
+    # (llm_output), grounded desk-review quotes (claude_analyzer), profiler ID
+    # filter and cap (context_profiler).
+    ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
+    ":(exclude)app/services/context_profiler.py",
 ]
 
 

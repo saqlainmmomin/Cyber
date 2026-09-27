@@ -73,6 +73,15 @@ def test_validate_and_filter_coerces_unknown_status_to_not_assessed():
     assert result["assessments"][0]["compliance_status"] == "not_assessed"
 
 
+def test_validate_and_filter_coerces_missing_status_to_not_assessed():
+    item = _item()
+    item.pop("compliance_status")
+    result = validate_and_filter(
+        {"executive_summary": "s", "assessments": [item]}, SINGLE_KNOWN_ID
+    )
+    assert result["assessments"][0]["compliance_status"] == "not_assessed"
+
+
 def test_validate_and_filter_coerces_none_optional_fields_to_defaults():
     parsed = {
         "executive_summary": "s",

@@ -111,6 +111,39 @@ def test_registry_extraction_runs_despite_desk_review_evidence_and_merges(monkey
     assert "invented quote" not in prompt
 
 
+def test_registry_desk_review_quotes_are_grounded_before_merge(monkeypatch):
+    desk_data = {
+        "findings": [
+            {
+                "type": "evidence",
+                "requirement_id": "ISO.A5.1",
+                "content": "Found",
+                "source_quote": "fabricated desk-review quote",
+            },
+            {
+                "type": "evidence",
+                "requirement_id": "ISO.A5.1",
+                "content": "Found",
+                "source_quote": "Desk quote about policy.",
+            },
+        ],
+        "coverage_summary": {},
+        "signal_flags": [],
+        "absence_findings": [],
+    }
+    _, judges = _run(
+        monkeypatch,
+        ["iso27001"],
+        desk_data,
+        {"evidence": {"ISO.A5.15": ["Extracted quote about access."]}},
+    )
+
+    (prompt,) = judges
+    iso_a51 = prompt.split("### ISO.A5.1\n", 1)[1].split("\n\n", 1)[0]
+    assert iso_a51 == "> Desk quote about policy."
+    assert "fabricated desk-review quote" not in prompt
+
+
 def test_extracted_quotes_dedupe_against_desk_quotes_after_normalization(monkeypatch):
     _, judges = _run(
         monkeypatch,
