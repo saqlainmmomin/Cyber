@@ -1616,6 +1616,11 @@ PROTECTED_PATHS = [
     "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/__init__.py",
     "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "app/routers", "app/templates",
     "alembic", "tests/fixtures", "tests/support", "validation", "scripts/validation",
+    # Small follow-ups (claude/p6-small-followups): batched status retry
+    # (llm_output), grounded desk-review quotes (claude_analyzer), profiler ID
+    # filter and cap (context_profiler).
+    ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
+    ":(exclude)app/services/context_profiler.py",
 ]
 
 
