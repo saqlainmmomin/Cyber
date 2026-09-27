@@ -1160,6 +1160,9 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)app/routers/documents.py",
     ":(exclude)app/services/grounding/judge.py",
     ":(exclude)app/services/grounding/judge_prompts.py",
+    # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md) lifts the
+    # upload cap in _truncate; app/config.py is already excluded above.
+    ":(exclude)app/services/document_processor.py",
 )
 
 
