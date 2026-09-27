@@ -201,12 +201,14 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
                 llm_rows.append(json.loads(line))
             except json.JSONDecodeError:
                 continue
-    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0})
+    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "non_ok": 0})
     for row in llm_rows:
         target = costs[f"{row.get('tier', 'unknown')} / {row.get('model', 'unknown')}"]
         target["calls"] += 1
         for field in ("input_tokens", "output_tokens", "cache_read_input_tokens"):
             target[field] += int(row.get(field) or 0)
+        if row.get("status") not in (None, "ok"):
+            target["non_ok"] += 1
     stages = _read(run_dir / "stages.json", [])
     score = {
         "slug": slug,

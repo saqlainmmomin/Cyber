@@ -16,7 +16,7 @@ from scripts.validation.models import AnswerKey, EvidenceSpec
 from scripts.validation.paths import REPO_ROOT, VALIDATION_ROOT
 from scripts.validation.render_evidence import render_pack
 from scripts.validation.report import build_report
-from scripts.validation.run_company import _non_success_rows, run_company
+from scripts.validation.run_company import _collecting_calls, _non_success_rows, _usage_row, run_company
 from scripts.validation.score import score_run
 
 EXAMPLE = VALIDATION_ROOT / "companies" / "c0-example"
@@ -351,6 +351,156 @@ def test_screening_303_is_not_recorded_as_non_success():
     assert _non_success_rows("evidence", other_stage_rows) == other_stage_rows
 
 
+def test_usage_row_surfaces_final_attempt_status_finish_reason_and_attempt():
+    # Simulates `llm_client.collect_calls()` output for a call that was
+    # retried once: attempt 1 came back non-JSON (parse_error), attempt 2
+    # parsed fine. The row should reflect the attempt that actually
+    # determined the outcome, not the first one.
+    calls = [
+        {"tier": "judge", "status": "parse_error", "finish_reason": "stop"},
+        {"tier": "judge", "status": "ok", "finish_reason": "stop", "attempt": 2},
+    ]
+    row = _usage_row(
+        tier="judge",
+        model="some/model",
+        usage={"input_tokens": 10, "output_tokens": 20, "cache_read_input_tokens": 0},
+        elapsed_ms=123.45,
+        ok=True,
+        calls=calls,
+    )
+    assert row["status"] == "ok"
+    assert row["finish_reason"] == "stop"
+    assert row["attempt"] == 2
+    # Existing fields are untouched.
+    assert row["tier"] == "judge"
+    assert row["model"] == "some/model"
+    assert row["input_tokens"] == 10
+    assert row["output_tokens"] == 20
+    assert row["cache_read_input_tokens"] == 0
+    assert row["elapsed_ms"] == 123.45
+    assert row["ok"] is True
+    assert isinstance(row["ts"], str) and row["ts"]
+
+
+def test_usage_row_surfaces_parse_error_when_every_attempt_fails():
+    # Both attempts failed to parse; the final one hit the max_tokens cutoff
+    # (finish_reason="length") and was not retried further.
+    calls = [
+        {"tier": "extract", "status": "parse_error", "finish_reason": "stop"},
+        {"tier": "extract", "status": "parse_error", "finish_reason": "length", "attempt": 2},
+    ]
+    row = _usage_row(
+        tier="extract",
+        model="some/model",
+        usage=None,
+        elapsed_ms=50.0,
+        ok=False,
+        calls=calls,
+    )
+    assert row["status"] == "parse_error"
+    assert row["finish_reason"] == "length"
+    assert row["attempt"] == 2
+    assert row["ok"] is False
+    assert row["input_tokens"] == 0
+    assert row["output_tokens"] == 0
+    assert row["cache_read_input_tokens"] == 0
+
+
+def test_usage_row_tolerates_records_missing_the_new_fields():
+    # No call records at all (e.g. a collector that never observed a call,
+    # or a pre-PR#68 shape) should write null rather than raise or omit keys.
+    row = _usage_row(
+        tier="synthesize",
+        model="some/model",
+        usage={"input_tokens": 5, "output_tokens": 5, "cache_read_input_tokens": 5},
+        elapsed_ms=1.0,
+        ok=True,
+        calls=[],
+    )
+    assert row["status"] is None
+    assert row["finish_reason"] is None
+    assert row["attempt"] is None
+    # The row must still be JSON-serializable with the null fields intact.
+    reloaded = json.loads(json.dumps(row, sort_keys=True))
+    assert reloaded["status"] is None
+    assert reloaded["finish_reason"] is None
+    assert reloaded["attempt"] is None
+
+
+def test_collecting_calls_preserves_outer_collector_on_success():
+    # app/routers/analysis.py, app/services/desk_review.py, and the grounding
+    # pipeline each wrap their LLM work in llm_client.collect_calls() to
+    # build AnalysisRun call records. llm_client.collect_calls() sets a plain
+    # ContextVar, so it does not nest: without splicing, the harness's own
+    # inner collector would silently replace (and swallow) an outer one for
+    # the duration of the call. This proves the outer collector still gets
+    # the record after the inner harness collector exits normally.
+    from app.services import llm_client
+
+    with llm_client.collect_calls() as outer:
+        with _collecting_calls(llm_client) as inner:
+            llm_client._record_call(
+                tier="judge",
+                model="some/model",
+                usage={"input_tokens": 1, "output_tokens": 2, "cache_read_input_tokens": 0},
+                latency_ms=5,
+                finish_reason="stop",
+                status="ok",
+                error_type=None,
+            )
+        assert len(inner) == 1
+    assert len(outer) == 1
+    assert outer[0]["status"] == "ok"
+    assert outer[0]["tier"] == "judge"
+
+
+def test_collecting_calls_preserves_outer_collector_on_exception():
+    # Same as above, but the wrapped call raises (e.g. the harness's
+    # original_call() blew up after the LLM client already recorded a
+    # parse_error/error attempt). The outer collector must still see the
+    # record even though the exception propagates through both context
+    # managers.
+    from app.services import llm_client
+
+    with llm_client.collect_calls() as outer:
+        with pytest.raises(RuntimeError, match="boom"):
+            with _collecting_calls(llm_client) as inner:
+                llm_client._record_call(
+                    tier="extract",
+                    model="some/model",
+                    usage=None,
+                    latency_ms=3,
+                    finish_reason=None,
+                    status="error",
+                    error_type="RuntimeError",
+                )
+                raise RuntimeError("boom")
+        assert len(inner) == 1
+    assert len(outer) == 1
+    assert outer[0]["status"] == "error"
+    assert outer[0]["tier"] == "extract"
+
+
+def test_collecting_calls_is_a_noop_without_an_outer_collector():
+    # The common harness case: no outer collect_calls() is active. Splicing
+    # must not leak a collector into the ambient ContextVar afterwards.
+    from app.services import llm_client
+
+    assert llm_client._collector.get() is None
+    with _collecting_calls(llm_client) as calls:
+        llm_client._record_call(
+            tier="judge",
+            model="some/model",
+            usage={"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0},
+            latency_ms=1,
+            finish_reason="stop",
+            status="ok",
+            error_type=None,
+        )
+    assert len(calls) == 1
+    assert llm_client._collector.get() is None
+
+
 def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):
     validation_root = tmp_path / "validation"
     base = _copy_example(validation_root)
@@ -389,6 +539,28 @@ def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):
     result = score_run(run_dir, validation_root=validation_root)
     assert result["gap_results"][0]["req_scores"] == [1.0]
     assert result["gap_results"][0]["caught"] is True
+
+
+def test_scorer_counts_non_ok_llm_usage_rows(tmp_path):
+    validation_root = tmp_path / "validation"
+    _copy_example(validation_root)
+    run_dir = tmp_path / "out" / "c0-example" / "run-1"
+    run_dir.mkdir(parents=True)
+    (run_dir / "run.json").write_text(json.dumps({"frameworks": [], "llm_mode": "real"}), encoding="utf-8")
+    rows = [
+        {"tier": "judge", "model": "m1", "status": "ok", "finish_reason": "stop", "attempt": None},
+        {"tier": "judge", "model": "m1", "status": "parse_error", "finish_reason": "stop", "attempt": None},
+        {"tier": "judge", "model": "m1", "status": "ok", "finish_reason": "stop", "attempt": 2},
+        {"tier": "extract", "model": "m2", "status": "error", "finish_reason": None, "attempt": None},
+    ]
+    usage_path = run_dir / "llm_usage.jsonl"
+    usage_path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+    result = score_run(run_dir, validation_root=validation_root)
+    usage = result["cost"]["llm_usage"]
+    assert usage["judge / m1"]["calls"] == 3
+    assert usage["judge / m1"]["non_ok"] == 1
+    assert usage["extract / m2"]["calls"] == 1
+    assert usage["extract / m2"]["non_ok"] == 1
 
 
 def test_app_files_are_untouched_by_harness():

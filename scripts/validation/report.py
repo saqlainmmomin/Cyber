@@ -240,6 +240,7 @@ def build_report(out_dir: Path | str, *, baseline: bool = False) -> tuple[dict, 
             if usage:
                 usage_text = "; ".join(
                     f"{name}: {values.get('calls', 0)} calls, {values.get('input_tokens', 0)} input / {values.get('output_tokens', 0)} output tokens"
+                    + (f", {values['non_ok']} non-ok" if values.get("non_ok") else "")
                     for name, values in sorted(usage.items())
                 )
             else:
