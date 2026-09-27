@@ -234,3 +234,9 @@ Session run 2026-09-27 by the Claude orchestrator. Codex (gpt-5.6-luna, xhigh) i
 - The harness's `llm_usage.jsonl` has its own `ok` field and no `status`. It was not checked whether a `parse_error` record would show up there. The stored `raw_ai_response["llm_calls"]` records do show it. A small harness follow-up if wanted, owned by the harness agent.
 - `test_p5_6_rfi_rebuild.py::test_scenario_10` failed intermittently when several suites ran at once (seen twice, passes on rerun). Probably a shared-resource or timing race. Worth a look.
 - The earlier pending items still stand: primary-checkout cleanup, c4's NIST 2.0 answers, the criteria CSV review, the ISO titles review, and Track 4.
+
+### Saqlain's answers (2026-09-27, recorded before merge)
+- **Screenshot claims (P6-3b):** yes. They count toward `partial` and can drive pre-fill, flagged `derived_from_image` and `needs_review`. The handoff default stands.
+- **v2 metadata fallback:** on by default (`v2_metadata_fallback=True`). The default stands.
+- **Harness `llm_usage.jsonl` status:** a small follow-up task. The harness agent adds `status`/`finish_reason` to `llm_usage.jsonl` in its own PR.
+- **Flaky `test_p5_6_rfi_rebuild.py::test_scenario_10`:** investigate next session.
