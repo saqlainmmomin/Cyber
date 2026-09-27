@@ -1628,11 +1628,16 @@ PROTECTED_PATHS = [
     # filter and cap (context_profiler).
     ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
     ":(exclude)app/services/context_profiler.py",
+    # P6-4 (tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md) adds the flag-gated
+    # v2 analysis branch (analysis.py; additive-only, guarded by
+    # tests/test_p6_4_v2_judge.py) and framework-aware upload categories (documents.py).
+    ":(exclude)app/routers/analysis.py", ":(exclude)app/routers/documents.py",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
-# desk-review module. Any other importer still fails the dormancy scan.
-P6_3B_GROUNDING_IMPORTERS = {"app/services/desk_review_v2.py"}
+# desk-review module. P6-4 adds the v2 analysis service. Any other importer
+# still fails the dormancy scan.
+P6_3B_GROUNDING_IMPORTERS = {"app/services/desk_review_v2.py", "app/services/analysis_v2.py"}
 
 
 def _git(*args) -> str:

@@ -314,6 +314,10 @@ def test_no_template_reads_retired_score():
         "app/legacy_migrations.py",
         "app/legacy_migrations_schema.py",
         "app/routers/analysis.py",
+        # P6-4 (tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md): the v2 analysis
+        # service writes the legacy GapReport as analysis.py does; it is held to the
+        # same line-level rule at the end of this test.
+        "app/services/analysis_v2.py",
     }
     retired_score_hits = {}
     for path in (repo / "app").rglob("*.py"):
@@ -388,6 +392,43 @@ def test_no_template_reads_retired_score():
         "analysis.py contains an unapproved overall_score reference:\n"
         + "\n".join(disallowed_analysis_hits)
     )
+
+    # P6-4: app/services/analysis_v2.py may only write overall_score=0.0 and build the
+    # per-framework response dict from per_fw_scores, exactly like analysis.py.
+    v2_path = repo / "app/services/analysis_v2.py"
+    if v2_path.exists():
+        v2_source = v2_path.read_text()
+        v2_allowed = set()
+        for node in ast.walk(ast.parse(v2_source, filename=str(v2_path))):
+            if (
+                isinstance(node, ast.keyword)
+                and node.arg == "overall_score"
+                and isinstance(node.value, ast.Constant)
+                and node.value.value == 0.0
+            ):
+                v2_allowed.update(range(node.lineno, node.end_lineno + 1))
+            if (
+                isinstance(node, ast.DictComp)
+                and len(node.generators) == 1
+                and isinstance(node.generators[0].iter, ast.Call)
+                and isinstance(node.generators[0].iter.func, ast.Attribute)
+                and node.generators[0].iter.func.attr == "items"
+                and isinstance(node.generators[0].iter.func.value, ast.Name)
+                and node.generators[0].iter.func.value.id == "per_fw_scores"
+                and isinstance(node.value, ast.Subscript)
+                and isinstance(node.value.slice, ast.Constant)
+                and node.value.slice.value == "overall_score"
+            ):
+                v2_allowed.update(range(node.lineno, node.end_lineno + 1))
+        v2_disallowed = [
+            f"{v2_path}:{number}: {line.rstrip()}"
+            for number, line in enumerate(v2_source.splitlines(), start=1)
+            if token.search(line) and number not in v2_allowed
+        ]
+        assert not v2_disallowed, (
+            "analysis_v2.py contains an unapproved overall_score reference:\n"
+            + "\n".join(v2_disallowed)
+        )
 
 
 def test_score_supports_order_deduplication_and_shared_clusters(db_session):
