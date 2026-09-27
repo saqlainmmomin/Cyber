@@ -170,3 +170,67 @@ Append a `## Results` section to this file. Cover:
 - anything that still needs Saqlain
 
 Also update `tasks/todo.md` and the auto-memory project status. Commit this file with the first PR of the session.
+
+## Results
+
+Session run 2026-09-27 by the Claude orchestrator. Codex (gpt-5.6-luna, xhigh) implemented, Opus subagents designed and reviewed, and a separate Sonnet agent did the harness fix. Every PR has CI green (#67–#69 confirmed; #70 was just opened). None is merged: Saqlain merges.
+
+### PRs
+| PR | Task | State |
+|---|---|---|
+| [#67](https://github.com/saqlainmmomin/Cyber/pull/67) | (C4) Harness: screening 303 counts as success; README `rendered/` note corrected | open, CI green |
+| [#68](https://github.com/saqlainmmomin/Cyber/pull/68) | (B) LLM JSON reliability. Also carries this file | open, CI green |
+| [#69](https://github.com/saqlainmmomin/Cyber/pull/69) | (C1–C3) batched status retry, grounded desk-review quotes, profiler ID cap | open, CI green |
+| [#70](https://github.com/saqlainmmomin/Cyber/pull/70) | (A) P6-3b: v2 flag, desk-review adapter, claim-set persistence | open |
+
+**Merge order.** Any order works. #68, #69 and #70 each add `:(exclude)` entries to the same lines in `tests/test_p6_3a_grounding.py` and `tests/test_p6_nist_csf2_alignment.py`. #67 also touches the first of those files. Whichever PR merges later needs a keep-both resolution, done by merging `origin/main` into the branch (never a rebase).
+
+### (A) P6-3b (#70)
+- **Handoff and contract tests.** An Opus designer wrote `tasks/handoffs/2026-09-27-p6-3b-v2-flag-and-adapter.md` and 25 contract tests (`tests/test_p6_3b_v2_flag.py`, `tests/test_p6_3b_metadata_fallback.py`).
+  - The tests were checked against a throwaway reference implementation. That reference passed a full suite of 911 tests, and the tests caught all 18 deliberate mutations made to it.
+  - The tests were committed before Codex was dispatched, and Codex did not modify them.
+  - The P6-3a scenario-17 dormancy guard was narrowed to exactly one permitted importer, `desk_review_v2.py`.
+- **Adversarial review found three real defects:**
+  - the source load ran outside the `try`, so the summary could be stuck in `analyzing`
+  - the metadata fallback's exceptions could discard a completed Stage-1 claim set
+  - the `"citation" in item` check was too broad for v1 output
+
+  Codex fixed all three. I amended the citation check to accept only a dict or `None`, because the contract pins `None`.
+- **Flag off.** Golden DPDPA and the fingerprint tests are unchanged. Full suite: 914 passed, 10 skipped.
+- **Live flag-on smoke** (synthetic `tests/grounding_fixtures/`, real `run_desk_review` → `question_engine`; output in `~/cyberassess-runs/2026-09-27-p6-3b-flag-on-smoke/`):
+  - DPDPA-only: 57 of 57 findings have grounded `text_span` citations. Coverage is 23 partial and 18 not_covered. 23 questions were pre-filled, all `partially_implemented`.
+  - DPDPA+ISO (UCC): 236 of 236 findings are grounded. Coverage is 79 partial and 55 not_covered. 19 cluster and single-control questions were pre-filled, all `partially_implemented`.
+  - No pre-fill was above `partial`. Every call ended `ok`/`stop`, with 0 reasoning tokens.
+
+### (B) JSON reliability (#68)
+- **Root cause.** Desk review and evidence extraction never asked for JSON. `call_llm` recorded `ok` for any non-empty reply, and the parse failed later, outside the call record.
+- **Fix.**
+  - `json_output=True` sends `response_format: json_object` **without** `require_parameters`, so the ZDR pool stays exactly as it was.
+  - A reply that doesn't parse is recorded as `status: "parse_error"` with `error_type: "JSONDecodeError"`, then retried once. The retry's record carries `attempt: 2`.
+  - A second failure raises `LLMOutputParseError`, a `ValueError`, into the existing fallbacks.
+  - A `finish_reason="length"` reply is not retried (review finding).
+- **Golden DPDPA recording.** Byte-identical. The DPDPA desk-review request pin in `test_p5_3` was changed deliberately. The test proves that the request minus the new flag still hashes to the old key.
+- **Tests.** 14 new tests with a fake client that returns Markdown or truncated JSON. Full suite: 900 passed.
+- **Live smoke** (c0-example ISO through the harness, `~/cyberassess-runs/2026-09-27-json-enforcement-smoke/`):
+  - all 8 stages ok
+  - 13 of 13 stored call records `ok`/`stop` on the first attempt, with 0 reasoning tokens
+  - no parse failure occurred live, so the retry path is covered by tests only
+
+### (C) Follow-ups (#69 and #67)
+1. **Batched missing or unknown status.** On the first pass, status is normalised (strip, lowercase) and a missing or unknown status is treated as a missing ID, so the existing retry covers it. On the retry pass it is coerced to `not_assessed`, so one bad item can't fail a whole framework (review finding). Unbatched and DPDPA paths are unchanged.
+2. **Desk-review quotes.** For registry frameworks they are now grounded against the **untruncated** documents, not the reordered 20k-word window (review finding). Desk findings with no source quote now fail grounding.
+3. **Context profiler.** `likely_not_applicable` is filtered to real DPDPA IDs and capped at 20, and the prompt lists the allowed IDs. The profiler is DPDPA-only: its signals are SDF and children's data, and its only consumer is `app/dpdpa/questionnaire.py`. I removed Codex's dead non-DPDPA branch.
+4. **Harness (#67).** A separate Sonnet agent fixed this, so it was not the agent that did items 1–3. Its live c1 run (`--stop-after screening`) shows every stage ok and screening ok with no non_success. I reverted its unnecessary edit to the `test_retention` guard: that guard only checks uncommitted edits.
+
+### Decisions made this session
+- JSON enforcement uses `json_object` without `require_parameters`, not strict `json_schema`. The dynamic `{requirement_id: [...]}` maps can't be written as a strict schema, and `require_parameters` risks leaving no endpoints.
+- A reply truncated at `max_tokens` is never retried.
+- The context-profiler cap is 20, below DPDPA's 41 IDs.
+- P6-3b defaults were taken from the handoff: screenshot claims count toward `partial`, flagged `needs_review`, and the metadata fallback is on.
+
+### Needs Saqlain
+- Merge #67–#70, resolving the guard-exclude conflicts with keep-both.
+- Two P6-3b questions (#70): should screenshot-derived claims pre-fill, and should the metadata fallback stay on by default (about one cheap call per non-image document)?
+- The harness's `llm_usage.jsonl` has its own `ok` field and no `status`. It was not checked whether a `parse_error` record would show up there. The stored `raw_ai_response["llm_calls"]` records do show it. A small harness follow-up if wanted, owned by the harness agent.
+- `test_p5_6_rfi_rebuild.py::test_scenario_10` failed intermittently when several suites ran at once (seen twice, passes on rerun). Probably a shared-resource or timing race. Worth a look.
+- The earlier pending items still stand: primary-checkout cleanup, c4's NIST 2.0 answers, the criteria CSV review, the ISO titles review, and Track 4.

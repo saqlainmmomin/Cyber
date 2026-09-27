@@ -93,6 +93,7 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
 - [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
+- [ ] **2026-09-27 session PRs (open, awaiting Saqlain's merge):** #67 harness screening-303, #68 LLM JSON reliability (+ this session's kickoff/Results), #69 small follow-ups (C1–C3), #70 P6-3b v2 flag/adapter. Guard-exclude conflicts between #68/#69/#70 resolve keep-both. Results: `tasks/handoffs/2026-09-27-next-session-kickoff.md#results`.
 
 ## Source of truth
 
