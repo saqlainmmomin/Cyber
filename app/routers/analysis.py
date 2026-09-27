@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.questionnaire import build_questionnaire
@@ -227,6 +228,14 @@ def trigger_analysis(
                 "expected": total_expected,
             },
         )
+
+    if settings.analysis_pipeline_version == "v2":
+        from app.services.analysis_v2 import AnalysisV2Error, run_analysis_v2
+
+        try:
+            return run_analysis_v2(db, assessment, responses=responses)
+        except AnalysisV2Error as exc:
+            raise HTTPException(exc.status_code, exc.message) from exc
 
     # Update status
     assessment.status = "analyzing"

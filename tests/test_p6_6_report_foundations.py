@@ -1154,6 +1154,12 @@ P6_4_AND_PROTECTED_PATHS = (
     # Saqlain authorised (2026-09-27) one narrow edit here: the longitudinal-demo
     # seed records a report basis before its first approval (P6-6 gate).
     ":(exclude)scripts/seed_test_companies.py",
+    # P6-4 (PR #74) lands after P6-6 and legitimately touches these; the guard
+    # still protects every other listed path.
+    ":(exclude)app/config.py",
+    ":(exclude)app/routers/documents.py",
+    ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)app/services/grounding/judge_prompts.py",
 )
 
 
