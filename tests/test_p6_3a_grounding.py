@@ -1628,6 +1628,15 @@ PROTECTED_PATHS = [
     # filter and cap (context_profiler).
     ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
     ":(exclude)app/services/context_profiler.py",
+    # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report routes,
+    # templates and the re-recorded golden PDF text hash and page count.
+    ":(exclude)app/routers/reports.py", ":(exclude)app/routers/review.py",
+    ":(exclude)app/routers/web.py", ":(exclude)app/templates/pages/conclusions.html",
+    ":(exclude)app/templates/pages/workpaper.html",
+    ":(exclude)app/templates/partials/report_basis_panel.html",
+    ":(exclude)app/templates/partials/report_summary.html",
+    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
+    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
