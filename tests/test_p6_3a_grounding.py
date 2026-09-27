@@ -1616,6 +1616,9 @@ PROTECTED_PATHS = [
     "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/__init__.py",
     "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "app/routers", "app/templates",
     "alembic", "tests/fixtures", "tests/support", "validation", "scripts/validation",
+    # LLM JSON reliability (claude/llm-json-enforcement): JSON mode, parse-failure
+    # records and one retry for desk review and evidence extraction.
+    ":(exclude)app/services/llm_client.py", ":(exclude)app/services/claude_analyzer.py",
     # P6-3b (tasks/handoffs/2026-09-27-p6-3b-v2-flag-and-adapter.md) adds the v2
     # branch and the precomputed-citation path to desk_review.py; its own suite
     # (tests/test_p6_3b_v2_flag.py) guards that only lines there are added.
@@ -1634,8 +1637,15 @@ def _git(*args) -> str:
 
 
 def test_scenario_17_protected_files_unchanged():
-    committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS)
-    uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS)
+    # 2026-09-27 screening-303 harness fix (P5-9): scripts/validation/run_company.py
+    # and validation/README.md were legitimately touched by that fix, not by
+    # grounding work. Excluded here rather than removed from PROTECTED_PATHS.
+    exclusions = [
+        ":(exclude)scripts/validation/run_company.py",
+        ":(exclude)validation/README.md",
+    ]
+    committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
+    uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)
     assert committed == "" and uncommitted == "", committed + uncommitted
 
 

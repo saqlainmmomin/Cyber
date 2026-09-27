@@ -16,7 +16,7 @@ from scripts.validation.models import AnswerKey, EvidenceSpec
 from scripts.validation.paths import REPO_ROOT, VALIDATION_ROOT
 from scripts.validation.render_evidence import render_pack
 from scripts.validation.report import build_report
-from scripts.validation.run_company import run_company
+from scripts.validation.run_company import _non_success_rows, run_company
 from scripts.validation.score import score_run
 
 EXAMPLE = VALIDATION_ROOT / "companies" / "c0-example"
@@ -341,6 +341,14 @@ def test_mock_runner_is_blind_and_completes_two_isolated_runs(tmp_path, monkeypa
         assert decoy["why_it_is_compliant"] not in markdown
     with pytest.raises(ValueError, match="requires every run to use the live LLM"):
         build_report(out, baseline=True)
+
+
+def test_screening_303_is_not_recorded_as_non_success():
+    rows = [{"path": "/assessments/1/screening/submit", "status": 303}]
+    assert _non_success_rows("screening", rows) == []
+
+    other_stage_rows = [{"path": "/api/assessments/1/evidence", "status": 303}]
+    assert _non_success_rows("evidence", other_stage_rows) == other_stage_rows
 
 
 def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):

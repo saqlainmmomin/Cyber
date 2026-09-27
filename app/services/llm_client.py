@@ -23,10 +23,17 @@ Callers describe structured output with a JSON schema only. This module maps
 that provider-agnostic request to OpenRouter's response_format today; the
 future Bedrock migration maps the same schema to Converse tool use.
 
+Callers that parse free-form JSON pass `json_output=True`: the request asks
+for a JSON object without narrowing the provider pool, and a reply that does
+not parse is recorded as `status="parse_error"` and retried once.
+
 Calls may also carry an optional batch tag in their records when a large
 framework is split into deterministic analysis units.
 """
 
+import json
+import logging
+import re
 import threading
 import time
 from contextlib import contextmanager
@@ -69,6 +76,31 @@ _REQUEST_PREFS = {
     "provider": {"data_collection": "deny", "zdr": True},
     "reasoning": {"enabled": False},
 }
+
+# JSON mode for callers that parse free-form JSON (desk review, evidence
+# extraction), whose outputs (maps keyed by requirement id) can't be written
+# as a strict json_schema. Seen live: 4 of 148 calls returned a Markdown
+# report with finish_reason="stop" and were recorded "ok".
+#
+# Deliberately sent WITHOUT `provider.require_parameters`. With it,
+# OpenRouter only routes to endpoints that support every parameter in the
+# request, intersected with the ZDR + data_collection="deny" pool above; that
+# intersection can be empty ("no endpoints found") and would turn a
+# formatting nudge into a hard outage. Without it, endpoints that support
+# response_format enforce JSON and the rest ignore the field, so the routable
+# pool is exactly today's and ZDR is still enforced. The parse check and one
+# retry in `call_llm` are the backstop for endpoints that ignore it.
+# `response_schema` (strict json_schema + require_parameters) stays the
+# stricter path, used only where it has been proven live (v2 grounding).
+_JSON_OBJECT_FORMAT = {"type": "json_object"}
+_JSON_ATTEMPTS = 2
+
+logger = logging.getLogger(__name__)
+
+
+class LLMOutputParseError(ValueError):
+    """A `json_output=True` call returned non-JSON text on every attempt."""
+
 
 _client: OpenAI | None = None
 _collector: ContextVar[list[dict] | None] = ContextVar("llm_call_collector", default=None)
@@ -118,9 +150,11 @@ def _record_call(
     finish_reason: str | None,
     status: str,
     error_type: str | None,
+    attempt: int = 1,
 ) -> None:
-    """Record one call, adding the optional batch key only for batched work
-    and reasoning_tokens only when the provider reports it."""
+    """Record one call, adding the optional batch key only for batched work,
+    reasoning_tokens only when the provider reports it, and attempt only on a
+    JSON-parse retry (attempt 2+)."""
     collector = _collector.get()
     if collector is None:
         return
@@ -142,6 +176,8 @@ def _record_call(
         record["batch"] = tags["batch"]
     if usage and "reasoning_tokens" in usage:
         record["reasoning_tokens"] = usage["reasoning_tokens"]
+    if attempt > 1:
+        record["attempt"] = attempt
     with _collector_lock:
         collector.append(record)
 
@@ -199,12 +235,20 @@ def call_llm(
     temperature: float = 0,
     stream: bool = False,
     response_schema: dict | None = None,
+    json_output: bool = False,
 ) -> dict:
     """Make one LLM request for the given tier and return a plain dict.
 
     Return shape matches the app's existing usage contract:
     {"text": str, "usage": {"input_tokens", "output_tokens",
     "cache_read_input_tokens", "cache_creation_input_tokens"}}
+
+    `json_output=True` asks for a JSON object (see `_JSON_OBJECT_FORMAT`) and
+    checks the returned text parses as JSON. A reply that does not parse is
+    recorded with `status="parse_error"` and retried once; if the retry does
+    not parse either, `LLMOutputParseError` is raised. A reply truncated at
+    `max_tokens` (finish_reason="length") is not retried: the identical
+    request would truncate again at double the cost.
     """
     model = getattr(settings, _TIER_MODELS[tier])
     request_messages = [{"role": "system", "content": system}, *messages]
@@ -214,9 +258,7 @@ def call_llm(
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
-    if response_schema is None:
-        request_kwargs["extra_body"] = _REQUEST_PREFS
-    else:
+    if response_schema is not None:
         request_kwargs["response_format"] = {
             "type": "json_schema",
             "json_schema": {
@@ -232,9 +274,54 @@ def call_llm(
                 "require_parameters": True,
             },
         }
+    elif json_output:
+        request_kwargs["response_format"] = _JSON_OBJECT_FORMAT
+        request_kwargs["extra_body"] = _REQUEST_PREFS
+    else:
+        request_kwargs["extra_body"] = _REQUEST_PREFS
     if stream:
         request_kwargs.update(stream=True, stream_options={"include_usage": True})
 
+    attempts = _JSON_ATTEMPTS if json_output else 1
+    for attempt in range(1, attempts + 1):
+        result, finish_reason, latency_ms = _send(
+            request_kwargs, tier=tier, model=model, stream=stream, attempt=attempt
+        )
+        parse_ok = not json_output or is_json_text(result["text"])
+        _record_call(
+            tier=tier,
+            model=model,
+            usage=result["usage"],
+            latency_ms=latency_ms,
+            finish_reason=finish_reason,
+            status="ok" if parse_ok else "parse_error",
+            error_type=None if parse_ok else "JSONDecodeError",
+            attempt=attempt,
+        )
+        if parse_ok:
+            return result
+        if finish_reason == "length":
+            break
+        logger.warning(
+            "LLM reply for tier=%s model=%s was not JSON (finish_reason=%r, attempt %d/%d): %.200r",
+            tier,
+            model,
+            finish_reason,
+            attempt,
+            attempts,
+            result["text"],
+        )
+    raise LLMOutputParseError(
+        f"LLM reply for tier={tier!r} model={model!r} was not valid JSON after "
+        f"{attempt} attempt(s) (finish_reason={finish_reason!r}). "
+        f"Last reply starts: {result['text'][:300]!r}"
+    )
+
+
+def _send(
+    request_kwargs: dict, *, tier: Tier, model: str, stream: bool, attempt: int
+) -> tuple[dict, str | None, int]:
+    """Send one request. Records the call itself only when it raises."""
     started = time.monotonic()
     finish_reason = None
     try:
@@ -245,7 +332,6 @@ def call_llm(
             text = choice.message.content
             _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
             usage = _usage_dict(response.usage)
-            result = {"text": text, "usage": usage}
         else:
             text_parts: list[str] = []
             usage_obj = None
@@ -262,7 +348,6 @@ def call_llm(
             text = "".join(text_parts)
             _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
             usage = _usage_dict(usage_obj)
-            result = {"text": text, "usage": usage}
     except Exception as exc:
         _record_call(
             tier=tier,
@@ -272,19 +357,26 @@ def call_llm(
             finish_reason=finish_reason,
             status="error",
             error_type=type(exc).__name__,
+            attempt=attempt,
         )
         raise
-
-    _record_call(
-        tier=tier,
-        model=model,
-        usage=usage,
-        latency_ms=int((time.monotonic() - started) * 1000),
-        finish_reason=finish_reason,
-        status="ok",
-        error_type=None,
+    return (
+        {"text": text, "usage": usage},
+        finish_reason,
+        int((time.monotonic() - started) * 1000),
     )
-    return result
+
+
+def is_json_text(text: str) -> bool:
+    """True when `text` parses as JSON after stripping one Markdown code fence,
+    the same tolerance the analyzer and desk-review parsers apply."""
+    text = re.sub(r"^```(?:json)?\s*\n?", "", text.strip())
+    text = re.sub(r"\n?```\s*$", "", text).strip()
+    try:
+        json.loads(text)
+    except json.JSONDecodeError:
+        return False
+    return True
 
 
 def _require_content(text: str | None, *, tier: Tier, model: str, finish_reason: str | None) -> None:
