@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     v2_extraction_max_tokens: int = 8192
     v2_support_max_tokens: int = 4096
     v2_structured_output: bool = True
+    # Desk-review pipeline selector; v1 remains the default until the P6-5 gate.
+    analysis_pipeline_version: Literal["v1", "v2"] = "v1"
+    # Worker count for every pool in the v2 desk-review pipeline.
+    v2_max_concurrency: int = 6
+    # Whether v2 fills regex-missed document metadata with a verified LLM pass.
+    v2_metadata_fallback: bool = True
     recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"

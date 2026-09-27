@@ -700,10 +700,20 @@ def _finish_metrics(metrics: dict[str, object], calls: Sequence[dict], claims: S
     metrics["grounding_failure_rate"] = locate_failures / metrics["proposed"] if metrics["proposed"] else 0.0
 
 
-def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[str]) -> ClaimSet:
-    """Run grounding without a DB; an enclosing call collector will not see these calls."""
+def run_stages_0_1(
+    sources: Sequence[SourceDocument],
+    framework_ids: Sequence[str],
+    *,
+    max_workers: int | None = None,
+) -> ClaimSet:
+    """Run grounding without a DB; an enclosing call collector will not see these calls.
+
+    ``max_workers`` overrides the default LLM concurrency for all grounding
+    pools. When omitted, the existing ``llm_max_concurrency`` setting applies.
+    """
     sources = tuple(sources)
     framework_ids = tuple(framework_ids)
+    workers = settings.llm_max_concurrency if max_workers is None else max_workers
     chunks = chunk_sources(sources)
     batches = extraction_batches(framework_ids)
     source_by_id = {source.source_id: source for source in sources}
@@ -778,7 +788,7 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
         extraction_results = run_bounded(
             _run_extraction,
             units,
-            max_workers=settings.llm_max_concurrency,
+            max_workers=workers,
         )
         for unit, (result, error) in zip(units, extraction_results):
             if error is not None:
@@ -821,7 +831,7 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
         support_results = run_bounded(
             _run_support,
             support_units,
-            max_workers=settings.llm_max_concurrency,
+            max_workers=workers,
         )
         verdicts: dict[int, SupportItem] = {}
         missing_units: list[tuple[_SupportUnit, tuple[_Candidate, ...]]] = []
@@ -858,7 +868,7 @@ def run_stages_0_1(sources: Sequence[SourceDocument], framework_ids: Sequence[st
         retry_results = run_bounded(
             lambda retry_unit: _run_support(retry_unit, suffix="+missing"),
             retry_units,
-            max_workers=settings.llm_max_concurrency,
+            max_workers=workers,
         )
         for (_original, missing), retry_unit, (result, error) in zip(missing_units, retry_units, retry_results):
             if error is not None or isinstance(result, _ParseFailure):
