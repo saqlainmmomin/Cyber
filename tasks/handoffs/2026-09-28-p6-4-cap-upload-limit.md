@@ -169,3 +169,10 @@ Say if you want either changed.
 
 ## Results
 
+- Step 0 baseline on the clean designer branch: `1019 passed, 10 skipped, 11 failed` in `119.73s`; all 11 failures were the expected pre-implementation contract failures.
+- Implemented D-P6-4-cap-A/B: the extraction safety bound is `200000`, the 20,000-word v1 total remains unchanged, and `_truncate` preserves normalized line breaks while cutting before word `N+1`.
+- Contract tests: `16 passed` in each of three runs, plus a final post-formatting run (`16 passed`). Golden DPDPA: `8 passed`.
+- Full suite: `1030 passed, 10 skipped, 0 failed` in `112.79s` (`286` warnings). The expected retention guard failure did not occur because no test files were uncommitted.
+- HTTP smoke: `status 201 text_length 378499`; `stored_words 30000 stored_chars 378499 newlines 599 marker False`; `v1_reader_equal True v2_reader_equal True`.
+- Bounded smoke with `settings.max_document_words = 1000`: `bounded_body_words 1000 bounded_newlines 19 bounded_marker True`.
+- Working-tree scope is limited to `app/config.py`, `app/services/document_processor.py`, this handoff, and `tasks/todo.md`; no optional test was added. The P5-9 v1 baseline re-run remains pending after merge and before P6-5. No deviations from the handoff were required.
