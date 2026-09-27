@@ -537,3 +537,13 @@ The reviewer follows the same independence rule and scopes every search.
 10. **Independence.** No `validation/` input; the sentences are P6-3b's invented ones; the prompt names no DPDPA-specific gap.
 
 ## Results
+
+Implemented the P6-4 what's-missing pass exactly within the permitted application scope.
+
+- Step 0 baseline: `1016 passed, 10 skipped, 15 failed, 11 errors`; the 26 red/error contract cases were the expected missing settings/module failures, with the structural guards green.
+- Contract: `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_4_whats_missing.py` → `28 passed`.
+- Golden/neighbour and P6-3a/P6-3b/P6-4 regression set → `261 passed`.
+- Full suite: `1042 passed, 10 skipped`; no unexpected failures and no retention guard failure because `tests/` remained unmodified.
+- Live smoke: not run; the configured OpenRouter endpoint was unreachable from the sandbox, so no live result is claimed.
+
+Changed only `app/services/grounding/missing.py`, `app/services/desk_review_v2.py`, `app/config.py`, `.env.example`, this Results section, and the corresponding Phase 6 tracker entry. No tests or protected modules were edited, and no commit was made.
