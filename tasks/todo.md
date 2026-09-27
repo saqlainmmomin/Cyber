@@ -92,15 +92,14 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] **P6-3b: v2 desk-review flag, adapter, persistence, and metadata fallback** — implemented on `claude/p6-3b-v2-flag-adapter`; 25 contract tests, 201 parity/fingerprint tests, and the full suite pass. Results: `tasks/handoffs/2026-09-27-p6-3b-v2-flag-and-adapter.md#results`.
   - [x] **Review-fix round:** source-load failure mapping, best-effort metadata fallback, and v1 citation fallback. Verified: 3 new regression tests and the golden DPDPA suite pass; the orchestrator's full suite passed (914 passed); the `boto3` collection block was Codex's sandbox only.
 - [ ] **Lift the 5,000-word upload cap** (Q4): a separate PR after P6-4 (D-P6-4-R); the mini-spec is in `tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md`. Re-run the P5-9 v1 baseline after it and before P6-5.
-- [ ] **P6-4: v2 Stage 2 judge**: PR #74, awaiting merge. Follow-up: a "what's missing" desk-review pass so v2 can suppress DPDPA pre-fill (Saqlain, 2026-09-27).
-- [ ] **P6-6: report foundations** (period/cut-off, approval gate, D0 #4–#7 and #9–#11, sign-off): PR #73, awaiting merge.
+- [x] **P6-4: v2 Stage 2 judge**: PR #74. Follow-up: a "what's missing" desk-review pass so v2 can suppress DPDPA pre-fill (Saqlain, 2026-09-27).
+- [x] **P6-6: report foundations** (period/cut-off, approval gate, D0 #4–#7 and #9–#11, sign-off): PR #73 (merged).
 - [ ] **P6-3 / P6-4 / P6-5:** v2 claims pipeline, batched closed-set judge, A/B + default flip. P6-4 runs without test criteria: it falls back to the control description and records `criteria_source` (D-P6-L), so ISO and NIST are not blocked on criteria sign-off.
-- [x] **P6-4: v2 Stage 2 batched requirement judge** — implemented from `tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md`; contract, parity/P6-3 regression set, and full suite verified.
 - [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
 - [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
 - [x] **2026-09-27 session PRs (all merged):** #67 harness screening-303, #68 LLM JSON reliability (+ this session's kickoff/Results), #69 small follow-ups (C1–C3), #70 P6-3b v2 flag/adapter. Guard-exclude conflicts between #68/#69/#70 resolve keep-both. Results: `tasks/handoffs/2026-09-27-next-session-kickoff.md#results`.
-- [ ] **Harness: add `status`/`finish_reason` to `llm_usage.jsonl`** (PR #72, awaiting merge) so a `parse_error` call is visible in harness output (harness agent only; independence rule).
+- [x] **Harness: add `status`/`finish_reason` to `llm_usage.jsonl`** (PR #72, merged) so a `parse_error` call is visible in harness output (harness agent only; independence rule).
 - [x] **Flaky `test_p5_6_rfi_rebuild.py::test_scenario_10`**: root cause was not a shared resource but wall-clock zip timestamps — python-docx stamps each DOCX member with the current second, so two downloads of one frozen RFI version differed when they straddled a second (likelier under load). `generate_rfi_docx` now pins entry timestamps to `generated_at`; regression test `tests/test_rfi_docx_determinism.py`. PR on `claude/p6-cleanup`.
 
 ## Source of truth
