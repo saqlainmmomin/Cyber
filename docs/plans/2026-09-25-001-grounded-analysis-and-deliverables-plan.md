@@ -206,7 +206,7 @@ The reports audit was run against `origin/main` on 2026-09-25.
 | 5 | Methodology still describes CMMI maturity and "questionnaire response scale" scoring, which is not how approved scoring works | `pdf_export.py:1420-1448` |
 | 6 | Disclaimer says "qualified legal counsel" and M5 says "privacy practice" for ISO/NIST-only reports, breaking the framework-conditional copy rule | `pdf_export.py:1447-1452` |
 | 7 | "Remediation Timeline (not estimated) n/a" KPI card; permanently empty "Why These Gaps Exist"; roadmap uses fixed P1-P4 windows instead of real Actions | `pdf_export.py:69-74,1004-1049`; `web.py:2034` |
-| 8 | **The DPDPA penalty table looks wrong.** It has `BN.NOTIFY` at ₹250 Cr and `CH4.SDF` at ₹50 Cr. The Schedule reads ₹200 Cr (breach notice) and ₹150 Cr (SDF obligations), and unmatched IDs fall back to ₹50 Cr. **Verify against the statute before fixing.** | `web.py:1856-1870` |
+| 8 | **The DPDPA penalty table looks wrong.** It has `BN.NOTIFY` at ₹250 Cr and `CH4.SDF` at ₹50 Cr. The Schedule reads ₹200 Cr (breach notice) and ₹150 Cr (SDF obligations), and unmatched IDs fall back to ₹50 Cr. **Verify against the statute before fixing.** *Resolved (P6-0e, P6-0d): verified per prefix against the Schedule; `BN.NOTIFY.3`/`.4` moved to the ₹50 Cr residual.* | `web.py:1856-1870` |
 | 9 | Integrated PDF has no Scope & Limitations, methodology or disclaimer pages | `pdf_export.py:1461+` |
 | 10 | Cover domain bars and heatmap overflow with auto page break off once DPDPA+NIST exceed ~8 domains (inferred) | `pdf_export.py:760-878` |
 | 11 | Unescaped company name in `Content-Disposition` | `reports.py:222-227`, `web.py:1121,1153` |
@@ -314,6 +314,7 @@ The evidence, approval and snapshot engine is well built. There is **no perimete
   - A firm selling DPDPA readiness needs a written position: subprocessor list, DPAs, where data is processed, and an optional redaction pass for obvious personal data before LLM calls.
 - **E-H6 Accuracy is unmeasured.** P5-9 Stage C has never run on the live pipeline. Every quality claim about the product is unproven until it does.
 - **E-H7 Regulatory currency.**
+  - *Resolved 2026-09-27 (P6-0d):* by then the pack cited the DPDP Rules 2025 throughout, and the 72-hour report was attributed to r.7(2)(b). About 40 of 120 citations were spot-checked against the Rules, all correct. The pack-update process in the third bullet below is still open.
   - The DPDPA pack has no reference to the **DPDP Rules, 2025** (`git grep` is empty).
   - The desk-review prompt attributes the 72-hour breach timeline to "Section 8(6)" of the Act (`app/dpdpa/prompts.py`), but that timeline comes from the Rules. Verify it.
   - More generally, there is no process for pack updates when a regulation changes: bump the pack version, show affected Conclusions, and trigger re-review (the pack-level analogue of PR-026).

@@ -1863,6 +1863,11 @@ _PENALTY_MAP = [
     # precede the CH2.SECURITY prefix, because the lookup takes the first match.
     ("CH2.SECURITY.3", 50),
     ("CH2.SECURITY", 250),
+    # Item 2 covers only the s.8(6) duty to notify. An incident response plan
+    # (s.8(4)) and a breach register (named nowhere in items 1-4) are residual
+    # item 7. Must precede the BN.NOTIFY prefix (P6-0d, signed off 2026-09-27).
+    ("BN.NOTIFY.3",   50),
+    ("BN.NOTIFY.4",   50),
     ("BN.NOTIFY",    200),
     ("CH2.CONSENT.5", 200),  # s.9(1) verifiable parental consent
     ("CH4.CHILD",    200),
