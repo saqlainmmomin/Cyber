@@ -108,6 +108,11 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     db.commit()
     db.refresh(summary)
 
+    if settings.analysis_pipeline_version == "v2":
+        from app.services.desk_review_v2 import run_desk_review_v2
+
+        return run_desk_review_v2(db, assessment, summary, doc_id_by_filename)
+
     # Truncate documents for prompt
     truncated = _truncate_documents(documents)
 
@@ -597,7 +602,9 @@ def _persist_findings(
             doc_filename = item.get("document", "")
             quote = item.get("quote", "")
             citations = (
-                cite_quotes(sources, [quote], preferred_filename=doc_filename)
+                ([item["citation"]] if item["citation"] else [])
+                if "citation" in item
+                else cite_quotes(sources, [quote], preferred_filename=doc_filename)
                 if quote.strip()
                 else [
                     whole_item_citation(source)

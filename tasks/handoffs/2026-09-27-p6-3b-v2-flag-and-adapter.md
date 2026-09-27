@@ -385,3 +385,26 @@ The reviewer follows the same independence rule and scopes every search.
 
 ## Results
 
+Implemented with no deviations from D-P6-3b-A through D-P6-3b-K.
+
+Files changed:
+
+- `.env.example`
+- `app/config.py`
+- `app/services/desk_review.py` — only the v2 branch and precomputed-citation expression
+- `app/services/desk_review_v2.py` — new adapter, persistence, loader, and failure mapping
+- `app/services/grounding/metadata_fallback.py` — new verified metadata fallback
+- `app/services/grounding/pipeline.py` — only the keyword-only `max_workers` override
+- `tasks/todo.md`
+
+The two P6-3b contract tests and all protected tests/files were left unmodified. No `.git` writes or commits were made.
+
+Verification:
+
+- Step 0 baseline: 888 passed, 10 skipped, 13 failed, 10 errors. The failures/errors were the expected pre-implementation P6-3b missing-code failures.
+- Contract tests: 25 passed in 3.80s.
+- Flag-off parity, prompt fingerprints, golden DPDPA, P6-3a, P5-3/P5-4, LLM plumbing, citations, isolation, and pre-fill set: 201 passed, 38 warnings in 24.15s.
+- Full suite: 911 passed, 10 skipped, 282 warnings in 108.68s. No failures, including the expected dirty-tree retention guard.
+- `git diff --check` and changed-file `py_compile` passed; the desk-review diff contains only the allowed branch and citation changes, and protected prompt/fixture/support paths are unchanged.
+
+Deviation: the optional live smoke was not run because the user explicitly prohibited live LLM calls. No live-call result is claimed.
