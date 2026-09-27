@@ -951,6 +951,11 @@ def test_scenario_13_structural_guards(db):
         "app/services/scoring.py", "app/routers/reports.py",
         "app/utils/pdf_export.py", "app/routers/review.py", "app/services/tier_engine.py",
         "app/frameworks", "app/dpdpa", "alembic", "app/models",
+        # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report
+        # foundations fix the D0 PDF defects, escape Content-Disposition and add
+        # the report-basis route; tests/test_p6_6_report_foundations.py guards them.
+        ":(exclude)app/routers/reports.py", ":(exclude)app/utils/pdf_export.py",
+        ":(exclude)app/routers/review.py",
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert protected.stdout == ""
     analysis_source = (REPO_ROOT / "app/routers/analysis.py").read_text()

@@ -20,6 +20,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 
+from tests.report_period_helper import record_test_period
+
 import app.models  # noqa: F401
 from app.config import settings
 from app.database import get_db
@@ -163,6 +165,7 @@ def _seed(
     )
     db.add(assessment)
     db.flush()
+    record_test_period(db, assessment)  # P6-6: D-P6-G approval gate
     db.add(
         QuestionnaireResponse(
             assessment_id=assessment.id,
@@ -864,7 +867,8 @@ def test_scenario_5_integrated_report_happy_path(db, http, gate, monkeypatch, up
     assert "Assessment A finding" in text_value and "Assessment B finding" in text_value
     assert "Assessments Not Included" in text_value
     assert "Assessment C" in text_value and "Not approved for release" in text_value
-    assert "Assessment period and evidence cut-off: not recorded" in text_value
+    assert "Assessment period: 01 Jan 2026 to 31 Mar 2026" in text_value  # P6-6 (D0 #1)
+    assert "Evidence cut-off: 15 Apr 2026" in text_value
     assert all(value not in text_value for value in ("67%", "70%", "Overall"))
     first_label = next(section.label for section in data.sections if section.assessment_id == first.id)
     second_label = next(section.label for section in data.sections if section.assessment_id == second.id)

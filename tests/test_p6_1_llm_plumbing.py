@@ -763,7 +763,11 @@ def test_golden_surfaces_and_harness_wrapper(monkeypatch):
     diff = subprocess.run(
         # Three-dot diff: only this branch's own changes since it left main, so the
         # guard stays true after merge instead of going stale.
-        ["git", "diff", "--stat", "main...HEAD", "--", "tests/fixtures", "tests/support"],
+        ["git", "diff", "--stat", "main...HEAD", "--", "tests/fixtures", "tests/support",
+         # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md) re-records the
+         # golden PDF text hash and page count after fixing the D0 report defects.
+         ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
+         ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json"],
         capture_output=True,
         text=True,
         check=True,

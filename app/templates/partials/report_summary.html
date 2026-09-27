@@ -371,28 +371,6 @@
 {% endif %}
 
 
-<!-- ── F. Root Cause Breakdown ────────────────────────────────────────────── -->
-{% if root_cause_counts %}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Why These Gaps Exist</h3>
-  <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Root cause distribution across non-compliant and partial gaps</p>
-  <div class="space-y-3">
-    {% for rc, data in root_cause_counts.items() %}
-    <div>
-      <div class="flex items-center justify-between mb-1">
-        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ data.label }}</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400">{{ data.count }} gap{{ "s" if data.count != 1 else "" }}</span>
-      </div>
-      <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-        <div class="h-2 rounded-full bg-navy-600 dark:bg-navy-500 transition-all" style="width: {{ data.pct }}%;"></div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
-
 <!-- ── G. Detailed Findings (grouped by chapter if available, flat fallback) ─ -->
 <details class="mb-6" open>
   <summary class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">

@@ -17,6 +17,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, insert, text
 from sqlalchemy.orm import sessionmaker
 
+from tests.report_period_helper import record_test_period
+
 import app.models  # noqa: F401
 from app.config import settings
 from app.database import get_db
@@ -134,6 +136,7 @@ def _seed(db, *, applicable=None, client_name="Acme Corp"):
     )
     db.add(assessment)
     db.flush()
+    record_test_period(db, assessment)  # P6-6: D-P6-G approval gate
     db.add(
         QuestionnaireResponse(
             assessment_id=assessment.id,
