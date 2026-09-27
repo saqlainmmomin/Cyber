@@ -1648,6 +1648,12 @@ def test_scenario_17_protected_files_unchanged():
     exclusions = [
         ":(exclude)scripts/validation/run_company.py",
         ":(exclude)validation/README.md",
+        # claude/harness-usage-status: llm_usage.jsonl rows gain status/
+        # finish_reason/attempt (run_company.py already excluded above), plus
+        # a trivial non-ok call count surfaced through score.py's cost
+        # aggregation and report.py's per-run cost line.
+        ":(exclude)scripts/validation/score.py",
+        ":(exclude)scripts/validation/report.py",
     ]
     committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
     uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)

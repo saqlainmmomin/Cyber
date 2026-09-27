@@ -16,6 +16,7 @@ import sys
 import time
 import traceback
 from collections import Counter
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -128,6 +129,60 @@ class MockLLM:
         }
 
 
+@contextmanager
+def _collecting_calls(llm_client_module):
+    """Collect one `call_llm` invocation's records without breaking an
+    already-active outer `collect_calls()`.
+
+    `llm_client.collect_calls()` sets a plain ContextVar; it does not nest.
+    If something up the stack (e.g. app/routers/analysis.py,
+    app/services/desk_review.py, or the grounding pipeline) already opened
+    its own `collect_calls()` to build `AnalysisRun` call records, opening
+    another one here would *replace* that outer collector for the duration
+    of this call, silently dropping every harnessed call from it. Instead we
+    remember the outer collector (if any), collect into our own list, and
+    splice our records back into the outer one afterwards -- on both the
+    success and the exception path -- so the outer collector ends up with
+    exactly what it would have seen without the harness's own recording.
+    """
+    outer = llm_client_module._collector.get()
+    calls: list[dict] = []
+    try:
+        with llm_client_module.collect_calls() as calls:
+            yield calls
+    finally:
+        if outer is not None:
+            outer.extend(calls)
+
+
+def _usage_row(*, tier, model: str, usage: dict | None, elapsed_ms: float, ok: bool, calls: list[dict]) -> dict:
+    """Build one `llm_usage.jsonl` row.
+
+    `calls` is whatever `llm_client.collect_calls()` captured for this
+    `call_llm` invocation (one entry per attempt, e.g. a `parse_error` retry
+    followed by an `ok`). We surface the last attempt's `status`,
+    `finish_reason` and `attempt` so a retried parse failure or a
+    `finish_reason="length"` cutoff is visible without changing the existing
+    fields/ordering. Records that lack a field (e.g. `attempt`, which the
+    client only sets on a retry) write `null`.
+    """
+    usage = usage or {}
+    last = calls[-1] if calls else {}
+    return {
+        "ts": _utc_now(),
+        "tier": str(tier),
+        "model": model,
+        "input_tokens": usage.get("input_tokens", 0),
+        "output_tokens": usage.get("output_tokens", 0),
+        "cache_read_input_tokens": usage.get("cache_read_input_tokens", 0),
+        "elapsed_ms": elapsed_ms,
+        "ok": ok,
+        "status": last.get("status"),
+        "finish_reason": last.get("finish_reason"),
+        "attempt": last.get("attempt"),
+    }
+
+
 def _mime(filename: str) -> str:
     return mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
@@ -215,34 +270,31 @@ def _child_run(slug: str, out_dir: Path, validation_root: Path, llm_mode: str, s
 
         def recorded_call(tier, *args, **kwargs):
             started = time.perf_counter()
+            model = getattr(settings, tier_setting.get(str(tier), "llm_model_judge"))
+            calls: list[dict] = []
             try:
-                result = original_call(tier, *args, **kwargs)
+                with _collecting_calls(llm_client) as calls:
+                    result = original_call(tier, *args, **kwargs)
             except Exception:
-                elapsed = round((time.perf_counter() - started) * 1000, 2)
-                row = {
-                    "ts": _utc_now(),
-                    "tier": str(tier),
-                    "model": getattr(settings, tier_setting.get(str(tier), "llm_model_judge")),
-                    "input_tokens": 0,
-                    "output_tokens": 0,
-                    "cache_read_input_tokens": 0,
-                    "elapsed_ms": elapsed,
-                    "ok": False,
-                }
+                row = _usage_row(
+                    tier=tier,
+                    model=model,
+                    usage=None,
+                    elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
+                    ok=False,
+                    calls=calls,
+                )
                 with (out_dir / "llm_usage.jsonl").open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(row, sort_keys=True) + "\n")
                 raise
-            usage = result.get("usage", {})
-            row = {
-                "ts": _utc_now(),
-                "tier": str(tier),
-                "model": getattr(settings, tier_setting.get(str(tier), "llm_model_judge")),
-                "input_tokens": usage.get("input_tokens", 0),
-                "output_tokens": usage.get("output_tokens", 0),
-                "cache_read_input_tokens": usage.get("cache_read_input_tokens", 0),
-                "elapsed_ms": round((time.perf_counter() - started) * 1000, 2),
-                "ok": True,
-            }
+            row = _usage_row(
+                tier=tier,
+                model=model,
+                usage=result.get("usage", {}),
+                elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
+                ok=True,
+                calls=calls,
+            )
             with (out_dir / "llm_usage.jsonl").open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(row, sort_keys=True) + "\n")
             return result
