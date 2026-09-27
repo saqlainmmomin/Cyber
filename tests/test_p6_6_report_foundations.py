@@ -1160,6 +1160,10 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)app/routers/documents.py",
     ":(exclude)app/services/grounding/judge.py",
     ":(exclude)app/services/grounding/judge_prompts.py",
+    # P6-4-missing (tasks/handoffs/2026-09-28-p6-4-whats-missing-pass.md) wires the
+    # flag-gated v2 "what is missing" pass into v2 desk review and adds its module.
+    ":(exclude)app/services/desk_review_v2.py",
+    ":(exclude)app/services/grounding/missing.py",
 )
 
 
