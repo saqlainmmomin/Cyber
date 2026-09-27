@@ -196,18 +196,16 @@ def run_desk_review_v2(
 ) -> DeskReviewSummary:
     """Run v2 grounding, adapt claims, and persist ordinary desk-review rows."""
     framework_ids = assessment.frameworks
-    sources = load_source_documents(db, assessment.id)
     claim_set: ClaimSet | None = None
     errors: dict[str, str] = {}
 
     try:
+        sources = load_source_documents(db, assessment.id)
         claim_set = run_stages_0_1(
             sources,
             framework_ids,
             max_workers=settings.v2_max_concurrency,
         )
-        if settings.v2_metadata_fallback:
-            claim_set = fill_metadata_gaps(claim_set, sources)
     except ClaimBudgetExceeded as exc:
         message = V2_BUDGET_MESSAGE.format(planned=exc.planned, cap=exc.cap)
         errors = {framework_id: message for framework_id in framework_ids}
@@ -215,6 +213,14 @@ def run_desk_review_v2(
         logger.exception("v2 desk review failed before adaptation")
         message = V2_FAILED_MESSAGE.format(error=f"{type(exc).__name__}: {exc}")
         errors = {framework_id: message for framework_id in framework_ids}
+
+    if claim_set is not None and settings.v2_metadata_fallback:
+        try:
+            claim_set = fill_metadata_gaps(claim_set, sources)
+        except Exception:
+            logger.exception(
+                "v2 metadata fallback failed; continuing with Stage 1 claim set"
+            )
 
     if claim_set is not None:
         errors.update(_incomplete_errors(claim_set))

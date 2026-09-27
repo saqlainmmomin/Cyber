@@ -408,3 +408,5 @@ Verification:
 - `git diff --check` and changed-file `py_compile` passed; the desk-review diff contains only the allowed branch and citation changes, and protected prompt/fixture/support paths are unchanged.
 
 Deviation: the optional live smoke was not run because the user explicitly prohibited live LLM calls. No live-call result is claimed.
+
+Review-fix round: source loading now maps failures to the v2 error state, metadata fallback is best-effort, and non-dict v1 citation values use quote grounding. Added `tests/test_p6_3b_review_fixes.py` (3 passed); `tests/test_golden_dpdpa.py` passed (8 passed). Contract/full-suite collection remained blocked by the environment's missing `boto3`; no live LLM calls were made.
