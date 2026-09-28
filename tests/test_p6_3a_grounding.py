@@ -1662,12 +1662,22 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/components/requirement_card_body.html",
     ":(exclude)app/templates/pages/review_queue.html",
     ":(exclude)app/templates/pages/evidence_span.html",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md): the drafting
+    # router, the narrative page and the recommended-action draft partial;
+    # tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard them.
+    ":(exclude)app/routers/drafting.py",
+    ":(exclude)app/templates/pages/narrative.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
 # desk-review module. P6-4 adds the v2 analysis service. Any other importer
 # still fails the dormancy scan.
-P6_3B_GROUNDING_IMPORTERS = {"app/services/desk_review_v2.py", "app/services/analysis_v2.py"}
+# P6-10 reuses grounding.prompts.wrap_untrusted for its two drafting prompts.
+P6_3B_GROUNDING_IMPORTERS = {
+    "app/services/desk_review_v2.py", "app/services/analysis_v2.py",
+    "app/services/remediation_draft.py", "app/services/narrative.py",
+}
 
 
 def _git(*args) -> str:

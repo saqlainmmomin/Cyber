@@ -1016,6 +1016,12 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after
+    # P6-8 B1; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py
+    # guard these files.
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1034,6 +1040,9 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-10: the recommended-action draft control in the conclusion card and its partial.
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
 )
 
 
