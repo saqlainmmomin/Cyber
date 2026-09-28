@@ -1122,6 +1122,14 @@ P6_7_FORBIDDEN = (
     "scripts", "validation", "app/frameworks", "app/dpdpa", "app/config.py",
 )
 
+# P6-2b (PR #79) lands after P6-7a and legitimately touches these (approved DPDPA
+# criteria, pack version); tests/test_p6_2b_*.py guard them.
+P6_2B_APP_FILES = (
+    "app/frameworks/criteria/dpdpa.py", "app/frameworks/definitions/dpdpa.py",
+    "app/frameworks/schema.py", "app/services/engagement_factory.py",
+    "app/services/grounding/claims.py", "app/services/grounding/pipeline.py",
+)
+
 
 def _changed(*args: str) -> set[str]:
     return set(_git("diff", "--name-only", *args, "--", "app").split())
@@ -1131,7 +1139,9 @@ def test_scenario_14_p6_7_touches_only_its_files():
     changed = _changed("main...HEAD") | _changed("HEAD") | set(
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
+    changed -= set(P6_2B_APP_FILES)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
-    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN).split()
-    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN).split()
+    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py")]
+    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
+    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

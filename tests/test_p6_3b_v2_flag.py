@@ -946,7 +946,9 @@ def test_scenario_11_p6_3a_prompts_unchanged():
 
     assert prompts.PROMPT_VERSION == "p6-3a.1"
     diff = _git("diff", "main", "--", "app/services/grounding/prompts.py",
-                "app/services/grounding/claims.py", "app/services/grounding/chunking.py",
+                # P6-2b: claim freshness now compares the signed pack version.
+                "app/services/grounding/claims.py", ":(exclude)app/services/grounding/claims.py",
+                "app/services/grounding/chunking.py",
                 "app/services/grounding/batches.py", "app/services/grounding/schemas.py",
                 "app/services/grounding/sources.py", "app/services/grounding/metadata.py")
     assert diff == ""
