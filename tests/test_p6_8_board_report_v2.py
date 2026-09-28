@@ -1026,6 +1026,12 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/services/grounding/injection.py",
     "app/services/grounding/judge.py",
     "app/services/analysis_v2.py",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after
+    # P6-8 B1; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py
+    # guard these files.
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1054,6 +1060,9 @@ P6_8_FORBIDDEN_PATHS = (
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
+    # P6-10: the recommended-action draft control in the conclusion card and its partial.
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
