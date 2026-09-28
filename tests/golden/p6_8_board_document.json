@@ -1,0 +1,427 @@
+{
+  "appendices": {
+    "evidence_register": [
+      {
+        "added_on": "<run-date>",
+        "cited": false,
+        "filename": "isms-manual.pdf",
+        "sha256_prefix": "bbbbbbbbbbbb",
+        "status": "active",
+        "version_number": 1
+      },
+      {
+        "added_on": "<run-date>",
+        "cited": true,
+        "filename": "privacy-policy.pdf",
+        "sha256_prefix": "aaaaaaaaaaaa",
+        "status": "active",
+        "version_number": 1
+      }
+    ],
+    "methodology": "This assessment evaluates compliance against the following framework(s): India DPDPA, ISO 27001, across 5 in-scope requirements.\n\nBasis of Assessment:\nEach in-scope requirement receives one conclusion. The analysis engine reviews the submitted documents and questionnaire responses and proposes an outcome with cited evidence. A consultant reviews the evidence and individually approves, edits or rejects every proposal. Only individually approved conclusions appear in this report; no outcome, score or finding is produced by the AI on its own.\n\nOutcome Definitions:\n- Compliant: the requirement is met and supported by evidence\n- Partially Compliant: the requirement is met in part\n- Non-Compliant: the requirement is not met\n- Insufficient Evidence: the evidence provided does not support a conclusion either way\n- Not Applicable: the requirement does not apply within the assessed scope\n\nScoring Basis:\nScores are computed only from conclusions a consultant has individually approved. Each approved outcome counts as follows: Compliant 100 points, Partially Compliant 50 points, Non-Compliant 0 points. Not Applicable and Insufficient Evidence are excluded from the scoring denominator. Insufficient Evidence is not treated as Non-Compliant; the number of requirements with insufficient evidence is reported next to each framework score. Requirements excluded at scoping are not scored. A framework is scored only when every in-scope requirement has an approved conclusion. Section scores are the average of their requirement points; domain and framework scores are weighted averages using the published weights below.\n\nFramework Structure and Weights:\n- India DPDPA (2023): 41 requirements in 6 domains. Domain weights: Obligations of Data Fiduciary 30%, Rights of Data Principal 20%, Special Provisions 20%, Consent Management (Detailed) 10%, Cross-Border Data Transfer 10%, Breach Notification 10%.\n- ISO 27001 (2022): 93 requirements in 4 domains. Domain weights: Organizational Controls 35%, People Controls 15%, Physical Controls 15%, Technological Controls 35%.\nRequirements are referenced by clause or control identifier for each selected framework; requirement descriptions are summarised for assessment purposes and do not reproduce the source standard. Scores are computed and reported independently for each framework; no score is combined across frameworks.\n\nRating Thresholds:\n- 80-100%: Compliant\n- 60-79%: Partially Compliant\n- 40-59%: Needs Significant Improvement\n- 0-39%: Non-Compliant\n\nRisk Classification:\nEach gap carries the risk level (Critical, High, Medium, Low) approved by the consultant, reflecting regulatory exposure, potential penalties under INDIA DPDPA and impact on affected individuals (for INDIA DPDPA), and likely impact on the confidentiality, integrity and availability of information (for ISO 27001). Remediation priority on each gap is derived from its approved risk level.\n\nDisclaimer:\nThis assessment provides guidance based on the information and evidence provided and is not legal advice. Consult qualified legal counsel for definitive compliance determinations under INDIA DPDPA. For ISO 27001, it is not a certification audit; certification decisions rest with an accredited certification body or qualified assessor.",
+    "requirement_register": [
+      {
+        "citation": "privacy-policy.pdf v1, whole",
+        "citation_note": null,
+        "decided_by": "Priya",
+        "decided_on": "<run-date>",
+        "decision_label": "Approved",
+        "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+        "framework_id": "dpdpa",
+        "outcome": "non_compliant",
+        "outcome_label": "Non-Compliant",
+        "priority": 2,
+        "requirement_id": "CH2.CONSENT.1",
+        "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+        "risk_level": "high"
+      },
+      {
+        "citation": null,
+        "citation_note": "No supporting citation",
+        "decided_by": "Priya",
+        "decided_on": "<run-date>",
+        "decision_label": "Approved",
+        "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+        "framework_id": "dpdpa",
+        "outcome": "compliant",
+        "outcome_label": "Compliant",
+        "priority": 4,
+        "requirement_id": "CH2.CONSENT.2",
+        "requirement_title": "Itemised consent for multiple purposes",
+        "risk_level": "low"
+      },
+      {
+        "citation": null,
+        "citation_note": "No supporting citation",
+        "decided_by": "Priya",
+        "decided_on": "<run-date>",
+        "decision_label": "Approved",
+        "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+        "framework_id": "dpdpa",
+        "outcome": "insufficient_evidence",
+        "outcome_label": "Insufficient Evidence",
+        "priority": 3,
+        "requirement_id": "CH2.CONSENT.3",
+        "requirement_title": "Consent withdrawal mechanism",
+        "risk_level": "medium"
+      },
+      {
+        "citation": null,
+        "citation_note": "Consultant decision; no cited evidence",
+        "decided_by": "Priya",
+        "decided_on": "<run-date>",
+        "decision_label": "Edited and approved",
+        "domain_title": "ISO 27001 — Organizational Controls",
+        "framework_id": "iso27001",
+        "outcome": "partially_compliant",
+        "outcome_label": "Partially Compliant",
+        "priority": 1,
+        "requirement_id": "ISO.A5.1",
+        "requirement_title": "Policies for information security",
+        "risk_level": "critical"
+      },
+      {
+        "citation": null,
+        "citation_note": "No supporting citation",
+        "decided_by": "Priya",
+        "decided_on": "<run-date>",
+        "decision_label": "Approved",
+        "domain_title": "ISO 27001 — Organizational Controls",
+        "framework_id": "iso27001",
+        "outcome": "not_applicable",
+        "outcome_label": "Not Applicable",
+        "priority": 4,
+        "requirement_id": "ISO.A5.2",
+        "requirement_title": "Information security roles and responsibilities",
+        "risk_level": "low"
+      }
+    ]
+  },
+  "assessment_id": "<id:1>",
+  "basis": {
+    "cutoff_label": "15 Jul 2026",
+    "evidence_cutoff": "2026-07-15",
+    "period_end": "2026-06-30",
+    "period_label": "01 Apr 2026 to 30 Jun 2026",
+    "period_start": "2026-04-01",
+    "prepared_by": "Priya Sharma",
+    "reviewed_by": "Ravi Menon"
+  },
+  "company_name": "भारत डेटा प्राइवेट लिमिटेड",
+  "engagement_name": "FY26 privacy and security review",
+  "firm_name": "Golden Advisory",
+  "framework_sections": [
+    {
+      "domains": [
+        {
+          "domain_id": "chapter_2",
+          "rating": "Needs Significant Improvement",
+          "score": 50.0,
+          "title": "Obligations of Data Fiduciary"
+        },
+        {
+          "domain_id": "chapter_3",
+          "rating": null,
+          "score": null,
+          "title": "Rights of Data Principal"
+        },
+        {
+          "domain_id": "chapter_4",
+          "rating": null,
+          "score": null,
+          "title": "Special Provisions"
+        },
+        {
+          "domain_id": "consent_management",
+          "rating": null,
+          "score": null,
+          "title": "Consent Management (Detailed)"
+        },
+        {
+          "domain_id": "cross_border",
+          "rating": null,
+          "score": null,
+          "title": "Cross-Border Data Transfer"
+        },
+        {
+          "domain_id": "breach_notification",
+          "rating": null,
+          "score": null,
+          "title": "Breach Notification"
+        }
+      ],
+      "framework_id": "dpdpa",
+      "gaps": [
+        {
+          "outcome": "non_compliant",
+          "outcome_label": "Non-Compliant",
+          "priority": 2,
+          "requirement_id": "CH2.CONSENT.1",
+          "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+          "risk_level": "high"
+        }
+      ],
+      "name": "India DPDPA",
+      "rating": "Needs Significant Improvement",
+      "score": 50.0,
+      "status": "scored",
+      "version": "2023"
+    },
+    {
+      "domains": [
+        {
+          "domain_id": "organizational",
+          "rating": "Needs Significant Improvement",
+          "score": 50.0,
+          "title": "Organizational Controls"
+        },
+        {
+          "domain_id": "people",
+          "rating": null,
+          "score": null,
+          "title": "People Controls"
+        },
+        {
+          "domain_id": "physical",
+          "rating": null,
+          "score": null,
+          "title": "Physical Controls"
+        },
+        {
+          "domain_id": "technological",
+          "rating": null,
+          "score": null,
+          "title": "Technological Controls"
+        }
+      ],
+      "framework_id": "iso27001",
+      "gaps": [
+        {
+          "outcome": "partially_compliant",
+          "outcome_label": "Partially Compliant",
+          "priority": 1,
+          "requirement_id": "ISO.A5.1",
+          "requirement_title": "Policies for information security",
+          "risk_level": "critical"
+        }
+      ],
+      "name": "ISO 27001",
+      "rating": "Needs Significant Improvement",
+      "score": 50.0,
+      "status": "scored",
+      "version": "2022"
+    }
+  ],
+  "frameworks": [
+    {
+      "framework_id": "dpdpa",
+      "legal": true,
+      "name": "India DPDPA",
+      "version": "2023"
+    },
+    {
+      "framework_id": "iso27001",
+      "legal": false,
+      "name": "ISO 27001",
+      "version": "2022"
+    }
+  ],
+  "kind": "board_report",
+  "not_assessed": {
+    "insufficient_evidence": [
+      {
+        "framework_id": "dpdpa",
+        "requirement_id": "CH2.CONSENT.3",
+        "requirement_title": "Consent withdrawal mechanism"
+      }
+    ],
+    "rfi": {
+      "items": [],
+      "version_label": null
+    }
+  },
+  "release": {
+    "released_by": "Priya",
+    "released_on": "<run-date>"
+  },
+  "roadmap": {
+    "actions": [
+      {
+        "closes": [
+          {
+            "finding_title": "Access reviews are informal",
+            "framework_name": "ISO 27001",
+            "requirement_id": "ISO.A5.1"
+          }
+        ],
+        "owner": "Vikram Iyer",
+        "status_label": "Open",
+        "target_date": "2026-10-31",
+        "title": "Run quarterly access reviews"
+      },
+      {
+        "closes": [
+          {
+            "finding_title": "Consent is not freely given",
+            "framework_name": "India DPDPA",
+            "requirement_id": "CH2.CONSENT.1"
+          }
+        ],
+        "owner": "Anita Rao",
+        "status_label": "Open",
+        "target_date": "2026-11-30",
+        "title": "Replace pre-ticked consent"
+      }
+    ],
+    "unplanned_gap_count": 0
+  },
+  "schema_version": 1,
+  "sign_off": {
+    "issue_status": "This version is a draft until it is issued. Whether it was issued, who issued it and the SHA-256 of the issued file are recorded in the report version history.",
+    "names_note": "Names are recorded as entered by the consultant; they are not verified sign-ins.",
+    "prepared_by": "Priya Sharma",
+    "reviewed_by": "Ravi Menon"
+  },
+  "snapshot": {
+    "generated_at": "2026-09-28T10:00:00+00:00",
+    "generated_on": "28 Sep 2026",
+    "id": "<id:2>",
+    "version_label": "v1"
+  },
+  "source": {
+    "conclusion_versions": [
+      [
+        "<id:3>",
+        2
+      ],
+      [
+        "<id:4>",
+        2
+      ],
+      [
+        "<id:5>",
+        2
+      ],
+      [
+        "<id:6>",
+        2
+      ],
+      [
+        "<id:7>",
+        2
+      ]
+    ],
+    "gap_report_id": "<id:8>"
+  },
+  "summary": {
+    "basis_of_assessment": "This document constitutes an evidence-based compliance gap assessment. It is not a formal compliance audit and does not constitute legal advice. Findings are based on documents submitted for review and information disclosed by the organization's representatives, and every conclusion was individually approved by a consultant. These conclusions reflect the evidence considered up to the evidence cut-off stated above.",
+    "confidentiality": "This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. Golden Advisory and the named organization are the intended recipients of this report.",
+    "frameworks": [
+      {
+        "coverage": {
+          "awaiting": 0,
+          "compliant": 1,
+          "eligible": 3,
+          "in_scope": 3,
+          "insufficient_evidence": 1,
+          "missing": 0,
+          "non_compliant": 1,
+          "not_applicable": 0,
+          "out_of_scope": 0,
+          "partially_compliant": 0,
+          "scored": 2
+        },
+        "framework_id": "dpdpa",
+        "headline": "50% (Needs Significant Improvement); 1 requirement(s) insufficient evidence",
+        "name": "India DPDPA",
+        "narrative": null,
+        "rating": "Needs Significant Improvement",
+        "score": 50.0,
+        "status": "scored"
+      },
+      {
+        "coverage": {
+          "awaiting": 0,
+          "compliant": 0,
+          "eligible": 2,
+          "in_scope": 2,
+          "insufficient_evidence": 0,
+          "missing": 0,
+          "non_compliant": 0,
+          "not_applicable": 1,
+          "out_of_scope": 0,
+          "partially_compliant": 1,
+          "scored": 1
+        },
+        "framework_id": "iso27001",
+        "headline": "50% (Needs Significant Improvement); 0 requirement(s) insufficient evidence",
+        "name": "ISO 27001",
+        "narrative": null,
+        "rating": "Needs Significant Improvement",
+        "score": 50.0,
+        "status": "scored"
+      }
+    ],
+    "limitations": [
+      "This assessment does not include technical penetration testing, source code review, network security assessment, or any form of independent technical verification. Where the selected framework(s) include physical or environmental controls, findings on those controls are based on disclosed information and submitted documents, not on physical inspection or testing.",
+      "All findings reflect the information provided to the assessor at the time of the assessment. The assessor has not independently verified the accuracy or completeness of information provided. Material omissions or inaccuracies in disclosed information would affect the reliability of findings.",
+      "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by qualified legal counsel or a certified privacy professional (for INDIA DPDPA requirements), or by a qualified information security auditor (for ISO 27001), is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.",
+      "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a readiness assessment, not a determination of current non-compliance. Until then, obligations under the Information Technology Act, 2000, s.43A and the SPDI Rules, 2011 continue to apply and were not assessed."
+    ],
+    "scope": [
+      "India DPDPA: 3 requirements in scope",
+      "ISO 27001: 2 requirements in scope"
+    ],
+    "totals": {
+      "critical_high_gaps": 2,
+      "gaps": 2,
+      "insufficient_evidence": 1,
+      "not_applicable": 1,
+      "requirements": 5
+    }
+  },
+  "top_risks": [
+    {
+      "action_title": "Run quarterly access reviews",
+      "citations": [],
+      "description": "Quarterly reviews are not evidenced.",
+      "finding_id": "<id:9>",
+      "framework_id": "iso27001",
+      "framework_name": "ISO 27001",
+      "outcome_label": "Partially Compliant",
+      "owner": "Vikram Iyer",
+      "priority": 1,
+      "rank": 1,
+      "requirement_id": "ISO.A5.1",
+      "requirement_title": "Policies for information security",
+      "severity": "critical",
+      "target_date": "2026-10-31",
+      "title": "Access reviews are informal"
+    },
+    {
+      "action_title": "Replace pre-ticked consent",
+      "citations": [
+        {
+          "filename": "privacy-policy.pdf",
+          "is_current": true,
+          "location_ref": "whole",
+          "sha256_prefix": "aaaaaaaaaaaa",
+          "version_number": 1
+        }
+      ],
+      "description": "Budget ₹12 lakh for consent tooling",
+      "finding_id": "<id:10>",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "outcome_label": "Non Compliant",
+      "owner": "Anita Rao",
+      "priority": 1,
+      "rank": 2,
+      "requirement_id": "CH2.CONSENT.1",
+      "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+      "severity": "high",
+      "target_date": "2026-11-30",
+      "title": "Consent is not freely given"
+    }
+  ]
+}

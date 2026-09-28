@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workpaper — {{ assessment.company_name }}</title>
+  <style>
+    :root { color-scheme: light; font-family: 'Noto Sans', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f8fafc; color: #172033; line-height: 1.5; }
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    h1, h2, h3, h4, h5 { line-height: 1.2; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    h2 { font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; color: #475569; }
+    h3 { font-size: 1rem; margin: .25rem 0 0; }
+    h4 { font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+    h5 { font-size: .85rem; color: #334155; }
+    p { margin: .45rem 0; }
+    .muted { color: #64748b; font-size: .88rem; }
+    .basis { color: #334155; font-size: .9rem; }
+    .counts, .grid { display: grid; gap: .75rem; }
+    .counts { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); margin: 1.5rem 0 2rem; }
+    .card, article, table, .notice { background: #fff; border: 1px solid #e2e8f0; border-radius: .75rem; }
+    .card { padding: .75rem; }
+    .count { font-size: 1.25rem; font-weight: 700; margin-top: .25rem; }
+    section { margin: 2rem 0; }
+    article { overflow: hidden; margin: 1.25rem 0; }
+    article > header { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; }
+    article > div { padding: 1.25rem; }
+    article section { margin: 1.5rem 0; }
+    dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; }
+    dt { color: #64748b; font-size: .75rem; }
+    dd { margin: .15rem 0 0; white-space: pre-wrap; }
+    .wide { grid-column: 1 / -1; }
+    .pill { display: inline-block; margin: .2rem .25rem .2rem 0; padding: .2rem .55rem; border-radius: 999px; background: #e2e8f0; font-size: .75rem; }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; font-size: .8rem; }
+    th, td { padding: .55rem .65rem; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; color: #64748b; }
+    a { color: #1d4ed8; text-decoration: none; }
+    ol, ul { padding-left: 1.25rem; }
+    .notice { padding: 1rem; color: #475569; }
+    @media (max-width: 700px) { main { padding: 1rem .75rem 3rem; } th, td { padding: .45rem; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Workpaper: requirement traceability</h1>
+    <p class="muted">Read-only. Client response, evidence, AI proposal, consultant decision and every revision for each requirement, oldest event first.</p>
+    {% set basis = report_basis_for(assessment) %}
+    <p data-report-basis class="basis">Assessment period: {{ basis.period_label }} · Evidence cut-off: {{ basis.cutoff_label }}</p>
+  </header>
+
+  <div class="counts">
+    {% for key, label in [('conclusions', 'Conclusions'), ('in_scope', 'In scope'), ('excluded', 'Excluded'), ('unconcluded', 'No conclusion'), ('pending', 'Pending'), ('rejected', 'Rejected'), ('approved', 'Approved'), ('edited', 'Edited'), ('legacy_bulk', 'Legacy bulk approvals'), ('runs', 'Analysis runs')] %}
+    <div class="card"><div class="muted">{{ label }}</div><div data-count="{{ key }}" class="count">{{ wp.counts[key] }}</div></div>
+    {% endfor %}
+  </div>
+
+  <section>
+    <h2>Analysis runs</h2>
+    {% if wp.runs %}
+    <table><thead><tr><th>Framework</th><th>Status</th><th>Model</th><th>Started</th><th>Completed</th><th>Trigger</th><th>Claims</th><th>Evidence versions offered</th><th>Desk review used</th><th>Error type</th></tr></thead>
+      <tbody>{% for run in wp.runs %}
+        <tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}"><td>{{ run.framework_id|upper }}</td><td>{{ 'Running (stale: started more than 1 hour ago; likely interrupted)' if run.stale else run.status|title }}</td><td>{{ run.model_id }}</td><td>{{ run.started_at }}</td><td>{{ run.completed_at or 'Not recorded' }}</td><td>{{ run.trigger_id[:8] if run.trigger_id else 'Not recorded' }}</td><td>{{ run.claim_count }}</td><td>{{ run.evidence_version_count if run.evidence_version_count is not none else 'Not recorded' }}</td><td>{{ 'Yes' if run.desk_review_used is sameas true else ('No' if run.desk_review_used is sameas false else 'Not recorded') }}</td><td>{{ run.error_type or 'Not recorded' }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="muted">No analysis runs recorded.</p>{% endif %}
+  </section>
+
+  {% if wp.sections %}
+  {% for section in wp.sections %}
+  <section data-workpaper-section="{{ section.framework_id }}">
+    <h2>{{ section.framework_id|upper }}</h2>
+    {% for entry in section.entries %}
+    <article data-workpaper-entry id="{{ entry.anchor }}" data-in-scope="{{ 'true' if entry.in_scope else 'false' }}" data-decision-state="{{ entry.card.state }}">
+      <header>
+        <div class="muted">{{ entry.card.conclusion.framework_id|upper }} · {{ entry.card.conclusion.requirement_id }} · v{{ entry.card.conclusion.version }} · {{ entry.card.conclusion.id }}</div>
+        <h3>{{ entry.card.requirement_title }}</h3>
+        {% if entry.card.legacy_bulk_approval %}<span class="pill">Legacy bulk approval, not individually reviewed</span>{% elif entry.card.state == 'approved' %}<span class="pill">Approved</span>{% elif entry.card.state == 'edited' %}<span class="pill">Edited and approved</span>{% elif entry.card.state == 'rejected' %}<span class="pill">Rejected</span>{% else %}<span class="pill">Pending</span>{% endif %}
+        {% if not entry.in_scope %}<span class="pill">Excluded by scope enforcement</span>{% endif %}
+        {% if entry.card.locked %}<p class="muted">Locked: re-analysis will not overwrite this</p>{% endif %}
+        <p><a href="#">Decide on the conclusions page</a>{% for finding in entry.findings %} <span data-workpaper-finding>Finding: {{ finding.title }}</span>{% endfor %}</p>
+        {% if entry.card.legacy_report_status %}<p class="muted">Report view differs: {{ entry.card.legacy_report_status|replace('_', ' ')|title }}</p>{% endif %}
+      </header>
+      <div>
+        <section><h4>1. Client response</h4>{% if entry.client_response %}<dl><div><dt>Answer</dt><dd>{{ entry.client_response.answer|replace('_', ' ')|title }}</dd></div><div><dt>Question id</dt><dd>{{ entry.client_response.question_id }}</dd></div><div><dt>Answer source</dt><dd>{{ entry.client_response.answer_source or 'Not recorded' }}</dd></div><div><dt>Confidence</dt><dd>{{ entry.client_response.confidence or 'Not recorded' }}</dd></div><div><dt>N/A reason</dt><dd>{{ entry.client_response.na_reason or 'Not recorded' }}</dd></div><div><dt>Submitted</dt><dd>{{ entry.client_response.submitted_at }}</dd></div><div class="wide"><dt>Notes</dt><dd>{{ entry.client_response.notes or 'None recorded' }}</dd></div><div class="wide"><dt>Evidence reference</dt><dd>{{ entry.client_response.evidence_reference or 'None recorded' }}</dd></div></dl>{% else %}<p class="muted">No questionnaire response recorded for this requirement.</p>{% endif %}</section>
+
+        <section><h4>2. Evidence</h4><h5>Mapped evidence</h5>{% if entry.mapped_evidence %}<ul>{% for row in entry.mapped_evidence %}<li>{{ row.filename }} <span class="muted">{{ row.relevance }} · {{ row.evidence_status }}</span></li>{% endfor %}</ul>{% else %}<p class="muted">No evidence mapped to this requirement.</p>{% endif %}<h5>Current desk review</h5>{% if entry.desk_review_findings %}<ul>{% for finding in entry.desk_review_findings %}<li><span class="muted">{{ finding.finding_type|title }} · {{ finding.severity|title }}</span><div>{{ finding.content }}</div>{% if finding.source_quote %}<div>{{ finding.source_quote }}</div>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="muted">No desk-review findings for this requirement.</p>{% endif %}</section>
+
+        <section><h4>3. AI proposal</h4>{% if not entry.ai_proposal %}<p class="muted">No AI proposal recorded.</p>{% elif entry.ai_proposal.claim is none %}<p class="muted">No run record for this proposal (migrated from the legacy report).</p>{% else %}<p>{{ entry.ai_proposal.claim.get('outcome')|replace('_', ' ')|title }} · {{ entry.ai_proposal.claim.get('disposition') }}</p>{% set item = entry.ai_proposal.claim.get('item') or {} %}<dl><div class="wide"><dt>Rationale</dt><dd>{{ item.get('current_state') }}</dd></div><div class="wide"><dt>Gap description</dt><dd>{{ item.get('gap_description') }}</dd></div><div><dt>Risk level</dt><dd>{{ item.get('risk_level') }}</dd></div><div><dt>Remediation action</dt><dd>{{ item.get('remediation_action') }}</dd></div></dl>{% endif %}{% if entry.card.withheld_proposal %}<p class="notice">A newer AI proposal was withheld because this conclusion is locked</p>{% endif %}</section>
+
+        <section><h4>4. Consultant decision</h4><p class="muted">{{ 'AI proposal' if entry.card.conclusion.ai_proposed else 'Consultant-edited' }}</p><dl><div><dt>Outcome</dt><dd>{{ entry.card.conclusion.outcome|replace('_', ' ')|title }}</dd></div><div><dt>Risk level</dt><dd>{{ entry.card.conclusion.risk_level|title }}</dd></div><div class="wide"><dt>Rationale</dt><dd>{{ entry.card.conclusion.rationale }}</dd></div><div class="wide"><dt>Gaps identified</dt><dd>{{ entry.card.conclusion.gaps_identified }}</dd></div><div class="wide"><dt>Recommended action</dt><dd>{{ entry.card.conclusion.recommended_action }}</dd></div><div class="wide"><dt>Evidence summary</dt><dd>{{ entry.card.conclusion.evidence_summary or 'No grounded supporting quote' }}</dd></div></dl>{% if entry.card.state == 'edited' %}<p class="muted">Consultant edits carry no citations; the citations above belong to the AI proposal this edit replaced.</p>{% endif %}</section>
+
+        <section><h4>5. Revision history</h4><ol>{% for rev in entry.revisions %}<li data-revision-action="{{ rev.revision.action }}"><strong>#{{ rev.sequence }} · {{ rev.action_label }} by {{ rev.actor_display }}</strong>{% if rev.outcome_after is not none %}<div>After: {{ rev.outcome_after|replace('_', ' ')|title }} — {{ rev.rationale_after }}</div>{% endif %}</li>{% endfor %}</ol></section>
+      </div>
+    </article>
+    {% endfor %}
+    {% if section.excluded_entries %}<h3>Excluded by scope enforcement</h3>{% for entry in section.excluded_entries %}<article data-workpaper-entry id="{{ entry.anchor }}" data-in-scope="false" data-decision-state="{{ entry.card.state }}"><header><h3>{{ entry.card.requirement_title }}</h3></header><div><p>Excluded by scope enforcement.</p></div></article>{% endfor %}{% endif %}
+    {% if section.unconcluded %}<h3>Applicable requirements with no conclusion</h3><ul>{% for row in section.unconcluded %}<li data-workpaper-unconcluded id="{{ row.anchor }}">{{ row.requirement_id }} — {{ row.title }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endfor %}
+  {% else %}<div class="notice"><h2>No conclusions yet. Run the gap analysis first.</h2></div>{% endif %}
+</main>
+</body>
+</html>
