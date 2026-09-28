@@ -1016,6 +1016,8 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
+    "app/services/board_exports.py",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
