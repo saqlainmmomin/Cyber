@@ -867,8 +867,22 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/services/grounding/claims.py",
         "app/services/grounding/pipeline.py",
     }
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example").split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "app").split()
+    # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md) lands later and
+    # legitimately touches these; tests/test_p6_7_requirement_card.py guards them.
+    p6_7a = [f":(exclude){path}" for path in (
+        "app/main.py",
+        "app/services/requirement_card.py",
+        "app/services/review_queue.py",
+        "app/services/conclusion_review.py",
+        "app/routers/requirement_review.py",
+        "app/templates/components/conclusion_card.html",
+        "app/templates/components/requirement_card_body.html",
+        "app/templates/pages/conclusions.html",
+        "app/templates/pages/review_queue.html",
+        "app/templates/pages/evidence_span.html",
+    )]
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_7a).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_7a).split()
     changed = set(committed) | set(untracked)
     assert changed <= {
         "app/config.py",

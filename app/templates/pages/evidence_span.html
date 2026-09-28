@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Evidence span — {{ view.filename }}{% endblock %}
+
+{% block content %}
+<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+  <a href="/evidence/{{ view.evidence_id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ view.filename }}</a>
+  <span class="mx-1.5">/</span>
+  <span class="text-gray-600 dark:text-gray-300">Version {{ view.version_number }}</span>
+</nav>
+<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  <div class="flex flex-wrap items-center gap-2 text-sm">
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ view.filename }}</h1>
+    <span>Version {{ view.version_number }}</span>
+    <span class="rounded-full px-2.5 py-1 text-xs {% if view.is_current %}bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300{% else %}bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300{% endif %}">{{ "Current version" if view.is_current else "Superseded version" }}</span>
+    <span class="font-mono text-xs">{{ view.location_ref }}</span>
+  </div>
+  {% if not view.available %}
+  <p data-span-unavailable class="mt-5 text-sm text-amber-700 dark:text-amber-300">The extracted text of this version is no longer available.</p>
+  {% elif view.whole %}
+  <p class="mt-5 text-sm text-gray-600 dark:text-gray-300">Whole document cited.</p>
+  <pre data-evidence-span-text class="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 dark:bg-gray-800/60 p-4 text-sm">{{ view.before }}{% if view.truncated_after %}…{% endif %}</pre>
+  {% else %}
+  <pre data-evidence-span-text class="mt-5 overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 dark:bg-gray-800/60 p-4 text-sm">{% if view.truncated_before %}…{% endif %}{{ view.before }}<mark id="cited-span" data-cited-span>{{ view.span }}</mark>{{ view.after }}{% if view.truncated_after %}…{% endif %}</pre>
+  {% endif %}
+</div>
+{% endblock %}

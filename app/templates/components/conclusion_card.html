@@ -73,6 +73,8 @@
       {% endif %}
     </section>
 
+    {% include "components/requirement_card_body.html" %}
+
     <section>
       <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence summary</h4>
       <p class="mt-2 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ card.conclusion.evidence_summary or 'No grounded supporting quote' }}</p>

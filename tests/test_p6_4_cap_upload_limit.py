@@ -338,7 +338,19 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/services/grounding/claims.py",
              ":(exclude)app/services/grounding/pipeline.py",
              ":(exclude)app/frameworks/criteria/dpdpa.py",
-             ":(exclude).env.example"],
+             ":(exclude).env.example",
+             # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md) lands later and
+             # legitimately touches these; tests/test_p6_7_requirement_card.py guards them.
+             ":(exclude)app/main.py",
+             ":(exclude)app/services/requirement_card.py",
+             ":(exclude)app/services/review_queue.py",
+             ":(exclude)app/services/conclusion_review.py",
+             ":(exclude)app/routers/requirement_review.py",
+             ":(exclude)app/templates/components/conclusion_card.html",
+             ":(exclude)app/templates/components/requirement_card_body.html",
+             ":(exclude)app/templates/pages/conclusions.html",
+             ":(exclude)app/templates/pages/review_queue.html",
+             ":(exclude)app/templates/pages/evidence_span.html"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )

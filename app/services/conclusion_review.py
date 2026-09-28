@@ -13,7 +13,7 @@ from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.report import GapItem, GapReport
-from app.services import analysis_pipeline, report_basis
+from app.services import analysis_pipeline, report_basis, requirement_card
 from app.services.analysis_pipeline import ConclusionConflict
 from app.services.citations import loads_citations, resolve_citations
 
@@ -98,6 +98,7 @@ class ConclusionCard:
     withheld_proposal: dict | None
     legacy_report_status: str | None
     previous_outcome: str | None = None
+    requirement: requirement_card.RequirementCard | None = None
 
 
 def reviewer_actor(reviewer_name: str | None) -> str:
@@ -238,6 +239,12 @@ def decide(
             raise InvalidDecision(period_blocker)
 
     latest_proposal = _latest_proposal(revisions)
+    if action in analysis_pipeline.LOCKING_ACTIONS:
+        divergence_blocker = requirement_card.divergence_blocker(
+            db, conclusion, latest_proposal
+        )
+        if divergence_blocker:
+            raise InvalidDecision(divergence_blocker)
     values: dict[str, str | bool] = {}
     if action == "approved":
         blocker = _approval_blocker(_content(conclusion), latest_proposal)
@@ -421,6 +428,16 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
     }
     titles = _requirement_titles({row.framework_id for row in ordered})
     period_blocker = report_basis.approval_blocker(db, assessment)
+    latest_proposals = {
+        row.id: _latest_proposal(revisions_by_conclusion[row.id])
+        for row in ordered
+    }
+    card_context = requirement_card.load_context(
+        db,
+        assessment,
+        latest_proposals.values(),
+        [row.id for row in ordered],
+    )
 
     cards: list[ConclusionCard] = []
     for conclusion in ordered:
@@ -430,7 +447,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
             row_revisions,
             locked=state_row.locked,
         )
-        latest_proposal = _latest_proposal(row_revisions)
+        latest_proposal = latest_proposals[conclusion.id]
         citations_captured = (
             latest_proposal is not None and latest_proposal.citations_json is not None
         )
@@ -438,7 +455,14 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
             db,
             latest_proposal.citations_json if latest_proposal else None,
         )
-        blocker = period_blocker or _approval_blocker(_content(conclusion), latest_proposal)
+        requirement = requirement_card.build_card(
+            card_context, conclusion, latest_proposal, citations
+        )
+        blocker = (
+            period_blocker
+            or requirement_card.approval_blocker(requirement)
+            or _approval_blocker(_content(conclusion), latest_proposal)
+        )
         last_decision = None
         if latest_human is not None:
             actor_display = latest_human.actor
@@ -503,6 +527,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
                 previous_outcome=(
                     edited_revision.previous_outcome if edited_revision else None
                 ),
+                requirement=requirement,
             )
         )
     return cards
