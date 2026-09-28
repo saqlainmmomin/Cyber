@@ -339,6 +339,16 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/services/grounding/pipeline.py",
              ":(exclude)app/frameworks/criteria/dpdpa.py",
              ":(exclude).env.example",
+             # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
+             # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.
+             ":(exclude)app/utils/html_pdf.py",
+             ":(exclude)app/services/board_report.py",
+             ":(exclude)app/services/standalone_workpaper.py",
+             ":(exclude)app/services/report_snapshots.py",
+             ":(exclude)app/routers/snapshots.py",
+             ":(exclude)app/templates/reports",
+             ":(exclude)app/templates/pages/report_snapshots.html",
+             ":(exclude)app/assets/fonts/noto",
              # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md) lands later and
              # legitimately touches these; tests/test_p6_7_requirement_card.py guards them.
              ":(exclude)app/main.py",

@@ -859,6 +859,18 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
 
 
 def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
+    # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md) lands after this PR and
+    # legitimately adds the board report v2 files; tests/test_p6_8_board_report_v2.py guards them.
+    p6_8_b1 = (
+        ":(exclude)app/utils/html_pdf.py",
+        ":(exclude)app/services/board_report.py",
+        ":(exclude)app/services/standalone_workpaper.py",
+        ":(exclude)app/services/report_snapshots.py",
+        ":(exclude)app/routers/snapshots.py",
+        ":(exclude)app/templates/reports",
+        ":(exclude)app/templates/pages/report_snapshots.html",
+        ":(exclude)app/assets/fonts/noto",
+    )
     p6_2b_app_files = {
         "app/frameworks/criteria/dpdpa.py",
         "app/frameworks/definitions/dpdpa.py",
@@ -881,8 +893,8 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/templates/pages/review_queue.html",
         "app/templates/pages/evidence_span.html",
     )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_7a).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_7a).split()
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a).split()
     changed = set(committed) | set(untracked)
     assert changed <= {
         "app/config.py",

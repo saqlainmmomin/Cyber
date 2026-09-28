@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Board report: {{ doc.company_name }}</title>
+  <meta name="author" content="{{ doc.firm_name }}">
+  <meta name="dcterms.created" content="{{ doc.snapshot.generated_at }}">
+  <style>
+    {{ font_face_css }}
+    html { font-family: {{ font_stack }}; color: #202030; font-size: 10pt; }
+    @page {
+      size: A4;
+      margin: 18mm 16mm 20mm;
+      font-family: {{ font_stack }};
+      @top-center { content: string(running-header); font-size: 8pt; color: #606070; }
+      @bottom-center { content: string(running-footer); font-size: 8pt; color: #606070; }
+      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #606070; }
+    }
+    @page :first { @top-center { content: none; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: {{ font_stack }}; line-height: 1.42; }
+    .running-header, .running-footer { height: 0; margin: 0; overflow: hidden; font-size: 0; }
+    .running-header { string-set: running-header content(); }
+    .running-footer { string-set: running-footer content(); }
+    h1 { font-size: 28pt; margin: 0 0 12pt; color: #1e1e50; }
+    h2 { font-size: 17pt; margin: 0 0 14pt; color: #1e1e50; }
+    h3 { font-size: 12pt; margin: 14pt 0 6pt; color: #303050; }
+    h4 { font-size: 10pt; margin: 10pt 0 4pt; color: #303050; }
+    p { margin: 4pt 0; }
+    section { break-before: page; }
+    section.cover { break-before: auto; min-height: 230mm; }
+    .eyebrow { color: #606070; font-size: 9pt; }
+    .preview { border: 1px solid #c58c00; background: #fff8dc; padding: 7pt; }
+    .meta { color: #505060; margin: 5pt 0; }
+    .callout { border-left: 3pt solid #303070; background: #f5f5fa; padding: 8pt 10pt; margin: 8pt 0; }
+    .muted { color: #606070; }
+    .small { font-size: 8.5pt; }
+    .risk { border: 1px solid #d6d6df; padding: 8pt; margin: 7pt 0; break-inside: avoid; }
+    .risk-title { font-weight: 700; color: #1e1e50; }
+    .pill { display: inline-block; border: 1px solid #c8c8d5; padding: 2pt 5pt; font-size: 8pt; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 8.5pt; }
+    th, td { border: 1px solid #d6d6df; padding: 5pt; vertical-align: top; text-align: left; }
+    th { background: #f0f0f6; color: #303050; font-weight: 700; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    ul, ol { margin: 5pt 0 8pt; padding-left: 18pt; }
+    .empty { color: #606070; font-style: italic; }
+    .preline { white-space: pre-line; }
+    .page-break { break-before: page; }
+  </style>
+</head>
+<body>
+  <p class="running-header">{{ doc.firm_name }} | Board report</p>
+  <p class="running-footer">{{ doc.company_name }} | {{ doc.snapshot.version_label }}</p>
+
+  <section class="cover" data-section="cover">
+    <p class="eyebrow">{{ doc.firm_name }}</p>
+    <h1>Board report</h1>
+    <h2>{{ doc.company_name }}</h2>
+    {% if doc.engagement_name %}<p class="meta">{{ doc.engagement_name }}</p>{% endif %}
+    <p class="meta">Frameworks: {% for framework in doc.frameworks %}{{ framework.name }} ({{ framework.version }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+    <p class="meta">Assessment period: {{ doc.basis.period_label }} | Evidence cut-off: {{ doc.basis.cutoff_label }}</p>
+    <p class="meta">Report generated: {{ doc.snapshot.generated_on }}</p>
+    {% if doc.snapshot.id %}<p class="meta">Version {{ doc.snapshot.version_label }} | Snapshot {{ doc.snapshot.id[:8] }}</p>{% endif %}
+    {% if doc.release.released_by %}<p class="meta">Released for reporting by {{ doc.release.released_by }} on {{ doc.release.released_on }}</p>{% endif %}
+    {% if not doc.snapshot.id %}<p class="preview" data-preview>{{ doc.snapshot.version_label }}. Generate a report version to produce the PDF.</p>{% endif %}
+    <div class="callout">{{ doc.sign_off.issue_status }}</div>
+  </section>
+
+  <section data-section="summary">
+    <h2>Management summary</h2>
+    <h3>Basis of assessment</h3>
+    <p>{{ doc.summary.basis_of_assessment }}</p>
+    <h3>Scope</h3>
+    <ul>{% for line in doc.summary.scope %}<li>{{ line }}</li>{% endfor %}</ul>
+    <h3>Limitations</h3>
+    {% for limitation in doc.summary.limitations %}<p>{{ limitation }}</p>{% endfor %}
+    <h3>Confidentiality</h3><p>{{ doc.summary.confidentiality }}</p>
+    <h3>Scores and coverage</h3>
+    <table><thead><tr><th>Framework</th><th>Headline</th><th>In scope</th><th>Compliant</th><th>Partial</th><th>Non-compliant</th><th>Insufficient evidence</th><th>Not applicable</th></tr></thead><tbody>
+      {% for framework in doc.summary.frameworks %}<tr><td>{{ framework.name }}</td><td>{{ framework.headline }}</td><td>{{ framework.coverage.in_scope }}</td><td>{{ framework.coverage.compliant }}</td><td>{{ framework.coverage.partially_compliant }}</td><td>{{ framework.coverage.non_compliant }}</td><td>{{ framework.coverage.insufficient_evidence }}</td><td>{{ framework.coverage.not_applicable }}</td></tr>{% endfor %}
+    </tbody></table>
+    <p class="small">Scores are computed and reported independently for each framework; no score is combined across frameworks.</p>
+    <p><strong>{{ doc.summary.totals.requirements }} requirements assessed | {{ doc.summary.totals.gaps }} gaps identified ({{ doc.summary.totals.critical_high_gaps }} critical or high)</strong></p>
+  </section>
+
+  <section data-section="top-risks">
+    <h2>Top risks</h2>
+    {% if doc.top_risks %}{% for risk in doc.top_risks %}
+    <article class="risk"><p class="risk-title">{{ risk.rank }}. {{ risk.title }}</p><p>{{ risk.description }}</p><p class="small">{{ risk.framework_name }} | {{ risk.requirement_id }}: {{ risk.requirement_title }} | {{ risk.outcome_label }} | Severity: {{ risk.severity }} | Priority: {{ risk.priority }}</p>
+      {% for citation in risk.citations %}<p class="small">{{ citation.filename }} v{{ citation.version_number }}, {{ citation.location_ref }} (SHA-256 {{ citation.sha256_prefix }})</p>{% endfor %}
+      <p class="small">Owner: {{ risk.owner or 'Unassigned' }} | Target: {{ risk.target_date|display_date if risk.target_date else 'No target date' }}</p>{% if risk.action_title %}<p class="small">Action: {{ risk.action_title }}</p>{% endif %}
+    </article>{% endfor %}{% else %}<p class="empty">No approved findings are recorded.</p>{% endif %}
+  </section>
+
+  <section data-section="roadmap">
+    <h2>Remediation roadmap</h2>
+    <p>Actions recorded against approved findings, ordered by target date. Owners and dates are set by the consultant; nothing on this page is estimated.</p>
+    {% if doc.roadmap.actions %}<table><thead><tr><th>Action</th><th>Owner</th><th>Target date</th><th>Status</th><th>Closes</th></tr></thead><tbody>{% for action in doc.roadmap.actions %}<tr><td>{{ action.title }}</td><td>{{ action.owner or 'Unassigned' }}</td><td>{{ action.target_date|display_date if action.target_date else 'No target date' }}</td><td>{{ action.status_label }}</td><td>{% for close in action.closes %}{{ close.framework_name }}: {{ close.requirement_id }} ({{ close.finding_title }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No remediation actions are recorded for the approved findings yet.</p>{% endif %}
+  </section>
+
+  <section data-section="not-assessed">
+    <h2>What we could not assess</h2>
+    {% if doc.not_assessed.insufficient_evidence %}<h3>Insufficient evidence</h3><ul>{% for row in doc.not_assessed.insufficient_evidence %}<li>{{ row.framework_id }}: {{ row.requirement_id }} - {{ row.requirement_title }}</li>{% endfor %}</ul>{% else %}<p class="empty">No requirement was concluded as insufficient evidence.</p>{% endif %}
+    <h3>Request for information</h3>
+    {% if doc.not_assessed.rfi['items'] %}<p>Issued version {{ doc.not_assessed.rfi.version_label }}</p><ul>{% for item in doc.not_assessed.rfi['items'] %}<li>{{ item.item_id }}: {{ item.title }} ({{ 'Required' if item.required else 'Recommended' }})</li>{% endfor %}</ul>{% else %}<p class="empty">No request for information has been issued for this assessment.</p>{% endif %}
+  </section>
+
+  {% for framework in doc.framework_sections %}
+  <section data-section="framework" data-framework="{{ framework.framework_id }}">
+    <h2>{{ framework.name }} ({{ framework.version }})</h2>
+    <p>Score: {{ framework.score if framework.score is not none else 'Not scored' }}{% if framework.rating %} ({{ framework.rating }}){% endif %}</p>
+    <h3>Domains</h3><table><thead><tr><th>Domain</th><th>Score</th><th>Rating</th></tr></thead><tbody>{% for domain in framework.domains %}<tr><td>{{ domain.title }}</td><td>{{ domain.score if domain.score is not none else 'Not applicable' }}</td><td>{{ domain.rating or 'Not applicable' }}</td></tr>{% endfor %}</tbody></table>
+    <h3>Gaps</h3>{% if framework.gaps %}<table><thead><tr><th>Requirement</th><th>Outcome</th><th>Risk</th><th>Priority</th></tr></thead><tbody>{% for gap in framework.gaps %}<tr><td>{{ gap.requirement_id }}: {{ gap.requirement_title }}</td><td>{{ gap.outcome_label }}</td><td>{{ gap.risk_level }}</td><td>{{ gap.priority }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No approved gaps are recorded.</p>{% endif %}
+  </section>
+  {% endfor %}
+
+  <section data-section="sign-off">
+    <h2>Sign-off</h2>
+    <p>Prepared by: {{ doc.sign_off.prepared_by or 'not recorded' }}</p>
+    <p>Reviewed by: {{ doc.sign_off.reviewed_by or 'not recorded' }}</p>
+    <p>Assessment period: {{ doc.basis.period_label }}</p>
+    <p>Evidence cut-off: {{ doc.basis.cutoff_label }}</p>
+    <p>Report generated: {{ doc.snapshot.generated_on }}</p>
+    <p>{{ doc.sign_off.issue_status }}</p>
+    <p class="small">{{ doc.sign_off.names_note }}</p>
+  </section>
+
+  <section data-section="methodology">
+    <h2>Appendix A: Methodology</h2>
+    <div class="callout preline">{{ doc.appendices.methodology }}</div>
+  </section>
+
+  <section data-section="requirement-register">
+    <h2>Appendix B: Requirement register</h2>
+    <table><thead><tr><th>Framework</th><th>Requirement</th><th>Outcome</th><th>Risk</th><th>Priority</th><th>Decision</th><th>Decided by</th><th>Decided on</th><th>Citation</th></tr></thead><tbody>{% for row in doc.appendices.requirement_register %}<tr><td>{{ row.framework_id }}</td><td>{{ row.requirement_id }}: {{ row.requirement_title }}</td><td>{{ row.outcome_label }}</td><td>{{ row.risk_level }}</td><td>{{ row.priority }}</td><td>{{ row.decision_label }}</td><td>{{ row.decided_by }}</td><td>{{ row.decided_on|display_date if row.decided_on else 'Not recorded' }}</td><td>{{ row.citation or row.citation_note }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+
+  <section data-section="evidence-register">
+    <h2>Appendix C: Evidence register</h2>
+    {% if doc.appendices.evidence_register %}<table><thead><tr><th>File</th><th>Version</th><th>Added</th><th>Status</th><th>SHA-256</th><th>Cited</th></tr></thead><tbody>{% for row in doc.appendices.evidence_register %}<tr><td>{{ row.filename }}</td><td>v{{ row.version_number }}</td><td>{{ row.added_on|display_date if row.added_on else 'Not recorded' }}</td><td>{{ row.status }}</td><td>{{ row.sha256_prefix }}</td><td>{{ 'Yes' if row.cited else 'No' }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No evidence documents are recorded for this assessment.</p>{% endif %}
+  </section>
+</body>
+</html>

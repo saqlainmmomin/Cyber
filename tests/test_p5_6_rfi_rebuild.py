@@ -681,7 +681,7 @@ def test_scenario_12_generic_snapshot_routes_do_not_adopt_rfi(db, http):
     assert refused.status_code == 400 and refused.json()["detail"] == rfi_requests.RFI_WRONG_ROUTE_MESSAGE
     assert not db.get(ReportSnapshot, snapshot_id).is_issued
     page = http.get(f"/assessments/{assessment.id}/snapshots")
-    assert page.text.count("data-snapshot-type=") == 2
+    assert page.text.count("data-snapshot-type=") == 3  # P6-8: + board_report
     assert "data-snapshot-type=\"rfi\"" not in page.text
     file_response = http.get(f"/api/assessments/{assessment.id}/snapshots/{snapshot_id}/file")
     assert "_rfi_v1_" in file_response.headers["Content-Disposition"]
@@ -996,8 +996,9 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
         token in rfi_route_source
         for token in ("require_review_approval", "latest_release_event", "release_state", "is_released")
     )
-    assert report_snapshots.SNAPSHOT_TYPES == ("gap_report", "workpaper", "integrated_report")
-    assert report_snapshots.ASSESSMENT_SNAPSHOT_TYPES == ("gap_report", "workpaper")
+    # P6-8 adds the board report v2 type (D-P6-8-B).
+    assert report_snapshots.SNAPSHOT_TYPES == ("gap_report", "workpaper", "integrated_report", "board_report")
+    assert report_snapshots.ASSESSMENT_SNAPSHOT_TYPES == ("gap_report", "workpaper", "board_report")
     assert report_snapshots.MANIFEST_SCHEMA_VERSION == 1
     assert "UPDATE report_snapshots SET is_issued = 1" in report_snapshots.ISSUE_SQL
     assert list(inspect.signature(magic_links.create_link).parameters) == [
