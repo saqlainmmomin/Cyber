@@ -476,6 +476,14 @@ P6_2C_FILES = (
     "app/frameworks/criteria/nist_csf_draft.py", "app/frameworks/definitions/iso27001.py",
     "app/frameworks/definitions/nist_csf.py",
 )
+# P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-2b;
+# tests/test_p6_7b_add_to_rfi.py guards its app file set.
+P6_7B_FILES = (
+    "tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md", "tests/test_p6_7b_add_to_rfi.py",
+    "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
+    "app/services/requirement_card.py", "app/routers/requirement_review.py",
+    "app/templates/components/requirement_card_body.html", "app/templates/pages/rfi.html",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -486,5 +494,6 @@ def test_scenario_11_only_p6_2b_files_change():
     offenders = [
         f for f in committed
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES) and not f.startswith(P6_2C_FILES)
+        and f not in P6_7B_FILES
     ]
     assert offenders == [], offenders

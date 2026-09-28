@@ -1036,6 +1036,18 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
+    # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
+    ":(exclude)app/templates/components/requirement_card_body.html",
+)
+# P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
+P6_7B_APP_FILES = (
+    "app/services/rfi_evidence_requests.py",
+    "app/services/rfi_requests.py",
+    "app/services/requirement_card.py",
+    "app/routers/requirement_review.py",
+    "app/templates/components/requirement_card_body.html",
+    "app/templates/pages/rfi.html",
 )
 
 
@@ -1059,5 +1071,8 @@ def test_scenario_14_no_llm_and_b1_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    outside = sorted(path for path in changed_app if not path.startswith(P6_8_B1_APP_ALLOWLIST))
+    outside = sorted(
+        path for path in changed_app
+        if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
+    )
     assert outside == [], outside

@@ -1662,6 +1662,9 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/components/requirement_card_body.html",
     ":(exclude)app/templates/pages/review_queue.html",
     ":(exclude)app/templates/pages/evidence_span.html",
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): the RFI page lists the
+    # requests added from requirement cards; tests/test_p6_7b_add_to_rfi.py guards it.
+    ":(exclude)app/templates/pages/rfi.html",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
