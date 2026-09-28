@@ -327,7 +327,11 @@ P6_4_CAP_APP_FILES = {"app/config.py", "app/services/document_processor.py"}
 def _changed(*args: str) -> set[str]:
     return set(
         subprocess.run(
-            ["git", "diff", "--name-only", *args, "--", "app", "alembic", ".env.example"],
+            ["git", "diff", "--name-only", *args, "--", "app", "alembic", ".env.example",
+             # P6-4-missing (PR #77) lands after P6-4-cap and legitimately touches these.
+             ":(exclude)app/services/desk_review_v2.py",
+             ":(exclude)app/services/grounding/missing.py",
+             ":(exclude).env.example"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )

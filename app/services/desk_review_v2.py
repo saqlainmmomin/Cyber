@@ -25,6 +25,7 @@ from app.services.grounding import (
     load_source_documents,
     run_stages_0_1,
 )
+from app.services.grounding import missing
 from app.services.grounding.metadata_fallback import fill_metadata_gaps
 
 
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 COVERAGE_WITH_CLAIMS = "partial"
 COVERAGE_WITHOUT_CLAIMS = "not_covered"
 CLAIM_SET_KEY = "claim_set"
+MISSING_PASS_KEY = "missing_pass"
 PIPELINE_VERSION = "v2"
 
 V2_BUDGET_MESSAGE = (
@@ -133,6 +135,7 @@ def _raw_response_v2(
     results,
     errors,
     claim_set: ClaimSet | None,
+    missing_pass=None,
 ) -> str:
     payload = json.loads(
         _raw_response(
@@ -146,7 +149,18 @@ def _raw_response_v2(
     payload[CLAIM_SET_KEY] = (
         json.loads(claim_set.to_json()) if claim_set is not None else None
     )
+    payload[MISSING_PASS_KEY] = (
+        missing_pass.to_dict() if missing_pass is not None else None
+    )
     return json.dumps(payload)
+
+
+def _run_missing_pass(claim_set: ClaimSet):
+    try:
+        return missing.run_missing_pass(claim_set)
+    except Exception as exc:
+        logger.exception("v2 missing pass failed; continuing without suppression")
+        return missing.failed_missing_pass(f"{type(exc).__name__}: {exc}")
 
 
 def load_claim_set(db: Session, assessment_id: str) -> ClaimSet | None:
@@ -232,6 +246,17 @@ def run_desk_review_v2(
     else:
         results = {}
 
+    missing_pass = None
+    if claim_set is not None and settings.v2_missing_pass and "dpdpa" in results:
+        missing_pass = _run_missing_pass(claim_set)
+        if missing_pass.status != "completed":
+            logger.warning("v2 missing pass completed with status=%s", missing_pass.status)
+        results["dpdpa"] = {
+            **results["dpdpa"],
+            "absence_findings": list(missing_pass.absence_findings),
+            "signal_flags": list(missing_pass.signal_flags),
+        }
+
     if not results:
         summary.status = "error"
         if len(framework_ids) == 1:
@@ -243,7 +268,7 @@ def run_desk_review_v2(
             )
             summary.error_message = DESK_REVIEW_ALL_FAILED_MESSAGE.format(names=names)
         summary.raw_ai_response = _raw_response_v2(
-            framework_ids, results, errors, claim_set
+            framework_ids, results, errors, claim_set, missing_pass
         )
         assessment.desk_review_status = "error"
         db.commit()
@@ -276,7 +301,7 @@ def run_desk_review_v2(
         summary.document_catalog = json.dumps(catalog)
         summary.coverage_summary = json.dumps(merged_coverage)
         summary.raw_ai_response = _raw_response_v2(
-            framework_ids, results, errors, claim_set
+            framework_ids, results, errors, claim_set, missing_pass
         )
         summary.status = "completed"
         summary.error_message = None

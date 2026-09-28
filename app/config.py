@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     v2_judge_batch_max_requirements: int = 15
     v2_judge_max_tokens: int = 8192
     v2_judge_max_claims_per_requirement: int = 25
+    # v2 desk-review "what is missing" pass that feeds DPDPA pre-fill suppression.
+    v2_missing_pass: bool = False
+    v2_missing_max_tokens: int = 8192
     recover_interrupted_on_startup: bool = True
     session_secret: str = _DEFAULT_SESSION_SECRET
     auditor_username: str = "admin"

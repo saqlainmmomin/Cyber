@@ -1264,6 +1264,10 @@ def test_scenario_16_v1_and_stage_0_1_modules_unchanged():
         "app/services/grounding/schemas.py", "app/services/grounding/sources.py",
         "app/services/grounding/metadata.py", "app/services/grounding/pipeline.py",
         "app/services/grounding/metadata_fallback.py",
+        # P6-4-missing (tasks/handoffs/2026-09-28-p6-4-whats-missing-pass.md) wires the
+        # flag-gated missing pass into v2 desk review; tests/test_p6_4_whats_missing.py
+        # guards the v1 readers and the rest of the stack.
+        ":(exclude)app/services/desk_review_v2.py",
     )
     assert diff == ""
     from app.services.grounding import prompts
