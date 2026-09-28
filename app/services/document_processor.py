@@ -74,15 +74,22 @@ def _extract_docx(file_path: str) -> str:
 
 
 def _truncate(text: str) -> str:
-    """Truncate text to max_document_words."""
+    """Truncate text to max_document_words while preserving line breaks."""
     # Clean up whitespace
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r" {2,}", " ", text)
-    words = text.split()
-    if len(words) > settings.max_document_words:
-        words = words[: settings.max_document_words]
-        return " ".join(words) + "\n\n[... truncated to first {} words ...]".format(
-            settings.max_document_words
+    max_words = settings.max_document_words
+    cutoff = next(
+        (
+            match
+            for index, match in enumerate(re.finditer(r"\S+", text))
+            if index == max_words
+        ),
+        None,
+    )
+    if cutoff is not None:
+        return text[: cutoff.start()].rstrip() + "\n\n[... truncated to first {} words ...]".format(
+            max_words
         )
     return text
 

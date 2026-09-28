@@ -1641,6 +1641,9 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/partials/report_summary.html",
     ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
     ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json",
+    # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md): the upload
+    # cap becomes a 200k-word safety bound that keeps line breaks (_truncate only).
+    ":(exclude)app/services/document_processor.py",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
