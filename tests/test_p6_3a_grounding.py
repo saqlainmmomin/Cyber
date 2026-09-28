@@ -1644,6 +1644,10 @@ PROTECTED_PATHS = [
     # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md): the upload
     # cap becomes a 200k-word safety bound that keeps line breaks (_truncate only).
     ":(exclude)app/services/document_processor.py",
+    # P6-2b: approved DPDPA criteria and pack-version schema changes.
+    ":(exclude)app/frameworks/schema.py",
+    ":(exclude)app/frameworks/definitions/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/dpdpa.py",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

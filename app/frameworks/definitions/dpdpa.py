@@ -12,6 +12,7 @@ from app.dpdpa.framework import (
 )
 from app.dpdpa.questionnaire import _GUIDANCE_TEXT, _QUESTION_TEXT
 from app.dpdpa.scope_questions import APPLICABILITY_PROPOSALS, SCOPE_QUESTIONS
+from app.frameworks.criteria.dpdpa import DPDPA_CRITERIA, DPDPA_CRITERIA_VERSION
 from app.frameworks.schema import (
     Control,
     Domain,
@@ -124,6 +125,7 @@ def _build_dpdpa_definition() -> FrameworkDefinition:
                         reference=req["section_ref"],
                         criticality=req["criticality"],
                         tags=_CONTROL_TAGS.get(req["id"], []),
+                        test_criteria=DPDPA_CRITERIA.get(req["id"], ()),
                     )
                 )
             sections[section_key] = Section(
@@ -165,6 +167,7 @@ def _build_dpdpa_definition() -> FrameworkDefinition:
         id="dpdpa",
         name="India DPDPA",
         version="2023",
+        criteria_version=DPDPA_CRITERIA_VERSION,
         description="Digital Personal Data Protection Act, 2023 (India)",
         domains=domains,
         dependencies=REQUIREMENT_DEPENDENCIES,

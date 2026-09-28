@@ -1167,6 +1167,13 @@ P6_4_AND_PROTECTED_PATHS = (
     # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md) lifts the
     # upload cap in _truncate; app/config.py is already excluded above.
     ":(exclude)app/services/document_processor.py",
+    # P6-2b: approved DPDPA criteria and pack-version changes.
+    ":(exclude)app/frameworks/schema.py",
+    ":(exclude)app/frameworks/definitions/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/dpdpa.py",
+    ":(exclude)scripts/convert_criteria.py",
+    ":(exclude)app/services/grounding/claims.py",
+    ":(exclude)app/services/grounding/pipeline.py",
 )
 
 

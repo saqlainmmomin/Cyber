@@ -219,4 +219,21 @@ tasks/handoffs/*p5-9*.
 
 ## Results
 
-(fill in after implementation)
+Implemented P6-2b without modifying the signed CSV or either protected P6-2a/P6-2b contract test.
+
+Files written or updated:
+
+- `scripts/convert_criteria.py` — deterministic CSV loader, signed-row validator, renderer, generator, and `--check` mode.
+- `app/frameworks/criteria/dpdpa.py` — generated from the signed 150-row sheet; 41 requirements and 150 criteria.
+- `app/frameworks/definitions/dpdpa.py`, `app/frameworks/schema.py`, `app/services/engagement_factory.py`, `app/services/grounding/pipeline.py`, and `app/services/grounding/claims.py` — approved criteria attachment and `pack_version` wiring, including stale-claim comparison.
+- Narrow P6-2b scope-guard exclusions and stale expectation updates in `tests/test_longitudinal_demo.py`, `tests/test_p5_4_adaptive_ucc_questionnaire.py`, `tests/test_p6_1b_framework_batching.py`, `tests/test_p6_3a_grounding.py`, `tests/test_p6_3b_v2_flag.py`, `tests/test_p6_4_cap_upload_limit.py`, `tests/test_p6_4_v2_judge.py`, `tests/test_p6_4_whats_missing.py`, `tests/test_p6_6_report_foundations.py`, and `tests/test_p6_nist_csf2_alignment.py`. No existing guard was removed or broadened; the `claims.py` exclusion is path-specific and commented `P6-2b`.
+- `tasks/todo.md` status and this Results section.
+
+There were no production deviations from D-P6-2b-A..G. The full suite exposed older P6-4 and longitudinal assertions that still expected DPDPA fallback criteria and pack version `2023`; those assertions were updated to the now-required approved criteria and `2023+criteria-v1`. Additional exact-path guard exclusions were required for the same intentional P6-2b files in guards that use working-tree or two-dot diffs rather than the handoff’s listed `main...HEAD` guards.
+
+Verification:
+
+- `scripts/convert_criteria.py --framework dpdpa --check`: passed.
+- Stub-free smoke: all 41 DPDPA controls returned `criteria_source="approved"`.
+- P6-2b contract tests: 31 passed; P6-2a regression tests: 5 passed.
+- Required full run, `.venv/bin/python -m pytest -q`: 1,088 passed, 10 skipped, with one instructed failure, `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, caused by uncommitted test files and explicitly ignored per the handoff request.

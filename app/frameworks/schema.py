@@ -119,6 +119,7 @@ class FrameworkDefinition:
     name: str  # display name
     version: str  # e.g. "2023", "2022", "2016/679"
     description: str = ""
+    criteria_version: str = ""
 
     domains: dict[str, Domain] = field(default_factory=dict)
     dependencies: dict[str, list[str]] = field(default_factory=dict)
@@ -137,6 +138,15 @@ class FrameworkDefinition:
     )
 
     # -- derived helpers ---------------------------------------------------
+
+    @property
+    def pack_version(self) -> str:
+        """Version including any signed test-criteria pack revision."""
+        return (
+            self.version
+            if not self.criteria_version
+            else f"{self.version}+{self.criteria_version}"
+        )
 
     def all_controls(self) -> list[Control]:
         """Flatten all controls across domains/sections."""

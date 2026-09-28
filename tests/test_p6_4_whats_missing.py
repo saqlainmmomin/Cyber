@@ -375,7 +375,9 @@ def test_scenario_3_prompt_content_and_untrusted_material(monkeypatch):
         "for India DPDPA (2023) requirements."
     )
     assert f"### {CONSENT} [India DPDPA] {consent.title}" in system
-    assert f"- {CONSENT}.IMPLICIT (design): {consent.description}" in system
+    first_criterion = consent.test_criteria[0]
+    assert f"- {first_criterion.id} ({first_criterion.kind}): {first_criterion.statement}" in system
+    assert f"{CONSENT}.IMPLICIT" not in system
     # DPDPA only, and only requirements that have at least one verified claim.
     assert REQUIREMENT_HEADER.findall(system) == [CONSENT, DPO]
     assert "ISO." not in system and "ISO." not in user.replace(Q_ACCESS, "")
@@ -841,6 +843,13 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
         "app/services/grounding/judge.py", "app/services/grounding/judge_prompts.py",
         "app/services/grounding/prompts.py", "app/services/grounding/claims.py",
         "app/services/grounding/batches.py", "app/services/grounding/pipeline.py",
+        # P6-2b: approved DPDPA criteria and pack-version changes.
+        ":(exclude)app/frameworks/schema.py",
+        ":(exclude)app/frameworks/definitions/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/dpdpa.py",
+        ":(exclude)app/services/engagement_factory.py",
+        ":(exclude)app/services/grounding/claims.py",
+        ":(exclude)app/services/grounding/pipeline.py",
     )
     assert diff == ""
     from app.services.grounding import judge_prompts, prompts
@@ -850,6 +859,14 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
 
 
 def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
+    p6_2b_app_files = {
+        "app/frameworks/criteria/dpdpa.py",
+        "app/frameworks/definitions/dpdpa.py",
+        "app/frameworks/schema.py",
+        "app/services/engagement_factory.py",
+        "app/services/grounding/claims.py",
+        "app/services/grounding/pipeline.py",
+    }
     committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example").split()
     untracked = _git("ls-files", "--others", "--exclude-standard", "app").split()
     changed = set(committed) | set(untracked)
@@ -858,7 +875,7 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         ".env.example",
         "app/services/desk_review_v2.py",
         "app/services/grounding/missing.py",
-    }
+    } | p6_2b_app_files
     assert not changed & {
         "app/services/document_processor.py", "app/routers/documents.py",
         "app/services/evidence.py", "app/services/grounding/sources.py",

@@ -299,7 +299,8 @@ def test_scenario_2_criteria_for_approved_and_fallback():
     from app.frameworks.schema import TestCriterion
 
     control = FrameworkRegistry.get("dpdpa").get_control("CH2.CONSENT.1")
-    source, criteria = judge().criteria_for(control)
+    fallback_control = dataclasses.replace(control, test_criteria=())
+    source, criteria = judge().criteria_for(fallback_control)
     assert source == "fallback"
     assert criteria == (
         {"criterion_id": "CH2.CONSENT.1.IMPLICIT", "kind": "design", "statement": control.description},
@@ -391,8 +392,10 @@ def test_scenario_3_prompt_content_scope_and_untrusted_material(monkeypatch):
     consent = FrameworkRegistry.get("dpdpa").get_control("CH2.CONSENT.1")
     assert dpdpa_system.startswith("You are a compliance assessor judging India DPDPA (2023) requirements for one organisation.")
     assert f"### CH2.CONSENT.1 [India DPDPA] {consent.title}" in dpdpa_system
-    assert "Test criteria (fallback):" in dpdpa_system
-    assert f"- CH2.CONSENT.1.IMPLICIT (design): {consent.description}" in dpdpa_system
+    assert "Test criteria (approved):" in dpdpa_system
+    first_criterion = consent.test_criteria[0]
+    assert f"- {first_criterion.id} ({first_criterion.kind}): {first_criterion.statement}" in dpdpa_system
+    assert "CH2.CONSENT.1.IMPLICIT" not in dpdpa_system
     assert "Other frameworks in scope for this assessment: ISO 27001." in dpdpa_system
     assert "Other frameworks in scope for this assessment: India DPDPA." in iso_system
     # Scope-aware red flags: DPDPA vocabulary checks are dropped, substantive ones kept.
@@ -427,6 +430,8 @@ def test_scenario_3_prompt_content_scope_and_untrusted_material(monkeypatch):
 
 
 def test_scenario_3_schema_is_strict_and_ordered(monkeypatch):
+    from app.frameworks.registry import FrameworkRegistry
+
     claim_set = claim_set_for(monkeypatch, ["dpdpa"], policy_text(Q_DPO, Q_CONSENT))
     seam = JudgeSeam().install(monkeypatch)
     run_judge(claim_set, ["dpdpa"])
@@ -454,7 +459,12 @@ def test_scenario_3_schema_is_strict_and_ordered(monkeypatch):
     assert item["properties"]["requirement_id"]["enum"] == ["CH2.CONSENT.1", "CH4.SDF.1"]
     criterion = item["properties"]["criteria"]["items"]["properties"]
     assert criterion["result"]["enum"] == ["met", "not_met", "no_evidence"]
-    assert criterion["criterion_id"]["enum"] == ["CH2.CONSENT.1.IMPLICIT", "CH4.SDF.1.IMPLICIT"]
+    expected_criteria_ids = [
+        criterion.id
+        for requirement_id in ("CH2.CONSENT.1", "CH4.SDF.1")
+        for criterion in FrameworkRegistry.get("dpdpa").get_control(requirement_id).test_criteria
+    ]
+    assert criterion["criterion_id"]["enum"] == expected_criteria_ids
     assert judge_prompts().JUDGE_PROMPT_VERSION == "p6-4.1"
 
 
@@ -801,7 +811,7 @@ def test_scenario_8_approved_criteria_replace_the_fallback(monkeypatch):
         if rid == "CH4.SDF.1":
             assert criterion_ids == ["CH4.SDF.1.TC1", "CH4.SDF.1.TC2"]
             return {**entry(rid, criterion_ids[:1], "compliant", claim_ids=claim_ids[:1])}
-        assert criterion_ids == [f"{rid}.IMPLICIT"]
+        assert criterion_ids == [criterion.id for criterion in framework.get_control(rid).test_criteria]
         return entry(rid, criterion_ids, "compliant", claim_ids=claim_ids)
 
     seam = JudgeSeam(script).install(monkeypatch)
@@ -816,9 +826,9 @@ def test_scenario_8_approved_criteria_replace_the_fallback(monkeypatch):
     assert sdf["criteria"][1]["result"] == "no_evidence"
     assert "criteria_incomplete" in sdf["flags"]
     assert sdf["outcome"] == "insufficient_evidence"
-    assert records["CH2.CONSENT.1"]["criteria_source"] == "fallback"
+    assert records["CH2.CONSENT.1"]["criteria_source"] == "approved"
     assert records["CH2.CONSENT.1"]["outcome"] == "compliant"
-    assert judgment.metrics["dpdpa"]["criteria_source"] == {"approved": 1, "fallback": 40}
+    assert judgment.metrics["dpdpa"]["criteria_source"] == {"approved": 41, "fallback": 0}
 
 
 # --------------------------------------------------------------------------- #
@@ -1068,8 +1078,9 @@ def test_scenario_13_v2_analysis_end_to_end(db, monkeypatch, flag_v2):
             for c in envelope["llm_calls"]
         )
         for item in envelope["claims"]:
-            assert item["item"]["criteria_source"] == "fallback"
-            assert item["quality"]["criteria_source"] == "fallback"
+            expected_source = "approved" if framework_id == "dpdpa" else "fallback"
+            assert item["item"]["criteria_source"] == expected_source
+            assert item["quality"]["criteria_source"] == expected_source
             assert set(item["item"]["cited_claim_ids"]) <= set(verified)
             if item["outcome"] == "compliant":
                 assert all(c["result"] == "met" and c["claim_ids"] for c in item["item"]["criteria"])
@@ -1268,6 +1279,13 @@ def test_scenario_16_v1_and_stage_0_1_modules_unchanged():
         # flag-gated missing pass into v2 desk review; tests/test_p6_4_whats_missing.py
         # guards the v1 readers and the rest of the stack.
         ":(exclude)app/services/desk_review_v2.py",
+        # P6-2b: approved DPDPA criteria and pack-version changes.
+        ":(exclude)app/frameworks/schema.py",
+        ":(exclude)app/frameworks/definitions/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/dpdpa.py",
+        ":(exclude)app/services/engagement_factory.py",
+        ":(exclude)app/services/grounding/claims.py",
+        ":(exclude)app/services/grounding/pipeline.py",
     )
     assert diff == ""
     from app.services.grounding import prompts

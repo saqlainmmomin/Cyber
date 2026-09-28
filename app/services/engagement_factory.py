@@ -46,7 +46,7 @@ def create_engagement_with_assessment(
                 AssessmentPack(
                     assessment_id=assessment.id,
                     framework_id=framework_id,
-                    pack_version=framework.version if framework else "unknown",
+                    pack_version=framework.pack_version if framework else "unknown",
                 )
             )
         db.commit()

@@ -951,6 +951,9 @@ def test_scenario_13_structural_guards(db):
         "app/services/scoring.py", "app/routers/reports.py",
         "app/utils/pdf_export.py", "app/routers/review.py", "app/services/tier_engine.py",
         "app/frameworks", "app/dpdpa", "alembic", "app/models",
+        # P6-2b: approved DPDPA criteria and pack-version schema changes.
+        ":(exclude)app/frameworks/schema.py", ":(exclude)app/frameworks/definitions/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/dpdpa.py",
         # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report
         # foundations fix the D0 PDF defects, escape Content-Disposition and add
         # the report-basis route; tests/test_p6_6_report_foundations.py guards them.
