@@ -446,6 +446,10 @@ P6_2B_ALLOWED_FILES = {
     "tests/test_p6_6_report_foundations.py",
     "tests/test_p6_nist_csf2_alignment.py",
     "tests/test_p6_7_requirement_card.py",
+    # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-2b.
+    "scripts/validation/run_company.py",
+    "tests/test_validation_harness.py",
+    "tests/test_p6_6_report_foundations.py",
 }
 # P6-8 B1 (PR #80) lands after P6-2b; tests/test_p6_8_board_report_v2.py guards its file set.
 P6_8_B1_FILES = (

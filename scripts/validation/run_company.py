@@ -422,7 +422,8 @@ def _child_run(slug: str, out_dir: Path, validation_root: Path, llm_mode: str, s
                     failures.append({"filename": spec.filename, "status": response.status_code, "detail": response.text[:2048]})
                     continue
                 with database.SessionLocal() as db:
-                    row = db.query(Evidence).filter(Evidence.assessment_id == assessment_id, Evidence.original_filename == spec.filename).order_by(Evidence.created_at.desc()).first()
+                    # Magic-link uploads are engagement-level evidence (assessment_id is NULL).
+                    row = db.query(Evidence).filter(Evidence.engagement_id == engagement_id, Evidence.original_filename == spec.filename).order_by(Evidence.created_at.desc()).first()
                     evidence_id = row.id if row else None
                 if evidence_id is None:
                     failures.append({"filename": spec.filename, "status": 500, "detail": "uploaded file has no evidence row"})
