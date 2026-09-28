@@ -1167,6 +1167,9 @@ P6_4_AND_PROTECTED_PATHS = (
     # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md) lifts the
     # upload cap in _truncate; app/config.py is already excluded above.
     ":(exclude)app/services/document_processor.py",
+    # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md) adds the board report v2
+    # snapshot type and its document sidecar; tests/test_p6_8_board_report_v2.py guards it.
+    ":(exclude)app/services/report_snapshots.py",
 )
 
 

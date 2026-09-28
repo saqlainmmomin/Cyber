@@ -1644,6 +1644,12 @@ PROTECTED_PATHS = [
     # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md): the upload
     # cap becomes a 200k-word safety bound that keeps line breaks (_truncate only).
     ":(exclude)app/services/document_processor.py",
+    # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2
+    # generation and preview in the snapshot router, the standalone Workpaper and the
+    # report templates; tests/test_p6_8_board_report_v2.py guards the P6-8 file set.
+    ":(exclude)app/routers/snapshots.py",
+    ":(exclude)app/templates/pages/report_snapshots.html",
+    ":(exclude)app/templates/reports",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

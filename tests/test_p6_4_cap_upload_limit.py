@@ -331,7 +331,18 @@ def _changed(*args: str) -> set[str]:
              # P6-4-missing (PR #77) lands after P6-4-cap and legitimately touches these.
              ":(exclude)app/services/desk_review_v2.py",
              ":(exclude)app/services/grounding/missing.py",
-             ":(exclude).env.example"],
+             ":(exclude).env.example",
+             # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
+             # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.
+             ":(exclude)app/utils/html_pdf.py",
+             ":(exclude)app/services/board_report.py",
+             ":(exclude)app/services/standalone_workpaper.py",
+             ":(exclude)app/services/report_snapshots.py",
+             ":(exclude)app/routers/snapshots.py",
+             ":(exclude)app/templates/reports",
+             ":(exclude)app/templates/pages/report_snapshots.html",
+             ":(exclude)app/assets/fonts/noto",
+             ],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )
