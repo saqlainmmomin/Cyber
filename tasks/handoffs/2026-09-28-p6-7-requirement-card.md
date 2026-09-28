@@ -681,3 +681,32 @@ All runs used Python 3.13 (`.venv`) on 2026-09-28.
 `tests/test_performance_benchmarks.py` and `tests/test_workpaper.py` scenario 10 (one `conclusion_cards` call) stayed green with the reference.
 
 ## Results
+
+### Implementation
+
+Changed only the P6-7a file set plus the required tracker and this Results section:
+
+- `app/services/requirement_card.py`
+- `app/services/review_queue.py`
+- `app/services/conclusion_review.py`
+- `app/routers/requirement_review.py`
+- `app/main.py`
+- `app/templates/components/conclusion_card.html`
+- `app/templates/components/requirement_card_body.html`
+- `app/templates/pages/conclusions.html`
+- `app/templates/pages/review_queue.html`
+- `app/templates/pages/evidence_span.html`
+- `tasks/todo.md`
+- `tasks/handoffs/2026-09-28-p6-7-requirement-card.md`
+
+The contract test file was not edited. No migrations, models, analysis, grounding, scoring, report, snapshot, RFI, or existing route files were changed. No additional stale-guard excludes were needed; the designer's P6-7a excludes were already present.
+
+### Verification
+
+- Step 0 baseline: **1059 passed, 10 skipped, 13 failed**. The 13 failures were the expected missing P6-7a implementation failures; scenario 14 passed.
+- Contract: `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_7_requirement_card.py` → **14 passed**.
+- Neighbours: the handoff's required neighbour command → **299 passed, 9 skipped**.
+- Scope: forbidden app diff was empty; the new modules contained none of `services.grounding`, `llm_client`, `call_llm`, or `analysis_v2`.
+- Full suite: `.venv/bin/python -m pytest -q` → **1072 passed, 10 skipped, 286 warnings**.
+
+No deviations or still-failing assertions.
