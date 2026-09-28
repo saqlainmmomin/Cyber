@@ -325,7 +325,17 @@ def _git(*args) -> str:
 # --------------------------------------------------------------------------- #
 
 
+def fallback_only(monkeypatch, framework_id="dpdpa"):
+    """Pin every control to the fallback path, whatever criteria the pack ships (P6-2b)."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    framework = FrameworkRegistry.get(framework_id)
+    patched = tuple(dataclasses.replace(control, test_criteria=()) for control in framework.all_controls())
+    monkeypatch.setattr(framework, "_all_controls_cache", patched)
+
+
 def test_scenario_1_v2_card_criteria_checklist_links_only_verified_claims(db, http, monkeypatch, flag_v2):
+    fallback_only(monkeypatch)
     assessment = build_v2(db, monkeypatch)
     forbid_llm(monkeypatch)
     page = conclusions_page(http, assessment)
@@ -1038,7 +1048,7 @@ def test_scenario_12_approved_criteria_label(db, http, monkeypatch, flag_v2):
             ),
         )
         if control.id == "CH4.SDF.1"
-        else control
+        else dataclasses.replace(control, test_criteria=())
         for control in framework.all_controls()
     )
     monkeypatch.setattr(framework, "_all_controls_cache", patched)

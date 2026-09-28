@@ -719,3 +719,7 @@ No deviations or still-failing assertions.
   - The span viewer returns 200, with the cited text inside `<mark>`. No card mentions "confidence".
   - Neither live run produced a framework divergence, so the acknowledgement flow relies on contract scenario 6.
   - Not browser-tested this time: j/k focus movement. It is covered by the markup and script checks in the contract tests.
+- **Disclosed contract-test change (orchestrator, forward-compatibility with P6-2b #79).** A trial merge of #78, #79 and #80 showed that scenarios 1 and 12 assumed DPDPA controls have no approved criteria. P6-2b attaches 150 approved criteria, so both scenarios would fail after #79 merges.
+  - Fix: a `fallback_only` helper pins the controls to `test_criteria=()` in scenario 1. In scenario 12, every control other than the patched one is pinned to fallback.
+  - The intent of both tests is unchanged. They pass with and without #79.
+  - No other test changed.
