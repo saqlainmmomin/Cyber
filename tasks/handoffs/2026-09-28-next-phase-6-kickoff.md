@@ -171,3 +171,91 @@ Append a `## Results` section to this file. Cover:
 Also update `tasks/todo.md` and the auto-memory project status.
 
 ## Results
+
+Session of 2026-09-28. Three PRs are open: (A) P6-7a, (B) P6-8 B1 and (D) P6-2b. Saqlain handed over the criteria CSV mid-session, which unblocked (D). (C) Stage C is prepared and cost-approved, but the environment's permission classifier blocked the live run, so Saqlain has to start it.
+
+Workflow for each track:
+- A cloud Opus designer wrote the handoff and contract tests. The exception is P6-2b, where the orchestrator designed it and a local Sonnet agent wrote the tests.
+- Codex (`gpt-5.6-luna`, xhigh) implemented.
+- A cloud Sonnet reviewer checked it adversarially.
+- The orchestrator ran the smoke.
+
+### PRs and merge order
+1. **[#78](https://github.com/saqlainmmomin/Cyber/pull/78): P6-7a.** The requirement card, the divergence acknowledgement, the evidence span viewer and the review queue. This PR also commits this kickoff file.
+2. **[#79](https://github.com/saqlainmmomin/Cyber/pull/79): P6-2b.** The DPDPA criteria converter. It attaches 150 approved criteria and bumps the pack to `2023+criteria-v1`.
+3. **[#80](https://github.com/saqlainmmomin/Cyber/pull/80): P6-8 B1.** Board report v2 (WeasyPrint with Noto, Devanagari and ₹) and the standalone Workpaper.
+
+**Conflict notes.** A trial merge of all three (#78 → #79 → #80) was run and then thrown away:
+- The text conflicts are in the stale-guard exclude lists and `tasks/todo.md`: `test_p6_3a_grounding.py`, `test_p6_4_cap_upload_limit.py`, `test_p6_4_whats_missing.py`, `test_p6_nist_csf2_alignment.py` and `test_p6_6_report_foundations.py`. Resolve by keeping both sides.
+  - For list-closing lines (`"],`), join the lists.
+  - In `test_p6_4_whats_missing.py`, define both `p6_8_b1` and `p6_2b_app_files`, and pass `*p6_7a, *p6_8_b1` into the same `_git(...)` calls.
+- With the conflicts resolved, the combined suite gave 1112 passed. The only failures were the three PRs' own "only my files" guards, which is expected in a combined diff and not the case after sequential merges.
+- **One semantic conflict was found and fixed on #78:** P6-7a scenarios 1 and 12 assumed DPDPA had no criteria. They now pin the fallback explicitly and pass with and without #79.
+- After each merge, merge `origin/main` into the next branch, resolve as above, and re-run the suite. Never rebase. The orchestrator can do these merges on request.
+- **No migrations anywhere.**
+
+### Smoke numbers
+- **(A) P6-7a.** Rendered from real v2 fixture runs (a copy of the P6-4 flag-on smoke DB; no new spend):
+  - DPDPA: 41 cards. DPDPA+ISO: 134 cards. Every card carries the fallback label (those runs predate P6-2b).
+  - 194 claim links, 0 outside the verified set.
+  - The span viewer returns 200 with `<mark>`. The queue renders 41 items in 22 groups. No confidence number anywhere.
+  - Neither run produced a divergence, so the acknowledgement relies on contract scenario 6.
+  - Review: one should-fix (a double context load passed the wrong object), now fixed.
+  - Full suite 1072 passed. CI green before the scenario 1/12 fix; re-running now.
+- **(B) P6-8 B1.**
+  - DPDPA+ISO PDF: 13 pages, 42 KB.
+  - The Title metadata round-trips the exact Devanagari name. The ₹ text reads back exactly, with 0 `?` and 0 `Rs.`. Every glyph comes from the Noto fonts. The cover PNG was inspected, and the conjuncts are correct.
+  - The Workpaper has no external references, one inline `<style>` and all entries present.
+  - Review: no blocking or should-fix findings.
+  - Full suite 1072 passed. In CI, the ubuntu "Renderer smoke" step passed.
+- **(D) P6-2b.**
+  - `--check` passes, and the 150 criteria round-trip the signed CSV verbatim (the reviewer found 0 mismatches).
+  - Live v2 DPDPA smoke:
+    - `criteria_source` approved 41/41, with criterion IDs equal to the signed set
+    - 2 calls, both `stop`/`ok`, with 13.8k input and 7.7k output tokens
+    - 0 dropped IDs, 0 `criteria_incomplete`
+  - Full suite 1089 passed. CI green.
+- **(C) Stage C.** The harness agent estimated about $0.70–$1.00 for 4 companies × 3 runs, around 35 minutes in parallel. #76 has roughly zero token impact on these packs, because every rendered document is under 400 words. c4 is new, so this is the first 4-company baseline.
+  - Saqlain approved the run, but the permission classifier denied the live launch. No calls were made and nothing was spent.
+
+### Decisions made this session
+- **P6-7a:** D-P6-7-A..M (see its handoff).
+  - The "add to RFI" button is deferred to P6-7b.
+  - The acknowledgement is an append-only audit event.
+  - The queue risk mirrors the judge table.
+- **P6-8:** D-P6-8-A..L.
+  - fpdf2 and v2 run side by side as separate report types.
+  - WeasyPrint is pinned to 70.0, with the fonts vendored and hash-pinned.
+  - The golden is a normalised JSON document, not PDF bytes.
+  - B2 (DOCX and XLSX) gets its own PR.
+- **P6-2b** (orchestrator): D-P6-2b-A..G.
+  - `FrameworkDefinition.pack_version` is `version` plus `criteria_version`.
+  - `claims.py` staleness uses `pack_version` too. The designer left this out of scope; without it, every DPDPA claim set would read as stale forever.
+- **Saqlain's answers:**
+  - Run Stage C 4-way parallel.
+  - The P6-5 A/B runs `v2_missing_pass` both off and on.
+  - He approved the WeasyPrint and font downloads.
+
+### Still needs Saqlain
+- **Merge #78 → #79 → #80** in that order.
+- **#79 disclosed guard change:** the orchestrator widened #79's own scope-guard allowed set to the 10 stale-guard and expectation test files it had to update. The reviewer flagged the process; please confirm.
+- **Run Stage C yourself** (the classifier blocks it for agents), from `/Users/saqlainmomin/dpdpa-gap-tool-stagec`:
+  ```bash
+  cd /Users/saqlainmomin/dpdpa-gap-tool-stagec && set -a && source .env && set +a && OUT=~/cyberassess-runs/2026-09-28-stage-c-baseline-v1-rerun && for c in c1-app-startup c2-b2b-saas c3-certified-fortress c4-healthsaas; do .venv/bin/python -m scripts.validation.run_company $c --runs 3 --llm live --out "$OUT" > "$OUT/$c.log" 2>&1 & done; wait && .venv/bin/python -m scripts.validation.score "$OUT"/*/run-* && .venv/bin/python -m scripts.validation.report "$OUT" --baseline
+  ```
+  Alternatively, add a permission rule and ask the orchestrator to retry. A harness agent then records the aggregate metrics.
+- **P6-5** starts after the baseline exists and #79 merges, so that v2 DPDPA runs on approved criteria. Watch DPDPA judge output against the 8,192-token ceiling: a full 15-requirement batch is estimated at about 6.4k tokens.
+- **P6-8 open questions**, with defaults in its handoff:
+  - issued-PDF marking (default: no)
+  - when the fpdf2 report retires
+  - penalty exposure (moves to P6-9)
+  - the `_framework_label` "INDIA DPDPA" bug (a small separate PR)
+- **P6-7 open questions:**
+  - P6-7b timing
+  - whether the acknowledgement note is optional or required
+  - acknowledgement scope
+  - the in-period chip
+- **Carried over:** a `main` ruleset, the ISO clause titles (P5-7), and Track 4.
+- **Worktrees left in place:**
+  - `dpdpa-gap-tool-p6-2b`, `-p6-7`, `-p6-8`: remove after merge.
+  - `dpdpa-gap-tool-stagec`: for the Stage C run.
