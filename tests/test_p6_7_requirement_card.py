@@ -1141,7 +1141,8 @@ def test_scenario_14_p6_7_touches_only_its_files():
     )
     changed -= set(P6_2B_APP_FILES)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
-    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py")]
+    # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
+    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", "scripts/validation/run_company.py")]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

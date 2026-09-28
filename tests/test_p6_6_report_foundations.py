@@ -1174,6 +1174,8 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)scripts/convert_criteria.py",
     ":(exclude)app/services/grounding/claims.py",
     ":(exclude)app/services/grounding/pipeline.py",
+    # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
+    ":(exclude)scripts/validation/run_company.py",
 )
 
 
