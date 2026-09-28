@@ -1032,6 +1032,8 @@ P6_8_FORBIDDEN_PATHS = (
     "app/services/report_basis.py", "app/services/workpaper.py", "app/services/findings.py",
     "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "alembic", "app/config.py",
     "scripts", "validation",
+    # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
+    ":(exclude)scripts/validation/run_company.py",
 )
 
 
