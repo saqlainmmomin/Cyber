@@ -1,30 +1,28 @@
 """Assessment report snapshot endpoints."""
 
-from pathlib import Path
 import re
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException
-from fastapi.responses import JSONResponse, Response
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.routers import reports
-from app.services import report_snapshots, rfi_requests, workpaper
+from app.services import (
+    board_report,
+    report_snapshots,
+    rfi_requests,
+    standalone_workpaper,
+)
 from app.services.conclusion_review import reviewer_actor
 from app.services import approved_report
-from app.template_config import configure_templates
+from app.utils import html_pdf
 from app.utils.review_gate import require_review_approval
 
 router = APIRouter(prefix="/api/assessments", tags=["snapshots"])
-
-_templates = Jinja2Templates(
-    directory=Path(__file__).resolve().parent.parent / "templates"
-)
-configure_templates(_templates)
-
 
 def _error(status_code: int, message: str) -> JSONResponse:
     response = JSONResponse({"detail": message}, status_code=status_code)
@@ -71,12 +69,7 @@ def _render(db: Session, assessment: Assessment, snapshot_type: str) -> bytes:
             allow_failed_draft=True,
         )
         return bytes(response.body)
-    wp = workpaper.build_workpaper(db, assessment)
-    return (
-        _templates.get_template("pages/workpaper.html")
-        .render(assessment=assessment, wp=wp)
-        .encode("utf-8")
-    )
+    return standalone_workpaper.render(db, assessment).encode("utf-8")
 
 
 @router.post("/{assessment_id}/snapshots")
@@ -100,20 +93,32 @@ def generate_snapshot(
         db.rollback()
         return _error(400, "Integrated engagement reports are not available yet.")
 
+    snapshot = None
     try:
-        content = _render(db, assessment, type)
+        if type == report_snapshots.BOARD_REPORT_SNAPSHOT_TYPE:
+            snapshot = board_report.generate_version(
+                db,
+                assessment,
+                actor=reviewer_actor(reviewer_name),
+            )
+        else:
+            content = _render(db, assessment, type)
+            snapshot = report_snapshots.create_snapshot(
+                db,
+                assessment=assessment,
+                snapshot_type=type,
+                content=content,
+                actor=reviewer_actor(reviewer_name),
+            )
     except HTTPException as exc:
         db.rollback()
         return _error(exc.status_code, str(exc.detail))
-
-    try:
-        snapshot = report_snapshots.create_snapshot(
-            db,
-            assessment=assessment,
-            snapshot_type=type,
-            content=content,
-            actor=reviewer_actor(reviewer_name),
-        )
+    except html_pdf.RendererUnavailable as exc:
+        db.rollback()
+        return _error(503, exc.message)
+    except html_pdf.OfflineRenderError as exc:
+        db.rollback()
+        return _error(500, exc.message)
     except report_snapshots.SnapshotError as exc:
         db.rollback()
         return _error(exc.status_code, exc.message)
@@ -122,9 +127,35 @@ def generate_snapshot(
         db.commit()
     except Exception:
         db.rollback()
-        report_snapshots.snapshot_path(snapshot).unlink(missing_ok=True)
+        if snapshot is not None:
+            for path in report_snapshots.snapshot_files(snapshot):
+                path.unlink(missing_ok=True)
         return _error(500, "The report version could not be saved. Try again.")
     return _success(snapshot, assessment_id, "Draft version generated")
+
+
+@router.get(
+    "/{assessment_id}/board-report/preview",
+    response_class=HTMLResponse,
+)
+def board_report_preview(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    require_review_approval(assessment_id, db)
+    document = board_report.build_document(
+        db,
+        assessment,
+        snapshot_id=None,
+        version_label=board_report.PREVIEW_VERSION_LABEL,
+        generated_at=datetime.now(timezone.utc),
+    )
+    db.rollback()
+    return HTMLResponse(board_report.render_html(document, embed_fonts=False))
 
 
 @router.post("/{assessment_id}/rfi/versions")

@@ -750,3 +750,11 @@ Steps:
 8. **What was not verified here.** CI on Ubuntu was not run. The apt package names come from WeasyPrint's documentation for Ubuntu 20.04 and later, and the workflow's "Renderer smoke" step fails fast if they are wrong. The Docker image was not built.
 
 ## Results
+
+- Baseline before implementation: `.venv/bin/pytest -q -p no:cacheprovider` — **1059 passed, 10 skipped, 13 failed** in 127.57s. The 13 failures were the expected missing P6-8 modules/workflow/golden.
+- Contract suite: `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_8_board_report_v2.py` — **14 passed**. Repeated twice without the environment override and once with `CYBERASSESS_REQUIRE_WEASYPRINT=1`; each run passed 14 tests.
+- Required rendered smoke: `tests/test_p6_8_board_report_v2.py .... [100%]` and **4 passed, 10 deselected in 4.26s** for scenarios 3, 7, 8 and 10.
+- Neighbor regression set: **111 passed, 1 failed, 64 warnings**. The sole failure is the expected uncommitted-tree guard `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`; it sees the two mandated existing-test edits.
+- Full suite: `.venv/bin/python -m pytest -q` — **1070 passed, 10 skipped, 2 failed** in 121.61s. Both failures are the expected uncommitted-tree guards: `tests/test_longitudinal_demo.py::test_scenario_13_protected_surface_is_unchanged` sees the permitted `report_snapshots.py` and `requirements.txt` changes, and the retention guard above sees the mandated test edits. They are expected to pass after the orchestrator commits the working tree.
+- Golden: `tests/golden/p6_8_board_document.json`, **17,413 bytes**, recorded once with `P6_8_RECORD_GOLDEN=1`. Top-level keys: `appendices`, `assessment_id`, `basis`, `company_name`, `engagement_name`, `firm_name`, `framework_sections`, `frameworks`, `kind`, `not_assessed`, `release`, `roadmap`, `schema_version`, `sign_off`, `snapshot`, `source`, `summary`, `top_risks`.
+- Deviation: none from D-P6-8-A through D-P6-8-L. The frozen-surface check and scenario 14 file-set guard are both green.

@@ -19,14 +19,16 @@ from app.models.report import GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.services.conclusion_review import REVIEWER_ACTOR_PREFIX
 
-SNAPSHOT_TYPES = ("gap_report", "workpaper", "integrated_report")
-ASSESSMENT_SNAPSHOT_TYPES = ("gap_report", "workpaper")
+BOARD_REPORT_SNAPSHOT_TYPE = "board_report"
+SNAPSHOT_TYPES = ("gap_report", "workpaper", "integrated_report", BOARD_REPORT_SNAPSHOT_TYPE)
+ASSESSMENT_SNAPSHOT_TYPES = ("gap_report", "workpaper", BOARD_REPORT_SNAPSHOT_TYPE)
 RFI_SNAPSHOT_TYPE = "rfi"
 RFI_DOCUMENT_SUFFIX = ".json"
 FORMAT_BY_TYPE = {
     "gap_report": "pdf",
     "workpaper": "html",
     "integrated_report": "pdf",
+    BOARD_REPORT_SNAPSHOT_TYPE: "pdf",
     RFI_SNAPSHOT_TYPE: "pdf",
 }
 MEDIA_TYPES = {"pdf": "application/pdf", "html": "text/html; charset=utf-8"}
@@ -34,8 +36,11 @@ TYPE_LABELS = {
     "gap_report": "Gap report (PDF)",
     "workpaper": "Workpaper (HTML)",
     "integrated_report": "Integrated engagement report (PDF)",
+    BOARD_REPORT_SNAPSHOT_TYPE: "Board report v2 (PDF)",
     RFI_SNAPSHOT_TYPE: "Request for information (PDF)",
 }
+
+BOARD_REPORT_DOCUMENT_REQUIRED = "Board reports are generated with their document."
 
 AUDIT_ENTITY_TYPE = "report_snapshot"
 GENERATED_ACTION = "report_snapshot.generated"
@@ -106,10 +111,12 @@ def snapshot_path(snapshot: ReportSnapshot) -> Path:
     return Path(settings.upload_dir) / snapshot.storage_path
 
 
+def document_storage_path(storage_path: str) -> str:
+    return storage_path.removesuffix(".pdf") + RFI_DOCUMENT_SUFFIX
+
+
 def rfi_document_path(snapshot: ReportSnapshot) -> Path:
-    return Path(settings.upload_dir) / (
-        snapshot.storage_path.removesuffix(".pdf") + RFI_DOCUMENT_SUFFIX
-    )
+    return Path(settings.upload_dir) / document_storage_path(snapshot.storage_path)
 
 
 def source_manifest(db: Session, assessment: Assessment) -> dict:
@@ -170,6 +177,7 @@ def _store(
     review_status: str | None,
     source: dict,
     extra_metadata: dict | None = None,
+    document_content: bytes | None = None,
 ) -> ReportSnapshot:
     digest = hashlib.sha256(content).hexdigest()
     metadata = {
@@ -191,8 +199,13 @@ def _store(
                 f"Snapshot metadata keys already exist: {', '.join(sorted(collisions))}"
             )
         metadata.update(extra_metadata)
-    path = _write_file(storage_path, content)
+    written: list[Path] = []
     try:
+        written.append(_write_file(storage_path, content))
+        if document_content is not None:
+            written.append(
+                _write_file(document_storage_path(storage_path), document_content)
+            )
         snapshot = ReportSnapshot(
             id=snapshot_id,
             assessment_id=assessment_id,
@@ -213,7 +226,8 @@ def _store(
         db.flush()
         return snapshot
     except Exception:
-        path.unlink(missing_ok=True)
+        for path in written:
+            path.unlink(missing_ok=True)
         raise
 
 
@@ -227,6 +241,8 @@ def create_snapshot(
 ) -> ReportSnapshot:
     if snapshot_type not in ASSESSMENT_SNAPSHOT_TYPES:
         raise InvalidSnapshot("Unknown report type.")
+    if snapshot_type == BOARD_REPORT_SNAPSHOT_TYPE:
+        raise InvalidSnapshot(BOARD_REPORT_DOCUMENT_REQUIRED)
     if not content:
         raise InvalidSnapshot("Rendered report was empty; nothing was saved.")
 
@@ -250,6 +266,55 @@ def create_snapshot(
         engagement_id=assessment.engagement_id,
         review_status=assessment.review_status,
         source=manifest,
+    )
+
+
+def snapshot_files(snapshot: ReportSnapshot) -> tuple[Path, ...]:
+    paths = (snapshot_path(snapshot),)
+    if snapshot.type == BOARD_REPORT_SNAPSHOT_TYPE:
+        return paths + (rfi_document_path(snapshot),)
+    return paths
+
+
+def create_board_report_snapshot(
+    db: Session,
+    *,
+    assessment: Assessment,
+    snapshot_id: str,
+    pdf_content: bytes,
+    document_content: bytes,
+    actor: str,
+) -> ReportSnapshot:
+    if not pdf_content or not document_content:
+        raise InvalidSnapshot("Rendered report was empty; nothing was saved.")
+
+    from app.services import board_report
+    from app.utils import html_pdf
+
+    storage_path = storage_path_for(
+        snapshot_id=snapshot_id,
+        fmt=FORMAT_BY_TYPE[BOARD_REPORT_SNAPSHOT_TYPE],
+        assessment_id=assessment.id,
+    )
+    return _store(
+        db,
+        snapshot_id=snapshot_id,
+        snapshot_type=BOARD_REPORT_SNAPSHOT_TYPE,
+        fmt=FORMAT_BY_TYPE[BOARD_REPORT_SNAPSHOT_TYPE],
+        storage_path=storage_path,
+        content=pdf_content,
+        document_content=document_content,
+        actor=actor,
+        assessment_id=assessment.id,
+        engagement_id=assessment.engagement_id,
+        review_status=assessment.review_status,
+        source=source_manifest(db, assessment),
+        extra_metadata={
+            "document_sha256": hashlib.sha256(document_content).hexdigest(),
+            "document_size_bytes": len(document_content),
+            "document_schema_version": board_report.DOCUMENT_SCHEMA_VERSION,
+            "renderer": html_pdf.renderer_label(),
+        },
     )
 
 
@@ -312,6 +377,26 @@ def create_rfi_snapshot(
 def read_rfi_document(db: Session, snapshot: ReportSnapshot) -> dict:
     if snapshot.type != RFI_SNAPSHOT_TYPE:
         raise SnapshotNotFound("RFI version not found.")
+    metadata = generated_event(db, snapshot.id)
+    expected = metadata.get("document_sha256")
+    try:
+        content = rfi_document_path(snapshot).read_bytes()
+    except OSError:
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE) from None
+    if not isinstance(expected, str) or hashlib.sha256(content).hexdigest() != expected:
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE)
+    try:
+        document = json.loads(content)
+    except (json.JSONDecodeError, TypeError):
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE) from None
+    if not isinstance(document, dict):
+        raise SnapshotIntegrityError(INTEGRITY_MESSAGE)
+    return document
+
+
+def read_board_report_document(db: Session, snapshot: ReportSnapshot) -> dict:
+    if snapshot.type != BOARD_REPORT_SNAPSHOT_TYPE:
+        raise SnapshotNotFound("Report version not found.")
     metadata = generated_event(db, snapshot.id)
     expected = metadata.get("document_sha256")
     try:
@@ -511,6 +596,8 @@ def issue_snapshot(
     actor: str,
 ) -> ReportSnapshot:
     verify_snapshot_file(db, snapshot)
+    if snapshot.type == BOARD_REPORT_SNAPSHOT_TYPE:
+        read_board_report_document(db, snapshot)
     result = db.execute(text(ISSUE_SQL), {"id": snapshot.id})
     if result.rowcount != 1:
         db.expire(snapshot)

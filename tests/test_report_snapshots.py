@@ -504,7 +504,10 @@ def test_workpaper_snapshot_matches_live_page_then_stays_frozen(
     assert snapshot.format == "html"
     assert snapshot.storage_path == f"reports/assessments/{assessment.id}/{snapshot.id}.html"
     frozen = (upload_root / snapshot.storage_path).read_bytes().decode("utf-8")
-    assert frozen == http.get(f"/assessments/{assessment.id}/workpaper").text
+    # P6-8 (D-P6-8-H): the Workpaper snapshot is the standalone render, not the live page.
+    from app.services import standalone_workpaper
+
+    assert frozen == standalone_workpaper.render(db, assessment)
 
     served = http.get(f"/api/assessments/{assessment.id}/snapshots/{snapshot.id}/file")
     assert served.headers["content-type"] == "text/html; charset=utf-8"
@@ -738,8 +741,8 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
     assessment, conclusion = _run_one(db, gate, monkeypatch)
     empty = http.get(f"/assessments/{assessment.id}/snapshots")
     assert empty.status_code == 200
-    assert empty.text.count("data-snapshot-type=") == 2
-    assert empty.text.count("No versions generated yet.") == 2
+    assert empty.text.count("data-snapshot-type=") == 3  # P6-8: + board_report
+    assert empty.text.count("No versions generated yet.") == 3
 
     ids = [_generate(http, assessment.id).json()["snapshot_id"] for _ in range(3)]
     assert _issue(http, assessment.id, ids[2]).status_code == 200
