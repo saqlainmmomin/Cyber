@@ -1129,6 +1129,14 @@ P6_2B_APP_FILES = (
     "app/frameworks/schema.py", "app/services/engagement_factory.py",
     "app/services/grounding/claims.py", "app/services/grounding/pipeline.py",
 )
+# P6-8 B1 (PR #80) lands after P6-7a and legitimately touches these (board report
+# v2, standalone Workpaper, Noto fonts); tests/test_p6_8_board_report_v2.py guards them.
+P6_8_B1_FILES = (
+    "app/utils/html_pdf.py", "app/services/board_report.py",
+    "app/services/standalone_workpaper.py", "app/services/report_snapshots.py",
+    "app/routers/snapshots.py", "app/templates/reports", "app/templates/pages/report_snapshots.html",
+    "app/assets/fonts/noto", ".github/workflows/tests.yml", "Dockerfile", "requirements.txt",
+)
 
 
 def _changed(*args: str) -> set[str]:
@@ -1140,8 +1148,9 @@ def test_scenario_14_p6_7_touches_only_its_files():
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES)
+    changed = {path for path in changed if not path.startswith(P6_8_B1_FILES)}
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
-    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py")]
+    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES)]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

@@ -447,6 +447,15 @@ P6_2B_ALLOWED_FILES = {
     "tests/test_p6_nist_csf2_alignment.py",
     "tests/test_p6_7_requirement_card.py",
 }
+# P6-8 B1 (PR #80) lands after P6-2b; tests/test_p6_8_board_report_v2.py guards its file set.
+P6_8_B1_FILES = (
+    ".github/workflows/tests.yml", "Dockerfile", "requirements.txt", "app/assets/fonts/noto/",
+    "app/routers/snapshots.py", "app/services/board_report.py", "app/services/report_snapshots.py",
+    "app/services/standalone_workpaper.py", "app/templates/pages/report_snapshots.html",
+    "app/templates/reports/", "app/utils/html_pdf.py", "tasks/handoffs/2026-09-28-p6-8-board-report-v2.md",
+    "tests/golden/p6_8_board_document.json", "tests/test_p5_6_rfi_rebuild.py",
+    "tests/test_p6_8_board_report_v2.py", "tests/test_report_snapshots.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -454,5 +463,5 @@ def test_scenario_11_only_p6_2b_files_change():
         ["git", "diff", "--name-only", "main...HEAD"],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
-    offenders = [f for f in committed if f not in P6_2B_ALLOWED_FILES]
+    offenders = [f for f in committed if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)]
     assert offenders == [], offenders
