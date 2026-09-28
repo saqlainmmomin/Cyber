@@ -434,6 +434,17 @@ P6_2B_ALLOWED_FILES = {
     "tests/test_p6_2b_dpdpa_criteria.py",
     "tasks/handoffs/2026-09-28-p6-2b-dpdpa-criteria-converter.md",
     "tasks/todo.md",
+    # Stale guards (:(exclude) lines) and fallback-era expectations updated for P6-2b.
+    "tests/test_longitudinal_demo.py",
+    "tests/test_p5_4_adaptive_ucc_questionnaire.py",
+    "tests/test_p6_1b_framework_batching.py",
+    "tests/test_p6_3a_grounding.py",
+    "tests/test_p6_3b_v2_flag.py",
+    "tests/test_p6_4_cap_upload_limit.py",
+    "tests/test_p6_4_v2_judge.py",
+    "tests/test_p6_4_whats_missing.py",
+    "tests/test_p6_6_report_foundations.py",
+    "tests/test_p6_nist_csf2_alignment.py",
 }
 
 
