@@ -445,6 +445,7 @@ P6_2B_ALLOWED_FILES = {
     "tests/test_p6_4_whats_missing.py",
     "tests/test_p6_6_report_foundations.py",
     "tests/test_p6_nist_csf2_alignment.py",
+    "tests/test_p6_7_requirement_card.py",
 }
 
 
