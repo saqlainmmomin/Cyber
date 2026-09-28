@@ -94,6 +94,7 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] **Lift the 5,000-word upload cap** (Q4): PR #76 (merged); re-run the P5-9 v1 baseline after merge and before P6-5 remains pending.
 - [x] **P6-4: v2 Stage 2 judge**: PR #74. Follow-up done: the "what's missing" desk-review pass (PR #77) lets v2 suppress DPDPA pre-fill, behind `v2_missing_pass` (off by default). The smoke suppression rate was 91–100%; decide at P6-5 whether to enable it.
 - [x] **P6-6: report foundations** (period/cut-off, approval gate, D0 #4–#7 and #9–#11, sign-off): PR #73 (merged).
+- [x] **P6-7a: requirement card, divergence acknowledgement, review queue** (Claude designs, Codex implements, Claude reviews) `[AR: D3 + closed-set citation]`. Implemented and verified: 14 contract tests, 299 neighbour tests, and 1072 full-suite tests pass; 10 full-suite skips. Results: `tasks/handoffs/2026-09-28-p6-7-requirement-card.md`. P6-7b (one-click add-to-RFI) deferred until after P6-8.
 - [ ] **P6-3 / P6-4 / P6-5:** v2 claims pipeline, batched closed-set judge, A/B + default flip. P6-4 runs without test criteria: it falls back to the control description and records `criteria_source` (D-P6-L), so ISO and NIST are not blocked on criteria sign-off.
 - [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
