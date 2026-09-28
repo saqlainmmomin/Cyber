@@ -3,6 +3,7 @@ from __future__ import annotations
 import builtins
 import json
 import shutil
+import sqlite3
 import subprocess
 from pathlib import Path
 
@@ -604,3 +605,31 @@ def test_app_files_are_untouched_by_harness():
         check=True,
     )
     assert result.stdout.strip() == ""
+
+
+def test_mock_runner_maps_magic_link_evidence_at_engagement_level(tmp_path, monkeypatch):
+    # Stage C 2026-09-28: magic-link uploads are engagement-level (assessment_id NULL), so a
+    # lookup by assessment_id found no row and every magic-link file went unmapped.
+    validation_root = tmp_path / "validation"
+    _copy_example(validation_root)
+    visible = validation_root / "companies" / "c0-example" / "client_visible"
+    intake = _read(visible / "intake_answers.json")
+    intake["magic_link_items"] = ["Quarterly access review record"]
+    (visible / "intake_answers.json").write_text(json.dumps(intake, indent=2), encoding="utf-8")
+    spec = _read(visible / "evidence" / "E01.json")
+    spec.update(channel="magic_link", magic_item="Quarterly access review record",
+                consultant_maps_to=[{"framework_id": "iso27001", "requirement_id": "ISO.A5.18"}])
+    (visible / "evidence" / "E01.json").write_text(json.dumps(spec, indent=2), encoding="utf-8")
+    render_pack("c0-example", validation_root=validation_root)
+
+    out = tmp_path / "runs"
+    assert run_company("c0-example", llm="mock", runs=1, out=out, validation_root=validation_root) == 0
+    run_dir = out / "c0-example" / "run-1"
+    evidence = next(stage for stage in _read(run_dir / "stages.json") if stage["stage"] == "evidence")
+    assert evidence["detail"]["failures"] == []
+    with sqlite3.connect(run_dir / "app.db") as db:
+        rows = db.execute(
+            "SELECT e.assessment_id, u.requirement_id FROM evidence_uses u JOIN evidence e ON e.id = u.evidence_id"
+            " WHERE e.original_filename = ?", (spec["filename"],)
+        ).fetchall()
+    assert rows == [(None, "ISO.A5.18")]
