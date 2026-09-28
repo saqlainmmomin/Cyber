@@ -1186,7 +1186,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
-    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py", *P6_7B_APP_FILES, *P6_5_FILES)]
+    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py", *P6_7B_APP_FILES, *P6_5_FILES, "scripts/data/iso27001_legacy_6gram_sha256.txt")]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

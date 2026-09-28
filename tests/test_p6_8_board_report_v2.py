@@ -1060,6 +1060,8 @@ P6_8_FORBIDDEN_PATHS = (
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
+    # P6-2c (tasks/handoffs/2026-09-28-p6-2c-iso-nist-criteria.md): ISO legacy-text hash list.
+    ":(exclude)scripts/data/iso27001_legacy_6gram_sha256.txt",
     # P6-10: the recommended-action draft control in the conclusion card and its partial.
     ":(exclude)app/templates/components/conclusion_card.html",
     ":(exclude)app/templates/partials/remediation_draft.html",

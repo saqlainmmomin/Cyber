@@ -1185,6 +1185,8 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)app/services/analysis_v2.py",
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
+    # P6-2c (tasks/handoffs/2026-09-28-p6-2c-iso-nist-criteria.md): ISO legacy-text hash list.
+    ":(exclude)scripts/data/iso27001_legacy_6gram_sha256.txt",
     ":(exclude)scripts/validation/score.py",
 )
 

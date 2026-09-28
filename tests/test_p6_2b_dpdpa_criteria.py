@@ -503,6 +503,12 @@ P6_5_FILES = (
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
 )
+# P6-8 B2 and P6-10 design handoffs + contract tests land after P6-2b (batched design PR).
+P6_B2_P6_10_FILES = (
+    "tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md", "tests/test_p6_8_b2_docx_xlsx.py",
+    "tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md", "tests/p6_10_support.py",
+    "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -514,5 +520,6 @@ def test_scenario_11_only_p6_2b_files_change():
         f for f in committed
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES) and not f.startswith(P6_2C_FILES)
         and f not in P6_7B_FILES and not f.startswith(P6_9_FILES) and not f.startswith(P6_5_FILES)
+        and f not in P6_B2_P6_10_FILES
     ]
     assert offenders == [], offenders
