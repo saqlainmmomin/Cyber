@@ -237,3 +237,23 @@ Verification:
 - Stub-free smoke: all 41 DPDPA controls returned `criteria_source="approved"`.
 - P6-2b contract tests: 31 passed; P6-2a regression tests: 5 passed.
 - Required full run, `.venv/bin/python -m pytest -q`: 1,088 passed, 10 skipped, with one instructed failure, `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, caused by uncommitted test files and explicitly ignored per the handoff request.
+
+### Orchestrator verification (2026-09-28)
+- **Disclosed contract-test change (needs Saqlain's sign-off).** The orchestrator, not Codex, widened `P6_2B_ALLOWED_FILES` in `tests/test_p6_2b_dpdpa_criteria.py` (commit "P6-2b scope guard: allow ..."). The designer's allowed set left out the test files this PR must edit:
+  - the stale-guard `:(exclude)` additions that this handoff itself lists
+  - five more guards and fallback-era expectations found by the full suite: `test_longitudinal_demo.py`, `test_p6_3b_v2_flag.py`, `test_p6_4_cap_upload_limit.py`, `test_p6_4_v2_judge.py`, `test_p6_4_whats_missing.py`
+
+  Exactly those 10 files were added; nothing else changed. The adversarial review flagged this as a process issue and found every one of those edits legitimate. The fallback path is still covered through `dataclasses.replace(control, test_criteria=())`.
+- **Review (cloud Sonnet), no code defects:**
+  - All 150 criteria match the signed sheet: 0 mismatches.
+  - `--check` catches a hand edit.
+  - Case, whitespace and BOM variants fail closed.
+  - Every stored or compared pack-version site uses `pack_version`; display sites stay on `version`.
+  - v1 is isolated.
+  - Existing `AssessmentPack.pack_version == "2023"` rows are display-only.
+- **Live smoke:** a v2 DPDPA run on `tests/grounding_fixtures` (`~/cyberassess-runs/2026-09-28-p6-2b-criteria-smoke`):
+  - `criteria_source` was approved for 41/41, and each requirement's criterion IDs equal the signed set.
+  - 22 requirements were judged in 2 calls, both finishing `stop`/`ok`, with 13.8k input and 7.7k output tokens.
+  - 0 dropped claim IDs, 0 `analysis_incomplete`, 0 `criteria_incomplete`.
+  - Risk and scores match deterministic recomputation.
+- **Watch at P6-5 (review should-fix #2).** DPDPA now averages 3.7 criteria per requirement. The largest smoke batch (about 11 requirements) used 4.7k of the 8,192 output-token ceiling, so a full 15-requirement batch lands near 6.4k. Watch `criteria_incomplete` and `finish_reason=length` on the harness run. If either shows up, lower `v2_judge_batch_max_requirements` for DPDPA or raise `v2_judge_max_tokens`.
