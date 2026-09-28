@@ -769,3 +769,13 @@ Steps:
   - The cover was rendered to PNG and inspected. The Devanagari shapes correctly (प्रा, लि, टेड), and the period, cut-off and draft notice are present.
 - **Standalone Workpaper**, from the stored bytes: no `http(s)://`, `/static`, `<script`, `<link` or `url(`, and one inline `<style>`. All 5 entries are present.
 - **Pending:** the first CI run on ubuntu-latest (renderer smoke step) and the Docker build are both unverified locally.
+- **Review (cloud Sonnet), no blocking or should-fix findings.**
+  - Tests: 14/14 (also with `CYBERASSESS_REQUIRE_WEASYPRINT=1`), neighbours 99 passed, full suite 1072 passed.
+  - Frozen-surface diff empty; the font hashes match.
+  - The offline fetcher refuses https, `data:`, `file://` traversal and `@import`.
+  - No `|safe`, and no user text inside `<style>`.
+  - Tampering with the sidecar blocks issue.
+  - Only approved data is used, and the existing-test edits match D-P6-8-L.
+  - NITs, both outside P6-8's frozen scope:
+    - `report_content.py`'s `finding.outcome_label` gives "Non Compliant" where the register says "Non-Compliant".
+    - The known `_framework_label` issue prints "INDIA DPDPA" (Open question 4).
