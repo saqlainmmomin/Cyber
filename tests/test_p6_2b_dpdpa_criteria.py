@@ -484,6 +484,14 @@ P6_7B_FILES = (
     "app/services/requirement_card.py", "app/routers/requirement_review.py",
     "app/templates/components/requirement_card_body.html", "app/templates/pages/rfi.html",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-2b;
+# tests/test_p6_9_file_set.py guards its file set.
+P6_9_FILES = (
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    "tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md", "tests/p6_9_support.py",
+    "tests/test_p6_9_", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -494,6 +502,6 @@ def test_scenario_11_only_p6_2b_files_change():
     offenders = [
         f for f in committed
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES) and not f.startswith(P6_2C_FILES)
-        and f not in P6_7B_FILES
+        and f not in P6_7B_FILES and not f.startswith(P6_9_FILES)
     ]
     assert offenders == [], offenders

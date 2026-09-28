@@ -903,10 +903,19 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/services/rfi_requests.py",
         "app/templates/pages/rfi.html",
     )]
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands later; its
+    # new SoA, roadmap and comparison files are guarded by tests/test_p6_9_file_set.py.
+    p6_9 = [f":(exclude){path}" for path in (
+        "app/services/soa.py",
+        "app/services/remediation_groups.py",
+        "app/services/prior_period.py",
+        "app/routers/soa.py",
+        "app/templates/pages/soa.html",
+    )]
     committed = _git(
-        "diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_7b
+        "diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_7b, *p6_9
     ).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_7b).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_7b, *p6_9).split()
     changed = set(committed) | set(untracked)
     assert changed <= {
         "app/config.py",
