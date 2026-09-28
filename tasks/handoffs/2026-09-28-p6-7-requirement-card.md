@@ -710,3 +710,12 @@ The contract test file was not edited. No migrations, models, analysis, groundin
 - Full suite: `.venv/bin/python -m pytest -q` → **1072 passed, 10 skipped, 286 warnings**.
 
 No deviations or still-failing assertions.
+
+### Orchestrator verification (2026-09-28)
+- **Review (cloud Sonnet):** no blocking findings. One should-fix: `acknowledge_divergence` made a second `load_context` call, passing the Conclusion where the Assessment belongs. It was harmless today, because only `.acks` was read, but it was latent. Fixed by building the context and the card once in `_single_card` and reusing that context. The contract tests still pass: 14/14.
+- **Rendered smoke, no new LLM spend.** Uses a copy of the live v2 DPDPA and DPDPA+ISO fixture runs from the P6-4 flag-on smoke (`~/cyberassess-runs/2026-09-28-p6-4-flag-on-smoke`, built from `tests/grounding_fixtures` only; the schema is unchanged since). The period was recorded through the real service, then the pages were rendered with TestClient:
+  - **DPDPA:** conclusions 200, 41 cards. 41 fallback labels, 41 criterion rows, 58 claim links, 0 outside the run's verified claims. Queue 200: 41 items in 22 groups, keyboard handler present.
+  - **DPDPA+ISO:** 134 cards. 134 fallback labels, 136 claim links, 0 outside the verified set. Queue 200: 45 groups.
+  - The span viewer returns 200, with the cited text inside `<mark>`. No card mentions "confidence".
+  - Neither live run produced a framework divergence, so the acknowledgement flow relies on contract scenario 6.
+  - Not browser-tested this time: j/k focus movement. It is covered by the markup and script checks in the contract tests.

@@ -632,7 +632,9 @@ def _latest_proposal(db: Session, conclusion_id: str) -> ConclusionRevision | No
     ).scalar_one_or_none()
 
 
-def card_for(db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None) -> RequirementCard:
+def _single_card(
+    db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None
+) -> tuple[CardContext, RequirementCard]:
     assessment = db.get(Assessment, conclusion.assessment_id)
     context = load_context(
         db, assessment=assessment,
@@ -640,7 +642,11 @@ def card_for(db: Session, conclusion: Conclusion, proposal: ConclusionRevision |
         conclusion_ids=[conclusion.id],
     )
     citations = resolve_citations(db, proposal.citations_json if proposal is not None else None)
-    return build_card(context, conclusion, proposal, citations)
+    return context, build_card(context, conclusion, proposal, citations)
+
+
+def card_for(db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None) -> RequirementCard:
+    return _single_card(db, conclusion, proposal)[1]
 
 
 def divergence_blocker(db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None) -> str | None:
@@ -661,16 +667,13 @@ def acknowledge_divergence(
     if conclusion is None or conclusion.assessment_id != assessment_id:
         raise RequirementCardError(CONCLUSION_NOT_FOUND_MESSAGE, 404)
     proposal = _latest_proposal(db, conclusion.id)
-    card = card_for(db, conclusion, proposal)
+    context, card = _single_card(db, conclusion, proposal)
     divergence = card.divergence
     if divergence is None:
         raise RequirementCardError(NO_DIVERGENCE_MESSAGE)
     if divergence.analysis_run_id != analysis_run_id or divergence.cluster_id != cluster_id:
         raise RequirementCardError(DIVERGENCE_STALE_MESSAGE, 409)
 
-    context = load_context(
-        db, conclusion, [proposal] if proposal is not None else [], [conclusion.id]
-    )
     existing = context.acks.get((conclusion.id, analysis_run_id, cluster_id))
     if existing is not None:
         return existing, False
