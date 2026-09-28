@@ -1170,6 +1170,13 @@ P6_4_AND_PROTECTED_PATHS = (
     # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md) adds the board report v2
     # snapshot type and its document sidecar; tests/test_p6_8_board_report_v2.py guards it.
     ":(exclude)app/services/report_snapshots.py",
+    # P6-2b: approved DPDPA criteria and pack-version changes.
+    ":(exclude)app/frameworks/schema.py",
+    ":(exclude)app/frameworks/definitions/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/dpdpa.py",
+    ":(exclude)scripts/convert_criteria.py",
+    ":(exclude)app/services/grounding/claims.py",
+    ":(exclude)app/services/grounding/pipeline.py",
 )
 
 

@@ -331,6 +331,13 @@ def _changed(*args: str) -> set[str]:
              # P6-4-missing (PR #77) lands after P6-4-cap and legitimately touches these.
              ":(exclude)app/services/desk_review_v2.py",
              ":(exclude)app/services/grounding/missing.py",
+             # P6-2b: approved criteria and pack-version changes are unrelated to this guard.
+             ":(exclude)app/frameworks/schema.py",
+             ":(exclude)app/frameworks/definitions/dpdpa.py",
+             ":(exclude)app/services/engagement_factory.py",
+             ":(exclude)app/services/grounding/claims.py",
+             ":(exclude)app/services/grounding/pipeline.py",
+             ":(exclude)app/frameworks/criteria/dpdpa.py",
              ":(exclude).env.example",
              # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
              # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.

@@ -210,7 +210,7 @@ def claim_set_is_current(
         return False
     try:
         versions = {
-            framework_id: FrameworkRegistry.get(framework_id).version
+            framework_id: FrameworkRegistry.get(framework_id).pack_version
             for framework_id in framework_ids
         }
     except KeyError:
