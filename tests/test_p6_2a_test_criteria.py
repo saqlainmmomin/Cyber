@@ -28,13 +28,21 @@ def test_unmodified_control_has_no_criteria_and_registry_loads():
         DPDPA_DEFINITION, ISO27001_DEFINITION, GDPR_DEFINITION,
         HIPAA_DEFINITION, NIST_CSF_DEFINITION, PCI_DSS_DEFINITION,
     ]
+    from app.frameworks.criteria.dpdpa import DPDPA_CRITERIA
+
     saved = dict(FrameworkRegistry._frameworks)
     try:
         for fw in definitions:
             FrameworkRegistry.register(fw)
             assert FrameworkRegistry.get(fw.id).control_count() > 0
-            # Draft criteria are not attached to any control until P6-2b.
-            assert all(c.test_criteria == () for c in fw.all_controls())
+            if fw.id == "dpdpa":
+                # P6-2b: DPDPA controls carry exactly the approved, signed-off criteria.
+                assert all(
+                    c.test_criteria == DPDPA_CRITERIA.get(c.id, ()) for c in fw.all_controls()
+                )
+            else:
+                # No other framework has been through sign-off yet.
+                assert all(c.test_criteria == () for c in fw.all_controls())
     finally:
         FrameworkRegistry._frameworks.clear()
         FrameworkRegistry._frameworks.update(saved)
