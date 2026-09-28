@@ -84,7 +84,7 @@ PR-014, PR-021, PR-022 and PR-041 are in `docs/product/2026-09-21-cyberassess-pr
 ## Step 0 (before writing code)
 
 1. The worktree exists with `.venv` symlinked; `main` == `origin/main` == `db3fdc8`.
-2. Run `.venv/bin/pytest -q -p no:cacheprovider` and record the counts in `## Results`. On `db3fdc8` the suite is **1058 passed, 10 skipped** (kickoff). With the designer's files committed, expect those plus 13 new failures and 1 new pass.
+2. Run `.venv/bin/pytest -q -p no:cacheprovider` and record the counts in `## Results`. With the designer's commit on top of `db3fdc8`, the suite is **1059 passed, 10 skipped, 13 failed**: 1058 existing tests plus scenario 14, and the 13 red contract scenarios.
 3. Confirm these facts. **If any is false, stop and report.** Line numbers are from `db3fdc8`.
    1. **v2 envelope** (`app/services/analysis_v2.py:record_framework_run_v2`). `AnalysisRun.claims_json` for a v2 run has:
       - `analysis_pipeline_version: "v2"`
@@ -587,6 +587,68 @@ Codex has no network. The orchestrator runs this.
 7. **Span viewer.** Are the bounds checked? Is there any path that reads a file from disk (there should be none; extracted text only)?
 8. **File set and independence.** The diff must match the File overlap table exactly, with nothing under grounding, analysis, models, alembic, report or P6-8 files.
 
+## Codex implementation prompt (ready to paste)
+
+The orchestrator commits the designer files first. It prepares the worktree: `.venv` symlink, `.env` copy, and `git branch -f main origin/main`. Then it runs:
+
+```bash
+codex exec -m gpt-5.6-luna -c model_reasoning_effort=xhigh -s workspace-write -c 'plugins."compound-engineering@compound-engineering-plugin".enabled=false' -C <worktree> "<prompt below>" < /dev/null
+```
+
+```text
+You are implementing P6-7a (consultant requirement card, divergence acknowledgement,
+review queue, span viewer) in the CyberAssess repo in this working directory.
+
+Read, in order:
+1. CLAUDE.md
+2. tasks/handoffs/2026-09-28-p6-7-requirement-card.md. This is the spec. Every name,
+   signature, constant, route, form field, data attribute and rendered string in it
+   is binding.
+3. tests/test_p6_7_requirement_card.py. This is the contract. Do not edit it.
+4. The code named in the handoff's Step 0.
+
+Rules:
+- Make all 14 tests in tests/test_p6_7_requirement_card.py pass WITHOUT editing that
+  file. Never skip, xfail, weaken, re-parametrize or delete a test. If a test looks
+  wrong, leave it failing and explain it in the handoff's "## Results". Put extra
+  tests in tests/test_p6_7_extra.py.
+- Touch only the files in the handoff's "File overlap" table. Scenario 14 enforces
+  the app/ part. Do not touch anything listed under "Do not touch".
+- Make no LLM call, no migration and no model change. The new modules must not
+  import app.services.grounding, llm_client or analysis_v2 (D-P6-7-J). Never take
+  risk, priority or a score from LLM output.
+- Answer-key independence (D-P5-9-C). Never open, grep, glob, list or read:
+  validation/**, tasks/handoffs/*p5-9*, docs/plans/2026-09-24-002-*,
+  scripts/seed_test_companies.py, scripts/test_ground_truth.json,
+  scripts/seed-v2-prompt.md, scripts/validation/**, tests/test_validation_harness.py,
+  any answer_key.json, ~/cyberassess-runs/**. Scope every search to explicit paths
+  under app/ and tests/test_p6_7_*.py. Never run a bare repo-root search.
+- You cannot write .git: no git add, commit, branch or stash. Read-only git is fine,
+  and the guards use it.
+- You have no network. Use .venv/bin/pytest (Python 3.13).
+- If the code forces a deviation from the design, stop and report it in "## Results".
+  Do not choose an alternative.
+
+Steps:
+1. Do the handoff's Step 0: record the baseline suite counts and confirm facts 1-12.
+2. Implement D-P6-7-B through L and the three markup contracts (card partial, queue
+   page, span page).
+3. Run the handoff's Verification section:
+   - the contract file must show 14 passed
+   - the neighbour list must be green
+   - the scope greps must be empty
+   - run the full suite: .venv/bin/pytest -q -p no:cacheprovider
+   Expect all green, except tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes
+   if you left anything under tests/ uncommitted. That test passes once the
+   orchestrator commits.
+4. Append to the handoff's "## Results":
+   - the files changed
+   - the Step 0 baseline
+   - the contract, neighbour and full-suite counts
+   - any guard exclude you had to add, and why
+   - any deviation or still-failing assertion, with your reasoning
+```
+
 ## Open questions for Saqlain (recommended defaults; nothing here blocks P6-7a)
 
 1. **P6-7b, the one-click "add to RFI" for missing evidence.** This needs a new RFI item kind, the consultant-requested items, and a new RFI `source` key, which would make existing drafts stale on their next issue check. It touches `rfi_requests.py`, the P5-6 test pins, and `report_snapshots.py` (P6-8's file).
@@ -607,6 +669,15 @@ Codex has no network. The orchestrator runs this.
 
 ## Designer verification
 
-To be filled in by the designer before handing over: the full-suite result with the throwaway reference implementation and the guard excludes applied, and the red run on the committed tests.
+All runs used Python 3.13 (`.venv`) on 2026-09-28.
+
+| State | Result |
+|---|---|
+| Designer commit on `db3fdc8` (red) | **1059 passed, 10 skipped, 13 failed.** Only the 13 P6-7 contract scenarios fail, each for a missing-code reason. Scenario 14 passes. |
+| Throwaway reference implementation, committed on a local scratch branch that was then deleted (never pushed) | **1072 passed, 10 skipped, 0 failed.** All 14 contract tests pass, and the four guard files with the D-P6-7-M excludes pass. |
+| The reference, uncommitted, before the excludes were added | 3 guard failures (`test_p6_3a_grounding` s17, `test_p6_4_cap_upload_limit` s9, `test_p6_4_whats_missing` s13). `test_p6_nist_csf2_alignment` would trip once committed. This is why the excludes were added. |
+| Mutations | 14 of 14 caught (see the list at the top of this file). |
+
+`tests/test_performance_benchmarks.py` and `tests/test_workpaper.py` scenario 10 (one `conclusion_cards` call) stayed green with the reference.
 
 ## Results
