@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import importlib
+import importlib.util
 import re
 from pathlib import Path
 
@@ -129,18 +132,30 @@ def test_iso_own_words_cover_every_id():
     assert all(d.strip() for d in ISO27001_OWN_WORDS_DRAFT.values())
 
 
-def test_iso_own_words_do_not_copy_the_repo_descriptions():
-    """Verbatim-copy guard: the pack's descriptions are near-verbatim ISO text."""
-    repo = {c.id: c.description for c in ISO27001_DEFINITION.all_controls()}
-    repo_shingles = set().union(*(_shingles(d, 8) for d in repo.values()))
+LEGACY_6GRAMS = ROOT / "scripts" / "data" / "iso27001_legacy_6gram_sha256.txt"
+
+
+def _legacy_hashes() -> set[str]:
+    lines = LEGACY_6GRAMS.read_text(encoding="utf-8").splitlines()
+    return {line for line in lines if line and not line.startswith("#")}
+
+
+def test_iso_own_words_do_not_copy_the_legacy_descriptions():
+    """Verbatim-copy guard. The pre-P6-2c pack descriptions were near-verbatim ISO text;
+    they are kept only as hashed 6-word runs (P6-2c, D-P6-2c-D), because after
+    conversion the live descriptions ARE the own-words text."""
+    legacy = _legacy_hashes()
     for rid, own in ISO27001_OWN_WORDS_DRAFT.items():
-        norm_own = " ".join(_words(own))
-        for desc in repo.values():
-            norm_repo = " ".join(_words(desc))
-            assert norm_own != norm_repo, rid
-            assert norm_repo not in norm_own, rid
-        # No run of 8+ words shared with any current pack description.
-        assert not _shingles(own, 8) & repo_shingles, rid
+        runs = {" ".join(s) for s in _shingles(own, 6)}
+        assert not {r for r in runs if hashlib.sha256(r.encode()).hexdigest() in legacy}, rid
+
+
+def test_iso_draft_criteria_do_not_copy_the_legacy_descriptions():
+    legacy = _legacy_hashes()
+    for criteria in ISO27001_CRITERIA_DRAFT.values():
+        for c in criteria:
+            runs = {" ".join(s) for s in _shingles(c.statement, 6) | _shingles(c.evidence_hint, 6)}
+            assert not {r for r in runs if hashlib.sha256(r.encode()).hexdigest() in legacy}, c.id
 
 
 # ── Export ────────────────────────────────────────────────────────────────
@@ -211,5 +226,12 @@ def test_no_app_module_imports_the_drafts_outside_criteria_package():
 
 
 def test_drafts_are_not_attached_to_any_control():
+    """Controls carry only the generated, signed-off criteria (P6-2c conversion),
+    or none before sign-off. Never the draft objects themselves."""
     for fw in (ISO27001_DEFINITION, NIST_CSF_DEFINITION):
-        assert all(c.test_criteria == () for c in fw.all_controls())
+        module_name = f"app.frameworks.criteria.{fw.id}"
+        if importlib.util.find_spec(module_name) is None:
+            assert all(c.test_criteria == () for c in fw.all_controls())
+            continue
+        approved = getattr(importlib.import_module(module_name), f"{fw.id.upper()}_CRITERIA")
+        assert all(c.test_criteria == approved.get(c.id, ()) for c in fw.all_controls())

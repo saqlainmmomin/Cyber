@@ -267,11 +267,12 @@ def test_scenario_5_every_dpdpa_control_has_its_approved_criteria_and_judge_says
         assert len(criteria) == len(ctrl.test_criteria)
 
 
-def test_scenario_5_an_iso_control_stays_fallback():
-    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
+def test_scenario_5_an_unsigned_framework_control_stays_fallback():
+    # P6-2c: was an ISO control; ISO and NIST gain approved criteria once signed.
+    from app.frameworks.definitions.gdpr import GDPR_DEFINITION
     from app.services.grounding.judge import criteria_for
 
-    ctrl = ISO27001_DEFINITION.all_controls()[0]
+    ctrl = GDPR_DEFINITION.all_controls()[0]
     assert ctrl.test_criteria == ()
     source, criteria = criteria_for(ctrl)
     assert source == "fallback"
@@ -300,8 +301,12 @@ def test_scenario_6_every_other_framework_pack_version_equals_version():
     from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
     from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
 
-    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, ISO27001_DEFINITION, NIST_CSF_DEFINITION, PCI_DSS_DEFINITION):
+    # P6-2c: ISO and NIST gain a criteria_version once their signed sheets are converted
+    # (pinned in tests/test_p6_2c_criteria_converter.py); until then it is empty.
+    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, PCI_DSS_DEFINITION):
         assert fw.pack_version == fw.version, fw.id
+    for fw in (ISO27001_DEFINITION, NIST_CSF_DEFINITION):
+        assert fw.pack_version in {fw.version, f"{fw.version}+criteria-v1"}, fw.id
 
 
 def test_scenario_6_new_engagement_stores_pack_version_on_the_assessment_pack(tmp_path):
@@ -404,15 +409,16 @@ def test_scenario_9_claude_analyzer_does_not_reference_test_criteria():
 
 
 # --------------------------------------------------------------------------- #
-# Scenario 10: only dpdpa is supported for now
+# Scenario 10: an unsupported framework exits non-zero
+# (P6-2c: was iso27001; the converter now supports dpdpa, iso27001 and nist_csf)
 # --------------------------------------------------------------------------- #
 
 
-def test_scenario_10_iso27001_framework_exits_nonzero(tmp_path):
+def test_scenario_10_unsupported_framework_exits_nonzero(tmp_path):
     mod = converter()
     out = tmp_path / "out.py"
     with pytest.raises(SystemExit) as excinfo:
-        mod.main(["--framework", "iso27001", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
+        mod.main(["--framework", "gdpr", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
     assert excinfo.value.code != 0
 
 
@@ -460,6 +466,16 @@ P6_8_B1_FILES = (
     "tests/golden/p6_8_board_document.json", "tests/test_p5_6_rfi_rebuild.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_report_snapshots.py",
 )
+# P6-2c (ISO + NIST criteria conversion, tasks/handoffs/2026-09-28-p6-2c-iso-nist-criteria.md)
+# lands after P6-2b and reuses its converter.
+P6_2C_FILES = (
+    "tasks/handoffs/2026-09-28-p6-2c-iso-nist-criteria.md", "tests/test_p6_2c_criteria_converter.py",
+    "tests/test_p6_2c_iso_nist_criteria.py", "scripts/data/iso27001_legacy_6gram_sha256.txt",
+    "scripts/export_criteria_review.py", "tasks/criteria-review/",
+    "app/frameworks/criteria/iso27001.py", "app/frameworks/criteria/nist_csf.py",
+    "app/frameworks/criteria/nist_csf_draft.py", "app/frameworks/definitions/iso27001.py",
+    "app/frameworks/definitions/nist_csf.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -467,5 +483,8 @@ def test_scenario_11_only_p6_2b_files_change():
         ["git", "diff", "--name-only", "main...HEAD"],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
-    offenders = [f for f in committed if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)]
+    offenders = [
+        f for f in committed
+        if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES) and not f.startswith(P6_2C_FILES)
+    ]
     assert offenders == [], offenders
