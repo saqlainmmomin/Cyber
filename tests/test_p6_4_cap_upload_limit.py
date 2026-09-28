@@ -360,7 +360,12 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/templates/components/requirement_card_body.html",
              ":(exclude)app/templates/pages/conclusions.html",
              ":(exclude)app/templates/pages/review_queue.html",
-             ":(exclude)app/templates/pages/evidence_span.html"],
+             ":(exclude)app/templates/pages/evidence_span.html",
+             # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
+             # guarded by tests/test_p6_5_injection_pack.py.
+             ":(exclude)app/services/grounding/injection.py",
+             ":(exclude)app/services/grounding/judge.py",
+             ":(exclude)app/services/analysis_v2.py"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )
