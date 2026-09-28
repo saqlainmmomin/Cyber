@@ -1022,6 +1022,10 @@ P6_8_B1_APP_ALLOWLIST = (
     # tests/test_p6_9_file_set.py guards its file set.
     "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
     "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine persistence.
+    "app/services/grounding/injection.py",
+    "app/services/grounding/judge.py",
+    "app/services/analysis_v2.py",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1043,6 +1047,13 @@ P6_8_FORBIDDEN_PATHS = (
     # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
     # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
     ":(exclude)app/templates/components/requirement_card_body.html",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim
+    # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
+    ":(exclude)app/services/grounding/injection.py",
+    ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)scripts/injection_pack_live.py",
+    ":(exclude)scripts/validation/ab_compare.py",
+    ":(exclude)scripts/validation/score.py",
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (

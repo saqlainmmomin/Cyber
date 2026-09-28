@@ -492,6 +492,17 @@ P6_9_FILES = (
     "tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md", "tests/p6_9_support.py",
     "tests/test_p6_9_", "tests/test_p6_2b_dpdpa_criteria.py",
 )
+# P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-2b: the injected-document
+# pack and quarantine, and the aggregate-only A/B comparison; its contract tests guard them.
+P6_5_FILES = (
+    "app/services/grounding/injection.py", "app/services/grounding/judge.py", "app/services/analysis_v2.py",
+    "scripts/injection_pack_live.py", "scripts/validation/ab_compare.py", "scripts/validation/run_company.py",
+    "scripts/validation/score.py", "tests/injection_pack/", "tests/test_p6_5_injection_pack.py",
+    "tests/test_p6_5_ab_compare.py", "tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md", "tasks/todo.md",
+    "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_whats_missing.py",
+    "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -502,6 +513,6 @@ def test_scenario_11_only_p6_2b_files_change():
     offenders = [
         f for f in committed
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES) and not f.startswith(P6_2C_FILES)
-        and f not in P6_7B_FILES and not f.startswith(P6_9_FILES)
+        and f not in P6_7B_FILES and not f.startswith(P6_9_FILES) and not f.startswith(P6_5_FILES)
     ]
     assert offenders == [], offenders
