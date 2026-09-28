@@ -25,6 +25,7 @@ from app.routers import (
     magic,
     questionnaire,
     reports,
+    requirement_review,
     review,
     retention as retention_router,
     snapshots,
@@ -142,6 +143,7 @@ app.include_router(reports.comparison_router, dependencies=_ARCHIVE_GUARD)
 app.include_router(desk_review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(conclusions.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(requirement_review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(findings.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(snapshots.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)

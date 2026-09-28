@@ -1650,6 +1650,14 @@ PROTECTED_PATHS = [
     ":(exclude)app/routers/snapshots.py",
     ":(exclude)app/templates/pages/report_snapshots.html",
     ":(exclude)app/templates/reports",
+    # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md): the requirement
+    # card partial, the review queue and span pages, their router, and the one-line
+    # include in the conclusion card; tests/test_p6_7_requirement_card.py guards them.
+    ":(exclude)app/routers/requirement_review.py",
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/components/requirement_card_body.html",
+    ":(exclude)app/templates/pages/review_queue.html",
+    ":(exclude)app/templates/pages/evidence_span.html",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
