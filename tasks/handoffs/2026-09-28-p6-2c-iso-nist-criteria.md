@@ -399,7 +399,7 @@ The pilot wording follows. It is in our own words and cites clauses by number on
 
 ## Designer verification
 
-- Full suite on this branch (with `git branch -f main origin/main` not run; local `main` = `93d8b32`): see Results below for the counts.
+- Full suite on this branch (after `git branch -f main origin/main`, committed tree): 1123 passed, 13 skipped, 36 failed. The 36 failures are exactly the red contract tests in `tests/test_p6_2c_criteria_converter.py`; nothing else fails. The 3 new skips are scenarios 10-11. `test_retention.py::test_scenario_13` fails only while the files are uncommitted; it is green once they are committed.
 - The own-words scan, 6-gram against the hashed corpus:
   - 0/308 ISO criteria and evidence hints
   - 0/118 descriptions
