@@ -758,3 +758,14 @@ Steps:
 - Full suite: `.venv/bin/python -m pytest -q` — **1070 passed, 10 skipped, 2 failed** in 121.61s. Both failures are the expected uncommitted-tree guards: `tests/test_longitudinal_demo.py::test_scenario_13_protected_surface_is_unchanged` sees the permitted `report_snapshots.py` and `requirements.txt` changes, and the retention guard above sees the mandated test edits. They are expected to pass after the orchestrator commits the working tree.
 - Golden: `tests/golden/p6_8_board_document.json`, **17,413 bytes**, recorded once with `P6_8_RECORD_GOLDEN=1`. Top-level keys: `appendices`, `assessment_id`, `basis`, `company_name`, `engagement_name`, `firm_name`, `framework_sections`, `frameworks`, `kind`, `not_assessed`, `release`, `roadmap`, `schema_version`, `sign_off`, `snapshot`, `source`, `summary`, `top_risks`.
 - Deviation: none from D-P6-8-A through D-P6-8-L. The frozen-surface check and scenario 14 file-set guard are both green.
+
+### Orchestrator smoke (2026-09-28, after commit)
+- Pre-steps done: `weasyprint==70.0` is in the shared `.venv` (Homebrew pango 1.57.1). The fonts were fetched from the notofonts releases and all 6 sha256 values match the pins.
+- With `CYBERASSESS_REQUIRE_WEASYPRINT=1`, scenarios 3, 7, 8 and 10 give 4 passed. The full suite gives 1072 passed and 10 skipped, with no P6-8 skips.
+- **Board PDF read-back.** A DPDPA+ISO fixture was generated through the real routes, with no LLM, and read back with pdfplumber:
+  - 13 pages, 42 KB. The Title metadata is exactly `Board report: भारत डेटा प्राइवेट लिमिटेड`.
+  - The ₹ text reads back exactly. There are 0 `?` and 0 `Rs.`.
+  - The fonts used are Noto Sans, Noto Sans Bold, Noto Sans Devanagari and Noto Sans Devanagari Bold, plus a synthesised oblique.
+  - The cover was rendered to PNG and inspected. The Devanagari shapes correctly (प्रा, लि, टेड), and the period, cut-off and draft notice are present.
+- **Standalone Workpaper**, from the stored bytes: no `http(s)://`, `/static`, `<script`, `<link` or `url(`, and one inline `<style>`. All 5 entries are present.
+- **Pending:** the first CI run on ubuntu-latest (renderer smoke step) and the Docker build are both unverified locally.
