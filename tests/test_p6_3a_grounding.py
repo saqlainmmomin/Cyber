@@ -1662,6 +1662,10 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/components/requirement_card_body.html",
     ":(exclude)app/templates/pages/review_queue.html",
     ":(exclude)app/templates/pages/evidence_span.html",
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): the SoA
+    # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
+    ":(exclude)app/routers/soa.py",
+    ":(exclude)app/templates/pages/soa.html",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

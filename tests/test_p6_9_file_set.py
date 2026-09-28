@@ -1,0 +1,72 @@
+"""Scope guard for P6-9 (handoff D-P6-9-K): no LLM, and only the P6-9 file set changes under app/.
+
+Green before implementation (nothing under app/ changed) and must stay green after it.
+"""
+
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+P6_9_APP_ALLOWLIST = (
+    "app/services/soa.py",
+    "app/services/remediation_groups.py",
+    "app/services/prior_period.py",
+    "app/services/board_report.py",
+    "app/routers/soa.py",
+    "app/main.py",
+    "app/templates/reports/board_report.html",
+    "app/templates/pages/soa.html",
+    "app/templates/pages/report_snapshots.html",
+)
+P6_9_FORBIDDEN_PATHS = (
+    # Frozen fpdf2 reports and goldens (D-P6-H).
+    "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
+    "app/routers/integrated_reports.py", "tests/fixtures", "tests/support",
+    # B1 plumbing and parallel P6-8 B2 / P6-7b / P6-10 surfaces.
+    "app/utils/html_pdf.py", "app/services/report_snapshots.py", "app/routers/snapshots.py",
+    "app/services/standalone_workpaper.py", "app/templates/reports/workpaper_standalone.html",
+    "app/services/rfi_requests.py", "app/services/requirement_card.py", "app/services/review_queue.py",
+    "app/routers/requirement_review.py", "app/routers/review.py", "app/routers/web.py",
+    "app/services/conclusion_review.py", "app/templates/components", "app/templates/partials",
+    "app/templates/base.html",
+    # Readers, scoring, analyzer, LLM, packs (incl. UCC mappings, read-only), schema, scripts.
+    "app/services/approved_report.py", "app/services/report_content.py", "app/services/report_basis.py",
+    "app/services/findings.py", "app/services/remediation_rollup.py", "app/services/scoring.py",
+    "app/services/claude_analyzer.py", "app/services/llm_client.py", "app/services/grounding",
+    "app/services/analysis_pipeline.py", "app/services/analysis_v2.py", "app/services/desk_review.py",
+    "app/services/desk_review_v2.py", "app/frameworks", "app/dpdpa", "app/models", "app/schemas",
+    "alembic", "app/config.py", "requirements.txt", "requirements-dev.txt", "scripts", "validation",
+    ":(exclude)scripts/validation/run_company.py",
+)
+NEW_MODULES = (
+    "app/services/soa.py",
+    "app/services/remediation_groups.py",
+    "app/services/prior_period.py",
+    "app/routers/soa.py",
+    "app/services/board_report.py",
+)
+
+
+def _git(*args) -> str:
+    return subprocess.run(["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True).stdout
+
+
+def test_scenario_1_no_llm_and_p6_9_file_set():
+    for relative in NEW_MODULES:
+        path = REPO_ROOT / relative
+        if path.exists():
+            source = path.read_text(encoding="utf-8")
+            for token in ("llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai", "anthropic"):
+                assert token not in source, (relative, token)
+
+    committed = _git("diff", "--name-only", "main...HEAD", "--", *P6_9_FORBIDDEN_PATHS).split()
+    working = _git("diff", "--name-only", "HEAD", "--", *P6_9_FORBIDDEN_PATHS).split()
+    assert committed == [] and working == [], committed + working
+
+    changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
+    changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
+    changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
+    outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST)
+    assert outside == [], outside

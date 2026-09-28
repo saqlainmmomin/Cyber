@@ -1137,6 +1137,12 @@ P6_8_B1_FILES = (
     "app/routers/snapshots.py", "app/templates/reports", "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto", ".github/workflows/tests.yml", "Dockerfile", "requirements.txt",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-7a and
+# adds the SoA, roadmap-group and comparison files; tests/test_p6_9_file_set.py guards them.
+P6_9_APP_FILES = (
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html",
+)
 
 
 def _changed(*args: str) -> set[str]:
@@ -1148,6 +1154,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES)
+    changed -= set(P6_9_APP_FILES)
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES)}
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.

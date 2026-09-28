@@ -1016,6 +1016,10 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after B1;
+    # tests/test_p6_9_file_set.py guards its file set.
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
