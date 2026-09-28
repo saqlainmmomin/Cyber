@@ -1164,6 +1164,9 @@ P6_4_AND_PROTECTED_PATHS = (
     # flag-gated v2 "what is missing" pass into v2 desk review and adds its module.
     ":(exclude)app/services/desk_review_v2.py",
     ":(exclude)app/services/grounding/missing.py",
+    # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md) lifts the
+    # upload cap in _truncate; app/config.py is already excluded above.
+    ":(exclude)app/services/document_processor.py",
 )
 
 

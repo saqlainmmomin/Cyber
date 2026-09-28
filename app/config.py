@@ -14,7 +14,9 @@ _DEFAULT_AUDITOR_PASSWORD = "admin"
 class Settings(BaseSettings):
     database_url: str = "sqlite:///data/dpdpa.db"
     upload_dir: str = "uploads"
-    max_document_words: int = 5000
+    # Safety bound for pathological files at extraction, not an analysis cap;
+    # v1 prompts remain bounded by max_total_document_words.
+    max_document_words: int = 200000
     max_total_document_words: int = 20000
 
     # OpenRouter-backed LLM client (app/services/llm_client.py) — every
