@@ -1666,6 +1666,8 @@ PROTECTED_PATHS = [
     # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
     ":(exclude)app/routers/soa.py",
     ":(exclude)app/templates/pages/soa.html",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
