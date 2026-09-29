@@ -1150,7 +1150,7 @@ P6_9_APP_FILES = (
 # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7a: judge claim
 # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
 P6_5_FILES = (
-    "app/services/grounding/injection.py", "app/services/grounding/judge.py",
+    "app/services/grounding/injection.py", "app/services/grounding/judge.py", "app/services/grounding/judge_prompts.py",
     "app/services/analysis_v2.py", "scripts/injection_pack_live.py",
     "scripts/validation/ab_compare.py", "scripts/validation/score.py",
 )

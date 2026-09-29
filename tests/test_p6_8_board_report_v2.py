@@ -1024,6 +1024,7 @@ P6_8_B1_APP_ALLOWLIST = (
     # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine persistence.
     "app/services/grounding/injection.py",
     "app/services/grounding/judge.py",
+    "app/services/grounding/judge_prompts.py",
     "app/services/analysis_v2.py",
 )
 P6_8_FORBIDDEN_PATHS = (
@@ -1049,6 +1050,7 @@ P6_8_FORBIDDEN_PATHS = (
     # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
     ":(exclude)app/services/grounding/injection.py",
     ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)app/services/grounding/judge_prompts.py",
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",

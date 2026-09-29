@@ -331,6 +331,7 @@ def _changed(*args: str) -> set[str]:
              # P6-4-missing (PR #77) lands after P6-4-cap and legitimately touches these.
              ":(exclude)app/services/desk_review_v2.py",
              ":(exclude)app/services/grounding/missing.py",
+             ":(exclude)app/services/grounding/judge_prompts.py",  # P6-5 judge strictness
              # P6-2b: approved criteria and pack-version changes are unrelated to this guard.
              ":(exclude)app/frameworks/schema.py",
              ":(exclude)app/frameworks/definitions/dpdpa.py",

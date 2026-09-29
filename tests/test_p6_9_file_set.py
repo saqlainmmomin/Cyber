@@ -42,6 +42,8 @@ P6_9_FORBIDDEN_PATHS = (
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-9: harness only.
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
+    # P6-5 judge strictness (prompt p6-4.2), separate PR.
+    ":(exclude)app/services/grounding/judge_prompts.py",
 )
 NEW_MODULES = (
     "app/services/soa.py",
@@ -71,5 +73,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST)
+    outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST and path != "app/services/grounding/judge_prompts.py")
     assert outside == [], outside
