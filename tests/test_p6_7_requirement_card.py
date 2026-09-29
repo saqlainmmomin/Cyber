@@ -1137,6 +1137,13 @@ P6_8_B1_FILES = (
     "app/routers/snapshots.py", "app/templates/reports", "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto", ".github/workflows/tests.yml", "Dockerfile", "requirements.txt",
 )
+# P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7a: judge claim
+# quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
+P6_5_FILES = (
+    "app/services/grounding/injection.py", "app/services/grounding/judge.py",
+    "app/services/analysis_v2.py", "scripts/injection_pack_live.py",
+    "scripts/validation/ab_compare.py", "scripts/validation/score.py",
+)
 
 
 def _changed(*args: str) -> set[str]:
@@ -1148,11 +1155,11 @@ def test_scenario_14_p6_7_touches_only_its_files():
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES)
-    changed = {path for path in changed if not path.startswith(P6_8_B1_FILES)}
+    changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
-                                                    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json")]
+                                                    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES)]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

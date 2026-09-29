@@ -1016,6 +1016,10 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine persistence.
+    "app/services/grounding/injection.py",
+    "app/services/grounding/judge.py",
+    "app/services/analysis_v2.py",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1036,6 +1040,13 @@ P6_8_FORBIDDEN_PATHS = (
     ":(exclude)scripts/validation/run_company.py",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim
+    # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
+    ":(exclude)app/services/grounding/injection.py",
+    ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)scripts/injection_pack_live.py",
+    ":(exclude)scripts/validation/ab_compare.py",
+    ":(exclude)scripts/validation/score.py",
 )
 
 
