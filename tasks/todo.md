@@ -104,6 +104,7 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] **2026-09-27 session PRs (all merged):** #67 harness screening-303, #68 LLM JSON reliability (+ this session's kickoff/Results), #69 small follow-ups (C1–C3), #70 P6-3b v2 flag/adapter. Guard-exclude conflicts between #68/#69/#70 resolve keep-both. Results: `tasks/handoffs/2026-09-27-next-session-kickoff.md#results`.
 - [x] **Harness: add `status`/`finish_reason` to `llm_usage.jsonl`** (PR #72, merged) so a `parse_error` call is visible in harness output (harness agent only; independence rule).
 - [x] **Flaky `test_p5_6_rfi_rebuild.py::test_scenario_10`**: root cause was not a shared resource but wall-clock zip timestamps — python-docx stamps each DOCX member with the current second, so two downloads of one frozen RFI version differed when they straddled a second (likelier under load). `generate_rfi_docx` now pins entry timestamps to `generated_at`; regression test `tests/test_rfi_docx_determinism.py`. PR on `claude/p6-cleanup`.
+- [x] **2026-09-29: open items in the six Phase 6 design handoffs answered by Saqlain** (P6-5, P6-7b, P6-8 B1/B2, P6-9, P6-10, P6-2c) and the subagent model rule (Sonnet 5.5 default, Opus only when necessary). Recorded in `tasks/handoffs/2026-09-29-open-item-decisions.md`. Pending: record the Stage C v1 re-run aggregates when its PR lands; P6-5 flip decision #5.
 
 ## Source of truth
 

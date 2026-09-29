@@ -79,3 +79,9 @@ All four are independent subsystems — run concurrently once Phase 3 lands.
 | P6-11..P6-14 Security, Bedrock, deploy | Claude designs security boundary → Codex implements; reviewed by a security subagent |
 
 P6-1 and P6-2a run in parallel (disjoint files). P6-3 needs P6-1; P6-4 needs P6-3 and the approved DPDPA criteria.
+
+## Model budget for subagents (Saqlain, 2026-09-29)
+
+- **Default is Sonnet 5.5** (`claude-sonnet-5-5`) for every subagent: harness agent, reviewers, contract-test writers, mechanical work. Any older handoff that says just "Sonnet" means Sonnet 5.5.
+- **Opus only when necessary:** genuinely hard design where a wrong call is expensive (scoring or grounding boundaries, `[AR]` items). Say why in the handoff's Results.
+- The app's runtime LLM tiers in `app/config.py` are product settings, not this workflow, and are not changed by this rule.
