@@ -29,6 +29,7 @@ from app.routers import (
     review,
     retention as retention_router,
     snapshots,
+    soa as soa_router,
     web,
 )
 from app.services.magic_links import MagicTokenRedactionFilter
@@ -146,6 +147,7 @@ app.include_router(conclusions.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(requirement_review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(findings.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(snapshots.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(soa_router.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(retention_router.router)
 
