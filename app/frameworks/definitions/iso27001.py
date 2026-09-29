@@ -10,6 +10,8 @@ Based on ISO/IEC 27001:2022 Annex A controls, organized by the 4 themes:
 Total: 93 Annex A controls.
 """
 
+from app.frameworks.criteria import attach_criteria
+from app.frameworks.criteria.iso27001 import ISO27001_CRITERIA, ISO27001_CRITERIA_VERSION
 from app.frameworks.schema import (
     ApplicabilityProposal,
     Control,
@@ -1181,17 +1183,22 @@ _ISO_RED_FLAGS = [
 
 # ── Framework definition ──────────────────────────────────────────────────
 
+_DOMAINS = {
+    "organizational": _ORGANIZATIONAL,
+    "people": _PEOPLE,
+    "physical": _PHYSICAL,
+    "technological": _TECHNOLOGICAL,
+}
+# Signed test criteria (P6-2e) attach to the controls in place.
+attach_criteria(_DOMAINS, ISO27001_CRITERIA)
+
 ISO27001_DEFINITION = FrameworkDefinition(
     id="iso27001",
     name="ISO 27001",
     version="2022",
+    criteria_version=ISO27001_CRITERIA_VERSION,
     description="ISO/IEC 27001:2022 — Information Security Management System (Annex A controls)",
-    domains={
-        "organizational": _ORGANIZATIONAL,
-        "people": _PEOPLE,
-        "physical": _PHYSICAL,
-        "technological": _TECHNOLOGICAL,
-    },
+    domains=_DOMAINS,
     dependencies=_ISO_DEPENDENCIES,
     root_cause_clusters=_ISO_ROOT_CAUSE_CLUSTERS,
     scope_questions=_ISO_SCOPE_QUESTIONS,

@@ -1654,6 +1654,12 @@ PROTECTED_PATHS = [
     ":(exclude)app/frameworks/schema.py",
     ":(exclude)app/frameworks/definitions/dpdpa.py",
     ":(exclude)app/frameworks/criteria/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/__init__.py",
+    ":(exclude)app/frameworks/criteria/iso27001.py",
+    ":(exclude)app/frameworks/criteria/nist_csf.py",
+    ":(exclude)app/frameworks/definitions/iso27001.py",
+    ":(exclude)app/frameworks/definitions/nist_csf.py",
+    ":(exclude)scripts/convert_criteria.py",
     # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md): the requirement
     # card partial, the review queue and span pages, their router, and the one-line
     # include in the conclusion card; tests/test_p6_7_requirement_card.py guards them.

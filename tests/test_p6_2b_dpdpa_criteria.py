@@ -268,10 +268,11 @@ def test_scenario_5_every_dpdpa_control_has_its_approved_criteria_and_judge_says
 
 
 def test_scenario_5_an_iso_control_stays_fallback():
-    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
+    # P6-2e: ISO 27001 now carries approved criteria; GDPR is the remaining fallback exemplar.
+    from app.frameworks.definitions.gdpr import GDPR_DEFINITION
     from app.services.grounding.judge import criteria_for
 
-    ctrl = ISO27001_DEFINITION.all_controls()[0]
+    ctrl = GDPR_DEFINITION.all_controls()[0]
     assert ctrl.test_criteria == ()
     source, criteria = criteria_for(ctrl)
     assert source == "fallback"
@@ -296,11 +297,10 @@ def test_scenario_6_dpdpa_pack_version_is_version_plus_criteria_version():
 def test_scenario_6_every_other_framework_pack_version_equals_version():
     from app.frameworks.definitions.gdpr import GDPR_DEFINITION
     from app.frameworks.definitions.hipaa import HIPAA_DEFINITION
-    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
-    from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
     from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
 
-    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, ISO27001_DEFINITION, NIST_CSF_DEFINITION, PCI_DSS_DEFINITION):
+    # P6-2e: ISO 27001 and NIST CSF have their own signed criteria and pack versions.
+    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, PCI_DSS_DEFINITION):
         assert fw.pack_version == fw.version, fw.id
 
 
@@ -409,10 +409,11 @@ def test_scenario_9_claude_analyzer_does_not_reference_test_criteria():
 
 
 def test_scenario_10_iso27001_framework_exits_nonzero(tmp_path):
+    # P6-2e: iso27001 is supported; a framework with no signed criteria still exits non-zero.
     mod = converter()
     out = tmp_path / "out.py"
     with pytest.raises(SystemExit) as excinfo:
-        mod.main(["--framework", "iso27001", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
+        mod.main(["--framework", "gdpr", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
     assert excinfo.value.code != 0
 
 
@@ -424,6 +425,12 @@ P6_2B_ALLOWED_FILES = {
     "tasks/criteria-review/signed/dpdpa-criteria-v1.csv",
     "scripts/convert_criteria.py",
     "app/frameworks/criteria/dpdpa.py",
+    "app/frameworks/criteria/__init__.py",
+    "app/frameworks/criteria/iso27001.py",
+    "app/frameworks/criteria/nist_csf.py",
+    "app/frameworks/definitions/iso27001.py",
+    "app/frameworks/definitions/nist_csf.py",
+    "scripts/convert_criteria.py",
     "app/frameworks/criteria/__init__.py",
     "app/frameworks/definitions/dpdpa.py",
     "app/frameworks/schema.py",

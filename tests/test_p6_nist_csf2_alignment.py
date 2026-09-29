@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+
 import hashlib
 import json
 import subprocess
@@ -147,12 +149,13 @@ def test_pack_shape_content_and_weights():
     for control_id, changes in CHANGED_FIELDS.items():
         for field, expected in changes.items():
             assert getattr(current[control_id], field) == expected
-        for field in ("id", "title", "description", "reference", "criticality", "tags", "test_criteria"):
+        # test_criteria is excluded: P6-2e attaches signed criteria on top of this pack.
+        for field in ("id", "title", "description", "reference", "criticality", "tags"):
             if field not in changes:
                 assert getattr(current[control_id], field) == getattr(original[control_id], field)
     for control_id, control in current.items():
         if control_id not in NEW_CONTROLS and control_id not in CHANGED_FIELDS:
-            assert control == original[control_id]
+            assert dataclasses.replace(control, test_criteria=()) == original[control_id]
     for domain_key, domain in NIST_CSF_DEFINITION.domains.items():
         assert domain.weight == main.domains[domain_key].weight
         for section_key, section in domain.sections.items():

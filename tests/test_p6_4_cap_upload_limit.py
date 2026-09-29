@@ -338,6 +338,12 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/services/grounding/claims.py",
              ":(exclude)app/services/grounding/pipeline.py",
              ":(exclude)app/frameworks/criteria/dpdpa.py",
+             ":(exclude)app/frameworks/criteria/__init__.py",
+             ":(exclude)app/frameworks/criteria/iso27001.py",
+             ":(exclude)app/frameworks/criteria/nist_csf.py",
+             ":(exclude)app/frameworks/definitions/iso27001.py",
+             ":(exclude)app/frameworks/definitions/nist_csf.py",
+             ":(exclude)scripts/convert_criteria.py",
              ":(exclude).env.example",
              # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
              # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.

@@ -336,6 +336,7 @@ def fallback_only(monkeypatch, framework_id="dpdpa"):
 
 def test_scenario_1_v2_card_criteria_checklist_links_only_verified_claims(db, http, monkeypatch, flag_v2):
     fallback_only(monkeypatch)
+    fallback_only(monkeypatch, "iso27001")  # P6-2e: ISO ships approved criteria too
     assessment = build_v2(db, monkeypatch)
     forbid_llm(monkeypatch)
     page = conclusions_page(http, assessment)
@@ -1130,6 +1131,7 @@ P6_7_FORBIDDEN = (
 # criteria, pack version); tests/test_p6_2b_*.py guard them.
 P6_2B_APP_FILES = (
     "app/frameworks/criteria/dpdpa.py", "app/frameworks/definitions/dpdpa.py",
+    "app/frameworks/criteria/__init__.py", "app/frameworks/criteria/iso27001.py", "app/frameworks/criteria/nist_csf.py", "app/frameworks/definitions/iso27001.py", "app/frameworks/definitions/nist_csf.py", "scripts/convert_criteria.py",
     "app/frameworks/schema.py", "app/services/engagement_factory.py",
     "app/services/grounding/claims.py", "app/services/grounding/pipeline.py",
 )
