@@ -39,6 +39,9 @@ P6_9_FORBIDDEN_PATHS = (
     "app/services/desk_review_v2.py", "app/frameworks", "app/dpdpa", "app/models", "app/schemas",
     "alembic", "app/config.py", "requirements.txt", "requirements-dev.txt", "scripts", "validation",
     ":(exclude)scripts/validation/run_company.py",
+    # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-9: harness only.
+    ":(exclude)scripts/validation/ab_compare.py",
+    ":(exclude)scripts/validation/score.py",
 )
 NEW_MODULES = (
     "app/services/soa.py",
