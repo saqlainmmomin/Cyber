@@ -259,3 +259,46 @@ Workflow for each track:
 - **Worktrees left in place:**
   - `dpdpa-gap-tool-p6-2b`, `-p6-7`, `-p6-8`: remove after merge.
   - `dpdpa-gap-tool-stagec`: for the Stage C run.
+
+## Stage C v1 baseline results (recorded 2026-09-29)
+
+This is the first 4-company v1 baseline and the reference for P6-5.
+
+- **Code and data:** commit `9962930`, which is `main` after #78, #79 and #80, plus the harness fix [#81](https://github.com/saqlainmmomin/Cyber/pull/81).
+- **Models:** `deepseek/deepseek-v4-flash` for extract, judge and synthesize; `anthropic/claude-sonnet-4` for vision.
+- **Outputs:** 4 companies × 3 live runs, written locally to `~/cyberassess-runs/2026-09-28-stage-c-baseline-v1-rerun-2/`. That folder holds `summary.md`, `summary.json` and one folder per run. It is not committed, because `summary.md` quotes key facts from the answer keys.
+- **Dirty flag:** the report shows `dirty: true` only because c4's NIST answers were uncommitted during the run. This PR commits them.
+
+| Company | Catch rate | Decoy false positives | Clean-control false positives | Stability (modal agreement) |
+|---|---:|---:|---:|---:|
+| c1-app-startup | 89.7% | 83.3% | 77.8% | 83.7% |
+| c2-b2b-saas | 97.2% | 88.9% | 87.5% | 82.3% |
+| c3-certified-fortress | 86.1% | 41.7% | 43.3% | 80.4% |
+| c4-healthsaas | 96.7% | 33.3% | 45.8% | 82.7% |
+| **All companies** | **92.2%** | **58.3%** | **61.5%** | |
+
+Per-run scores (the scorer's run score, 0–1):
+- c1: 0.77, 0.92, 1.00
+- c2: 1.00, 0.92, 1.00
+- c3: 0.92, 0.83, 0.83
+- c4: 0.90, 1.00, 1.00
+
+All 12 runs completed with no upload failures and no failed stages.
+
+**How this run went:**
+- **A first attempt was discarded.** It ran as `…-rerun`, and three problems made it unusable:
+  - c4 was skipped because its questionnaire was missing 13 answers for the NIST CSF 2.0 questions.
+  - One c1 analysis crashed when DeepSeek returned malformed JSON. The analyzer has no retry for that. It did not recur, but it is still open.
+  - Every magic-link screenshot upload went unmapped because of a harness lookup bug. #81 fixes it.
+- **c4's answers:** a subagent filled the 13 missing NIST answers from client-visible material only, and removed the answer for RS.CO.04, which is no longer rendered. All 13 are `fully_implemented`, consistent with the neighbouring answers.
+- **The second run was interrupted.** The Claude process shut down with 5 of the 12 runs done. The 7 missing runs were re-run one by one through the runner's `--_child` entry point, on the same commit and data. The partial folders were moved to `…-rerun-2-interrupted`.
+
+**How to read it:**
+- **Catch rate held steady:** 92.2% across 4 companies, against 92.8% on c1–c3 on 2026-09-26. Against the discarded first attempt (82.9%, with no screenshot mappings), it rose once the screenshot evidence reached its requirements.
+- **v1 still over-flags.** Decoy false positives are 58% and clean-control false positives are 62%. c1 and c2 are above 75%.
+- **Runs are noisy.** Stability is about 80–84%, so roughly 1 requirement in 6 changes outcome between runs.
+- **What P6-5 should show:** v2 must cut false positives without losing catch rate (D-P6-E). Split the metrics by `criteria_source`, and run with `v2_missing_pass` both off and on.
+
+**Answered since the Results section above (Saqlain, 2026-09-28):**
+- All 12 P6-7 and P6-8 open questions took their recommended defaults.
+- #78, #79 and #80 are merged.
