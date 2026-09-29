@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
-from app.models.assessment_pack import AssessmentPack
 from app.models.report_snapshot import ReportSnapshot
 from app.services import report_snapshots
 
@@ -156,14 +155,6 @@ def _outcome_label(outcome: str | None) -> str | None:
     if outcome is None:
         return None
     return OUTCOME_LABELS.get(outcome, outcome.replace("_", " ").title())
-
-
-def _pack_versions(db: Session, assessment_id: str) -> dict[str, str]:
-    rows = db.query(AssessmentPack).filter_by(assessment_id=assessment_id).order_by(
-        AssessmentPack.created_at,
-        literal_column("assessment_packs.rowid"),
-    ).all()
-    return {row.framework_id: row.pack_version for row in rows}
 
 
 def _framework_rank(frameworks: list[dict]) -> dict[str, int]:
