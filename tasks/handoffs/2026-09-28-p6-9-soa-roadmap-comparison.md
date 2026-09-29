@@ -470,3 +470,22 @@ Launch with stdin redirected: `codex exec ... < /dev/null`.
 - Verification 4: the final full suite reported **1134 passed, 10 skipped, 1 failed**. The only failure was `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, the expected uncommitted-tree guard for the authorized golden and P6-8 test edits; the paired longitudinal guard passed in a targeted run (**1 passed, 1 expected guard failure**).
 - Golden: `tests/golden/p6_8_board_document.json` is **65,281 bytes**. Diff hunk groups are: schema version `1` to `2`; recorded `pack_version: null` on the two fixture frameworks; added `roadmap.groups` for `CLUSTER_001` and `CLUSTER_029`; added `prior_period` with `no_prior` and its required note; and added the 93-row `soa` with the expected totals/notes. No other golden changes were present.
 - Scope/deviation: no implementation deviation or unresolved doubt. No commit was made, as instructed; the post-commit real-route smoke plan was therefore not run. `git diff --check` passed and no forbidden path changed.
+
+### Orchestrator verification (2026-09-29)
+
+- **Branch:** `claude/p6-9-impl` = the design branch + `origin/main` @ `879c174` (#83) merged in. The `test_p6_3a_grounding.py` guard conflict was resolved by keeping both sides.
+- **Saqlain's answers applied:** every open question takes the handoff default (free-text justifications, no source-manifest key, SoA only in the board report, no gate, archived priors skipped, no penalty line).
+- **Full suite (committed):** 1135 passed, 10 skipped, 0 failed, matching the designer's reference count.
+- **Adversarial review (Sonnet subagent):** all 10 `[AR]` checkpoints PASS and nothing is blocking. Every golden hunk is a D-P6-9-L item; `pack_version: null` is item 3.
+  - SHOULD-FIX, fixed by the orchestrator: `prior_period._pack_versions` was dead code, because `board_report` computes the pack versions itself. Deleted, with its orphaned import; the affected suites still pass (136).
+  - NITs, not changed:
+    - The roadmap sort tuples add final tie-breakers (`finding.title`, `requirement_id`) beyond the listed keys. This only strengthens determinism.
+    - `routers/soa.py` hard-codes `"consultant:"` rather than importing `REVIEWER_ACTOR_PREFIX`.
+    - `find_prior` also catches `KeyError`/`TypeError` as a failed sidecar. That is broader than specified, but a failure is still surfaced, never skipped.
+    - `find_prior` hash-checks one sidecar per other issued assessment in the engagement. It is bounded by the engagement's size.
+- **Smoke (real routes, real WeasyPrint render, no LLM).** The script is a scratch pytest module reusing `tests/p6_9_support.py`. It builds one engagement with two DPDPA+ISO+NIST assessments (Jan-Mar and Apr-Jun 2026). The first is released and its board report generated and issued. The second has Findings on `CH2.SECURITY.1`, `ISO.A5.15` and `NIST.PR.AA.05`, two SoA justifications posted through `/api/assessments/{id}/soa/justifications` (`/soa` page 200, posts 200/200), then release and generate:
+  - PDF: 21 pages; fonts Noto-Sans, Noto-Sans-Bold, Noto-Sans-Oblique only; no U+FFFD and no `?`.
+  - "Addresses 3 findings across India DPDPA, ISO 27001 and NIST CSF": present.
+  - "Prior-period comparison": present, status `compared`, with signed per-framework deltas (-16.6, -57.1, -62.4). Counts: DPDPA 1 improved and 1 regressed; ISO and NIST 1 regressed and 1 unchanged each.
+  - "Appendix D: Statement of Applicability": present, 93 rows. Both justifications are in the sidecar verbatim (`<by>` and `&` round-trip, not double-escaped) and every word of both is in the PDF text; they wrap across table cells.
+  - Tamper: after editing the issued prior's sidecar and regenerating, the comparison status is `unavailable` and the PDF says the earlier report "failed its integrity check". The sidecar was restored byte-identical.
