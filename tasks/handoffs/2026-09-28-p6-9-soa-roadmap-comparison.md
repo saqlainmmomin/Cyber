@@ -462,3 +462,11 @@ Launch with stdin redirected: `codex exec ... < /dev/null`.
 7. **Known pre-existing warning.** `board_report.build_document` calls `db.get(Engagement, None)` for an assessment without an engagement (SQLAlchemy `SAWarning`, B1 code). Prior scenario 3 hits it. Not fixed here (out of scope); Codex may guard it with `if assessment.engagement_id` only if it touches that line anyway.
 
 ## Results
+
+- Step 0 baseline: `.venv/bin/pytest -q -p no:cacheprovider` reported **1119 passed, 10 skipped, 16 failed**. The 16 failures were the expected missing P6-9 modules/schema keys. The Step 0 branch, board-report v1 shape, snapshot sidecar helpers, UCC counts/mappings, ISO 27001 catalog, and AssessmentPack facts were confirmed.
+- Verification 1: the four P6-9 contract files passed twice: **17 passed** each run. The post-cleanup combined P6-9/P6-8 run also passed (**31 passed**).
+- Verification 2: `tests/test_p6_8_board_report_v2.py` passed **14 passed** normally and **14 passed** with `CYBERASSESS_REQUIRE_WEASYPRINT=1`.
+- Verification 3: the required neighbor suites passed **113 passed**.
+- Verification 4: the final full suite reported **1134 passed, 10 skipped, 1 failed**. The only failure was `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`, the expected uncommitted-tree guard for the authorized golden and P6-8 test edits; the paired longitudinal guard passed in a targeted run (**1 passed, 1 expected guard failure**).
+- Golden: `tests/golden/p6_8_board_document.json` is **65,281 bytes**. Diff hunk groups are: schema version `1` to `2`; recorded `pack_version: null` on the two fixture frameworks; added `roadmap.groups` for `CLUSTER_001` and `CLUSTER_029`; added `prior_period` with `no_prior` and its required note; and added the 93-row `soa` with the expected totals/notes. No other golden changes were present.
+- Scope/deviation: no implementation deviation or unresolved doubt. No commit was made, as instructed; the post-commit real-route smoke plan was therefore not run. `git diff --check` passed and no forbidden path changed.

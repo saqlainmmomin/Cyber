@@ -8,22 +8,26 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
-from sqlalchemy import select
+from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment, _new_id
+from app.models.assessment_pack import AssessmentPack
 from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceVersion
 from app.models.report_snapshot import ReportSnapshot
 from app.services import (
     approved_report,
     conclusion_review,
+    prior_period,
     report_basis,
     report_content,
     report_snapshots,
+    remediation_groups,
+    soa,
 )
 from app.services.approved_report import ApprovedRow
 from app.template_config import configure_templates
@@ -39,7 +43,7 @@ from app.utils.review_gate import require_review_approval
 
 
 SNAPSHOT_TYPE = "board_report"
-DOCUMENT_SCHEMA_VERSION = 1
+DOCUMENT_SCHEMA_VERSION = 2
 TOP_RISKS_LIMIT = 10
 TEMPLATE = "reports/board_report.html"
 PREVIEW_VERSION_LABEL = "Preview (not a report version)"
@@ -390,6 +394,7 @@ def build_document(
     roadmap_actions.sort(key=lambda action: action["_sort"])
     for action in roadmap_actions:
         del action["_sort"]
+    roadmap_groups = remediation_groups.build_groups(findings, framework_ids)
     finding_keys = set(findings_by_key)
     unplanned_gap_count = sum(
         row.compliance_status in GAP_STATUSES
@@ -424,6 +429,14 @@ def build_document(
 
     release = approved.release
     engagement = db.get(Engagement, assessment.engagement_id)
+    pack_versions = {}
+    for pack in (
+        db.query(AssessmentPack)
+        .filter(AssessmentPack.assessment_id == assessment.id)
+        .order_by(AssessmentPack.created_at, literal_column("assessment_packs.rowid"))
+        .all()
+    ):
+        pack_versions[pack.framework_id] = pack.pack_version
     limitations = [NOT_COVERED_TEXT, RELIANCE_TEXT, _follow_on_text(framework_ids)]
     if dpdpa_readiness_note_applies(framework_ids, generated_at.date()):
         limitations.append(DPDPA_READINESS_NOTE)
@@ -433,6 +446,7 @@ def build_document(
             "name": FrameworkRegistry.get(framework_id).name,
             "version": FrameworkRegistry.get(framework_id).version,
             "legal": framework_id in LEGAL_FRAMEWORK_IDS,
+            "pack_version": pack_versions.get(framework_id),
         }
         for framework_id in framework_ids
     ]
@@ -496,6 +510,7 @@ def build_document(
         "roadmap": {
             "actions": roadmap_actions,
             "unplanned_gap_count": unplanned_gap_count,
+            "groups": roadmap_groups,
         },
         "not_assessed": {
             "insufficient_evidence": [
@@ -524,8 +539,10 @@ def build_document(
             "requirement_register": register,
             "evidence_register": _evidence_register(db, assessment, cited_ids),
         },
+        "soa": soa.build_soa(db, assessment, approved),
         "source": report_snapshots.source_manifest(db, assessment),
     }
+    document["prior_period"] = prior_period.build_comparison(db, assessment, document)
     return document
 
 

@@ -74,6 +74,7 @@ DOCUMENT_KEYS = {
     "schema_version", "kind", "snapshot", "firm_name", "company_name", "engagement_name",
     "assessment_id", "frameworks", "basis", "release", "summary", "top_risks", "roadmap",
     "not_assessed", "framework_sections", "sign_off", "appendices", "source",
+    "soa", "prior_period",  # P6-9 (D-P6-9-E): schema v2
 }
 SECTION_HEADINGS = (
     "Management summary",
@@ -608,7 +609,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     assert "Unreviewed stray" not in json.dumps(document)
 
     assert set(document) == DOCUMENT_KEYS
-    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 1
+    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)
     assert document["kind"] == board.SNAPSHOT_TYPE == "board_report"
     assert document["snapshot"] == {
         "id": "00000000-0000-4000-8000-000000000001",
