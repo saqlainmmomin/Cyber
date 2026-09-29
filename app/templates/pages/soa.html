@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Statement of Applicability — {{ assessment.company_name }}{% endblock %}
+
+{% block content %}
+<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+  <span class="mx-1.5">/</span>
+  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+  <span class="mx-1.5">/</span>
+  <span class="text-gray-600 dark:text-gray-300">Statement of Applicability</span>
+</nav>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Statement of Applicability</h1>
+  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">{{ soa.intro }}</p>
+  <p class="mt-2 max-w-4xl text-xs text-gray-500 dark:text-gray-400">{{ soa.reliance }}</p>
+</div>
+
+<div class="mb-6 max-w-sm">
+  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
+  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
+         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+</div>
+
+{% for note in soa.notes %}
+<p class="mb-2 text-sm text-gray-600 dark:text-gray-300">{{ note }}</p>
+{% endfor %}
+
+<div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+  <table class="min-w-full text-left text-xs">
+    <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
+      <tr>
+        <th class="px-3 py-2">Control</th>
+        <th class="px-3 py-2">Theme</th>
+        <th class="px-3 py-2">Applicability</th>
+        <th class="px-3 py-2">Implementation</th>
+        <th class="px-3 py-2">Justification</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
+      {% for row in soa.rows %}
+      <tr data-soa-row="{{ row.control_id }}" data-applicability="{{ row.applicability }}">
+        <td class="px-3 py-3"><div class="font-medium">{{ row.reference }}</div><div>{{ row.title }}</div></td>
+        <td class="px-3 py-3">{{ row.theme }}</td>
+        <td class="px-3 py-3">{{ row.applicability_label }}</td>
+        <td class="px-3 py-3">{{ row.implementation_label }}</td>
+        <td class="px-3 py-3">
+          {% if rationale.get(row.control_id) %}<p data-approved-rationale class="mb-2 text-xs text-gray-500 dark:text-gray-400">Approved rationale: {{ rationale[row.control_id] }}</p>{% endif %}
+          <form data-soa-justification-form hx-post="/api/assessments/{{ assessment.id }}/soa/justifications" hx-include="#reviewer-name" hx-swap="none">
+            <input type="hidden" name="requirement_id" value="{{ row.control_id }}">
+            <textarea name="justification" maxlength="{{ max_chars }}" rows="2" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100">{{ row.justification or '' }}</textarea>
+            <button type="submit" class="mt-1 rounded-md border border-brand px-2.5 py-1.5 font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Save</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

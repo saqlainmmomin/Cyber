@@ -566,8 +566,12 @@ def test_scenario_5_missing_evidence_lists_judge_output_and_links_the_rfi(db, ht
         assert request["what_it_would_show"] in body
     assert MISSING_EVIDENCE_RFI_NOTE in html
     assert f'href="/assessments/{assessment.id}/rfi"' in html
-    # Deferred to P6-7b: nothing on the card writes to the RFI.
-    assert not re.search(r'hx-post="[^"]*rfi', html, re.I)
+    # P6-7b adds the one-click add-to-RFI control on this section; its contract
+    # (routes, states, idempotency) is tests/test_p6_7b_add_to_rfi.py. The only RFI
+    # write the card may post to is that route.
+    assert all(
+        "/rfi-requests/" in url for url in re.findall(r'hx-post="([^"]*rfi[^"]*)"', html, re.I)
+    )
 
     sdf_html = card_html(page, conclusion(db, assessment, "dpdpa", "CH4.SDF.1").id)
     assert "data-missing-evidence" not in sdf_html
@@ -1137,12 +1141,24 @@ P6_8_B1_FILES = (
     "app/routers/snapshots.py", "app/templates/reports", "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto", ".github/workflows/tests.yml", "Dockerfile", "requirements.txt",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-7a and
+# adds the SoA, roadmap-group and comparison files; tests/test_p6_9_file_set.py guards them.
+P6_9_APP_FILES = (
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html",
+)
 # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7a: judge claim
 # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
 P6_5_FILES = (
     "app/services/grounding/injection.py", "app/services/grounding/judge.py",
     "app/services/analysis_v2.py", "scripts/injection_pack_live.py",
     "scripts/validation/ab_compare.py", "scripts/validation/score.py",
+)
+# P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-7a and
+# legitimately touches these; tests/test_p6_7b_add_to_rfi.py guards them.
+P6_7B_APP_FILES = (
+    "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
+    "app/templates/pages/rfi.html",
 )
 
 
@@ -1154,12 +1170,12 @@ def test_scenario_14_p6_7_touches_only_its_files():
     changed = _changed("main...HEAD") | _changed("HEAD") | set(
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
-    changed -= set(P6_2B_APP_FILES)
+    changed -= set(P6_2B_APP_FILES) | set(P6_7B_APP_FILES) | set(P6_9_APP_FILES)
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
-                                                    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES)]
+                                                    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES, *P6_7B_APP_FILES)]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

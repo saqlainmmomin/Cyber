@@ -25,6 +25,7 @@ from app.services.analysis_pipeline import (
 from app.services.citations import attach_citations
 from app.services.desk_review_v2 import load_claim_set
 from app.services.grounding import judge
+from app.services.grounding import injection
 from app.services.grounding.claims import ClaimSet, claim_set_is_current
 from app.services.grounding.sources import load_source_documents
 from app.services.scoring import compute_framework_scores, failed_framework_scores, namespaced_domain_scores
@@ -164,6 +165,16 @@ def record_framework_run_v2(
     records = judgment_set.judgments[framework_id]
     claims: list[dict] = []
     cited_claim_ids: set[str] = set()
+    quarantined_claim_ids = {
+        claim_id
+        for record in records
+        for claim_id in record["quarantined_claim_ids"]
+    }
+    quarantined_claims = [
+        {**_claim_dict(claim), "markers": list(judgment_set.quarantined[claim.claim_id])}
+        for claim in (claim_set.claims if claim_set is not None else ())
+        if claim.claim_id in quarantined_claim_ids
+    ]
 
     for record in records:
         requirement_id = record["requirement_id"]
@@ -237,7 +248,11 @@ def record_framework_run_v2(
                 "citation_count": len(citations),
                 "evidence_quote_grounded": bool(citations) if cited_claims else None,
                 "unsupported_assertion": record["unsupported_assertion"],
-                "needs_review": any(claim.needs_review for claim in cited_claims),
+                "needs_review": (
+                    any(claim.needs_review for claim in cited_claims)
+                    or bool(record["quarantined_claim_ids"])
+                ),
+                "suspected_instruction": bool(record["quarantined_claim_ids"]),
                 "desk_review_red_flags": len(record["red_flags"]),
                 "desk_review_absence": bool(record["absences"]),
                 "contradictions": len(record["contradictions"]),
@@ -259,8 +274,10 @@ def record_framework_run_v2(
         "analysis_pipeline_version": PIPELINE_VERSION,
         "judge_prompt_version": judgment_set.prompt_version,
         "judge_prompt_fingerprint": judgment_set.prompt_fingerprint,
+        "injection_patterns_version": injection.INJECTION_PATTERNS_VERSION,
         "claim_set_id": judgment_set.claim_set_id,
         "verified_claims": verified_claims,
+        "quarantined_claims": quarantined_claims,
         "divergences": _framework_divergences(framework_id, judgment_set.divergences),
         "judgment_metrics": judgment_set.metrics[framework_id],
         "claims": claims,
@@ -352,6 +369,7 @@ def _legacy_item(
         record["unsupported_assertion"]
         or record["applicability_proposed"]
         or record["analysis_incomplete"]
+        or bool(record["quarantined_claim_ids"])
         or any(claim.needs_review for claim in cited_claims)
     )
     status = LEGACY_STATUS_BY_OUTCOME[record["conclusion_outcome"]]
@@ -492,6 +510,7 @@ def run_analysis_v2(db: Session, assessment: Assessment, *, responses: list[dict
             framework_ids,
             responses,
             applicable_requirements=applicable_requirements,
+            source_texts={s.source_id: s.text for s in sources},
         )
     except Exception as exc:
         analysis_pipeline.fail_runs(

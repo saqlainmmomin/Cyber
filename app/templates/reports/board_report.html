@@ -95,8 +95,19 @@
 
   <section data-section="roadmap">
     <h2>Remediation roadmap</h2>
-    <p>Actions recorded against approved findings, ordered by target date. Owners and dates are set by the consultant; nothing on this page is estimated.</p>
-    {% if doc.roadmap.actions %}<table><thead><tr><th>Action</th><th>Owner</th><th>Target date</th><th>Status</th><th>Closes</th></tr></thead><tbody>{% for action in doc.roadmap.actions %}<tr><td>{{ action.title }}</td><td>{{ action.owner or 'Unassigned' }}</td><td>{{ action.target_date|display_date if action.target_date else 'No target date' }}</td><td>{{ action.status_label }}</td><td>{% for close in action.closes %}{{ close.framework_name }}: {{ close.requirement_id }} ({{ close.finding_title }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No remediation actions are recorded for the approved findings yet.</p>{% endif %}
+    <p>Actions recorded against approved findings, grouped by shared control: findings in different frameworks that cover the same control concern are listed together, so one remediation is tracked once. Groups are ordered by their earliest target date. Owners and dates are set by the consultant; nothing on this page is estimated.</p>
+    {% if doc.roadmap.groups %}
+    {% for group in doc.roadmap.groups %}
+    <article class="risk" data-roadmap-group="{{ group.group_id }}">
+      <p class="risk-title">{{ group.topic }}</p>
+      <p class="small">{{ group.headline }}</p>
+      <table><thead><tr><th>Action</th><th>Owner</th><th>Target date</th><th>Status</th><th>Finding</th></tr></thead><tbody>
+        {% for action in group.actions %}<tr><td>{{ action.title }}</td><td>{{ action.owner or 'Unassigned' }}</td><td>{{ action.target_date|display_date if action.target_date else 'No target date' }}</td><td>{{ action.status_label }}</td><td>{{ action.framework_name }}: {{ action.requirement_id }} ({{ action.finding_title }})</td></tr>{% endfor %}
+      </tbody></table>
+      <p class="small"><strong>Findings addressed:</strong> {% for close in group.closes %}{{ close.framework_name }}: {{ close.requirement_id }} ({{ close.finding_title }}){% if not loop.last %}; {% endif %}{% endfor %}</p>
+    </article>
+    {% endfor %}
+    {% else %}<p class="empty">No remediation actions are recorded for the approved findings yet.</p>{% endif %}
   </section>
 
   <section data-section="not-assessed">
@@ -114,6 +125,20 @@
     <h3>Gaps</h3>{% if framework.gaps %}<table><thead><tr><th>Requirement</th><th>Outcome</th><th>Risk</th><th>Priority</th></tr></thead><tbody>{% for gap in framework.gaps %}<tr><td>{{ gap.requirement_id }}: {{ gap.requirement_title }}</td><td>{{ gap.outcome_label }}</td><td>{{ gap.risk_level }}</td><td>{{ gap.priority }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No approved gaps are recorded.</p>{% endif %}
   </section>
   {% endfor %}
+
+  <section data-section="comparison">
+    <h2>Prior-period comparison</h2>
+    {% if doc.prior_period.status == 'compared' %}
+    <p>{{ doc.prior_period.intro }}</p>
+    <p>Compared with version {{ doc.prior_period.prior.version_label }} (snapshot {{ doc.prior_period.prior.snapshot_id[:8] }}) for the assessment period {{ doc.prior_period.prior.period_label }}, evidence cut-off {{ doc.prior_period.prior.cutoff_label }}, generated {{ doc.prior_period.prior.generated_on }}.</p>
+    {% for note in doc.prior_period.notes %}<p class="small">{{ note }}</p>{% endfor %}
+    <table><thead><tr><th>Framework</th><th>Prior score</th><th>Current score</th><th>Change</th><th>Improved</th><th>Regressed</th><th>Changed</th><th>Newly assessed</th><th>No longer assessed</th></tr></thead><tbody>
+      {% for framework in doc.prior_period.frameworks %}<tr data-comparison-framework="{{ framework.framework_id }}"><td>{{ framework.name }}</td>{% if framework.compared %}<td>{{ framework.prior_score if framework.prior_score is not none else 'Not scored' }}</td><td>{{ framework.current_score if framework.current_score is not none else 'Not scored' }}</td><td>{% if framework.score_delta is not none %}{{ '%+.1f'|format(framework.score_delta) }} points{% else %}Not compared{% endif %}</td><td>{{ framework.counts.improved }}</td><td>{{ framework.counts.regressed }}</td><td>{{ framework.counts.changed }}</td><td>{{ framework.counts.new }}</td><td>{{ framework.counts.no_longer_assessed }}</td>{% else %}<td colspan="8">Not compared</td>{% endif %}</tr>{% endfor %}
+    </tbody></table>
+    <p>Gaps identified: {{ doc.prior_period.totals.prior.gaps }} in the prior period, {{ doc.prior_period.totals.current.gaps }} in this period.</p>
+    {% if doc.prior_period.changes %}<table><thead><tr><th>Requirement</th><th>Prior outcome</th><th>Current outcome</th><th>Change</th></tr></thead><tbody>{% for change in doc.prior_period.changes %}<tr><td>{{ change.framework_name }}: {{ change.requirement_id }} - {{ change.requirement_title }}</td><td>{{ change.prior_outcome_label or 'Not assessed' }}</td><td>{{ change.current_outcome_label or 'Not assessed' }}</td><td>{{ change.direction_label }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No requirement outcome changed between the two periods.</p>{% endif %}
+    {% else %}{% for note in doc.prior_period.notes %}<p class="empty">{{ note }}</p>{% endfor %}{% endif %}
+  </section>
 
   <section data-section="sign-off">
     <h2>Sign-off</h2>
@@ -140,5 +165,17 @@
     <h2>Appendix C: Evidence register</h2>
     {% if doc.appendices.evidence_register %}<table><thead><tr><th>File</th><th>Version</th><th>Added</th><th>Status</th><th>SHA-256</th><th>Cited</th></tr></thead><tbody>{% for row in doc.appendices.evidence_register %}<tr><td>{{ row.filename }}</td><td>v{{ row.version_number }}</td><td>{{ row.added_on|display_date if row.added_on else 'Not recorded' }}</td><td>{{ row.status }}</td><td>{{ row.sha256_prefix }}</td><td>{{ 'Yes' if row.cited else 'No' }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No evidence documents are recorded for this assessment.</p>{% endif %}
   </section>
+
+  {% if doc.soa %}
+  <section data-section="soa">
+    <h2>Appendix D: Statement of Applicability</h2>
+    <p>{{ doc.soa.intro }}</p>
+    <p class="small">{{ doc.soa.reliance }}</p>
+    {% for note in doc.soa.notes %}<p class="small">{{ note }}</p>{% endfor %}
+    <table><thead><tr><th>Control</th><th>Theme</th><th>Applicability</th><th>Implementation</th><th>Justification</th></tr></thead><tbody>
+      {% for row in doc.soa.rows %}<tr data-soa-control="{{ row.control_id }}"><td>{{ row.reference }} {{ row.title }}</td><td>{{ row.theme }}</td><td>{{ row.applicability_label }}</td><td>{{ row.implementation_label }}</td><td>{% if row.justification %}{{ row.justification }}{% else %}<span class="muted">Justification not recorded</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
 </body>
 </html>

@@ -464,6 +464,14 @@ P6_8_B1_FILES = (
     "tests/golden/p6_8_board_document.json", "tests/test_p5_6_rfi_rebuild.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_report_snapshots.py",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-2b;
+# tests/test_p6_9_file_set.py guards its file set.
+P6_9_FILES = (
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    "tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md", "tests/p6_9_support.py",
+    "tests/test_p6_9_", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-2b: the injected-document
 # pack and quarantine, and the aggregate-only A/B comparison; its contract tests guard them.
 P6_5_FILES = (
@@ -477,6 +485,14 @@ P6_5_FILES = (
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
 )
+# P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-2b;
+# tests/test_p6_7b_add_to_rfi.py guards its app file set.
+P6_7B_FILES = (
+    "tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md", "tests/test_p6_7b_add_to_rfi.py",
+    "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
+    "app/services/requirement_card.py", "app/routers/requirement_review.py",
+    "app/templates/components/requirement_card_body.html", "app/templates/pages/rfi.html",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -484,6 +500,9 @@ def test_scenario_11_only_p6_2b_files_change():
         ["git", "diff", "--name-only", "main...HEAD"],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
-    offenders = [f for f in committed if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
-                and not f.startswith(P6_5_FILES)]
+    offenders = [
+        f for f in committed
+        if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
+        and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
+    ]
     assert offenders == [], offenders
