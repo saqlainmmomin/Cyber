@@ -117,6 +117,25 @@ def _count(value) -> int:
     return 0
 
 
+def _has_missing_conclusions(score: dict) -> bool:
+    return (
+        any(
+            requirement.get("outcome") == "missing"
+            for gap in score.get("gap_results", [])
+            for requirement in gap.get("requirements", [])
+        )
+        or any(
+            requirement.get("outcome") == "missing"
+            for decoy in score.get("decoy_results", [])
+            for requirement in decoy.get("requirements", [])
+        )
+        or any(
+            clean.get("outcome") == "missing"
+            for clean in score.get("clean_control_results", [])
+        )
+    )
+
+
 def _framework_bucket(requirements: list[dict]) -> str | None:
     framework_ids = {item.get("framework_id") for item in requirements if item.get("framework_id")}
     if not framework_ids:
@@ -308,6 +327,7 @@ def _arm_record(name: str, root: Path, declared: str | None, source_for, expecte
     missing_conclusions = sum(
         not (record["dir"] / "conclusions.json").is_file()
         or not record["score"].get("coverage", {}).get("conclusions_count", 0)
+        or _has_missing_conclusions(record["score"])
         for record in records
     )
     defects = {
@@ -316,13 +336,16 @@ def _arm_record(name: str, root: Path, declared: str | None, source_for, expecte
         "missing_conclusions": missing_conclusions,
     }
     pack_mismatch = False
-    if pipeline == "v2" and first_settings is not None:
-        for record in records:
-            settings = record["meta"].get("settings", {})
-            packs = settings.get("pack_versions")
-            if not isinstance(packs, dict) or not packs or any(expected_packs.get(fid) != version for fid, version in packs.items()):
-                pack_mismatch = True
-                break
+    if pipeline == "v2":
+        if first_settings is None:
+            pack_mismatch = True
+        else:
+            for record in records:
+                settings = record["meta"].get("settings", {})
+                packs = settings.get("pack_versions")
+                if not isinstance(packs, dict) or not packs or any(expected_packs.get(fid) != version for fid, version in packs.items()):
+                    pack_mismatch = True
+                    break
     return {
         "path": str(root),
         "pipeline": pipeline,
