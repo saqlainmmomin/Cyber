@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.config import settings
@@ -15,6 +15,7 @@ from app.frameworks.registry import FrameworkRegistry
 from app.services import llm_client
 from app.services.document_categories import document_categories
 from app.services.grounding.claims import ClaimSet
+from app.services.grounding import injection
 from app.services.grounding import judge_prompts
 from app.services.parallel import run_bounded
 
@@ -31,6 +32,7 @@ JUDGE_FLAGS = (
     "retried",
     "analysis_incomplete",
     "framework_divergence",
+    "suspected_instruction",
 )
 RISK_LEVELS = ("low", "medium", "high", "critical")
 PRIORITY_BY_RISK = {"critical": 1, "high": 2, "medium": 3, "low": 4}
@@ -185,10 +187,21 @@ def _context(
     responses: Sequence[dict],
     source_by_id: dict[str, dict],
     scope: set[str] | None,
+    source_texts: Mapping[str, str] | None,
+    quarantine: dict[str, tuple[str, ...]],
 ) -> dict:
     criteria_source, criteria = criteria_for(control)
     claims = claim_set.claims_for_requirement(control.id) if claim_set is not None else ()
-    shown = claims[: settings.v2_judge_max_claims_per_requirement]
+    quarantined_claim_ids = []
+    safe_claims = []
+    for claim in claims:
+        markers = injection.claim_markers(claim, source_texts)
+        if markers:
+            quarantined_claim_ids.append(claim.claim_id)
+            quarantine.setdefault(claim.claim_id, markers)
+        else:
+            safe_claims.append(claim)
+    shown = tuple(safe_claims[: settings.v2_judge_max_claims_per_requirement])
     response_map = _response_map(responses, framework_id, {control.id})
     response_value = response_map.get(control.id)
     response = None
@@ -208,7 +221,8 @@ def _context(
         "all_claims": claims,
         "shown_claims": tuple(_claim_prompt_value(claim, source_by_id) for claim in shown),
         "shown_claim_objects": tuple(shown),
-        "claims_available": len(claims),
+        "claims_available": len(safe_claims),
+        "quarantined_claim_ids": tuple(quarantined_claim_ids),
         "response": response,
         "scope_excluded": scope is not None and control.id not in scope,
     }
@@ -266,6 +280,9 @@ def _finish_record(record: dict, context: dict, flag_set: set[str]) -> dict:
     outcome = record["conclusion_outcome"]
     record["risk_level"] = deterministic_risk(context["control"].criticality, outcome)
     record["priority"] = priority_for_risk(record["risk_level"])
+    record["quarantined_claim_ids"] = list(context["quarantined_claim_ids"])
+    if record["quarantined_claim_ids"]:
+        flag_set.add("suspected_instruction")
     record["flags"] = _flags(flag_set)
     return record
 
@@ -657,6 +674,11 @@ def _empty_metrics(framework, contexts: Sequence[dict]) -> dict:
         "analysis_incomplete": 0,
         "downgraded_compliant": 0,
         "dropped_claim_ids": 0,
+        "quarantined_claims": len({
+            claim_id
+            for context in contexts
+            for claim_id in context["quarantined_claim_ids"]
+        }),
         "unsupported_assertions": 0,
         "applicability_proposed": 0,
         "unknown_requirement_ids": 0,
@@ -712,6 +734,7 @@ class JudgmentSet:
     prompt_version: str
     prompt_fingerprint: str
     claim_set_id: str | None
+    quarantined: dict = field(default_factory=dict)
 
 
 def run_stage_2(
@@ -721,6 +744,7 @@ def run_stage_2(
     *,
     applicable_requirements: Sequence[str] | None = None,
     max_workers: int | None = None,
+    source_texts: Mapping[str, str] | None = None,
 ) -> JudgmentSet:
     framework_ids = tuple(framework_ids)
     source_by_id = {
@@ -737,6 +761,7 @@ def run_stage_2(
     sent_units: list[_Unit] = []
     metrics_by_framework: dict[str, dict] = {}
     failed_frameworks: dict[str, str] = {}
+    quarantine: dict[str, tuple[str, ...]] = {}
 
     for framework_id in framework_ids:
         framework = FrameworkRegistry.get(framework_id)
@@ -749,6 +774,8 @@ def run_stage_2(
                 responses,
                 source_by_id,
                 scope,
+                source_texts,
+                quarantine,
             )
             for control in controls
         }
@@ -944,4 +971,5 @@ def run_stage_2(
         prompt_version=judge_prompts.JUDGE_PROMPT_VERSION,
         prompt_fingerprint=judge_prompts.judge_prompt_fingerprint(),
         claim_set_id=claim_set.claim_set_id if claim_set is not None else None,
+        quarantined=quarantine,
     )
