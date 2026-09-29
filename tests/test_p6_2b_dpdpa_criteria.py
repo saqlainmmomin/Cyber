@@ -426,7 +426,7 @@ P6_2B_ALLOWED_FILES = {
     "scripts/convert_criteria.py",
     "app/frameworks/criteria/dpdpa.py",
     "tasks/criteria-review/signed/iso27001-criteria-v1.csv", "tasks/criteria-review/signed/nist-csf-criteria-v1.csv",
-    "tests/test_p6_2c_iso_nist_criteria.py", "tests/test_p6_2e_iso_nist_criteria.py",
+    "tests/test_p6_2c_iso_nist_criteria.py", "tests/test_p6_2e_iso_nist_criteria.py", "tests/test_p5_3_framework_desk_review.py",
     "app/frameworks/criteria/__init__.py",
     "app/frameworks/criteria/iso27001.py",
     "app/frameworks/criteria/nist_csf.py",
