@@ -1675,6 +1675,8 @@ PROTECTED_PATHS = [
     ":(exclude)app/routers/drafting.py",
     ":(exclude)app/templates/pages/narrative.html",
     ":(exclude)app/templates/partials/remediation_draft.html",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

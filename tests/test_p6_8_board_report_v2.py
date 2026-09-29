@@ -1065,6 +1065,8 @@ P6_8_FORBIDDEN_PATHS = (
     # P6-10: the recommended-action draft control in the conclusion card and its partial.
     ":(exclude)app/templates/components/conclusion_card.html",
     ":(exclude)app/templates/partials/remediation_draft.html",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
