@@ -52,11 +52,52 @@
     </section>
     {% endif %}
 
-    {% if requirement.missing_evidence %}
+    {% if requirement.missing_evidence or requirement.other_rfi_requests %}
     <section>
       <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Missing evidence</h4>
       {% if requirement.missing_evidence_label %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.missing_evidence_label }}</p>{% endif %}
-      <ul class="mt-2 space-y-2 text-sm">{% for request in requirement.missing_evidence %}<li data-missing-evidence="{{ request.document_type }}"><span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}</li>{% endfor %}</ul>
+      {% if requirement.missing_evidence %}
+      <ul class="mt-2 space-y-2 text-sm">
+        {% for request in requirement.missing_evidence %}
+        {% if requirement.source == "v2" %}
+        <li data-missing-evidence="{{ request.document_type }}" data-rfi-request-key="{{ request.request_key }}" data-rfi-state="{{ request.rfi_state }}">
+          <span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}
+          {% if request.rfi_state == "available" %}
+          <p data-rfi-request-preview class="mt-1 text-gray-600 dark:text-gray-300">{{ request.request_text }}</p>
+          <form data-rfi-add-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+            <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-light">Add to draft RFI</button>
+          </form>
+          {% else %}
+          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ request.rfi_status_label }}</p>
+          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+          </form>
+          {% endif %}
+        </li>
+        {% else %}
+        <li data-missing-evidence="{{ request.document_type }}"><span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}</li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if requirement.other_rfi_requests %}
+      <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Also on the draft RFI for this conclusion</p>
+      <ul class="mt-2 space-y-2 text-sm">
+        {% for state in requirement.other_rfi_requests %}
+        {% set request = state.request %}
+        <li data-rfi-request="{{ request.request_key }}" data-rfi-state="{{ state.state }}">
+          <span class="font-medium">{{ request.title }}:</span> {{ request.request }}
+          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ state.status_label }}</p>
+          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">Approved insufficient-evidence conclusions are added to the next RFI version.</p>
       <a class="mt-1 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline" href="/assessments/{{ assessment.id }}/rfi">Open the RFI page →</a>
     </section>

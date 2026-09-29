@@ -365,7 +365,12 @@ def _changed(*args: str) -> set[str]:
              # guarded by tests/test_p6_5_injection_pack.py.
              ":(exclude)app/services/grounding/injection.py",
              ":(exclude)app/services/grounding/judge.py",
-             ":(exclude)app/services/analysis_v2.py"],
+             ":(exclude)app/services/analysis_v2.py",
+             # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI from the
+             # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
+             ":(exclude)app/services/rfi_evidence_requests.py",
+             ":(exclude)app/services/rfi_requests.py",
+             ":(exclude)app/templates/pages/rfi.html"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )
