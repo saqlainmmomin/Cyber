@@ -471,6 +471,8 @@ P6_5_FILES = (
     "scripts/injection_pack_live.py", "scripts/validation/ab_compare.py", "scripts/validation/run_company.py",
     "scripts/validation/score.py", "tests/injection_pack/", "tests/test_p6_5_injection_pack.py",
     "tests/test_p6_5_ab_compare.py", "tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md", "tasks/todo.md",
+    # P6-5b: orchestrator-requested extra tests (sibling-folder trap, baseline provenance).
+    "tests/test_p6_5_ab_compare_extra.py",
     "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_whats_missing.py",
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
