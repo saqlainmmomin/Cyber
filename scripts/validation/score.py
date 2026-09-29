@@ -16,7 +16,7 @@ DISTANCE = {
     "non_compliant": {
         "non_compliant": 1.0,
         "partially_compliant": 0.5,
-        "insufficient_evidence": 0.3,
+        "insufficient_evidence": 1.0,
         "compliant": 0.0,
         "not_applicable": 0.0,
         "missing": 0.0,
@@ -30,7 +30,7 @@ DISTANCE = {
         "missing": 0.0,
     },
 }
-NEGATIVE = {"non_compliant", "partially_compliant"}
+NEGATIVE = {"non_compliant", "partially_compliant", "insufficient_evidence"}
 
 
 def _read(path: Path, default):
@@ -201,7 +201,7 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
                 llm_rows.append(json.loads(line))
             except json.JSONDecodeError:
                 continue
-    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "non_ok": 0})
+    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "non_ok": 0, "length": 0})
     for row in llm_rows:
         target = costs[f"{row.get('tier', 'unknown')} / {row.get('model', 'unknown')}"]
         target["calls"] += 1
@@ -209,6 +209,8 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
             target[field] += int(row.get(field) or 0)
         if row.get("status") not in (None, "ok"):
             target["non_ok"] += 1
+        if row.get("finish_reason") == "length":
+            target["length"] += 1
     stages = _read(run_dir / "stages.json", [])
     score = {
         "slug": slug,
