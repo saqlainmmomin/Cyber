@@ -1034,6 +1034,8 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 )
 
 
