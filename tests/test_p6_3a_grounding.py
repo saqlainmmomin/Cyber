@@ -1666,6 +1666,9 @@ PROTECTED_PATHS = [
     # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
     ":(exclude)app/routers/soa.py",
     ":(exclude)app/templates/pages/soa.html",
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): the RFI page lists the
+    # requests added from requirement cards; tests/test_p6_7b_add_to_rfi.py guards it.
+    ":(exclude)app/templates/pages/rfi.html",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 ]
@@ -1695,6 +1698,9 @@ def test_scenario_17_protected_files_unchanged():
         # aggregation and report.py's per-run cost line.
         ":(exclude)scripts/validation/score.py",
         ":(exclude)scripts/validation/report.py",
+        # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): the aggregate-only
+        # A/B comparison is a new harness module; tests/test_p6_5_ab_compare.py guards it.
+        ":(exclude)scripts/validation/ab_compare.py",
     ]
     committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
     uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)

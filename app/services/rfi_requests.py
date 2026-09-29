@@ -18,10 +18,17 @@ from app.models.evidence import Evidence, EvidenceUse
 from app.models.magic_link import MagicLink
 from app.models.report import GapReport
 from app.models.report_snapshot import ReportSnapshot
-from app.services import approved_report, magic_links, report_snapshots, scope_profiler
+from app.services import (
+    approved_report,
+    magic_links,
+    report_snapshots,
+    rfi_evidence_requests,
+    scope_profiler,
+)
 from app.utils import rfi_export
 
 RFI_DOCUMENT_SCHEMA_VERSION = 1
+RFI_REQUESTS_SCHEMA_VERSION = 2
 RFI_ITEM_ID_FORMAT = "RFI-{n:03d}"
 RFI_DOCUMENTS_GROUP = "Documents requested"
 RFI_DOCUMENT_STATUS = "Document requested for this assessment"
@@ -146,7 +153,7 @@ def current_source(db: Session, assessment: Assessment) -> dict:
         separators=(",", ":"),
     ).encode("utf-8")
     rows = included_rows(db, assessment)
-    return {
+    source = {
         "schema_version": RFI_DOCUMENT_SCHEMA_VERSION,
         "framework_ids": list(assessment.frameworks),
         "checklist_sha256": hashlib.sha256(checklist_bytes).hexdigest(),
@@ -155,6 +162,13 @@ def current_source(db: Session, assessment: Assessment) -> dict:
             for row in sorted(rows, key=lambda item: item.conclusion_id)
         ],
     }
+    requests = rfi_evidence_requests.active_requests(db, assessment.id)
+    if requests:
+        source["schema_version"] = RFI_REQUESTS_SCHEMA_VERSION
+        source["evidence_requests"] = sorted(
+            [[request.conclusion_id, request.request_key] for request in requests]
+        )
+    return source
 
 
 def build_rfi_document(
@@ -210,10 +224,27 @@ def build_rfi_document(
         )
         next_number += 1
 
+    evidence_requests = rfi_evidence_requests.active_requests(db, assessment.id)
+    for item in rfi_evidence_requests.rfi_items(evidence_requests):
+        item["item_id"] = RFI_ITEM_ID_FORMAT.format(n=next_number)
+        items.append(item)
+        next_number += 1
+
     documents = sum(item["kind"] == "document" for item in items)
-    requirements = len(items) - documents
+    requirements = sum(item["kind"] == "requirement" for item in items)
+    source = current_source(db, assessment)
+    totals = {
+        "items": len(items),
+        "documents": documents,
+        "requirements": requirements,
+        "required": sum(item["required"] for item in items),
+    }
+    if evidence_requests:
+        totals["evidence_requests"] = len(
+            [item for item in items if item["kind"] == rfi_evidence_requests.ITEM_KIND]
+        )
     return {
-        "schema_version": RFI_DOCUMENT_SCHEMA_VERSION,
+        "schema_version": source["schema_version"],
         "assessment_id": assessment.id,
         "company_name": assessment.company_name,
         "framework_ids": list(assessment.frameworks),
@@ -226,13 +257,8 @@ def build_rfi_document(
         "response_instructions": RFI_RESPONSE_INSTRUCTIONS,
         "omitted_document_types": omitted_document_types,
         "items": items,
-        "totals": {
-            "items": len(items),
-            "documents": documents,
-            "requirements": requirements,
-            "required": sum(item["required"] for item in items),
-        },
-        "source": current_source(db, assessment),
+        "totals": totals,
+        "source": source,
     }
 
 
@@ -258,13 +284,17 @@ def render_items(document: dict) -> list[dict]:
             "deadline_weeks": DEADLINE_WEEKS[priority],
             "chapter": item["group"],
         }
-        if item["kind"] == "document":
+        if item["kind"] in ("document", rfi_evidence_requests.ITEM_KIND):
             rendered.append(
                 base
                 | {
                     "requirement_id": "",
                     "section_ref": "",
-                    "current_status": RFI_DOCUMENT_STATUS,
+                    "current_status": (
+                        rfi_evidence_requests.RFI_EVIDENCE_REQUEST_STATUS
+                        if item["kind"] == rfi_evidence_requests.ITEM_KIND
+                        else RFI_DOCUMENT_STATUS
+                    ),
                     "requirements": ids,
                 }
             )
@@ -497,6 +527,7 @@ def _link_rows(
 def page_context(db: Session, assessment: Assessment) -> dict:
     scope_recorded = assessment.scope_answers is not None
     preview = build_rfi_document(db, assessment) if scope_recorded else None
+    evidence_requests = rfi_evidence_requests.active_requests(db, assessment.id)
     mapped_hints: dict[str, tuple[int, int]] = {}
     if preview is not None:
         mapped_keys = {
@@ -596,6 +627,8 @@ def page_context(db: Session, assessment: Assessment) -> dict:
         "assessment": assessment,
         "scope_recorded": scope_recorded,
         "preview": preview,
+        "evidence_requests": evidence_requests,
+        "evidence_requests_note": rfi_evidence_requests.RFI_PAGE_REQUESTS_NOTE,
         "mapped_hints": mapped_hints,
         "versions": versions,
         "current_issue": current_issue,
