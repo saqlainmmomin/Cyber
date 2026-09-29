@@ -450,6 +450,10 @@ P6_2B_ALLOWED_FILES = {
     "scripts/validation/run_company.py",
     "tests/test_validation_harness.py",
     "tests/test_p6_6_report_foundations.py",
+    # Stage C v1 baseline results and c4's CSF 2.0 answers (2026-09-29) land after P6-2b.
+    "tasks/handoffs/2026-09-28-next-phase-6-kickoff.md",
+    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    "tests/test_p6_8_board_report_v2.py",
 }
 # P6-8 B1 (PR #80) lands after P6-2b; tests/test_p6_8_board_report_v2.py guards its file set.
 P6_8_B1_FILES = (

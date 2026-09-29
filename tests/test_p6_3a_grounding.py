@@ -1665,6 +1665,8 @@ PROTECTED_PATHS = [
     # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): the RFI page lists the
     # requests added from requirement cards; tests/test_p6_7b_add_to_rfi.py guards it.
     ":(exclude)app/templates/pages/rfi.html",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
