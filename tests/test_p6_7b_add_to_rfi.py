@@ -811,6 +811,14 @@ P6_7B_FORBIDDEN = (
     "app/templates/partials/rfi_links.html", "app/frameworks", "app/dpdpa", "app/config.py", "app/main.py",
     "requirements.txt", ".github", "Dockerfile", "scripts", "validation",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-7b and
+# legitimately touches these; tests/test_p6_9_file_set.py guards its file set.
+P6_9_APP_FILES = {
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    "app/services/board_report.py", "app/templates/reports/board_report.html",
+    "app/templates/pages/report_snapshots.html",
+}
 
 
 def _changed(*args: str) -> set[str]:
@@ -821,7 +829,9 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     changed = _changed("main...HEAD") | _changed("HEAD") | set(
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
+    changed -= P6_9_APP_FILES
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
-    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN).split()
-    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN).split()
+    p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES)]
+    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
+    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     assert forbidden == []
