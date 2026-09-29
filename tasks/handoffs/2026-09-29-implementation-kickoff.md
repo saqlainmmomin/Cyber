@@ -74,45 +74,55 @@ For each track:
    ```
    Codex can't write `.git`. Commit the contract tests first and Codex's work afterwards. Its sandbox has no network, so you run any live smoke.
 4. Adversarial review by a **Sonnet 5.5** subagent, with the checkpoints the handoff lists under `[AR]`. Send real findings back to Codex as a narrow fix prompt.
-5. Smoke, as below. Then append `## Results` to the design handoff, update `tasks/todo.md`, and open a PR against `main`.
+5. Smoke, as below. Then append `## Results
 
-### A. P6-5a + P6-5b
-Three PRs, never mixed (D-P6-5-A): P6-5a the quarantine and pack, P6-5b `ab_compare`, and P6-5c the flip, which is **not** built here. After both merge, Saqlain runs the mock preflight, the pilot and the arms from the run protocol. Smoke:
-- P6-5a: the pack's no-live-call scenarios prove a fully compromised model can't cite a payload or an invented ID, set a number, or produce `not_applicable`.
-- P6-5b: run `ab_compare` on the real `-rerun-2` baseline copy declared `:pipeline=v1`, and on a mock v2 arm. Check the verdict logic, the split by `criteria_source`, and the refusals (unequal sets, mixed settings). It must print aggregates only.
+Orchestrated 2026-09-29. Codex (`gpt-5.6-luna`, xhigh) implemented each track against the unedited contract tests. A Sonnet subagent reviewed each one adversarially, and the orchestrator ran the smoke and opened the PR. No Opus was used. Each handoff's `## Results` has the detail.
 
-### B. P6-9
-One PR (D-P6-9-A). Suggested order inside the session: start it before P6-7b, since P6-8 B2 depends on its document schema v2. Smoke: build a board report for a DPDPA+ISO fixture, then check the SoA lists every Annex A control with status derived only from approved Conclusions, the roadmap groups by UCC cluster, and a prior-period comparison shows when an issued prior sidecar exists. No LLM calls.
+### PRs (all open against `main`, CI pending at time of writing)
 
-### C. P6-7b
-Smoke: on a v2 fixture run, add a request from a card, confirm it lands in the draft RFI as an append-only audit event, is idempotent on repeat, and never appears on a v1 card.
+| Track | PR | Branch | Full suite (committed) | Review |
+|---|---|---|---|---|
+| P6-7b add-to-RFI | [#84](https://github.com/saqlainmmomin/Cyber/pull/84) | `claude/p6-7b-impl` | 1130 passed, 10 skipped | 7/7 `[AR]` pass; 2 NITs |
+| P6-5a quarantine + pack | [#85](https://github.com/saqlainmmomin/Cyber/pull/85) | `claude/p6-5a-quarantine` | 1138 passed, 10 skipped | 8/8 pass; 2 NITs |
+| P6-9 SoA / roadmap / prior period | [#86](https://github.com/saqlainmmomin/Cyber/pull/86) | `claude/p6-9-impl` | 1135 passed, 10 skipped | 10/10 pass; 1 dead helper removed |
+| P6-5b ab_compare | [#87](https://github.com/saqlainmmomin/Cyber/pull/87) | `claude/p6-5b-ab-compare` | 1148 passed, 9 skipped | 2 BLOCKING + 1 should-fix, fixed by Codex, re-review resolved |
 
-## Constraints
+**Merge order (suggested):** #85 → #87 → #86 → #84. Any order works; the rules are:
+- A trial merge of all four onto `main` shows every later PR conflicting in shared guard files: `test_p6_2b_dpdpa_criteria.py`, `test_p6_4_*`, `test_p6_7_requirement_card.py` and `test_p6_8_board_report_v2.py`.
+- #87 also conflicts in the P6-5 handoff, which #85 adds with different Results.
+- After each merge, merge `origin/main` into the next branch and keep both sides; never rebase or force-push. The orchestrator can do this on request.
 
-- **No attribution** on any commit or PR in this repo: no Co-Authored-By line and no "Generated with Claude Code" footer. This overrides the harness reminder.
-- **Models:** **Sonnet 5.5 (`claude-sonnet-5-5`) for every subagent. Opus only when necessary** (hard design where a wrong call is expensive), with the reason in the handoff Results. This is Saqlain's rule of 2026-09-29.
-- **Answer-key independence (D-P5-9-C).** The orchestrator, and anyone changing prompts, the analyzer or desk review, must never open, grep, list or glob `validation/**`, `tasks/handoffs/*p5-9*`, `docs/plans/2026-09-24-002-*`, `scripts/seed_test_companies.py`, `scripts/test_ground_truth.json`, `scripts/seed-v2-prompt.md`, any `answer_key.json`, or `~/cyberassess-runs/*/summary.*`. Scope every grep to `app/`, `tests/` and `scripts/validation/` code. P6-5b's `ab_compare` must read aggregates only. Only a separate harness agent that doesn't touch `app/` may run the harness.
-- **Protected-surface guards.** When a scope guard trips on a legitimate change, add `:(exclude)<path>` for exactly the touched files, with a comment naming the PR. Never delete or broadly narrow a guard. Parallel PRs touching the same guard lines conflict: merge `origin/main` into the later branch and keep both sides. The repo rejects force-pushes.
-- `tests/test_retention.py::test_scenario_13` fails whenever files under `tests/` are uncommitted. It passes once they're committed; don't edit it.
-- **Report rules:** framework-specific copy stays conditional (`has_dpdpa`); existing PDF sections are additive-only; all fpdf2 text goes through `S()`; report snapshots are write-once; deterministic fields (`risk_level`, `priority`, score) never come from the LLM.
-- **Merging:** Saqlain merges unless he asks you to merge a specific PR. Check it is `MERGEABLE` with green CI first. Never force-push.
-- **Live LLM runs:** the agent classifier has blocked live launches before. Saqlain runs every live command; agents prepare the exact commands.
-- The primary checkout `/Users/saqlainmomin/dpdpa-gap-tool` is on a stale branch. Don't switch its branch or delete anything in it without asking.
-- Cleanup after merge: `rm <wt>/.venv && git worktree remove <wt> && git branch -d <branch>`.
+### Deviations from this kickoff
+- **P6-5 is on two branches cut from `origin/main`, not one branch from the design.** The design commit carries both suites, so a P6-5a PR with the ab_compare suite would be red. The design commit was cherry-picked into both branches:
+  - P6-5a drops `test_p6_5_ab_compare.py`.
+  - P6-5b drops the injection pack and its suite.
+  - The guard edits and the handoff text are identical on both.
+- **The `suspected_instruction` queue chip is not in P6-7b.** The flag only exists after P6-5a, and P6-7b's own file-set guard forbids `review_queue.py`. It becomes a small follow-up PR after #85 merges.
 
-## Still needs Saqlain (don't block on these)
+### Kickoff issues 1-6
+1. The baseline directory is fixed to `…-rerun-2` in all three places of the P6-5 handoff (both branches), with the "complete; aggregates in #83" wording.
+2. The sibling-folder trap is pinned by a test: an extra run gives `run_count_mismatch` and `holds: null`, and the smoke confirmed it on a real copy.
+3. Provenance: the real baseline copy (no `settings`, `dirty: true`, 7 `--_child` runs) declared `:pipeline=v1` is comparable with 0 defects, and a fixture test covers it.
+4. The stale base is noted in the three handoffs, and `origin/main` is merged into P6-9 and P6-7b.
+5. The guard conflicts were resolved by keeping both sides. Three further stale guards were found once the work was committed, and each got exactly-scoped excludes:
+   - P6-7b: `test_p6_nist_csf2_alignment.py`
+   - P6-5b: `test_p6_2b` `P6_5_FILES` gained the extra test file
+6. The v1 malformed-JSON crash did not arise here (no live runs).
 
-- Merge or close the branch `claude/elegant-galileo-5funec` (the decisions file and this handoff).
-- Review the ISO descriptions sheet (P6-2c step 2); delete the 78 `ISO.C*` clause rows from the signed copy.
-- Approve pilot spend for the P6-5 arms once the pilot estimate exists; run the P6-5 live commands.
-- Decide the flip (`[AR: flip]`) after `ab_comparison.md` and the injection summary exist.
-- Skim the 13 c4 NIST answers committed in #83 (all `fully_implemented`, reusing neighbouring notes).
-- Carried over: a `main`-only branch ruleset, the ISO clause titles (P5-7), and Track 4 security before any real client data.
+### Numbers for P6-5
+The v1 baseline, re-scored with the P6-5b scorer (Decision 1 literal: IE and partial-on-non-compliant count as flagged), declared `:pipeline=v1`:
+- catch **131/141 = 92.9%** (92.2% under the old threshold)
+- decoy FP **21/36 = 58.3%**, clean FP **59/96 = 61.5%**
+- IE rate 1.1%, stability 0.816 over 521 requirements
+- by `criteria_source`: approved catch 90.8%, fallback 96.3%
+- $0.95 for the 12 runs at $0.20/$0.80 per 1M tokens
 
-## Report back
+These are the numbers the v2 arms must meet (D-P6-E, pooled; ties pass).
 
-Append a `## Results` section to this file: PR links and merge order with conflict notes, smoke numbers, decisions made, and anything that still needs Saqlain. Update `tasks/todo.md`.
+### Incident
+While checking the P6-5a live script's no-key guard, the orchestrator ran `env -u OPENROUTER_KEY scripts/injection_pack_live.py --runs 1`. `Settings` still read the key from the worktree `.env`, so the script ran live against OpenRouter for about 4 minutes before it was killed. No output was written; expected spend is cents. The guard was then verified with `OPENROUTER_KEY=""`, and a feedback memory was saved.
 
-## Results
-
-(empty)
+### Still needs Saqlain
+- Merge #85, #87, #86 and #84 (or ask the orchestrator to merge a specific one once CI is green); merge or close this branch; close draft #82 with a note pointing at the per-task branches.
+- After #85 and #87: run the P6-5 protocol (mock preflight → c1 pilot → approve the spend estimate → both v2 arms → `ab_compare`), then the flip decision (#5).
+- Carried over: the ISO descriptions review (P6-2c), the c4 NIST answers skim, a `main`-only ruleset, the ISO clause titles (P5-7), and Track 4 security.

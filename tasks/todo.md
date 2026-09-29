@@ -105,6 +105,11 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] **Harness: add `status`/`finish_reason` to `llm_usage.jsonl`** (PR #72, merged) so a `parse_error` call is visible in harness output (harness agent only; independence rule).
 - [x] **Flaky `test_p5_6_rfi_rebuild.py::test_scenario_10`**: root cause was not a shared resource but wall-clock zip timestamps — python-docx stamps each DOCX member with the current second, so two downloads of one frozen RFI version differed when they straddled a second (likelier under load). `generate_rfi_docx` now pins entry timestamps to `generated_at`; regression test `tests/test_rfi_docx_determinism.py`. PR on `claude/p6-cleanup`.
 - [x] **2026-09-29: open items in the six Phase 6 design handoffs answered by Saqlain** (P6-5, P6-7b, P6-8 B1/B2, P6-9, P6-10, P6-2c) and the subagent model rule (Sonnet 5.5 default, Opus only when necessary). Recorded in `tasks/handoffs/2026-09-29-open-item-decisions.md`. Pending: record the Stage C v1 re-run aggregates when its PR lands; P6-5 flip decision #5.
+- [ ] **2026-09-29: Phase 6 implementation round (P6-5a, P6-5b, P6-9, P6-7b), all PRs open, awaiting Saqlain's merge.** Codex implemented; Sonnet reviewed; orchestrator smoke-tested. Results: `tasks/handoffs/2026-09-29-implementation-kickoff.md#results`.
+  - P6-5a quarantine + pack: PR #85 (1138 passed). P6-5b ab_compare: PR #87 (1148 passed; v1 baseline under the pre-registered scorer: catch 92.9%, decoy FP 58.3%, clean FP 61.5%).
+  - P6-9 SoA/roadmap/prior period: PR #86 (1135 passed). P6-7b add-to-RFI: PR #84 (1130 passed).
+  - After each merge, merge `origin/main` into the remaining branches (shared guard files conflict; keep both sides).
+  - Then: the P6-5 run protocol (Saqlain), the `suspected_instruction` queue chip follow-up (after P6-5a), P6-8 B2 and P6-10 (after P6-9), the DPDPA penalty line (after P6-7b).
 
 ## Source of truth
 
