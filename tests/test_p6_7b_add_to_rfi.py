@@ -823,6 +823,10 @@ P6_9_APP_FILES = {
 }
 
 
+# LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+LLM_DEADLINE_FILES = {"app/config.py", "app/services/llm_client.py"}
+
+
 def _changed(*args: str) -> set[str]:
     return set(_git("diff", "--name-only", *args, "--", "app").split())
 
@@ -833,11 +837,13 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     )
     changed -= P6_9_APP_FILES
     changed -= P6_2E_APP_FILES
+    changed -= LLM_DEADLINE_FILES
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
     p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.
     p6_9 += [f":(exclude)scripts/validation/{name}" for name in ("run_company.py", "ab_compare.py", "score.py")]
     p6_9 += [":(exclude)scripts/convert_criteria.py"]  # P6-2e
+    p6_9 += [f":(exclude){path}" for path in sorted(LLM_DEADLINE_FILES)]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     assert forbidden == []

@@ -860,6 +860,8 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
         # guarded by tests/test_p6_5_injection_pack.py.
         ":(exclude)app/services/grounding/judge.py",
         ":(exclude)app/services/analysis_v2.py",
+        # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+        ":(exclude)app/services/llm_client.py",
     )
     assert diff == ""
     from app.services.grounding import judge_prompts, prompts
@@ -935,6 +937,7 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
     committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
     untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
     changed = set(committed) | set(untracked)
+    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= {
         "app/config.py",
         ".env.example",
