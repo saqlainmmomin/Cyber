@@ -104,3 +104,14 @@ Extraction never sees the criteria, and the claim volume is the same in both arm
 **Honest ceiling.** 440 of 1,563 requirement-runs (28%) have no claims and will stay IE under any judge change. The gate needs clean FP to drop from 96.9% to ≤61.5%, i.e. roughly a third of clean-control runs to become compliant. The pre-#88 arm reached 46.9% with loose criteria, so it is possible in principle, but the risk is that catch falls back towards the fallback arm's 82.3%.
 
 **Process note.** While learning the `score.json` layout I printed one line of `clean_control_results` and one of `decoy_results`, which showed three requirement IDs with their outcomes. No gap text, key facts or answer key file were read. Those IDs played no part in choosing or wording the fix, which is general and was chosen from the aggregates above.
+
+### Fix (committed on `claude/p6-5-abstention`)
+
+- `app/services/grounding/judge_prompts.py`: the one-line "Criterion results" rule is replaced by a short block that defines what evidence meets a design criterion and an operating criterion (wording above). `JUDGE_PROMPT_VERSION` `p6-4.1` → `p6-4.3` (`p6-4.2` is the unmerged strict branch, so it is skipped to keep run records unambiguous). The outcome rule, schema, `judge.py` derivation, downgrade rule and `score.py` are untouched.
+- `tests/test_p6_5_abstention_prompt.py` (new, 5 tests): the new evidence rules, the two catch guards (omission → not_met; blanket certification is not evidence), met needs claim IDs, outcome and untrusted-material rules unchanged, fingerprint tracks the template.
+- Guards: per-PR `:(exclude)`/allow entries for `judge_prompts.py` (and, in the P6-2b guard, the new test and this handoff) in `test_p6_4_cap_upload_limit`, `test_p6_4_whats_missing` (both scenario-13 tests), `test_p6_7_requirement_card`, `test_p6_7b_add_to_rfi`, `test_p6_8_board_report_v2`, `test_p6_9_file_set`, `test_p6_2b_dpdpa_criteria`. No guard deleted. Version pins in `test_p6_4_v2_judge.py` (3) and `test_p6_4_whats_missing.py` (1) moved to `p6-4.3`.
+- `test_retention` scenario 13 only checks uncommitted edits under `tests/`, so it passes once committed.
+
+### Tests
+
+`.venv/bin/pytest -q -p no:cacheprovider`: **1,210 passed, 10 skipped** (baseline 1,205 + 5 new).
