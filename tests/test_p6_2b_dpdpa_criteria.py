@@ -493,6 +493,9 @@ P6_5_FILES = (
     "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_whats_missing.py",
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
+    # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md).
+    "app/services/grounding/judge_prompts.py", "tests/test_p6_5_abstention_prompt.py",
+    "tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md",
 )
 # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-2b;
 # tests/test_p6_7b_add_to_rfi.py guards its app file set.
