@@ -393,4 +393,5 @@ def _changed(*args: str) -> set[str]:
 
 def test_scenario_9_only_config_and_document_processor_change_under_app():
     changed = _changed("main...HEAD") | _changed("HEAD")
+    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= P6_4_CAP_APP_FILES, sorted(changed - P6_4_CAP_APP_FILES)

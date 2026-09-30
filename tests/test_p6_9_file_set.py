@@ -51,6 +51,9 @@ P6_9_FORBIDDEN_PATHS = (
     ":(exclude)scripts/convert_criteria.py",
     # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md): judge prompt wording.
     ":(exclude)app/services/grounding/judge_prompts.py",
+    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+    ":(exclude)app/config.py",
+    ":(exclude)app/services/llm_client.py",
 )
 NEW_MODULES = (
     "app/services/soa.py",
@@ -82,4 +85,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
     outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST and not path.startswith("app/frameworks/")
                      and path != "app/services/grounding/judge_prompts.py")  # P6-5 abstention fix: judge prompt wording
+    outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside

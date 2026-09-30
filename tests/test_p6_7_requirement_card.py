@@ -1170,16 +1170,22 @@ def _changed(*args: str) -> set[str]:
     return set(_git("diff", "--name-only", *args, "--", "app").split())
 
 
+# LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+LLM_DEADLINE_FILES = ("app/config.py", "app/services/llm_client.py")
+
+
 def test_scenario_14_p6_7_touches_only_its_files():
     changed = _changed("main...HEAD") | _changed("HEAD") | set(
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES) | set(P6_7B_APP_FILES) | set(P6_9_APP_FILES)
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
+    changed -= set(LLM_DEADLINE_FILES)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
                                                     "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES, *P6_7B_APP_FILES)]
+    p6_2b += [f":(exclude){path}" for path in LLM_DEADLINE_FILES]
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

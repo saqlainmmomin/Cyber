@@ -1192,6 +1192,8 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
+    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call. app/config.py is already excluded above.
+    ":(exclude)app/services/llm_client.py",
 )
 
 

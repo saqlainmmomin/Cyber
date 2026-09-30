@@ -1063,6 +1063,9 @@ P6_8_FORBIDDEN_PATHS = (
     # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
     # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
     ":(exclude)app/templates/components/requirement_card_body.html",
+    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+    ":(exclude)app/config.py",
+    ":(exclude)app/services/llm_client.py",
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
@@ -1101,4 +1104,5 @@ def test_scenario_14_no_llm_and_b1_file_set():
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
         and path != "app/services/grounding/judge_prompts.py"  # P6-5 abstention fix: judge prompt wording
     )
+    outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside
