@@ -496,6 +496,7 @@ P6_5_FILES = (
     # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md).
     "app/services/grounding/judge_prompts.py", "tests/test_p6_5_abstention_prompt.py",
     "tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md",
+    "tasks/handoffs/2026-09-30-p6-5-abstention-c3-rerun.md",
 )
 # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-2b;
 # tests/test_p6_7b_add_to_rfi.py guards its app file set.
