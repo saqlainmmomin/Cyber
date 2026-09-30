@@ -49,6 +49,8 @@ P6_9_FORBIDDEN_PATHS = (
     ":(exclude)app/frameworks/definitions/iso27001.py",
     ":(exclude)app/frameworks/definitions/nist_csf.py",
     ":(exclude)scripts/convert_criteria.py",
+    # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md): judge prompt wording.
+    ":(exclude)app/services/grounding/judge_prompts.py",
 )
 NEW_MODULES = (
     "app/services/soa.py",
@@ -78,5 +80,6 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST and not path.startswith("app/frameworks/"))
+    outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST and not path.startswith("app/frameworks/")
+                     and path != "app/services/grounding/judge_prompts.py")  # P6-5 abstention fix: judge prompt wording
     assert outside == [], outside

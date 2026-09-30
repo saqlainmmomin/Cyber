@@ -465,7 +465,7 @@ def test_scenario_3_schema_is_strict_and_ordered(monkeypatch):
         for criterion in FrameworkRegistry.get("dpdpa").get_control(requirement_id).test_criteria
     ]
     assert criterion["criterion_id"]["enum"] == expected_criteria_ids
-    assert judge_prompts().JUDGE_PROMPT_VERSION == "p6-4.1"
+    assert judge_prompts().JUDGE_PROMPT_VERSION == "p6-4.3"
 
 
 # --------------------------------------------------------------------------- #
@@ -1006,7 +1006,7 @@ def test_scenario_12_results_do_not_depend_on_concurrency(monkeypatch):
     assert serial.divergences == parallel.divergences
     assert serial.metrics == parallel.metrics
     assert serial.claim_set_id == claim_set.claim_set_id
-    assert serial.prompt_version == "p6-4.1"
+    assert serial.prompt_version == "p6-4.3"
 
 
 # --------------------------------------------------------------------------- #
@@ -1080,7 +1080,7 @@ def test_scenario_13_v2_analysis_end_to_end(db, monkeypatch, flag_v2):
     for framework_id, run in runs.items():
         envelope = json.loads(run.claims_json)
         assert envelope["analysis_pipeline_version"] == "v2"
-        assert envelope["judge_prompt_version"] == "p6-4.1"
+        assert envelope["judge_prompt_version"] == "p6-4.3"
         assert envelope["claim_set_id"] == claim_set.claim_set_id
         assert envelope["desk_review_used"] is True
         assert len(envelope["claims"]) == FrameworkRegistry.get(framework_id).control_count()

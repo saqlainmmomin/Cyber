@@ -1155,6 +1155,8 @@ P6_5_FILES = (
     "app/services/grounding/injection.py", "app/services/grounding/judge.py",
     "app/services/analysis_v2.py", "scripts/injection_pack_live.py",
     "scripts/validation/ab_compare.py", "scripts/validation/score.py",
+    # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md): judge prompt wording.
+    "app/services/grounding/judge_prompts.py",
 )
 # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-7a and
 # legitimately touches these; tests/test_p6_7b_add_to_rfi.py guards them.

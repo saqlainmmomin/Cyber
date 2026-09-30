@@ -1058,6 +1058,8 @@ P6_8_FORBIDDEN_PATHS = (
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
+    # P6-5 abstention fix (tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md): judge prompt wording.
+    ":(exclude)app/services/grounding/judge_prompts.py",
     # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
     # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
     ":(exclude)app/templates/components/requirement_card_body.html",
@@ -1097,5 +1099,6 @@ def test_scenario_14_no_llm_and_b1_file_set():
         path for path in changed_app
         if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
+        and path != "app/services/grounding/judge_prompts.py"  # P6-5 abstention fix: judge prompt wording
     )
     assert outside == [], outside
