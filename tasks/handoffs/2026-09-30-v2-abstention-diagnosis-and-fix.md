@@ -144,3 +144,40 @@ Judge-record aggregates, same three companies (`partial_diag.py`, from `analysis
 ### PRs (2026-09-30)
 - Draft: https://github.com/saqlainmmomin/Cyber/pull/90 (this branch; stays a draft unless the full arm is measurably better).
 - Deadline fix: https://github.com/saqlainmmomin/Cyber/pull/89 (`claude/llm-request-deadline`; merge first, then merge `main` into this branch before the c3 re-run). Also fixes `tests/test_p6_nist_csf2_alignment.py`, which failed on `main` once local `main` included #88; the same one-line fix is on this branch.
+
+### Live arm (full, 2026-09-30)
+
+c3-certified-fortress re-run on `919db15` (branch with #89 merged: `llm_request_deadline_seconds = 600`). Three runs, sequential, 745 LLM calls, all `ok`: **0 `LLMRequestTimeout` records, no stalls.** Every `run.json` has `analysis_pipeline_version == v2`; every judge record has `judge_prompt_version == p6-4.3`. c3 cost $0.334 (DeepSeek, $0.14/M in, $0.28/M out). **Arm total $0.752 for the 12 scored runs; session spend including the two hung c3 attempts ~$1.28.** `stuck-c3/` and `stuck-c3-2/` kept, never scored.
+
+`ab_compare` output (`~/cyberassess-runs/2026-09-30-p6-5-ab-abstain/ab_comparison.md`), verbatim:
+
+# P6-5 A/B comparison
+
+Baseline: `v1`
+
+## Arms
+
+| Arm | Pipeline | Runs | Catch | Decoy FP | Clean FP | Stability | IE | Cost USD |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| v1 | v1 | 12 | 92.9% | 58.3% | 61.5% | 81.6% | 1.1% | 0.43063552 |
+| v2-criteria | v2 | 12 | 98.6% | 77.8% | 96.9% | 88.9% | 75.8% | 0.7653041200000001 |
+| v2-fix | v2 | 12 | 98.6% | 88.9% | 97.9% | 88.2% | 76.3% | 0.7577416000000001 |
+
+## Gate
+
+| Arm | Comparable | Reasons | Catch | Decoy FP | Clean FP | Stability | Cost reported | Holds |
+|---|---|---|---|---|---|---|---|---|
+| v2-criteria | true | none | true | false | false | true | true | false |
+| v2-fix | true | none | true | false | false | true | true | false |
+
+c3 on its own (from `ab_comparison.json` `by_company`):
+
+| Arm | Catch | Decoy FP | Clean FP | Stability | IE |
+|---|---|---|---|---|---|
+| v1 | 86.1% (31/36) | 41.7% (5/12) | 43.3% (13/30) | 80.4% | 1.4% (10/720) |
+| v2-criteria | 100.0% (36/36) | 75.0% (9/12) | 90.0% (27/30) | 90.0% | 84.3% (607/720) |
+| v2-fix | 100.0% (36/36) | 91.7% (11/12) | 96.7% (29/30) | 89.2% | 81.8% (589/720) |
+
+**Gate verdict: fails** (pooled, vs v1). Catch 98.6% ≥ 92.9% holds; stability 88.2% ≥ 81.6% holds; decoy FP 88.9% > 58.3% fails; clean FP 97.9% > 61.5% fails.
+
+**Recommendation.** The p6-4.3 prompt is not better than p6-4.1: catch is identical (98.6%), IE is about the same (76.3% vs 75.8%), clean FP is about the same (97.9% vs 96.9%), and decoy FP is worse (88.9% vs 77.8%). Keep PR #90 as a draft for the record and close it, or close it now; do not merge it. v2 stays off. The deadline fix (#89) held: a full c3 arm completed with no hangs. The next step is a choice for Saqlain between the two levers in "Open question" above (criterion-aware evidence for the judge, or revisiting Decision 1 with written sign-off). A third prompt-wording attempt is not recommended.
