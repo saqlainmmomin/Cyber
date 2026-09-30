@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from sqlalchemy import literal_column, select
@@ -16,7 +16,7 @@ from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.evidence import Evidence, EvidenceVersion
-from app.services import desk_review_v2, report_basis
+from app.services import desk_review_v2, report_basis, rfi_evidence_requests
 from app.services.citations import resolve_citations
 
 FALLBACK_CRITERIA_LABEL = "Judged against the control description; no approved test criteria yet"
@@ -129,6 +129,10 @@ class MissingEvidence:
     document_type: str
     label: str
     what_it_would_show: str
+    request_key: str = ""
+    request_text: str = ""
+    rfi_state: str = ""
+    rfi_status_label: str = ""
 
 
 @dataclass(frozen=True)
@@ -153,6 +157,7 @@ class CardContext:
     source_dates: dict[str, date | None]
     claim_set_id: str | None
     acks: dict[tuple[str, str, str], AuditEvent]
+    rfi_states: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -191,6 +196,7 @@ class RequirementCard:
     missing_evidence: tuple[MissingEvidence, ...]
     missing_evidence_label: str | None
     divergence: DivergenceNote | None
+    other_rfi_requests: tuple = ()
 
 
 class RequirementCardError(Exception):
@@ -284,6 +290,7 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
         source_dates=_source_dates(claim_set),
         claim_set_id=claim_set.claim_set_id if claim_set is not None else None,
         acks=acknowledgement_by_key,
+        rfi_states=rfi_evidence_requests.request_states(db, assessment, ids),
     )
 
 
@@ -398,6 +405,49 @@ def _missing_evidence_v1(framework_id: str, requirement_id: str, outcome: str) -
         for request in framework.evidence_requests
         if requirement_id in request.maps_to
     )[:3]
+
+
+def _rfi_missing_evidence(
+    context: CardContext,
+    conclusion: Conclusion,
+    source: str,
+    missing: tuple[MissingEvidence, ...],
+) -> tuple[tuple[MissingEvidence, ...], tuple]:
+    states = context.rfi_states.get(conclusion.id, {})
+    visible_keys: set[str] = set()
+    if source != "v2":
+        return missing, tuple(states.values())
+
+    rendered = []
+    for entry in missing:
+        key = rfi_evidence_requests.request_key(
+            conclusion.framework_id,
+            conclusion.requirement_id,
+            entry.document_type,
+            entry.what_it_would_show,
+        )
+        visible_keys.add(key)
+        state = states.get(key)
+        rendered.append(
+            MissingEvidence(
+                document_type=entry.document_type,
+                label=entry.label,
+                what_it_would_show=entry.what_it_would_show,
+                request_key=key,
+                request_text=rfi_evidence_requests.request_text(
+                    conclusion.framework_id,
+                    conclusion.requirement_id,
+                    entry.document_type,
+                    entry.what_it_would_show,
+                ),
+                rfi_state=state.state if state is not None else "available",
+                rfi_status_label=state.status_label if state is not None else "",
+            )
+        )
+    orphans = tuple(
+        state for key, state in states.items() if key not in visible_keys
+    )
+    return tuple(rendered), orphans
 
 
 def _currency_chip(citations: list[dict]) -> QualityChip:
@@ -542,12 +592,17 @@ def _quality_v1(envelope: dict, item: dict, citations: list[dict], conclusion: C
 def build_card(context: CardContext, conclusion: Conclusion, proposal: ConclusionRevision | None, citations) -> RequirementCard:
     entry = _entry_for(context, proposal)
     if entry is None:
+        missing_evidence, other_rfi_requests = _rfi_missing_evidence(
+            context, conclusion, "none", ()
+        )
         return RequirementCard(
             source="none", analysis_run_id=None, proposed_outcome=None, reason=None,
             criteria_source=None, criteria_label=None, criteria=(), claims=(),
             response=None, contradictions=(), unsupported_assertion=False,
-            analysis_incomplete=False, flags=(), quality=(), missing_evidence=(),
+            analysis_incomplete=False, flags=(), quality=(),
+            missing_evidence=missing_evidence,
             missing_evidence_label=None, divergence=None,
+            other_rfi_requests=other_rfi_requests,
         )
 
     source, run_id, envelope, claim_entry = entry
@@ -555,6 +610,12 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
     if source == "v1":
         outcome = claim_entry.get("outcome")
         quality = claim_entry.get("quality") or {}
+        missing_evidence, other_rfi_requests = _rfi_missing_evidence(
+            context,
+            conclusion,
+            "v1",
+            _missing_evidence_v1(conclusion.framework_id, conclusion.requirement_id, outcome),
+        )
         return RequirementCard(
             source="v1", analysis_run_id=run_id, proposed_outcome=outcome,
             reason=item.get("gap_description") or None, criteria_source=None,
@@ -562,11 +623,10 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
             contradictions=(), unsupported_assertion=bool(quality.get("unsupported_assertion")),
             analysis_incomplete=False, flags=(),
             quality=_quality_v1(envelope, claim_entry, citations, conclusion),
-            missing_evidence=_missing_evidence_v1(
-                conclusion.framework_id, conclusion.requirement_id, outcome
-            ),
+            missing_evidence=missing_evidence,
             missing_evidence_label=V1_MISSING_EVIDENCE_LABEL if outcome in _V1_GAP_OUTCOMES else None,
             divergence=None,
+            other_rfi_requests=other_rfi_requests,
         )
 
     verified = {
@@ -596,6 +656,12 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
         reason = REASON_COMPLIANT
     else:
         reason = None
+    missing_evidence, other_rfi_requests = _rfi_missing_evidence(
+        context,
+        conclusion,
+        "v2",
+        _missing_evidence_v2(conclusion.framework_id, item),
+    )
     return RequirementCard(
         source="v2", analysis_run_id=run_id, proposed_outcome=outcome, reason=reason,
         criteria_source=criteria_source, criteria_label=criteria_label,
@@ -605,9 +671,10 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
         analysis_incomplete=bool(item.get("analysis_incomplete")),
         flags=tuple(item.get("flags") or ()),
         quality=_quality_v2(context, envelope, item, cited_records, claim_views, citations, conclusion),
-        missing_evidence=_missing_evidence_v2(conclusion.framework_id, item),
+        missing_evidence=missing_evidence,
         missing_evidence_label=None,
         divergence=_divergence_note(context, conclusion, run_id, envelope, item),
+        other_rfi_requests=other_rfi_requests,
     )
 
 
@@ -647,6 +714,50 @@ def _single_card(
 
 def card_for(db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None) -> RequirementCard:
     return _single_card(db, conclusion, proposal)[1]
+
+
+def add_rfi_request(
+    db: Session,
+    *,
+    assessment_id: str,
+    conclusion_id: str,
+    request_key: str,
+    actor: str,
+) -> tuple[AuditEvent, bool]:
+    conclusion = db.get(Conclusion, conclusion_id)
+    if conclusion is None or conclusion.assessment_id != assessment_id:
+        raise rfi_evidence_requests.RfiRequestError(
+            CONCLUSION_NOT_FOUND_MESSAGE, 404
+        )
+
+    proposal = _latest_proposal(db, conclusion.id)
+    card = card_for(db, conclusion, proposal)
+    match = next(
+        (
+            entry
+            for entry in card.missing_evidence
+            if entry.request_key and entry.request_key == request_key
+        ),
+        None,
+    )
+    if card.source != "v2" or match is None:
+        raise rfi_evidence_requests.RfiRequestError(
+            rfi_evidence_requests.RFI_REQUEST_STALE_MESSAGE, 409
+        )
+
+    return rfi_evidence_requests.record_request(
+        db,
+        conclusion=conclusion,
+        request_key_value=request_key,
+        document_type=match.document_type,
+        title=rfi_evidence_requests.request_title(
+            conclusion.framework_id,
+            match.document_type,
+        ),
+        request=match.request_text,
+        analysis_run_id=card.analysis_run_id,
+        actor=actor,
+    )
 
 
 def divergence_blocker(db: Session, conclusion: Conclusion, proposal: ConclusionRevision | None) -> str | None:

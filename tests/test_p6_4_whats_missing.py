@@ -847,9 +847,21 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
         ":(exclude)app/frameworks/schema.py",
         ":(exclude)app/frameworks/definitions/dpdpa.py",
         ":(exclude)app/frameworks/criteria/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/__init__.py",
+        ":(exclude)app/frameworks/criteria/iso27001.py",
+        ":(exclude)app/frameworks/criteria/nist_csf.py",
+        ":(exclude)app/frameworks/definitions/iso27001.py",
+        ":(exclude)app/frameworks/definitions/nist_csf.py",
+        ":(exclude)scripts/convert_criteria.py",
         ":(exclude)app/services/engagement_factory.py",
         ":(exclude)app/services/grounding/claims.py",
         ":(exclude)app/services/grounding/pipeline.py",
+        # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
+        # guarded by tests/test_p6_5_injection_pack.py.
+        ":(exclude)app/services/grounding/judge.py",
+        ":(exclude)app/services/analysis_v2.py",
+        # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+        ":(exclude)app/services/llm_client.py",
     )
     assert diff == ""
     from app.services.grounding import judge_prompts, prompts
@@ -876,6 +888,12 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
     )
     p6_2b_app_files = {
         "app/frameworks/criteria/dpdpa.py",
+        "app/frameworks/criteria/__init__.py",
+        "app/frameworks/criteria/iso27001.py",
+        "app/frameworks/criteria/nist_csf.py",
+        "app/frameworks/definitions/iso27001.py",
+        "app/frameworks/definitions/nist_csf.py",
+        "scripts/convert_criteria.py",
         "app/frameworks/definitions/dpdpa.py",
         "app/frameworks/schema.py",
         "app/services/engagement_factory.py",
@@ -896,9 +914,33 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/templates/pages/review_queue.html",
         "app/templates/pages/evidence_span.html",
     )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a).split()
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands later; its
+    # new SoA, roadmap and comparison files are guarded by tests/test_p6_9_file_set.py.
+    p6_9 = [f":(exclude){path}" for path in (
+        "app/services/soa.py",
+        "app/services/remediation_groups.py",
+        "app/services/prior_period.py",
+        "app/routers/soa.py",
+        "app/templates/pages/soa.html",
+    )]
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
+    # guarded by tests/test_p6_5_injection_pack.py.
+    p6_5 = [f":(exclude){path}" for path in (
+        "app/services/grounding/injection.py",
+        "app/services/grounding/judge.py",
+        "app/services/analysis_v2.py",
+    )]
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI from the
+    # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
+    p6_7b = [f":(exclude){path}" for path in (
+        "app/services/rfi_evidence_requests.py",
+        "app/services/rfi_requests.py",
+        "app/templates/pages/rfi.html",
+    )]
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
     changed = set(committed) | set(untracked)
+    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= {
         "app/config.py",
         ".env.example",

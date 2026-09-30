@@ -743,7 +743,17 @@ def test_scenario_6_framework_fails_closed_when_nothing_is_judged(monkeypatch):
 # --------------------------------------------------------------------------- #
 
 
+def iso_fallback_only(monkeypatch):
+    """Pin ISO 27001 to the fallback path; P6-2e ships approved criteria for it."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    framework = FrameworkRegistry.get("iso27001")
+    patched = tuple(dataclasses.replace(c, test_criteria=()) for c in framework.all_controls())
+    monkeypatch.setattr(framework, "_all_controls_cache", patched)
+
+
 def test_scenario_7_requirements_without_inputs_are_not_sent(monkeypatch):
+    iso_fallback_only(monkeypatch)
     claim_set = claim_set_for(monkeypatch, ["iso27001"], policy_text(Q_ROLES))
     seam = JudgeSeam().install(monkeypatch)
     judgment = run_judge(claim_set, ["iso27001"])
@@ -1038,6 +1048,7 @@ def e2e_script(rid, criterion_ids, claim_ids, request):
 
 
 def test_scenario_13_v2_analysis_end_to_end(db, monkeypatch, flag_v2):
+    iso_fallback_only(monkeypatch)
     from app.frameworks.registry import FrameworkRegistry
     from app.models.analysis_run import AnalysisRun
     from app.models.conclusion import Conclusion, ConclusionRevision
@@ -1283,6 +1294,12 @@ def test_scenario_16_v1_and_stage_0_1_modules_unchanged():
         ":(exclude)app/frameworks/schema.py",
         ":(exclude)app/frameworks/definitions/dpdpa.py",
         ":(exclude)app/frameworks/criteria/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/__init__.py",
+        ":(exclude)app/frameworks/criteria/iso27001.py",
+        ":(exclude)app/frameworks/criteria/nist_csf.py",
+        ":(exclude)app/frameworks/definitions/iso27001.py",
+        ":(exclude)app/frameworks/definitions/nist_csf.py",
+        ":(exclude)scripts/convert_criteria.py",
         ":(exclude)app/services/engagement_factory.py",
         ":(exclude)app/services/grounding/claims.py",
         ":(exclude)app/services/grounding/pipeline.py",

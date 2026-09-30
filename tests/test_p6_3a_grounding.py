@@ -1654,6 +1654,12 @@ PROTECTED_PATHS = [
     ":(exclude)app/frameworks/schema.py",
     ":(exclude)app/frameworks/definitions/dpdpa.py",
     ":(exclude)app/frameworks/criteria/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/__init__.py",
+    ":(exclude)app/frameworks/criteria/iso27001.py",
+    ":(exclude)app/frameworks/criteria/nist_csf.py",
+    ":(exclude)app/frameworks/definitions/iso27001.py",
+    ":(exclude)app/frameworks/definitions/nist_csf.py",
+    ":(exclude)scripts/convert_criteria.py",
     # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md): the requirement
     # card partial, the review queue and span pages, their router, and the one-line
     # include in the conclusion card; tests/test_p6_7_requirement_card.py guards them.
@@ -1662,6 +1668,15 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/components/requirement_card_body.html",
     ":(exclude)app/templates/pages/review_queue.html",
     ":(exclude)app/templates/pages/evidence_span.html",
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): the SoA
+    # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
+    ":(exclude)app/routers/soa.py",
+    ":(exclude)app/templates/pages/soa.html",
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): the RFI page lists the
+    # requests added from requirement cards; tests/test_p6_7b_add_to_rfi.py guards it.
+    ":(exclude)app/templates/pages/rfi.html",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
@@ -1689,6 +1704,9 @@ def test_scenario_17_protected_files_unchanged():
         # aggregation and report.py's per-run cost line.
         ":(exclude)scripts/validation/score.py",
         ":(exclude)scripts/validation/report.py",
+        # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): the aggregate-only
+        # A/B comparison is a new harness module; tests/test_p6_5_ab_compare.py guards it.
+        ":(exclude)scripts/validation/ab_compare.py",
     ]
     committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
     uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)

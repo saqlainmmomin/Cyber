@@ -954,6 +954,12 @@ def test_scenario_13_structural_guards(db):
         # P6-2b: approved DPDPA criteria and pack-version schema changes.
         ":(exclude)app/frameworks/schema.py", ":(exclude)app/frameworks/definitions/dpdpa.py",
         ":(exclude)app/frameworks/criteria/dpdpa.py",
+        ":(exclude)app/frameworks/criteria/__init__.py",
+        ":(exclude)app/frameworks/criteria/iso27001.py",
+        ":(exclude)app/frameworks/criteria/nist_csf.py",
+        ":(exclude)app/frameworks/definitions/iso27001.py",
+        ":(exclude)app/frameworks/definitions/nist_csf.py",
+        ":(exclude)scripts/convert_criteria.py",
         # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report
         # foundations fix the D0 PDF defects, escape Content-Disposition and add
         # the report-basis route; tests/test_p6_6_report_foundations.py guards them.

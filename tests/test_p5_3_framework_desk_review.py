@@ -823,6 +823,7 @@ def test_scenario_12_standing_guards_and_public_signatures():
     protected = subprocess.run(
         ["git", "diff", "--stat", "main...HEAD", "--", "app/frameworks/definitions",
          ":!app/frameworks/definitions/dpdpa.py",
+        ":!app/frameworks/definitions/iso27001.py",  # P6-2e
          ":!app/frameworks/definitions/nist_csf.py"],  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )

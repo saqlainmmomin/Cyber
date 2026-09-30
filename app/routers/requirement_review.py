@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
-from app.services import conclusion_review, requirement_card, review_queue
+from app.services import conclusion_review, requirement_card, review_queue, rfi_evidence_requests
 from app.template_config import configure_templates
 
 router = APIRouter(tags=["requirement-review"])
@@ -92,6 +92,102 @@ def acknowledge_divergence(
         context={"request": request, "assessment": assessment, "card": card},
     )
     response.headers["X-Toast-Message"] = "Framework divergence acknowledged"
+    response.headers["X-Toast-Type"] = "success"
+    return response
+
+
+@router.post("/api/assessments/{assessment_id}/rfi-requests/{conclusion_id}")
+def add_rfi_request(
+    request: Request,
+    assessment_id: str,
+    conclusion_id: str,
+    request_key: str = Form(""),
+    reviewer_name: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    try:
+        _event, changed = requirement_card.add_rfi_request(
+            db,
+            assessment_id=assessment_id,
+            conclusion_id=conclusion_id,
+            request_key=request_key,
+            actor=conclusion_review.reviewer_actor(reviewer_name),
+        )
+    except rfi_evidence_requests.RfiRequestError as exc:
+        db.rollback()
+        response = JSONResponse({"detail": exc.message}, status_code=exc.status_code)
+        response.headers["X-Toast-Message"] = quote(exc.message)
+        response.headers["X-Toast-Type"] = "error"
+        return response
+
+    db.commit()
+    assessment = db.get(Assessment, assessment_id)
+    card = conclusion_review.conclusion_card(
+        db,
+        assessment_id=assessment_id,
+        conclusion_id=conclusion_id,
+    )
+    response = _templates.TemplateResponse(
+        request=request,
+        name="components/conclusion_card.html",
+        context={"request": request, "assessment": assessment, "card": card},
+    )
+    response.headers["X-Toast-Message"] = (
+        rfi_evidence_requests.ADDED_TOAST
+        if changed
+        else rfi_evidence_requests.ALREADY_TOAST
+    )
+    response.headers["X-Toast-Type"] = "success"
+    return response
+
+
+@router.post("/api/assessments/{assessment_id}/rfi-requests/{conclusion_id}/withdraw")
+def withdraw_rfi_request(
+    request: Request,
+    assessment_id: str,
+    conclusion_id: str,
+    request_key: str = Form(""),
+    reviewer_name: str = Form(""),
+    origin: str = Form("card"),
+    db: Session = Depends(get_db),
+):
+    try:
+        _event, changed = rfi_evidence_requests.withdraw_request(
+            db,
+            assessment_id=assessment_id,
+            conclusion_id=conclusion_id,
+            request_key_value=request_key,
+            actor=conclusion_review.reviewer_actor(reviewer_name),
+        )
+    except rfi_evidence_requests.RfiRequestError as exc:
+        db.rollback()
+        response = JSONResponse({"detail": exc.message}, status_code=exc.status_code)
+        response.headers["X-Toast-Message"] = quote(exc.message)
+        response.headers["X-Toast-Type"] = "error"
+        return response
+
+    db.commit()
+    toast = (
+        rfi_evidence_requests.WITHDRAWN_TOAST
+        if changed
+        else rfi_evidence_requests.ALREADY_WITHDRAWN_TOAST
+    )
+    if origin == "rfi":
+        response = JSONResponse({"status": "withdrawn" if changed else "unchanged"})
+        response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/rfi"
+    else:
+        assessment = db.get(Assessment, assessment_id)
+        card = conclusion_review.conclusion_card(
+            db,
+            assessment_id=assessment_id,
+            conclusion_id=conclusion_id,
+        )
+        response = _templates.TemplateResponse(
+            request=request,
+            name="components/conclusion_card.html",
+            context={"request": request, "assessment": assessment, "card": card},
+        )
+    response.headers["X-Toast-Message"] = toast
     response.headers["X-Toast-Type"] = "success"
     return response
 

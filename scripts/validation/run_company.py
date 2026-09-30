@@ -239,11 +239,11 @@ def _child_run(slug: str, out_dir: Path, validation_root: Path, llm_mode: str, s
         "started_at": _utc_now(),
         "mock": llm_mode == "mock",
     }
-    _json_write(out_dir / "run.json", run_meta)
 
     import app.main as application  # noqa: PLC0415
     from app import database  # noqa: PLC0415
     from app.config import settings  # noqa: PLC0415
+    from app.frameworks.registry import FrameworkRegistry  # noqa: PLC0415
     from app.models.analysis_run import AnalysisRun  # noqa: PLC0415
     from app.models.assessment import Assessment  # noqa: PLC0415
     from app.models.conclusion import Conclusion, ConclusionRevision  # noqa: PLC0415
@@ -256,6 +256,17 @@ def _child_run(slug: str, out_dir: Path, validation_root: Path, llm_mode: str, s
     from app.services.question_engine import build_adaptive_questionnaire  # noqa: PLC0415
     from fastapi.testclient import TestClient  # noqa: PLC0415
     from sqlalchemy import select  # noqa: PLC0415
+
+    application._register_frameworks()
+    run_meta["settings"] = {
+        "analysis_pipeline_version": settings.analysis_pipeline_version,
+        "v2_missing_pass": settings.v2_missing_pass,
+        "pack_versions": {
+            framework_id: FrameworkRegistry.get(framework_id).pack_version
+            for framework_id in company.frameworks
+        },
+    }
+    _json_write(out_dir / "run.json", run_meta)
 
     if llm_mode == "mock":
         llm_client.call_llm = MockLLM(company.frameworks)

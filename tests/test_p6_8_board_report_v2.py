@@ -74,6 +74,7 @@ DOCUMENT_KEYS = {
     "schema_version", "kind", "snapshot", "firm_name", "company_name", "engagement_name",
     "assessment_id", "frameworks", "basis", "release", "summary", "top_risks", "roadmap",
     "not_assessed", "framework_sections", "sign_off", "appendices", "source",
+    "soa", "prior_period",  # P6-9 (D-P6-9-E): schema v2
 }
 SECTION_HEADINGS = (
     "Management summary",
@@ -608,7 +609,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     assert "Unreviewed stray" not in json.dumps(document)
 
     assert set(document) == DOCUMENT_KEYS
-    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 1
+    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)
     assert document["kind"] == board.SNAPSHOT_TYPE == "board_report"
     assert document["snapshot"] == {
         "id": "00000000-0000-4000-8000-000000000001",
@@ -1018,6 +1019,14 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/assets/fonts/noto/",
     # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
     "app/services/board_exports.py",
+    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after B1;
+    # tests/test_p6_9_file_set.py guards its file set.
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine persistence.
+    "app/services/grounding/injection.py",
+    "app/services/grounding/judge.py",
+    "app/services/analysis_v2.py",
 )
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1036,6 +1045,36 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
+    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim
+    # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
+    ":(exclude)app/services/grounding/injection.py",
+    ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)app/frameworks/criteria/__init__.py",
+    ":(exclude)app/frameworks/criteria/iso27001.py",
+    ":(exclude)app/frameworks/criteria/nist_csf.py",
+    ":(exclude)app/frameworks/definitions/iso27001.py",
+    ":(exclude)app/frameworks/definitions/nist_csf.py",
+    ":(exclude)scripts/convert_criteria.py",
+    ":(exclude)scripts/injection_pack_live.py",
+    ":(exclude)scripts/validation/ab_compare.py",
+    ":(exclude)scripts/validation/score.py",
+    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
+    # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
+    ":(exclude)app/templates/components/requirement_card_body.html",
+    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+    ":(exclude)app/config.py",
+    ":(exclude)app/services/llm_client.py",
+)
+# P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
+P6_7B_APP_FILES = (
+    "app/services/rfi_evidence_requests.py",
+    "app/services/rfi_requests.py",
+    "app/services/requirement_card.py",
+    "app/routers/requirement_review.py",
+    "app/templates/components/requirement_card_body.html",
+    "app/templates/pages/rfi.html",
 )
 
 
@@ -1059,5 +1098,10 @@ def test_scenario_14_no_llm_and_b1_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    outside = sorted(path for path in changed_app if not path.startswith(P6_8_B1_APP_ALLOWLIST))
+    outside = sorted(
+        path for path in changed_app
+        if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
+        and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
+    )
+    outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside

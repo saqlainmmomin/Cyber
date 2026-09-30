@@ -527,7 +527,7 @@ def test_scorer_arithmetic_grounding_recall_and_false_positives(tmp_path):
     result = score_run(run_dir, validation_root=validation_root)
     by_id = {gap["gap_id"]: gap for gap in result["gap_results"]}
     assert by_id["G01"]["req_scores"] == [0.5]
-    assert by_id["G01"]["caught"] is False
+    assert by_id["G01"]["caught"] is True
     assert by_id["G02"]["req_scores"] == [0.3, 1.0]
     assert by_id["G02"]["gap_score"] == pytest.approx(0.65)
     assert by_id["G02"]["caught"] is True

@@ -465,10 +465,70 @@
       "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
       "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
     },
-    "SINGLE.NIST.RS.CO.04": {
+    "SINGLE.NIST.GV.RM.05": {
       "answer": "fully_implemented",
-      "notes": "The August exercise used the commander bridge, isolated the simulated workload and recorded responders’ actions.",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.RM.06": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.RM.07": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.GV.SC.06": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.07": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.08": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.09": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.GV.SC.10": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
+    },
+    "SINGLE.NIST.ID.IM.04": {
+      "answer": "fully_implemented",
+      "notes": "The IR plan is exercised annually; the August tabletop recorded responders' actions and fed improvements back into the plan.",
       "evidence_reference": "HD-Incident-Response-Plan-v3.pdf; HD-Tabletop-After-Action-2026.pdf"
+    },
+    "SINGLE.NIST.ID.RA.07": {
+      "answer": "fully_implemented",
+      "notes": "The risk council records treatment decisions using the monthly scan and finding summaries.",
+      "evidence_reference": "HD-Configuration-and-Risk-Review-Q3.pdf; HD-Vulnerability-Scan-2026-09.pdf"
+    },
+    "SINGLE.NIST.ID.RA.08": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.RA.08 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.RA.09": {
+      "answer": "fully_implemented",
+      "notes": "Our security team includes NIST.ID.RA.09 in the October control review and records ownership under the v4 policy.",
+      "evidence_reference": "HD-Cybersecurity-Policy-v4.pdf"
+    },
+    "SINGLE.NIST.ID.RA.10": {
+      "answer": "fully_implemented",
+      "notes": "The supply-security register records annual assurance and renewal dates for critical services.",
+      "evidence_reference": "HD-Supplier-Assurance-Q3.pdf"
     }
   }
 }

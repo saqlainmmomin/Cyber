@@ -37,6 +37,7 @@
       {% endif %}
       {% if type == 'board_report' %}
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% if release.released %}<a data-board-report-preview href="/api/assessments/{{ assessment.id }}/board-report/preview" class="font-medium text-brand dark:text-navy-300 hover:underline">Preview the board report →</a>{% else %}Generating a board report requires the report to be released.{% endif %}</p>
+      {% if 'iso27001' in assessment.frameworks %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><a data-soa-link href="/assessments/{{ assessment.id }}/soa" class="font-medium text-brand dark:text-navy-300 hover:underline">Statement of Applicability justifications →</a></p>{% endif %}
       {% endif %}
     </div>
     <form hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name">
