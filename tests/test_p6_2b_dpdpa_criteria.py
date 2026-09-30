@@ -512,6 +512,11 @@ LLM_DEADLINE_FILES = (
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py",
 )
+# P6-5c decision record (tasks/2026-09-30-p6-5c-decision-park-v2.md): docs and context only.
+P6_5C_RECORD_FILES = (
+    "CLAUDE.md", "tasks/2026-09-30-p6-5c-decision-park-v2.md", "tasks/2026-09-30-status-log.md",
+    "tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -523,6 +528,6 @@ def test_scenario_11_only_p6_2b_files_change():
         f for f in committed
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
-        and f not in LLM_DEADLINE_FILES
+        and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES
     ]
     assert offenders == [], offenders
