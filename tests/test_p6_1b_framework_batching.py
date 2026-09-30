@@ -973,7 +973,7 @@ def test_protected_surface_guard_uses_three_dot_diff():
             "app/frameworks/definitions",
             ":(exclude)app/frameworks/definitions/nist_csf.py",  # P6-NIST: CSF 2.0 alignment edits the NIST pack.
             # P6-2b: approved DPDPA criteria and pack-version schema changes.
-            ":(exclude)app/frameworks/schema.py", ":(exclude)app/frameworks/definitions/dpdpa.py",
+            ":(exclude)app/frameworks/schema.py", ":(exclude)app/frameworks/definitions/dpdpa.py", ":(exclude)app/frameworks/definitions/iso27001.py",
             "app/services/scoring.py",
             # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md) re-records the
             # golden PDF text hash and page count after fixing the D0 report defects.

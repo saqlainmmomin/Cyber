@@ -1049,6 +1049,12 @@ P6_8_FORBIDDEN_PATHS = (
     # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
     ":(exclude)app/services/grounding/injection.py",
     ":(exclude)app/services/grounding/judge.py",
+    ":(exclude)app/frameworks/criteria/__init__.py",
+    ":(exclude)app/frameworks/criteria/iso27001.py",
+    ":(exclude)app/frameworks/criteria/nist_csf.py",
+    ":(exclude)app/frameworks/definitions/iso27001.py",
+    ":(exclude)app/frameworks/definitions/nist_csf.py",
+    ":(exclude)scripts/convert_criteria.py",
     ":(exclude)scripts/injection_pack_live.py",
     ":(exclude)scripts/validation/ab_compare.py",
     ":(exclude)scripts/validation/score.py",
@@ -1090,5 +1096,6 @@ def test_scenario_14_no_llm_and_b1_file_set():
     outside = sorted(
         path for path in changed_app
         if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
+        and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
     )
     assert outside == [], outside

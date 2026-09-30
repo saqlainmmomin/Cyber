@@ -12,6 +12,8 @@ relocated from CSF 1.1). Titles and descriptions are the pack's own wording and
 reference the CSF outcome rather than reproduce it.
 """
 
+from app.frameworks.criteria import attach_criteria
+from app.frameworks.criteria.nist_csf import NIST_CSF_CRITERIA, NIST_CSF_CRITERIA_VERSION
 from app.frameworks.schema import (
     Control,
     Domain,
@@ -1363,19 +1365,24 @@ _NIST_CSF_RED_FLAGS = [
 
 # ── Framework definition ────────────────────────────────────────────────────
 
+_DOMAINS = {
+    "govern": _GOVERN,
+    "identify": _IDENTIFY,
+    "protect": _PROTECT,
+    "detect": _DETECT,
+    "respond": _RESPOND,
+    "recover": _RECOVER,
+}
+# Signed test criteria (P6-2e) attach to the controls in place.
+attach_criteria(_DOMAINS, NIST_CSF_CRITERIA)
+
 NIST_CSF_DEFINITION = FrameworkDefinition(
     id="nist_csf",
     name="NIST CSF",
     version="2.0",
+    criteria_version=NIST_CSF_CRITERIA_VERSION,
     description="NIST Cybersecurity Framework (CSF) 2.0 — Risk-based approach to managing cybersecurity risk across 6 functions",
-    domains={
-        "govern": _GOVERN,
-        "identify": _IDENTIFY,
-        "protect": _PROTECT,
-        "detect": _DETECT,
-        "respond": _RESPOND,
-        "recover": _RECOVER,
-    },
+    domains=_DOMAINS,
     dependencies=_NIST_CSF_DEPENDENCIES,
     root_cause_clusters=_NIST_CSF_ROOT_CAUSE_CLUSTERS,
     scope_questions=_NIST_CSF_SCOPE_QUESTIONS,
