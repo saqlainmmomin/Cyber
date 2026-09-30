@@ -115,3 +115,28 @@ Extraction never sees the criteria, and the claim volume is the same in both arm
 ### Tests
 
 `.venv/bin/pytest -q -p no:cacheprovider`: **1,210 passed, 10 skipped** (baseline 1,205 + 5 new).
+
+### Live arm (partial: c1, c2, c4)
+
+**Information only, no gate verdict.** `ab_compare` refuses unequal company sets, and c3 has not finished (see hangs below). Arm dir: `~/cyberassess-runs/2026-09-30-p6-5-v2-abstain/` (branch at `7d4eb02`, `ANALYSIS_PIPELINE_VERSION=v2`, `V2_MISSING_PASS=false`, prompt `p6-4.3` in every judge record). Pooled over c1-app-startup, c2-b2b-saas, c4-healthsaas, all `run-*` dirs; same script over all three arms (`partial_compare.py` in the session scratchpad; stability uses `ab_compare`'s modal-share definition):
+
+| Arm | Runs | Catch | Decoy FP | Clean FP | Stability | IE rate | Compliant share |
+|---|---|---|---|---|---|---|---|
+| v1 | 9 | 95.2% (100/105) | 66.7% (16/24) | 69.7% (46/66) | 82.7% (281 reqs) | 0.8% (7/843) | 9.0% (76/843) |
+| v2-criteria | 9 | 98.1% (103/105) | 79.2% (19/24) | 100.0% (66/66) | 88.0% (281 reqs) | 68.4% (577/843) | 1.3% (11/843) |
+| v2-fix | 9 | 98.1% (103/105) | 87.5% (21/24) | 98.5% (65/66) | 87.3% (281 reqs) | 71.6% (604/843) | 1.1% (9/843) |
+
+Judge-record aggregates, same three companies (`partial_diag.py`, from `analysis_runs.claims_json`):
+
+| Arm | Prompt | Req-runs (judged) | IE of judged | IE with zero criteria met | IE with no claims shown | Criteria met / not_met / no_evidence | `met` dropped for missing claim IDs | Claims shown | Claims cited |
+|---|---|---|---|---|---|---|---|---|---|
+| v2-criteria | p6-4.1 | 843 (798) | 72.3% (577) | 95.7% (552) | 43.3% (250) | 269 / 110 / 2,090 (11% met) | 40 | 3,013 | 689 |
+| v2-fix | p6-4.3 | 843 (798) | 75.7% (604) | 92.1% (556) | 41.7% (252) | 268 / 172 / 2,029 (11% met) | 60 | 2,778 | 609 |
+
+**Read.** The p6-4.3 wording did not change how the judge behaves. The share of criteria credited `met` is unchanged at 11%; IE is slightly up; clean-control runs are still flagged in 65 of 66; the only visible shift is about 60 criteria moving from `no_evidence` to `not_met` (the omission rule), which keeps them flagged. The "met needs claim IDs" instruction did not help either (60 lost `met` results vs 40). Catch held at 98.1%.
+
+**The gate cannot hold for this arm whatever c3 does.** In the full post-#88 comparison c3 contributes 30 of the 96 clean-control runs and 12 of the 36 decoy runs. Even if every c3 clean control came back compliant, pooled clean FP would be 65/96 = 67.7%, above the 61.5% gate. Running c3 would complete the record, not change the verdict.
+
+**Spend and hangs.** DeepSeek at $0.14/M in, $0.28/M out. The nine finished runs cost $0.418. c3 hung twice (kept in `stuck-c3/` and `stuck-c3-2/`, never scored) and lost $0.529. Total ~$0.95. A full four-company arm costs ~$0.55-0.60, not the $0.25 estimated above. Both hangs had the same shape: every in-flight request of every c3 process stopped in the same minute (10:04, then 11:02) while OpenRouter `/api/v1/models` answered in 0.45 s. Cause: `llm_client._get_client()` passes `timeout=settings.llm_timeout_seconds` (300 s) to `OpenAI(...)`; in httpx that is a per-phase timeout, the read timer resets whenever bytes arrive, and OpenRouter sends keep-alive bytes while a request is stuck upstream, so the call never times out. Fix: a wall-clock deadline per provider call, on its own branch (`claude/llm-request-deadline`). The c3 re-run is written up in `tasks/handoffs/2026-09-30-p6-5-abstention-c3-rerun.md`.
+
+**Open question for Saqlain.** Two prompt directions have now failed (stricter p6-4.2 lost catch; the evidence definitions in p6-4.3 changed nothing). The judge credits almost nothing against the approved audit-style criteria, and 28% of requirement-runs have no claims at all. The remaining levers are outside the judge prompt: (a) show the judge which criterion each claim was extracted for (extraction currently never sees the criteria), or (b) revisit Decision 1, since under the frozen scorer IE is flagged and only `compliant` clears a clean control. Either needs your call; (b) needs written sign-off and a recorded reason.
