@@ -147,7 +147,7 @@ Judge-record aggregates, same three companies (`partial_diag.py`, from `analysis
 
 ### Live arm (full, 2026-09-30)
 
-c3-certified-fortress re-run on `919db15` (branch with #89 merged: `llm_request_deadline_seconds = 600`). Three runs, sequential, 745 LLM calls, all `ok`: **0 `LLMRequestTimeout` records, no stalls.** Every `run.json` has `analysis_pipeline_version == v2`; every judge record has `judge_prompt_version == p6-4.3`. c3 cost $0.334 (DeepSeek, $0.14/M in, $0.28/M out). **Arm total $0.752 for the 12 scored runs; session spend including the two hung c3 attempts ~$1.28.** `stuck-c3/` and `stuck-c3-2/` kept, never scored.
+c3-certified-fortress re-run on `919db15` (branch with #89 merged: `llm_request_deadline_seconds = 600`). Three runs, sequential, 745 LLM calls, all `ok`: **0 `LLMRequestTimeout` records, no stalls.** Every `run.json` has `analysis_pipeline_version == v2`; every judge record has `judge_prompt_version == p6-4.3`. c3 cost $0.334 (DeepSeek, $0.14/M in, $0.28/M out). **Arm total $0.758 for the 12 scored runs (ab_compare); session spend including the two hung c3 attempts ~$1.28.** `stuck-c3/` and `stuck-c3-2/` kept, never scored.
 
 `ab_compare` output (`~/cyberassess-runs/2026-09-30-p6-5-ab-abstain/ab_comparison.md`), verbatim:
 
