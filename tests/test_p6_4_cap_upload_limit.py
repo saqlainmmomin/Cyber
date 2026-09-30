@@ -383,7 +383,10 @@ def _changed(*args: str) -> set[str]:
              # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
              ":(exclude)app/services/rfi_evidence_requests.py",
              ":(exclude)app/services/rfi_requests.py",
-             ":(exclude)app/templates/pages/rfi.html"],
+             ":(exclude)app/templates/pages/rfi.html",
+             # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exporter;
+             # guarded by tests/test_p6_8_b2_docx_xlsx.py.
+             ":(exclude)app/services/board_exports.py"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )

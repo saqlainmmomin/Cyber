@@ -1,9 +1,11 @@
 """Contract tests for P6-8 B2: DOCX and XLSX derived from a board report version's JSON sidecar.
 
-Handoff: tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md. B1 (the board report snapshot and its
-hashed sidecar) is merged; B2 renders editable DOCX and XLSX files from that stored document
-only, on request, and never stores them. Written before the implementation: on `main` these fail
-because `app.services.board_exports`, the two routes and the `openpyxl` pin do not exist yet.
+Handoff: tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md (revised 2026-09-30 for document schema
+v2, P6-9). B1 (the board report snapshot and its hashed sidecar) and P6-9 (SoA, roadmap groups,
+prior-period comparison) are merged; B2 renders editable DOCX and XLSX files from that stored
+document only, on request, and never stores them. Schema v1 sidecars (generated before P6-9) must
+still export. Written before the implementation: on `main` these fail because
+`app.services.board_exports`, the two routes and the `openpyxl` pin do not exist yet.
 
 No network, no LLM and no WeasyPrint: the board PDF renderer is faked, because B2 never renders
 a PDF and must not depend on Pango being installed.
@@ -11,6 +13,7 @@ a PDF and must not depend on Pango being installed.
 
 from __future__ import annotations
 
+import copy
 import importlib
 import io
 import json
@@ -68,9 +71,12 @@ XLSX_SHEETS = (
     "Action tracker",
     "Evidence register",
 )
+# Schema v2 only, in this order after XLSX_SHEETS: the changes sheet only when
+# prior_period.status == "compared", the SoA sheet only when document["soa"] is set.
+XLSX_OPTIONAL_SHEETS = ("Prior-period changes", "Statement of Applicability")
 XLSX_COLUMNS = {
     "Framework summary": (
-        "Framework", "Version", "Score (%)", "Rating", "Headline", "In scope", "Compliant",
+        "Framework", "Version", "Pack version", "Score (%)", "Rating", "Headline", "In scope", "Compliant",
         "Partially compliant", "Non-compliant", "Insufficient evidence", "Not applicable",
     ),
     "Requirement register": (
@@ -83,10 +89,21 @@ XLSX_COLUMNS = {
     ),
     "Action tracker": (
         "Action", "Owner", "Target date", "Status", "Framework", "Requirement ID", "Finding",
-        "Client update", "Evidence of closure",
+        "Control group", "Client update", "Evidence of closure",
     ),
     "Evidence register": ("File", "Version", "SHA-256 prefix", "Added on", "Status", "Cited"),
+    "Prior-period changes": (
+        "Framework", "Requirement ID", "Requirement", "Prior outcome", "Current outcome", "Change",
+    ),
+    "Statement of Applicability": (
+        "Control ID", "Reference", "Control", "Theme", "Applicability", "Implementation",
+        "Justification", "Justification status", "Justified by", "Justified on",
+    ),
 }
+# SoA sheet (D-P6-8-B2-E): the document's soa.notes (the PDF's notes, including soa.py's
+# MISSING_JUSTIFICATION_NOTE) sit in column A above the header, then one blank row, then the header.
+JUSTIFICATION_STATUS = {True: "Recorded", False: "Missing"}
+MISSING_FILL = "FFFFF2CC"  # extra cue on "Missing" cells; the word itself is the flag
 ABOUT_KEYS = (
     "Company",
     "Engagement",
@@ -96,6 +113,7 @@ ABOUT_KEYS = (
     "Report version",
     "Snapshot ID",
     "Report generated",
+    "Prior-period comparison",
     "Document SHA-256",
     "Document schema version",
     "Export format version",
@@ -105,7 +123,8 @@ DOCX_TABLE_HEADERS = {
         "Framework", "Headline", "In scope", "Compliant", "Partial", "Non-compliant",
         "Insufficient evidence", "Not applicable",
     ),
-    "roadmap": ("Action", "Owner", "Target date", "Status", "Closes"),
+    "roadmap": ("Action", "Owner", "Target date", "Status", "Closes"),  # schema v1 only
+    "roadmap_group": ("Action", "Owner", "Target date", "Status", "Finding"),  # schema v2, one per group
     "domains": ("Domain", "Score", "Rating"),
     "gaps": ("Requirement", "Outcome", "Risk", "Priority"),
     "requirement_register": (
@@ -113,7 +132,23 @@ DOCX_TABLE_HEADERS = {
         "Decided on", "Citation",
     ),
     "evidence_register": ("File", "Version", "Added", "Status", "SHA-256", "Cited"),
+    "comparison": (
+        "Framework", "Prior score", "Current score", "Change", "Improved", "Regressed", "Changed",
+        "Newly assessed", "No longer assessed",
+    ),
+    "comparison_changes": ("Requirement", "Prior outcome", "Current outcome", "Change"),
+    "soa": ("Control", "Theme", "Applicability", "Implementation", "Justification"),
 }
+ROADMAP_INTRO_V1 = (
+    "Actions recorded against approved findings, ordered by target date. Owners and dates are set by "
+    "the consultant; nothing on this page is estimated."
+)
+B1_HEADINGS_HEAD = ("Management summary", "Top risks", "Remediation roadmap", "What we could not assess")
+B1_HEADINGS_TAIL = (
+    "Sign-off", "Appendix A: Methodology", "Appendix B: Requirement register", "Appendix C: Evidence register",
+)
+COMPARISON_HEADING = "Prior-period comparison"
+SOA_HEADING = "Appendix D: Statement of Applicability"
 FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 FAKE_RENDERER = "weasyprint 70.0"
 
@@ -207,7 +242,12 @@ def _body_rows(table) -> list[list[str]]:
     return [[cell.text for cell in row.cells] for row in table.rows[1:]]
 
 
-def _sheet_rows(sheet) -> list[list]:
+def _header_row(sheet, document) -> int:
+    notes = document["soa"]["notes"] if sheet.title == "Statement of Applicability" else []
+    return len(notes) + 2 if notes else 1
+
+
+def _sheet_rows(sheet, min_row: int = 2) -> list[list]:
     def _norm(value):
         if isinstance(value, datetime):
             return value.date().isoformat()
@@ -215,11 +255,83 @@ def _sheet_rows(sheet) -> list[list]:
             return value.isoformat()
         return value
 
-    return [[_norm(cell.value) for cell in row] for row in sheet.iter_rows(min_row=2)]
+    return [[_norm(cell.value) for cell in row] for row in sheet.iter_rows(min_row=min_row)]
 
 
 def _framework_names(document) -> dict[str, str]:
     return {framework["framework_id"]: framework["name"] for framework in document["frameworks"]}
+
+
+def _headings(word, level: int) -> list[str]:
+    return [paragraph.text for paragraph in word.paragraphs if paragraph.style.name == f"Heading {level}"]
+
+
+def _has_table(word, headers) -> bool:
+    return any(tuple(cell.text for cell in table.rows[0].cells) == headers for table in word.tables)
+
+
+def _v1(document: dict) -> dict:
+    """A schema-v1 (B1, pre-P6-9) document: the same data without the keys P6-9 added (D-P6-9-E)."""
+    old = copy.deepcopy(document)
+    old["schema_version"] = 1
+    for key in ("soa", "prior_period"):
+        del old[key]
+    del old["roadmap"]["groups"]
+    for framework in old["frameworks"]:
+        del framework["pack_version"]
+    return old
+
+
+def _compared(document: dict) -> dict:
+    """The document with a `compared` prior_period in the exact D-P6-9-I shape (renderer input only)."""
+    new = copy.deepcopy(document)
+    dp_name, iso_name = (framework["name"] for framework in new["frameworks"][:2])
+    new["prior_period"] = {
+        "status": "compared",
+        "intro": "Compared with the last issued board report for the previous assessment period.",
+        "notes": ["ISO 27001: the pack version of one of the two reports was not recorded."],
+        "prior": {
+            "snapshot_id": "abcdef12-0000-4000-8000-000000000009", "assessment_id": "prior-assessment",
+            "version_label": "v3", "generated_on": "15 Mar 2026", "period_label": "1 Apr 2025 to 31 Mar 2026",
+            "cutoff_label": "15 Mar 2026", "document_sha256": "ef" * 32, "schema_version": 1,
+        },
+        "frameworks": [
+            {
+                "framework_id": new["frameworks"][0]["framework_id"], "name": dp_name, "compared": True,
+                "prior_version": "2023", "current_version": "2023", "prior_pack_version": None,
+                "current_pack_version": None, "prior_score": 40.0, "current_score": 62.5, "score_delta": 22.5,
+                "prior_rating": "Low", "current_rating": "Moderate",
+                "counts": {"improved": 1, "regressed": 1, "unchanged": 0, "changed": 0, "new": 0, "no_longer_assessed": 0},
+            },
+            {
+                "framework_id": new["frameworks"][1]["framework_id"], "name": iso_name, "compared": False,
+                "prior_version": None, "current_version": "2022", "prior_pack_version": None,
+                "current_pack_version": None, "prior_score": None, "current_score": 55.0, "score_delta": None,
+                "prior_rating": None, "current_rating": "Moderate", "counts": None,
+            },
+        ],
+        "changes": [
+            {
+                "framework_id": new["frameworks"][0]["framework_id"], "framework_name": dp_name,
+                "requirement_id": "CH2.CONSENT.1", "requirement_title": "Consent is free and specific",
+                "prior_outcome": "compliant", "prior_outcome_label": "Compliant",
+                "current_outcome": "non_compliant", "current_outcome_label": "Non-compliant",
+                "direction": "regressed", "direction_label": "Regressed",
+            },
+            {
+                "framework_id": new["frameworks"][0]["framework_id"], "framework_name": dp_name,
+                "requirement_id": "CH2.NOTICE.1", "requirement_title": "Notice before processing",
+                "prior_outcome": None, "prior_outcome_label": None,
+                "current_outcome": "compliant", "current_outcome_label": "Compliant",
+                "direction": "new", "direction_label": "Newly assessed",
+            },
+        ],
+        "totals": {
+            "prior": {"requirements": 4, "gaps": 3, "critical_high_gaps": 1, "insufficient_evidence": 0, "not_applicable": 0},
+            "current": {"requirements": 5, "gaps": 2, "critical_high_gaps": 2, "insufficient_evidence": 1, "not_applicable": 1},
+        },
+    }
+    return new
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +350,14 @@ def test_scenario_1_openpyxl_is_pinned_and_the_exporters_take_only_the_document(
 
     exports = _exports()
     assert exports.EXPORT_FORMAT_VERSION == 1
-    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1,)
+    # Schema v1 sidecars (pre-P6-9) stay exportable; v2 is the current builder (D-P6-8-B2-J).
+    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2)
+    assert _board().DOCUMENT_SCHEMA_VERSION in exports.SUPPORTED_SCHEMA_VERSIONS
+    assert exports.XLSX_OPTIONAL_SHEETS == XLSX_OPTIONAL_SHEETS
+    # The roadmap intro mirrors the PDF of the document's own schema: v2 is the live template's text.
+    assert exports.ROADMAP_INTROS[1] == ROADMAP_INTRO_V1
+    template = (REPO_ROOT / "app" / "templates" / "reports" / "board_report.html").read_text(encoding="utf-8")
+    assert f"<p>{exports.ROADMAP_INTROS[2]}</p>" in template
     assert exports.DOCX_MEDIA_TYPE == DOCX_MEDIA_TYPE
     assert exports.XLSX_MEDIA_TYPE == XLSX_MEDIA_TYPE
     assert exports.XLSX_SHEETS == XLSX_SHEETS
@@ -259,7 +378,7 @@ def test_scenario_1_openpyxl_is_pinned_and_the_exporters_take_only_the_document(
 
 
 def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, http, gate, monkeypatch, fake_pdf):
-    """Scenario 2 (D-P6-8-B2-D): same headings and order as the PDF, Word styles, exact Devanagari and rupee."""
+    """Scenario 2 (D-P6-8-B2-D): same headings and order as the v2 PDF, Word styles, exact Devanagari and rupee."""
     board = _board()
     assessment, snapshot, document, sha, *_ = _version(db, http, gate, monkeypatch)
 
@@ -277,17 +396,13 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
     paragraphs = [paragraph.text for paragraph in word.paragraphs]
     label = _label(document, sha)
 
-    headings = [paragraph.text for paragraph in word.paragraphs if paragraph.style.name == "Heading 1"]
-    assert headings == [
-        "Management summary",
-        "Top risks",
-        "Remediation roadmap",
-        "What we could not assess",
+    assert document["schema_version"] == 2 and document["soa"] is not None  # DPDPA + ISO fixture
+    assert _headings(word, 1) == [
+        *B1_HEADINGS_HEAD,
         *[f"{section['name']} ({section['version']})" for section in document["framework_sections"]],
-        "Sign-off",
-        "Appendix A: Methodology",
-        "Appendix B: Requirement register",
-        "Appendix C: Evidence register",
+        COMPARISON_HEADING,
+        *B1_HEADINGS_TAIL,
+        SOA_HEADING,
     ]
     assert [p.text for p in word.paragraphs if p.style.name == "Title"] == ["Board report"]
     assert paragraphs.count(label) == 1
@@ -348,16 +463,49 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
         for row in document["appendices"]["evidence_register"]
     ]
     assert "rejected-scan.pdf" not in everything
-    (roadmap,) = _table(word, DOCX_TABLE_HEADERS["roadmap"])
-    assert _body_rows(roadmap) == [
-        [
-            action["title"],
-            action["owner"] or "Unassigned",
-            board.display_date(action["target_date"]) if action["target_date"] else "No target date",
-            action["status_label"],
-            "; ".join(f"{c['framework_name']}: {c['requirement_id']} ({c['finding_title']})" for c in action["closes"]),
+    # Roadmap: one Heading 2 + headline + table + "Findings addressed" per group, as the v2 PDF (D-P6-9-G).
+    exports = _exports()
+    groups = document["roadmap"]["groups"]
+    assert len(groups) == 2
+    assert exports.ROADMAP_INTROS[2] in paragraphs
+    assert not _has_table(word, DOCX_TABLE_HEADERS["roadmap"])  # the v1 flat table is not used for v2
+    group_tables = _table(word, DOCX_TABLE_HEADERS["roadmap_group"])
+    assert len(group_tables) == len(groups)
+    heading_2 = _headings(word, 2)
+    for table, group in zip(group_tables, groups):
+        assert group["topic"] in heading_2
+        assert group["headline"] in paragraphs
+        assert _body_rows(table) == [
+            [
+                action["title"],
+                action["owner"] or "Unassigned",
+                board.display_date(action["target_date"]) if action["target_date"] else "No target date",
+                action["status_label"],
+                f"{action['framework_name']}: {action['requirement_id']} ({action['finding_title']})",
+            ]
+            for action in group["actions"]
         ]
-        for action in document["roadmap"]["actions"]
+        assert "Findings addressed: " + "; ".join(
+            f"{c['framework_name']}: {c['requirement_id']} ({c['finding_title']})" for c in group["closes"]
+        ) in paragraphs
+
+    # Prior-period comparison: the fixture has no earlier period, so only the note (no tables).
+    assert document["prior_period"]["status"] == "no_prior"
+    start = paragraphs.index(COMPARISON_HEADING)
+    assert paragraphs[start + 1 : start + 1 + len(document["prior_period"]["notes"])] == document["prior_period"]["notes"]
+    assert not _has_table(word, DOCX_TABLE_HEADERS["comparison"])
+
+    # Appendix D: every SoA row, justification or the PDF's fallback text.
+    soa = document["soa"]
+    for text in (soa["intro"], soa["reliance"], *soa["notes"]):
+        assert text in paragraphs
+    (soa_table,) = _table(word, DOCX_TABLE_HEADERS["soa"])
+    assert _body_rows(soa_table) == [
+        [
+            f"{row['reference']} {row['title']}", row["theme"], row["applicability_label"],
+            row["implementation_label"], row["justification"] or "Justification not recorded",
+        ]
+        for row in soa["rows"]
     ]
     (scores,) = _table(word, DOCX_TABLE_HEADERS["scores"])
     assert [row[:3] for row in _body_rows(scores)] == [
@@ -368,7 +516,7 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
 
 
 def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, gate, monkeypatch, fake_pdf):
-    """Scenario 3 (D-P6-8-B2-E): six sheets, pinned columns, frozen bold filtered headers, typed cells, no formulas."""
+    """Scenario 3 (D-P6-8-B2-E): six sheets + SoA, pinned columns, frozen bold filtered headers, typed cells, no formulas."""
     assessment, snapshot, document, sha, *_ = _version(db, http, gate, monkeypatch)
     response = _get(http, assessment.id, snapshot.id, "xlsx")
     assert response.status_code == 200, response.text
@@ -378,7 +526,8 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert "filename*=UTF-8''" + urllib.parse.quote(expected_name, safe="") in response.headers["content-disposition"]
 
     book = _xlsx(response.content)
-    assert tuple(book.sheetnames) == XLSX_SHEETS
+    # No earlier period, so no changes sheet; ISO in scope, so the SoA sheet.
+    assert tuple(book.sheetnames) == (*XLSX_SHEETS, "Statement of Applicability")
     names = _framework_names(document)
 
     about = book["About"]
@@ -390,7 +539,8 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert about_rows["Report version"] == "v1"
     assert about_rows["Document SHA-256"] == sha
     assert about_rows["Report generated"] == document["snapshot"]["generated_at"]
-    assert about_rows["Document schema version"] == 1
+    assert about_rows["Document schema version"] == 2
+    assert about_rows["Prior-period comparison"] == " ".join(document["prior_period"]["notes"])
     assert about_rows["Export format version"] == 1
     assert about_rows["Assessment period"] == document["basis"]["period_label"]
     assert about_rows["Evidence cut-off"] == document["basis"]["cutoff_label"]
@@ -398,12 +548,14 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert book.properties.identifier == snapshot.id
     assert book.properties.creator == document["firm_name"]
 
-    for sheet_name, columns in XLSX_COLUMNS.items():
-        sheet = book[sheet_name]
-        assert tuple(cell.value for cell in sheet[1]) == columns, sheet_name
-        assert all(cell.font.b for cell in sheet[1]), sheet_name
-        assert sheet.freeze_panes == "A2", sheet_name
-        assert sheet.auto_filter.ref == sheet.dimensions, sheet_name
+    for sheet_name in book.sheetnames[1:]:
+        sheet, columns = book[sheet_name], XLSX_COLUMNS[sheet_name]
+        header = _header_row(sheet, document)
+        assert tuple(cell.value for cell in sheet[header]) == columns, sheet_name
+        assert all(cell.font.b for cell in sheet[header]), sheet_name
+        assert sheet.freeze_panes == f"A{header + 1}", sheet_name
+        last = sheet.cell(row=header, column=len(columns)).column_letter
+        assert sheet.auto_filter.ref == f"A{header}:{last}{sheet.max_row}", sheet_name
 
     assert _sheet_rows(book["Requirement register"]) == [
         [
@@ -425,30 +577,62 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
         ]
         for risk in document["top_risks"]
     ]
+    # One row per roadmap action (flat, target-date order); "Control group" is the topic of the
+    # roadmap group that addresses the action's Finding, looked up by (framework name, requirement id).
+    topics = {
+        (close["framework_name"], close["requirement_id"]): group["topic"]
+        for group in document["roadmap"]["groups"]
+        for close in group["closes"]
+    }
     assert _sheet_rows(book["Action tracker"]) == [
         [
             action["title"], action["owner"], action["target_date"], action["status_label"],
             "; ".join(c["framework_name"] for c in action["closes"]),
             "; ".join(c["requirement_id"] for c in action["closes"]),
             "; ".join(c["finding_title"] for c in action["closes"]),
+            "; ".join(dict.fromkeys(topics[(c["framework_name"], c["requirement_id"])] for c in action["closes"])),
             None, None,
         ]
         for action in document["roadmap"]["actions"]
     ]
+    # SoA: the recorded justifications as written (blank only where none is recorded), a filterable
+    # status column, and the PDF's notes above the header (the missing-justification count among them).
+    soa_sheet, soa = book["Statement of Applicability"], document["soa"]
+    from app.services import soa as soa_module
+
+    missing = sum(1 for row in soa["rows"] if not row["justification"])
+    assert soa_module.MISSING_JUSTIFICATION_NOTE.format(count=missing) in soa["notes"]
+    assert [soa_sheet.cell(row=i + 1, column=1).value for i in range(len(soa["notes"]))] == soa["notes"]
+    assert all(cell.value is None for cell in soa_sheet[len(soa["notes"]) + 1])
+    soa_header = _header_row(soa_sheet, document)
+    assert _sheet_rows(soa_sheet, min_row=soa_header + 1) == [
+        [
+            row["control_id"], row["reference"], row["title"], row["theme"], row["applicability_label"],
+            row["implementation_label"], row["justification"], JUSTIFICATION_STATUS[bool(row["justification"])],
+            row["justification_by"], row["justification_on"],
+        ]
+        for row in soa["rows"]
+    ]
+    status_column = XLSX_COLUMNS["Statement of Applicability"].index("Justification status") + 1
+    for offset in range(len(soa["rows"])):
+        cell = soa_sheet.cell(row=soa_header + 1 + offset, column=status_column)
+        assert (cell.fill.fgColor.rgb == MISSING_FILL) is (cell.value == "Missing"), cell.coordinate
     assert _sheet_rows(book["Evidence register"]) == [
         [row["filename"], row["version_number"], row["sha256_prefix"], row["added_on"], row["status"], "Yes" if row["cited"] else "No"]
         for row in document["appendices"]["evidence_register"]
     ]
     summary = _sheet_rows(book["Framework summary"])
-    assert [row[:5] for row in summary] == [
+    by_id = {framework["framework_id"]: framework for framework in document["frameworks"]}
+    assert [row[:6] for row in summary] == [
         [
             framework["name"],
-            next(f["version"] for f in document["frameworks"] if f["framework_id"] == framework["framework_id"]),
+            by_id[framework["framework_id"]]["version"],
+            by_id[framework["framework_id"]]["pack_version"],
             framework["score"], framework["rating"], framework["headline"],
         ]
         for framework in document["summary"]["frameworks"]
     ]
-    assert [row[5:] for row in summary] == [
+    assert [row[6:] for row in summary] == [
         [framework["coverage"][key] for key in ("in_scope", "compliant", "partially_compliant", "non_compliant", "insufficient_evidence", "not_applicable")]
         for framework in document["summary"]["frameworks"]
     ]
@@ -636,11 +820,13 @@ def test_scenario_7_formula_prefixes_are_text_and_illegal_characters_are_dropped
         "owner": "+SUM(1,2)",
         "description": "-2+3 overdue",
         "action": "@evil",
+        "justification": "=IMPORTXML(A1)",
     }
     document["company_name"] = hostile["company"]
     risk = document["top_risks"][0]
     risk.update(title=hostile["title"], owner=hostile["owner"], description=hostile["description"], action_title=hostile["action"])
     document["roadmap"]["actions"][0]["owner"] = hostile["owner"]
+    document["soa"]["rows"][0]["justification"] = hostile["justification"]  # consultant free text (P6-9)
     register = document["appendices"]["requirement_register"]
     register[0]["requirement_title"] = "\tTabbed title"
     register[1]["requirement_title"] = "Vertical\x0btab and NUL\x00 removed"
@@ -663,7 +849,7 @@ def test_scenario_7_formula_prefixes_are_text_and_illegal_characters_are_dropped
                 elif isinstance(cell.value, str):
                     assert cell.quotePrefix is not True, (sheet.title, cell.coordinate, cell.value)
     # Text is kept as written (no visible apostrophe), only typed and flagged as text.
-    assert {hostile["company"], hostile["title"], hostile["owner"], hostile["description"], hostile["action"]} <= seen
+    assert set(hostile.values()) <= seen
     assert "Verticaltab and NUL removed" in _xlsx_strings(book)
     assert book["Requirement register"].cell(row=2, column=7).data_type == "n"  # priority stays a number
 
@@ -699,7 +885,7 @@ def test_scenario_8_versions_page_links_exports_on_board_report_rows_only(db, ht
 
 
 def test_scenario_9_exports_add_no_framework_copy_of_their_own(db, http, gate, monkeypatch, fake_pdf):
-    """Scenario 9 (D-P6-8-B2-D): an ISO-only export carries no DPDPA or legal wording."""
+    """Scenario 9 (D-P6-8-B2-D/E): ISO-only exports carry no legal wording; DPDPA-only exports carry no SoA."""
     assessment, snapshot, *_ = _version(db, http, gate, monkeypatch, frameworks=("iso27001",))
     docx_text = "\n".join(_docx_text(_docx(_get(http, assessment.id, snapshot.id, "docx").content))).lower()
     xlsx_text = "\n".join(_xlsx_strings(_xlsx(_get(http, assessment.id, snapshot.id, "xlsx").content))).lower()
@@ -707,6 +893,18 @@ def test_scenario_9_exports_add_no_framework_copy_of_their_own(db, http, gate, m
         assert phrase not in docx_text, phrase
         assert phrase not in xlsx_text, phrase
     assert "certification" in docx_text
+
+
+def test_scenario_9b_a_dpdpa_only_export_has_no_statement_of_applicability(db, http, gate, monkeypatch, fake_pdf):
+    """Scenario 9b (D-P6-8-B2-D/E): the SoA is ISO-only (document soa is None), so neither export shows it."""
+    assessment, snapshot, document, *_ = _version(db, http, gate, monkeypatch, frameworks=("dpdpa",))
+    assert document["soa"] is None
+    word = _docx(_get(http, assessment.id, snapshot.id, "docx").content)
+    assert SOA_HEADING not in _headings(word, 1)
+    assert not _has_table(word, DOCX_TABLE_HEADERS["soa"])
+    book = _xlsx(_get(http, assessment.id, snapshot.id, "xlsx").content)
+    assert tuple(book.sheetnames) == XLSX_SHEETS
+    assert "statement of applicability" not in "\n".join(_xlsx_strings(book)).lower()
 
 
 # ---------------------------------------------------------------------------
@@ -722,6 +920,9 @@ P6_8_B2_FORBIDDEN_PATHS = (
     # B1's frozen surfaces: the document builder, snapshot storage, renderer, templates, fonts, golden.
     "app/services/board_report.py", "app/services/report_snapshots.py", "app/utils/html_pdf.py",
     "app/services/standalone_workpaper.py", "app/templates/reports", "app/assets", "tests/golden",
+    # P6-9's builders: the SoA, groups and comparison are read from the document, never recomputed.
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py",
     # fpdf2 reports and the RFI (P6-7b owns RFI changes).
     "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
     "app/routers/integrated_reports.py", "app/services/rfi_requests.py",
@@ -755,6 +956,15 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     for token in LIVE_READER_TOKENS:
         assert token not in source, token
     assert re.search(r"^import openpyxl|^from openpyxl", source, re.M) is None, "import openpyxl lazily inside render_xlsx"
+    # From app/, the exporter may import only board_report (display_date, SHA_PREFIX_CHARS) and
+    # report_snapshots (SnapshotError). Nothing that recomputes the SoA, groups or comparison.
+    app_imports = set()
+    for module, names in re.findall(r"^\s*from (app(?:\.\w+)*) import ([^\n]+)$", source, re.M):
+        app_imports |= {module.rsplit(".", 1)[-1]} if module != "app.services" else {
+            name.strip(" ()").split(" as ")[0] for name in names.split(",") if name.strip(" ()")
+        }
+    assert re.search(r"^\s*import app\b", source, re.M) is None
+    assert app_imports <= {"board_report", "report_snapshots"}, app_imports
 
     committed = _git("diff", "--name-only", "main...HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
     working = _git("diff", "--name-only", "HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
@@ -770,3 +980,96 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     added = [line[1:] for line in requirements.splitlines() if line.startswith("+") and not line.startswith("+++")]
     removed = [line[1:] for line in requirements.splitlines() if line.startswith("-") and not line.startswith("---")]
     assert added in ([], [OPENPYXL_PIN]) and removed == [], (added, removed)
+
+
+# ---------------------------------------------------------------------------
+# 11. Schema v1 still exports; v2 comparison and recorded justifications render from the document
+# ---------------------------------------------------------------------------
+
+
+def test_scenario_11_schema_v1_and_v2_comparison_render_from_the_document(db, http, gate, monkeypatch):
+    """Scenario 11 (D-P6-8-B2-J): a v1 sidecar renders the B1 layout; a v2 comparison and SoA render as the PDF."""
+    board, exports = _board(), _exports()
+    assessment, *_ = _engagement_fixture(db, http, gate, monkeypatch)
+    current = _document(db, assessment)
+    sha = "12" * 32
+
+    # --- v1: B1 headings, flat roadmap, no comparison or SoA, empty v2-only cells. ---
+    old = _v1(current)
+    word = _docx(exports.render_docx(old, document_sha256=sha))
+    assert _headings(word, 1) == [
+        *B1_HEADINGS_HEAD,
+        *[f"{section['name']} ({section['version']})" for section in old["framework_sections"]],
+        *B1_HEADINGS_TAIL,
+    ]
+    paragraphs = [paragraph.text for paragraph in word.paragraphs]
+    assert ROADMAP_INTRO_V1 in paragraphs and exports.ROADMAP_INTROS[2] not in paragraphs
+    assert not _has_table(word, DOCX_TABLE_HEADERS["roadmap_group"])
+    (roadmap,) = _table(word, DOCX_TABLE_HEADERS["roadmap"])
+    assert _body_rows(roadmap) == [
+        [
+            action["title"],
+            action["owner"] or "Unassigned",
+            board.display_date(action["target_date"]) if action["target_date"] else "No target date",
+            action["status_label"],
+            "; ".join(f"{c['framework_name']}: {c['requirement_id']} ({c['finding_title']})" for c in action["closes"]),
+        ]
+        for action in old["roadmap"]["actions"]
+    ]
+    book = _xlsx(exports.render_xlsx(old, document_sha256=sha))
+    assert tuple(book.sheetnames) == XLSX_SHEETS
+    about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
+    assert tuple(about) == ABOUT_KEYS
+    assert about["Document schema version"] == 1 and about["Prior-period comparison"] is None
+    assert {row[2] for row in _sheet_rows(book["Framework summary"])} == {None}  # Pack version
+    assert {row[7] for row in _sheet_rows(book["Action tracker"])} == {None}  # Control group
+
+    # --- v2 with a comparison and one recorded justification. ---
+    new = _compared(current)
+    soa_row = new["soa"]["rows"][0]
+    soa_row.update(justification="Supplier policy approved by the board", justification_by="Priya", justification_on="2026-09-20")
+    prior, period = new["prior_period"]["prior"], new["prior_period"]
+    dp_name, iso_name = (framework["name"] for framework in period["frameworks"])
+
+    word = _docx(exports.render_docx(new, document_sha256=sha))
+    paragraphs = [paragraph.text for paragraph in word.paragraphs]
+    start = paragraphs.index(COMPARISON_HEADING)
+    assert paragraphs[start + 1 : start + 3 + len(period["notes"])] == [
+        period["intro"],
+        f"Compared with version v3 (snapshot abcdef12) for the assessment period {prior['period_label']}, "
+        f"evidence cut-off {prior['cutoff_label']}, generated {prior['generated_on']}.",
+        *period["notes"],
+    ]
+    (frameworks_table,) = _table(word, DOCX_TABLE_HEADERS["comparison"])
+    assert _body_rows(frameworks_table) == [
+        [dp_name, "40.0", "62.5", "+22.5 points", "1", "1", "0", "0", "0"],
+        [iso_name, *["Not compared"] * 8],  # one merged cell, as the PDF's colspan
+    ]
+    assert "Gaps identified: 3 in the prior period, 2 in this period." in paragraphs
+    (changes_table,) = _table(word, DOCX_TABLE_HEADERS["comparison_changes"])
+    assert _body_rows(changes_table) == [
+        [f"{dp_name}: CH2.CONSENT.1 - Consent is free and specific", "Compliant", "Non-compliant", "Regressed"],
+        [f"{dp_name}: CH2.NOTICE.1 - Notice before processing", "Not assessed", "Compliant", "Newly assessed"],
+    ]
+    (soa_table,) = _table(word, DOCX_TABLE_HEADERS["soa"])
+    assert _body_rows(soa_table)[0][4] == "Supplier policy approved by the board"
+
+    book = _xlsx(exports.render_xlsx(new, document_sha256=sha))
+    assert tuple(book.sheetnames) == (*XLSX_SHEETS, *XLSX_OPTIONAL_SHEETS)
+    about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
+    assert about["Prior-period comparison"] == "Compared with version v3 (snapshot abcdef12)"
+    assert _sheet_rows(book["Prior-period changes"]) == [
+        [dp_name, "CH2.CONSENT.1", "Consent is free and specific", "Compliant", "Non-compliant", "Regressed"],
+        [dp_name, "CH2.NOTICE.1", "Notice before processing", "Not assessed", "Compliant", "Newly assessed"],
+    ]
+    soa_sheet = book["Statement of Applicability"]
+    first = _sheet_rows(soa_sheet, min_row=_header_row(soa_sheet, new) + 1)[0]
+    assert first[6:] == ["Supplier policy approved by the board", "Recorded", "Priya", "2026-09-20"]
+    assert isinstance(soa_sheet.cell(row=_header_row(soa_sheet, new) + 1, column=10).value, datetime)
+
+    # A key missing from a v2 document is a bug, not a reason to render less: it raises.
+    broken = copy.deepcopy(current)
+    del broken["prior_period"]
+    for render in (exports.render_docx, exports.render_xlsx):
+        with pytest.raises(KeyError):
+            render(broken, document_sha256=sha)
