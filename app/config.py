@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     llm_model_synthesize: str = "deepseek/deepseek-v4-flash"
     llm_model_vision: str = "anthropic/claude-sonnet-4"
     llm_timeout_seconds: float = 300.0
+    # Wall-clock cap on one provider call, including reading a whole stream.
+    # llm_timeout_seconds is an httpx per-phase timeout: its read timer resets
+    # whenever bytes arrive, and OpenRouter sends keep-alive bytes while a
+    # request is stuck upstream, so a stuck call never times out on it (live,
+    # 2026-09-30: every in-flight c3 request hung for over an hour, twice).
+    # The longest legitimate call seen took ~342 s.
+    llm_request_deadline_seconds: float = 600.0
     llm_max_retries: int = 2
     llm_max_concurrency: int = 4
     llm_batch_threshold_controls: int = 90

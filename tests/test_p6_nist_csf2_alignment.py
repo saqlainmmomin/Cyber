@@ -155,7 +155,10 @@ def test_pack_shape_content_and_weights():
                 assert getattr(current[control_id], field) == getattr(original[control_id], field)
     for control_id, control in current.items():
         if control_id not in NEW_CONTROLS and control_id not in CHANGED_FIELDS:
-            assert dataclasses.replace(control, test_criteria=()) == original[control_id]
+            # Both sides: once main includes P6-2e, main's controls carry criteria too.
+            assert dataclasses.replace(control, test_criteria=()) == dataclasses.replace(
+                original[control_id], test_criteria=()
+            )
     for domain_key, domain in NIST_CSF_DEFINITION.domains.items():
         assert domain.weight == main.domains[domain_key].weight
         for section_key, section in domain.sections.items():
