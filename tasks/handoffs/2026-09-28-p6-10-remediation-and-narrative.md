@@ -558,6 +558,7 @@ Steps:
 - Baseline before implementation: Python 3.13.13; both P6-10 files were `11 failed, 17 passed`.
 - Implemented the Stage 4 narrative service, routes, page, report integration, v3 exporter support, exact D-P6-10-P integer edits, and the requested Stage 3 invalid/missing `expected_version` refusal. No migrations, network calls, live LLM calls, or protected-file edits.
 - Verification: P6-10 contract files `28 passed` twice; `tests/test_p6_10_extra.py` `2 passed`; P6-8 B1 `14 passed`; neighbour set `276 passed`; full suite `1250 passed, 10 skipped, 4 failed`.
+- Review fix: removed the framework-only gate from narrative check 7 and added executive/cross-framework legal-copy regressions; targeted suite `34 passed`, full suite `1257 passed, 10 skipped, 1 failed` (retention guard rejects the required test-file edit).
 - Full-suite failures left unchanged as required: the P6-4 cap and NIST protected-surface guards still see the already-committed P6-10a files; the retention guard reports the required uncommitted test edits; and `tests/test_p6_9_prior_period.py::test_scenario_1_compares_with_the_previous_issued_period_from_its_sidecar` still expects schema 2 although the live document is v3. The handoff explicitly prohibits editing that v3 assertion.
 - Golden diff (exactly the required two hunks):
 

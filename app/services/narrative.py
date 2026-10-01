@@ -332,8 +332,7 @@ def _clean_model_sentences(
             dropped.append({"text": text, "reason": "single_framework"})
             continue
         if (
-            kind == "framework"
-            and not any(ref.framework_id in LEGAL_FRAMEWORK_IDS for ref in closed_refs)
+            not any(ref.framework_id in LEGAL_FRAMEWORK_IDS for ref in closed_refs)
             and any(term in text.lower() for term in NON_LEGAL_TERMS)
         ):
             dropped.append({"text": text, "reason": "framework_copy"})
