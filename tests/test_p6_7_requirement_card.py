@@ -1164,6 +1164,16 @@ P6_7B_APP_FILES = (
     "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
     "app/templates/pages/rfi.html",
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after P6-7a and
+# legitimately touches these; tests/test_p6_10a_remediation_draft.py and
+# tests/test_p6_10b_narrative.py guard them.
+P6_10_APP_FILES = (
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/templates/partials/remediation_draft.html", "app/templates/pages/narrative.html",
+)
+
+
+from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 
 
 def _changed(*args: str) -> set[str]:
@@ -1179,13 +1189,16 @@ def test_scenario_14_p6_7_touches_only_its_files():
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES) | set(P6_7B_APP_FILES) | set(P6_9_APP_FILES)
+    changed -= set(P6_10_APP_FILES)
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
     changed -= set(LLM_DEADLINE_FILES)
+    changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
                                                     "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES, *P6_7B_APP_FILES)]
     p6_2b += [f":(exclude){path}" for path in LLM_DEADLINE_FILES]
+    p6_2b += V3A_EXCLUDES
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []

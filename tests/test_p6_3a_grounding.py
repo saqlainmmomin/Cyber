@@ -1608,6 +1608,8 @@ def test_scenario_16_load_source_documents(db, monkeypatch):
 # Scenario 17: dormancy, parity and independence guards
 # --------------------------------------------------------------------------- #
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 PROTECTED_PATHS = [
     "app/services/claude_analyzer.py", "app/services/desk_review.py",
     "app/services/desk_review_findings.py", "app/services/auto_answer.py",
@@ -1668,6 +1670,12 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/components/requirement_card_body.html",
     ":(exclude)app/templates/pages/review_queue.html",
     ":(exclude)app/templates/pages/evidence_span.html",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md): the drafting
+    # router, the narrative page and the recommended-action draft partial;
+    # tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard them.
+    ":(exclude)app/routers/drafting.py",
+    ":(exclude)app/templates/pages/narrative.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
     # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): the SoA
     # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
     ":(exclude)app/routers/soa.py",
@@ -1677,12 +1685,19 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/pages/rfi.html",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): consultant-entered board-deck
+    # data (migration, models, board-inputs page, theme settings, display font).
+    *V3A_EXCLUDES,
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2
 # desk-review module. P6-4 adds the v2 analysis service. Any other importer
 # still fails the dormancy scan.
-P6_3B_GROUNDING_IMPORTERS = {"app/services/desk_review_v2.py", "app/services/analysis_v2.py"}
+# P6-10 reuses grounding.prompts.wrap_untrusted for its two drafting prompts.
+P6_3B_GROUNDING_IMPORTERS = {
+    "app/services/desk_review_v2.py", "app/services/analysis_v2.py",
+    "app/services/remediation_draft.py", "app/services/narrative.py",
+}
 
 
 def _git(*args) -> str:

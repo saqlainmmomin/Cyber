@@ -16,7 +16,12 @@ FONT_FILES = {
     "NotoSansDevanagari-Regular.ttf": "9c7d935139ea6a1e6ad9dbac4f6d27ece1e04bca8123c8888d00a0f9df4724cd",
     "NotoSansDevanagari-Bold.ttf": "ff2f76a23aad41e0608c2d7dbc4bacd247ff3bec78f0ec2a8fb106b561636e58",
 }
+DISPLAY_FONT_FILES = {
+    "BarlowCondensed-Bold.ttf": "e476562ec9c1e16cf16475895b511f08c804f438cc9a9f80a44ea50a0eeb5b65",
+    "BarlowCondensed-SemiBold.ttf": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9",
+}
 LICENSE_FILES = ("OFL-NotoSans.txt", "OFL-NotoSansDevanagari.txt")
+DISPLAY_LICENSE_FILES = ("OFL-BarlowCondensed.txt",)
 FONT_STACK = "'Noto Sans', 'Noto Sans Devanagari'"
 REQUIRE_ENV = "CYBERASSESS_REQUIRE_WEASYPRINT"
 RENDERER_UNAVAILABLE_MESSAGE = (
@@ -73,6 +78,17 @@ def font_face_css() -> str:
     )
 
 
+def display_font_face_css() -> str:
+    return "\n".join(
+        (
+            "@font-face { font-family: 'Display'; src: url('BarlowCondensed-Bold.ttf'); "
+            "font-weight: 700; font-style: normal; }",
+            "@font-face { font-family: 'Display'; src: url('BarlowCondensed-SemiBold.ttf'); "
+            "font-weight: 600; font-style: normal; }",
+        )
+    )
+
+
 def render_pdf(html: str) -> bytes:
     available, reason = weasyprint_status()
     if not available:
@@ -93,7 +109,7 @@ def render_pdf(html: str) -> bytes:
             parts = urlsplit(url)
             if parts.scheme.lower() == "file":
                 path = Path(url2pathname(unquote(parts.path))).resolve()
-                if path.parent == font_dir and path.name in FONT_FILES:
+                if path.parent == font_dir and path.name in (FONT_FILES | DISPLAY_FONT_FILES):
                     return super().fetch(url, headers)
             raise _OfflineURLRefused(url)
 

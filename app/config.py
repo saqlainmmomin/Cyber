@@ -93,7 +93,17 @@ class Settings(BaseSettings):
     firm_name: str = "CyberAssess"
     firm_logo_path: str | None = None
     firm_primary_hex: str = "#2563eb"
+    firm_color_primary: str = "#161A5C"
+    firm_color_secondary: str = "#2D3FD3"
+    firm_color_accent: str = "#12B3A6"
     aws_external_id_secret: str = ""
+
+    @field_validator("firm_color_primary", "firm_color_secondary", "firm_color_accent")
+    @classmethod
+    def validate_firm_color(cls, v: str) -> str:
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
+            raise ValueError("firm colors must be 6-digit hex colors like #161A5C")
+        return v
 
     @field_validator("firm_primary_hex")
     @classmethod

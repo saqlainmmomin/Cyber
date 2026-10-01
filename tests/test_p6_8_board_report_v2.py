@@ -609,7 +609,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     assert "Unreviewed stray" not in json.dumps(document)
 
     assert set(document) == DOCUMENT_KEYS
-    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)
+    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 3  # P6-10 (D-P6-10-K)
     assert document["kind"] == board.SNAPSHOT_TYPE == "board_report"
     assert document["snapshot"] == {
         "id": "00000000-0000-4000-8000-000000000001",
@@ -1017,6 +1017,12 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after
+    # P6-8 B1; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py
+    # guard these files.
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
     # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
     "app/services/board_exports.py",
     # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after B1;
@@ -1028,6 +1034,8 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/services/grounding/judge.py",
     "app/services/analysis_v2.py",
 )
+from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
     "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
@@ -1045,6 +1053,9 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-10: the recommended-action draft control in the conclusion card and its partial.
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
     # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim
@@ -1066,6 +1077,8 @@ P6_8_FORBIDDEN_PATHS = (
     # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     ":(exclude)app/config.py",
     ":(exclude)app/services/llm_client.py",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
+    *V3A_EXCLUDES,
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
@@ -1102,6 +1115,7 @@ def test_scenario_14_no_llm_and_b1_file_set():
         path for path in changed_app
         if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
+        and path not in V3A_APP_PATHS  # P6-8 V3-A
     )
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside
