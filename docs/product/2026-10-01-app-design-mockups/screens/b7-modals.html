@@ -8,17 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.stage{position:relative;min-height:440px;border-radius:var(--r-lg);overflow:hidden;display:grid;place-items:center;padding:var(--s-6)}
-.stage .ghost-page{position:absolute;inset:0;padding:var(--s-6);display:flex;flex-direction:column;gap:var(--s-3)}
-.stage .ghost-page .glass{padding:var(--s-4);display:flex;flex-direction:column;gap:10px}
-.stage .scrim-modal{position:absolute;inset:0}
-.modal .fields{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-4)}
-.modal .alert{margin-top:var(--s-4)}
-.modal .choice{margin-top:var(--s-1)}
-.toolbar .seg{max-width:100%;overflow-x:auto}
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);flex-wrap:wrap;margin-bottom:var(--s-4)}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -91,7 +82,7 @@
     <div class="page">
 
 <div class="page-head"><h1>Modals and confirm dialogs</h1></div>
-<div class="toolbar"><div class="seg" data-switch role="group" aria-label="State"><button data-s="delete" aria-pressed="false">Delete</button><button data-s="purge" aria-pressed="false">Purge, typed</button><button data-s="send" aria-pressed="false">Send</button><button data-s="invite" aria-pressed="false">Form</button><button data-s="discard" aria-pressed="false">Discard</button><button data-s="failed" aria-pressed="false">Failed</button></div>
+<div class="toolbar spread"><div class="seg" data-switch role="group" aria-label="State"><button data-s="delete" aria-pressed="false">Delete</button><button data-s="purge" aria-pressed="false">Purge, typed</button><button data-s="send" aria-pressed="false">Send</button><button data-s="invite" aria-pressed="false">Form</button><button data-s="discard" aria-pressed="false">Discard</button><button data-s="failed" aria-pressed="false">Failed</button></div>
 <button class="btn danger lead" id="try"><svg class="i"><use href="#i-trash"/></svg>Try the delete dialog live</button></div>
 <div data-state="delete"><div class="stage solid"><div class="ghost-page" aria-hidden="true">
 <span class="skel" style="width:30%;height:24px"></span>

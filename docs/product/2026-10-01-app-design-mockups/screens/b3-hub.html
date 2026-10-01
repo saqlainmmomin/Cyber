@@ -8,62 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-[hidden]{display:none!important}
-fieldset{border:0;min-width:0}
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.x-stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.x-card{padding:var(--s-6)}
-.x-form{max-width:720px}
-.x-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
-.x-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
-.x-q{padding:var(--s-5) 0;border-top:1px solid var(--line)}
-.x-q:first-of-type{border-top:0;padding-top:var(--s-4)}
-.x-opts{display:flex;flex-direction:column;gap:10px;margin-top:var(--s-3)}
-.x-opts.inline{flex-direction:row;flex-wrap:wrap;gap:var(--s-2) var(--s-6)}
-.x-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-6);padding-top:var(--s-4);border-top:1px solid var(--line)}
-.x-split{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-4);align-items:start}
-.x-list{padding:var(--s-3) var(--s-2)}
-.x-pane{padding:var(--s-6)}
-.x-qc{padding:var(--s-5) var(--s-6)}
-.x-qc + .x-qc{margin-top:var(--s-3)}
-.x-qc h3{font-weight:500;line-height:1.5}
-.x-qc .help{margin-top:4px}
-.x-qc .cite{margin-top:var(--s-3)}
-.x-qc .alert,.x-qc .warn{margin-top:var(--s-3)}
-.x-qc .x-opts{margin-top:var(--s-4)}
-.x-qc.muted-card{background:none;box-shadow:inset 0 0 0 1px var(--line);padding:var(--s-4) var(--s-6)}
-.x-qc.muted-card h3{font-weight:400;color:var(--text-2)}
-.x-qc.quick{padding:var(--s-3) var(--s-6)}
-.x-qc.quick .x-opts{margin-top:var(--s-2)}
-.x-sum{margin-top:var(--s-3);font-size:var(--t-sm);color:var(--muted);cursor:pointer}
-.x-sum:hover{color:var(--text)}
-.x-extra{display:flex;flex-direction:column;gap:var(--s-2);margin-top:var(--s-3)}
-.x-skel{display:flex;flex-direction:column;gap:10px}
-.x-gap-top{margin-top:var(--s-4)}
-.x-gap-top-lg{margin-top:var(--s-8)}
-.x-narrow{max-width:560px}
-.x-center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
-.x-center p{max-width:44ch;color:var(--text-2)}
-.x-grow{flex:1;min-width:0}
-.x-fw{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
-.x-list-item{display:flex;flex-direction:column;gap:2px;padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-list-item:first-child{border-top:0}
-.x-check-row{display:flex;align-items:flex-start;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-check-row:first-child{border-top:0;padding-top:0}
-.x-check-row .x-grow b{display:block;font-weight:500}
-@media (max-width:860px){
-  .state-bar{padding:0 var(--s-4) var(--s-2)}
-  .x-split{grid-template-columns:1fr}
-  .x-card,.x-pane{padding:var(--s-5)}
-  .x-qc{padding:var(--s-4)}
-  .x-check-row{flex-wrap:wrap}
-  .x-bar{flex-wrap:wrap}
-  .tabs{overflow-x:auto;gap:var(--s-5);scrollbar-width:none}
-  .tabs a{white-space:nowrap}
-}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -142,7 +88,7 @@ fieldset{border:0;min-width:0}
 
       <nav class="tabs" aria-label="Assessment sections"><a href="b3-hub.html" aria-selected="true">Overview</a><a href="b3-scope-complete.html">Scope</a><a href="#">Documents</a><a href="b3-questionnaire.html">Questionnaire</a><a href="#">Report</a></nav>
 
-      <div class="x-gap-top-lg"></div>
+      <div class="mt-lg"></div>
       <div class="glass stepper" aria-label="Progress" data-state="default loading error archived">
         <div class="stp done"><div class="rail"><i style="width:100%"></i></div><div class="lbl"><svg class="i"><use href="#i-check"/></svg>Scope</div></div>
         <div class="stp done"><div class="rail"><i style="width:100%"></i></div><div class="lbl"><svg class="i"><use href="#i-check"/></svg>Evidence</div></div>
@@ -163,8 +109,8 @@ fieldset{border:0;min-width:0}
         <a href="#" role="tab" aria-selected="true" data-t="dpdpa">DPDPA 2023</a>
         <a href="#" role="tab" aria-selected="false" data-t="iso">ISO 27001:2022</a>
       </nav>
-      <div class="x-gap-top" id="fwpanel">
-        <div class="glass x-card" data-fw="dpdpa" role="tabpanel" data-state="default archived">
+      <div class="mt" id="fwpanel">
+        <div class="glass card" data-fw="dpdpa" role="tabpanel" data-state="default archived">
   <h2>DPDPA 2023</h2>
   <div class="fw-top">
     <div class="ring" role="img" aria-label="Score 61 out of 100"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="val" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="61 100"/></svg><b>61</b></div>
@@ -175,9 +121,9 @@ fieldset{border:0;min-width:0}
     </div>
   </div>
   <div class="domains"><div><span>Consent management</span><span class="status"><i class="dot c-high"></i>1 high-severity gap</span></div><div><span>Security safeguards</span><span class="status"><i class="dot c-part"></i>1 partial</span></div><div><span>Data principal rights</span><span class="status calm">No gaps</span></div></div>
-  <div class="solid x-gap-top-lg"><table><thead><tr><th>Open finding</th><th style="width:120px">Severity</th><th class="hide-sm" style="width:150px">Status</th><th class="hide-sm" style="width:100px">Owner</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody><tr><td class="t-title">No in-app consent withdrawal</td><td><span class="pill c-high">High</span></td><td class="hide-sm"><span class="status"><span class="st"></span>Open</span></td><td class="hide-sm"><span class="status">Client</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr><td class="t-title">Breach runbook has no Board notification timeline</td><td><span class="pill c-medium">Medium</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Shared</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>
+  <div class="solid mt-lg"><table><thead><tr><th>Open finding</th><th style="width:120px">Severity</th><th class="hide-sm" style="width:150px">Status</th><th class="hide-sm" style="width:100px">Owner</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody><tr><td class="t-title">No in-app consent withdrawal</td><td><span class="pill c-high">High</span></td><td class="hide-sm"><span class="status"><span class="st"></span>Open</span></td><td class="hide-sm"><span class="status">Client</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr><td class="t-title">Breach runbook has no Board notification timeline</td><td><span class="pill c-medium">Medium</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Shared</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>
 </div>
-        <div class="glass x-card" data-fw="iso" hidden role="tabpanel" data-state="default archived">
+        <div class="glass card" data-fw="iso" hidden role="tabpanel" data-state="default archived">
   <h2>ISO 27001:2022</h2>
   <div class="fw-top">
     <div class="ring" role="img" aria-label="Score 54 out of 100"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="val" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="54 100"/></svg><b>54</b></div>
@@ -188,9 +134,9 @@ fieldset{border:0;min-width:0}
     </div>
   </div>
   <div class="domains"><div><span>Access control</span><span class="status"><i class="dot c-high"></i>1 high-severity gap</span></div><div><span>Business continuity</span><span class="status"><i class="dot c-part"></i>1 partial</span></div><div><span>Policies</span><span class="status calm">No gaps</span></div></div>
-  <div class="solid x-gap-top-lg"><table><thead><tr><th>Open finding</th><th style="width:120px">Severity</th><th class="hide-sm" style="width:150px">Status</th><th class="hide-sm" style="width:100px">Owner</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody><tr><td class="t-title">Three service accounts exempt from MFA</td><td><span class="pill c-high">High</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Client</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr><td class="t-title">DR failover exceeded the 4-hour RTO</td><td><span class="pill c-medium">Medium</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Shared</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>
+  <div class="solid mt-lg"><table><thead><tr><th>Open finding</th><th style="width:120px">Severity</th><th class="hide-sm" style="width:150px">Status</th><th class="hide-sm" style="width:100px">Owner</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody><tr><td class="t-title">Three service accounts exempt from MFA</td><td><span class="pill c-high">High</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Client</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr><td class="t-title">DR failover exceeded the 4-hour RTO</td><td><span class="pill c-medium">Medium</span></td><td class="hide-sm"><span class="status"><span class="st prog"></span>In progress</span></td><td class="hide-sm"><span class="status">Shared</span></td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>
 </div>
-        <div class="glass x-card" data-state="loading" hidden role="status" aria-label="Loading framework"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:30%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:55%"></span><span class="skel" style="width:80%"></span></div></div>
+        <div class="glass card" data-state="loading" hidden role="status" aria-label="Loading framework"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:30%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:55%"></span><span class="skel" style="width:80%"></span></div></div>
         <div class="alert c-non" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div><b>This framework did not load</b>The scores are unchanged. <a href="#"><u>Try again</u></a></div></div>
         <div class="glass empty" data-state="empty" hidden><svg class="i"><use href="#i-folder"/></svg><h3>No scores yet</h3><p>Set the scope to choose which requirements apply. Scores appear once evidence is analysed.</p><a class="btn primary" href="b3-scope.html">Set scope</a></div>
       </div>

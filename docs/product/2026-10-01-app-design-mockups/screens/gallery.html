@@ -6,6 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
 <style>.g{max-width:960px;margin:0 auto;padding:var(--s-8) var(--s-6) var(--s-16)}.g section{margin-top:var(--s-12)}.g .row{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;margin-top:var(--s-4)}.g .card{padding:var(--s-6);margin-top:var(--s-4)}.w{width:260px}</style>
 </head>
 <body>
@@ -61,6 +62,17 @@
 <div class="glass card"><span class="skel" style="width:60%"></span><span class="skel" style="width:90%;margin-top:10px"></span><span class="skel" style="width:40%;margin-top:10px"></span></div>
 <div class="row"><div class="toast"><svg class="i"><use href="#i-check"/></svg>Conclusion approved</div></div>
 <div class="modal" style="margin-top:var(--s-4)"><h2>Delete this engagement?</h2><p>This permanently removes its evidence, findings and reports. This can't be undone.</p><div class="foot"><button class="btn ghost">Cancel</button><button class="btn destructive">Delete engagement</button></div></div></section>
+<section><h2>Consolidated components</h2>
+<div class="glass card"><div class="row" style="align-items:flex-start;gap:var(--s-8)">
+<div style="width:260px"><p class="label">Progress</p><div class="progress-bar"><i style="width:62%"></i></div><div class="progress-bar indeterminate" style="margin-top:12px"><i></i></div></div>
+<dl class="kv" style="width:340px"><div><dt>Uploaded</dt><dd>12 Mar 2026</dd></div><div><dt>Version</dt><dd>3</dd></div></dl>
+<div class="glass stat" style="width:160px"><span class="l">Approved</span><span class="v">3 of 6</span></div>
+<div class="w"><details class="disclose" open><summary>Add notes</summary><p class="help">Notes are visible to the client.</p></details></div>
+<button class="btn primary loading">Saving</button><button class="btn secondary" data-tip="Copy link" aria-label="Copy link">Hover for tip</button>
+<div class="w"><label class="field touch"><input placeholder="Touch size field"></label></div>
+<div class="w"><label class="field"><input type="date" value="2026-03-15"></label></div>
+</div>
+<div class="code" style="margin-top:var(--s-4)"><div class="code-head">policy.json<button class="btn ghost sm">Copy</button></div><pre>{ "Effect": "Allow", "Action": "s3:GetObject" }</pre></div></div></section>
 </div>
 <script>const q=new URLSearchParams(location.search);if(q.has('dark'))document.documentElement.dataset.theme='dark';
 // ?focus shows the focus ring statically for the screenshot

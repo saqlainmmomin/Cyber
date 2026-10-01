@@ -8,39 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4);align-items:start}
-.demo-grid .glass{padding:var(--s-6)}
-.demo-grid h3{margin-bottom:var(--s-4)}
-.anchor{position:relative;display:inline-block}
-.demo .menu{position:static;opacity:1;transform:none;pointer-events:auto;width:240px;max-width:100%}
-.anchor .menu{width:240px;position:absolute;top:calc(100% + 6px);bottom:auto;left:auto;right:0;opacity:0;transform:translateY(-4px);pointer-events:none;z-index:20}
-.anchor .menu.open{opacity:1;transform:none;pointer-events:auto}
-.menu hr{border:0;border-top:1px solid var(--line);margin:4px -6px}
-.menu a:focus-visible,.menu button.mi:focus-visible{box-shadow:0 0 0 2px var(--accent-ring);outline:none}
-.menu .mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 8px;border-radius:var(--r-sm);font-size:var(--t-sm);color:var(--text-2);text-align:left}
-.menu .mi:hover{background:var(--hover);color:var(--text)}
-.menu .mi svg{color:var(--muted)}
-.menu .mi.sel{color:var(--text);font-weight:500}
-.menu .mi .tick{margin-left:auto;color:var(--accent-text)}
-.menu a.bad,.menu .mi.bad{color:var(--danger-text)}
-.menu a.bad svg,.menu .mi.bad svg{color:var(--danger-text)}
-.menu [aria-disabled=true]{opacity:.45;pointer-events:none}
-.menu .gh{padding:6px 8px 4px;font-size:var(--t-xs);font-weight:500;color:var(--muted)}
-.menu .opt{padding:6px 8px}
-.menu .mf{display:flex;justify-content:flex-end;gap:var(--s-2);padding:6px 2px 2px}
-.demo .menu.wide,.anchor .menu.wide{width:300px}
-.pop-body{padding:var(--s-2) var(--s-2) var(--s-1)}
-.pop-body h3{margin-bottom:4px}
-.pop-body p{font-size:var(--t-sm);color:var(--text-2)}
-.pop-body .links{margin-top:var(--s-3)}
-.row-live{min-height:340px}
-td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
-.res-name{display:block;line-height:1.35}
-.res-name span{display:block;font-size:var(--t-xs);color:var(--muted)}
-.menu a.res{height:auto;padding:6px 8px}
-@media (max-width:860px){.demo-grid{grid-template-columns:1fr}}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">

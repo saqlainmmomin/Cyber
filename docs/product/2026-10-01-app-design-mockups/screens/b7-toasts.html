@@ -8,27 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4);align-items:start}
-.demo-grid .glass{padding:var(--s-6)}
-.demo-grid h3{margin-bottom:var(--s-4)}
-.stack{display:flex;flex-direction:column;gap:var(--s-3);align-items:flex-start}
-.toast .grow{flex:1}
-.toast .btn{margin-right:-8px}
-.toast.bad svg.lead-i{color:var(--noncompliant)}
-.toast.info svg.lead-i{color:var(--accent-text)}
-.toast .msg b{display:block;font-weight:500}
-.toast .msg span{display:block;color:var(--muted);font-size:var(--t-xs)}
-.toasts{position:fixed;right:var(--s-6);bottom:var(--s-6);z-index:100;display:flex;flex-direction:column;gap:var(--s-2);width:min(380px,calc(100vw - 32px))}
-.toasts .toast{animation:toast-in .2s var(--ease)}
-@keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.frame{position:relative;height:210px;border-radius:var(--r-md);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line-strong);padding:var(--s-3);display:flex;flex-direction:column;gap:var(--s-2)}
-.frame .toast{position:absolute;right:var(--s-3);bottom:var(--s-3)}
-.frame.mob{width:180px;margin:0 auto}
-.frame.mob .toast{left:var(--s-2);right:var(--s-2);bottom:var(--s-2);font-size:var(--t-xs);padding:8px var(--s-3)}
-.place{display:grid;grid-template-columns:1fr 200px;gap:var(--s-4);align-items:end}
-@media (max-width:860px){.demo-grid,.place{grid-template-columns:1fr}.toasts{right:var(--s-4);left:var(--s-4);width:auto;bottom:var(--s-4)}}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -102,11 +83,11 @@
 
 <div class="page-head"><h1>Toasts</h1></div>
 <div class="demo-grid">
-  <div class="glass"><h3>Success</h3><div class="stack"><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span></div><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span><button class="btn ghost sm">Undo</button></div></div></div>
-  <div class="glass"><h3>Error and information</h3><div class="stack"><div class="toast bad" role="alert"><svg class="i lead-i" ><use href="#i-alert"/></svg><span class="grow msg"><b>The conclusion wasn't saved</b><span>Check your connection and try again.</span></span><button class="btn ghost sm">Try again</button><button class="btn ghost icon sm" aria-label="Dismiss"><svg class="i"><use href="#i-x"/></svg></button></div><div class="toast info" role="status"><svg class="i lead-i"><use href="#i-info"/></svg><span class="grow msg"><b>Analysis started for ISO 27001:2022</b><span>You can leave this page. It takes about 30 seconds.</span></span></div></div></div>
-  <div class="glass"><h3>Stacked</h3><div class="stack"><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span><button class="btn ghost sm">Undo</button></div><div class="toast info" role="status"><svg class="i lead-i"><use href="#i-info"/></svg><span class="grow msg"><b>Analysis started for ISO 27001:2022</b><span>You can leave this page. It takes about 30 seconds.</span></span></div></div></div>
+  <div class="glass"><h3>Success</h3><div class="stack-start"><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span></div><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span><button class="btn ghost sm">Undo</button></div></div></div>
+  <div class="glass"><h3>Error and information</h3><div class="stack-start"><div class="toast bad" role="alert"><svg class="i lead-i" ><use href="#i-alert"/></svg><span class="grow msg"><b>The conclusion wasn't saved</b><span>Check your connection and try again.</span></span><button class="btn ghost sm">Try again</button><button class="btn ghost icon sm" aria-label="Dismiss"><svg class="i"><use href="#i-x"/></svg></button></div><div class="toast info" role="status"><svg class="i lead-i"><use href="#i-info"/></svg><span class="grow msg"><b>Analysis started for ISO 27001:2022</b><span>You can leave this page. It takes about 30 seconds.</span></span></div></div></div>
+  <div class="glass"><h3>Stacked</h3><div class="stack-start"><div class="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span class="grow">Conclusion approved</span><button class="btn ghost sm">Undo</button></div><div class="toast info" role="status"><svg class="i lead-i"><use href="#i-info"/></svg><span class="grow msg"><b>Analysis started for ISO 27001:2022</b><span>You can leave this page. It takes about 30 seconds.</span></span></div></div></div>
   <div class="glass"><h3>Try it</h3>
-    <div class="stack">
+    <div class="stack-start">
       <button class="btn secondary" data-t="ok">Approve a conclusion</button>
       <button class="btn secondary" data-t="info">Start analysis</button>
       <button class="btn secondary" data-t="err">Fail to save</button>

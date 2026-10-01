@@ -8,62 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-[hidden]{display:none!important}
-fieldset{border:0;min-width:0}
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.x-stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.x-card{padding:var(--s-6)}
-.x-form{max-width:720px}
-.x-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
-.x-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
-.x-q{padding:var(--s-5) 0;border-top:1px solid var(--line)}
-.x-q:first-of-type{border-top:0;padding-top:var(--s-4)}
-.x-opts{display:flex;flex-direction:column;gap:10px;margin-top:var(--s-3)}
-.x-opts.inline{flex-direction:row;flex-wrap:wrap;gap:var(--s-2) var(--s-6)}
-.x-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-6);padding-top:var(--s-4);border-top:1px solid var(--line)}
-.x-split{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-4);align-items:start}
-.x-list{padding:var(--s-3) var(--s-2)}
-.x-pane{padding:var(--s-6)}
-.x-qc{padding:var(--s-5) var(--s-6)}
-.x-qc + .x-qc{margin-top:var(--s-3)}
-.x-qc h3{font-weight:500;line-height:1.5}
-.x-qc .help{margin-top:4px}
-.x-qc .cite{margin-top:var(--s-3)}
-.x-qc .alert,.x-qc .warn{margin-top:var(--s-3)}
-.x-qc .x-opts{margin-top:var(--s-4)}
-.x-qc.muted-card{background:none;box-shadow:inset 0 0 0 1px var(--line);padding:var(--s-4) var(--s-6)}
-.x-qc.muted-card h3{font-weight:400;color:var(--text-2)}
-.x-qc.quick{padding:var(--s-3) var(--s-6)}
-.x-qc.quick .x-opts{margin-top:var(--s-2)}
-.x-sum{margin-top:var(--s-3);font-size:var(--t-sm);color:var(--muted);cursor:pointer}
-.x-sum:hover{color:var(--text)}
-.x-extra{display:flex;flex-direction:column;gap:var(--s-2);margin-top:var(--s-3)}
-.x-skel{display:flex;flex-direction:column;gap:10px}
-.x-gap-top{margin-top:var(--s-4)}
-.x-gap-top-lg{margin-top:var(--s-8)}
-.x-narrow{max-width:560px}
-.x-center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
-.x-center p{max-width:44ch;color:var(--text-2)}
-.x-grow{flex:1;min-width:0}
-.x-fw{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
-.x-list-item{display:flex;flex-direction:column;gap:2px;padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-list-item:first-child{border-top:0}
-.x-check-row{display:flex;align-items:flex-start;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-check-row:first-child{border-top:0;padding-top:0}
-.x-check-row .x-grow b{display:block;font-weight:500}
-@media (max-width:860px){
-  .state-bar{padding:0 var(--s-4) var(--s-2)}
-  .x-split{grid-template-columns:1fr}
-  .x-card,.x-pane{padding:var(--s-5)}
-  .x-qc{padding:var(--s-4)}
-  .x-check-row{flex-wrap:wrap}
-  .x-bar{flex-wrap:wrap}
-  .tabs{overflow-x:auto;gap:var(--s-5);scrollbar-width:none}
-  .tabs a{white-space:nowrap}
-}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -139,9 +85,9 @@ fieldset{border:0;min-width:0}
 
       <nav class="tabs" aria-label="Assessment sections"><a href="b3-hub.html">Overview</a><a href="b3-scope-complete.html">Scope</a><a href="#">Documents</a><a href="b3-questionnaire.html" aria-selected="true">Questionnaire</a><a href="#">Report</a></nav>
 
-      <div class="x-gap-top-lg" data-state="default saved" hidden><p class="sub">42 questions, 18 answered. 6 pre-filled answers wait for your confirmation. 5 questions need deep review.</p></div>
-      <div class="x-split x-gap-top" data-state="default saved" hidden>
-        <div class="glass x-list" id="sections">
+      <div class="mt-lg" data-state="default saved" hidden><p class="sub">42 questions, 18 answered. 6 pre-filled answers wait for your confirmation. 5 questions need deep review.</p></div>
+      <div class="split mt" data-state="default saved" hidden>
+        <div class="glass split-list" id="sections">
   <div class="grp">To answer</div>
   <a class="item sel" href="#"><div class="txt"><b>Notice and consent</b><span>4 of 6 answered · 2 deep review</span></div></a>
   <a class="item" href="#"><div class="txt"><b>Data principal rights</b><span>0 of 8 answered</span></div></a>
@@ -151,42 +97,42 @@ fieldset{border:0;min-width:0}
   <a class="item decided" href="#"><div class="txt"><b>Security safeguards</b><span>9 of 9 answered</span></div><svg class="i"><use href="#i-check"/></svg></a>
   <a class="item decided" href="#"><div class="txt"><b>Information security policy</b><span>5 of 5 answered</span></div><svg class="i"><use href="#i-check"/></svg></a>
 </div>
-        <div class="solid x-pane" data-state="default">
-          <div class="x-between">
+        <div class="solid split-pane" data-state="default">
+          <div class="between">
   <div><h2 class="big">Notice and consent</h2><p class="sub">Obligations of the data fiduciary</p></div>
   <div class="progress"><span class="num">4 of 6 answered</span></div>
 </div>
-          <div class="x-gap-top-lg"><div class="solid x-qc" id="q5">
+          <div class="mt-lg"><div class="solid qcard" id="q5">
   <h3>Are notices offered in the languages your data principals read?</h3>
   <p class="help">Count the languages used in your apps and customer support.</p>
-  <div class="x-opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a5">Fully implemented</label><label class="choice"><input type="radio" name="a5">Partially implemented</label><label class="choice"><input type="radio" name="a5">Planned</label><label class="choice"><input type="radio" name="a5">Not implemented</label><label class="choice"><input type="radio" name="a5">Not applicable</label></div>
-  <details><summary class="x-sum">Add notes or evidence reference</summary>
-<div class="x-extra"><label class="field area"><textarea name="notes_q5" placeholder="Notes"></textarea></label>
+  <div class="opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a5">Fully implemented</label><label class="choice"><input type="radio" name="a5">Partially implemented</label><label class="choice"><input type="radio" name="a5">Planned</label><label class="choice"><input type="radio" name="a5">Not implemented</label><label class="choice"><input type="radio" name="a5">Not applicable</label></div>
+  <details><summary class="disclose">Add notes or evidence reference</summary>
+<div class="extra"><label class="field area"><textarea name="notes_q5" placeholder="Notes"></textarea></label>
 <label class="field"><input name="evidence_q5" placeholder="Document name or link" aria-label="Evidence reference"></label></div></details>
-</div><div class="solid x-qc" id="q2">
-  <div class="x-between"><h3>Can a data principal withdraw consent as easily as they gave it?</h3><div class="x-row"><span class="chip">From documents</span><span class="pill c-high">High</span></div></div>
+</div><div class="solid qcard" id="q2">
+  <div class="between"><h3>Can a data principal withdraw consent as easily as they gave it?</h3><div class="hrow"><span class="chip">From documents</span><span class="pill c-high">High</span></div></div>
   <div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>Suggested from consent_policy.docx, <span class="pg">page 2</span></span></div><blockquote>Withdrawal requests are accepted <mark>by email to privacy@meridianledger.example</mark> and processed by the support team. No in-app control is described.</blockquote></div>
   <p class="help">Medium confidence. The answer counts once you save the section.</p>
-  <div class="x-opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a2">Fully implemented</label><label class="choice"><input type="radio" name="a2" checked>Partially implemented</label><label class="choice"><input type="radio" name="a2">Planned</label><label class="choice"><input type="radio" name="a2">Not implemented</label><label class="choice"><input type="radio" name="a2">Not applicable</label></div>
-  <details><summary class="x-sum">Add notes or evidence reference</summary>
-<div class="x-extra"><label class="field area"><textarea name="notes_q2" placeholder="Notes"></textarea></label>
+  <div class="opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a2">Fully implemented</label><label class="choice"><input type="radio" name="a2" checked>Partially implemented</label><label class="choice"><input type="radio" name="a2">Planned</label><label class="choice"><input type="radio" name="a2">Not implemented</label><label class="choice"><input type="radio" name="a2">Not applicable</label></div>
+  <details><summary class="disclose">Add notes or evidence reference</summary>
+<div class="extra"><label class="field area"><textarea name="notes_q2" placeholder="Notes"></textarea></label>
 <label class="field"><input name="evidence_q2" placeholder="Document name or link" aria-label="Evidence reference"></label></div></details>
-</div><div class="solid x-qc quick" id="q3">
-  <div class="x-between"><h3>Is each consent stored with a timestamp and the notice version?</h3><span class="ai">Inferred from screening</span></div>
-  <div class="x-opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a3" checked>Full</label><label class="choice"><input type="radio" name="a3">Partial</label><label class="choice"><input type="radio" name="a3">Planned</label><label class="choice"><input type="radio" name="a3">No</label><label class="choice"><input type="radio" name="a3">N/A</label></div>
+</div><div class="solid qcard quick" id="q3">
+  <div class="between"><h3>Is each consent stored with a timestamp and the notice version?</h3><span class="ai">Inferred from screening</span></div>
+  <div class="opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a3" checked>Full</label><label class="choice"><input type="radio" name="a3">Partial</label><label class="choice"><input type="radio" name="a3">Planned</label><label class="choice"><input type="radio" name="a3">No</label><label class="choice"><input type="radio" name="a3">N/A</label></div>
 </div></div>
-          <div class="x-bar"><span class="sub">3 more questions in this section</span><button class="btn primary" type="button">Save section</button></div>
+          <div class="action-row"><span class="sub">3 more questions in this section</span><button class="btn primary" type="button">Save section</button></div>
         </div>
-        <div class="solid x-pane" data-state="saved" hidden>
-          <div class="x-center empty"><svg class="i"><use href="#i-circle-check"/></svg><h3>Section saved</h3><p>Your answers count towards the analysis. Pre-filled answers in this section are now confirmed.</p><a class="btn primary" href="#">Next: Data principal rights</a></div>
+        <div class="solid split-pane" data-state="saved" hidden>
+          <div class="center-block empty"><svg class="i"><use href="#i-circle-check"/></svg><h3>Section saved</h3><p>Your answers count towards the analysis. Pre-filled answers in this section are now confirmed.</p><a class="btn primary" href="#">Next: Data principal rights</a></div>
         </div>
       </div>
-      <div class="x-split x-gap-top" data-state="loading" hidden role="status" aria-label="Loading sections">
-        <div class="glass x-list"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:80%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:75%"></span><span class="skel" style="width:55%"></span></div></div>
-        <div class="solid x-pane"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:35%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:70%"></span></div><div class="x-gap-top-lg"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:85%"></span><span class="skel" style="width:60%"></span></div></div><div class="x-bar"><span></span><button class="btn primary" type="button" disabled>Save section</button></div></div>
+      <div class="split mt" data-state="loading" hidden role="status" aria-label="Loading sections">
+        <div class="glass split-list"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:80%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:75%"></span><span class="skel" style="width:55%"></span></div></div>
+        <div class="solid split-pane"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:35%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:70%"></span></div><div class="mt-lg"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:85%"></span><span class="skel" style="width:60%"></span></div></div><div class="action-row"><span></span><button class="btn primary" type="button" disabled>Save section</button></div></div>
       </div>
-      <div class="glass empty x-gap-top" data-state="empty" hidden><svg class="i"><use href="#i-folder"/></svg><h3>No questionnaire yet</h3><p>Sections are created from your scope. Set the scope to generate them.</p><a class="btn primary" href="b3-scope.html">Set scope</a></div>
-      <div class="alert c-non x-gap-top" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div class="x-grow"><b>The sections did not load</b>Your answers are saved.</div><button class="btn primary sm" type="button">Try again</button></div>
+      <div class="glass empty mt" data-state="empty" hidden><svg class="i"><use href="#i-folder"/></svg><h3>No questionnaire yet</h3><p>Sections are created from your scope. Set the scope to generate them.</p><a class="btn primary" href="b3-scope.html">Set scope</a></div>
+      <div class="alert c-non mt" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div class="grow"><b>The sections did not load</b>Your answers are saved.</div><button class="btn primary sm" type="button">Try again</button></div>
     </div>
   </div>
 </div>

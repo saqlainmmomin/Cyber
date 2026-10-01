@@ -8,17 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);flex-wrap:wrap;margin-bottom:var(--s-4)}
-.bar{display:flex;align-items:center;gap:var(--s-3);margin-bottom:var(--s-4);flex-wrap:wrap}
-.bar .field{width:280px;max-width:100%}
-.skel.pill-s{height:22px;border-radius:var(--r-full)}
-.skel.chip-s{height:22px;width:72px}
-.skel.circle{border-radius:var(--r-full)}
-.skel.r{margin-left:auto}
-.stack-s{display:flex;flex-direction:column;gap:8px}
-@media (max-width:860px){.bar .field{width:100%}}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -91,8 +82,8 @@
     <div class="page">
 
 <div class="page-head"><h1>Engagements</h1><div class="acts"><button class="btn primary lead"><svg class="i"><use href="#i-plus"/></svg>New engagement</button></div></div>
-<div class="toolbar"><div class="seg" data-switch role="group" aria-label="State"><button data-s="loading" aria-pressed="false">Loading</button><button data-s="loaded" aria-pressed="false">Loaded</button></div></div>
-<div class="bar"><label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search engagements" aria-label="Search engagements"></label></div>
+<div class="toolbar spread"><div class="seg" data-switch role="group" aria-label="State"><button data-s="loading" aria-pressed="false">Loading</button><button data-s="loaded" aria-pressed="false">Loaded</button></div></div>
+<div class="filter-bar"><label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search engagements" aria-label="Search engagements"></label></div>
 <div data-state="loading"><div class="solid" role="status" aria-busy="true" aria-label="Loading engagements"><table><thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th class="hide-sm">Stage</th><th class="n">High severity</th><th class="hide-sm"></th></tr></thead><tbody><tr><td><div class="stack-s"><span class="skel" style="width:62%"></span><span class="skel" style="width:34%;height:10px"></span></div></td>
 <td class="hide-sm"><span class="skel chip-s"></span></td><td class="hide-sm"><span class="skel" style="width:84px"></span></td><td class="n"><span class="skel r" style="width:20px"></span></td><td class="go hide-sm"></td></tr><tr><td><div class="stack-s"><span class="skel" style="width:48%"></span><span class="skel" style="width:28%;height:10px"></span></div></td>
 <td class="hide-sm"><span class="skel chip-s"></span></td><td class="hide-sm"><span class="skel" style="width:84px"></span></td><td class="n"><span class="skel r" style="width:20px"></span></td><td class="go hide-sm"></td></tr><tr><td><div class="stack-s"><span class="skel" style="width:70%"></span><span class="skel" style="width:38%;height:10px"></span></div></td>

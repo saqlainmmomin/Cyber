@@ -8,62 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-[hidden]{display:none!important}
-fieldset{border:0;min-width:0}
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.x-stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.x-card{padding:var(--s-6)}
-.x-form{max-width:720px}
-.x-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
-.x-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
-.x-q{padding:var(--s-5) 0;border-top:1px solid var(--line)}
-.x-q:first-of-type{border-top:0;padding-top:var(--s-4)}
-.x-opts{display:flex;flex-direction:column;gap:10px;margin-top:var(--s-3)}
-.x-opts.inline{flex-direction:row;flex-wrap:wrap;gap:var(--s-2) var(--s-6)}
-.x-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-6);padding-top:var(--s-4);border-top:1px solid var(--line)}
-.x-split{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-4);align-items:start}
-.x-list{padding:var(--s-3) var(--s-2)}
-.x-pane{padding:var(--s-6)}
-.x-qc{padding:var(--s-5) var(--s-6)}
-.x-qc + .x-qc{margin-top:var(--s-3)}
-.x-qc h3{font-weight:500;line-height:1.5}
-.x-qc .help{margin-top:4px}
-.x-qc .cite{margin-top:var(--s-3)}
-.x-qc .alert,.x-qc .warn{margin-top:var(--s-3)}
-.x-qc .x-opts{margin-top:var(--s-4)}
-.x-qc.muted-card{background:none;box-shadow:inset 0 0 0 1px var(--line);padding:var(--s-4) var(--s-6)}
-.x-qc.muted-card h3{font-weight:400;color:var(--text-2)}
-.x-qc.quick{padding:var(--s-3) var(--s-6)}
-.x-qc.quick .x-opts{margin-top:var(--s-2)}
-.x-sum{margin-top:var(--s-3);font-size:var(--t-sm);color:var(--muted);cursor:pointer}
-.x-sum:hover{color:var(--text)}
-.x-extra{display:flex;flex-direction:column;gap:var(--s-2);margin-top:var(--s-3)}
-.x-skel{display:flex;flex-direction:column;gap:10px}
-.x-gap-top{margin-top:var(--s-4)}
-.x-gap-top-lg{margin-top:var(--s-8)}
-.x-narrow{max-width:560px}
-.x-center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
-.x-center p{max-width:44ch;color:var(--text-2)}
-.x-grow{flex:1;min-width:0}
-.x-fw{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
-.x-list-item{display:flex;flex-direction:column;gap:2px;padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-list-item:first-child{border-top:0}
-.x-check-row{display:flex;align-items:flex-start;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-check-row:first-child{border-top:0;padding-top:0}
-.x-check-row .x-grow b{display:block;font-weight:500}
-@media (max-width:860px){
-  .state-bar{padding:0 var(--s-4) var(--s-2)}
-  .x-split{grid-template-columns:1fr}
-  .x-card,.x-pane{padding:var(--s-5)}
-  .x-qc{padding:var(--s-4)}
-  .x-check-row{flex-wrap:wrap}
-  .x-bar{flex-wrap:wrap}
-  .tabs{overflow-x:auto;gap:var(--s-5);scrollbar-width:none}
-  .tabs a{white-space:nowrap}
-}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -139,9 +85,9 @@ fieldset{border:0;min-width:0}
 
       <nav class="tabs" aria-label="Assessment sections"><a href="b3-hub.html">Overview</a><a href="b3-scope-complete.html" aria-selected="true">Scope</a><a href="#">Documents</a><a href="b3-questionnaire.html">Questionnaire</a><a href="#">Report</a></nav>
 
-      <div class="x-stack x-gap-top-lg">
-        <div class="solid x-card">
-          <div class="x-between">
+      <div class="stack mt-lg">
+        <div class="solid card">
+          <div class="between">
             <div><h2>Scope confirmed</h2><p class="sub"><span class="num">118 of 132</span> requirements apply to this organisation.</p></div>
             <a class="btn secondary sm lead" href="b3-scope.html?state=edit"><svg class="i"><use href="#i-pen"/></svg>Edit scope</a>
           </div>
@@ -151,34 +97,34 @@ fieldset{border:0;min-width:0}
 <div><span>Significant data fiduciary obligations</span><span class="status"><i class="dot c-accent"></i>Likely</span></div>
 <div><span>Third-party processors</span><span class="status"><i class="dot c-accent"></i>Yes</span></div>
 </div>
-          <details class="x-gap-top"><summary class="x-sum">14 requirements excluded</summary>
-            <ul class="checks x-gap-top"><li>Parental consent for children's data. No children's data is processed.</li><li>Obligations specific to significant data fiduciaries. Not yet notified.</li></ul>
+          <details class="mt"><summary class="disclose">14 requirements excluded</summary>
+            <ul class="checks mt"><li>Parental consent for children's data. No children's data is processed.</li><li>Obligations specific to significant data fiduciaries. Not yet notified.</li></ul>
           </details>
-          <details class="x-gap-top"><summary class="x-sum">3 controls proposed as likely not applicable. You confirm each during review.</summary>
+          <details class="mt"><summary class="disclose">3 controls proposed as likely not applicable. You confirm each during review.</summary>
             <p class="help">These controls stay in scope. To exclude one, record a Not applicable conclusion with your reason during review. For ISO 27001 this is a Statement of Applicability decision.</p>
-            <ul class="checks x-gap-top"><li><div><b>Physical security of offices</b><span class="sub x-grow">ISO 27001 · The organisation is fully remote.</span></div></li><li><div><b>Removable media handling</b><span class="sub">ISO 27001 · Removable media are blocked on all laptops.</span></div></li></ul>
+            <ul class="checks mt"><li><div><b>Physical security of offices</b><span class="sub grow">ISO 27001 · The organisation is fully remote.</span></div></li><li><div><b>Removable media handling</b><span class="sub">ISO 27001 · Removable media are blocked on all laptops.</span></div></li></ul>
           </details>
         </div>
 
-        <div class="solid x-card">
-          <div class="x-between">
+        <div class="solid card">
+          <div class="between">
             <div><h2>Evidence request</h2><p class="sub">Documents to collect before analysis starts.</p></div>
-            <div class="x-row" data-state="default iso">
+            <div class="hrow" data-state="default iso">
               <a class="btn secondary sm lead" href="#"><svg class="i"><use href="#i-download"/></svg>PDF</a>
               <a class="btn secondary sm lead" href="#"><svg class="i"><use href="#i-download"/></svg>DOCX</a>
               <a class="btn secondary sm" href="b6-rfi.html">Prepare RFI</a>
             </div>
           </div>
           <div data-state="default iso">
-            <h3 class="x-gap-top-lg">Required</h3>
-            <div class="x-gap-top"><div class="x-check-row"><div class="x-grow"><b>Privacy notice and consent screens</b><span class="sub">Shows how consent is requested and recorded.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="x-check-row"><div class="x-grow"><b>Information security policy</b><span class="sub">Sets the management system's direction and owners.</span></div><div class="chips"><span class="chip">ISO 27001</span><span class="chip">DPDPA</span></div></div><div class="x-check-row"><div class="x-grow"><b>Access review records, last two quarters</b><span class="sub">Proves reviews cover every production system.</span></div><div class="chips"><span class="chip">ISO 27001</span></div></div><div class="x-check-row"><div class="x-grow"><b>Record of processing activities</b><span class="sub">Lists what personal data is processed and why.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="x-check-row"><div class="x-grow"><b>Incident response plan and latest test report</b><span class="sub">Shows how breaches are detected and escalated.</span></div><div class="chips"><span class="chip">ISO 27001</span><span class="chip">DPDPA</span></div></div></div>
-            <h3 class="x-gap-top-lg">Recommended</h3>
-            <div class="x-gap-top"><div class="x-check-row"><div class="x-grow"><b>Vendor list with data processing agreements</b><span class="sub">Helps confirm processor obligations.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="x-check-row"><div class="x-grow"><b>Business continuity test report</b><span class="sub">Supports the recovery-time findings.</span></div><div class="chips"><span class="chip">ISO 27001</span></div></div><div class="x-check-row"><div class="x-grow"><b>Data retention schedule</b><span class="sub">Shows when personal data is erased.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div></div>
+            <h3 class="mt-lg">Required</h3>
+            <div class="mt"><div class="check-row"><div class="grow"><b>Privacy notice and consent screens</b><span class="sub">Shows how consent is requested and recorded.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="check-row"><div class="grow"><b>Information security policy</b><span class="sub">Sets the management system's direction and owners.</span></div><div class="chips"><span class="chip">ISO 27001</span><span class="chip">DPDPA</span></div></div><div class="check-row"><div class="grow"><b>Access review records, last two quarters</b><span class="sub">Proves reviews cover every production system.</span></div><div class="chips"><span class="chip">ISO 27001</span></div></div><div class="check-row"><div class="grow"><b>Record of processing activities</b><span class="sub">Lists what personal data is processed and why.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="check-row"><div class="grow"><b>Incident response plan and latest test report</b><span class="sub">Shows how breaches are detected and escalated.</span></div><div class="chips"><span class="chip">ISO 27001</span><span class="chip">DPDPA</span></div></div></div>
+            <h3 class="mt-lg">Recommended</h3>
+            <div class="mt"><div class="check-row"><div class="grow"><b>Vendor list with data processing agreements</b><span class="sub">Helps confirm processor obligations.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div><div class="check-row"><div class="grow"><b>Business continuity test report</b><span class="sub">Supports the recovery-time findings.</span></div><div class="chips"><span class="chip">ISO 27001</span></div></div><div class="check-row"><div class="grow"><b>Data retention schedule</b><span class="sub">Shows when personal data is erased.</span></div><div class="chips"><span class="chip">DPDPA</span></div></div></div>
           </div>
-          <div data-state="loading" hidden class="x-gap-top-lg" role="status" aria-label="Preparing checklist"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:45%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:60%"></span><span class="skel" style="width:75%"></span></div></div>
-          <div class="alert c-non x-gap-top-lg" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div><b>The checklist could not be prepared</b>Your scope is saved. <a href="#"><u>Try again</u></a></div></div>
+          <div data-state="loading" hidden class="mt-lg" role="status" aria-label="Preparing checklist"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:45%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:60%"></span><span class="skel" style="width:75%"></span></div></div>
+          <div class="alert c-non mt-lg" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div><b>The checklist could not be prepared</b>Your scope is saved. <a href="#"><u>Try again</u></a></div></div>
         </div>
-        <div class="x-row" style="justify-content:flex-end"><a class="btn primary" href="#">Continue to documents<svg class="i"><use href="#i-arrow-r"/></svg></a></div>
+        <div class="hrow" style="justify-content:flex-end"><a class="btn primary" href="#">Continue to documents<svg class="i"><use href="#i-arrow-r"/></svg></a></div>
       </div>
     </div>
   </div>

@@ -336,3 +336,40 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:1px 2px;box-
 .btn.destructive:hover{background:color-mix(in srgb,var(--noncompliant) 88%,black)}
 .btn.destructive:focus-visible{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px color-mix(in srgb,var(--noncompliant) 40%,transparent)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ============ Added in consolidation (2026-10-01) ============ */
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.field select{padding-right:22px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23525D71' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center}
+.field input[type=date]{font-variant-numeric:tabular-nums;min-width:132px}
+.field.touch,.btn.touch{--h:44px;height:44px}
+.field.touch{padding:0 14px}
+.progress-bar{height:4px;border-radius:var(--r-full);background:var(--track);overflow:hidden}
+.progress-bar i{display:block;height:100%;border-radius:var(--r-full);background:var(--accent-text);transition:width .2s var(--ease)}
+.progress-bar.indeterminate i{width:35%;animation:indet 1.2s var(--ease) infinite}
+@keyframes indet{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--s-4) var(--s-6)}
+.kv dt{font-size:var(--t-xs);color:var(--muted);margin-bottom:2px}
+.kv dd{font-size:var(--t-sm);color:var(--text);margin:0;overflow-wrap:anywhere}
+.stat{padding:var(--s-4) var(--s-5)}
+.stat .l{display:block;font-size:var(--t-xs);color:var(--muted)}
+.stat .v{display:block;margin-top:2px;font-size:var(--t-lg);font-weight:500;letter-spacing:-.014em;font-variant-numeric:tabular-nums}
+.code{border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line-strong);overflow:hidden}
+.code .code-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s-2);padding:6px var(--s-3) 6px var(--s-4);background:var(--hover);border-bottom:1px solid var(--line);font-size:var(--t-xs);color:var(--muted)}
+.code pre{margin:0;padding:var(--s-4);overflow:auto;font:400 var(--t-xs)/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)}
+details.disclose>summary,summary.disclose{list-style:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--t-sm);color:var(--muted);border-radius:var(--r-xs)}
+details.disclose>summary::-webkit-details-marker,summary.disclose::-webkit-details-marker{display:none}
+details.disclose>summary::before,summary.disclose::before{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);transition:transform .14s var(--ease)}
+details.disclose[open]>summary::before{transform:rotate(45deg)}
+details.disclose>summary:hover{color:var(--text)}
+details.disclose>summary:focus-visible{box-shadow:0 0 0 2px var(--accent-ring)}
+.btn.loading{pointer-events:none;color:transparent;position:relative}
+.btn.loading::after{content:"";position:absolute;width:14px;height:14px;border-radius:var(--r-full);border:2px solid var(--on-accent);border-top-color:transparent;animation:spin .7s linear infinite}
+.btn.secondary.loading::after,.btn.ghost.loading::after{border-color:var(--text-2);border-top-color:transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);white-space:nowrap;padding:4px 8px;border-radius:var(--r-sm);background:var(--text);color:var(--canvas-mid);font-size:var(--t-xs);font-weight:500;pointer-events:none;z-index:50}
+[data-theme=dark] .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2396A1B3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+@media (max-width:1100px){.hide-md{display:none}}
+.field input[type=file]{padding:6px 0;cursor:pointer;color:var(--text-2)}
+.field input[type=file]::file-selector-button{margin-right:var(--s-3);height:24px;padding:0 12px;border:0;border-radius:var(--r-full);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-strong);font:500 var(--t-xs) var(--font);color:var(--text);cursor:pointer}
+[data-theme=dark] .field input[type=file]::file-selector-button{background:rgba(255,255,255,.1)}

@@ -8,62 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-[hidden]{display:none!important}
-fieldset{border:0;min-width:0}
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.x-stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.x-card{padding:var(--s-6)}
-.x-form{max-width:720px}
-.x-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
-.x-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
-.x-q{padding:var(--s-5) 0;border-top:1px solid var(--line)}
-.x-q:first-of-type{border-top:0;padding-top:var(--s-4)}
-.x-opts{display:flex;flex-direction:column;gap:10px;margin-top:var(--s-3)}
-.x-opts.inline{flex-direction:row;flex-wrap:wrap;gap:var(--s-2) var(--s-6)}
-.x-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-6);padding-top:var(--s-4);border-top:1px solid var(--line)}
-.x-split{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-4);align-items:start}
-.x-list{padding:var(--s-3) var(--s-2)}
-.x-pane{padding:var(--s-6)}
-.x-qc{padding:var(--s-5) var(--s-6)}
-.x-qc + .x-qc{margin-top:var(--s-3)}
-.x-qc h3{font-weight:500;line-height:1.5}
-.x-qc .help{margin-top:4px}
-.x-qc .cite{margin-top:var(--s-3)}
-.x-qc .alert,.x-qc .warn{margin-top:var(--s-3)}
-.x-qc .x-opts{margin-top:var(--s-4)}
-.x-qc.muted-card{background:none;box-shadow:inset 0 0 0 1px var(--line);padding:var(--s-4) var(--s-6)}
-.x-qc.muted-card h3{font-weight:400;color:var(--text-2)}
-.x-qc.quick{padding:var(--s-3) var(--s-6)}
-.x-qc.quick .x-opts{margin-top:var(--s-2)}
-.x-sum{margin-top:var(--s-3);font-size:var(--t-sm);color:var(--muted);cursor:pointer}
-.x-sum:hover{color:var(--text)}
-.x-extra{display:flex;flex-direction:column;gap:var(--s-2);margin-top:var(--s-3)}
-.x-skel{display:flex;flex-direction:column;gap:10px}
-.x-gap-top{margin-top:var(--s-4)}
-.x-gap-top-lg{margin-top:var(--s-8)}
-.x-narrow{max-width:560px}
-.x-center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
-.x-center p{max-width:44ch;color:var(--text-2)}
-.x-grow{flex:1;min-width:0}
-.x-fw{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
-.x-list-item{display:flex;flex-direction:column;gap:2px;padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-list-item:first-child{border-top:0}
-.x-check-row{display:flex;align-items:flex-start;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-check-row:first-child{border-top:0;padding-top:0}
-.x-check-row .x-grow b{display:block;font-weight:500}
-@media (max-width:860px){
-  .state-bar{padding:0 var(--s-4) var(--s-2)}
-  .x-split{grid-template-columns:1fr}
-  .x-card,.x-pane{padding:var(--s-5)}
-  .x-qc{padding:var(--s-4)}
-  .x-check-row{flex-wrap:wrap}
-  .x-bar{flex-wrap:wrap}
-  .tabs{overflow-x:auto;gap:var(--s-5);scrollbar-width:none}
-  .tabs a{white-space:nowrap}
-}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -139,33 +85,33 @@ fieldset{border:0;min-width:0}
 
       <nav class="tabs" aria-label="Assessment sections"><a href="b3-hub.html">Overview</a><a href="b3-scope-complete.html">Scope</a><a href="#">Documents</a><a href="b3-questionnaire.html" aria-selected="true">Questionnaire</a><a href="#">Report</a></nav>
 
-      <div class="x-gap-top-lg">
-<div class="solid x-card x-form" data-state="org" hidden>
-  <div class="x-between"><h2 class="big">Your organisation</h2><div class="progress"><span class="num">1 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></div></div>
-  <p class="sub x-gap-top">A few facts so the questionnaire fits the organisation.</p>
-  <div class="x-gap-top"><fieldset class="x-q"><legend class="label">What does the organisation mainly do?</legend><div class="x-opts"><label class="choice"><input type="radio" name="c1">Financial services</label><label class="choice"><input type="radio" name="c1">Software and technology</label><label class="choice"><input type="radio" name="c1">Healthcare</label><label class="choice"><input type="radio" name="c1">Retail</label><label class="choice"><input type="radio" name="c1">Something else</label></div></fieldset><fieldset class="x-q"><legend class="label">How many people work in the organisation?</legend><div class="x-opts"><label class="choice"><input type="radio" name="c2">Up to 50</label><label class="choice"><input type="radio" name="c2">51 to 250</label><label class="choice"><input type="radio" name="c2">251 to 1,000</label><label class="choice"><input type="radio" name="c2">More than 1,000</label></div></fieldset><div class="x-q"><label class="label">Which regions does it operate in?</label><label class="field area"><textarea name="c3" placeholder="For example, India and Singapore"></textarea></label></div></div>
-  <div class="x-bar"><span></span><button class="btn primary" type="submit">Next</button></div>
+      <div class="mt-lg">
+<div class="solid card form-narrow" data-state="org" hidden>
+  <div class="between"><h2 class="big">Your organisation</h2><div class="progress"><span class="num">1 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></div></div>
+  <p class="sub mt">A few facts so the questionnaire fits the organisation.</p>
+  <div class="mt"><fieldset class="qgroup"><legend class="label">What does the organisation mainly do?</legend><div class="opts"><label class="choice"><input type="radio" name="c1">Financial services</label><label class="choice"><input type="radio" name="c1">Software and technology</label><label class="choice"><input type="radio" name="c1">Healthcare</label><label class="choice"><input type="radio" name="c1">Retail</label><label class="choice"><input type="radio" name="c1">Something else</label></div></fieldset><fieldset class="qgroup"><legend class="label">How many people work in the organisation?</legend><div class="opts"><label class="choice"><input type="radio" name="c2">Up to 50</label><label class="choice"><input type="radio" name="c2">51 to 250</label><label class="choice"><input type="radio" name="c2">251 to 1,000</label><label class="choice"><input type="radio" name="c2">More than 1,000</label></div></fieldset><div class="qgroup"><label class="label">Which regions does it operate in?</label><label class="field area"><textarea name="c3" placeholder="For example, India and Singapore"></textarea></label></div></div>
+  <div class="action-row"><span></span><button class="btn primary" type="submit">Next</button></div>
 </div>
-<div class="solid x-card x-form" data-state="data data-yes" hidden>
-  <div class="x-between"><h2 class="big">Data landscape</h2><div class="progress"><span class="num">2 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div></div>
-  <p class="sub x-gap-top">What personal data the organisation holds and where it goes.</p>
-  <div class="x-gap-top"><fieldset class="x-q"><legend class="label">Which categories of personal data does the organisation process?</legend><div class="x-opts"><label class="choice"><input type="checkbox" name="c4" checked>Customer identity</label><label class="choice"><input type="checkbox" name="c4" checked>Financial</label><label class="choice"><input type="checkbox" name="c4">Health</label><label class="choice"><input type="checkbox" name="c4">Employee</label><label class="choice"><input type="checkbox" name="c4">Children's</label><label class="choice"><input type="checkbox" name="c4">Biometric</label></div></fieldset><fieldset class="x-q"><legend class="label">Does it transfer personal data outside India?</legend><div class="x-opts"><label class="choice"><input type="radio" name="c5" id="xfer-yes">Yes</label><label class="choice"><input type="radio" name="c5" id="xfer-no">No</label></div></fieldset>
-<div class="x-q" id="dep" hidden><label class="label">Where is it transferred, and under what safeguards?</label><label class="field area"><textarea name="c6" placeholder="For example, Singapore under standard contractual clauses"></textarea></label></div></div>
-  <div class="x-bar"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Next</button></div>
+<div class="solid card form-narrow" data-state="data data-yes" hidden>
+  <div class="between"><h2 class="big">Data landscape</h2><div class="progress"><span class="num">2 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div></div>
+  <p class="sub mt">What personal data the organisation holds and where it goes.</p>
+  <div class="mt"><fieldset class="qgroup"><legend class="label">Which categories of personal data does the organisation process?</legend><div class="opts"><label class="choice"><input type="checkbox" name="c4" checked>Customer identity</label><label class="choice"><input type="checkbox" name="c4" checked>Financial</label><label class="choice"><input type="checkbox" name="c4">Health</label><label class="choice"><input type="checkbox" name="c4">Employee</label><label class="choice"><input type="checkbox" name="c4">Children's</label><label class="choice"><input type="checkbox" name="c4">Biometric</label></div></fieldset><fieldset class="qgroup"><legend class="label">Does it transfer personal data outside India?</legend><div class="opts"><label class="choice"><input type="radio" name="c5" id="xfer-yes">Yes</label><label class="choice"><input type="radio" name="c5" id="xfer-no">No</label></div></fieldset>
+<div class="qgroup" id="dep" hidden><label class="label">Where is it transferred, and under what safeguards?</label><label class="field area"><textarea name="c6" placeholder="For example, Singapore under standard contractual clauses"></textarea></label></div></div>
+  <div class="action-row"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Next</button></div>
 </div>
-<div class="solid x-card x-form" data-state="last" hidden>
-  <div class="x-between"><h2 class="big">Risk exposure</h2><div class="progress"><span class="num">5 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div></div>
-  <p class="sub x-gap-top">Past incidents and anything unusual about your risk.</p>
-  <div class="x-gap-top"><fieldset class="x-q"><legend class="label">Has the organisation had a security incident in the last two years?</legend><div class="x-opts"><label class="choice"><input type="radio" name="c7">No</label><label class="choice"><input type="radio" name="c7">Yes, minor</label><label class="choice"><input type="radio" name="c7">Yes, a reportable breach</label></div></fieldset><div class="x-q"><label class="label">Anything else that raises the organisation&#39;s risk exposure?</label><label class="field area"><textarea name="c8" placeholder="Optional"></textarea></label></div></div>
-  <div class="x-bar"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Submit context and continue</button></div>
+<div class="solid card form-narrow" data-state="last" hidden>
+  <div class="between"><h2 class="big">Risk exposure</h2><div class="progress"><span class="num">5 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div></div>
+  <p class="sub mt">Past incidents and anything unusual about your risk.</p>
+  <div class="mt"><fieldset class="qgroup"><legend class="label">Has the organisation had a security incident in the last two years?</legend><div class="opts"><label class="choice"><input type="radio" name="c7">No</label><label class="choice"><input type="radio" name="c7">Yes, minor</label><label class="choice"><input type="radio" name="c7">Yes, a reportable breach</label></div></fieldset><div class="qgroup"><label class="label">Anything else that raises the organisation&#39;s risk exposure?</label><label class="field area"><textarea name="c8" placeholder="Optional"></textarea></label></div></div>
+  <div class="action-row"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Submit context and continue</button></div>
 </div>
-<div class="solid x-card x-form" data-state="saving" hidden role="status"><div class="x-between"><h2 class="big">Saving your answers</h2></div><div class="x-gap-top-lg"><div class="x-skel" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:45%"></span></div></div><div class="x-bar"><span></span><button class="btn primary" type="submit" disabled>Submit context and continue</button></div></div>
-<div class="x-form" data-state="error" hidden><div class="alert c-non" style="margin-bottom:var(--s-4)"><svg class="i"><use href="#i-alert"/></svg><div><b>Your answers were not saved</b>The connection dropped. Your answers are still here. Submit again.</div></div>
-<div class="solid x-card x-form" data-state="error">
-  <div class="x-between"><h2 class="big">Risk exposure</h2><div class="progress"><span class="num">5 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div></div>
-  <p class="sub x-gap-top">Past incidents and anything unusual about your risk.</p>
-  <div class="x-gap-top"><fieldset class="x-q"><legend class="label">Has the organisation had a security incident in the last two years?</legend><div class="x-opts"><label class="choice"><input type="radio" name="c7">No</label><label class="choice"><input type="radio" name="c7">Yes, minor</label><label class="choice"><input type="radio" name="c7">Yes, a reportable breach</label></div></fieldset><div class="x-q"><label class="label">Anything else that raises the organisation&#39;s risk exposure?</label><label class="field area"><textarea name="c8" placeholder="Optional"></textarea></label></div></div>
-  <div class="x-bar"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Submit context and continue</button></div>
+<div class="solid card form-narrow" data-state="saving" hidden role="status"><div class="between"><h2 class="big">Saving your answers</h2></div><div class="mt-lg"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:45%"></span></div></div><div class="action-row"><span></span><button class="btn primary" type="submit" disabled>Submit context and continue</button></div></div>
+<div class="form-narrow" data-state="error" hidden><div class="alert c-non" style="margin-bottom:var(--s-4)"><svg class="i"><use href="#i-alert"/></svg><div><b>Your answers were not saved</b>The connection dropped. Your answers are still here. Submit again.</div></div>
+<div class="solid card form-narrow" data-state="error">
+  <div class="between"><h2 class="big">Risk exposure</h2><div class="progress"><span class="num">5 of 5</span><span class="ticks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div></div>
+  <p class="sub mt">Past incidents and anything unusual about your risk.</p>
+  <div class="mt"><fieldset class="qgroup"><legend class="label">Has the organisation had a security incident in the last two years?</legend><div class="opts"><label class="choice"><input type="radio" name="c7">No</label><label class="choice"><input type="radio" name="c7">Yes, minor</label><label class="choice"><input type="radio" name="c7">Yes, a reportable breach</label></div></fieldset><div class="qgroup"><label class="label">Anything else that raises the organisation&#39;s risk exposure?</label><label class="field area"><textarea name="c8" placeholder="Optional"></textarea></label></div></div>
+  <div class="action-row"><button class="btn ghost lead" type="button"><svg class="i"><use href="#i-arrow-l"/></svg>Previous</button><button class="btn primary" type="submit">Submit context and continue</button></div>
 </div></div>
       </div>
     </div>

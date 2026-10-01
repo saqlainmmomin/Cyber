@@ -8,62 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-[hidden]{display:none!important}
-fieldset{border:0;min-width:0}
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.x-stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.x-card{padding:var(--s-6)}
-.x-form{max-width:720px}
-.x-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
-.x-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
-.x-q{padding:var(--s-5) 0;border-top:1px solid var(--line)}
-.x-q:first-of-type{border-top:0;padding-top:var(--s-4)}
-.x-opts{display:flex;flex-direction:column;gap:10px;margin-top:var(--s-3)}
-.x-opts.inline{flex-direction:row;flex-wrap:wrap;gap:var(--s-2) var(--s-6)}
-.x-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-6);padding-top:var(--s-4);border-top:1px solid var(--line)}
-.x-split{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-4);align-items:start}
-.x-list{padding:var(--s-3) var(--s-2)}
-.x-pane{padding:var(--s-6)}
-.x-qc{padding:var(--s-5) var(--s-6)}
-.x-qc + .x-qc{margin-top:var(--s-3)}
-.x-qc h3{font-weight:500;line-height:1.5}
-.x-qc .help{margin-top:4px}
-.x-qc .cite{margin-top:var(--s-3)}
-.x-qc .alert,.x-qc .warn{margin-top:var(--s-3)}
-.x-qc .x-opts{margin-top:var(--s-4)}
-.x-qc.muted-card{background:none;box-shadow:inset 0 0 0 1px var(--line);padding:var(--s-4) var(--s-6)}
-.x-qc.muted-card h3{font-weight:400;color:var(--text-2)}
-.x-qc.quick{padding:var(--s-3) var(--s-6)}
-.x-qc.quick .x-opts{margin-top:var(--s-2)}
-.x-sum{margin-top:var(--s-3);font-size:var(--t-sm);color:var(--muted);cursor:pointer}
-.x-sum:hover{color:var(--text)}
-.x-extra{display:flex;flex-direction:column;gap:var(--s-2);margin-top:var(--s-3)}
-.x-skel{display:flex;flex-direction:column;gap:10px}
-.x-gap-top{margin-top:var(--s-4)}
-.x-gap-top-lg{margin-top:var(--s-8)}
-.x-narrow{max-width:560px}
-.x-center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
-.x-center p{max-width:44ch;color:var(--text-2)}
-.x-grow{flex:1;min-width:0}
-.x-fw{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
-.x-list-item{display:flex;flex-direction:column;gap:2px;padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-list-item:first-child{border-top:0}
-.x-check-row{display:flex;align-items:flex-start;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.x-check-row:first-child{border-top:0;padding-top:0}
-.x-check-row .x-grow b{display:block;font-weight:500}
-@media (max-width:860px){
-  .state-bar{padding:0 var(--s-4) var(--s-2)}
-  .x-split{grid-template-columns:1fr}
-  .x-card,.x-pane{padding:var(--s-5)}
-  .x-qc{padding:var(--s-4)}
-  .x-check-row{flex-wrap:wrap}
-  .x-bar{flex-wrap:wrap}
-  .tabs{overflow-x:auto;gap:var(--s-5);scrollbar-width:none}
-  .tabs a{white-space:nowrap}
-}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -139,28 +85,28 @@ fieldset{border:0;min-width:0}
 
       <nav class="tabs" aria-label="Assessment sections"><a href="b3-hub.html">Overview</a><a href="b3-scope-complete.html">Scope</a><a href="#">Documents</a><a href="b3-questionnaire.html" aria-selected="true">Questionnaire</a><a href="#">Report</a></nav>
 
-      <div class="x-gap-top-lg x-form">
+      <div class="mt-lg form-narrow">
         <div class="alert c-ok" style="margin-bottom:var(--s-4)" data-state="complete" hidden><svg class="i"><use href="#i-circle-check"/></svg><div><b>Domain screening complete</b>Proposed answers are pre-filled. Confirm or change them in the questionnaire.</div></div>
         <div class="alert c-non" style="margin-bottom:var(--s-4)" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div><b>Screening failed</b>The model did not respond in time. Your answers are kept. Run screening again.</div></div>
         <h2>Domain screening</h2>
         <p class="sub">Nine questions, about five minutes. AI proposes answers it is confident about, and you confirm each in the questionnaire.</p>
-        <form class="solid x-card x-gap-top" onsubmit="return false" data-state="default loading error" hidden>
-          <div class="x-q"><h3>Notice and consent</h3><p class="x-gap-top" style="color:var(--text-2)">Describe how the organisation tells people what data it collects and why, and how consent is captured.</p>
-<label class="field area x-gap-top"><textarea name="Notice and consent" aria-label="Notice and consent" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 6 requirements</p></div><div class="x-q"><h3>Purpose and data minimisation</h3><p class="x-gap-top" style="color:var(--text-2)">Describe how you limit collection to what each purpose needs.</p>
-<label class="field area x-gap-top"><textarea name="Purpose and data minimisation" aria-label="Purpose and data minimisation" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 4 requirements</p></div><div class="x-q"><h3>Data principal rights</h3><p class="x-gap-top" style="color:var(--text-2)">Describe how people can see, correct, erase and move their data, and how fast you respond.</p>
-<label class="field area x-gap-top"><textarea name="Data principal rights" aria-label="Data principal rights" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 7 requirements</p></div><div class="x-q"><h3>Children's data</h3><p class="x-gap-top" style="color:var(--text-2)">Describe whether and how you process data of anyone under 18.</p>
-<label class="field area x-gap-top"><textarea name="Children's data" aria-label="Children's data" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 3 requirements</p></div><div class="x-q"><h3>Security safeguards</h3><p class="x-gap-top" style="color:var(--text-2)">Describe the technical and organisational controls that protect personal data.</p>
-<label class="field area x-gap-top"><textarea name="Security safeguards" aria-label="Security safeguards" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 8 requirements</p></div><div class="x-q"><h3>Breach response</h3><p class="x-gap-top" style="color:var(--text-2)">Describe how a personal data breach is detected, assessed and reported.</p>
-<label class="field area x-gap-top"><textarea name="Breach response" aria-label="Breach response" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 5 requirements</p></div><div class="x-q"><h3>Retention and erasure</h3><p class="x-gap-top" style="color:var(--text-2)">Describe how long personal data is kept and how it is erased.</p>
-<label class="field area x-gap-top"><textarea name="Retention and erasure" aria-label="Retention and erasure" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 4 requirements</p></div><div class="x-q"><h3>Processors and transfers</h3><p class="x-gap-top" style="color:var(--text-2)">Describe which vendors handle personal data and what controls bind them, including transfers abroad.</p>
-<label class="field area x-gap-top"><textarea name="Processors and transfers" aria-label="Processors and transfers" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 6 requirements</p></div><div class="x-q"><h3>Governance and grievance</h3><p class="x-gap-top" style="color:var(--text-2)">Describe who owns data protection and how complaints are handled.</p>
-<label class="field area x-gap-top"><textarea name="Governance and grievance" aria-label="Governance and grievance" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 5 requirements</p></div>
-          <div class="x-skel x-gap-top" role="status" aria-label="Screening in progress" data-state="loading" hidden><span class="sub">Inferring status across applicable requirements</span><span class="skel" style="width:70%"></span><span class="skel" style="width:45%"></span></div>
-          <div class="x-bar"><a class="btn ghost" href="b3-questionnaire.html">Skip screening</a>
+        <form class="solid card mt" onsubmit="return false" data-state="default loading error" hidden>
+          <div class="qgroup"><h3>Notice and consent</h3><p class="mt" style="color:var(--text-2)">Describe how the organisation tells people what data it collects and why, and how consent is captured.</p>
+<label class="field area mt"><textarea name="Notice and consent" aria-label="Notice and consent" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 6 requirements</p></div><div class="qgroup"><h3>Purpose and data minimisation</h3><p class="mt" style="color:var(--text-2)">Describe how you limit collection to what each purpose needs.</p>
+<label class="field area mt"><textarea name="Purpose and data minimisation" aria-label="Purpose and data minimisation" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 4 requirements</p></div><div class="qgroup"><h3>Data principal rights</h3><p class="mt" style="color:var(--text-2)">Describe how people can see, correct, erase and move their data, and how fast you respond.</p>
+<label class="field area mt"><textarea name="Data principal rights" aria-label="Data principal rights" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 7 requirements</p></div><div class="qgroup"><h3>Children's data</h3><p class="mt" style="color:var(--text-2)">Describe whether and how you process data of anyone under 18.</p>
+<label class="field area mt"><textarea name="Children's data" aria-label="Children's data" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 3 requirements</p></div><div class="qgroup"><h3>Security safeguards</h3><p class="mt" style="color:var(--text-2)">Describe the technical and organisational controls that protect personal data.</p>
+<label class="field area mt"><textarea name="Security safeguards" aria-label="Security safeguards" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 8 requirements</p></div><div class="qgroup"><h3>Breach response</h3><p class="mt" style="color:var(--text-2)">Describe how a personal data breach is detected, assessed and reported.</p>
+<label class="field area mt"><textarea name="Breach response" aria-label="Breach response" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 5 requirements</p></div><div class="qgroup"><h3>Retention and erasure</h3><p class="mt" style="color:var(--text-2)">Describe how long personal data is kept and how it is erased.</p>
+<label class="field area mt"><textarea name="Retention and erasure" aria-label="Retention and erasure" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 4 requirements</p></div><div class="qgroup"><h3>Processors and transfers</h3><p class="mt" style="color:var(--text-2)">Describe which vendors handle personal data and what controls bind them, including transfers abroad.</p>
+<label class="field area mt"><textarea name="Processors and transfers" aria-label="Processors and transfers" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 6 requirements</p></div><div class="qgroup"><h3>Governance and grievance</h3><p class="mt" style="color:var(--text-2)">Describe who owns data protection and how complaints are handled.</p>
+<label class="field area mt"><textarea name="Governance and grievance" aria-label="Governance and grievance" placeholder="Current state, in a few sentences"></textarea></label><p class="help">Covers 5 requirements</p></div>
+          <div class="skel-stack mt" role="status" aria-label="Screening in progress" data-state="loading" hidden><span class="sub">Inferring status across applicable requirements</span><span class="skel" style="width:70%"></span><span class="skel" style="width:45%"></span></div>
+          <div class="action-row"><a class="btn ghost" href="b3-questionnaire.html">Skip screening</a>
             <button class="btn primary" type="submit" data-state="default error">Run screening</button>
             <button class="btn primary" type="submit" disabled data-state="loading" hidden>Running screening</button></div>
         </form>
-        <div class="glass x-card" data-state="complete" hidden><div class="x-between"><div><h3>Next</h3><p class="sub">Open the questionnaire to review proposed answers.</p></div><a class="btn primary" href="b3-questionnaire.html?state=screened">Go to questionnaire</a></div></div>
+        <div class="glass card" data-state="complete" hidden><div class="between"><div><h3>Next</h3><p class="sub">Open the questionnaire to review proposed answers.</p></div><a class="btn primary" href="b3-questionnaire.html?state=screened">Go to questionnaire</a></div></div>
       </div>
     </div>
   </div>

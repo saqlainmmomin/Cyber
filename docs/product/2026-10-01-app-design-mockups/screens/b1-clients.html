@@ -8,54 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
-.state-bar .seg{white-space:nowrap}
-.state[hidden]{display:none}
-.tools{display:flex;gap:var(--s-3);align-items:center;margin-bottom:var(--s-4)}
-.tools .field{width:280px}
-.tools .field.sel{width:180px}
-.tools .sp{flex:1}
-.stack{display:flex;flex-direction:column;gap:var(--s-4)}
-.card{padding:var(--s-6)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4)}
-.form-row{display:flex;gap:var(--s-3);align-items:flex-end;flex-wrap:wrap}
-.form-row .grow{flex:0 1 220px}
-.line-list{list-style:none}
-.line-list li{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
-.line-list li:first-child{border-top:0;padding-top:0}
-.line-list li:last-child{padding-bottom:0}
-.line-list .txt{flex:1;min-width:0}
-.line-list .txt b{display:block;font-weight:500}
-.tight{margin-top:var(--s-2)}
-.share{display:flex;align-items:center;gap:var(--s-4)}
-.swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:var(--s-2);max-width:440px}
-.swatches label{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--t-xs);color:var(--muted);cursor:pointer}
-.swatches input{position:absolute;opacity:0;pointer-events:none}
-.swatches i{width:36px;height:36px;border-radius:var(--r-full);background:var(--accent);box-shadow:inset 0 0 0 1px var(--line-strong);display:grid;place-items:center;color:var(--on-accent);transition:box-shadow .14s var(--ease)}
-.swatches i svg{width:14px;height:14px;stroke-width:2.4;opacity:0}
-.swatches input:checked + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-text)}
-.swatches input:checked + i svg{opacity:1}
-.swatches input:focus-visible + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
-.swatches input:checked ~ span{color:var(--text)}
-.drop{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-4);border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line-strong)}
-.drop .tile{width:48px;height:48px;border-radius:var(--r-md);display:grid;place-items:center;flex:none;font-weight:600;color:var(--on-accent);background:var(--accent)}
-.drop .txt{flex:1;min-width:0}
-.drop .txt b{display:block;font-weight:500}
-.static tbody tr{cursor:default}
-.static tbody tr:hover td{background:none}
-.narrow{max-width:640px}
-td.n{white-space:nowrap}
-.login{min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-6);padding:var(--s-6) var(--s-4)}
-.login .box{width:min(400px,100%);padding:var(--s-8)}
-.login .firm{display:flex;flex-direction:column;align-items:center;gap:var(--s-3);text-align:center;margin-bottom:var(--s-6)}
-.login .firm .mark{width:44px;height:44px;border-radius:var(--r-md);font-weight:600;font-size:var(--t-md)}
-.login form{display:flex;flex-direction:column;gap:var(--s-4)}
-.login .btn{width:100%;height:40px}
-.login .foot-note{text-align:center;font-size:var(--t-xs);color:var(--muted)}
-.login .states-wrap{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:var(--s-3);overflow-x:auto}
-@media (max-width:860px){.state-bar{padding:0 var(--s-4) var(--s-2)}.tools{flex-wrap:wrap}.tools .field,.tools .field.sel{width:100%}.form-grid{grid-template-columns:1fr}.swatches{grid-template-columns:repeat(4,1fr)}}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">

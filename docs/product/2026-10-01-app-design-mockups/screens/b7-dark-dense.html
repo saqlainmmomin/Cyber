@@ -8,19 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../design/yozora-tokens.css">
 <link rel="stylesheet" href="../../../../design/yozora-components.css">
-<style>
-.bar{display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin:var(--s-4) 0}
-.bar .field{width:260px;max-width:100%}
-.bar .sp{flex:1}
-.pager{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);padding:var(--s-3) var(--s-5);border-top:1px solid var(--line);font-size:var(--t-sm);color:var(--muted)}
-.pager .pg{display:flex;align-items:center;gap:var(--s-2)}
-.top-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-4);margin-bottom:var(--s-4)}
-.top-sum .glass{padding:var(--s-4) var(--s-5)}
-.top-sum .big-n{font-size:var(--t-lg);display:block;margin-top:2px}
-.top-sum .l{display:flex;align-items:center;gap:var(--s-2);font-size:var(--t-sm);color:var(--text-2)}
-.wrap-fix .tabs{margin-top:var(--s-6)}
-@media (max-width:860px){.top-sum{grid-template-columns:1fr 1fr}.bar .field{width:100%}}
-</style>
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -106,7 +95,7 @@
   <div class="glass"><span class="l"><i class="dot c-low"></i>Low</span><span class="big-n num">3</span></div>
 </div>
 
-<div class="bar">
+<div class="filter-bar">
   <label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search findings" aria-label="Search findings"></label>
   <div class="seg" role="group" aria-label="Status"><button aria-pressed="true">All</button><button aria-pressed="false">Open</button><button aria-pressed="false">Resolved</button></div>
   <span class="sp"></span>
