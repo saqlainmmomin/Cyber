@@ -40,7 +40,7 @@
         <h4 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Responsibility</h4>
         <div class="space-y-3">
           {% for action_view in view.actions %}
-          <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" hx-trigger="change" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span class="text-sm text-gray-600 dark:text-gray-300">{{ action_view.action.title }}</span>
             <select name="responsibility" class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-48">
               <option value="">Not recorded</option>

@@ -263,3 +263,4 @@ Rules as for V3-A, for the two V3-B test files. Apply exactly the V3-B edits of 
 - Full suite: 1245 passed, 10 skipped, 290 warnings.
 - Deviations: None. The V3-A contract tests, support/paths/guard files, and existing tests were not edited. Changes stayed within the V3-A file set.
 - Doubts: No blocking doubts. Browser-level screenshot verification and upstream font-license comparison were not performed; the offline font rendering contract passed.
+- Review fix: responsibility forms now submit on `change`; targeted command: 21 passed, 1 failed (the V3-A file-set guard requires an allowance for `tests/test_p6_8_v3a_extra.py`); full suite not run.

@@ -864,6 +864,7 @@ GUARD_TEST_FILES = {
 V3_TEST_FILES = {
     "tests/test_p6_8_v3a_data_capture.py", "tests/p6_8_v3_support.py", "tests/p6_8_v3a_paths.py",
     "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_document.py",
+    "tests/test_p6_8_v3a_extra.py",  # review fix: responsibility form submits on change
 }
 
 
