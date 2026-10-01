@@ -539,7 +539,7 @@ P6_10_FILES = (
     "app/templates/components/conclusion_card.html", "app/services/board_exports.py",
     "tests/test_p6_9_soa.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_b2_docx_xlsx.py",
     "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_9_file_set.py", "tests/test_p6_2b_dpdpa_criteria.py",
-    "tests/golden/p6_8_board_document.json",
+    "tests/golden/p6_8_board_document.json", "tests/test_p6_10_extra.py",
 )
 
 
