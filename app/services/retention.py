@@ -29,6 +29,7 @@ from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.finding import Finding
 from app.models.magic_link import MagicLink
 from app.models.initiative import Initiative
+from app.models.initiative_metadata import InitiativeMetadata
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
@@ -46,6 +47,7 @@ PURGE_ORDER = (
     "evidence_uses",
     "actions",
     "findings",
+    "initiative_metadata",
     "conclusion_revisions",
     "conclusions",
     "analysis_runs",
@@ -630,6 +632,11 @@ def _purge_scopes(
         ("evidence_uses", EvidenceUse, or_(EvidenceUse.evidence_id.in_(evidence_ids), EvidenceUse.assessment_id.in_(assessment_ids))),
         ("actions", Action, Action.finding_id.in_(finding_ids)),
         ("findings", Finding, Finding.assessment_id.in_(assessment_ids)),
+        (
+            "initiative_metadata",
+            InitiativeMetadata,
+            InitiativeMetadata.assessment_id.in_(assessment_ids),
+        ),
         ("conclusion_revisions", ConclusionRevision, ConclusionRevision.conclusion_id.in_(conclusion_ids)),
         ("conclusions", Conclusion, Conclusion.assessment_id.in_(assessment_ids)),
         ("analysis_runs", AnalysisRun, AnalysisRun.assessment_id.in_(assessment_ids)),

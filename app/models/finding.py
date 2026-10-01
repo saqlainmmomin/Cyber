@@ -19,6 +19,8 @@ class Finding(Base):
     )
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text)
+    business_impact: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommendation: Mapped[str | None] = mapped_column(Text, nullable=True)
     severity: Mapped[str] = mapped_column(String(20))
     priority: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(30))

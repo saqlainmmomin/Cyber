@@ -255,3 +255,11 @@ Rules as for V3-A, for the two V3-B test files. Apply exactly the V3-B edits of 
 4. **Not verified:** the page in a browser, the PDF look (the mockup PDF is the reference), live LLM anything (none is used), and the merge of this branch with P6-10 (disjoint files except `tests/test_p6_2b_dpdpa_criteria.py` and possibly `pages/report_snapshots.html`).
 
 ## Results
+
+## Results (V3-A)
+
+- Baseline: 34 failed, 1211 passed, 10 skipped.
+- Focused V3-A tests: 21 passed on the first run and 21 passed on the required second run.
+- Full suite: 1245 passed, 10 skipped, 290 warnings.
+- Deviations: None. The V3-A contract tests, support/paths/guard files, and existing tests were not edited. Changes stayed within the V3-A file set.
+- Doubts: No blocking doubts. Browser-level screenshot verification and upstream font-license comparison were not performed; the offline font rendering contract passed.

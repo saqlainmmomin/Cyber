@@ -15,6 +15,7 @@ from app.routers import (
     analysis,
     assessments,
     aws,
+    board_inputs,
     conclusions,
     desk_review,
     documents,
@@ -148,6 +149,7 @@ app.include_router(requirement_review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(findings.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(snapshots.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(soa_router.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(board_inputs.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(retention_router.router)
 

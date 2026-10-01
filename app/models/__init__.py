@@ -10,6 +10,7 @@ from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.finding import Finding
 from app.models.initiative import Initiative
+from app.models.initiative_metadata import InitiativeMetadata
 from app.models.magic_link import MagicLink
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapReport, GapItem
@@ -34,6 +35,7 @@ __all__ = [
     "EvidenceVersion",
     "Finding",
     "Initiative",
+    "InitiativeMetadata",
     "MagicLink",
     "QuestionnaireResponse",
     "GapReport",
