@@ -825,6 +825,10 @@ P6_9_APP_FILES = {
 
 # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
 LLM_DEADLINE_FILES = {"app/config.py", "app/services/llm_client.py"}
+# P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exports; tests/test_p6_8_b2_docx_xlsx.py guards them.
+P6_8_B2_APP_FILES = {
+    "app/services/board_exports.py", "app/routers/snapshots.py", "app/templates/pages/report_snapshots.html",
+}
 
 
 def _changed(*args: str) -> set[str]:
@@ -838,12 +842,14 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     changed -= P6_9_APP_FILES
     changed -= P6_2E_APP_FILES
     changed -= LLM_DEADLINE_FILES
+    changed -= P6_8_B2_APP_FILES
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
     p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.
     p6_9 += [f":(exclude)scripts/validation/{name}" for name in ("run_company.py", "ab_compare.py", "score.py")]
     p6_9 += [":(exclude)scripts/convert_criteria.py"]  # P6-2e
     p6_9 += [f":(exclude){path}" for path in sorted(LLM_DEADLINE_FILES)]
+    p6_9 += [f":(exclude){path}" for path in sorted(P6_8_B2_APP_FILES | {"requirements.txt"})]  # P6-8 B2
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     assert forbidden == []
