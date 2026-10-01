@@ -859,6 +859,7 @@ GUARD_TEST_FILES = {
     "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_b2_docx_xlsx.py",
     "tests/test_p6_9_file_set.py", "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py",
     "tests/test_p6_4_v2_judge.py", "tests/test_p6_nist_csf2_alignment.py",
+    "tests/p6_10_support.py",  # P6-10 guard helper: V3-A per-PR allowance
 }
 # ... and the v3 contract tests themselves (V3-B's two files ride along on its own branch).
 V3_TEST_FILES = {
