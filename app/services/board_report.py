@@ -22,6 +22,7 @@ from app.models.report_snapshot import ReportSnapshot
 from app.services import (
     approved_report,
     conclusion_review,
+    narrative,
     prior_period,
     report_basis,
     report_content,
@@ -43,7 +44,7 @@ from app.utils.review_gate import require_review_approval
 
 
 SNAPSHOT_TYPE = "board_report"
-DOCUMENT_SCHEMA_VERSION = 2
+DOCUMENT_SCHEMA_VERSION = 3
 TOP_RISKS_LIMIT = 10
 TEMPLATE = "reports/board_report.html"
 PREVIEW_VERSION_LABEL = "Preview (not a report version)"
@@ -543,6 +544,7 @@ def build_document(
         "source": report_snapshots.source_manifest(db, assessment),
     }
     document["prior_period"] = prior_period.build_comparison(db, assessment, document)
+    narrative.apply_to_document(db, assessment, document)
     return document
 
 
@@ -552,6 +554,7 @@ def render_html(document: dict, *, embed_fonts: bool) -> str:
         font_face_css=Markup(html_pdf.font_face_css()) if embed_fonts else Markup(""),
         font_stack=Markup(html_pdf.FONT_STACK),
         embed_fonts=embed_fonts,
+        narrative_note=narrative.NARRATIVE_NOTE,
     )
 
 
@@ -566,6 +569,7 @@ def generate_version(
     actor: str,
 ) -> ReportSnapshot:
     require_review_approval(assessment.id, db)
+    narrative.require_report_ready(db, assessment)
     snapshot_id = _new_id()
     sequence = len(
         report_snapshots.snapshot_rows(db, assessment)[SNAPSHOT_TYPE]

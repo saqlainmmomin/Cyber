@@ -1164,6 +1164,13 @@ P6_7B_APP_FILES = (
     "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
     "app/templates/pages/rfi.html",
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after P6-7a and
+# legitimately touches these; tests/test_p6_10a_remediation_draft.py and
+# tests/test_p6_10b_narrative.py guard them.
+P6_10_APP_FILES = (
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/templates/partials/remediation_draft.html", "app/templates/pages/narrative.html",
+)
 
 
 def _changed(*args: str) -> set[str]:
@@ -1179,6 +1186,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
         _git("ls-files", "--others", "--exclude-standard", "app").split()
     )
     changed -= set(P6_2B_APP_FILES) | set(P6_7B_APP_FILES) | set(P6_9_APP_FILES)
+    changed -= set(P6_10_APP_FILES)
     changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
     changed -= set(LLM_DEADLINE_FILES)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)

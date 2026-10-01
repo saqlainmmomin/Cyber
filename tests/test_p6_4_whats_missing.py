@@ -914,6 +914,15 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/templates/pages/review_queue.html",
         "app/templates/pages/evidence_span.html",
     )]
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands later;
+    # tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard these.
+    p6_10 = [f":(exclude){path}" for path in (
+        "app/services/remediation_draft.py",
+        "app/services/narrative.py",
+        "app/routers/drafting.py",
+        "app/templates/partials/remediation_draft.html",
+        "app/templates/pages/narrative.html",
+    )]
     # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands later; its
     # new SoA, roadmap and comparison files are guarded by tests/test_p6_9_file_set.py.
     p6_9 = [f":(exclude){path}" for path in (
@@ -937,8 +946,8 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/services/rfi_requests.py",
         "app/templates/pages/rfi.html",
     )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10).split()
     changed = set(committed) | set(untracked)
     changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= {
