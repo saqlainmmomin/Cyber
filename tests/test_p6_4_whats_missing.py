@@ -831,6 +831,9 @@ def test_scenario_12_metric_keys_are_pinned(monkeypatch):
 # --------------------------------------------------------------------------- #
 
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
+
 def test_scenario_13_v1_readers_and_protected_modules_unchanged():
     diff = _git(
         "diff", _merge_base(), "--",
@@ -862,6 +865,8 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
         ":(exclude)app/services/analysis_v2.py",
         # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
         ":(exclude)app/services/llm_client.py",
+        # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme, display font.
+        *V3A_EXCLUDES,
     )
     assert diff == ""
     from app.services.grounding import judge_prompts, prompts
@@ -937,8 +942,8 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/services/rfi_requests.py",
         "app/templates/pages/rfi.html",
     )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b).split()
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *V3A_EXCLUDES).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *V3A_EXCLUDES).split()
     changed = set(committed) | set(untracked)
     changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= {

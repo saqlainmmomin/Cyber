@@ -45,6 +45,7 @@ from app.services.scoring import (
     namespaced_domain_scores,
 )
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 _register_frameworks()
 DPDPA_IDS = [control.id for control in FrameworkRegistry.get_all_controls("dpdpa")]
@@ -804,8 +805,8 @@ def test_scenario_19_source_and_worktree_guards(db_path):
     )
     # P6-1: explicit llm_calls persistence (D-P6-1-E)
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic"],
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic", *V3A_EXCLUDES],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "8b2d5f7e1c34 (head)"
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "5e9a2c7d4b18 (head)"  # P6-8 V3-A head

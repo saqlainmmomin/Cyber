@@ -1028,6 +1028,8 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/services/grounding/judge.py",
     "app/services/analysis_v2.py",
 )
+from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
     "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
@@ -1066,6 +1068,8 @@ P6_8_FORBIDDEN_PATHS = (
     # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     ":(exclude)app/config.py",
     ":(exclude)app/services/llm_client.py",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
+    *V3A_EXCLUDES,
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
@@ -1102,6 +1106,7 @@ def test_scenario_14_no_llm_and_b1_file_set():
         path for path in changed_app
         if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
+        and path not in V3A_APP_PATHS  # P6-8 V3-A
     )
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside

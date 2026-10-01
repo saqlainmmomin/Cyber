@@ -24,6 +24,7 @@ from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REVISION = "8b2d5f7e1c34"
 _UNSET = object()
@@ -54,7 +55,7 @@ def upload_root(tmp_path, monkeypatch):
 @pytest.fixture()
 def db_path(tmp_path):
     path = tmp_path / "p5_4.sqlite3"
-    command.upgrade(_cfg(path), REVISION)
+    command.upgrade(_cfg(path), "head")  # P6-8 V3-A: ORM models carry the new columns
     return path
 
 
@@ -965,6 +966,7 @@ def test_scenario_13_structural_guards(db):
         # the report-basis route; tests/test_p6_6_report_foundations.py guards them.
         ":(exclude)app/routers/reports.py", ":(exclude)app/utils/pdf_export.py",
         ":(exclude)app/routers/review.py",
+        *V3A_EXCLUDES,  # P6-8 V3-A
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert protected.stdout == ""
     analysis_source = (REPO_ROOT / "app/routers/analysis.py").read_text()
@@ -976,7 +978,7 @@ def test_scenario_13_structural_guards(db):
     assert "llm_client" not in findings_source and "app.services.desk_review" not in findings_source
     assert UNCONFIRMED_ANSWER_SOURCES == ("document", "inferred")
     assert GROUNDED_CITATION_LOCATION_TYPE == "text_span"
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == f"{REVISION} (head)"
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "5e9a2c7d4b18 (head)"
     for template in (
         "app/templates/partials/questionnaire_tab.html",
         "app/templates/partials/screening_form.html",
