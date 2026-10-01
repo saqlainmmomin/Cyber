@@ -30,7 +30,8 @@ DISTANCE = {
         "missing": 0.0,
     },
 }
-NEGATIVE = {"non_compliant", "partially_compliant"}
+FLAGGED = {"non_compliant", "partially_compliant", "insufficient_evidence"}
+NEGATIVE = FLAGGED
 
 
 def _read(path: Path, default):
@@ -133,7 +134,7 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
             if not conclusion:
                 continue
             fact_texts.append(" ".join(str(conclusion.get(field) or "") for field in ("rationale", "gaps_identified", "evidence_summary")))
-            if score >= 0.7:
+            if conclusion["outcome"] in FLAGGED:
                 filenames = {citation.get("filename") for citation in conclusion.get("citations", [])}
                 grounded_refs.append(bool(filenames & evidence_filenames))
                 severity_scores.append(_risk_score(gap.severity_expected, conclusion.get("risk_level", "")))
@@ -147,8 +148,8 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
             "requirements": scored_refs,
             "req_scores": req_scores,
             "gap_score": _mean(req_scores) or 0.0,
-            "caught": max(req_scores, default=0.0) >= 0.7,
-            "grounded": any(grounded_refs) if evidence_filenames and grounded_refs else (False if evidence_filenames and any(score >= 0.7 for score in req_scores) else None),
+            "caught": any(ref["outcome"] in FLAGGED for ref in scored_refs),
+            "grounded": any(grounded_refs) if evidence_filenames and grounded_refs else (False if evidence_filenames and any(ref["outcome"] in FLAGGED for ref in scored_refs) else None),
             "key_fact_recall": recall,
             "severity": _mean(severity_scores),
             "key_facts": gap.key_facts,
@@ -162,14 +163,14 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
             req_to_decoys[pair].add(decoy.decoy_id)
             conclusion = outcome_map.get(pair)
             refs.append({"framework_id": pair[0], "requirement_id": pair[1], "outcome": conclusion["outcome"] if conclusion else "missing"})
-        decoy_results.append({"decoy_id": decoy.decoy_id, "requirements": refs, "false_positive": any(ref["outcome"] in NEGATIVE for ref in refs)})
+        decoy_results.append({"decoy_id": decoy.decoy_id, "requirements": refs, "false_positive": any(ref["outcome"] in FLAGGED for ref in refs)})
     clean_results = []
     for control in key.clean_controls:
         pair = (control.framework_id, control.requirement_id)
         req_to_clean.add(pair)
         conclusion = outcome_map.get(pair)
         outcome = conclusion["outcome"] if conclusion else "missing"
-        clean_results.append({"framework_id": pair[0], "requirement_id": pair[1], "outcome": outcome, "false_positive": outcome in NEGATIVE})
+        clean_results.append({"framework_id": pair[0], "requirement_id": pair[1], "outcome": outcome, "false_positive": outcome in FLAGGED})
 
     applicable = all_controls
     covered = [pair for pair in applicable if pair in outcome_map]
@@ -201,7 +202,7 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
                 llm_rows.append(json.loads(line))
             except json.JSONDecodeError:
                 continue
-    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "non_ok": 0})
+    costs = defaultdict(lambda: {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "non_ok": 0, "length": 0})
     for row in llm_rows:
         target = costs[f"{row.get('tier', 'unknown')} / {row.get('model', 'unknown')}"]
         target["calls"] += 1
@@ -209,6 +210,8 @@ def score_run(run_dir: Path | str, *, validation_root: Path | None = None) -> di
             target[field] += int(row.get(field) or 0)
         if row.get("status") not in (None, "ok"):
             target["non_ok"] += 1
+        if row.get("finish_reason") == "length":
+            target["length"] += 1
     stages = _read(run_dir / "stages.json", [])
     score = {
         "slug": slug,

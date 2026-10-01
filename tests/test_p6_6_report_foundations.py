@@ -1174,11 +1174,26 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)app/frameworks/schema.py",
     ":(exclude)app/frameworks/definitions/dpdpa.py",
     ":(exclude)app/frameworks/criteria/dpdpa.py",
+    ":(exclude)app/frameworks/criteria/__init__.py",
+    ":(exclude)app/frameworks/criteria/iso27001.py",
+    ":(exclude)app/frameworks/criteria/nist_csf.py",
+    ":(exclude)app/frameworks/definitions/iso27001.py",
+    ":(exclude)app/frameworks/definitions/nist_csf.py",
+    ":(exclude)scripts/convert_criteria.py",
     ":(exclude)scripts/convert_criteria.py",
     ":(exclude)app/services/grounding/claims.py",
     ":(exclude)app/services/grounding/pipeline.py",
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine,
+    # injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
+    ":(exclude)app/services/grounding/injection.py",
+    ":(exclude)app/services/analysis_v2.py",
+    ":(exclude)scripts/injection_pack_live.py",
+    ":(exclude)scripts/validation/ab_compare.py",
+    ":(exclude)scripts/validation/score.py",
+    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call. app/config.py is already excluded above.
+    ":(exclude)app/services/llm_client.py",
 )
 
 

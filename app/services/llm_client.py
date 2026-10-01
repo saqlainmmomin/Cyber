@@ -29,6 +29,10 @@ not parse is recorded as `status="parse_error"` and retried once.
 
 Calls may also carry an optional batch tag in their records when a large
 framework is split into deterministic analysis units.
+
+Every provider call runs under a wall-clock deadline
+(`Settings.llm_request_deadline_seconds`). A call that passes it is recorded
+as an error (`LLMRequestTimeout`) and retried once; a second expiry raises.
 """
 
 import json
@@ -102,6 +106,10 @@ class LLMOutputParseError(ValueError):
     """A `json_output=True` call returned non-JSON text on every attempt."""
 
 
+class LLMRequestTimeout(TimeoutError):
+    """A provider call ran past `Settings.llm_request_deadline_seconds`."""
+
+
 _client: OpenAI | None = None
 _collector: ContextVar[list[dict] | None] = ContextVar("llm_call_collector", default=None)
 _tags: ContextVar[dict[str, str | None]] = ContextVar("llm_call_tags", default={})
@@ -154,7 +162,7 @@ def _record_call(
 ) -> None:
     """Record one call, adding the optional batch key only for batched work,
     reasoning_tokens only when the provider reports it, and attempt only on a
-    JSON-parse retry (attempt 2+)."""
+    retry (attempt 2+: a JSON-parse retry or a deadline retry)."""
     collector = _collector.get()
     if collector is None:
         return
@@ -249,6 +257,9 @@ def call_llm(
     not parse either, `LLMOutputParseError` is raised. A reply truncated at
     `max_tokens` (finish_reason="length") is not retried: the identical
     request would truncate again at double the cost.
+
+    A send that passes the wall-clock deadline is recorded and retried once;
+    a second expiry raises `LLMRequestTimeout` to the caller.
     """
     model = getattr(settings, _TIER_MODELS[tier])
     request_messages = [{"role": "system", "content": system}, *messages]
@@ -283,10 +294,24 @@ def call_llm(
         request_kwargs.update(stream=True, stream_options={"include_usage": True})
 
     attempts = _JSON_ATTEMPTS if json_output else 1
+    sends = 0
     for attempt in range(1, attempts + 1):
-        result, finish_reason, latency_ms = _send(
-            request_kwargs, tier=tier, model=model, stream=stream, attempt=attempt
-        )
+        sends += 1
+        try:
+            result, finish_reason, latency_ms = _send(
+                request_kwargs, tier=tier, model=model, stream=stream, attempt=sends
+            )
+        except LLMRequestTimeout:
+            logger.warning(
+                "LLM call for tier=%s model=%s passed its %.0f s deadline; retrying once",
+                tier,
+                model,
+                settings.llm_request_deadline_seconds,
+            )
+            sends += 1
+            result, finish_reason, latency_ms = _send(
+                request_kwargs, tier=tier, model=model, stream=stream, attempt=sends
+            )
         parse_ok = not json_output or is_json_text(result["text"])
         _record_call(
             tier=tier,
@@ -296,7 +321,7 @@ def call_llm(
             finish_reason=finish_reason,
             status="ok" if parse_ok else "parse_error",
             error_type=None if parse_ok else "JSONDecodeError",
-            attempt=attempt,
+            attempt=sends,
         )
         if parse_ok:
             return result
@@ -321,50 +346,81 @@ def call_llm(
 def _send(
     request_kwargs: dict, *, tier: Tier, model: str, stream: bool, attempt: int
 ) -> tuple[dict, str | None, int]:
-    """Send one request. Records the call itself only when it raises."""
+    """Send one request under the wall-clock deadline. Records the call itself
+    only when it raises.
+
+    The provider interaction (the request and, for streams, every chunk) runs
+    in a daemon worker thread. On expiry the worker is abandoned: its socket
+    closes when the stuck response finally ends or the process exits, and its
+    late result is discarded.
+    """
     started = time.monotonic()
-    finish_reason = None
+    box: dict = {"finish_reason": None}
+
+    def interact() -> None:
+        try:
+            box["result"] = _interact(request_kwargs, tier=tier, model=model, stream=stream, box=box)
+        except BaseException as exc:  # handed back to the calling thread
+            box["error"] = exc
+
+    worker = threading.Thread(target=interact, name=f"llm-{tier}", daemon=True)
+    worker.start()
+    deadline = settings.llm_request_deadline_seconds
+    worker.join(deadline)
     try:
-        response = _get_client().chat.completions.create(**request_kwargs)
-        if not stream:
-            choice = response.choices[0]
-            finish_reason = getattr(choice, "finish_reason", None)
-            text = choice.message.content
-            _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
-            usage = _usage_dict(response.usage)
-        else:
-            text_parts: list[str] = []
-            usage_obj = None
-            for chunk in response:
-                if chunk.choices:
-                    delta = chunk.choices[0].delta.content
-                    if delta:
-                        text_parts.append(delta)
-                    chunk_finish_reason = getattr(chunk.choices[0], "finish_reason", None)
-                    if chunk_finish_reason:
-                        finish_reason = chunk_finish_reason
-                if getattr(chunk, "usage", None) is not None:
-                    usage_obj = chunk.usage
-            text = "".join(text_parts)
-            _require_content(text, tier=tier, model=model, finish_reason=finish_reason)
-            usage = _usage_dict(usage_obj)
+        if worker.is_alive():
+            raise LLMRequestTimeout(
+                f"LLM call for tier={tier!r} model={model!r} passed its {deadline:g} s deadline"
+            )
+        if "error" in box:
+            raise box["error"]
     except Exception as exc:
         _record_call(
             tier=tier,
             model=model,
             usage=None,
             latency_ms=int((time.monotonic() - started) * 1000),
-            finish_reason=finish_reason,
+            finish_reason=box["finish_reason"],
             status="error",
             error_type=type(exc).__name__,
             attempt=attempt,
         )
         raise
+    text, usage = box["result"]
     return (
         {"text": text, "usage": usage},
-        finish_reason,
+        box["finish_reason"],
         int((time.monotonic() - started) * 1000),
     )
+
+
+def _interact(
+    request_kwargs: dict, *, tier: Tier, model: str, stream: bool, box: dict
+) -> tuple[str, dict[str, int]]:
+    """The whole provider interaction for one send; `box["finish_reason"]` is
+    kept current so a failed send still records it."""
+    response = _get_client().chat.completions.create(**request_kwargs)
+    if not stream:
+        choice = response.choices[0]
+        box["finish_reason"] = getattr(choice, "finish_reason", None)
+        text = choice.message.content
+        _require_content(text, tier=tier, model=model, finish_reason=box["finish_reason"])
+        return text, _usage_dict(response.usage)
+    text_parts: list[str] = []
+    usage_obj = None
+    for chunk in response:
+        if chunk.choices:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                text_parts.append(delta)
+            chunk_finish_reason = getattr(chunk.choices[0], "finish_reason", None)
+            if chunk_finish_reason:
+                box["finish_reason"] = chunk_finish_reason
+        if getattr(chunk, "usage", None) is not None:
+            usage_obj = chunk.usage
+    text = "".join(text_parts)
+    _require_content(text, tier=tier, model=model, finish_reason=box["finish_reason"])
+    return text, _usage_dict(usage_obj)
 
 
 def is_json_text(text: str) -> bool:

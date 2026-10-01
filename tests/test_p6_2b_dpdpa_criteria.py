@@ -268,10 +268,11 @@ def test_scenario_5_every_dpdpa_control_has_its_approved_criteria_and_judge_says
 
 
 def test_scenario_5_an_iso_control_stays_fallback():
-    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
+    # P6-2e: ISO 27001 now carries approved criteria; GDPR is the remaining fallback exemplar.
+    from app.frameworks.definitions.gdpr import GDPR_DEFINITION
     from app.services.grounding.judge import criteria_for
 
-    ctrl = ISO27001_DEFINITION.all_controls()[0]
+    ctrl = GDPR_DEFINITION.all_controls()[0]
     assert ctrl.test_criteria == ()
     source, criteria = criteria_for(ctrl)
     assert source == "fallback"
@@ -296,11 +297,10 @@ def test_scenario_6_dpdpa_pack_version_is_version_plus_criteria_version():
 def test_scenario_6_every_other_framework_pack_version_equals_version():
     from app.frameworks.definitions.gdpr import GDPR_DEFINITION
     from app.frameworks.definitions.hipaa import HIPAA_DEFINITION
-    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
-    from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
     from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
 
-    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, ISO27001_DEFINITION, NIST_CSF_DEFINITION, PCI_DSS_DEFINITION):
+    # P6-2e: ISO 27001 and NIST CSF have their own signed criteria and pack versions.
+    for fw in (GDPR_DEFINITION, HIPAA_DEFINITION, PCI_DSS_DEFINITION):
         assert fw.pack_version == fw.version, fw.id
 
 
@@ -409,10 +409,11 @@ def test_scenario_9_claude_analyzer_does_not_reference_test_criteria():
 
 
 def test_scenario_10_iso27001_framework_exits_nonzero(tmp_path):
+    # P6-2e: iso27001 is supported; a framework with no signed criteria still exits non-zero.
     mod = converter()
     out = tmp_path / "out.py"
     with pytest.raises(SystemExit) as excinfo:
-        mod.main(["--framework", "iso27001", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
+        mod.main(["--framework", "gdpr", "--sheet", str(SIGNED_SHEET), "--out", str(out)])
     assert excinfo.value.code != 0
 
 
@@ -424,6 +425,14 @@ P6_2B_ALLOWED_FILES = {
     "tasks/criteria-review/signed/dpdpa-criteria-v1.csv",
     "scripts/convert_criteria.py",
     "app/frameworks/criteria/dpdpa.py",
+    "tasks/criteria-review/signed/iso27001-criteria-v1.csv", "tasks/criteria-review/signed/nist-csf-criteria-v1.csv",
+    "tests/test_p6_2c_iso_nist_criteria.py", "tests/test_p6_2e_iso_nist_criteria.py", "tests/test_p5_3_framework_desk_review.py",
+    "app/frameworks/criteria/__init__.py",
+    "app/frameworks/criteria/iso27001.py",
+    "app/frameworks/criteria/nist_csf.py",
+    "app/frameworks/definitions/iso27001.py",
+    "app/frameworks/definitions/nist_csf.py",
+    "scripts/convert_criteria.py",
     "app/frameworks/criteria/__init__.py",
     "app/frameworks/definitions/dpdpa.py",
     "app/frameworks/schema.py",
@@ -450,6 +459,10 @@ P6_2B_ALLOWED_FILES = {
     "scripts/validation/run_company.py",
     "tests/test_validation_harness.py",
     "tests/test_p6_6_report_foundations.py",
+    # Stage C v1 baseline results and c4's CSF 2.0 answers (2026-09-29) land after P6-2b.
+    "tasks/handoffs/2026-09-28-next-phase-6-kickoff.md",
+    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    "tests/test_p6_8_board_report_v2.py",
 }
 # P6-8 B1 (PR #80) lands after P6-2b; tests/test_p6_8_board_report_v2.py guards its file set.
 P6_8_B1_FILES = (
@@ -460,6 +473,62 @@ P6_8_B1_FILES = (
     "tests/golden/p6_8_board_document.json", "tests/test_p5_6_rfi_rebuild.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_report_snapshots.py",
 )
+# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-2b;
+# tests/test_p6_9_file_set.py guards its file set.
+P6_9_FILES = (
+    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
+    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
+    "tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md", "tests/p6_9_support.py",
+    "tests/test_p6_9_", "tests/test_p6_2b_dpdpa_criteria.py",
+)
+# P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-2b: the injected-document
+# pack and quarantine, and the aggregate-only A/B comparison; its contract tests guard them.
+P6_5_FILES = (
+    "app/services/grounding/injection.py", "app/services/grounding/judge.py", "app/services/analysis_v2.py",
+    "scripts/injection_pack_live.py", "scripts/validation/ab_compare.py", "scripts/validation/run_company.py",
+    "scripts/validation/score.py", "tests/injection_pack/", "tests/test_p6_5_injection_pack.py",
+    "tests/test_p6_5_ab_compare.py", "tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md", "tasks/todo.md",
+    # P6-5b: orchestrator-requested extra tests (sibling-folder trap, baseline provenance).
+    "tests/test_p6_5_ab_compare_extra.py",
+    "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_whats_missing.py",
+    "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
+)
+# P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-2b;
+# tests/test_p6_7b_add_to_rfi.py guards its app file set.
+P6_7B_FILES = (
+    "tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md", "tests/test_p6_7b_add_to_rfi.py",
+    "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
+    "app/services/requirement_card.py", "app/routers/requirement_review.py",
+    "app/templates/components/requirement_card_body.html", "app/templates/pages/rfi.html",
+)
+
+
+# LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+LLM_DEADLINE_FILES = (
+    "app/config.py", "app/services/llm_client.py", "tests/test_llm_request_deadline.py",
+    "tests/test_p6_nist_csf2_alignment.py", "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_whats_missing.py",
+    "tests/test_p6_6_report_foundations.py", "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py",
+)
+# P6-5c decision record (tasks/2026-09-30-p6-5c-decision-park-v2.md): docs and context only.
+P6_5C_RECORD_FILES = (
+    "CLAUDE.md", "tasks/2026-09-30-p6-5c-decision-park-v2.md", "tasks/2026-09-30-status-log.md",
+    "tasks/handoffs/2026-09-30-v2-abstention-diagnosis-and-fix.md",
+)
+# P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exports; B1 paths above cover
+# the router, template, requirements.txt and test_report_snapshots.py; its contract test guards the rest.
+P6_8_B2_FILES = (
+    "app/services/board_exports.py", "tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md",
+    "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_4_whats_missing.py", "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
+)
+# Board report format re-evaluation (claude/report-format-review): decision doc, mockups, handoff only.
+REPORT_FORMAT_FILES = (
+    "docs/product/2026-10-01-board-report-format.md", "docs/product/2026-10-01-board-report-mockup/",
+    "tasks/handoffs/2026-10-01-report-format-reevaluation.md", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -467,5 +536,11 @@ def test_scenario_11_only_p6_2b_files_change():
         ["git", "diff", "--name-only", "main...HEAD"],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
-    offenders = [f for f in committed if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)]
+    offenders = [
+        f for f in committed
+        if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
+        and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
+        and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
+        and not f.startswith(REPORT_FORMAT_FILES)
+    ]
     assert offenders == [], offenders

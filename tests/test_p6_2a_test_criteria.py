@@ -29,6 +29,8 @@ def test_unmodified_control_has_no_criteria_and_registry_loads():
         HIPAA_DEFINITION, NIST_CSF_DEFINITION, PCI_DSS_DEFINITION,
     ]
     from app.frameworks.criteria.dpdpa import DPDPA_CRITERIA
+    from app.frameworks.criteria.iso27001 import ISO27001_CRITERIA
+    from app.frameworks.criteria.nist_csf import NIST_CSF_CRITERIA
 
     saved = dict(FrameworkRegistry._frameworks)
     try:
@@ -40,6 +42,10 @@ def test_unmodified_control_has_no_criteria_and_registry_loads():
                 assert all(
                     c.test_criteria == DPDPA_CRITERIA.get(c.id, ()) for c in fw.all_controls()
                 )
+            elif fw.id in ("iso27001", "nist_csf"):
+                # P6-2e: signed ISO / NIST criteria are attached.
+                signed = ISO27001_CRITERIA if fw.id == "iso27001" else NIST_CSF_CRITERIA
+                assert all(c.test_criteria == signed.get(c.id, ()) for c in fw.all_controls())
             else:
                 # No other framework has been through sign-off yet.
                 assert all(c.test_criteria == () for c in fw.all_controls())

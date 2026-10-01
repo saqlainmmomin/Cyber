@@ -201,9 +201,9 @@ def test_scenario_2_dashboard_has_both_clients_and_hierarchy(db, http, demo):
     assert json.loads(assessments_a[0].selected_frameworks) == ["dpdpa", "iso27001"]
     assert json.loads(assessments_a[1].selected_frameworks) == ["iso27001"]
     assert json.loads(assessments_b[0].selected_frameworks) == ["nist_csf"]
-    assert {pack.pack_version for pack in db.query(AssessmentPack).filter_by(assessment_id=assessments_a[0].id)} == {"2023+criteria-v1", "2022"}
+    assert {pack.pack_version for pack in db.query(AssessmentPack).filter_by(assessment_id=assessments_a[0].id)} == {"2023+criteria-v1", "2022+criteria-v1"}
     assert [pack.pack_version for pack in db.query(AssessmentPack).filter_by(assessment_id=assessments_a[1].id)] == ["2022"]
-    assert [pack.pack_version for pack in db.query(AssessmentPack).filter_by(assessment_id=assessments_b[0].id)] == ["2.0"]
+    assert [pack.pack_version for pack in db.query(AssessmentPack).filter_by(assessment_id=assessments_b[0].id)] == ["2.0+criteria-v1"]
     assert engagement_a.status == engagement_b.status == "active"
     assert all(assessment.status == "completed" for assessment in assessments_a + assessments_b)
 

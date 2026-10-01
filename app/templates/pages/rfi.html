@@ -27,6 +27,7 @@
   <div class="mb-5">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">RFI preview</h2>
     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Only conclusions you have individually approved as Insufficient evidence are included. AI proposals, scores and findings are never included.</p>
+    {% if evidence_requests %}<p data-rfi-requests-note class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ evidence_requests_note }}</p>{% endif %}
   </div>
   <ul class="space-y-3">
     {% for item in preview["items"] %}
@@ -60,6 +61,25 @@
     </li>
     {% endfor %}
   </ul>
+  {% if evidence_requests %}
+  <div data-rfi-requests class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Evidence requests added from requirement cards</h3>
+    <ul class="mt-3 space-y-3 text-sm">
+      {% for evidence_request in evidence_requests %}
+      <li data-rfi-request="{{ evidence_request.request_key }}" data-conclusion-id="{{ evidence_request.conclusion_id }}" class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
+        <p class="font-medium text-gray-900 dark:text-gray-100">{{ evidence_request.framework_id }}:{{ evidence_request.requirement_id }} · {{ evidence_request.title }}</p>
+        <p class="mt-1 text-gray-700 dark:text-gray-300">{{ evidence_request.request }}</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Added by {{ evidence_request.requested_by }}</p>
+        <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ evidence_request.conclusion_id }}/withdraw" hx-include="#reviewer-name" hx-swap="none" class="mt-2">
+          <input type="hidden" name="request_key" value="{{ evidence_request.request_key }}">
+          <input type="hidden" name="origin" value="rfi">
+          <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   <form data-rfi-generate-form class="mt-6" hx-post="/api/assessments/{{ assessment.id }}/rfi/versions" hx-include="#reviewer-name, [data-rfi-omit]" hx-swap="none">
     <button type="submit" class="inline-flex items-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light">Generate new RFI version</button>
   </form>

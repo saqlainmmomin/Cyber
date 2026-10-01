@@ -211,5 +211,9 @@ def test_no_app_module_imports_the_drafts_outside_criteria_package():
 
 
 def test_drafts_are_not_attached_to_any_control():
-    for fw in (ISO27001_DEFINITION, NIST_CSF_DEFINITION):
-        assert all(c.test_criteria == () for c in fw.all_controls())
+    # P6-2e: controls carry the signed criteria from the generated modules, never the drafts.
+    from app.frameworks.criteria.iso27001 import ISO27001_CRITERIA
+    from app.frameworks.criteria.nist_csf import NIST_CSF_CRITERIA
+
+    for fw, signed in ((ISO27001_DEFINITION, ISO27001_CRITERIA), (NIST_CSF_DEFINITION, NIST_CSF_CRITERIA)):
+        assert all(c.test_criteria == signed.get(c.id, ()) for c in fw.all_controls())

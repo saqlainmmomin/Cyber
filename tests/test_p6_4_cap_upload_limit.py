@@ -338,6 +338,12 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/services/grounding/claims.py",
              ":(exclude)app/services/grounding/pipeline.py",
              ":(exclude)app/frameworks/criteria/dpdpa.py",
+             ":(exclude)app/frameworks/criteria/__init__.py",
+             ":(exclude)app/frameworks/criteria/iso27001.py",
+             ":(exclude)app/frameworks/criteria/nist_csf.py",
+             ":(exclude)app/frameworks/definitions/iso27001.py",
+             ":(exclude)app/frameworks/definitions/nist_csf.py",
+             ":(exclude)scripts/convert_criteria.py",
              ":(exclude).env.example",
              # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
              # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.
@@ -358,9 +364,29 @@ def _changed(*args: str) -> set[str]:
              ":(exclude)app/routers/requirement_review.py",
              ":(exclude)app/templates/components/conclusion_card.html",
              ":(exclude)app/templates/components/requirement_card_body.html",
+             # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): SoA, roadmap
+             # groups, prior-period comparison; guarded by tests/test_p6_9_file_set.py.
+             ":(exclude)app/services/soa.py",
+             ":(exclude)app/services/remediation_groups.py",
+             ":(exclude)app/services/prior_period.py",
+             ":(exclude)app/routers/soa.py",
+             ":(exclude)app/templates/pages/soa.html",
              ":(exclude)app/templates/pages/conclusions.html",
              ":(exclude)app/templates/pages/review_queue.html",
-             ":(exclude)app/templates/pages/evidence_span.html"],
+             ":(exclude)app/templates/pages/evidence_span.html",
+             # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
+             # guarded by tests/test_p6_5_injection_pack.py.
+             ":(exclude)app/services/grounding/injection.py",
+             ":(exclude)app/services/grounding/judge.py",
+             ":(exclude)app/services/analysis_v2.py",
+             # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI from the
+             # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
+             ":(exclude)app/services/rfi_evidence_requests.py",
+             ":(exclude)app/services/rfi_requests.py",
+             ":(exclude)app/templates/pages/rfi.html",
+             # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exporter;
+             # guarded by tests/test_p6_8_b2_docx_xlsx.py.
+             ":(exclude)app/services/board_exports.py"],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )
@@ -368,4 +394,5 @@ def _changed(*args: str) -> set[str]:
 
 def test_scenario_9_only_config_and_document_processor_change_under_app():
     changed = _changed("main...HEAD") | _changed("HEAD")
+    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= P6_4_CAP_APP_FILES, sorted(changed - P6_4_CAP_APP_FILES)
