@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yozora component gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<style>.g{max-width:960px;margin:0 auto;padding:var(--s-8) var(--s-6) var(--s-16)}.g section{margin-top:var(--s-12)}.g .row{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;margin-top:var(--s-4)}.g .card{padding:var(--s-6);margin-top:var(--s-4)}.w{width:260px}</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+</svg>
+<div class="g">
+<h1>Components</h1><p class="sub" style="margin-top:6px">Every component in every state. Toggle dark with <code>?dark</code>.</p>
+
+<section><h2>Buttons</h2>
+<div class="glass card"><div class="row">
+<button class="btn primary">Primary</button><button class="btn primary" style="filter:brightness(.9)">Hover</button><button class="btn primary" disabled>Disabled</button>
+<button class="btn secondary">Secondary</button><button class="btn ghost">Ghost</button><button class="btn danger">Reject</button><button class="btn destructive">Delete</button>
+</div><div class="row">
+<button class="btn primary sm">Small</button><button class="btn secondary sm lead"><svg class="i"><use href="#i-plus"/></svg>New engagement</button><button class="btn ghost icon" aria-label="Add"><svg class="i"><use href="#i-plus"/></svg></button>
+<button class="btn primary" id="focusme">Focus ring</button><button class="btn primary">Approve <kbd>A</kbd></button>
+</div></div></section>
+
+<section><h2>Pills, chips, status</h2>
+<div class="glass card"><div class="row">
+<span class="pill c-critical">Critical</span><span class="pill c-high">High</span><span class="pill c-medium">Medium</span><span class="pill c-low">Low</span>
+</div><div class="row">
+<span class="pill c-ok">Compliant</span><span class="pill c-part">Partially compliant</span><span class="pill c-non">Non-compliant</span><span class="pill c-insuf">Insufficient evidence</span>
+</div><div class="row"><span class="chip">DPDPA</span><span class="chip">ISO 27001</span>
+<span class="status"><span class="st"></span>Open</span><span class="status"><span class="st prog"></span>In progress</span><span class="status"><span class="dot c-accent"></span>In review</span></div></div></section>
+
+<section><h2>Form controls</h2>
+<div class="glass card"><div class="row" style="align-items:flex-start;gap:var(--s-8)">
+<div class="w"><label class="label">Default</label><label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search"></label></div>
+<div class="w"><label class="label">Invalid</label><label class="field invalid"><input value="finance@"></label><p class="err">Enter a full email address.</p></div>
+<div class="w"><label class="label">Disabled</label><label class="field" aria-disabled="true"><input value="Locked" disabled></label></div>
+<div class="w"><label class="label">Select</label><label class="field"><select><option>Annual</option><option>Quarterly</option></select></label></div>
+<div class="w"><label class="label">Notes</label><label class="field area"><textarea>Scope excludes the Pune office.</textarea></label><p class="help">Visible to the client.</p></div>
+<div class="w"><label class="choice"><input type="checkbox" checked>Include in report</label><br><label class="choice"><input type="checkbox">Notify client</label><br><label class="choice"><input type="radio" name="r" checked>Annual</label><br><label class="choice"><input type="radio" name="r">Quarterly</label><br><label class="choice"><input type="checkbox" class="switch" checked>Firm theme</label></div>
+</div></div></section>
+
+<section><h2>Tabs, seg, alert</h2>
+<div class="glass card"><nav class="tabs"><a href="#" aria-selected="true">DPDPA 2023</a><a href="#">ISO 27001:2022</a><a href="#">NIST CSF 2.0</a></nav>
+<div class="row"><div class="seg"><button aria-pressed="true">Light</button><button aria-pressed="false">Dark</button></div></div>
+<div class="row"><div class="alert c-medium w" style="width:100%"><svg class="i"><use href="#i-alert"/></svg><div><b>Evidence is past the cut-off</b>Two files are dated after 15 Mar 2026 and were left out.</div></div></div></div></section>
+
+<section><h2>Tables and empty state</h2>
+<div class="solid"><table><thead><tr><th>Finding</th><th>Severity</th><th class="n">Evidence</th></tr></thead><tbody>
+<tr><td class="t-title">No in-app consent withdrawal</td><td><span class="pill c-high">High</span></td><td class="n num">4</td></tr>
+<tr><td class="t-title">DR failover exceeded the 4-hour RTO</td><td><span class="pill c-medium">Medium</span></td><td class="n num">2</td></tr></tbody></table></div>
+<div class="glass empty" style="margin-top:var(--s-4)"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-folder"/></svg><h3>No evidence yet</h3><p>Upload documents or send the client a link to start the desk review.</p><button class="btn primary">Upload documents</button></div></section>
+
+<section><h2>Loading, toast, modal</h2>
+<div class="glass card"><span class="skel" style="width:60%"></span><span class="skel" style="width:90%;margin-top:10px"></span><span class="skel" style="width:40%;margin-top:10px"></span></div>
+<div class="row"><div class="toast"><svg class="i"><use href="#i-check"/></svg>Conclusion approved</div></div>
+<div class="modal" style="margin-top:var(--s-4)"><h2>Delete this engagement?</h2><p>This permanently removes its evidence, findings and reports. This can't be undone.</p><div class="foot"><button class="btn ghost">Cancel</button><button class="btn destructive">Delete engagement</button></div></div></section>
+</div>
+<script>const q=new URLSearchParams(location.search);if(q.has('dark'))document.documentElement.dataset.theme='dark';
+// ?focus shows the focus ring statically for the screenshot
+if(q.has('focus'))document.getElementById('focusme').focus();</script>
+</body></html>
