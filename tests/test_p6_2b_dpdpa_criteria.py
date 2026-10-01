@@ -524,6 +524,11 @@ P6_8_B2_FILES = (
     "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_4_whats_missing.py", "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_2b_dpdpa_criteria.py",
 )
+# Board report format re-evaluation (claude/report-format-review): decision doc, mockups, handoff only.
+REPORT_FORMAT_FILES = (
+    "docs/product/2026-10-01-board-report-format.md", "docs/product/2026-10-01-board-report-mockup/",
+    "tasks/handoffs/2026-10-01-report-format-reevaluation.md", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -536,5 +541,6 @@ def test_scenario_11_only_p6_2b_files_change():
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
+        and not f.startswith(REPORT_FORMAT_FILES)
     ]
     assert offenders == [], offenders
