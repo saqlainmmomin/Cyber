@@ -536,7 +536,7 @@ from tests.p6_8_v3a_paths import V3A_APP_PATHS  # noqa: E402
 P6_8_V3_FILES = (
     "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/p6_8_v3_support.py",
     "tests/p6_8_v3a_paths.py", "tests/test_p6_8_v3a_data_capture.py", "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py",
-    "tests/test_p6_8_v3b_document.py", *V3A_APP_PATHS,
+    "tests/test_p6_8_v3b_document.py", "tests/test_p6_8_v3a_extra.py", *V3A_APP_PATHS,
     # existing tests: the "Alembic head" pins and the per-PR guard allowances
     "tests/test_p6_6_report_foundations.py", "tests/test_retention.py", "tests/test_p5_6_rfi_rebuild.py",
     "tests/test_startup_invariants.py", "tests/test_p5_3_framework_desk_review.py",
