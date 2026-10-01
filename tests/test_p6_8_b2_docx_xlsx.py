@@ -936,6 +936,8 @@ P6_8_B2_FORBIDDEN_PATHS = (
     "app/templates/partials", "tests/fixtures", "tests/support", "scripts", "validation",
     # Stage C 2026-09-28 harness fix (#81) is on main; a stale local `main` still shows it.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the synthetic v3 deck document.
+    ":(exclude)tests/golden/p6_8_v3_deck_document.json",
 )
 LIVE_READER_TOKENS = (
     "llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai",

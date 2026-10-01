@@ -529,6 +529,13 @@ REPORT_FORMAT_FILES = (
     "docs/product/2026-10-01-board-report-format.md", "docs/product/2026-10-01-board-report-mockup/",
     "tasks/handoffs/2026-10-01-report-format-reevaluation.md", "tests/test_p6_2b_dpdpa_criteria.py",
 )
+# P6-8 v3 board deck, part V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the handoff and the V3-B
+# contract tests with their synthetic document. V3-A's own allowances ride on its branch (merge: keep both).
+P6_8_V3B_FILES = (
+    "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/p6_8_v3_support.py",
+    "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_document.py",
+    "tests/golden/p6_8_v3_deck_document.json", "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_2b_dpdpa_criteria.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -541,6 +548,6 @@ def test_scenario_11_only_p6_2b_files_change():
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
-        and not f.startswith(REPORT_FORMAT_FILES)
+        and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3B_FILES
     ]
     assert offenders == [], offenders
