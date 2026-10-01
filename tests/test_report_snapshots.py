@@ -725,6 +725,9 @@ def test_snapshot_route_and_source_guards_are_exact():
         ("POST", "/api/assessments/{assessment_id}/snapshots"),
         ("POST", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/issue"),
         ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/file"),
+        # P6-8 B2: read-only derived exports (D-P6-8-B2-G)
+        ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/docx"),
+        ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/xlsx"),
     }
     assert all(
         forbidden not in path.lower()

@@ -882,6 +882,9 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         ":(exclude)app/templates/reports",
         ":(exclude)app/templates/pages/report_snapshots.html",
         ":(exclude)app/assets/fonts/noto",
+        # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exporter;
+        # tests/test_p6_8_b2_docx_xlsx.py guards it.
+        ":(exclude)app/services/board_exports.py",
     )
     p6_2b_app_files = {
         "app/frameworks/criteria/dpdpa.py",

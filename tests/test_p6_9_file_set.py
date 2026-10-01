@@ -52,6 +52,10 @@ P6_9_FORBIDDEN_PATHS = (
     # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     ":(exclude)app/config.py",
     ":(exclude)app/services/llm_client.py",
+    # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): two GET export routes and the openpyxl pin;
+    # tests/test_p6_8_b2_docx_xlsx.py guards both (the requirements diff must be exactly the pin).
+    ":(exclude)app/routers/snapshots.py",
+    ":(exclude)requirements.txt",
 )
 NEW_MODULES = (
     "app/services/soa.py",
@@ -83,4 +87,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
     outside = sorted(path for path in changed_app if path not in P6_9_APP_ALLOWLIST and not path.startswith("app/frameworks/"))
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
+    outside = [path for path in outside if path not in ("app/services/board_exports.py", "app/routers/snapshots.py")]  # P6-8 B2
     assert outside == [], outside

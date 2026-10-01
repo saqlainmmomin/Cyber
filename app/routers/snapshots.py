@@ -12,6 +12,7 @@ from app.database import get_db
 from app.models.assessment import Assessment
 from app.routers import reports
 from app.services import (
+    board_exports,
     board_report,
     report_snapshots,
     rfi_requests,
@@ -20,6 +21,7 @@ from app.services import (
 from app.services.conclusion_review import reviewer_actor
 from app.services import approved_report
 from app.utils import html_pdf
+from app.utils.http_headers import attachment_disposition
 from app.utils.review_gate import require_review_approval
 
 router = APIRouter(prefix="/api/assessments", tags=["snapshots"])
@@ -365,3 +367,63 @@ def snapshot_file_route(
         media_type=report_snapshots.MEDIA_TYPES[snapshot.format],
         headers=headers,
     )
+
+
+def _board_export_route(
+    assessment_id: str,
+    snapshot_id: str,
+    fmt: str,
+    db: Session,
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        db.rollback()
+        return _error(404, "Assessment not found")
+    try:
+        snapshot = report_snapshots.load_snapshot(
+            db,
+            assessment_id=assessment_id,
+            snapshot_id=snapshot_id,
+        )
+        document = report_snapshots.read_board_report_document(db, snapshot)
+        document_sha256 = report_snapshots.generated_event(db, snapshot.id)["document_sha256"]
+        if fmt == "docx":
+            content = board_exports.render_docx(document, document_sha256=document_sha256)
+            media_type = board_exports.DOCX_MEDIA_TYPE
+        else:
+            content = board_exports.render_xlsx(document, document_sha256=document_sha256)
+            media_type = board_exports.XLSX_MEDIA_TYPE
+    except report_snapshots.SnapshotError as exc:
+        db.rollback()
+        return _error(exc.status_code, exc.message)
+
+    db.rollback()
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": attachment_disposition(
+                board_exports.export_filename(document, fmt)
+            ),
+            "X-Board-Document-Sha256": document_sha256,
+            "X-Board-Export-Format-Version": str(board_exports.EXPORT_FORMAT_VERSION),
+        },
+    )
+
+
+@router.get("/{assessment_id}/snapshots/{snapshot_id}/docx")
+def board_report_docx_route(
+    assessment_id: str,
+    snapshot_id: str,
+    db: Session = Depends(get_db),
+):
+    return _board_export_route(assessment_id, snapshot_id, "docx", db)
+
+
+@router.get("/{assessment_id}/snapshots/{snapshot_id}/xlsx")
+def board_report_xlsx_route(
+    assessment_id: str,
+    snapshot_id: str,
+    db: Session = Depends(get_db),
+):
+    return _board_export_route(assessment_id, snapshot_id, "xlsx", db)
