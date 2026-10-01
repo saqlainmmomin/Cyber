@@ -552,3 +552,33 @@ Steps:
 - Implemented D-P6-10-B..F in the permitted 10a files only. No deviations, migration, network call, live LLM call, test/support-file edit, or unrelated app-file change.
 - Verification: 10a contract `16 passed`; neighbor set `276 passed`; 10b contract `11 failed, 1 passed` as expected (ten missing `app.services.narrative` failures plus the schema-v3 exporter assertion; the scenario 10 file-set guard passed); full suite `11 failed, 1241 passed, 10 skipped`, with only those expected 10b failures remaining.
 - Doubts: none for 10a. The remaining 10b failures are intentionally deferred to the separate Stage 4 run.
+
+## Results (10b)
+
+- Baseline before implementation: Python 3.13.13; both P6-10 files were `11 failed, 17 passed`.
+- Implemented the Stage 4 narrative service, routes, page, report integration, v3 exporter support, exact D-P6-10-P integer edits, and the requested Stage 3 invalid/missing `expected_version` refusal. No migrations, network calls, live LLM calls, or protected-file edits.
+- Verification: P6-10 contract files `28 passed` twice; `tests/test_p6_10_extra.py` `2 passed`; P6-8 B1 `14 passed`; neighbour set `276 passed`; full suite `1250 passed, 10 skipped, 4 failed`.
+- Full-suite failures left unchanged as required: the P6-4 cap and NIST protected-surface guards still see the already-committed P6-10a files; the retention guard reports the required uncommitted test edits; and `tests/test_p6_9_prior_period.py::test_scenario_1_compares_with_the_previous_issued_period_from_its_sidecar` still expects schema 2 although the live document is v3. The handoff explicitly prohibits editing that v3 assertion.
+- Golden diff (exactly the required two hunks):
+
+```diff
+@@ -354,7 +354,7 @@
+     ],
+     "unplanned_gap_count": 0
+   },
+-  "schema_version": 2,
++  "schema_version": 3,
+   "sign_off": {
+@@ -1681,6 +1681,10 @@
+       "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by qualified legal counsel or a certified privacy professional (for INDIA DPDPA requirements), or by a qualified information security auditor (for ISO 27001), is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.",
+       "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a readiness assessment, not a determination of current non-compliance. Until then, obligations under the Information Technology Act, 2000, s.43A and the SPDI Rules, 2011 continue to apply and were not assessed."
+     ],
++    "narrative": {
++      "cross_framework": null,
++      "executive": null
++    },
+     "scope": [
+```
+
+- Deviations: none from the fixed P6-10b implementation contract. The full-suite failures above are retained rather than weakening or editing protected tests.
+- Doubts: no live-model quality or browser interaction smoke was run because the request forbids network/live LLM calls; the existing portrait report placement remains intentionally temporary for the later v3 deck work.

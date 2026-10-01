@@ -351,7 +351,7 @@ def test_scenario_1_openpyxl_is_pinned_and_the_exporters_take_only_the_document(
     exports = _exports()
     assert exports.EXPORT_FORMAT_VERSION == 1
     # Schema v1 sidecars (pre-P6-9) stay exportable; v2 is the current builder (D-P6-8-B2-J).
-    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2)
+    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2, 3)
     assert _board().DOCUMENT_SCHEMA_VERSION in exports.SUPPORTED_SCHEMA_VERSIONS
     assert exports.XLSX_OPTIONAL_SHEETS == XLSX_OPTIONAL_SHEETS
     # The roadmap intro mirrors the PDF of the document's own schema: v2 is the live template's text.
@@ -396,7 +396,7 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
     paragraphs = [paragraph.text for paragraph in word.paragraphs]
     label = _label(document, sha)
 
-    assert document["schema_version"] == 2 and document["soa"] is not None  # DPDPA + ISO fixture
+    assert document["schema_version"] == 3 and document["soa"] is not None  # DPDPA + ISO fixture
     assert _headings(word, 1) == [
         *B1_HEADINGS_HEAD,
         *[f"{section['name']} ({section['version']})" for section in document["framework_sections"]],
@@ -539,7 +539,7 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert about_rows["Report version"] == "v1"
     assert about_rows["Document SHA-256"] == sha
     assert about_rows["Report generated"] == document["snapshot"]["generated_at"]
-    assert about_rows["Document schema version"] == 2
+    assert about_rows["Document schema version"] == 3
     assert about_rows["Prior-period comparison"] == " ".join(document["prior_period"]["notes"])
     assert about_rows["Export format version"] == 1
     assert about_rows["Assessment period"] == document["basis"]["period_label"]

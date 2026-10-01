@@ -609,7 +609,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     assert "Unreviewed stray" not in json.dumps(document)
 
     assert set(document) == DOCUMENT_KEYS
-    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)
+    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 3  # P6-10 (D-P6-10-K)
     assert document["kind"] == board.SNAPSHOT_TYPE == "board_report"
     assert document["snapshot"] == {
         "id": "00000000-0000-4000-8000-000000000001",

@@ -354,7 +354,7 @@
     ],
     "unplanned_gap_count": 0
   },
-  "schema_version": 2,
+  "schema_version": 3,
   "sign_off": {
     "issue_status": "This version is a draft until it is issued. Whether it was issued, who issued it and the SHA-256 of the issued file are recorded in the report version history.",
     "names_note": "Names are recorded as entered by the consultant; they are not verified sign-ins.",
@@ -1681,6 +1681,10 @@
       "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by qualified legal counsel or a certified privacy professional (for INDIA DPDPA requirements), or by a qualified information security auditor (for ISO 27001), is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.",
       "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a readiness assessment, not a determination of current non-compliance. Until then, obligations under the Information Technology Act, 2000, s.43A and the SPDI Rules, 2011 continue to apply and were not assessed."
     ],
+    "narrative": {
+      "cross_framework": null,
+      "executive": null
+    },
     "scope": [
       "India DPDPA: 3 requirements in scope",
       "ISO 27001: 2 requirements in scope"
