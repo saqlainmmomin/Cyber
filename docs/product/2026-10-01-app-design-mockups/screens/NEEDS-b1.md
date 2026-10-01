@@ -1,0 +1,6 @@
+- File dropzone and logo upload row (firm settings): built locally as a bordered row with preview tile, replace and remove. Needs a shared component with drag-over, uploading and invalid-file states.
+- Accent swatch picker (firm settings): radio group of round swatches drawn with the `[data-accent]` tokens, built in a local style block. Needs a shared component.
+- List rows (`.line-list`: text left, action right, divided): used for unmigrated assessments, archived engagements and purge history. The existing `.rows` class is tied to the home attention list.
+- Login layout (centered glass box, firm tile, full-width button): local styles; needs a shared client-facing page shell.
+- Clickable table rows rely on a small `data-href` script; the shared CSS sets `cursor:pointer` but has no row-link pattern.
+- Toolbar above tables (search plus filter) is a local `.tools` helper.

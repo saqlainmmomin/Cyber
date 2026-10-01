@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex, nofollow">
+<title>Kestrel Advisory evidence upload</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<style>[hidden]{display:none!important}</style>
+</head>
+<body data-default="default">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-8 8"/></symbol>
+<symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+</svg>
+<main style="width:100%;max-width:520px;margin:0 auto;padding:var(--s-6) var(--s-4) var(--s-12)">
+<div class="brand" style="padding:0;margin-bottom:var(--s-8)"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Kestrel Advisory</div>
+<div data-state="default">
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="solid" style="padding:var(--s-5);margin-top:var(--s-6)"><h2>Add a file</h2>
+<form onsubmit="return false">
+<div style="margin-top:var(--s-4)"><label class="label" for="item">Which item is this for?</label><label class="field" style="height:44px">
+<select id="item"><option>Board minutes for the last four quarters</option><option>Access review for September 2026</option><option>Disaster recovery test report</option><option>Vendor list with data categories</option></select><svg class="i"><use href="#i-updown"/></svg></label></div>
+<div style="margin-top:var(--s-4)"><label class="label" for="file">File</label><label class="field" style="height:auto;min-height:44px;padding:6px 10px"><input id="file" type="file"></label><p class="help">PDF, Word, Excel or an image, up to 25 MB.</p></div>
+<div style="margin-top:var(--s-5)"><button class="btn primary lead" style="--h:44px;width:100%"><svg class="i"><use href="#i-upload"/></svg>Upload file</button></div></form>
+<p class="help num" style="margin-top:var(--s-4);text-align:center">17 of 20 uploads left · Link expires 15 Oct 2026, 18:00 UTC</p></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><p class="sub" style="margin-top:var(--s-3)">No files have been sent through this link yet.</p>
+</div>
+<div data-state="received" hidden>
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><div class="alert c-ok" style="margin-bottom:var(--s-4)"><svg class="i"><use href="#i-circle-check"/></svg><div><b>File received</b>board-minutes-fy26.pdf was received. You can add another file.</div></div><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="solid" style="padding:var(--s-5);margin-top:var(--s-6)"><h2>Add a file</h2>
+<form onsubmit="return false">
+<div style="margin-top:var(--s-4)"><label class="label" for="item">Which item is this for?</label><label class="field" style="height:44px">
+<select id="item"><option>Board minutes for the last four quarters</option><option>Access review for September 2026</option><option>Disaster recovery test report</option><option>Vendor list with data categories</option></select><svg class="i"><use href="#i-updown"/></svg></label></div>
+<div style="margin-top:var(--s-4)"><label class="label" for="file">File</label><label class="field" style="height:auto;min-height:44px;padding:6px 10px"><input id="file" type="file"></label><p class="help">PDF, Word, Excel or an image, up to 25 MB.</p></div>
+<div style="margin-top:var(--s-5)"><button class="btn primary lead" style="--h:44px;width:100%"><svg class="i"><use href="#i-upload"/></svg>Upload file</button></div></form>
+<p class="help num" style="margin-top:var(--s-4);text-align:center">15 of 20 uploads left · Link expires 15 Oct 2026, 18:00 UTC</p></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">board-minutes-fy26.pdf</div><span class="pill c-accent">Received</span></div><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">access-review-sep-2026.xlsx</div><span class="pill c-accent">Received</span></div></div>
+</div>
+<div data-state="error" hidden>
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><div class="alert c-non" style="margin-bottom:var(--s-4)"><svg class="i"><use href="#i-alert"/></svg><div><b>The file was not uploaded</b>The file is over the 25 MB limit. Upload a smaller copy.</div></div><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="solid" style="padding:var(--s-5);margin-top:var(--s-6)"><h2>Add a file</h2>
+<form onsubmit="return false">
+<div style="margin-top:var(--s-4)"><label class="label" for="item">Which item is this for?</label><label class="field" style="height:44px">
+<select id="item"><option>Board minutes for the last four quarters</option><option>Access review for September 2026</option><option>Disaster recovery test report</option><option>Vendor list with data categories</option></select><svg class="i"><use href="#i-updown"/></svg></label></div>
+<div style="margin-top:var(--s-4)"><label class="label" for="file">File</label><label class="field" style="height:auto;min-height:44px;padding:6px 10px"><input id="file" type="file"></label><p class="help">PDF, Word, Excel or an image, up to 25 MB.</p></div>
+<div style="margin-top:var(--s-5)"><button class="btn primary lead" style="--h:44px;width:100%"><svg class="i"><use href="#i-upload"/></svg>Upload file</button></div></form>
+<p class="help num" style="margin-top:var(--s-4);text-align:center">16 of 20 uploads left · Link expires 15 Oct 2026, 18:00 UTC</p></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">board-minutes-fy26.pdf</div><span class="pill c-accent">Received</span></div></div>
+</div>
+<div data-state="rejected" hidden>
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><div class="alert c-non" style="margin-bottom:var(--s-4)"><svg class="i"><use href="#i-alert"/></svg><div><b>The file was not uploaded</b>dr-test-notes.exe is not a supported file type. Upload a PDF, Word, Excel or image file.</div></div><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="solid" style="padding:var(--s-5);margin-top:var(--s-6)"><h2>Add a file</h2>
+<form onsubmit="return false">
+<div style="margin-top:var(--s-4)"><label class="label" for="item">Which item is this for?</label><label class="field" style="height:44px">
+<select id="item"><option>Board minutes for the last four quarters</option><option>Access review for September 2026</option><option>Disaster recovery test report</option><option>Vendor list with data categories</option></select><svg class="i"><use href="#i-updown"/></svg></label></div>
+<div style="margin-top:var(--s-4)"><label class="label" for="file">File</label><label class="field" style="height:auto;min-height:44px;padding:6px 10px"><input id="file" type="file"></label><p class="help">PDF, Word, Excel or an image, up to 25 MB.</p></div>
+<div style="margin-top:var(--s-5)"><button class="btn primary lead" style="--h:44px;width:100%"><svg class="i"><use href="#i-upload"/></svg>Upload file</button></div></form>
+<p class="help num" style="margin-top:var(--s-4);text-align:center">15 of 20 uploads left · Link expires 15 Oct 2026, 18:00 UTC</p></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">board-minutes-fy26.pdf</div><span class="pill c-accent">Received</span></div><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">dr-test-notes.exe</div><span class="pill c-non">Rejected</span></div></div>
+</div>
+<div data-state="uploading" hidden>
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="solid" style="padding:var(--s-5);margin-top:var(--s-6)"><h2>Add a file</h2>
+<form onsubmit="return false">
+<div style="margin-top:var(--s-4)"><label class="label" for="item">Which item is this for?</label><label class="field" style="height:44px">
+<select id="item"><option>Board minutes for the last four quarters</option><option>Access review for September 2026</option><option>Disaster recovery test report</option><option>Vendor list with data categories</option></select><svg class="i"><use href="#i-updown"/></svg></label></div>
+<div style="margin-top:var(--s-4)"><label class="label" for="file">File</label><label class="field" style="height:auto;min-height:44px;padding:6px 10px"><input id="file" type="file"></label><p class="help">PDF, Word, Excel or an image, up to 25 MB.</p></div>
+<div style="margin-top:var(--s-5)"><button class="btn primary lead" style="--h:44px;width:100%" disabled>Uploading</button></div></form>
+<p class="help num" style="margin-top:var(--s-4);text-align:center">16 of 20 uploads left · Link expires 15 Oct 2026, 18:00 UTC</p></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">board-minutes-fy26.pdf</div><span class="pill c-accent">Received</span></div></div>
+</div>
+<div data-state="limit" hidden>
+<h1>Upload evidence</h1>
+<p style="margin-top:var(--s-2);color:var(--text-2)">Kestrel Advisory asked for the items below. Files go only to their assessment team.</p>
+<div style="margin-top:var(--s-6)"><h2>Requested items</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px">Board minutes for the last four quarters</div><div style="padding-top:14px;padding-bottom:14px">Access review for September 2026</div><div style="padding-top:14px;padding-bottom:14px">Disaster recovery test report</div><div style="padding-top:14px;padding-bottom:14px">Vendor list with data categories</div></div></div>
+<div class="alert c-medium" style="margin-top:var(--s-6)"><svg class="i"><use href="#i-alert"/></svg><div><b>This link has reached its upload limit</b>Ask Kestrel Advisory for a new link if you have more files to send.<div style="margin-top:var(--s-3)"><a class="btn primary" style="--h:44px" href="mailto:requests@kestreladvisory.example">Email Kestrel Advisory</a></div></div></div>
+<h2 style="margin-top:var(--s-8)">Files you have sent</h2><div class="solid rows" style="margin-top:var(--s-3)"><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">board-minutes-fy26.pdf</div><span class="pill c-accent">Received</span></div><div style="padding-top:14px;padding-bottom:14px;gap:var(--s-3);flex-wrap:wrap"><div class="txt" style="word-break:break-word">access-review-sep-2026.xlsx</div><span class="pill c-accent">Received</span></div></div>
+</div>
+</main>
+<script>const q=new URLSearchParams(location.search),R=document.documentElement;
+if(q.has('dark'))R.dataset.theme='dark';
+if(q.get('accent'))R.dataset.accent=q.get('accent');
+const st=q.get('state')||document.body.dataset.default;
+document.querySelectorAll('[data-state]').forEach(e=>e.hidden=e.dataset.state!==st);
+document.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;e.preventDefault();const sc=t.closest('[data-scope]');
+ sc.querySelectorAll('[data-tab]').forEach(a=>a.setAttribute('aria-selected',a===t));
+ sc.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab)});
+</script>
+</body></html>

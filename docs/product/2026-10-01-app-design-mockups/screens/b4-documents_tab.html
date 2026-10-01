@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documents tab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-briefcase" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+<symbol id="i-report" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+<symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-slash" viewBox="0 0 24 24"><path d="M15 4 9 20"/></symbol>
+<symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-8 8"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+</svg>
+<div class="scrim" id="scrim"></div>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="side-in glass">
+      <div class="brand"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Yozora</div>
+      <label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search" aria-label="Search"></label>
+      <nav class="nav"><a href="#"><svg class="i"><use href="#i-home"/></svg>Home</a><a href="#" aria-current="page"><svg class="i"><use href="#i-briefcase"/></svg>Engagements</a><a href="#"><svg class="i"><use href="#i-inbox"/></svg>Review<span class="count">3</span></a><a href="#"><svg class="i"><use href="#i-folder"/></svg>Evidence</a><a href="#"><svg class="i"><use href="#i-report"/></svg>Reports</a></nav>
+      <div class="side-foot">
+        <nav class="nav"><a href="#"><svg class="i"><use href="#i-settings"/></svg>Settings</a></nav>
+        <div class="menu" id="userMenu" role="menu">
+          <div class="who"><span class="avatar">PS</span><span><b>Priya Sharma</b><span>Reviewing partner</span></span></div>
+          <a href="#" role="menuitem"><svg class="i"><use href="#i-user"/></svg>Profile</a>
+          <a href="#" role="menuitem"><svg class="i"><use href="#i-logout"/></svg>Sign out</a>
+        </div>
+        <button class="user" id="userBtn" aria-expanded="false" aria-haspopup="menu">
+          <span class="avatar">PS</span><span class="name">Priya Sharma</span><svg class="i"><use href="#i-updown"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="top">
+      <button class="btn ghost icon menu-btn" aria-label="Open navigation"><svg class="i"><use href="#i-menu"/></svg></button>
+      <div class="crumb" style="overflow:hidden"><a class="hide-sm" href="#">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><b>FY2026 programme</b></div>
+    </div>
+    <div class="page">
+<div class="seg" id="states" aria-label="Mockup state" style="flex-wrap:wrap;margin-bottom:var(--s-5)"><button aria-pressed="true" data-s="idle">Ready</button><button aria-pressed="false" data-s="chosen">File chosen</button><button aria-pressed="false" data-s="uploading">Uploading</button><button aria-pressed="false" data-s="uploaded">Uploaded</button><button aria-pressed="false" data-s="error">Upload error</button><button aria-pressed="false" data-s="empty">No documents</button></div>
+<div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">FY2026 programme · 1 Apr 2025 – 31 Mar 2026 · Evidence cut-off 15 Mar 2026</p></div><div class="acts"></div></div>
+<nav class="tabs" style="margin-bottom:var(--s-6)"><a href="#">Scope</a><a href="#" aria-selected="true">Documents</a><a href="#">Questionnaire</a><a href="#">Report</a></nav><div class="glass" style="padding:var(--s-6)">
+  <h2>Upload documents</h2>
+  <div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-4)">
+    <div data-st="uploaded"><div class="alert c-ok" ><svg class="i"><use href="#i-circle-check"/></svg><div><b>Data retention policy v3.pdf uploaded</b></div></div></div>
+    <div data-st="error"><div class="alert c-non" ><svg class="i"><use href="#i-alert"/></svg><div><b>Cloud hosting agreement.pdf is over the 25 MB limit</b><span class="sub" style="display:block">Upload a smaller copy.</span></div></div></div>
+    <div data-st="idle uploaded error empty" style="display:flex;flex-direction:column;align-items:center;gap:var(--s-3);padding:var(--s-8) var(--s-6);border:1px dashed var(--line-strong);border-radius:var(--r-md);text-align:center">
+      <svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-upload"/></svg>
+      <div><div class="t-title">Drop files here</div><p class="help">PDF, DOCX, PNG, JPG or WEBP. Up to 25 MB each.</p></div>
+      <button class="btn primary">Choose files</button>
+    </div>
+    <div data-st="chosen" style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap">
+      <span class="ico" style="display:grid;place-items:center"><svg class="i"><use href="#i-file"/></svg></span>
+      <div style="flex:1;min-width:160px"><div class="t-title">Data retention policy v3.pdf</div><div class="t-sub">PDF · 1.8 MB</div></div>
+      <label class="field" style="min-width:200px"><select aria-label="Category"><option>Select category</option><option>Privacy policy</option><option>Consent form</option><option>Data flow diagram</option><option>DPIA</option><option>Processing records</option><option>Breach procedure</option><option>Retention policy</option><option>Vendor agreement</option><option>Other</option></select><svg class="i"><use href="#i-chev-d"/></svg></label>
+      <button class="btn ghost">Remove</button>
+      <button class="btn primary">Upload</button>
+    </div>
+    <div data-st="uploading">
+      <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-bottom:var(--s-3)">
+        <span class="status"><span class="st prog"></span>Uploading Data retention policy v3.pdf</span><span class="sub num" style="margin-left:auto">62%</span>
+      </div>
+      <div class="stp"><div class="rail"><i style="width:62%"></i></div></div>
+      <div style="margin-top:var(--s-4)"><button class="btn primary" disabled>Upload</button></div>
+    </div>
+  </div>
+</div>
+<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Uploaded documents</h2><a class="btn ghost sm lead" href="b4-evidence_reuse.html"><svg class="i"><use href="#i-history"/></svg>Reuse evidence from earlier assessments</a></div>
+<div data-st="idle chosen uploading uploaded error"><div class="solid" style="overflow-x:auto"><table><thead><tr><th>File</th><th class="hide-sm">Category</th><th>Status</th><th class="hide-sm">Version</th><th class="hide-sm">Added</th><th class="hide-sm"></th></tr></thead><tbody><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Privacy notice.pdf</a><div class="t-sub">PDF · 2.4 MB</div></td><td class="hide-sm">Privacy policy</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v3</td><td class="hide-sm">12 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Consent form, mobile app.pdf</a><div class="t-sub">PDF · 610 KB</div></td><td class="hide-sm">Consent form</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v1</td><td class="hide-sm">12 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Data flow diagram, payments.png</a><div class="t-sub">PNG · 1.1 MB</div></td><td class="hide-sm">Data flow diagram</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v2</td><td class="hide-sm">9 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Breach response procedure.docx</a><div class="t-sub">DOCX · 88 KB</div></td><td class="hide-sm">Breach procedure</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v1</td><td class="hide-sm">6 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Retention schedule.pdf</a><div class="t-sub">PDF · 320 KB</div></td><td class="hide-sm">Retention policy</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v2</td><td class="hide-sm">2 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Cloud hosting agreement.pdf</a><div class="t-sub">PDF · 3.8 MB · Mapped from the FY2025 assessment</div></td><td class="hide-sm">Vendor agreement</td><td><span class="status"><span class="dot c-accent"></span>Active</span></td><td class="hide-sm num">v1</td><td class="hide-sm">27 Feb 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="b4-evidence_detail.html"><td><a class="t-title" href="b4-evidence_detail.html">Incident log, Q4.docx</a><div class="t-sub">DOCX · 140 KB</div></td><td class="hide-sm">Other</td><td><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Quarantined</span></td><td class="hide-sm num">v1</td><td class="hide-sm">14 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div></div>
+<div class="glass empty" data-st="empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-folder"/></svg><h3>No documents yet</h3><p>Upload privacy policies, consent forms or other compliance documents above, or send the client a link.</p><a class="btn secondary lead" href="#"><svg class="i"><use href="#i-link"/></svg>Send an upload link</a></div>
+<div class="glass" data-st="idle chosen uploading uploaded error" style="padding:var(--s-6);margin-top:var(--s-10)">
+  <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;justify-content:space-between">
+    <div><h2>Desk review</h2><p class="sub" style="margin-top:2px">6 documents are ready to analyse against DPDPA and ISO 27001. The quarantined file is left out.</p></div>
+    <a class="btn secondary" href="b4-desk_review.html">Open desk review</a>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+<script>
+const root=document.documentElement,q=new URLSearchParams(location.search);
+if(q.has('dark'))root.dataset.theme='dark';
+const ub=document.getElementById('userBtn'),um=document.getElementById('userMenu');
+ub.onclick=e=>{e.stopPropagation();const o=!um.classList.contains('open');um.classList.toggle('open',o);ub.setAttribute('aria-expanded',o)};
+document.addEventListener('click',e=>{if(!um.contains(e.target)){um.classList.remove('open');ub.setAttribute('aria-expanded',false)}});
+document.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>root.classList.add('drawer-open'));
+document.getElementById('scrim').onclick=()=>root.classList.remove('drawer-open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){root.classList.remove('drawer-open');um.classList.remove('open');if(window.setState&&window.DEFAULT_STATE)setState(window.DEFAULT_STATE)}});
+document.querySelectorAll('tbody tr[data-href]').forEach(r=>r.addEventListener('click',e=>{if(!e.target.closest('a,button,input,label'))location.href=r.dataset.href}));
+const bar=document.getElementById('states');
+if(bar){
+  const valid=[...bar.querySelectorAll('button')].map(b=>b.dataset.s);
+  window.DEFAULT_STATE=valid[0];
+  window.setState=function(s){
+    if(!valid.includes(s))s=valid[0];
+    document.querySelectorAll('[data-st]').forEach(e=>{e.style.display=e.dataset.st.split(' ').includes(s)?'':'none'});
+    bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s));
+    q.set('state',s);history.replaceState(null,'',location.pathname+'?'+q.toString().replace('dark=','dark'));
+  };
+  bar.querySelectorAll('button').forEach(b=>b.onclick=()=>setState(b.dataset.s));
+  document.querySelectorAll('[data-setstate]').forEach(e=>e.addEventListener('click',ev=>{ev.preventDefault();setState(e.dataset.setstate)}));
+  setState(q.get('state')||valid[0]);
+}
+
+</script>
+</body>
+</html>

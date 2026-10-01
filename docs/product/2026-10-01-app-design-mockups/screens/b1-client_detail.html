@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meridian Ledger Technologies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<style>
+.state-bar{width:100%;max-width:1040px;margin:0 auto;padding:0 var(--s-8) var(--s-2);overflow-x:auto}
+.state-bar .seg{white-space:nowrap}
+.state[hidden]{display:none}
+.tools{display:flex;gap:var(--s-3);align-items:center;margin-bottom:var(--s-4)}
+.tools .field{width:280px}
+.tools .field.sel{width:180px}
+.tools .sp{flex:1}
+.stack{display:flex;flex-direction:column;gap:var(--s-4)}
+.card{padding:var(--s-6)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4)}
+.form-row{display:flex;gap:var(--s-3);align-items:flex-end;flex-wrap:wrap}
+.form-row .grow{flex:0 1 220px}
+.line-list{list-style:none}
+.line-list li{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line)}
+.line-list li:first-child{border-top:0;padding-top:0}
+.line-list li:last-child{padding-bottom:0}
+.line-list .txt{flex:1;min-width:0}
+.line-list .txt b{display:block;font-weight:500}
+.tight{margin-top:var(--s-2)}
+.share{display:flex;align-items:center;gap:var(--s-4)}
+.swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:var(--s-2);max-width:440px}
+.swatches label{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--t-xs);color:var(--muted);cursor:pointer}
+.swatches input{position:absolute;opacity:0;pointer-events:none}
+.swatches i{width:36px;height:36px;border-radius:var(--r-full);background:var(--accent);box-shadow:inset 0 0 0 1px var(--line-strong);display:grid;place-items:center;color:var(--on-accent);transition:box-shadow .14s var(--ease)}
+.swatches i svg{width:14px;height:14px;stroke-width:2.4;opacity:0}
+.swatches input:checked + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-text)}
+.swatches input:checked + i svg{opacity:1}
+.swatches input:focus-visible + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
+.swatches input:checked ~ span{color:var(--text)}
+.drop{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-4);border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.drop .tile{width:48px;height:48px;border-radius:var(--r-md);display:grid;place-items:center;flex:none;font-weight:600;color:var(--on-accent);background:var(--accent)}
+.drop .txt{flex:1;min-width:0}
+.drop .txt b{display:block;font-weight:500}
+.static tbody tr{cursor:default}
+.static tbody tr:hover td{background:none}
+.narrow{max-width:640px}
+td.n{white-space:nowrap}
+.login{min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-6);padding:var(--s-6) var(--s-4)}
+.login .box{width:min(400px,100%);padding:var(--s-8)}
+.login .firm{display:flex;flex-direction:column;align-items:center;gap:var(--s-3);text-align:center;margin-bottom:var(--s-6)}
+.login .firm .mark{width:44px;height:44px;border-radius:var(--r-md);font-weight:600;font-size:var(--t-md)}
+.login form{display:flex;flex-direction:column;gap:var(--s-4)}
+.login .btn{width:100%;height:40px}
+.login .foot-note{text-align:center;font-size:var(--t-xs);color:var(--muted)}
+.login .states-wrap{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:var(--s-3);overflow-x:auto}
+@media (max-width:860px){.state-bar{padding:0 var(--s-4) var(--s-2)}.tools{flex-wrap:wrap}.tools .field,.tools .field.sel{width:100%}.form-grid{grid-template-columns:1fr}.swatches{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+<symbol id="i-briefcase" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+<symbol id="i-report" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-slash" viewBox="0 0 24 24"><path d="M15 4 9 20"/></symbol>
+<symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-8 8"/></symbol>
+</svg>
+<div class="scrim" id="scrim"></div>
+<div class="app">
+<aside class="side" id="side"><div class="side-in glass">
+<div class="brand"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Yozora</div>
+<label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search" aria-label="Search"></label>
+<nav class="nav" aria-label="Main"><a href="b1-home.html"><svg class="i"><use href="#i-home"/></svg>Home</a><a href="b1-clients.html" aria-current="page"><svg class="i"><use href="#i-building"/></svg>Clients</a><a href="#"><svg class="i"><use href="#i-briefcase"/></svg>Engagements</a><a href="#"><svg class="i"><use href="#i-inbox"/></svg>Review<span class="count">3</span></a><a href="#"><svg class="i"><use href="#i-folder"/></svg>Evidence</a><a href="#"><svg class="i"><use href="#i-report"/></svg>Reports</a></nav>
+<div class="side-foot">
+<nav class="nav" aria-label="Firm"><a href="b1-firm_settings.html"><svg class="i"><use href="#i-settings"/></svg>Settings</a></nav>
+<div class="menu" id="userMenu" role="menu">
+<div class="who"><span class="avatar">PS</span><span><b>Priya Sharma</b><span>Northgate Advisory</span></span></div>
+<a href="#" role="menuitem"><svg class="i"><use href="#i-user"/></svg>Profile</a>
+<a href="b1-login.html" role="menuitem"><svg class="i"><use href="#i-logout"/></svg>Sign out</a>
+</div>
+<button class="user" id="userBtn" aria-expanded="false" aria-haspopup="menu"><span class="avatar">PS</span><span class="name">Priya Sharma</span><svg class="i"><use href="#i-updown"/></svg></button>
+</div></div></aside>
+<div class="main">
+<div class="top"><button class="btn ghost icon menu-btn" aria-label="Open navigation"><svg class="i"><use href="#i-menu"/></svg></button><div class="crumb"><a href="b1-clients.html">Clients</a><svg class="i sl" ><use href="#i-slash"/></svg><b>Meridian Ledger Technologies</b></div></div>
+<div class="state-bar"><div class="seg" id="states" role="group" aria-label="Screen state"><button aria-pressed="true" data-s="default">Default</button><button aria-pressed="false" data-s="empty">No engagements</button><button aria-pressed="false" data-s="loading">Loading</button><button aria-pressed="false" data-s="error">Save error</button><button aria-pressed="false" data-s="saved">Saved</button></div></div><div class="page"><div class="state" data-state="default"><div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">Fintech · SME · 3 engagements · Last activity 24 Sep 2026</p></div><div class="acts"><a class="btn primary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div><div class="sec"><h2>Engagements</h2></div><div class="solid"><table><thead><tr><th>Engagement</th><th class="hide-sm">Stage</th><th class="n">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead><tbody><tr data-href="#"><td><a class="t-title" href="#">FY2026 DPDPA and ISO 27001 programme</a></td><td class="hide-sm"><span class="status"><span class="dot c-accent"></span>In review</span></td><td class="n num">62%</td><td class="n num hide-sm">24 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">FY2025 ISO 27001 surveillance audit</a></td><td class="hide-sm"><span class="status"><span class="dot c-neutral"></span>Report released</span></td><td class="n num">100%</td><td class="n num hide-sm">14 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">Vendor risk review</a></td><td class="hide-sm"><span class="status"><span class="st"></span>Scoping</span></td><td class="n num">8%</td><td class="n num hide-sm">2 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div><div class="sec"><h2>Retention</h2></div><div class="glass card"><div class="form-row"><div class="grow"><label class="label" for="retention-years">Retention period in years</label><label class="field"><input id="retention-years" type="number" min="1" max="50" value="7"></label></div><button class="btn secondary">Save retention</button></div><p class="help">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p></div><div class="sec"><h2>Archived engagements</h2></div><div class="solid card"><ul class="line-list">
+<li><span class="ico"><svg class="i"><use href="#i-archive"/></svg></span><div class="txt"><b>FY2023 DPDPA readiness review</b><span class="sub">Archived 12 Mar 2026 · Eligible for purge from 12 Mar 2033</span></div><a class="btn ghost sm" href="#">Open</a></li>
+<li><span class="ico"><svg class="i"><use href="#i-archive"/></svg></span><div class="txt"><b>FY2022 ISO 27001 gap assessment</b><span class="sub">Archived 3 Apr 2021 · Eligible for purge now</span></div><a class="btn ghost sm" href="#">Open</a></li></ul></div><div class="sec"><h2>Purge history</h2></div><div class="solid card"><ul class="line-list">
+<li><div class="txt"><b>FY2021 DPDPA programme</b><span class="sub">Purged 2 Jun 2026 by Priya Sharma · Files pending removal</span></div><button class="btn secondary sm">Finish removing files</button></li>
+<li><div class="txt"><b>FY2020 ISO 27001 audit</b><span class="sub">Purged 9 Jan 2026 by Arjun Mehta · Files removed</span></div></li></ul></div></div><div class="state" data-state="empty" hidden><div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">Fintech · SME · No engagements</p></div><div class="acts"><a class="btn secondary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div><div class="sec"><h2>Engagements</h2></div><div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-briefcase"/></svg><h3>No engagements yet</h3><p>Start one to scope frameworks and collect evidence.</p><a class="btn primary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div><div class="sec"><h2>Retention</h2></div><div class="glass card"><div class="form-row"><div class="grow"><label class="label" for="retention-years">Retention period in years</label><label class="field"><input id="retention-years" type="number" min="1" max="50" value="7"></label></div><button class="btn secondary">Save retention</button></div><p class="help">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p></div><div class="sec"><h2>Archived engagements</h2></div><div class="glass card"><p class="muted">No archived engagements.</p></div><div class="sec"><h2>Purge history</h2></div><div class="glass card"><p class="muted">No engagements have been purged.</p></div></div><div class="state" data-state="loading" hidden><div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">Fintech · SME · 3 engagements · Last activity 24 Sep 2026</p></div><div class="acts"><a class="btn primary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div><div class="sec"><h2>Engagements</h2></div><div class="solid card" aria-busy="true"><span class="skel" style="width:55%"></span><span class="skel" style="width:90%;margin-top:14px"></span><span class="skel" style="width:70%;margin-top:14px"></span></div><div class="sec"><h2>Retention</h2></div><div class="glass card"><div class="form-row"><div class="grow"><label class="label" for="retention-years">Retention period in years</label><label class="field"><input id="retention-years" type="number" min="1" max="50" value="7"></label></div><button class="btn secondary">Save retention</button></div><p class="help">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p></div></div><div class="state" data-state="error" hidden><div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">Fintech · SME · 3 engagements · Last activity 24 Sep 2026</p></div><div class="acts"><a class="btn primary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div><div class="sec"><h2>Engagements</h2></div><div class="solid"><table><thead><tr><th>Engagement</th><th class="hide-sm">Stage</th><th class="n">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead><tbody><tr data-href="#"><td><a class="t-title" href="#">FY2026 DPDPA and ISO 27001 programme</a></td><td class="hide-sm"><span class="status"><span class="dot c-accent"></span>In review</span></td><td class="n num">62%</td><td class="n num hide-sm">24 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">FY2025 ISO 27001 surveillance audit</a></td><td class="hide-sm"><span class="status"><span class="dot c-neutral"></span>Report released</span></td><td class="n num">100%</td><td class="n num hide-sm">14 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">Vendor risk review</a></td><td class="hide-sm"><span class="status"><span class="st"></span>Scoping</span></td><td class="n num">8%</td><td class="n num hide-sm">2 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div><div class="sec"><h2>Retention</h2></div><div class="glass card"><div class="form-row"><div class="grow"><label class="label" for="retention-years">Retention period in years</label><label class="field invalid"><input id="retention-years" type="number" value="0" aria-describedby="re"></label><p class="err" id="re">Enter a whole number from 1 to 50.</p></div><button class="btn secondary">Save retention</button></div><p class="help">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p></div><div class="alert c-non" role="alert" style="margin-top:var(--s-4)"><svg class="i"><use href="#i-alert"/></svg><div><b>Retention was not saved</b>Fix the value above and save again.</div></div></div><div class="state" data-state="saved" hidden><div class="page-head"><div><h1>Meridian Ledger Technologies</h1><p class="meta-line">Fintech · SME · 3 engagements · Last activity 24 Sep 2026</p></div><div class="acts"><a class="btn primary lead" href="#"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div><div class="sec"><h2>Engagements</h2></div><div class="solid"><table><thead><tr><th>Engagement</th><th class="hide-sm">Stage</th><th class="n">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead><tbody><tr data-href="#"><td><a class="t-title" href="#">FY2026 DPDPA and ISO 27001 programme</a></td><td class="hide-sm"><span class="status"><span class="dot c-accent"></span>In review</span></td><td class="n num">62%</td><td class="n num hide-sm">24 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">FY2025 ISO 27001 surveillance audit</a></td><td class="hide-sm"><span class="status"><span class="dot c-neutral"></span>Report released</span></td><td class="n num">100%</td><td class="n num hide-sm">14 Mar 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+<tr data-href="#"><td><a class="t-title" href="#">Vendor risk review</a></td><td class="hide-sm"><span class="status"><span class="st"></span>Scoping</span></td><td class="n num">8%</td><td class="n num hide-sm">2 Sep 2026</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div><div class="sec"><h2>Retention</h2></div><div class="glass card"><div class="form-row"><div class="grow"><label class="label" for="retention-years">Retention period in years</label><label class="field"><input id="retention-years" type="number" min="1" max="50" value="7"></label></div><button class="btn secondary">Save retention</button></div><p class="help">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p><div class="toast" style="margin-top:var(--s-4);width:fit-content"><svg class="i"><use href="#i-check"/></svg>Retention saved</div></div><div class="sec"><h2>Archived engagements</h2></div><div class="solid card"><ul class="line-list">
+<li><span class="ico"><svg class="i"><use href="#i-archive"/></svg></span><div class="txt"><b>FY2023 DPDPA readiness review</b><span class="sub">Archived 12 Mar 2026 · Eligible for purge from 12 Mar 2033</span></div><a class="btn ghost sm" href="#">Open</a></li>
+<li><span class="ico"><svg class="i"><use href="#i-archive"/></svg></span><div class="txt"><b>FY2022 ISO 27001 gap assessment</b><span class="sub">Archived 3 Apr 2021 · Eligible for purge now</span></div><a class="btn ghost sm" href="#">Open</a></li></ul></div><div class="sec"><h2>Purge history</h2></div><div class="solid card"><ul class="line-list">
+<li><div class="txt"><b>FY2021 DPDPA programme</b><span class="sub">Purged 2 Jun 2026 by Priya Sharma · Files pending removal</span></div><button class="btn secondary sm">Finish removing files</button></li>
+<li><div class="txt"><b>FY2020 ISO 27001 audit</b><span class="sub">Purged 9 Jan 2026 by Arjun Mehta · Files removed</span></div></li></ul></div></div></div></div></div>
+<script>
+const root=document.documentElement,q=new URLSearchParams(location.search);
+if(q.has('dark'))root.dataset.theme='dark';
+const bs=[...document.querySelectorAll('#states button')],ss=[...document.querySelectorAll('.state')];
+function show(s){if(!ss.some(x=>x.dataset.state===s))s=ss[0].dataset.state;ss.forEach(x=>x.hidden=x.dataset.state!==s);bs.forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s))}
+bs.forEach(b=>b.onclick=()=>{show(b.dataset.s);history.replaceState(null,'',location.pathname+(q.has('dark')?'?dark&':'?')+'state='+b.dataset.s)});
+show(q.get('state')||ss[0].dataset.state);
+document.addEventListener('click',e=>{const r=e.target.closest('tr[data-href]');if(r&&!e.target.closest('a,button'))location.href=r.dataset.href});
+const sd=document.getElementById('side');
+if(sd){document.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>root.classList.add('drawer-open'));
+document.getElementById('scrim').onclick=()=>root.classList.remove('drawer-open');
+const ub=document.getElementById('userBtn'),um=document.getElementById('userMenu');
+ub.onclick=e=>{e.stopPropagation();const o=!um.classList.contains('open');um.classList.toggle('open',o);ub.setAttribute('aria-expanded',o)};
+document.addEventListener('click',e=>{if(!um.contains(e.target)){um.classList.remove('open');ub.setAttribute('aria-expanded',false)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){root.classList.remove('drawer-open');um.classList.remove('open');ub.setAttribute('aria-expanded',false)}});}
+
+</script>
+</body></html>
