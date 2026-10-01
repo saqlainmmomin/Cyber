@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction 3 · Neoclassical × Luxury Typography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ───────── Tokens ─────────
+   Brand colour is NOT decided. --accent (brass here) is the single swappable token.
+   Severity and outcome colours are fixed and never themed. */
+:root{
+  --paper:#F6F2E9; --surface:#FDFBF6; --sunken:#EFE9DC;
+  --ink:#171B2E; --ink-2:#43475A; --ink-3:#757889; --ink-4:#A4A5B0;
+  --rule:#DCD4C3; --rule-strong:#171B2E;
+  --accent:#8A6A2B; --accent-ink:#FFFFFF; --accent-soft:#EFE5CF;
+  --crit:#9B1C1C; --high:#C8431B; --med:#D98E1A; --low:#3C9D6B;
+  --ok:#2F8F63; --part:#D98E1A; --non:#B93A2E; --insuf:#9AA3B5; --na:#D5D9E3;
+  --f-serif:'Newsreader','Iowan Old Style',Georgia,serif;
+  --f-ui:'Source Sans 3','Noto Sans',system-ui,sans-serif;
+}
+[data-theme=dark]{
+  --paper:#0F1220; --surface:#151930; --sunken:#1B2038;
+  --ink:#F0ECE0; --ink-2:#C5C3BC; --ink-3:#8F90A0; --ink-4:#5F6174;
+  --rule:#2B3050; --rule-strong:#F0ECE0;
+  --accent:#C9A45C; --accent-ink:#14100A; --accent-soft:#2A2616;
+  --ok:#4DB583; --non:#E0574A; --high:#EE7A47; --crit:#D9534F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--f-ui);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums lining-nums}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* ───────── Mockup chrome (not part of the app) ───────── */
+.mock{position:sticky;top:0;z-index:50;display:flex;gap:24px;align-items:center;padding:10px 24px;background:#000;color:#ddd;font:12px var(--f-ui)}
+.mock b{color:#fff;font-weight:600}
+.mock .tabs{display:flex;gap:2px}
+.mock button{padding:5px 12px;border:1px solid #333;color:#bbb}
+.mock button[aria-pressed=true]{background:#fff;color:#000;border-color:#fff}
+.mock .sp{flex:1}
+
+/* ───────── Masthead ───────── */
+.mast{background:var(--surface);border-bottom:1px solid var(--rule)}
+.mast-in{max-width:1180px;margin:0 auto;padding:0 40px}
+.mast-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:40px;font-size:12px;color:var(--ink-3);border-bottom:1px solid var(--rule)}
+.mast-top .r{text-align:right}
+.mast-top b{color:var(--ink);font-weight:500}
+.wm{text-align:center;padding:20px 0 14px}
+.wm span{font:500 30px/1 var(--f-serif);letter-spacing:.34em;text-transform:uppercase;padding-left:.34em}
+.wm small{display:block;margin-top:7px;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3)}
+.dbl{height:5px;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong);margin-bottom:0}
+nav.m{display:flex;justify-content:center;gap:42px;padding:13px 0 12px;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3)}
+nav.m a{padding:3px 0;border-bottom:2px solid transparent}
+nav.m a[aria-current]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.m em{font-style:normal;color:var(--accent);margin-left:6px;letter-spacing:.05em}
+
+.page{max-width:1180px;margin:0 auto;padding:46px 40px 80px}
+
+/* ───────── Type ───────── */
+.folio{font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);text-align:center}
+h1{font:400 54px/1.05 var(--f-serif);letter-spacing:-.005em;text-align:center;margin:12px 0 14px}
+h2{font:500 24px/1.2 var(--f-serif)}
+.take{font:italic 400 19px/1.5 var(--f-serif);color:var(--ink-2);text-align:center;max-width:62ch;margin:0 auto}
+.take b{font-style:normal;font-weight:600;color:var(--ink)}
+.orn{display:flex;align-items:center;gap:14px;justify-content:center;margin:28px 0 8px;color:var(--accent)}
+.orn::before,.orn::after{content:"";height:1px;width:90px;background:var(--rule-strong);opacity:.5}
+.orn i{width:7px;height:7px;background:var(--accent);transform:rotate(45deg)}
+.sec{display:flex;align-items:baseline;gap:16px;margin:48px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--rule-strong)}
+.sec .k{font:italic 500 18px var(--f-serif);color:var(--accent);min-width:26px}
+.sec .r{margin-left:auto;font-size:12.5px;color:var(--ink-3)}
+.lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ───────── Controls ───────── */
+.btn{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 22px;border:1px solid var(--rule-strong);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.ghost{border-color:var(--rule)}
+.btn kbd{font:500 10.5px var(--f-ui);letter-spacing:.05em;opacity:.65;border:1px solid currentColor;padding:0 5px}
+.center{display:flex;justify-content:center;gap:12px;margin-top:26px}
+
+/* ───────── KPI row ───────── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);margin-top:38px;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule)}
+.kpi{text-align:center;padding:22px 16px 20px;border-left:1px solid var(--rule)}
+.kpi:first-child{border-left:0}
+.kpi b{display:block;font:400 62px/1 var(--f-serif);margin:10px 0 8px;font-variant-numeric:lining-nums tabular-nums}
+.kpi p{font-size:13px;color:var(--ink-3);line-height:1.4;max-width:24ch;margin:0 auto}
+.kpi.alert b{color:var(--high)}
+
+/* ───────── Ledger tables ───────── */
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);font-weight:600;text-align:left;padding:8px 14px 8px 0;border-bottom:1px solid var(--rule)}
+td{padding:16px 14px 16px 0;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr.row:hover td{background:var(--sunken)}
+td.n,th.n{text-align:right;padding-right:0}
+.cell-t b{display:block;font:500 18px/1.25 var(--f-serif)}
+.cell-t span{font-size:13px;color:var(--ink-3)}
+.ref{font-size:12px;letter-spacing:.1em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* ───────── Outcome / severity ───────── */
+.o{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;white-space:nowrap}
+.o::before{content:"";width:9px;height:9px;transform:rotate(45deg) scale(.82);background:var(--c)}
+.o.ok{--c:var(--ok)}.o.part{--c:var(--part)}.o.non{--c:var(--non)}
+.sev{display:inline-block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;padding:3px 9px 2px;color:#fff;background:var(--c)}
+.sev.high{--c:var(--high)}.sev.med{--c:var(--med);color:#1a1200}.sev.low{--c:var(--low)}
+.state{font-size:13px;color:var(--ink-3)}
+.state.wait{color:var(--high);font-weight:500}
+.bar{display:flex;height:6px;gap:3px}
+.bar i{display:block;background:var(--c)}
+.bar .ok{--c:var(--ok)}.bar .part{--c:var(--part)}.bar .non{--c:var(--non)}
+
+/* ───────── Needs list ───────── */
+.need a{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:8px;padding:18px 0;border-bottom:1px solid var(--rule)}
+.need a:first-child{border-top:1px solid var(--rule)}
+.need a:hover{background:var(--sunken)}
+.need .c{font:400 40px/1 var(--f-serif);text-align:center;color:var(--accent)}
+.need b{display:block;font:500 19px/1.25 var(--f-serif)}
+.need span{font-size:13px;color:var(--ink-3)}
+.need .go{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);border-bottom:1px solid var(--accent);padding-bottom:1px}
+
+/* ───────── Stepper (folio) ───────── */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:6px}
+.steps a{padding:14px 18px 10px 0;border-top:1px solid var(--rule);position:relative}
+.steps a.cur{border-top:3px solid var(--accent);margin-top:-1px}
+.steps .k{font:italic 500 17px var(--f-serif);color:var(--ink-3)}
+.steps b{display:block;font:500 19px/1.2 var(--f-serif)}
+.steps small{font-size:12.5px;color:var(--ink-3)}
+.steps .done b{color:var(--ink-2)}
+.steps .todo b{color:var(--ink-4)}
+
+/* ───────── Statements (framework status) ───────── */
+.stm{display:grid;grid-template-columns:1fr 1fr;gap:56px}
+.fw{border-top:3px double var(--rule-strong);padding-top:18px}
+.fw header{display:flex;justify-content:space-between;align-items:baseline}
+.fw h3{font:500 28px/1.1 var(--f-serif)}
+.fw .score{display:flex;align-items:baseline;gap:10px;margin:14px 0 14px}
+.fw .score b{font:400 76px/.9 var(--f-serif);font-variant-numeric:lining-nums}
+.fw .score span{font-size:13px;color:var(--ink-3)}
+.fw .legend{display:flex;gap:18px;margin-top:12px;font-size:13px;flex-wrap:wrap}
+.fw .dom{margin-top:20px}
+.fw .dom div{display:flex;align-items:baseline;gap:8px;padding:8px 0;font-size:14.5px}
+.fw .dom div::after{content:"";order:1;flex:1;border-bottom:1px dotted var(--ink-4);transform:translateY(-4px)}
+.fw .dom span:first-child{order:0}
+.fw .dom span:last-child{order:2}
+.pill{font-size:12px;color:var(--ink-2);white-space:nowrap}
+.pill.warn{color:var(--high);font-weight:600}
+
+/* ───────── Review folio ───────── */
+.rq{display:grid;grid-template-columns:270px 1fr;gap:0;margin-top:34px;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong)}
+.idx{border-right:1px solid var(--rule);padding:16px 22px 16px 0}
+.idx .lab{margin:6px 0 8px}
+.idx a{display:grid;grid-template-columns:1fr auto;gap:0 8px;padding:10px 0 10px 12px;border-bottom:1px solid var(--rule);border-left:3px solid transparent;margin-left:-15px;padding-left:12px}
+.idx a.cur{border-left-color:var(--accent);background:var(--sunken)}
+.idx b{font:500 15.5px/1.3 var(--f-serif)}
+.idx .ref{grid-column:1}
+.idx .o{grid-row:1/3;grid-column:2;align-self:center;font-size:0}
+.idx a.done b{color:var(--ink-3)}
+.fol{padding:26px 0 0 44px;display:grid;grid-template-columns:1fr 250px;gap:0 44px}
+.fol .full{grid-column:1/-1}
+.fol h2{font:400 40px/1.1 var(--f-serif);margin:8px 0 10px}
+.meta{display:flex;gap:18px;align-items:center;font-size:13px;color:var(--ink-3);flex-wrap:wrap}
+.body p{font:400 18px/1.6 var(--f-serif);margin-bottom:14px}
+.body .lab{margin:26px 0 8px;display:block}
+.body .lab:first-child{margin-top:4px}
+.body ul{list-style:none}
+.body li{display:grid;grid-template-columns:22px 1fr;padding:9px 0;border-bottom:1px solid var(--rule);font-size:14.5px}
+.body li i{width:9px;height:9px;transform:rotate(45deg) scale(.82);margin-top:7px;background:var(--c)}
+.body li.y{--c:var(--ok)}.body li.n{--c:var(--non)}
+.margin{border-left:1px solid var(--rule);padding-left:22px;font-size:13px}
+.margin .lab{display:block;margin:4px 0 8px}
+.margin blockquote{font:italic 400 16px/1.5 var(--f-serif);color:var(--ink);margin-bottom:8px}
+mark{background:#F2DC9B;color:#1a1200;padding:0 2px}
+[data-theme=dark] mark{background:#6b5410;color:#fff}
+.margin .src{font-size:12px;color:var(--ink-3);margin-bottom:22px}
+.margin .tags{display:flex;flex-direction:column;gap:6px;margin-bottom:22px}
+.dec{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:18px 0;margin-top:28px;border-top:3px double var(--rule-strong)}
+.dec .sp{flex:1;font:italic 400 14px var(--f-serif);color:var(--ink-3)}
+
+.screen{display:none}.screen.on{display:block}
+.note{margin:30px auto 0;padding:12px 16px;border:1px dashed var(--ink-4);font-size:12.5px;color:var(--ink-3);max-width:90ch}
+</style>
+</head>
+<body>
+
+<div class="mock">
+  <b>Direction 3 · Neoclassical restraint × Luxury Typography</b>
+  <div class="tabs" role="tablist">
+    <button aria-pressed="true" data-s="s1">Portfolio</button>
+    <button aria-pressed="false" data-s="s2">Assessment hub</button>
+    <button aria-pressed="false" data-s="s3">Review queue</button>
+  </div>
+  <span class="sp"></span>
+  <button id="th" aria-pressed="false">Dark mode</button>
+</div>
+
+<header class="mast">
+  <div class="mast-in">
+    <div class="mast-top"><span>Northgate Advisory</span><span></span><span class="r"><b>Priya Sharma</b> · Reviewing partner · <u style="text-decoration-color:var(--accent)">Switch role</u></span></div>
+    <div class="wm"><span>[Name]</span><small>Name pending · wordmark slot</small></div>
+    <div class="dbl"></div>
+    <nav class="m">
+      <a href="#" aria-current="page">Portfolio</a><a href="#">Engagements</a><a href="#">Review<em>3</em></a><a href="#">Evidence</a><a href="#">Reports</a><a href="#">Firm</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ═════════ SCREEN 1 · PORTFOLIO ═════════ -->
+<div class="screen on" id="scr-s1">
+  <div class="page">
+    <div class="folio">Portfolio · Partner view</div>
+    <h1>What needs you</h1>
+    <p class="take"><b>Three conclusions</b> on Meridian Ledger await your decision before its report can be released. One request for information is still with the client.</p>
+    <div class="center"><a class="btn pri" href="#">Open review queue</a><a class="btn ghost" href="#">New engagement</a></div>
+
+    <div class="kpis">
+      <div class="kpi alert"><div class="lab">Awaiting your decision</div><b class="num">3</b><p>conclusions across one assessment</p></div>
+      <div class="kpi"><div class="lab">Open engagements</div><b class="num">2</b><p>two clients, three assessments</p></div>
+      <div class="kpi"><div class="lab">Evidence outstanding</div><b class="num">3</b><p>items requested, none received. Link expires 15 October</p></div>
+      <div class="kpi"><div class="lab">Open critical and high</div><b class="num">4</b><p>findings across the portfolio</p></div>
+    </div>
+
+    <div class="sec"><span class="k">I.</span><h2>Awaiting action</h2><span class="r">3 items</span></div>
+    <div class="need">
+      <a href="#"><span class="c num">3</span><div><b>Approve conclusions</b><span>Meridian Ledger · DPDPA and ISO 27001 · one rated high</span></div><span class="go">Open queue</span></a>
+      <a href="#"><span class="c num">1</span><div><b>Sign off board report draft</b><span>Loomwire Labs · NIST CSF 2.0 · period not yet set</span></div><span class="go">Open</span></a>
+      <a href="#"><span class="c num">3</span><div><b>Awaiting client evidence</b><span>Meridian Ledger · upload link, none of three received</span></div><span class="go">View link</span></a>
+    </div>
+
+    <div class="sec"><span class="k">II.</span><h2>Register of engagements</h2><span class="r">2 open</span></div>
+    <table>
+      <thead><tr><th>Engagement</th><th>Frameworks</th><th>Stage</th><th class="n">Open critical / high</th></tr></thead>
+      <tbody>
+        <tr class="row"><td class="cell-t"><b>FY2026 DPDPA and ISO 27001 programme</b><span>Meridian Ledger Technologies · Fintech · Large</span></td><td class="state">DPDPA · ISO 27001</td><td><span class="state wait">III. Review · 3 pending</span></td><td class="n num"><b style="font:400 24px var(--f-serif)">3</b></td></tr>
+        <tr class="row"><td class="cell-t"><b>NIST CSF 2.0 gap assessment</b><span>Loomwire Labs Inc. · Software</span></td><td class="state">NIST CSF 2.0</td><td><span class="state">IV. Report · draft</span></td><td class="n num"><b style="font:400 24px var(--f-serif)">1</b></td></tr>
+      </tbody>
+    </table>
+    <div class="note">Design note: the legacy "Unmigrated assessments" list (17 amber rows today) leaves the landing page and moves to Firm › Data, since it is housekeeping, not work.</div>
+  </div>
+</div>
+
+<!-- ═════════ SCREEN 2 · ASSESSMENT HUB ═════════ -->
+<div class="screen" id="scr-s2">
+  <div class="page">
+    <div class="folio">Assessment · DPDPA 2023 · ISO 27001:2022</div>
+    <h1>Meridian Ledger Technologies</h1>
+    <p class="take">Both frameworks carry a non-compliant finding rated high. <b>Three conclusions</b> remain unapproved, so the report cannot yet be released.</p>
+    <div class="orn"><i></i></div>
+    <div style="display:flex;justify-content:center;gap:40px;font-size:13px;color:var(--ink-2)">
+      <span><span class="lab" style="margin-right:8px">Period</span>1 April 2025 – 31 March 2026</span>
+      <span><span class="lab" style="margin-right:8px">Evidence cut-off</span>15 March 2026</span>
+      <span><span class="lab" style="margin-right:8px">Prepared by</span>A. Rao</span>
+    </div>
+    <div class="center"><a class="btn ghost" href="#">Report versions</a><a class="btn pri" href="#">Review queue <kbd>R</kbd></a></div>
+
+    <div class="sec"><span class="k">I.</span><h2>Progress</h2></div>
+    <div class="steps">
+      <a class="done"><span class="k">i</span><b>Scope</b><small>Confirmed 12 March</small></a>
+      <a class="done"><span class="k">ii</span><b>Evidence</b><small>5 documents · 3 requested</small></a>
+      <a class="done"><span class="k">iii</span><b>Analysis</b><small>6 conclusions proposed</small></a>
+      <a class="cur"><span class="k">iv</span><b>Review</b><small>3 of 6 approved</small></a>
+      <a class="todo"><span class="k">v</span><b>Report</b><small>Blocked by review</small></a>
+    </div>
+
+    <div class="sec"><span class="k">II.</span><h2>Statement by framework</h2><span class="r">Scores are never combined across frameworks</span></div>
+    <div class="stm">
+      <div class="fw">
+        <header><h3>DPDPA 2023</h3><span class="pill warn">1 gap · 1 high</span></header>
+        <div class="score"><b class="num">61</b><span>of 100 · deterministic score</span></div>
+        <div class="bar"><i class="ok" style="flex:1"></i><i class="part" style="flex:1"></i><i class="non" style="flex:1"></i></div>
+        <div class="legend"><span class="o ok">1 compliant</span><span class="o part">1 partial</span><span class="o non">1 non-compliant</span></div>
+        <div class="dom">
+          <div><span>Consent management</span><span class="pill warn">1 gap · 1 high</span></div>
+          <div><span>Security safeguards</span><span class="pill">1 partial</span></div>
+          <div><span>Data principal rights</span><span class="pill">No gaps</span></div>
+        </div>
+      </div>
+      <div class="fw">
+        <header><h3>ISO 27001:2022</h3><span class="pill warn">1 gap · 1 high</span></header>
+        <div class="score"><b class="num">54</b><span>of 100 · deterministic score</span></div>
+        <div class="bar"><i class="ok" style="flex:1"></i><i class="part" style="flex:1"></i><i class="non" style="flex:1"></i></div>
+        <div class="legend"><span class="o ok">1 compliant</span><span class="o part">1 partial</span><span class="o non">1 non-compliant</span></div>
+        <div class="dom">
+          <div><span>Access control</span><span class="pill warn">1 gap · 1 high</span></div>
+          <div><span>Business continuity</span><span class="pill">1 partial</span></div>
+          <div><span>Policies</span><span class="pill">No gaps</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec"><span class="k">III.</span><h2>Open findings</h2><span class="r">3 of 6 shown · by severity</span></div>
+    <table>
+      <thead><tr><th style="width:80px">Ref</th><th>Finding</th><th style="width:110px">Severity</th><th style="width:120px">Status</th><th style="width:100px">Owner</th></tr></thead>
+      <tbody>
+        <tr class="row"><td class="ref">R-01</td><td class="cell-t"><b>No in-app consent withdrawal</b><span>DPDPA · CH2.CONSENT.3</span></td><td><span class="sev high">High</span></td><td class="state">Open</td><td class="state">Client</td></tr>
+        <tr class="row"><td class="ref">R-02</td><td class="cell-t"><b>Three service accounts exempt from MFA</b><span>ISO 27001 · A.8.5</span></td><td><span class="sev high">High</span></td><td class="state">In progress</td><td class="state">Client</td></tr>
+        <tr class="row"><td class="ref">R-03</td><td class="cell-t"><b>DR failover exceeded the 4-hour RTO</b><span>ISO 27001 · A.5.30</span></td><td><span class="sev med">Medium</span></td><td class="state">In progress</td><td class="state">Shared</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═════════ SCREEN 3 · REVIEW QUEUE ═════════ -->
+<div class="screen" id="scr-s3">
+  <div class="page">
+    <div class="folio">Review · Reviewing as Priya Sharma</div>
+    <h1>Three of six decided</h1>
+    <p class="take">Period 1 April 2025 – 31 March 2026 · evidence cut-off 15 March 2026.</p>
+
+    <div class="rq">
+      <div class="idx">
+        <div class="lab">Open · 3</div>
+        <a class="cur"><b>Access rights</b><span class="ref">ISO.A5.18</span><span class="o non">Non-compliant</span></a>
+        <a><b>Consent withdrawal mechanism</b><span class="ref">CH2.CONSENT.3</span><span class="o non">Non-compliant</span></a>
+        <a><b>Disaster recovery testing</b><span class="ref">ISO.A5.30</span><span class="o part">Partial</span></a>
+        <div class="lab" style="margin-top:22px">Decided · 3</div>
+        <a class="done"><b>Security safeguards</b><span class="ref">CH2.SECURITY.1</span><span class="o part">Partial</span></a>
+        <a class="done"><b>Record of processing</b><span class="ref">CH3.ACCESS.1</span><span class="o ok">Compliant</span></a>
+        <a class="done"><b>Information security policy</b><span class="ref">ISO.A5.1</span><span class="o ok">Compliant</span></a>
+      </div>
+
+      <div class="fol">
+        <div class="full">
+          <div class="meta"><span class="ref">ISO 27001 · A.5.18 · v2</span><span class="sev high">High risk</span><span>AI proposal, not yet reviewed</span></div>
+          <h2>Access rights</h2>
+          <div class="meta" style="margin-bottom:6px"><span>Shared with DPDPA CH3.ACCESS.1, evidence read once</span><a href="#" style="color:var(--accent);border-bottom:1px solid var(--accent)">Workpaper trace</a></div>
+        </div>
+
+        <div class="body" style="margin-top:18px">
+          <span class="lab">Proposed conclusion</span>
+          <p><span class="o non" style="font:500 15px var(--f-ui);margin-right:6px">Non-compliant</span> Quarterly access reviews skipped three production systems.</p>
+          <p style="color:var(--ink-2)"><b style="font-weight:600;color:var(--ink)">Gap.</b> Three production systems were left out of the quarterly access review.</p>
+          <p style="color:var(--ink-2)"><b style="font-weight:600;color:var(--ink)">Recommended.</b> Extend the quarterly access review to every production system.</p>
+          <span class="lab">Criteria</span>
+          <ul>
+            <li class="y"><i></i><span>A documented access review procedure exists</span></li>
+            <li class="n"><i></i><span>Reviews cover all production systems</span></li>
+            <li class="y"><i></i><span>Reviews are completed on a quarterly cadence</span></li>
+          </ul>
+        </div>
+
+        <aside class="margin" style="margin-top:18px">
+          <span class="lab">Evidence</span>
+          <blockquote>Access reviews were completed for <mark>11 of 14 production systems</mark>; the payments ledger, card vault and data warehouse were not reviewed.</blockquote>
+          <div class="src">access_review_q1.docx · p. 2 · §3.1<br>Current version · within cut-off</div>
+          <span class="lab">Evidence quality</span>
+          <div class="tags"><span class="pill">Current version</span><span class="pill">Quote found in evidence</span><span class="pill warn">Scope not recorded</span></div>
+          <span class="lab">If rejected</span>
+          <div class="src" style="margin:0">Returns to analysis. Approved conclusions are locked and never overwritten by re-analysis.</div>
+        </aside>
+
+        <div class="dec">
+          <button class="btn pri">Approve <kbd>A</kbd></button>
+          <button class="btn">Edit and approve <kbd>E</kbd></button>
+          <button class="btn ghost">Reject <kbd>X</kbd></button>
+          <span class="sp">Recorded against your name and the evidence version shown.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const sc=[...document.querySelectorAll('.screen')], bt=[...document.querySelectorAll('.mock .tabs button')];
+bt.forEach(b=>b.onclick=()=>{sc.forEach(s=>s.classList.toggle('on',s.id==='scr-'+b.dataset.s));bt.forEach(x=>x.setAttribute('aria-pressed',x===b));window.scrollTo(0,0);history.replaceState(null,'','#'+b.dataset.s);const idx={s1:0,s2:1,s3:2}[b.dataset.s];document.querySelectorAll('nav.m a').forEach((a,i)=>{if(i===idx)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')})});
+const t=document.getElementById('th');
+t.onclick=()=>{const d=document.documentElement;const n=d.dataset.theme==='dark'?'light':'dark';d.dataset.theme=n;t.setAttribute('aria-pressed',n==='dark');t.textContent=n==='dark'?'Light mode':'Dark mode'};
+const h=location.hash.slice(1); if(h&&document.getElementById('scr-'+h)) bt.find(b=>b.dataset.s===h).click();
+if(location.search.includes('dark')) t.click();
+</script>
+</body>
+</html>
