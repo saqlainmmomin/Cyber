@@ -198,7 +198,7 @@ Saqlain wants to work on **the design of the app (UI/UX)** before Track 4 (P6-11
 
 Append to the `## Results
 
-Session of 2026-10-01. Workstream status: A (P6-10) implemented and reviewed, PR pending Saqlain's push; B (v3 deck) V3-A merged-ready as PR #94, V3-B committed and held; C (P6-7b) resolved; D (app-design kickoff) written and pushed.
+Session of 2026-10-01. Workstream status: A (P6-10) implemented, reviewed, PR #95; B (v3 deck) V3-A PR #94, V3-B committed and held; C (P6-7b) resolved; D (app-design kickoff) written and pushed.
 
 ### Branches, PRs and commits
 
@@ -206,7 +206,7 @@ Session of 2026-10-01. Workstream status: A (P6-10) implemented and reviewed, PR
 |---|---|---|---|
 | P6-10 revision (A1) | `claude/p6-10-narrative` | merge `3a91bb1` (origin/main 1df2b68, no rebase), revision `5723ea5` | |
 | P6-10a (Stage 3) | same | `5861dd9` | |
-| P6-10b (Stage 4, schema v3) | same | `f9c2f98`, guard allowance `0ac3a83`, review fix `3769617` | **not opened yet** (push and `gh pr create` were blocked for Claude; commands handed to Saqlain) |
+| P6-10b (Stage 4, schema v3) | same | `f9c2f98`, guard allowance `0ac3a83`, review fix `3769617` | [#95](https://github.com/saqlainmmomin/Cyber/pull/95) (Saqlain pushed and opened it; push and `gh pr create` were denied to Claude) |
 | V3-A (data capture) | `claude/p6-8-v3a-data-capture` | `7d12576` (handoff + tests), `8aa50a2` (Codex), `d42e055` (review fix) | [#94](https://github.com/saqlainmmomin/Cyber/pull/94) |
 | V3-B (deck, held) | `claude/p6-8-v3b-deck` | `37386ad` (handoff + red tests only) | none; **not dispatched** |
 | App-design kickoff | `claude/app-design-kickoff` | `4974097` | none (docs only) |
@@ -243,7 +243,7 @@ Dispatch V3-B only **after the P6-10 PR and #94 (V3-A) are merged**. Before disp
 
 - **P6-7b:** "Done, fix todo (Recommended)". `tasks/todo.md` now says P6-7b shipped as #84 on v2 cards only (D-P6-7b-J). Nothing more to build.
 - V3-A fields live on one board-inputs page (`/assessments/{id}/board-inputs`); keep both `firm_primary_hex` and the new `firm_color_*` settings; add and install python-pptx before V3-B; accept the three V3-B layout defaults.
-- Saqlain pushed V3-A's last commit and opened #94 himself because push and `gh pr create` were denied to Claude.
+- Saqlain pushed V3-A's last commit and the P6-10 branch and opened #94 and #95 himself because push and `gh pr create` were denied to Claude.
 
 ### Review items for Saqlain (V3-A)
 
