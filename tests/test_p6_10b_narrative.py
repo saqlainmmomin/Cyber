@@ -140,6 +140,15 @@ def _document(db, assessment):
     )
 
 
+def _narrative_sentences(document):
+    narrative = document["summary"]["narrative"]
+    sentences = [s for key in ("executive", "cross_framework") for s in narrative[key] or []]
+    for framework in document["summary"]["frameworks"]:
+        sentences += framework["narrative"] or []
+    assert sentences, "the caller accepted every section first"
+    return sentences
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -302,13 +311,17 @@ def test_scenario_4_consultant_edits_are_validated_and_accepted_text_reaches_the
     document = _document(db, assessment)
     summary = {f["framework_id"]: f for f in document["summary"]["frameworks"]}
     finding_id = service.finding_refs(db, assessment)[1].finding_id
+    # Revision 2026-10-01 (D-P6-10-K): each sentence carries the stable finding ids next to the
+    # build-time aliases, so the v3 deck can map them to R-xx without reading the database.
     assert summary["dpdpa"]["narrative"] == [{
         "text": edited,
+        "finding_ids": [finding_id],
+        "finding_refs": [a["dpdpa"]],
         "citations": [{"finding_id": finding_id, "framework_id": "dpdpa", "requirement_id": dp[0]}],
     }]
     assert summary["iso27001"]["narrative"] is None  # still an unaccepted draft
     assert document["summary"]["narrative"] == {"executive": None, "cross_framework": None}
-    assert board_report.DOCUMENT_SCHEMA_VERSION >= 2
+    assert document["schema_version"] == board_report.DOCUMENT_SCHEMA_VERSION == 3  # revision 2026-10-01 (F7)
 
     html = board_report.render_html(document, embed_fonts=False)
     assert 'data-narrative="framework-dpdpa"' in html
@@ -379,6 +392,12 @@ def test_scenario_6_issued_snapshot_freezes_the_accepted_text(db, http, gate, mo
     frozen = report_snapshots.read_board_report_document(db, snapshot)
     assert frozen["summary"]["narrative"]["executive"][0]["text"] == EXEC_TEXT
     assert frozen["summary"]["narrative"]["cross_framework"][0]["text"] == CROSS_TEXT
+    assert frozen["schema_version"] == 3
+    # The sidecar keeps the stable ids with the aliases, in the accepted order (iso27001 first).
+    refs = {ref.framework_id: ref for ref in _service().finding_refs(db, assessment)}
+    executive = frozen["summary"]["narrative"]["executive"][0]
+    assert executive["finding_ids"] == [refs["iso27001"].finding_id, refs["dpdpa"].finding_id]
+    assert executive["finding_refs"] == [refs["iso27001"].alias, refs["dpdpa"].alias]
 
     a = _aliases(db, assessment)
     revised = "Access governance is the priority for the board."
@@ -484,6 +503,8 @@ def test_scenario_9_board_report_reads_narrative_without_any_llm_call(db, http, 
     document = _document(db, assessment)
     assert set(document["summary"]["narrative"]) == {"executive", "cross_framework"}
     assert document["summary"]["narrative"]["executive"][0]["citations"][0]["framework_id"] in ("dpdpa", "iso27001")
+    for sentence in _narrative_sentences(document):
+        assert set(sentence) == {"text", "finding_ids", "finding_refs", "citations"}
     preview = http.get(f"/api/assessments/{assessment.id}/board-report/preview")
     assert preview.status_code == 200
     assert EXEC_TEXT in preview.text and CROSS_TEXT in preview.text
@@ -498,3 +519,51 @@ def test_scenario_9_board_report_reads_narrative_without_any_llm_call(db, http, 
 def test_scenario_10_p6_10_file_set_and_llm_call_sites():
     """P6-10 touches only its listed files, adds exactly two LLM call-site modules, and no migration."""
     assert_p6_10_file_set()
+
+
+def test_scenario_11_sidecar_refs_join_to_top_risk_ranks_without_the_database(db, http, gate, monkeypatch):
+    """Revision 2026-10-01 (F7): `finding_ids` is the stable join key, `finding_refs` the build-time F-alias.
+
+    F<n> is the n-th finding in top-risk order, so the v3 deck's R-xx for a cited finding can be read
+    from the document alone: `top_risks[].finding_id` (and later `observations[].finding_id`).
+    """
+    assessment, *_ = released_assessment(db, http, gate, monkeypatch)
+    _accept_all(http, db, assessment)
+    document = _document(db, assessment)
+    rank = {risk["finding_id"]: index + 1 for index, risk in enumerate(document["top_risks"])}
+    assert len(rank) == 2
+    for sentence in _narrative_sentences(document):
+        assert len(sentence["finding_ids"]) == len(set(sentence["finding_ids"])) == len(sentence["finding_refs"])
+        assert sentence["finding_ids"] == [c["finding_id"] for c in sentence["citations"]]
+        assert sentence["finding_refs"] == [f"F{rank[finding_id]}" for finding_id in sentence["finding_ids"]]
+    # Re-derived at build time from the live approved set; the accept events keep only ids (D-P6-10-I).
+    (accepted, *_rest) = events(db, "assessment.narrative_accepted", assessment.id)
+    assert set(metadata(accepted)["sentences"][0]) == {"text", "finding_ids"}
+
+
+def test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout(db, http, gate, monkeypatch):
+    """Revision 2026-10-01 (D-P6-10-K): a v3 sidecar still exports until the v3 deck work replaces the layout."""
+    import io
+
+    import openpyxl
+
+    from app.services import board_exports as exports
+
+    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2, 3)
+    assert exports.ROADMAP_INTROS[3] == exports.ROADMAP_INTROS[2]
+    assessment, *_ = released_assessment(db, http, gate, monkeypatch)
+    _patch_renderer(monkeypatch)
+    _accept_all(http, db, assessment)
+    first = _generate_board(http, assessment)
+    assert first.status_code == 200, first.text
+    snapshot = db.get(ReportSnapshot, first.json()["snapshot_id"])
+    frozen = report_snapshots.read_board_report_document(db, snapshot)
+    assert frozen["schema_version"] == 3
+    sha = "ab" * 32
+
+    book = openpyxl.load_workbook(io.BytesIO(exports.render_xlsx(frozen, document_sha256=sha)))
+    about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
+    assert about["Document schema version"] == 3
+    assert exports.render_docx(frozen, document_sha256=sha)[:2] == b"PK"
+    with pytest.raises(exports.UnsupportedDocument):
+        exports.render_docx(dict(frozen, schema_version=4), document_sha256=sha)

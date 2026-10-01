@@ -937,6 +937,17 @@ P6_8_B2_FORBIDDEN_PATHS = (
     # Stage C 2026-09-28 harness fix (#81) is on main; a stale local `main` still shows it.
     ":(exclude)scripts/validation/run_company.py",
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): lands after
+# B2 and P6-9; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard this set.
+P6_10_APP_FILES = {
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
+    "app/services/board_report.py", "app/templates/reports/board_report.html",
+    "app/templates/pages/report_snapshots.html", "app/services/board_exports.py",
+}
+P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
+P6_8_B2_FORBIDDEN_PATHS += tuple(f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS))
 LIVE_READER_TOKENS = (
     "llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai",
     "build_document", "approved_report", "report_content", "report_basis", "conclusion_review",
@@ -973,6 +984,7 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
+    changed_app -= P6_10_APP_FILES  # P6-10 lands after B2 (its own contract tests guard that set)
     outside = sorted(path for path in changed_app if not path.startswith(P6_8_B2_APP_ALLOWLIST))
     assert outside == [], outside
 

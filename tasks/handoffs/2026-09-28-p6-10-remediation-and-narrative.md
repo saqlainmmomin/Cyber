@@ -1,19 +1,34 @@
 # P6-10: v2 Stage 3 (remediation drafts) and Stage 4 (Finding-grounded narrative) `[AR: closed-set citation + no unreviewed LLM text in client output]`
 
+## Revision 2026-10-01 (read this first; it overrides the sections below where they differ)
+
+Source: `docs/product/2026-10-01-board-report-format.md` (APPROVED 2026-10-01; decisions F1-F10, section 7). That decision doc turns the board report into a 16:9 deck and makes **P6-10's narrative share the document schema bump (F7)**. Since this design was written, `origin/main` also gained P6-9 (document schema is already **2**), P6-8 B2 (#92, DOCX/XLSX exporters) and P6-7b. This branch now contains `origin/main` @ `1df2b68` (merged, not rebased). What changes:
+
+1. **Schema 2 -> 3, not 1 -> 2.** P6-10 claims `DOCUMENT_SCHEMA_VERSION = 3`. Every "1 -> 2" below (D-P6-10-K, D-P6-10-P, the golden hunk, the B1 scenario-4 line) reads "2 -> 3". P6-10 still adds exactly one document key, `summary.narrative`, plus the per-framework `summary.frameworks[].narrative` slot that B1 already has. The v3 deck work (`tasks/handoffs/2026-10-01-board-report-v3-deck.md`) builds its further keys on top of this v3 and does **not** bump the version again (it pins its own delta under the same number; see that handoff).
+2. **B2 exporters accept v3** (D-P6-10-K, new decision D-P6-10-Q below). `app/services/board_exports.py` is now in P6-10's file set: `SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)` and `ROADMAP_INTROS[3] = ROADMAP_INTROS[2]`. A v3 sidecar exports with the **v2 layout** (narrative is not printed in the DOCX/XLSX) until the v3 deck work replaces that layout with PPTX/XLSX (F2, F3, F8). Contract: `test_scenario_12` in `tests/test_p6_10b_narrative.py`.
+3. **Stable finding ids next to the aliases in the sidecar** (D-P6-10-K, D-P6-10-R). Every narrative sentence in the document is now `{"text", "finding_ids", "finding_refs", "citations"}`: `finding_ids` (stable, authoritative join key), `finding_refs` (the F-aliases as numbered when the document was built) and the existing `citations`. Because aliases are the top-risk order (D-P6-10-G), `F<n>` is the n-th entry of `top_risks`, and the deck's `R-<n:02d>` for a cited finding is derivable from the document alone, with no database read. Contract: `test_scenario_4`, `test_scenario_6`, `test_scenario_9` (exact key set) and new `test_scenario_11`.
+4. **Placement.** For now the narrative still renders in the **current portrait template**, in `data-section="summary"`, exactly as D-P6-10-K describes (references as requirement IDs). **The v3 deck work moves it**: the executive narrative becomes the executive-summary verdict panel, `data-narrative="executive"` inside `data-slide="executive-summary"`, and the per-framework and cross-framework narratives move to the deck's per-framework narrative placement, with references rendered as `R-xx` through the `finding_ids` join. P6-10 must not anticipate that; the `data-narrative` attribute names are kept so the move is a template relocation, not a data change.
+5. **Existing-test edits (D-P6-10-P, extended).** Because the document is v3, the live-builder assertions in B1, P6-9 SoA and B2 tests change by one integer each. They are listed in D-P6-10-P and are the only edits to existing tests Codex makes.
+6. **Per-PR guard allowances are already committed** on this branch (nothing deleted): `tests/test_p6_2b_dpdpa_criteria.py` (`P6_10_FILES`), `tests/test_p6_7b_add_to_rfi.py`, `tests/test_p6_8_b2_docx_xlsx.py` and `tests/test_p6_9_file_set.py` (`P6_10_APP_FILES`). The merge itself kept both sides of the four conflicting guard files (`test_p6_3a_grounding.py`, `test_p6_4_whats_missing.py`, `test_p6_7_requirement_card.py`, `test_p6_8_board_report_v2.py`). With the P6-10 files simulated in a scratch worktree, the full suite is green except the usual retention transient.
+7. **Red state re-verified** on the merged branch: `tests/test_p6_10a_remediation_draft.py` + `tests/test_p6_10b_narrative.py` = **26 failed, 2 passed** (28 tests): 14 `ModuleNotFoundError: app.services.remediation_draft`, 10 `ModuleNotFoundError: app.services.narrative`, 1 assertion (`(1, 2) == (1, 2, 3)`, scenario 12) and 1 assertion (the missing `recommended-action-<id>` wrapper, 10a scenario 8). No collection errors. The two that pass are the file-set guards. The reference-implementation and mutation results quoted below were measured **before** this revision; the revised assertions (scenarios 4, 6, 9, 11, 12) were checked for collection and red state only.
+8. The old "File overlap with parallel work and merge order" section is superseded: B2, P6-9 and P6-7b are merged. P6-10 now runs in parallel with **V3-A** (data capture, disjoint files, see the v3 handoff) and merges before **V3-B**.
+
+---
+
 P6-10 adds the last two LLM stages of the v2 design. **Stage 3** drafts the recommended remediation for one gap Conclusion, on demand, inside the consultant's Edit & Approve form. **Stage 4** drafts the board report's executive, per-framework and cross-framework narrative from approved Findings only. Every narrative sentence cites Finding IDs from a closed set, code strips anything that does not, the consultant edits and accepts each section, and a board-report version freezes the accepted text in its JSON sidecar.
 
 **Plan:** `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md`: Part B Stage 3 and Stage 4, B.2 (structured output, provenance), Part D2 item 2 (per-framework posture paragraph, "Stage 4 narrative, grounded in Findings, consultant-edited"), Track 2 P6-10, Part F **D-P6-F** (narrative only from approved Findings at report-draft time, cites Finding IDs, consultant-edited). Principles 1 (LLM proposes, code verifies, human decides), 2 (closed-set citation) and 4 (no LLM-invented numbers).
 **Owner:** Claude designs (this file + contract tests) → Codex implements → Claude runs an adversarial review (`[AR]`, checkpoints below) → PR. Per `tasks/agent-ownership.md`, Phase 6 row "P6-6..P6-10 Deliverables".
-**Branch:** `claude/p6-10-narrative`, from `origin/main` @ `4f5309d` (P6-7a, P6-2b, P6-8 B1 and #81 merged). The designer's commit sits on top of it.
-**Depends on:** P6-4 (v2 Conclusions; merged #74), P6-6 (report basis and approval gate; #73), P6-8 B1 (`board_report` document, sidecar, `summary.frameworks[].narrative` slot; #80), P3-1/P3-4 (Findings and Actions). **Blocks:** nothing. **Runs in parallel with:** P6-8 B2 (DOCX/XLSX), P6-7b (add-to-RFI), P6-9 (SoA, roadmap, prior period). See "File overlap and merge order".
+**Branch:** `claude/p6-10-narrative`. Designed on `origin/main` @ `4f5309d`; since revision 2026-10-01 it contains `origin/main` @ `1df2b68` (merge commit, no rebase). The designer's commits sit on top of it.
+**Depends on:** P6-4 (v2 Conclusions; merged #74), P6-6 (report basis and approval gate; #73), P6-8 B1 (`board_report` document, sidecar, `summary.frameworks[].narrative` slot; #80), P3-1/P3-4 (Findings and Actions). **Blocks:** nothing. **Runs in parallel with:** V3-A (data capture for the v3 board deck). B2, P6-7b and P6-9 are merged. See "File overlap with parallel work and merge order".
 
-> **The contract tests are already written. They are the contract.** `tests/test_p6_10a_remediation_draft.py` (9 scenarios, 16 test items) and `tests/test_p6_10b_narrative.py` (10 scenarios) share `tests/p6_10_support.py`. On `4f5309d` plus the designer's commit, **24 fail and 2 pass**. The 2 that pass are the file-set guards (scenario 9 in 10a, 10 in 10b) and must stay green. The 24 fail only because code is missing: `ModuleNotFoundError` for `app.services.remediation_draft` or `app.services.narrative`, or (10a scenario 8) the missing `recommended-action-<id>` wrapper in the conclusion card. Make all 26 pass **without editing those three files**. Do not weaken, skip, `xfail`, re-parametrize or delete any test. If you believe a test is wrong, leave it failing and explain in `## Results` which assertion, why, and what it should be. Put extra tests in `tests/test_p6_10_extra.py`.
+> **The contract tests are already written. They are the contract.** `tests/test_p6_10a_remediation_draft.py` (9 scenarios, 16 test items) and `tests/test_p6_10b_narrative.py` (12 scenarios) share `tests/p6_10_support.py`. After the 2026-10-01 revision, **26 fail and 2 pass** (28 tests). The 2 that pass are the file-set guards (scenario 9 in 10a, 10 in 10b) and must stay green. The 26 fail only because code is missing: `ModuleNotFoundError` for `app.services.remediation_draft` or `app.services.narrative`, (10a scenario 8) the missing `recommended-action-<id>` wrapper in the conclusion card, or (10b scenario 12) `board_exports.SUPPORTED_SCHEMA_VERSIONS` lacking 3. Make all 28 pass **without editing those three files**. Do not weaken, skip, `xfail`, re-parametrize or delete any test. If you believe a test is wrong, leave it failing and explain in `## Results` which assertion, why, and what it should be. Put extra tests in `tests/test_p6_10_extra.py`.
 >
 > The designer checked the tests against a throwaway reference implementation of this spec. It is not in the repo; implement from this spec.
-> - **Contract tests:** 26/26 passed with the reference.
+> - **Contract tests (measured before the 2026-10-01 revision, 26 tests then):** 26/26 passed with the reference.
 > - **Mutations:** 12 targeted mutations, 12 caught: unknown-reference check removed; board-report readiness gate removed; the draft writes `conclusion.recommended_action`; Stage 3 reuse disabled; unaccepted drafts included in the document; Stage 4 measured-value filter removed; Stage 3 measured-value filter removed; the `findings_sha256` check removed; idempotent skipping removed; findings not wrapped as untrusted; section closed set widened to all findings; Stage 3 cap removed.
-> - **Full suite with the reference**, the guard excludes below, and the two D-P6-10-P existing-test edits applied: **1141 passed, 10 skipped**, plus only the known transient `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes` (uncommitted files under `tests/`), which passes once committed.
-> - **Golden:** with the reference, re-recording `tests/golden/p6_8_board_document.json` changed exactly two hunks: `"schema_version": 1 → 2` and a new `"narrative": {"cross_framework": null, "executive": null}` inside `summary`.
+> - **Full suite with the reference (pre-revision)**, the guard excludes below, and the two D-P6-10-P existing-test edits applied: **1141 passed, 10 skipped**, plus only the known transient `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes` (uncommitted files under `tests/`), which passes once committed.
+> - **Golden:** with the reference, re-recording `tests/golden/p6_8_board_document.json` changed exactly two hunks: `"schema_version": 1 → 2` and a new `"narrative": {"cross_framework": null, "executive": null}` inside `summary`. On the current main (schema 2) the same re-record must show `"schema_version": 2 → 3` and that one new `narrative` hunk.
 
 > **If the code forces a deviation from this design, stop and report it in `## Results`. Do not pick an alternative.** That applies to every numbered decision, and to every name, signature, constant, route, audit action, metadata key, document key and rendered string below.
 
@@ -34,18 +49,18 @@ P6-10 adds the last two LLM stages of the v2 design. **Stage 3** drafts the reco
 | Part | Scope | Codex run |
 |---|---|---|
 | **P6-10a** | Stage 3: `remediation_draft.py`, the drafting route, the draft partial, the conclusion-card include, the router registration | 1st |
-| **P6-10b** | Stage 4: `narrative.py`, narrative routes and page, board-report integration (schema v2, readiness gate, rendering), versions-page link, golden re-record, one B1 test line | 2nd |
+| **P6-10b** | Stage 4: `narrative.py`, narrative routes and page, board-report integration (schema v3, ids and aliases in the sidecar, readiness gate, rendering), `board_exports.py` v3 support, versions-page link, golden re-record, the D-P6-10-P integer edits | 2nd |
 
 **One branch, one PR, two Codex runs.** The designer's commit holds both test files, so a separate 10a PR would carry 10 failing 10b tests. Run Codex for 10a, have the orchestrator commit it ("P6-10a: …"), then run Codex for 10b and commit again ("P6-10b: …"). The reviewer reviews each commit on its own. 10a's commit must leave the 10a file green and the 10b file failing only with `No module named 'app.services.narrative'` (plus 10b scenario 10's guard staying green). If the orchestrator prefers two PRs, open the 10a PR from the 10a commit only after 10b is also committed; do not split the test files.
 
 ## Step 0 (before writing code)
 
-1. Run `.venv/bin/pytest -q -p no:cacheprovider` and record the counts in `## Results`. Expect exactly the 24 P6-10 failures described above; everything else green (the retention transient only if the tree has uncommitted test files).
+1. Run `.venv/bin/pytest -q -p no:cacheprovider` and record the counts in `## Results`. Expect exactly the 26 P6-10 failures described above; everything else green (the retention transient only if the tree has uncommitted test files).
 2. Confirm these facts; **if any is false, stop and report**. Line numbers are from `4f5309d`.
    1. `conclusion_review._approval_blocker` (`:158-174`) blocks approving a gap outcome (`GAP_OUTCOMES`) with an empty `recommended_action` (`INCOMPLETE_GAPS`), and `analysis_v2.record_framework_run_v2` writes `recommended_action=""` (`:182`). So a v2 gap can only be approved through Edit & Approve today.
    2. `tests/test_conclusion_approval.py:620-634` and `tests/test_findings.py:1125-1140` pin every route whose path contains `/conclusions`; `tests/test_remediation_tracking.py:1037-1043` pins every path containing `/remediation`; `tests/test_report_snapshots.py:715-728` pins `/snapshots`; `tests/test_workpaper.py` pins `/workpaper`. P6-10 routes contain none of these substrings.
    3. `llm_client.call_llm` supports `response_schema` (strict json_schema), and `collect_calls()`/`call_tag()` capture per-call records including from `parallel.run_bounded` workers.
-   4. `board_report.build_document` sets `summary.frameworks[].narrative = None` (`board_report.py:260`), `DOCUMENT_SCHEMA_VERSION = 1`, and `generate_version` calls `require_review_approval` first. `snapshots.generate_snapshot` maps `HTTPException` to `_error(exc.status_code, detail)`.
+   4. `board_report.build_document` sets `summary.frameworks[].narrative = None` (`board_report.py:260`), `DOCUMENT_SCHEMA_VERSION = 2` (P6-9; line numbers drifted, find it by name), and `generate_version` calls `require_review_approval` first. `snapshots.generate_snapshot` maps `HTTPException` to `_error(exc.status_code, detail)`.
    5. `report_content.assessment_findings(db, assessment).findings` returns approved Findings only (source Conclusion approved or edited, not a legacy bulk approval), with `finding_id, title, description, severity, priority, framework_id, framework_name, requirement_id, requirement_title, outcome_label, decision_version`.
    6. `grounding.prompts.wrap_untrusted` neutralises `<<<`/`>>>` inside the wrapped text.
 
@@ -284,21 +299,22 @@ Actor everywhere: `conclusion_review.reviewer_actor(reviewer_name)`. Commit only
 ### D-P6-10-K: Board report integration (P6-8 B1 document)
 
 In `app/services/board_report.py`:
-- `DOCUMENT_SCHEMA_VERSION = 2` (a key is added; D-P6-8-J). If P6-9 or B2 has already bumped it, use the next free integer and edit B1 scenario 4's line accordingly (D-P6-10-P).
+- `DOCUMENT_SCHEMA_VERSION = 3` (revision 2026-10-01; main is already at 2 after P6-9; a key is added, D-P6-8-J). The v3 deck work shares this number and does not bump it again (F7).
 - `from app.services import narrative` (added to the existing import group). The B1 guard forbids the tokens `llm_client`, `call_llm`, `services.grounding`, `claude_analyzer` and `openai` **in `board_report.py`'s own text**; importing `narrative` is allowed, and scenario 9 proves the report path never reaches the model.
 - `build_document`: as its last statement before `return document`, call `narrative.apply_to_document(db, assessment, document)`.
 - `render_html`: pass `narrative_note=narrative.NARRATIVE_NOTE` to the template.
+- `app/services/board_exports.py` (revision 2026-10-01, D-P6-10-Q): `SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)` and `ROADMAP_INTROS[3] = ROADMAP_INTROS[2]`; nothing else changes there. It must still pass B2's live-reader token and import checks.
 - `generate_version`: call `narrative.require_report_ready(db, assessment)` directly after `require_review_approval(...)`. The snapshots route already maps `HTTPException(409)` to `_error(409, detail)` and writes nothing, so `app/routers/snapshots.py` does not change.
 
 **`apply_to_document`** (never calls the model, never writes):
 - `document["summary"]["narrative"] = {"executive": <sentences or None>, "cross_framework": <sentences or None>}` (always present, key-stable)
 - for each `document["summary"]["frameworks"][i]`: `narrative = <sentences of framework-<id> or None>` (the B1 slot)
 - a section contributes only when its status is `accepted`, it is not stale, and every cited finding id is in the current refs; an accepted empty section contributes `None`
-- sentence shape: `{"text": str, "citations": [{"finding_id", "framework_id", "requirement_id"}]}` in the stored `finding_ids` order
+- sentence shape (revision 2026-10-01, D-P6-10-R): `{"text": str, "finding_ids": [str], "finding_refs": ["F<n>"], "citations": [{"finding_id", "framework_id", "requirement_id"}]}`, all three lists parallel and in the stored `finding_ids` order. `finding_refs[i]` is the alias of `finding_ids[i]` in `finding_refs(db, assessment)` order **at build time**, i.e. `F<n>` = the n-th `top_risks` entry. The accept/draft **events keep only `finding_ids`** (D-P6-10-I); aliases are re-derived at every build, so numbering shifts never corrupt stored text.
 
 **`report_blockers`** returns, in section order, `"<label>: the draft has not been accepted"` for `draft` sections and `"<label>: the approved findings changed after it was accepted"` for accepted-and-stale sections. `require_report_ready` raises `HTTPException(409, f"{NOT_READY_MESSAGE} " + "; ".join(blockers) + ".")` when the list is non-empty. A section with status `none` never blocks, so an assessment with no narrative still generates (scenario 5).
 
-**Template** (`app/templates/reports/board_report.html`, in `data-section="summary"`, directly after the totals paragraph): render only when any narrative is present:
+**Template** (`app/templates/reports/board_report.html`, in `data-section="summary"`, directly after the totals paragraph; **placement is temporary**: the v3 deck work relocates it, see the Revision note, item 4): render only when any narrative is present:
 - `<div data-narrative="executive"><h3>Overview</h3><p>…</p></div>`
 - one `<div data-narrative="framework-<id>"><h3><name>: posture</h3><p>…</p></div>` per framework with a narrative, in framework order
 - `<div data-narrative="cross-framework"><h3>Across frameworks</h3><p>…</p></div>`
@@ -342,15 +358,28 @@ Storage is `audit_events` only (append-only, same as P6-6 report basis and P6-7a
 **Already applied by the designer** (per-PR excludes, nothing deleted or narrowed):
 - `tests/test_p6_3a_grounding.py`: `PROTECTED_PATHS` excludes `app/routers/drafting.py`, `app/templates/pages/narrative.html`, `app/templates/partials/remediation_draft.html`; `P6_3B_GROUNDING_IMPORTERS` adds `remediation_draft.py` and `narrative.py` (they import `grounding.prompts.wrap_untrusted`).
 - `tests/test_p6_3b_v2_flag.py::test_scenario_11_only_desk_review_v2_imports_grounding`: the same two importers.
-- `tests/test_p6_4_whats_missing.py::test_scenario_13_…`: a `p6_10` exclude list (the five new app files).
-- `tests/test_p6_7_requirement_card.py`: `P6_10_APP_FILES` subtracted in scenario 14.
+- `tests/test_p6_4_whats_missing.py::test_scenario_13_…`: a `p6_10` exclude list (the five new app files), merged with main's `p6_9`/`p6_5`/`p6_7b` lists.
+- `tests/test_p6_7_requirement_card.py`: `P6_10_APP_FILES` subtracted in scenario 14, alongside main's `P6_7B`/`P6_9`/`P6_5`/LLM-deadline sets.
 - `tests/test_p6_8_board_report_v2.py`: the P6-10 app files added to `P6_8_B1_APP_ALLOWLIST`; `conclusion_card.html` and `remediation_draft.html` excluded from `P6_8_FORBIDDEN_PATHS`.
+- Revision 2026-10-01 (B2, P6-9 and P6-7b are now on main): `tests/test_p6_2b_dpdpa_criteria.py` (`P6_10_FILES`, the P6-10 handoff, tests, app files and golden), `tests/test_p6_7b_add_to_rfi.py` scenario 12, `tests/test_p6_8_b2_docx_xlsx.py` scenario 10 (`P6_10_APP_FILES`, `P6_10_EXTRA_PATHS` excludes) and `tests/test_p6_9_file_set.py` (`P6_10_APP_FILES` filter plus excludes for the card and partial).
 
-**Codex applies exactly these in the 10b run, and nothing else in existing tests:**
-1. `tests/test_p6_8_board_report_v2.py` scenario 4: `assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 1` becomes `… == 2  # P6-10: + summary.narrative (D-P6-10-K)`.
-2. Re-record `tests/golden/p6_8_board_document.json` once with `P6_8_RECORD_GOLDEN=1 .venv/bin/pytest -q -p no:cacheprovider tests/test_p6_8_board_report_v2.py -k golden`, then run the file without the variable. The diff must be exactly `schema_version` 1 → 2 and `summary.narrative: {"cross_framework": null, "executive": null}`; anything else, stop and report.
+**Codex applies exactly these in the 10b run, and nothing else in existing tests** (each is an integer or tuple, because the live builder now emits v3):
+1. `tests/test_p6_8_board_report_v2.py` scenario 4: `assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)` becomes `… == 3  # P6-10 (D-P6-10-K)`.
+2. `tests/test_p6_9_soa.py`: `assert board.DOCUMENT_SCHEMA_VERSION == 2 and document["schema_version"] == 2` becomes `== 3` for both.
+3. `tests/test_p6_8_b2_docx_xlsx.py`: `assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2)` becomes `(1, 2, 3)`; the DOCX scenario's `assert document["schema_version"] == 2 and document["soa"] is not None` becomes `== 3`; the XLSX About assertion `about_rows["Document schema version"] == 2` becomes `== 3`. The v1 fixtures and the v1/v2 comparison scenario are untouched (frozen paths).
+4. Re-record `tests/golden/p6_8_board_document.json` once with `P6_8_RECORD_GOLDEN=1 .venv/bin/pytest -q -p no:cacheprovider tests/test_p6_8_board_report_v2.py -k golden`, then run the file without the variable. The diff must be exactly `schema_version` 2 -> 3 and `summary.narrative: {"cross_framework": null, "executive": null}`; anything else, stop and report.
+
+If any other existing test fails because the document is now v3 (for example a fixture that builds a live document and asserts `== 2`), stop and report the file and line instead of editing it.
 
 Expected transient while uncommitted: `tests/test_retention.py::test_scenario_13_only_new_retention_test_file_changes`.
+
+### D-P6-10-Q: B2 exporters accept schema v3 (revision 2026-10-01)
+
+`board_exports.SUPPORTED_SCHEMA_VERSIONS` becomes `(1, 2, 3)`, with `ROADMAP_INTROS[3] = ROADMAP_INTROS[2]` (the portrait template text is unchanged in v3). A v3 sidecar therefore keeps exporting through the existing `/export/docx` and `/export/xlsx` routes with the v2 layout; the narrative is **not** printed there (it was a non-goal for B2 and stays one). Unknown versions still raise `UnsupportedDocument` (scenario 12 asserts v4 is refused). Why: B2 (#92) is merged and refuses any other version, so without this every v3 version would answer 409 on export. When the v3 deck work lands, DOCX returns 410 for v3 and PPTX/XLSX replace the layout (F2, F3, F8); until then this keeps issued v3 reports exportable.
+
+### D-P6-10-R: Stable finding ids beside the aliases (revision 2026-10-01)
+
+Contract for the later presenter (`board_view.py`, F7): to render a sentence's references as `R-xx` it reads `finding_ids` and looks each up in the document (`top_risks[].finding_id` today, `observations[].finding_id` after the v3 deck work). `finding_refs` is provided so the portrait template, tests and reviewers can see the F-alias without a lookup, and because `F<n>` == `top_risks[n-1]` == `R-<n:02d>` it is also a cross-check, never the source of truth. Neither list is an LLM output: both are filled by `apply_to_document` from the stored ids and the live approved set (D-P6-10-K). The `citations` list stays for existing consumers. No alias is ever stored in an audit event.
 
 ## Files touched
 
@@ -363,35 +392,28 @@ Expected transient while uncommitted: `tests/test_retention.py::test_scenario_13
 | `app/templates/components/conclusion_card.html` | 10a | recommended-action field → include (D) |
 | `app/services/narrative.py` | 10b | new (G-I, K-N) |
 | `app/templates/pages/narrative.html` | 10b | new (J) |
-| `app/services/board_report.py` | 10b | schema v2, `apply_to_document`, readiness gate, `narrative_note` (K) |
+| `app/services/board_report.py` | 10b | schema v3, `apply_to_document` (ids, aliases, citations), readiness gate, `narrative_note` (K, R) |
+| `app/services/board_exports.py` | 10b | `SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)`, `ROADMAP_INTROS[3]` (K, Q) |
 | `app/templates/reports/board_report.html` | 10b | narrative block in the summary (K) |
 | `app/templates/pages/report_snapshots.html` | 10b | one narrative link in the `board_report` block (K) |
 | `tests/golden/p6_8_board_document.json` | 10b | re-recorded (P) |
 | `tests/test_p6_8_board_report_v2.py` | 10b | one line (P) |
+| `tests/test_p6_9_soa.py`, `tests/test_p6_8_b2_docx_xlsx.py` | 10b | the integer edits in D-P6-10-P items 2-3 |
 | `tests/test_p6_10a_remediation_draft.py`, `tests/test_p6_10b_narrative.py`, `tests/p6_10_support.py`, five guard files, `tasks/todo.md`, this handoff | designer | already committed |
 | this handoff | Codex | append `## Results` only |
 
-The guard (`tests/p6_10_support.py::assert_p6_10_file_set`) enforces: every changed or untracked `app/` path is one of the ten app paths above; nothing under `P6_10_FORBIDDEN_PATHS` changes (committed or working tree), which includes `llm_client.py`, `grounding/`, `analysis_*`, `scoring.py`, `conclusion_review.py`, `findings.py`, `approved_report.py`, `report_content.py`, `report_basis.py`, `report_snapshots.py`, `requirement_card.py`, `review_queue.py`, `workpaper.py`, `standalone_workpaper.py`, `app/utils`, `routers/{conclusions,snapshots,web,reports,findings}.py`, models, schemas, frameworks, `app/dpdpa`, `config.py`, `alembic`, `tests/fixtures`, `tests/support`, `scripts`, `validation`, `requirements.txt`.
+The guard (`tests/p6_10_support.py::assert_p6_10_file_set`) enforces: every changed or untracked `app/` path is one of the eleven app paths above; nothing under `P6_10_FORBIDDEN_PATHS` changes (committed or working tree), which includes `llm_client.py`, `grounding/`, `analysis_*`, `scoring.py`, `conclusion_review.py`, `findings.py`, `approved_report.py`, `report_content.py`, `report_basis.py`, `report_snapshots.py`, `requirement_card.py`, `review_queue.py`, `workpaper.py`, `standalone_workpaper.py`, `app/utils`, `routers/{conclusions,snapshots,web,reports,findings}.py`, models, schemas, frameworks, `app/dpdpa`, `config.py`, `alembic`, `tests/fixtures`, `tests/support`, `scripts`, `validation`, `requirements.txt`.
 
-## File overlap with parallel work and merge order
+## File overlap with parallel work and merge order (rewritten 2026-10-01)
 
-The other Track 2 designs in flight (P6-8 B2, P6-7b, P6-9) were not readable when this was written; the overlap below is inferred from their handoff sketches (P6-8 B2 sketch; P6-8 open questions 3-4 for P6-9; P6-7a "P6-7b deferred" notes). Each designer should confirm against the others' file lists.
+B2 (#92), P6-9 and P6-7b are merged, so the old conflict table is obsolete (the guard conflicts were resolved in the merge commit). What runs alongside P6-10 now:
 
-| File | Also likely touched by | Conflict type |
+| Work | Files it touches | Overlap with P6-10 |
 |---|---|---|
-| `app/services/board_report.py` | P6-9 (SoA, roadmap grouping, prior period), maybe B2 (reads only) | text, plus `DOCUMENT_SCHEMA_VERSION` |
-| `app/templates/reports/board_report.html` | P6-9 | text (different sections) |
-| `app/templates/pages/report_snapshots.html` | B2 (DOCX/XLSX links), P6-7b possibly | text, same `board_report` block |
-| `tests/golden/p6_8_board_document.json`, `tests/test_p6_8_board_report_v2.py` line 611 | P6-9 | re-record after merge |
-| `app/templates/components/conclusion_card.html` | P6-7b (add-to-RFI) | text |
-| `app/main.py` | P6-7b if it adds a router | one-line |
-| guard exclude lists, `tasks/todo.md` | all | text, keep both sides |
+| **V3-A** data capture (`tasks/handoffs/2026-10-01-board-report-v3-deck.md`) | models, Alembic, Finding/Action/roadmap/versions forms, settings, fonts | Possible text overlap in `app/templates/pages/report_snapshots.html` (the versions page: V3-A adds board-ask fields, P6-10 adds the narrative link). Both are small, separate blocks; whichever merges second merges `origin/main` and keeps both. No overlap in `board_report.py`, the schema version, the report template or the exporters (V3-A is forbidden from them). |
+| **V3-B** document v3 content and deck (dispatched only after the P6-10 and V3-A PRs merge) | `board_report.py`, `board_view.py`, the 16:9 template, exporters, golden | Builds on this PR's v3 (D-P6-10-K, Q, R). It relocates the narrative (Revision note, item 4). |
 
-**Merge order:** P6-8 B2 → P6-10 → P6-9 is the recommended order (B2 is smallest and bumps nothing; P6-10's schema change is two keys; P6-9 is the largest document change). Whichever of P6-10 and P6-9 merges second must:
-1. merge `origin/main` into its branch (never rebase; force-push is rejected), keep both sides of every exclude list, template block and `todo.md`;
-2. set `DOCUMENT_SCHEMA_VERSION` to the next integer, update B1 scenario 4's line to match (P6-10's own scenario 4 asserts `>= 2`), and re-record the golden once with the D-P6-8-J command; the reviewer checks that every hunk of the golden diff is explained by one of the two PRs;
-3. rerun the full suite. The file-set guards of the earlier PRs see only the later PR's files after `git branch -f main origin/main`.
-If P6-7b lands first and changes the recommended-action textarea in `conclusion_card.html`, keep its change and re-apply D-P6-10-D's include around it.
+**Merge order:** P6-10 and V3-A in either order, then V3-B. P6-10 must be merged (not just open) before V3-B is dispatched. Whichever of P6-10 and V3-A merges second merges `origin/main` into its branch (never rebase; force-push is rejected), keeps both sides of every guard list, template block and `todo.md`, reruns the full suite after `git branch -f main origin/main`, and, for P6-10 only, re-records the golden if V3-A changed it (V3-A must not; if it did, the diff must be explained by one PR or the other).
 
 ## Do not touch
 
@@ -425,7 +447,7 @@ If you find you need to change any of these, stop and report.
 | 8 | `test_scenario_8_card_shows_the_draft_control_on_open_cards_only_v1_and_v2` | D, F: control on every open card, none on approved, v1 prefilled text kept |
 | 9 | `test_scenario_9_p6_10_file_set_and_llm_call_sites` | file set, forbidden paths, LLM call-site modules |
 
-`tests/test_p6_10b_narrative.py`:
+`tests/test_p6_10b_narrative.py` (12 scenarios; 4, 6 and 9 revised on 2026-10-01):
 
 | # | Test | Covers |
 |---|---|---|
@@ -439,11 +461,13 @@ If you find you need to change any of these, stop and report.
 | 8 | `test_scenario_8_release_and_findings_are_prerequisites_and_discard_unblocks` | G, I: 403 before release, 400 without findings, discard clears blockers |
 | 9 | `test_scenario_9_board_report_reads_narrative_without_any_llm_call` | K, N: build, preview and generate with the seam raising; versions-page link |
 | 10 | `test_scenario_10_p6_10_file_set_and_llm_call_sites` | file set |
+| 11 | `test_scenario_11_sidecar_refs_join_to_top_risk_ranks_without_the_database` | K, R: `finding_ids` / `finding_refs` / `citations` parallel; `F<n>` = `top_risks[n-1]`; events keep only ids (added 2026-10-01) |
+| 12 | `test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout` | K, Q: `SUPPORTED_SCHEMA_VERSIONS == (1, 2, 3)`, a v3 sidecar renders DOCX and XLSX, v4 is refused (added 2026-10-01) |
 
 ## Verification and smoke plan (before reporting done)
 
-1. `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_10a_remediation_draft.py tests/test_p6_10b_narrative.py` → **26 passed**, files unmodified. Run twice.
-2. Neighbours: `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_8_board_report_v2.py tests/test_conclusion_approval.py tests/test_findings.py tests/test_remediation_tracking.py tests/test_report_snapshots.py tests/test_p6_7_requirement_card.py tests/test_p6_6_report_foundations.py tests/test_workpaper.py tests/test_p6_3a_grounding.py tests/test_p6_3b_v2_flag.py`, all green (with the D-P6-10-P edits).
+1. `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_10a_remediation_draft.py tests/test_p6_10b_narrative.py` → **28 passed**, files unmodified. Run twice.
+2. Neighbours: `.venv/bin/pytest -q -p no:cacheprovider tests/test_p6_8_board_report_v2.py tests/test_conclusion_approval.py tests/test_findings.py tests/test_remediation_tracking.py tests/test_report_snapshots.py tests/test_p6_7_requirement_card.py tests/test_p6_6_report_foundations.py tests/test_workpaper.py tests/test_p6_3a_grounding.py tests/test_p6_3b_v2_flag.py`, all green (with the D-P6-10-P edits; also `tests/test_p6_9_soa.py tests/test_p6_8_b2_docx_xlsx.py tests/test_p6_9_file_set.py tests/test_p6_7b_add_to_rfi.py tests/test_p6_2b_dpdpa_criteria.py`).
 3. Frozen surfaces: `git diff --stat main -- app/services/llm_client.py app/services/grounding app/services/conclusion_review.py app/services/findings.py app/services/report_snapshots.py app/routers/snapshots.py app/routers/conclusions.py app/models alembic app/config.py` is empty.
 4. Full suite `.venv/bin/pytest -q -p no:cacheprovider`: everything green except the retention transient while uncommitted.
 5. **Orchestrator smoke (after commit, live model, local only; confirm cost with Saqlain first; the Stage C permission note applies, so Saqlain may need to run it):** on a released DPDPA+ISO synthetic assessment (`tests/grounding_fixtures/`, never `validation/`) with at least one Finding per framework:
@@ -489,14 +513,14 @@ Steps:
 ```
 You are implementing P6-10b (v2 Stage 4: Finding-grounded narrative) in <worktree> on branch claude/p6-10-narrative. P6-10a is already committed.
 
-Read fully first: tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md (the spec; D-P6-10-G..P, "File overlap"), tests/test_p6_10b_narrative.py and tests/p6_10_support.py (the contract), CLAUDE.md and AGENTS.md.
+Read fully first: tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md (the spec, starting with the Revision 2026-10-01 note; D-P6-10-G..R), tests/test_p6_10b_narrative.py and tests/p6_10_support.py (the contract), CLAUDE.md and AGENTS.md.
 
-Rules: as for 10a, for tests/test_p6_10b_narrative.py. Touch only the 10b rows of "Files touched". Apply exactly the two D-P6-10-P edits (B1 scenario 4's schema_version line; golden re-record with the stated command, whose diff must be exactly schema_version 1->2 and summary.narrative with two nulls). If DOCUMENT_SCHEMA_VERSION on main is already above 1 because another PR bumped it, use the next integer and say so in Results. Same no-network, no-.git, no-migration and answer-key rules.
+Rules: as for 10a, for tests/test_p6_10b_narrative.py. Touch only the 10b rows of "Files touched". Apply exactly the D-P6-10-P edits (the three integer edits in B1, P6-9 SoA and B2 tests; golden re-record with the stated command, whose diff must be exactly schema_version 2->3 and summary.narrative with two nulls). Schema is v3 (revision 2026-10-01); also read the Revision note at the top of the handoff and D-P6-10-Q, R. Same no-network, no-.git, no-migration and answer-key rules.
 
 Steps:
-1. Implement narrative.py, the narrative routes and page in drafting.py, the board_report.py/board_report.html/report_snapshots.html changes.
+1. Implement narrative.py, the narrative routes and page in drafting.py, the board_report.py/board_report.html/report_snapshots.html changes, and board_exports.py (v3).
 2. Apply the D-P6-10-P edits; re-record the golden once; rerun tests/test_p6_8_board_report_v2.py without the variable.
-3. Run both P6-10 files (26 passed, twice), the neighbour set, and the full suite.
+3. Run both P6-10 files (28 passed, twice), the neighbour set, and the full suite.
 4. Append "## Results (10b)": counts, the golden diff (paste it), deviations, doubts. Change nothing else in the handoff.
 ```
 
@@ -506,7 +530,7 @@ Steps:
 2. **Consultant sentences without a reference.** Every accepted line must end with `[F…]`. Alternative: allow uncited framing sentences from the consultant (rendered without references). **Default: strict**, so every client-facing narrative sentence traces to a Finding.
 3. **Draft or stale narrative at generation.** Blocks with 409 until accepted, regenerated or discarded. Alternative: generate without the unreviewed sections and warn. **Default: block** (a silently missing paragraph is easy to miss in review).
 4. **Stage 3 measured-value filter drops statutory deadlines** (e.g. a "72 hours" breach-notice duty). **Default: keep the filter**; the consultant types legal deadlines. Alternative: exempt durations that appear verbatim in the requirement's pack text.
-5. **Reference style in the PDF.** Requirement IDs (default), or `F`-numbers matching top-risk ranks (only the top ten are visible in the report).
+5. **Reference style in the PDF.** Requirement IDs in the portrait template (default). **Resolved for the v3 deck (2026-10-01, F7): `R-xx`**, via the `finding_ids` join (D-P6-10-R).
 6. **Narrative and "Source data changed".** Narrative edits do not mark older versions as source-changed, because `source_manifest` covers Conclusions only. **Default: leave it**; a later small PR can add the narrative event ids to the manifest (it changes every snapshot type's manifest, so it needs its own golden review).
 7. **Caps.** 3 Stage 3 attempts per Conclusion version, 3 Stage 4 attempts per section per findings state. **Default as stated.**
 

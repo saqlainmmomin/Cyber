@@ -63,6 +63,7 @@ P6_10_APP_FILES = (
     "app/services/board_report.py",
     "app/templates/reports/board_report.html",
     "app/templates/pages/report_snapshots.html",
+    "app/services/board_exports.py",  # revision 2026-10-01: schema v3 joins the supported versions
 )
 # Nothing in these may change in the P6-10 PR (committed diff or working tree).
 P6_10_FORBIDDEN_PATHS = (
