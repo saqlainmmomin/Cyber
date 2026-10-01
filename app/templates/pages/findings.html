@@ -16,6 +16,7 @@
     <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Create a finding from an individually approved conclusion, then track its remediation actions. Every change is appended to the action's history.</p>
     <div class="mt-2 flex flex-wrap gap-3">
       <a href="/assessments/{{ assessment.id }}/conclusions" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Conclusions (decide) →</a>
+      <a data-board-inputs-link href="/assessments/{{ assessment.id }}/board-inputs" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Board inputs →</a>
       <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (read-only trace) →</a>
       {% if assessment.engagement_id %}<a href="/engagements/{{ assessment.engagement_id }}/remediation" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Engagement remediation tracker →</a>{% endif %}
     </div>

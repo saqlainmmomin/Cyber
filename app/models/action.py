@@ -14,6 +14,7 @@ class Action(Base):
     finding_id: Mapped[str] = mapped_column(String(36), ForeignKey("findings.id"), index=True)
     title: Mapped[str] = mapped_column(String(255))
     owner: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    responsibility: Mapped[str | None] = mapped_column(String(20), nullable=True)
     target_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(30))
     history_json: Mapped[str] = mapped_column(Text)

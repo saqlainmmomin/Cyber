@@ -1608,6 +1608,8 @@ def test_scenario_16_load_source_documents(db, monkeypatch):
 # Scenario 17: dormancy, parity and independence guards
 # --------------------------------------------------------------------------- #
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 PROTECTED_PATHS = [
     "app/services/claude_analyzer.py", "app/services/desk_review.py",
     "app/services/desk_review_findings.py", "app/services/auto_answer.py",
@@ -1683,6 +1685,9 @@ PROTECTED_PATHS = [
     ":(exclude)app/templates/pages/rfi.html",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): consultant-entered board-deck
+    # data (migration, models, board-inputs page, theme settings, display font).
+    *V3A_EXCLUDES,
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

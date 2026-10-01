@@ -44,7 +44,7 @@ from app.services import approved_report, conclusion_review, report_snapshots
 from app.utils import pdf_export
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-ALEMBIC_HEAD = "8b2d5f7e1c34"  # unchanged: P6-6 adds no migration (D-P6-6-A)
+ALEMBIC_HEAD = "5e9a2c7d4b18"  # P6-6 added no migration (D-P6-6-A); P6-8 V3-A adds 5e9a2c7d4b18
 PERIOD = {
     "period_start": date(2026, 4, 1),
     "period_end": date(2026, 6, 30),
@@ -1134,6 +1134,8 @@ def test_scenario_16_workpaper_page_shows_basis(db, http, gate, monkeypatch):
 # 17. File-set guard (P6-4 runs in parallel)
 # ---------------------------------------------------------------------------
 
+from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 P6_4_AND_PROTECTED_PATHS = (
     "app/services/claude_analyzer.py",
     "app/services/grounding",
@@ -1194,6 +1196,8 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)scripts/validation/score.py",
     # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call. app/config.py is already excluded above.
     ":(exclude)app/services/llm_client.py",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
+    *V3A_EXCLUDES,
 )
 
 
