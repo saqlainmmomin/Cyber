@@ -561,6 +561,13 @@ P6_10_FILES = (
 )
 
 
+# App-design kickoff (claude/app-design-kickoff): handoff docs only.
+APP_DESIGN_KICKOFF_FILES = (
+    "tasks/handoffs/2026-10-01-app-design-kickoff.md", "tasks/handoffs/2026-10-01-next-session-kickoff.md",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+)
+
+
 def test_scenario_11_only_p6_2b_files_change():
     committed = subprocess.run(
         ["git", "diff", "--name-only", "main...HEAD"],
@@ -572,5 +579,6 @@ def test_scenario_11_only_p6_2b_files_change():
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
         and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_10_FILES
+        and f not in APP_DESIGN_KICKOFF_FILES
     ]
     assert offenders == [], offenders
