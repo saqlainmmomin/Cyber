@@ -609,7 +609,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     assert "Unreviewed stray" not in json.dumps(document)
 
     assert set(document) == DOCUMENT_KEYS
-    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 2  # P6-9 (D-P6-9-E)
+    assert document["schema_version"] == board.DOCUMENT_SCHEMA_VERSION == 3  # P6-10 (D-P6-10-K)
     assert document["kind"] == board.SNAPSHOT_TYPE == "board_report"
     assert document["snapshot"] == {
         "id": "00000000-0000-4000-8000-000000000001",
@@ -1017,6 +1017,12 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/templates/reports/",
     "app/templates/pages/report_snapshots.html",
     "app/assets/fonts/noto/",
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after
+    # P6-8 B1; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py
+    # guard these files.
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
     # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
     "app/services/board_exports.py",
     # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after B1;
@@ -1047,6 +1053,9 @@ P6_8_FORBIDDEN_PATHS = (
     "scripts", "validation",
     # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-10: the recommended-action draft control in the conclusion card and its partial.
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
     # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
     ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
     # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim

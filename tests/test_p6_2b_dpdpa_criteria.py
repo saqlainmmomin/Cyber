@@ -547,6 +547,18 @@ P6_8_V3_FILES = (
     "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py",
     "tests/test_p6_nist_csf2_alignment.py",
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): Stage 3/4 drafting;
+# tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard its app file set.
+P6_10_FILES = (
+    "tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md",
+    "tests/p6_10_support.py", "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py",
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/templates/partials/remediation_draft.html", "app/templates/pages/narrative.html",
+    "app/templates/components/conclusion_card.html", "app/services/board_exports.py",
+    "tests/test_p6_9_soa.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_9_file_set.py", "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/golden/p6_8_board_document.json", "tests/test_p6_10_extra.py",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -559,6 +571,6 @@ def test_scenario_11_only_p6_2b_files_change():
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
-        and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES
+        and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_10_FILES
     ]
     assert offenders == [], offenders

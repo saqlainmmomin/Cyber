@@ -60,6 +60,16 @@ P6_9_FORBIDDEN_PATHS = (
     ":(exclude)requirements.txt",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme, display font.
     *V3A_EXCLUDES,
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): the
+    # recommended-action draft control and partial; tests/test_p6_10a_remediation_draft.py guards them.
+    ":(exclude)app/templates/components/conclusion_card.html",
+    ":(exclude)app/templates/partials/remediation_draft.html",
+)
+# P6-10 lands after P6-9: drafting router, narrative service and page, plus board_exports (schema v3).
+P6_10_APP_FILES = (
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/templates/partials/remediation_draft.html", "app/templates/components/conclusion_card.html",
+    "app/templates/pages/narrative.html", "app/services/board_exports.py",
 )
 NEW_MODULES = (
     "app/services/soa.py",
@@ -93,4 +103,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     outside = [path for path in outside if path not in ("app/services/board_exports.py", "app/routers/snapshots.py")]  # P6-8 B2
     outside = [path for path in outside if path not in V3A_APP_PATHS]  # P6-8 V3-A
+    outside = [path for path in outside if path not in P6_10_APP_FILES]  # P6-10
     assert outside == [], outside

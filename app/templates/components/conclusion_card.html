@@ -147,11 +147,14 @@
               {% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}" {% if card.conclusion.risk_level == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
             </select>
           </label>
-          {% for field, label, value in [('rationale', 'Rationale', card.conclusion.rationale), ('gaps_identified', 'Gaps identified', card.conclusion.gaps_identified), ('recommended_action', 'Recommended action', card.conclusion.recommended_action)] %}
+          {% for field, label, value in [('rationale', 'Rationale', card.conclusion.rationale), ('gaps_identified', 'Gaps identified', card.conclusion.gaps_identified)] %}
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ label }}
             <textarea name="{{ field }}" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ value }}</textarea>
           </label>
           {% endfor %}
+          {% with assessment_id=assessment.id, conclusion_id=card.conclusion.id, recommended_action=card.conclusion.recommended_action, draft=None, error=None %}
+          {% include "partials/remediation_draft.html" %}
+          {% endwith %}
           <button type="submit" {% if card.approval_blocker and not card.citations_captured %}disabled{% endif %} class="justify-self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">Save &amp; Approve</button>
           {% if card.approval_blocker and not card.citations_captured %}<p class="text-xs text-amber-700 dark:text-amber-300">{{ card.approval_blocker }}</p>{% endif %}
         </form>

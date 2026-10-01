@@ -1,0 +1,15 @@
+<div id="recommended-action-{{ conclusion_id }}" data-recommended-action-field>
+  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Recommended action
+    <textarea name="recommended_action" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ recommended_action }}</textarea>
+  </label>
+  {% if draft %}
+  <p data-remediation-draft="{{ draft.event_id }}">{{ draft_notice }}</p>
+  {% if draft.suggested_owner_role %}<p data-suggested-owner-role>Suggested owner role: {{ draft.suggested_owner_role }} (a hint for the Action owner; not saved)</p>{% endif %}
+  {% endif %}
+  {% if error %}<p data-remediation-draft-error>{{ error }}</p>{% endif %}
+  <button type="button" data-remediation-draft-button
+          hx-post="/api/assessments/{{ assessment_id }}/recommended-action-drafts/{{ conclusion_id }}"
+          hx-include="closest form, #reviewer-name"
+          hx-target="#recommended-action-{{ conclusion_id }}"
+          hx-swap="outerHTML">Draft recommended action</button>
+</div>

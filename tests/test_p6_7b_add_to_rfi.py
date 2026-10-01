@@ -830,6 +830,17 @@ P6_8_B2_APP_FILES = {
     "app/services/board_exports.py", "app/routers/snapshots.py", "app/templates/pages/report_snapshots.html",
 }
 
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): lands after
+# B2 and P6-9; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard this set.
+P6_10_APP_FILES = {
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
+    "app/services/board_report.py", "app/templates/reports/board_report.html",
+    "app/templates/pages/report_snapshots.html", "app/services/board_exports.py",
+}
+P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
+
 
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 
@@ -847,6 +858,7 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     changed -= LLM_DEADLINE_FILES
     changed -= P6_8_B2_APP_FILES
     changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
+    changed -= P6_10_APP_FILES
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
     p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.
@@ -855,6 +867,7 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     p6_9 += [f":(exclude){path}" for path in sorted(LLM_DEADLINE_FILES)]
     p6_9 += [f":(exclude){path}" for path in sorted(P6_8_B2_APP_FILES | {"requirements.txt"})]  # P6-8 B2
     p6_9 += V3A_EXCLUDES  # P6-8 V3-A
+    p6_9 += [f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS)]  # P6-10
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     assert forbidden == []

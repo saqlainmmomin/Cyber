@@ -122,7 +122,7 @@ def test_scenario_1_compares_with_the_previous_issued_period_from_its_sidecar(db
         "period_label": "01 Jan 2026 to 31 Mar 2026",
         "cutoff_label": "15 Apr 2026",
         "document_sha256": metadata["document_sha256"],
-        "schema_version": 2,
+        "schema_version": 3,  # the prior sidecar is built by the live builder (P6-10, D-P6-10-K)
     }
     # Neither assessment recorded an AssessmentPack row, so criteria change cannot be ruled out.
     assert comparison["notes"] == [
