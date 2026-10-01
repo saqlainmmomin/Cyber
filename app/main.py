@@ -17,6 +17,7 @@ from app.routers import (
     aws,
     conclusions,
     desk_review,
+    drafting,
     documents,
     evidence,
     evidence_reuse,
@@ -142,6 +143,7 @@ app.include_router(analysis.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(reports.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(reports.comparison_router, dependencies=_ARCHIVE_GUARD)
 app.include_router(desk_review.router, dependencies=_ARCHIVE_GUARD)
+app.include_router(drafting.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(review.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(conclusions.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(requirement_review.router, dependencies=_ARCHIVE_GUARD)

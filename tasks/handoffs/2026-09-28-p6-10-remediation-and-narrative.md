@@ -544,3 +544,11 @@ Steps:
 6. **Not verified here:** live-model output quality, the page's HTMX interactions in a browser, and the merge with P6-8 B2 / P6-7b / P6-9 (not yet on `origin`).
 
 ## Results
+
+## Results (10a)
+
+- Step 0 baseline: `26 failed, 1226 passed, 10 skipped` in the full suite. The failures matched the handoff red state; all other tests were green.
+- Step 0 facts confirmed: gap approval requires a recommended action and v2 records an empty one; the new route avoids the pinned route substrings; the LLM seam supports structured schemas and call collection/tagging; the live board document is schema 2 and gates version generation; `assessment_findings` returns approved Findings; and `wrap_untrusted` neutralises marker injection.
+- Implemented D-P6-10-B..F in the permitted 10a files only. No deviations, migration, network call, live LLM call, test/support-file edit, or unrelated app-file change.
+- Verification: 10a contract `16 passed`; neighbor set `276 passed`; 10b contract `11 failed, 1 passed` as expected (ten missing `app.services.narrative` failures plus the schema-v3 exporter assertion; the scenario 10 file-set guard passed); full suite `11 failed, 1241 passed, 10 skipped`, with only those expected 10b failures remaining.
+- Doubts: none for 10a. The remaining 10b failures are intentionally deferred to the separate Stage 4 run.
