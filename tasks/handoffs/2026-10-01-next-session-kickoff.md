@@ -196,14 +196,60 @@ Saqlain wants to work on **the design of the app (UI/UX)** before Track 4 (P6-11
 
 ## Report back
 
-Append to the `## Results` section below:
-- branches and PR links for P6-10, V3-A and P6-7b (if any);
-- test counts and review findings, and how they were resolved;
-- the Codex run logs used;
-- the V3-B dispatch trigger;
-- Saqlain's P6-7b decision (quoted);
-- the path of the app-design kickoff.
+Append to the `## Results
 
-## Results
+Session of 2026-10-01. Workstream status: A (P6-10) implemented and reviewed, PR pending Saqlain's push; B (v3 deck) V3-A merged-ready as PR #94, V3-B committed and held; C (P6-7b) resolved; D (app-design kickoff) written and pushed.
 
-_(Append here.)_
+### Branches, PRs and commits
+
+| Item | Branch | Commits | PR |
+|---|---|---|---|
+| P6-10 revision (A1) | `claude/p6-10-narrative` | merge `3a91bb1` (origin/main 1df2b68, no rebase), revision `5723ea5` | |
+| P6-10a (Stage 3) | same | `5861dd9` | |
+| P6-10b (Stage 4, schema v3) | same | `f9c2f98`, guard allowance `0ac3a83`, review fix `3769617` | **not opened yet** (push and `gh pr create` were blocked for Claude; commands handed to Saqlain) |
+| V3-A (data capture) | `claude/p6-8-v3a-data-capture` | `7d12576` (handoff + tests), `8aa50a2` (Codex), `d42e055` (review fix) | [#94](https://github.com/saqlainmmomin/Cyber/pull/94) |
+| V3-B (deck, held) | `claude/p6-8-v3b-deck` | `37386ad` (handoff + red tests only) | none; **not dispatched** |
+| App-design kickoff | `claude/app-design-kickoff` | `4974097` | none (docs only) |
+
+### Test counts
+
+- Baseline on origin/main: 1224 passed, 10 skipped.
+- P6-10 red state after revision: 26 failed, 2 passed (the two P6-10 files), no collection errors. Verified independently.
+- P6-10a (Codex): 16 passed; full suite 1241 passed, 11 failed (the expected 10b tests).
+- P6-10b committed tree after my guard fixes: 1253 passed then, 1257 passed, 10 skipped, 0 failed after the review fix (retention scenario 13 is a transient that fails only while test files are uncommitted; it passed once committed).
+- V3-A red state: 34 failed, 1211 passed. Codex: 21 V3-A tests passed twice; full suite 1245 passed, 10 skipped. After the review fix: 22 V3-A tests pass; the only failure before the guard allowance was the file-set guard.
+- V3-B red state (committed tests, not dispatched): 36 failed, 1225 passed, 10 skipped.
+
+### Review findings and how they were resolved
+
+- **V3-A (code-review high + manual):** the per-action Responsibility form had no submit button or `hx-trigger`, so Responsibility could not be saved from the UI. Fixed by Codex (`hx-trigger="change"`) with a regression test; the guard allowance for the new test file was added by Claude. Noted, not fixed: routes re-query rows the service already loads; `_toast` helper duplicated; reviewer-name prefill reads only board-asks events; initiative metadata not reconciled when a roadmap group disappears (V3-B must ignore unknown group ids); `firm_logo_path` is unvalidated (V3-B must confine it).
+- **P6-10a:** non-integer `expected_version` returned HTTP 500. Fixed in the 10b run with a regression test.
+- **P6-10b:** the framework-conditional copy filter (spec D-P6-10-H rule 7) was skipped for the executive and cross-framework sections. Fixed by Codex with regression tests. Design note, not fixed: the specified measured-value filter lets counts, dates and timelines through; the consultant reviews every sentence.
+- **Designer omissions fixed by Claude:** two guards (`test_p6_4_cap_upload_limit`, `test_p6_nist_csf2_alignment`) and the P6-2b guard needed P6-10 allowances; `test_p6_9_prior_period` needed one integer (prior sidecar is built by the live builder, now v3). Codex also wrongly marked P6-10 done in `tasks/todo.md`; reverted.
+- Not verified: V3-A page in a real browser (the preview server is bound to the primary checkout, which is on `main`); no live LLM smoke for P6-10 (needs Saqlain's OK to spend).
+
+### Codex run logs
+
+- V3-A: `/Users/saqlainmomin/cyberassess-v3a-codex.log`; V3-A review fix: `/Users/saqlainmomin/cyberassess-v3a-fix-codex.log`
+- P6-10a: `/Users/saqlainmomin/cyberassess-p610a-codex.log`
+- P6-10b: `/Users/saqlainmomin/cyberassess-p610b-codex.log`; P6-10b review fix: `/Users/saqlainmomin/cyberassess-p610b-fix-codex.log`
+- All with `gpt-5.6-luna` at `xhigh`; no quota errors.
+
+### V3-B dispatch trigger
+
+Dispatch V3-B only **after the P6-10 PR and #94 (V3-A) are merged**. Before dispatching: branch from the `main` that has both; add `python-pptx` (pinned) to `requirements.txt` and install it in the shared `.venv` (Saqlain approved this on 2026-10-01; Codex cannot install packages); merge `claude/p6-8-v3b-deck` (handoff + red tests) forward; expect a keep-both merge in `tests/test_p6_2b_dpdpa_criteria.py`. V3-B tests were proven only for the pure derivations and XLSX; expect a few test bugs in the HTML selector, `build_document`, route and PDF tests when Codex first runs them. Accepted defaults: observations include all approved findings; framework narrative under each framework's bar on the executive-summary slide; cross-framework narrative on the risk-dashboard slide.
+
+### Decisions by Saqlain this session
+
+- **P6-7b:** "Done, fix todo (Recommended)". `tasks/todo.md` now says P6-7b shipped as #84 on v2 cards only (D-P6-7b-J). Nothing more to build.
+- V3-A fields live on one board-inputs page (`/assessments/{id}/board-inputs`); keep both `firm_primary_hex` and the new `firm_color_*` settings; add and install python-pptx before V3-B; accept the three V3-B layout defaults.
+- Saqlain pushed V3-A's last commit and opened #94 himself because push and `gh pr create` were denied to Claude.
+
+### Review items for Saqlain (V3-A)
+
+- `app/services/retention.py`: `initiative_metadata` purge scope and `PURGE_ORDER` position (destructive path).
+- `app/assets/fonts/noto/OFL-BarlowCondensed.txt` was reconstructed from Noto's OFL text under Barlow's copyright line; compare with upstream before release. The Barlow TTFs came from an earlier scratchpad (no network for Codex) and are pinned by SHA-256.
+
+### App-design kickoff
+
+`tasks/handoffs/2026-10-01-app-design-kickoff.md` (inventory of pages and flows, the deck's visual system, eight open questions). `tasks/todo.md` records the order: Track 2 done, then app design, then Track 4. Saqlain may start design in a separate session now; template implementation should wait for #94 and the P6-10 PR to merge.
