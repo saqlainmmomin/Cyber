@@ -127,7 +127,24 @@
 <label class="choice"><input type="checkbox" data-k="b72"><span><b>Error page shows a reference code</b><br>The error page shows a short code you can copy and send to support.<br><i>My suggestion:</i> Keep.</span></label>
 <label class="choice"><input type="checkbox" data-k="b73"><span><b>Two known glitches to fix</b><br>On a phone, one menu runs outside its box and one sample frame cuts off a button.<br><i>My suggestion:</i> I will fix both before building. Nothing for you to decide.</span></label>
 <div class="row" style="display:flex;gap:var(--s-2);margin-top:var(--s-4)"><label class="choice"><input type="radio" name="b7" data-k="b7-ok"><span>Approve batch</span></label><label class="choice" style="margin-left:var(--s-6)"><input type="radio" name="b7" data-k="b7-chg"><span>Approve with changes (note below)</span></label></div><label class="field area" style="margin-top:var(--s-3)"><textarea data-k="b7-note" placeholder="Notes for this batch"></textarea></label></div>
-</div><script>
+</div><div class="glass dec" style="margin-top:var(--s-12)"><h3>Export your answers</h3><p class="sub">Click, then paste the text into the Claude chat. It lists every decision with your tick, and your notes.</p>
+<div style="display:flex;gap:var(--s-2);margin-top:var(--s-3)"><button class="btn primary" id="exp">Copy my answers</button><button class="btn secondary" id="dl">Download as file</button></div>
+<label class="field area" style="margin-top:var(--s-3)"><textarea id="out" rows="8" readonly placeholder="Your answers appear here"></textarea></label></div>
+<script>
+function build(){const L=[];let grp='';
+document.querySelectorAll('h2,.dec').forEach(el=>{
+ if(el.tagName==='H2'){L.push('\n## '+el.textContent);return}
+ el.querySelectorAll('label.choice').forEach(l=>{const i=l.querySelector('input');if(!i||!i.dataset.k||i.type==='radio')return;
+  const b=l.querySelector('b');L.push((i.checked?'[x] AGREE   ':'[ ] NOT AGREED  ')+(b?b.textContent:l.textContent.trim().slice(0,80)))});
+ const r=[...el.querySelectorAll('input[type=radio]')].find(x=>x.checked);
+ if(el.querySelector('input[type=radio]'))L.push('Batch result: '+(r?(r.dataset.k.endsWith('ok')?'APPROVED':'APPROVED WITH CHANGES'):'no answer'));
+ const t=el.querySelector('textarea');if(t&&t.value.trim())L.push('Notes: '+t.value.trim());
+});return '# Yozora mockup approvals\n'+L.join('\n')}
+const out=document.getElementById('out');
+document.getElementById('exp').onclick=async()=>{const t=build();out.value=t;try{await navigator.clipboard.writeText(t);document.getElementById('exp').textContent='Copied'}catch(e){out.select();document.getElementById('exp').textContent='Select and copy below'}};
+document.getElementById('dl').onclick=()=>{const t=build();out.value=t;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown'}));a.download='yozora-approvals.md';a.click()};
+</script>
+<script>
 const K='yozora-approvals';let s={};try{s=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
 document.querySelectorAll('[data-k]').forEach(el=>{const k=el.dataset.k;if(el.type==='textarea')el.value=s[k]||'';else el.checked=!!s[k];
 el.addEventListener('change',()=>{if(el.type==='radio'){document.querySelectorAll('input[name='+el.name+']').forEach(r=>s[r.dataset.k]=r.checked)}else s[k]=el.type==='textarea'?el.value:el.checked;try{localStorage.setItem(K,JSON.stringify(s))}catch(e){}})});
