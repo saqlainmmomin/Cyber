@@ -1,0 +1,2 @@
+- Static table: a table whose rows do not navigate (no pointer cursor, no row hover, no chevron). Used on integrated_reports, remediation_tracker, engagement_purge. Built with a small inline style block override (.static); needs a shared modifier.
+- Stacked segmented bar: remediation_summary needs a multi-segment bar for verified, awaiting verification, in progress and open. Built with the single-fill .stp .rail plus a .dist list.

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workpaper entry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-briefcase" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+<symbol id="i-report" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+<symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-slash" viewBox="0 0 24 24"><path d="M15 4 9 20"/></symbol>
+<symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-8 8"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+</svg>
+<div class="scrim" id="scrim"></div>
+<div class="app">
+  <aside class="side" id="side"><div class="side-in glass">
+<div class="brand"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Yozora</div>
+<label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search" aria-label="Search"></label>
+<nav class="nav" aria-label="Main"><a href="b1-home.html"><svg class="i"><use href="#i-home"/></svg>Home</a><a href="b1-clients.html"><svg class="i"><use href="#i-building"/></svg>Clients</a><a href="b2-engagement_list.html" aria-current="page"><svg class="i"><use href="#i-briefcase"/></svg>Engagements</a><a href="b5-review-queue.html"><svg class="i"><use href="#i-inbox"/></svg>Review<span class="count">3</span></a><a href="b4-evidence.html?state=all"><svg class="i"><use href="#i-folder"/></svg>Evidence</a><a href="b6-report_snapshots.html"><svg class="i"><use href="#i-report"/></svg>Reports</a></nav>
+<div class="side-foot">
+<nav class="nav" aria-label="Firm"><a href="b1-firm_settings.html"><svg class="i"><use href="#i-settings"/></svg>Settings</a></nav>
+<div class="menu" id="userMenu" role="menu">
+<div class="who"><span class="avatar">PS</span><span><b>Priya Sharma</b><span>Northgate Advisory</span></span></div>
+<a href="#" role="menuitem"><svg class="i"><use href="#i-user"/></svg>Profile</a>
+<a href="b1-login.html" role="menuitem"><svg class="i"><use href="#i-logout"/></svg>Sign out</a>
+</div>
+<button class="user" id="userBtn" aria-expanded="false" aria-haspopup="menu"><span class="avatar">PS</span><span class="name">Priya Sharma</span><svg class="i"><use href="#i-updown"/></svg></button>
+</div></div></aside>
+  <div class="main">
+    <div class="top">
+      <button class="btn ghost icon menu-btn" aria-label="Open navigation"><svg class="i"><use href="#i-menu"/></svg></button>
+      <div class="crumb"><a class="hide-sm" href="b1-client_detail.html">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a class="hide-sm" href="b2-engagement_detail.html">FY2026 privacy readiness</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="b3-hub.html">Head office</a><svg class="i sl"><use href="#i-slash"/></svg><a href="b5-review-queue.html">Review</a><svg class="i sl"><use href="#i-slash"/></svg><a href="b4-workpaper.html">Workpaper</a><svg class="i sl"><use href="#i-slash"/></svg><b>Breach notification to the Board</b></div>
+    </div>
+    <div class="page">
+<div class="seg" id="states" aria-label="Mockup state" style="flex-wrap:wrap;margin-bottom:var(--s-5)"><button aria-pressed="true" data-s="default">Edited and approved</button><button aria-pressed="false" data-s="legacy">Legacy approval</button><button aria-pressed="false" data-s="excluded">Excluded by scope</button></div>
+<div class="page-head"><div><h1>Breach notification to the Board</h1><p class="meta-line">1 Apr 2025 – 31 Mar 2026 · Evidence cut-off 15 Mar 2026</p>
+<div class="meta"><span class="chip">DPDPA</span><span class="ref" style="margin-left:0">dpdpa.s8.6 · Conclusion version 3</span><span data-st="default" style="display:contents"><span class="pill c-non">Non-compliant</span><span class="status"><span class="dot c-accent"></span>Edited and approved</span><span class="warn"><svg class="i"><use href="#i-lock"/></svg>Locked, re-analysis will not overwrite</span></span><span data-st="legacy" style="display:contents"><span class="pill c-part">Partially compliant</span><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy approval</span></span><span data-st="excluded" style="display:contents"><span class="pill c-insuf">Excluded by scope enforcement</span></span></div></div>
+<div class="acts"><a class="btn primary" href="b5-conclusion-card.html">Open in conclusions</a></div></div><nav class="tabs" aria-label="Assessment"><a href="b3-hub.html">Overview</a><a href="b3-scope.html">Scope</a><a href="b3-questionnaire.html">Questionnaire</a><a href="b5-review-queue.html" aria-selected="true">Review</a><a href="b5-report.html">Report</a></nav><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)"><h2>Client response</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)"><div><span class="sub">Answer</span><div class="t-title" style="margin-top:2px;font-weight:400">Partially</div></div><div><span class="sub">Answer source</span><div class="t-title" style="margin-top:2px;font-weight:400">Client portal</div></div><div><span class="sub">Confidence</span><div class="t-title" style="margin-top:2px;font-weight:400">Medium</div></div><div><span class="sub">Submitted</span><div class="t-title" style="margin-top:2px;font-weight:400">10 Mar 2026</div></div><div style="grid-column:1/-1"><span class="sub">Notes</span><div class="t-title" style="margin-top:2px;font-weight:400">We notify customers within 72 hours. Whether the Board is told is decided by legal, case by case.</div></div><div><span class="sub">Evidence reference</span><div class="t-title" style="margin-top:2px;font-weight:400">Breach response procedure.docx</div></div></div><div class="alert c-accent" ><svg class="i"><use href="#i-link"/></svg><div><b>Shared cluster question</b>One answer informs every framework requirement in this cluster.</div></div></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="default legacy"><h2>Evidence</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div><h3 style="margin-bottom:var(--s-3)">Mapped evidence</h3><div class="rows glass"><div><span class="ico"><svg class="i"><use href="#i-file"/></svg></span><div class="txt"><b><a href="b4-evidence_detail.html">Breach response procedure.docx</a></b><span class="sub">Direct</span></div><span class="status"><span class="dot c-accent"></span>Active</span></div></div></div><div><h3 style="margin-bottom:var(--s-3)">Current desk review</h3><p class="help" style="margin:-8px 0 var(--s-3)">Replaced when the desk review is re-run.</p><div style="display:flex;flex-direction:column;gap:var(--s-3)"><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="pill c-critical">Critical</span><span class="t-title">Breach notice promises customers 72 hours and never mentions the Board</span></div><div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>Breach response procedure.docx</span><span class="pg">Page 3</span></div><blockquote>We will notify affected customers <mark>within 72 hours</mark> of confirming a personal data breach.</blockquote></div></div></div></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="default excluded"><h2>AI proposal</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="pill c-part">Partially compliant</span><span class="chip">Supported</span><span class="pill c-high">High</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)"><div style="grid-column:1/-1"><span class="sub">Rationale</span><div class="t-title" style="margin-top:2px;font-weight:400">Customers are told within 72 hours, but the procedure does not name the Board.</div></div><div style="grid-column:1/-1"><span class="sub">Gap</span><div class="t-title" style="margin-top:2px;font-weight:400">No step for notifying the Data Protection Board.</div></div><div style="grid-column:1/-1"><span class="sub">Remediation action</span><div class="t-title" style="margin-top:2px;font-weight:400">Add Board notification to the procedure with an owner and a deadline.</div></div><div><span class="sub">Model</span><div class="t-title" style="margin-top:2px;font-weight:400">anthropic/claude-sonnet-4.5</div></div><div><span class="sub">Started</span><div class="t-title" style="margin-top:2px;font-weight:400">14 Mar 2026, 10:42</div></div></div>
+<div><h3 style="margin-bottom:var(--s-3)">Quality checks</h3><ul class="checks">
+<li><span class="ck c-ok"><svg class="i"><use href="#i-check"/></svg></span>Citations<span class="res">2</span></li><li><span class="ck c-ok"><svg class="i"><use href="#i-check"/></svg></span>Evidence quote found in the document<span class="res">Grounded</span></li><li><span class="ck c-ok"><svg class="i"><use href="#i-check"/></svg></span>Unsupported assertion<span class="res">None</span></li><li><span class="ck c-ok"><svg class="i"><use href="#i-check"/></svg></span>Flagged for review by the model<span class="res">No</span></li><li><span class="ck c-part"><svg class="i"><use href="#i-alert"/></svg></span>Desk-review red flags<span class="res">1</span></li><li><span class="ck c-insuf"><svg class="i"><use href="#i-x"/></svg></span>Contradictions<span class="res">Not assessed</span></li></ul></div>
+<div><h3 style="margin-bottom:var(--s-3)">Citations</h3><div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>Breach response procedure.docx</span><span class="pg">Page 3</span></div><blockquote>We will notify affected customers <mark>within 72 hours</mark> of confirming a personal data breach.</blockquote></div></div>
+<div class="alert c-medium" ><svg class="i"><use href="#i-alert"/></svg><div><b>A newer AI proposal was withheld</b>This conclusion is locked. The newer proposal was Non-compliant, with the same gap.</div></div></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="legacy"><h2>AI proposal</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><p class="muted">Evidence support not captured (legacy)</p></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="default"><h2>Consultant decision</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="chip">Consultant-edited</span><span class="pill c-non">Non-compliant</span><span class="pill c-high">High</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)"><div style="grid-column:1/-1"><span class="sub">Rationale</span><div class="t-title" style="margin-top:2px;font-weight:400">The procedure never tells the Data Protection Board about a breach. Customer notice alone does not meet the requirement.</div></div><div style="grid-column:1/-1"><span class="sub">Gaps identified</span><div class="t-title" style="margin-top:2px;font-weight:400">No Board notification step, no owner, no deadline.</div></div><div style="grid-column:1/-1"><span class="sub">Recommended action</span><div class="t-title" style="margin-top:2px;font-weight:400">Add Board notification within the period the Rules set, and name the person responsible.</div></div><div style="grid-column:1/-1"><span class="sub">Evidence summary</span><div class="t-title" style="margin-top:2px;font-weight:400">We will notify affected customers within 72 hours of confirming a personal data breach.</div></div></div>
+<p class="sub">The AI proposed Partially compliant before this edit. Approved by Priya Sharma, 18 Mar 2026. Edits carry no citations; the citations above belong to the AI proposal this edit replaced.</p></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="legacy"><h2>Consultant decision</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy bulk approval, not individually reviewed</span><span class="pill c-part">Partially compliant</span></div><p class="sub">Approved in bulk before decisions were recorded one by one.</p></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="excluded"><h2>Consultant decision</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div class="alert c-neutral" ><svg class="i"><use href="#i-alert"/></svg><div><b>Excluded by scope enforcement</b>This requirement was set to not applicable at analysis time, so there is no conclusion to decide.</div></div></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="default"><h2>Revision history</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div class="glass rows">
+<div><span class="ico accent"><svg class="i"><use href="#i-history"/></svg></span><div class="txt"><b>Proposed by the AI</b><span class="sub">DPDPA run · 14 Mar 2026</span><span class="sub">Partially compliant, supported, 2 citations</span></div></div>
+<div><span class="ico accent"><svg class="i"><use href="#i-history"/></svg></span><div class="txt"><b>Edited</b><span class="sub">Priya Sharma · 17 Mar 2026</span><span class="sub">Partially compliant to Non-compliant. Reason: Board notification is missing.</span></div></div>
+<div><span class="ico accent"><svg class="i"><use href="#i-history"/></svg></span><div class="txt"><b>Approved</b><span class="sub">Priya Sharma · 18 Mar 2026</span></div></div>
+</div></div></div><div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)" data-st="legacy"><h2>Revision history</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)"><div class="glass rows"><div><span class="ico accent"><svg class="i"><use href="#i-history"/></svg></span><div class="txt"><b>Proposed</b><span class="sub">Migrated from the legacy report · 12 Jan 2026</span><span class="sub">No run record for this proposal.</span></div></div></div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const root=document.documentElement,q=new URLSearchParams(location.search);
+if(q.has('dark'))root.dataset.theme='dark';
+const ub=document.getElementById('userBtn'),um=document.getElementById('userMenu');
+ub.onclick=e=>{e.stopPropagation();const o=!um.classList.contains('open');um.classList.toggle('open',o);ub.setAttribute('aria-expanded',o)};
+document.addEventListener('click',e=>{if(!um.contains(e.target)){um.classList.remove('open');ub.setAttribute('aria-expanded',false)}});
+document.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>root.classList.add('drawer-open'));
+document.getElementById('scrim').onclick=()=>root.classList.remove('drawer-open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){root.classList.remove('drawer-open');um.classList.remove('open');if(window.setState&&window.DEFAULT_STATE)setState(window.DEFAULT_STATE)}});
+document.querySelectorAll('tbody tr[data-href]').forEach(r=>r.addEventListener('click',e=>{if(!e.target.closest('a,button,input,label'))location.href=r.dataset.href}));
+const bar=document.getElementById('states');
+if(bar){
+  const valid=[...bar.querySelectorAll('button')].map(b=>b.dataset.s);
+  window.DEFAULT_STATE=valid[0];
+  window.setState=function(s){
+    if(!valid.includes(s))s=valid[0];
+    document.querySelectorAll('[data-st]').forEach(e=>{e.style.display=e.dataset.st.split(' ').includes(s)?'':'none'});
+    bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s));
+    q.set('state',s);history.replaceState(null,'',location.pathname+'?'+q.toString().replace('dark=','dark'));
+  };
+  bar.querySelectorAll('button').forEach(b=>b.onclick=()=>setState(b.dataset.s));
+  document.querySelectorAll('[data-setstate]').forEach(e=>e.addEventListener('click',ev=>{ev.preventDefault();setState(e.dataset.setstate)}));
+  setState(q.get('state')||valid[0]);
+}
+
+</script>
+</body>
+</html>

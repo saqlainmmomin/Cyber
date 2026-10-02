@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction 1 · Utilitarian × Modular Type</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ───────── Tokens ─────────
+   Brand colour is NOT decided. --accent is the single swappable token (firm theme).
+   Severity and outcome colours are fixed and never themed. */
+:root{
+  --paper:#F3F2EE; --surface:#FBFAF8; --sunken:#EAE8E2;
+  --ink:#121418; --ink-2:#3B3F48; --ink-3:#6B707B; --ink-4:#9A9EA8;
+  --rule:#D8D5CC; --rule-strong:#121418;
+  --accent:#0E5560; --accent-ink:#FFFFFF; --accent-soft:#DCE9EB;
+  --crit:#9B1C1C; --high:#D9481E; --med:#E39A1F; --low:#3C9D6B;
+  --ok:#2F9466; --part:#E39A1F; --non:#C0392B; --insuf:#9AA3B5; --na:#D5D9E3;
+  --rail:#121418; --rail-accent:#4FB3C0; --rail-accent-ink:#06191C; --rail-ink:#E9E7E1; --rail-dim:#8C909A;
+  --f-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'IBM Plex Sans','Noto Sans',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+[data-theme=dark]{
+  --paper:#0E1013; --surface:#14171B; --sunken:#1B1F24;
+  --ink:#ECEAE4; --ink-2:#BDBFC6; --ink-3:#8B909B; --ink-4:#5F646E;
+  --rule:#2A2E35; --rule-strong:#ECEAE4;
+  --accent:#4FB3C0; --accent-ink:#06191C; --accent-soft:#12292D;
+  --rail:#0A0B0D; --rail-ink:#E4E2DC; --rail-dim:#767B86;
+  --ok:#43B27F; --non:#E0574A; --high:#F0693A; --crit:#D9534F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font:14px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+.num,td.n,.kpi b{font-variant-numeric:tabular-nums lining-nums}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* ───────── Mockup chrome (not part of the app) ───────── */
+.mock{position:sticky;top:0;z-index:50;display:flex;gap:24px;align-items:center;padding:10px 24px;background:#000;color:#ddd;font:12px var(--f-body)}
+.mock b{color:#fff;font-weight:600}
+.mock .tabs{display:flex;gap:2px}
+.mock button{padding:5px 12px;border:1px solid #333;color:#bbb}
+.mock button[aria-pressed=true]{background:#fff;color:#000;border-color:#fff}
+.mock .sp{flex:1}
+
+/* ───────── App shell ───────── */
+.app{display:grid;grid-template-columns:232px 1fr;min-height:calc(100vh - 41px)}
+.rail{background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;padding:22px 0 18px;position:sticky;top:41px;height:calc(100vh - 41px)}
+.mark{padding:0 22px 22px;border-bottom:1px solid #2a2d33}
+.mark .wm{font:600 22px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase}
+.mark .wm i{display:inline-block;width:9px;height:9px;background:var(--rail-accent);margin-right:10px;vertical-align:1px}
+.mark small{display:block;margin-top:7px;font:11px var(--f-mono);color:var(--rail-dim)}
+.nav{padding:14px 0;flex:1}
+.nav a{display:grid;grid-template-columns:34px 1fr auto;align-items:baseline;padding:9px 22px;color:var(--rail-dim);border-left:2px solid transparent}
+.nav a .k{font:500 12px var(--f-mono)}
+.nav a span.t{font-size:14px}
+.nav a em{font:600 11px var(--f-mono);font-style:normal;background:var(--rail-accent);color:var(--rail-accent-ink);padding:1px 6px}
+.nav a[aria-current]{color:#fff;border-left-color:var(--rail-accent);background:#181b20}
+.nav .grp{font:600 10.5px var(--f-disp);letter-spacing:.18em;text-transform:uppercase;color:#5d616b;padding:16px 22px 6px}
+.who{padding:14px 22px 0;border-top:1px solid #2a2d33;font-size:12.5px}
+.who b{display:block;font-weight:500;color:#fff}
+.who span{color:var(--rail-dim)}
+.seg{display:flex;margin-top:10px;border:1px solid #33363d}
+.seg button{flex:1;padding:4px 0;font-size:11.5px;color:var(--rail-dim)}
+.seg button[aria-pressed=true]{background:#e9e7e1;color:#121418}
+
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:18px;height:48px;padding:0 40px;border-bottom:1px solid var(--rule);background:var(--surface);font:12px var(--f-mono);color:var(--ink-3)}
+.top .crumb b{color:var(--ink);font-weight:500}
+.top .sp{flex:1}
+.top .cut{color:var(--ink-2)}
+.top .cut i{font-style:normal;color:var(--ink-4);margin-right:6px}
+.page{padding:34px 40px 64px;max-width:1280px}
+
+/* ───────── Type ───────── */
+.eyebrow{font:600 12px var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+h1{font:600 52px/.95 var(--f-disp);letter-spacing:.01em;text-transform:uppercase}
+h2{font:600 22px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase}
+.take{margin-top:12px;font-size:16px;color:var(--ink-2);max-width:64ch}
+.take b{color:var(--ink);font-weight:600}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:24px;border-bottom:2px solid var(--rule-strong)}
+.sec{display:flex;align-items:baseline;gap:14px;margin:38px 0 12px}
+.sec .k{font:500 12px var(--f-mono);color:var(--ink-3)}
+.sec .r{margin-left:auto;font-size:13px;color:var(--ink-3)}
+
+/* ───────── Controls ───────── */
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border:1px solid var(--rule-strong);font-weight:500;font-size:13.5px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:var(--rule)}
+.btn kbd{font:11px var(--f-mono);opacity:.7;border:1px solid currentColor;padding:0 4px}
+
+/* ───────── KPI strip ───────── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule)}
+.kpi{padding:20px 24px 18px;border-left:1px solid var(--rule)}
+.kpi:first-child{border-left:0;padding-left:0}
+.kpi b{display:block;font:600 56px/1 var(--f-disp);letter-spacing:.01em;margin:8px 0 6px}
+.kpi p{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.kpi.alert b{color:var(--high)}
+
+/* ───────── Tables ───────── */
+table{width:100%;border-collapse:collapse}
+th{font:600 11.5px var(--f-disp);letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule-strong)}
+td{padding:14px 12px 14px 0;border-bottom:1px solid var(--rule);vertical-align:middle}
+td.n,th.n{text-align:right}
+tr.row:hover td{background:var(--sunken)}
+.cell-t b{display:block;font-weight:600;font-size:14.5px}
+.cell-t span{font-size:12.5px;color:var(--ink-3)}
+.state{white-space:nowrap}
+.mono{font:12px var(--f-mono);color:var(--ink-3)}
+
+/* ───────── Outcome / severity marks ───────── */
+.o{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;white-space:nowrap}
+.o::before{content:"";width:9px;height:9px;background:var(--c)}
+.o.ok{--c:var(--ok)}.o.part{--c:var(--part)}.o.non{--c:var(--non)}.o.insuf{--c:var(--insuf)}.o.na{--c:var(--na)}
+.sev{display:inline-block;font:700 11px var(--f-disp);letter-spacing:.14em;text-transform:uppercase;padding:3px 8px 2px;color:#fff;background:var(--c)}
+.sev.crit{--c:var(--crit)}.sev.high{--c:var(--high)}.sev.med{--c:var(--med);color:#1a1200}.sev.low{--c:var(--low)}
+.state{font:500 12px var(--f-mono);color:var(--ink-3)}
+.state.wait{color:var(--high)}
+.bar{display:flex;height:8px;gap:2px}
+.bar i{display:block;background:var(--c)}
+.bar .ok{--c:var(--ok)}.bar .part{--c:var(--part)}.bar .non{--c:var(--non)}.bar .insuf{--c:var(--insuf)}
+
+/* ───────── Needs-you list ───────── */
+.need{border-top:1px solid var(--rule-strong)}
+.need a{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule)}
+.need a:hover{background:var(--sunken)}
+.need .c{font:600 34px/1 var(--f-disp)}
+.need b{display:block;font-weight:600}
+.need span{font-size:12.5px;color:var(--ink-3)}
+.need .go{font:12px var(--f-mono);color:var(--accent)}
+.cols{display:grid;grid-template-columns:5fr 7fr;gap:48px}
+
+/* ───────── Stepper ───────── */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--rule-strong);background:var(--surface)}
+.steps a{padding:12px 16px;border-left:1px solid var(--rule);position:relative}
+.steps a:first-child{border-left:0}
+.steps .k{font:500 11.5px var(--f-mono);color:var(--ink-3)}
+.steps b{display:block;font:600 17px/1.2 var(--f-disp);letter-spacing:.07em;text-transform:uppercase;margin-top:2px}
+.steps small{font-size:12px;color:var(--ink-3)}
+.steps .done b{color:var(--ink-3)}
+.steps .cur{background:var(--ink);color:var(--paper)}
+.steps .cur .k,.steps .cur small{color:var(--ink-4)}
+[data-theme=dark] .steps .cur{background:var(--ink)}
+
+/* ───────── Status board ───────── */
+.board{display:grid;grid-template-columns:repeat(2,1fr);border-top:2px solid var(--rule-strong);border-bottom:1px solid var(--rule)}
+.fw{padding:20px 28px 22px 0}
+.fw+.fw{padding-left:28px;border-left:1px solid var(--rule)}
+.fw header{display:flex;justify-content:space-between;align-items:baseline}
+.fw h3{font:600 26px/1 var(--f-disp);letter-spacing:.05em;text-transform:uppercase}
+.fw .score{display:flex;align-items:baseline;gap:6px;margin:16px 0 10px}
+.fw .score b{font:600 64px/.9 var(--f-disp)}
+.fw .score span{font-size:13px;color:var(--ink-3)}
+.fw .legend{display:flex;gap:16px;margin-top:10px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.fw .dom{margin-top:18px;border-top:1px solid var(--rule)}
+.fw .dom div{display:grid;grid-template-columns:1fr auto;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.pill{font:500 11.5px var(--f-mono);padding:2px 8px;border:1px solid var(--rule);color:var(--ink-2);white-space:nowrap}
+.pill.warn{border-color:var(--high);color:var(--high)}
+
+/* ───────── Review queue ───────── */
+.rq{display:grid;grid-template-columns:340px 1fr;border:1px solid var(--rule-strong);background:var(--surface);margin-top:26px;min-height:640px}
+.rq-list{border-right:1px solid var(--rule-strong)}
+.rq-list .hd{padding:12px 16px;border-bottom:1px solid var(--rule)}
+.rq-item{padding:13px 16px;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:2px 10px;border-left:3px solid transparent}
+.rq-item.cur{background:var(--sunken);border-left-color:var(--accent)}
+.rq-item b{font-weight:600;font-size:13.5px}
+.rq-item .mono{grid-column:1}
+.rq-item .o{grid-column:2;grid-row:1/3;align-self:center}
+.rq-item.done b{color:var(--ink-3);font-weight:500}
+.rq-detail{display:flex;flex-direction:column}
+.rq-top{padding:20px 28px 18px;border-bottom:1px solid var(--rule)}
+.rq-top h2{font-size:30px;letter-spacing:.03em;margin:8px 0 12px}
+.meta{display:flex;gap:22px;font-size:12.5px;color:var(--ink-3);align-items:center}
+.rq-body{display:grid;grid-template-columns:1fr 1fr;flex:1}
+.pane{padding:22px 28px}
+.pane+.pane{border-left:1px solid var(--rule)}
+.pane h4{font:600 12px var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+.pane p{margin-bottom:12px}
+.field{display:grid;grid-template-columns:130px 1fr;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+.field dt{color:var(--ink-3);font-size:12.5px}
+.quote{border-left:3px solid var(--ink);padding:2px 0 2px 14px;margin:6px 0 10px;font-size:14.5px;color:var(--ink)}
+.cite{font:12px var(--f-mono);color:var(--ink-3)}
+mark{background:#F5D77A;color:#1a1200;padding:0 2px}
+[data-theme=dark] mark{background:#6b5410;color:#fff}
+.check{display:grid;grid-template-columns:20px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.check i{width:12px;height:12px;margin-top:4px;background:var(--c)}
+.check.y{--c:var(--ok)}.check.n{--c:var(--non)}.check.p{--c:var(--part)}
+.act{display:flex;gap:10px;align-items:center;padding:14px 28px;border-top:1px solid var(--rule-strong);background:var(--paper)}
+.act .sp{flex:1;font-size:12.5px;color:var(--ink-3)}
+
+.screen{display:none}.screen.on{display:block}
+.note{margin-top:28px;padding:12px 16px;border:1px dashed var(--ink-4);font-size:12.5px;color:var(--ink-3);max-width:90ch}
+</style>
+</head>
+<body>
+
+<div class="mock">
+  <b>Direction 1 · Utilitarian × Modular Type, Luxury finish</b>
+  <div class="tabs" role="tablist">
+    <button aria-pressed="true" data-s="s1">Portfolio</button>
+    <button aria-pressed="false" data-s="s2">Assessment hub</button>
+    <button aria-pressed="false" data-s="s3">Review queue</button>
+  </div>
+  <span class="sp"></span>
+  <span style="color:#888">Accent</span>
+  <div class="tabs" id="acc"></div>
+  <button id="th" aria-pressed="false">Dark mode</button>
+</div>
+
+<div class="app">
+  <aside class="rail">
+    <div class="mark"><div class="wm"><i></i>[Name]</div><small>name pending · wordmark slot</small></div>
+    <nav class="nav">
+      <a href="#" aria-current="page"><span class="k">01</span><span class="t">Portfolio</span></a>
+      <a href="#"><span class="k">02</span><span class="t">Engagements</span></a>
+      <a href="#"><span class="k">03</span><span class="t">Review</span><em>3</em></a>
+      <a href="#"><span class="k">04</span><span class="t">Evidence</span></a>
+      <a href="#"><span class="k">05</span><span class="t">Reports</span></a>
+      <div class="grp">Firm</div>
+      <a href="#"><span class="k">—</span><span class="t">Settings</span></a>
+    </nav>
+    <div class="who"><b>Priya Sharma</b><span>Reviewing partner · Northgate Advisory</span>
+      <div class="seg" title="Role switch placeholder until Track 4"><button aria-pressed="false">Consultant</button><button aria-pressed="true">Partner</button></div>
+    </div>
+  </aside>
+
+  <div class="main">
+
+  <!-- ═════════ SCREEN 1 · PORTFOLIO ═════════ -->
+  <div class="screen on" id="scr-s1">
+    <div class="top"><span class="crumb"><b>01 Portfolio</b></span><span class="sp"></span><span>Sample data</span></div>
+    <div class="page">
+      <div class="head">
+        <div>
+          <div class="eyebrow">Portfolio · Partner view</div>
+          <h1 style="margin-top:8px">What needs you</h1>
+          <p class="take"><b>3 conclusions</b> on Meridian Ledger need your decision before its report can be released. One RFI is still waiting on the client.</p>
+        </div>
+        <a class="btn pri" href="#">New engagement</a>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi alert"><div class="eyebrow">Awaiting your decision</div><b class="num">3</b><p>conclusions across 1 assessment</p></div>
+        <div class="kpi"><div class="eyebrow">Open engagements</div><b class="num">2</b><p>2 clients · 3 assessments</p></div>
+        <div class="kpi"><div class="eyebrow">Evidence outstanding</div><b class="num">3</b><p>items requested, 0 received. Link expires 15 Oct</p></div>
+        <div class="kpi"><div class="eyebrow">Open critical / high</div><b class="num">4</b><p>findings across the portfolio</p></div>
+      </div>
+
+      <div class="cols">
+        <div>
+          <div class="sec"><span class="k">A</span><h2>Needs you</h2></div>
+          <div class="need">
+            <a href="#"><span class="c num">3</span><div><b>Approve conclusions</b><span>Meridian Ledger · DPDPA and ISO 27001 · 1 high</span></div><span class="go">Open queue →</span></a>
+            <a href="#"><span class="c num">1</span><div><b>Sign off board report draft</b><span>Loomwire Labs · NIST CSF 2.0 · period not yet set</span></div><span class="go">Open →</span></a>
+            <a href="#"><span class="c num">3</span><div><b>Awaiting client evidence</b><span>Meridian Ledger · RFI link, 0 of 3 uploaded</span></div><span class="go">View link →</span></a>
+          </div>
+        </div>
+        <div>
+          <div class="sec"><span class="k">B</span><h2>Engagements</h2><span class="r">2 open</span></div>
+          <table>
+            <thead><tr><th>Engagement</th><th>Frameworks</th><th>Stage</th><th class="n" style="white-space:nowrap">Open C/H</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="cell-t"><b>FY2026 DPDPA and ISO 27001 programme</b><span>Meridian Ledger Technologies · Fintech · Large</span></td><td class="mono">DPDPA · ISO 27001</td><td><span class="state wait">03 Review · 3 pending</span></td><td class="n num"><b>3</b></td></tr>
+              <tr class="row"><td class="cell-t"><b>NIST CSF 2.0 gap assessment</b><span>Loomwire Labs Inc. · Software</span></td><td class="mono">NIST CSF 2.0</td><td><span class="state">04 Report · draft</span></td><td class="n num"><b>1</b></td></tr>
+            </tbody>
+          </table>
+          <div class="note">Design note: the legacy "Unmigrated assessments" list (17 amber rows today) leaves the landing page. It moves to Firm › Settings › Data, since it is housekeeping, not work.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════ SCREEN 2 · ASSESSMENT HUB ═════════ -->
+  <div class="screen" id="scr-s2">
+    <div class="top"><span class="crumb">Meridian Ledger Technologies › FY2026 programme › <b>Assessment</b></span><span class="sp"></span>
+      <span class="cut"><i>PERIOD</i>1 Apr 2025 – 31 Mar 2026</span><span class="cut"><i>EVIDENCE CUT-OFF</i>15 Mar 2026</span></div>
+    <div class="page">
+      <div class="head">
+        <div>
+          <div class="eyebrow">Assessment · DPDPA 2023 · ISO 27001:2022</div>
+          <h1 style="margin-top:8px">Meridian Ledger</h1>
+          <p class="take">Both frameworks have a non-compliant finding rated high. <b>3 conclusions</b> are still unapproved, so the report cannot be released.</p>
+        </div>
+        <div style="display:flex;gap:10px"><a class="btn ghost" href="#">Report versions</a><a class="btn pri" href="#">Review queue <kbd>R</kbd></a></div>
+      </div>
+
+      <div class="sec" style="margin-top:26px"><span class="k">A</span><h2>Progress</h2></div>
+      <div class="steps">
+        <a class="done"><span class="k">01</span><b>Scope</b><small>Confirmed 12 Mar</small></a>
+        <a class="done"><span class="k">02</span><b>Evidence</b><small>5 documents · 3 requested</small></a>
+        <a class="done"><span class="k">03</span><b>Analysis</b><small>6 conclusions proposed</small></a>
+        <a class="cur"><span class="k">04</span><b>Review</b><small>3 of 6 approved</small></a>
+        <a><span class="k">05</span><b>Report</b><small>Blocked by review</small></a>
+      </div>
+
+      <div class="sec"><span class="k">B</span><h2>Status by framework</h2><span class="r">Scores are never combined across frameworks</span></div>
+      <div class="board">
+        <div class="fw">
+          <header><h3>DPDPA 2023</h3><span class="pill warn">1 gap · 1 high</span></header>
+          <div class="score"><b class="num">61</b><span>/ 100 · deterministic score</span></div>
+          <div class="bar"><i class="ok" style="flex:1"></i><i class="part" style="flex:1"></i><i class="non" style="flex:1"></i></div>
+          <div class="legend"><span class="o ok">1 compliant</span><span class="o part">1 partial</span><span class="o non">1 non-compliant</span></div>
+          <div class="dom">
+            <div><span>Consent management</span><span class="pill warn">1 gap · 1 high</span></div>
+            <div><span>Security safeguards</span><span class="pill">1 partial</span></div>
+            <div><span>Data principal rights</span><span class="pill">No gaps</span></div>
+          </div>
+        </div>
+        <div class="fw">
+          <header><h3>ISO 27001:2022</h3><span class="pill warn">1 gap · 1 high</span></header>
+          <div class="score"><b class="num">54</b><span>/ 100 · deterministic score</span></div>
+          <div class="bar"><i class="ok" style="flex:1"></i><i class="part" style="flex:1"></i><i class="non" style="flex:1"></i></div>
+          <div class="legend"><span class="o ok">1 compliant</span><span class="o part">1 partial</span><span class="o non">1 non-compliant</span></div>
+          <div class="dom">
+            <div><span>Access control</span><span class="pill warn">1 gap · 1 high</span></div>
+            <div><span>Business continuity</span><span class="pill">1 partial</span></div>
+            <div><span>Policies</span><span class="pill">No gaps</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec"><span class="k">C</span><h2>Open findings</h2><span class="r">3 of 6 shown · sorted by severity</span></div>
+      <table>
+        <thead><tr><th style="width:90px">Ref</th><th>Finding</th><th style="width:110px">Severity</th><th style="width:130px">Status</th><th style="width:130px">Owner</th></tr></thead>
+        <tbody>
+          <tr class="row"><td class="mono">R-01</td><td class="cell-t"><b>No in-app consent withdrawal</b><span>DPDPA · CH2.CONSENT.3</span></td><td><span class="sev high">High</span></td><td class="state">Open</td><td class="mono">Client</td></tr>
+          <tr class="row"><td class="mono">R-02</td><td class="cell-t"><b>Three service accounts exempt from MFA</b><span>ISO 27001 · A.8.5</span></td><td><span class="sev high">High</span></td><td class="state">In progress</td><td class="mono">Client</td></tr>
+          <tr class="row"><td class="mono">R-03</td><td class="cell-t"><b>DR failover exceeded the 4-hour RTO</b><span>ISO 27001 · A.5.30</span></td><td><span class="sev med">Medium</span></td><td class="state">In progress</td><td class="mono">Shared</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═════════ SCREEN 3 · REVIEW QUEUE ═════════ -->
+  <div class="screen" id="scr-s3">
+    <div class="top"><span class="crumb">Meridian Ledger Technologies › FY2026 programme › <b>Review</b></span><span class="sp"></span>
+      <span class="cut"><i>PERIOD</i>1 Apr 2025 – 31 Mar 2026</span><span class="cut"><i>EVIDENCE CUT-OFF</i>15 Mar 2026</span></div>
+    <div class="page" style="padding-bottom:40px">
+      <div class="head" style="padding-bottom:18px">
+        <div>
+          <div class="eyebrow">Review · Reviewing as Priya Sharma</div>
+          <h1 style="margin-top:8px;font-size:44px">3 of 6 decided</h1>
+        </div>
+        <span class="mono">J next · K previous · A approve · E edit · X reject</span>
+      </div>
+
+      <div class="rq">
+        <div class="rq-list">
+          <div class="hd eyebrow">Open · 3</div>
+          <div class="rq-item cur"><b>Access rights</b><span class="mono">ISO.A5.18</span><span class="o non">Non-compliant</span></div>
+          <div class="rq-item"><b>Consent withdrawal mechanism</b><span class="mono">CH2.CONSENT.3</span><span class="o non">Non-compliant</span></div>
+          <div class="rq-item"><b>Disaster recovery testing</b><span class="mono">ISO.A5.30</span><span class="o part">Partial</span></div>
+          <div class="hd eyebrow" style="border-top:1px solid var(--rule)">Decided · 3</div>
+          <div class="rq-item done"><b>Security safeguards</b><span class="mono">CH2.SECURITY.1</span><span class="o part">Partial</span></div>
+          <div class="rq-item done"><b>Record of processing</b><span class="mono">CH3.ACCESS.1</span><span class="o ok">Compliant</span></div>
+          <div class="rq-item done"><b>Information security policy</b><span class="mono">ISO.A5.1</span><span class="o ok">Compliant</span></div>
+        </div>
+
+        <div class="rq-detail">
+          <div class="rq-top">
+            <div class="meta"><span class="mono">ISO 27001 · A.5.18 · v2</span><span class="sev high">High risk</span><span class="state">AI proposal · not yet reviewed</span></div>
+            <h2>Access rights</h2>
+            <div class="meta"><span>Shared with DPDPA CH3.ACCESS.1: evidence read once</span><a class="cite" href="#" style="color:var(--accent)">Workpaper trace →</a></div>
+          </div>
+          <div class="rq-body">
+            <div class="pane">
+              <h4>Proposed conclusion</h4>
+              <dl>
+                <div class="field"><dt>Outcome</dt><dd><span class="o non">Non-compliant</span></dd></div>
+                <div class="field"><dt>Rationale</dt><dd>Quarterly access reviews skipped three production systems.</dd></div>
+                <div class="field"><dt>Gap</dt><dd>Three production systems were left out of the quarterly access review.</dd></div>
+                <div class="field"><dt>Recommended</dt><dd>Extend the quarterly access review to every production system.</dd></div>
+              </dl>
+              <h4 style="margin-top:22px">Criteria</h4>
+              <div class="check y"><i></i><span>A documented access review procedure exists</span></div>
+              <div class="check n"><i></i><span>Reviews cover all production systems</span></div>
+              <div class="check y"><i></i><span>Reviews are completed on a quarterly cadence</span></div>
+            </div>
+            <div class="pane">
+              <h4>Evidence</h4>
+              <div class="quote">Access reviews were completed for <mark>11 of 14 production systems</mark>; the payments ledger, card vault and data warehouse were not reviewed.</div>
+              <div class="cite">access_review_q1.docx · p. 2 · §3.1 · current version · cut-off respected</div>
+              <h4 style="margin-top:24px">Evidence quality</h4>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill">Current version</span><span class="pill">Quote found in evidence</span><span class="pill warn">Scope not recorded</span></div>
+              <h4 style="margin-top:24px">If rejected</h4>
+              <p style="font-size:13px;color:var(--ink-2)">The conclusion returns to analysis. Approved conclusions are locked and are never overwritten by re-analysis.</p>
+            </div>
+          </div>
+          <div class="act">
+            <button class="btn pri">Approve <kbd>A</kbd></button>
+            <button class="btn">Edit and approve <kbd>E</kbd></button>
+            <button class="btn ghost">Reject <kbd>X</kbd></button>
+            <span class="sp">Decision is recorded against your name and the evidence version shown.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<script>
+const sc=[...document.querySelectorAll('.screen')], bt=[...document.querySelectorAll('.mock .tabs button')];
+bt.forEach(b=>b.onclick=()=>{sc.forEach(s=>s.classList.toggle('on',s.id==='scr-'+b.dataset.s));bt.forEach(x=>x.setAttribute('aria-pressed',x===b));window.scrollTo(0,0);history.replaceState(null,'','#'+b.dataset.s);const idx={s1:0,s2:1,s3:2}[b.dataset.s];document.querySelectorAll('.nav a').forEach((a,i)=>{if(i===idx)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')})});
+const t=document.getElementById('th');
+t.onclick=()=>{const d=document.documentElement;const n=d.dataset.theme==='dark'?'light':'dark';d.dataset.theme=n;t.setAttribute('aria-pressed',n==='dark');t.textContent=n==='dark'?'Light mode':'Dark mode'};
+const h=location.hash.slice(1); if(h&&document.getElementById('scr-'+h)) bt.find(b=>b.dataset.s===h).click();
+
+const P={
+ petrol:{n:'Petrol',l:['#0E5560','#FFFFFF','#DCE9EB'],d:['#4FB3C0','#06191C','#12292D'],r:['#4FB3C0','#06191C']},
+ indigo:{n:'Indigo',l:['#2B3490','#FFFFFF','#E0E2F6'],d:['#8C98F5','#0B0F33','#1A1E45'],r:['#8C98F5','#0B0F33']},
+ aubergine:{n:'Aubergine',l:['#4B2A5C','#FFFFFF','#E9DFEE'],d:['#C49BD6','#1E0F28','#2C1A38'],r:['#C49BD6','#1E0F28']},
+ graphite:{n:'Graphite',l:['#121418','#FFFFFF','#E4E2DC'],d:['#ECEAE4','#121418','#2A2E35'],r:['#E9E7E1','#121418']}
+};
+const acc=document.getElementById('acc');
+function setAcc(k){const p=P[k],dark=document.documentElement.dataset.theme==='dark',v=dark?p.d:p.l,r=document.documentElement.style;
+ r.setProperty('--accent',v[0]);r.setProperty('--accent-ink',v[1]);r.setProperty('--accent-soft',v[2]);r.setProperty('--rail-accent',p.r[0]);r.setProperty('--rail-accent-ink',p.r[1]);
+ acc.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));window.__acc=k}
+Object.entries(P).forEach(([k,p])=>{const b=document.createElement('button');b.dataset.k=k;b.textContent=p.n;b.onclick=()=>setAcc(k);acc.appendChild(b)});
+setAcc('petrol');
+const _th=t.onclick;t.onclick=()=>{_th();setAcc(window.__acc)};
+const q=new URLSearchParams(location.search).get('accent');if(q&&P[q])setAcc(q);
+if(location.search.includes('dark')) t.click();
+</script>
+</body>
+</html>

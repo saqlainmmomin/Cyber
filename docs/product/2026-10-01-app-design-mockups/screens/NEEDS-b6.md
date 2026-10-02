@@ -1,0 +1,2 @@
+- File dropzone and touch-size (44px) field/select variant: client upload page uses a native file input inside `.field` with inline height, and `--h:44px` on `.btn`. A shared `.dropzone` and a `.touch` size modifier are needed before build.
+- Page-level toolbar for a segmented filter plus search above long lists (SoA controls): built with `.seg` only.

@@ -1,0 +1,4 @@
+- Date input styling: the period start, period end, evidence cut-off and target date fields use a native date input inside `.field`. Needs the date picker styling already listed as missing in the design system (b5-basis, b5-findings, b5-finding-card).
+- Popover or disclosure: the "Create finding", "Add action", domains and history controls use native `details` with `.btn.ghost.sm` on the summary. A styled disclosure component would replace this.
+- Stacked bar for domain distribution: the report shows domain status as dot and text rows because the system has no bar chart. The old template had a stacked compliance bar per chapter.
+- Contained modal: the confirm-release state positions `.scrim-modal` absolutely inside a wrapper so it can sit inside a state section. The real modal is fixed, as in the shared CSS.

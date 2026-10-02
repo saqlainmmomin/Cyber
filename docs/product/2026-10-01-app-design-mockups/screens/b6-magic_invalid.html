@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex, nofollow">
+<title>Kestrel Advisory evidence upload</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
+</head>
+<body data-default="expired">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-8 8"/></symbol>
+</svg>
+<main style="width:100%;max-width:520px;margin:0 auto;padding:var(--s-6) var(--s-4) var(--s-12)">
+<div class="brand" style="padding:0;margin-bottom:var(--s-8)"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Kestrel Advisory</div>
+<div data-state="expired">
+<div class="solid" style="padding:var(--s-8) var(--s-6);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s-3)">
+<svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-clock"/></svg><h1 style="font-size:var(--t-lg);font-weight:600">This link has expired</h1><p style="color:var(--text-2);max-width:36ch">It expired on 15 Oct 2026. Ask Kestrel Advisory to send you a new one.</p>
+<a class="btn primary" href="mailto:requests@kestreladvisory.example" style="--h:44px;width:100%;margin-top:var(--s-3)">Email Kestrel Advisory</a></div>
+</div>
+<div data-state="revoked" hidden>
+<div class="solid" style="padding:var(--s-8) var(--s-6);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s-3)">
+<svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-alert"/></svg><h1 style="font-size:var(--t-lg);font-weight:600">This link was turned off</h1><p style="color:var(--text-2);max-width:36ch">Kestrel Advisory turned this link off. Ask them for a new one if you still need to send files.</p>
+<a class="btn primary" href="mailto:requests@kestreladvisory.example" style="--h:44px;width:100%;margin-top:var(--s-3)">Email Kestrel Advisory</a></div>
+</div>
+<div data-state="unknown" hidden>
+<div class="solid" style="padding:var(--s-8) var(--s-6);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s-3)">
+<svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-alert"/></svg><h1 style="font-size:var(--t-lg);font-weight:600">We could not find this link</h1><p style="color:var(--text-2);max-width:36ch">Check that the whole address was copied. If it still fails, ask Kestrel Advisory for a new link.</p>
+<a class="btn primary" href="mailto:requests@kestreladvisory.example" style="--h:44px;width:100%;margin-top:var(--s-3)">Email Kestrel Advisory</a></div>
+</div>
+</main>
+<script>const q=new URLSearchParams(location.search),R=document.documentElement;
+if(q.has('dark'))R.dataset.theme='dark';
+if(q.get('accent'))R.dataset.accent=q.get('accent');
+const st=q.get('state')||document.body.dataset.default;
+document.querySelectorAll('[data-state]').forEach(e=>e.hidden=e.dataset.state!==st);
+document.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;e.preventDefault();const sc=t.closest('[data-scope]');
+ sc.querySelectorAll('[data-tab]').forEach(a=>a.setAttribute('aria-selected',a===t));
+ sc.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab)});
+</script>
+</body></html>
