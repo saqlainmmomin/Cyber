@@ -28,3 +28,85 @@ After Saqlain approves the flow map and the revised screens: update `docs/produc
 
 ## Report back
 Append a `## Results` section here: what changed, screens added or removed, the approved flow map, open questions, and what Saqlain still has to decide.
+
+## Results
+
+**Status (2026-10-02): all four requested changes and the settled fixes are applied. The flow map is approved. The revised screens still need Saqlain's look before the build "Then" steps start.**
+
+### Flow map (approved)
+- `docs/product/2026-10-01-app-design-mockups/flow-map.html` contains the level diagram, the journey diagram with the client-request loop and the findings branch, a stage-by-stage table (where each stage lives, what happens, the main button, the screens), and the list of changes.
+- Saqlain approved it on 2 Oct and chose the recommended option on every question:
+  - **Tabs:** engagement tabs are Overview, Evidence, Findings and actions, Reports. Assessment tabs are Overview, Scope, Questionnaire, Review, Report.
+  - **Stepper:** one stepper (Scope, Evidence, Questionnaire, Review, Report), on the assessment Overview only. Analysis runs inside Review.
+  - **Evidence:** lives on the engagement only. The assessment's Evidence step opens it filtered to that assessment.
+  - **Single assessment:** an engagement with one assessment opens straight on that assessment.
+  - **Extra features:** all four stay (Add assessment, Export actions, Open current report, Email the firm). Saqlain called them "all good features".
+- `screens/IA-SPEC.md` is the binding spec the screens follow: the side menu, tab rows, full breadcrumbs, sub-view `.seg` groups, and where every screen lives.
+
+### What changed
+1. **Retention.**
+   - Removed from `b1-client_detail` (and its save and error states) and from `b2-engagement_detail`.
+   - Added as "Keep archived engagements for" in `b1-firm_settings`, under data housekeeping. The page's one Save changes button moved to the page header.
+   - The engagement keeps only Archive, as a ghost button.
+2. **Evidence.**
+   - New `b4-evidence.html` (Engagement / Evidence / Inventory). Every item shows source (Upload, AWS, Client link, Reused), assessment, supported control codes and status.
+   - States: default, upload, filtered, empty, loading, error, and all (the cross-engagement view from the side menu).
+   - Status labels follow the real states: Scanning (quarantined), Available, Rejected, Out of date. The app has no "in review" or "accepted" state for evidence.
+   - Desk review, AWS, reuse, detail and cited-text pages are now sub-pages of Evidence. Desk review is retitled "Pre-fill questionnaire" and AWS "Pull from AWS".
+   - `b6-magic_links` is the Requests view. `b6-rfi` is one assessment's request.
+   - Remediation moved to its own tab: `b2-remediation_tracker`, retitled "Findings and actions".
+3. **Flow.**
+   - Every staff screen now has the complete side menu (Home, Clients, Engagements, Review, Evidence, Reports, Settings), the right tab row and full breadcrumbs.
+   - Review pages (queue, conclusions, findings, workpaper) and Report pages (report, versions, applicability, basis, release, compare) sit under assessment tabs instead of floating.
+   - `b3-hub` (assessment Overview) has stage states (Not started, Evidence, Questionnaire, Review, Report), and its primary button follows the stage.
+   - `b2-engagement_detail` has no stepper. It shows assessments with Stage and Next step, plus three summary cards.
+4. **Client links.** Each link is now a request card showing:
+   - the contact
+   - "From RFI version N"
+   - status
+   - an "N of M received" progress bar
+   - a per-item checklist with files and times
+   - the expiry
+
+   The new-link form picks items with tick boxes. The client upload page is a mobile-first checklist, with a choose-file control per item, firm accent only, and "Powered by Yozora". New components (`.req*`, `.mk`) are in `yozora-patterns.css` and the gallery.
+5. **Settled fixes.**
+   - Disabled and invented primaries were removed in about 30 states across b1 to b6. The full list is in the agent report, summarised in the commit.
+   - Control codes now show in small muted text in lists (SoA, conclusions, review queue, report, workpaper, desk review, comparison, evidence).
+   - Invented control counts and "Roadmap" tags were removed from the new-engagement form.
+   - The kebab menu overflow in `b7-menus-popovers` at 390 is fixed.
+   - Firm Settings has a new "Contact email for clients" field, which backs the kept "Email the firm" button.
+   - The b7 screens got the current side menu.
+6. **Docs.**
+   - `yozora-migration-map.md` has a revision note, and the rows for assessment, client_detail, engagement_detail, engagement_retention, remediation_tracker, integrated_reports, aws_evidence, documents_tab, document_list, magic_links, magic/upload and rfi are updated.
+   - `approval-walkthrough.html` now has a revision note linking the flow map, the new Evidence tile, and regenerated thumbnails.
+
+### Screens added and removed
+- **Added:** `screens/b4-evidence.html`, `flow-map.html` (with a screenshot, `flow-map-1440.png`) and `screens/IA-SPEC.md`.
+- **Removed (moved to `superseded/`):** `b4-documents_tab.html` and `b4-document_list.html`, both folded into the evidence inventory.
+- There are now 61 screens.
+
+### Checks
+- **Playwright:** 984 loads, covering every b1 to b7 screen and every state-bar state at 1440, 1024 and 390, light and dark. Results: no horizontal overflow, no uppercase, no disabled primaries, at most one visible primary, no console errors apart from the favicon 404, and every app-shell page has the full side menu.
+  - The b5 files stack their states on one page, so a whole-page count shows several primaries. Their per-state counts were checked by the agent that edited them (420 loads, `?state=` per state).
+- **Other checks:** `tokens_tool.py check` passes. `tests/test_p6_2b_dpdpa_criteria.py` passes (31, including the file-set guard).
+- **Visual review:** I looked at the flow map in light, dark and 390, and at evidence, engagement overview, assessment overview, review queue and client links at full size. I did not look at every other screen at full size.
+
+### Corrections and deviations
+- **Evidence reuse wording:** my first spec said evidence is reused "from an earlier engagement". The app (`app/services/evidence_reuse.py`) reuses evidence between assessments of one engagement, so the copy now says "Reuse from another assessment".
+- **Client links:**
+  - The real app has no client contact name or email on a link. The cards show both, which needs backend support.
+  - Items are tick boxes from the RFI, so free-text items are dropped. The link token is shown once, at creation only.
+- **Small screens:** at 390 the breadcrumb hides the client and engagement levels on deep pages. A proper breadcrumb overflow component is still missing from the CSS (already listed in the design doc).
+- **b2-engagement_purge:** no tab row; it is a destructive flow reached from Archive.
+- **b7-mobile-shell-sheet:** the clipped button could not be reproduced, so the file is unchanged.
+
+### Open questions / Saqlain still has to decide
+1. **Approve the revised screens:**
+   - Start at `approval-walkthrough.html` or `flow-map.html` (served on :8010).
+   - Then: update `yozora-design-system.md` (tabs, sub-view `.seg`, stepper placement, `.req` components), regenerate the S1 to S9 handoffs, and hand S1 to Codex.
+2. **Backend changes the kept features need:** a client contact on magic links, a firm contact email, Add assessment, and Export actions.
+3. **Design choices:**
+   - `b6-rfi` stacks two `.seg` rows (Inventory/Requests, then Items/Versions/Client links). Merge them?
+   - Should "Pre-fill questionnaire" be a ghost button on the inventory (current) or go in the "Add from" menu?
+   - Framework tabs inside Report, SoA and Compare are still a `.tabs` row under the assessment tabs. Keep, or switch to a `.seg`?
+4. Trademark search for Yozora (gates Track 4).

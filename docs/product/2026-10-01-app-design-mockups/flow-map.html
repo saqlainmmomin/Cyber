@@ -1,0 +1,147 @@
+<!doctype html><html lang="en" data-theme="light" data-accent="midnight"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Engagement flow map</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../design/yozora-tokens.css"><link rel="stylesheet" href="../../../design/yozora-components.css"><link rel="stylesheet" href="../../../design/yozora-patterns.css">
+<style>
+.w{max-width:1120px;margin:0 auto;padding:var(--s-8) var(--s-6) var(--s-16)}
+.w h2{margin-top:var(--s-12)}
+.w > p.sub{max-width:72ch}
+.lvl{display:grid;grid-template-columns:180px minmax(0,1fr);gap:var(--s-4);align-items:start;padding:var(--s-5);margin-top:var(--s-3)}
+.lvl + .lvl{margin-top:var(--s-3)}
+.lvl b{font-weight:500}
+.lvl .t{display:flex;flex-wrap:wrap;gap:var(--s-2);margin-top:2px}
+.tab-chip{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:var(--r-full);box-shadow:inset 0 0 0 1px var(--line-strong);font-size:var(--t-sm);color:var(--text)}
+.tab-chip.new{box-shadow:inset 0 0 0 1.5px var(--accent-text);color:var(--accent-text)}
+.lvl .note{grid-column:2;font-size:var(--t-sm);color:var(--text-2)}
+.down{display:flex;justify-content:center;color:var(--muted);height:18px}
+.down svg{width:16px;height:16px}
+.flow{padding:var(--s-6);margin-top:var(--s-4);overflow-x:auto}
+.flow svg{display:block;width:100%;min-width:860px;height:auto}
+.flow text{font-family:Inter,system-ui,sans-serif}
+.stage-table td{vertical-align:top}
+.stage-table td:first-child{font-weight:500;white-space:nowrap}
+.stage-table a{color:var(--accent-text)}
+.stage-table .btn{pointer-events:none;white-space:normal;height:auto;min-height:28px;padding:4px 12px;text-align:left}
+.chg{margin-top:var(--s-4);padding:var(--s-5) var(--s-6)}
+.chg li{margin:6px 0 6px 18px;color:var(--text-2)}
+.chg li b{color:var(--text);font-weight:500}
+.ask{margin-top:var(--s-4);padding:var(--s-5) var(--s-6)}
+.ask h3{font-weight:500}
+.ask p{color:var(--text-2);margin-top:4px}
+.ask + .ask{margin-top:var(--s-3)}
+@media (max-width:720px){.stage-table th,.stage-table td{padding-left:10px;padding-right:10px}.stage-table td:first-child{white-space:normal}.w{padding:var(--s-6) var(--s-4) var(--s-12)}.lvl{grid-template-columns:1fr}.lvl .note{grid-column:1}.stage-table .hide-sm{display:none}}
+</style></head><body><div class="w">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></symbol></svg>
+
+<h1>Engagement flow map</h1>
+<p class="sub" style="margin-top:6px">How one engagement moves from creation to a released report, where each screen lives, and what the main button is at every stage. Approved by Saqlain on 2 Oct 2026; the mockups follow it (see <code>screens/IA-SPEC.md</code>).</p>
+
+<h2>How the app is organised</h2>
+<p class="sub">Four levels. Every page's breadcrumb shows the levels above it, so you always know which client, engagement and assessment you are in.</p>
+
+<div class="glass lvl"><b>Side menu</b><div class="t"><span class="tab-chip">Home</span><span class="tab-chip">Clients</span><span class="tab-chip">Engagements</span><span class="tab-chip">Review</span><span class="tab-chip">Evidence</span><span class="tab-chip">Reports</span><span class="tab-chip">Settings</span></div>
+<div class="note">Review, Evidence and Reports are cross-engagement inboxes: the same lists as inside an engagement, with an engagement column added. Settings now holds the firm's retention period.</div></div>
+<div class="down"><svg><use href="#i-down"/></svg></div>
+<div class="glass lvl"><b>Client</b><div class="t"><span class="tab-chip">Engagements list</span></div>
+<div class="note">Client name, contacts and their engagements. Nothing else; retention has moved to Settings.</div></div>
+<div class="down"><svg><use href="#i-down"/></svg></div>
+<div class="glass lvl"><b>Engagement</b><div class="t"><span class="tab-chip">Overview</span><span class="tab-chip new">Evidence</span><span class="tab-chip new">Findings and actions</span><span class="tab-chip">Reports</span></div>
+<div class="note">One client, one review period. Holds the work shared by its assessments: the single evidence inventory, the findings and their remediation actions, and the combined reports. Archive is a quiet header action.</div></div>
+<div class="down"><svg><use href="#i-down"/></svg></div>
+<div class="glass lvl"><b>Assessment</b><div class="t"><span class="tab-chip">Overview</span><span class="tab-chip">Scope</span><span class="tab-chip">Questionnaire</span><span class="tab-chip new">Review</span><span class="tab-chip">Report</span></div>
+<div class="note">One scoped part of the client (for example head office) assessed against one or more frameworks. The stepper lives here. Outlined tabs are new or renamed.</div></div>
+
+<h2>The journey</h2>
+<p class="sub">The five stepper stages of an assessment, with the creation steps before it and the loop that brings work back: missing evidence goes back to the client as a request. Approved gaps branch off into findings and actions.</p>
+<div class="glass flow">
+<svg viewBox="0 0 1060 360" role="img" aria-label="Engagement journey: create client and engagement, add assessment, then scope, evidence, questionnaire, review and report. Missing evidence loops back to evidence through a client request. Findings from review go to findings and actions.">
+ <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" style="fill:var(--muted)"/></marker></defs>
+ <!-- setup -->
+ <g style="font-size:13px">
+  <rect x="10" y="40" width="130" height="64" rx="10" style="fill:var(--solid);stroke:var(--line-strong)"/>
+  <text x="75" y="68" text-anchor="middle" style="fill:var(--text);font-weight:500">Create</text>
+  <text x="75" y="88" text-anchor="middle" style="fill:var(--muted);font-size:12px">client, engagement</text>
+  <line x1="140" y1="72" x2="168" y2="72" style="stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+ </g>
+ <!-- stepper band -->
+ <rect x="172" y="20" width="878" height="104" rx="14" style="fill:none;stroke:var(--line-strong);stroke-dasharray:4 4"/>
+ <text x="186" y="40" style="fill:var(--muted);font-size:12px">Assessment stepper</text>
+ <g style="font-size:13px">
+  <rect x="186" y="50" width="152" height="60" rx="10" style="fill:var(--solid);stroke:var(--line-strong)"/>
+  <text x="262" y="75" text-anchor="middle" style="fill:var(--text);font-weight:500">Scope</text>
+  <text x="262" y="95" text-anchor="middle" style="fill:var(--muted);font-size:12px">what applies</text>
+  <line x1="338" y1="80" x2="358" y2="80" style="stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+  <rect x="362" y="50" width="152" height="60" rx="10" style="fill:var(--solid);stroke:var(--accent-text);stroke-width:1.5"/>
+  <text x="438" y="75" text-anchor="middle" style="fill:var(--text);font-weight:500">Evidence</text>
+  <text x="438" y="95" text-anchor="middle" style="fill:var(--muted);font-size:12px">collect, pre-fill</text>
+  <line x1="514" y1="80" x2="534" y2="80" style="stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+  <rect x="538" y="50" width="152" height="60" rx="10" style="fill:var(--solid);stroke:var(--line-strong)"/>
+  <text x="614" y="75" text-anchor="middle" style="fill:var(--text);font-weight:500">Questionnaire</text>
+  <text x="614" y="95" text-anchor="middle" style="fill:var(--muted);font-size:12px">answer, confirm</text>
+  <line x1="690" y1="80" x2="710" y2="80" style="stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+  <rect x="714" y="50" width="152" height="60" rx="10" style="fill:var(--solid);stroke:var(--line-strong)"/>
+  <text x="790" y="75" text-anchor="middle" style="fill:var(--text);font-weight:500">Review</text>
+  <text x="790" y="95" text-anchor="middle" style="fill:var(--muted);font-size:12px">analysis, approve</text>
+  <line x1="866" y1="80" x2="886" y2="80" style="stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+  <rect x="890" y="50" width="146" height="60" rx="10" style="fill:var(--solid);stroke:var(--line-strong)"/>
+  <text x="963" y="75" text-anchor="middle" style="fill:var(--text);font-weight:500">Report</text>
+  <text x="963" y="95" text-anchor="middle" style="fill:var(--muted);font-size:12px">sign off, release</text>
+ </g>
+ <!-- RFI loop -->
+ <path d="M790 110 V196 H468" style="fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"/>
+ <path d="M408 196 H438 V114" style="fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4" marker-end="url(#ar)"/>
+ <rect x="408" y="176" width="60" height="40" rx="8" style="fill:var(--solid);stroke:var(--line-strong)"/>
+ <text x="438" y="201" text-anchor="middle" style="fill:var(--text);font-size:12px;font-weight:500">Client</text>
+ <text x="626" y="188" text-anchor="middle" style="fill:var(--text-2);font-size:12px">Missing evidence: request sent as a client link</text>
+ <text x="300" y="232" text-anchor="middle" style="fill:var(--text-2);font-size:12px">Client uploads on their phone; files land in Evidence</text>
+ <!-- findings branch -->
+ <path d="M820 110 V286 H850" style="fill:none;stroke:var(--muted);stroke-width:1.5" marker-end="url(#ar)"/>
+ <rect x="854" y="256" width="196" height="60" rx="10" style="fill:var(--solid);stroke:var(--accent-text);stroke-width:1.5"/>
+ <text x="952" y="281" text-anchor="middle" style="fill:var(--text);font-size:13px;font-weight:500">Findings and actions</text>
+ <text x="952" y="301" text-anchor="middle" style="fill:var(--muted);font-size:12px">owners, due dates, verify</text>
+ <text x="810" y="246" text-anchor="end" style="fill:var(--text-2);font-size:12px">Approved gaps become findings</text>
+ <!-- versions -->
+ <text x="963" y="142" text-anchor="middle" style="fill:var(--text-2);font-size:12px">New evidence gives a</text>
+ <text x="963" y="158" text-anchor="middle" style="fill:var(--text-2);font-size:12px">new version to compare</text>
+ <!-- legend -->
+ <rect x="10" y="300" width="14" height="14" rx="3" style="fill:var(--solid);stroke:var(--accent-text);stroke-width:1.5"/>
+ <text x="32" y="312" style="fill:var(--text-2);font-size:12px">Lives on the engagement, shared by its assessments</text>
+ <line x1="10" y1="336" x2="26" y2="336" style="stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"/>
+ <text x="32" y="340" style="fill:var(--text-2);font-size:12px">Loop that brings work back</text>
+</svg>
+</div>
+
+<h2>Stage by stage</h2>
+<p class="sub">The main button is the one primary on the assessment Overview at that stage; it moves forward as the work does. Screen names link to the current mockups, some of which change once this is approved.</p>
+<div class="solid mt" style="overflow-x:auto"><table class="static stage-table"><thead><tr><th>Stage</th><th>Where it lives</th><th class="hide-sm">What happens</th><th>Main button</th><th class="hide-sm">Screens</th></tr></thead><tbody>
+<tr><td>Create</td><td>Clients, then Engagements</td><td class="hide-sm">Add the client, open an engagement for a review period with an evidence cut-off, add an assessment and pick its frameworks.</td><td><span class="btn primary sm">Create engagement</span></td><td class="hide-sm"><a href="screens/b1-clients.html">Clients</a>, <a href="screens/b1-client_detail.html">client detail</a>, <a href="screens/b2-new_engagement.html">new engagement</a></td></tr>
+<tr><td>Scope</td><td>Assessment, Scope tab</td><td class="hide-sm">Mark what is in and out of scope per framework.</td><td><span class="btn primary sm">Save scope</span></td><td class="hide-sm"><a href="screens/b3-scope.html">Scope</a>, <a href="screens/b3-scope-complete.html">scope complete</a></td></tr>
+<tr><td>Evidence</td><td>Engagement, Evidence tab (filtered to this assessment)</td><td class="hide-sm">One inventory of everything collected: uploads, AWS pulls, files clients send through links, and evidence reused from another assessment in the engagement. Desk review reads the documents and pre-fills the questionnaire.</td><td><span class="btn primary sm">Upload evidence</span><br><span class="t-sub">then Pre-fill questionnaire</span></td><td class="hide-sm">New evidence inventory; replaces <a href="screens/b4-documents_tab.html">documents</a>, <a href="screens/b4-aws_evidence.html">AWS evidence</a>, <a href="screens/b6-magic_links.html">client links</a>; keeps <a href="screens/b4-evidence_detail.html">evidence detail</a>, <a href="screens/b4-evidence_reuse.html">reuse</a>, <a href="screens/b4-desk_review.html">desk review</a></td></tr>
+<tr><td>Questionnaire</td><td>Assessment, Questionnaire tab</td><td class="hide-sm">Screening (DPDPA only), business context, then the question sections, with answers already pre-filled from documents waiting for confirmation.</td><td><span class="btn primary sm">Continue questionnaire</span><br><span class="t-sub">at the end: Run analysis</span></td><td class="hide-sm"><a href="screens/b3-questionnaire.html">Questionnaire</a>, <a href="screens/b3-screening-form.html">screening</a>, <a href="screens/b3-question-step.html">context</a>, <a href="screens/b3-section-questions.html">sections</a>, <a href="screens/b3-followups.html">follow-ups</a></td></tr>
+<tr><td>Review</td><td>Assessment, Review tab</td><td class="hide-sm">Analysis runs, then the reviewer works the queue: approve, edit or reject each conclusion, check the cited evidence, and turn approved gaps into findings. Missing evidence is added to a client request.</td><td><span class="btn primary sm">Review 6 conclusions</span></td><td class="hide-sm"><a href="screens/b5-analysis.html">Analysis</a>, <a href="screens/b5-review-queue.html">review queue</a>, <a href="screens/b5-requirement-card.html">requirement</a>, <a href="screens/b5-findings.html">findings</a>, <a href="screens/b4-workpaper.html">workpaper</a></td></tr>
+<tr><td>Report</td><td>Assessment, Report tab</td><td class="hide-sm">Confirm the period and sign-off, release, then generate the gap report, board report and statement of applicability. Each generation is a version you can compare.</td><td><span class="btn primary sm">Release report</span><br><span class="t-sub">then Generate board report</span></td><td class="hide-sm"><a href="screens/b5-report.html">Report</a>, <a href="screens/b5-basis.html">basis</a>, <a href="screens/b5-release.html">release</a>, <a href="screens/b6-report_snapshots.html">versions</a>, <a href="screens/b6-soa.html">applicability</a>, <a href="screens/b6-comparison.html">compare</a></td></tr>
+<tr><td>Client request</td><td>Engagement, Evidence tab, Requests view</td><td class="hide-sm">Missing items from review become a request for information. Sending it creates a client link that lists exactly what was asked for and tracks what has arrived.</td><td><span class="btn primary sm">Send request</span></td><td class="hide-sm"><a href="screens/b6-rfi.html">RFI</a>, <a href="screens/b6-magic_links.html">client links</a>, <a href="screens/b6-magic_upload.html">client upload</a></td></tr>
+<tr><td>Actions</td><td>Engagement, Findings and actions tab</td><td class="hide-sm">Every finding across the engagement's assessments with its actions, owners, due dates and verification. Replaces the remediation tracker.</td><td><span class="btn primary sm">Add action</span></td><td class="hide-sm"><a href="screens/b2-remediation_tracker.html">Remediation tracker</a>, <a href="screens/b5-finding-card.html">finding</a></td></tr>
+</tbody></table></div>
+
+<h2>What changes from the current mockups</h2>
+<div class="glass chg"><ul>
+<li><b>One stepper, on the assessment only:</b> Scope, Evidence, Questionnaire, Review, Report. The engagement page had a second, different stepper; it goes. The engagement Overview shows each assessment's current stage and next action instead.</li>
+<li><b>Evidence is one place.</b> The assessment Documents tab, the engagement AWS evidence tab and the client links page become one Evidence tab on the engagement: an Inventory view (every item with its source, status and the requirements it supports) and a Requests view (what was asked of the client and what has arrived). Upload, AWS pull, reuse and desk review are actions on that screen, not separate tabs.</li>
+<li><b>Remediation moves</b> out from beside AWS evidence into its own Findings and actions tab.</li>
+<li><b>Review gets a tab.</b> Conclusions, the review queue, findings and the workpaper were floating pages with half breadcrumbs; they sit under the assessment Review tab.</li>
+<li><b>Reports split by level.</b> Assessment Report tab: one assessment's report, sign-off, versions and applicability. Engagement Reports tab: the integrated report across assessments and comparisons.</li>
+<li><b>Breadcrumbs are always complete:</b> Client / Engagement / Assessment / page.</li>
+<li><b>Retention leaves client and engagement pages</b> for firm Settings, under data housekeeping. The engagement keeps only an Archive action.</li>
+<li><b>Evidence status uses the app's real states:</b> Scanning (quarantined until the malware scan clears it), Available, Rejected, Out of date. The app has no separate in-review or accepted state for evidence; acceptance happens on the conclusions that cite it.</li>
+</ul></div>
+
+<h2>Decisions, approved 2 Oct 2026</h2>
+<div class="glass chg"><ul>
+<li><b>Structure approved:</b> engagement tabs Overview, Evidence, Findings and actions, Reports; assessment tabs Overview, Scope, Questionnaire, Review, Report; one five-stage stepper on the assessment.</li>
+<li><b>Evidence lives on the engagement only.</b> The assessment's Evidence step opens it filtered to that assessment.</li>
+<li><b>An engagement with one assessment opens straight on that assessment.</b> The engagement tabs stay one click away in the breadcrumb.</li>
+<li><b>Kept features the app does not have yet:</b> Add assessment, Export actions, Open current report, and Email the firm (which needs a new contact email field in firm Settings).</li>
+</ul></div>
+</div>
+<script>if(new URLSearchParams(location.search).has('dark'))document.documentElement.dataset.theme='dark'</script>
+</body></html>

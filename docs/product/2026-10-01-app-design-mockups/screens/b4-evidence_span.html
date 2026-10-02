@@ -45,6 +45,7 @@
 <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
 <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
 </svg>
 <div class="scrim" id="scrim"></div>
 <div class="app">
@@ -52,9 +53,9 @@
     <div class="side-in glass">
       <div class="brand"><span class="mark"><svg class="i"><use href="#i-mark"/></svg></span>Yozora</div>
       <label class="field"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search" aria-label="Search"></label>
-      <nav class="nav"><a href="#"><svg class="i"><use href="#i-home"/></svg>Home</a><a href="#"><svg class="i"><use href="#i-briefcase"/></svg>Engagements</a><a href="#"><svg class="i"><use href="#i-inbox"/></svg>Review<span class="count">3</span></a><a href="#" aria-current="page"><svg class="i"><use href="#i-folder"/></svg>Evidence</a><a href="#"><svg class="i"><use href="#i-report"/></svg>Reports</a></nav>
+      <nav class="nav" aria-label="Main"><a href="b1-home.html" data-nav="home"><svg class="i"><use href="#i-home"/></svg>Home</a><a href="b1-clients.html" data-nav="clients"><svg class="i"><use href="#i-building"/></svg>Clients</a><a href="b2-engagement_list.html" data-nav="eng" aria-current="page"><svg class="i"><use href="#i-briefcase"/></svg>Engagements</a><a href="b5-review-queue.html" data-nav="review"><svg class="i"><use href="#i-inbox"/></svg>Review<span class="count">3</span></a><a href="b4-evidence.html?state=all" data-nav="evidence"><svg class="i"><use href="#i-folder"/></svg>Evidence</a><a href="b6-report_snapshots.html" data-nav="reports"><svg class="i"><use href="#i-report"/></svg>Reports</a></nav>
       <div class="side-foot">
-        <nav class="nav"><a href="#"><svg class="i"><use href="#i-settings"/></svg>Settings</a></nav>
+        <nav class="nav"><a href="b1-firm_settings.html"><svg class="i"><use href="#i-settings"/></svg>Settings</a></nav>
         <div class="menu" id="userMenu" role="menu">
           <div class="who"><span class="avatar">PS</span><span><b>Priya Sharma</b><span>Reviewing partner</span></span></div>
           <a href="#" role="menuitem"><svg class="i"><use href="#i-user"/></svg>Profile</a>
@@ -69,12 +70,12 @@
   <div class="main">
     <div class="top">
       <button class="btn ghost icon menu-btn" aria-label="Open navigation"><svg class="i"><use href="#i-menu"/></svg></button>
-      <div class="crumb" style="overflow:hidden"><a class="hide-sm" href="#">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a class="hide-sm" href="#">FY2026 programme</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a class="hide-sm" href="b4-evidence_detail.html">Privacy notice.pdf</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><b>Cited text</b></div>
+      <div class="crumb" style="overflow:hidden"><a class="hide-sm" href="b1-client_detail.html">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a class="" href="b2-engagement_detail.html">FY2026 privacy readiness</a><svg class="i sl"><use href="#i-slash"/></svg><a class="" href="b4-evidence.html">Evidence</a><svg class="i sl"><use href="#i-slash"/></svg><a class="" href="b4-evidence_detail.html">Privacy notice.pdf</a><svg class="i sl"><use href="#i-slash"/></svg><b>Cited text</b></div>
     </div>
     <div class="page">
 <div class="seg" id="states" aria-label="Mockup state" style="flex-wrap:wrap;margin-bottom:var(--s-5)"><button aria-pressed="true" data-s="span">Cited passage</button><button aria-pressed="false" data-s="whole">Whole document</button><button aria-pressed="false" data-s="superseded">Older version</button><button aria-pressed="false" data-s="unavailable">Text unavailable</button></div>
 <div class="page-head"><div><h1>Privacy notice.pdf</h1><p class="meta-line">Version 3 · Cited for Notice to data principals · Evidence cut-off 15 Mar 2026</p></div>
-<div class="acts"><a class="btn primary" href="b4-evidence_detail.html">Open evidence record</a></div></div>
+<div class="acts"><a class="btn primary" href="b4-evidence_detail.html">Open evidence record</a></div></div><nav class="tabs" aria-label="Engagement" style="overflow-x:auto;margin-bottom:var(--s-6)"><a href="b2-engagement_detail.html">Overview</a><a href="b4-evidence.html" aria-selected="true">Evidence</a><a href="b2-remediation_tracker.html">Findings and actions</a><a href="b2-integrated_reports.html">Reports</a></nav>
 <div data-st="superseded" style="margin-bottom:var(--s-5)"><div class="alert c-medium" ><svg class="i"><use href="#i-alert"/></svg><div><b>This citation points to version 2</b>Version 3 replaced it on 12 Mar 2026. Check that the cited passage still holds in the current version.</div></div></div>
 <div data-st="unavailable" style="margin-bottom:var(--s-5)"><div class="alert c-non" ><svg class="i"><use href="#i-alert"/></svg><div><b>The extracted text of this version is no longer available</b>Open the evidence record to download the original file.</div></div></div>
 <div class="cite" data-st="span" style="background:var(--solid)"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>Privacy notice.pdf</span><span class="pg">Page 4</span><span class="sp"></span><span class="status"><span class="dot c-accent"></span>Current version</span></div><pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:var(--t-base);line-height:1.75;padding:var(--s-5) var(--s-6);margin:0;color:var(--text)">…Your rights. You may ask us to access, correct or erase your personal data, and to withdraw consent at any time from Settings in the app.
