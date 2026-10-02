@@ -576,7 +576,9 @@ APP_DESIGN_DOC_DIRS = (
 YOZORA_DESIGN_FILES = (
     "docs/product/yozora-design-system.md", "docs/product/yozora-fidelity-gate.md",
     "docs/product/yozora-migration-map.md",
-) + tuple(f"tasks/handoffs/2026-10-01-yozora-s{n}-handoff.md" for n in range(1, 10))
+) + tuple(f"tasks/handoffs/2026-10-01-yozora-s{n}-handoff.md" for n in range(1, 10)) + (
+    "tasks/handoffs/2026-10-01-yozora-mockup-approvals.md", "tasks/handoffs/2026-10-01-yozora-mockup-revisions-kickoff.md",
+)
 
 
 def test_scenario_11_only_p6_2b_files_change():
