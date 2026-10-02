@@ -17,7 +17,7 @@ Five stages, no numbers: Scope, Evidence, Questionnaire, Review, Report. Evidenc
 
 ## Sub-views inside a tab
 Use one `.seg` group under the tab row (buttons that navigate), never a second `.tabs` row:
-- Engagement Evidence: Inventory `b4-evidence.html` | Requests `b6-magic_links.html`.
+- Engagement Evidence: Inventory `b4-evidence.html` | Requests `b6-magic_links.html`. A request page (`b6-rfi`) shows only its own seg (Items | Versions | Client links); the breadcrumb leads back to Evidence and Requests.
 - Assessment Review: Queue `b5-review-queue.html` | Conclusions `b5-conclusions.html` | Findings `b5-findings.html` | Workpaper `b4-workpaper.html`.
 - Assessment Report: Report `b5-report.html` | Versions `b6-report_snapshots.html` | Applicability `b6-soa.html` (ISO 27001 only, conditional).
 
