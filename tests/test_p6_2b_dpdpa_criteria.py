@@ -570,7 +570,13 @@ APP_DESIGN_KICKOFF_FILES = (
 # Design exploration artifacts: mockups and baseline screenshots (docs only, no app code).
 APP_DESIGN_DOC_DIRS = (
     "docs/product/2026-10-01-app-design-baseline/", "docs/product/2026-10-01-app-design-mockups/",
+    "design/",
 )
+# Yozora design system docs and slice handoffs (docs only, no app code).
+YOZORA_DESIGN_FILES = (
+    "docs/product/yozora-design-system.md", "docs/product/yozora-fidelity-gate.md",
+    "docs/product/yozora-migration-map.md",
+) + tuple(f"tasks/handoffs/2026-10-01-yozora-s{n}-handoff.md" for n in range(1, 10))
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -585,5 +591,6 @@ def test_scenario_11_only_p6_2b_files_change():
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
         and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_10_FILES
         and f not in APP_DESIGN_KICKOFF_FILES and not f.startswith(APP_DESIGN_DOC_DIRS)
+        and f not in YOZORA_DESIGN_FILES
     ]
     assert offenders == [], offenders
