@@ -1135,6 +1135,7 @@ def test_scenario_16_workpaper_page_shows_basis(db, http, gate, monkeypatch):
 # ---------------------------------------------------------------------------
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 
 P6_4_AND_PROTECTED_PATHS = (
     "app/services/claude_analyzer.py",
@@ -1198,6 +1199,8 @@ P6_4_AND_PROTECTED_PATHS = (
     ":(exclude)app/services/llm_client.py",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
     *V3A_EXCLUDES,
+    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md): migration and models.
+    *YOZORA_BACKEND_EXCLUDES,
 )
 
 

@@ -562,9 +562,11 @@ P6_10_FILES = (
 
 
 # Yozora backend features (claude/yozora-backend-features): the implementing session adds every file it touches.
+from tests.yozora_backend_paths import YOZORA_BACKEND_FILES as _YOZORA_BACKEND_FILE_SET  # noqa: E402
+
 YOZORA_BACKEND_FILES = (
     "tasks/handoffs/2026-10-03-yozora-backend-features.md",
-)
+) + _YOZORA_BACKEND_FILE_SET
 
 
 # App-design kickoff (claude/app-design-kickoff): handoff docs only.

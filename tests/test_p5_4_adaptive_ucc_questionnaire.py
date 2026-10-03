@@ -25,6 +25,7 @@ from app.models.questionnaire import QuestionnaireResponse
 
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REVISION = "8b2d5f7e1c34"
 _UNSET = object()
@@ -967,6 +968,7 @@ def test_scenario_13_structural_guards(db):
         ":(exclude)app/routers/reports.py", ":(exclude)app/utils/pdf_export.py",
         ":(exclude)app/routers/review.py",
         *V3A_EXCLUDES,  # P6-8 V3-A
+        *YOZORA_BACKEND_EXCLUDES,  # Yozora backend
     ], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     assert protected.stdout == ""
     analysis_source = (REPO_ROOT / "app/routers/analysis.py").read_text()

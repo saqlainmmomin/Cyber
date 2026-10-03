@@ -39,6 +39,7 @@ from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.services import approved_report, report_basis
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PERIOD = {
@@ -79,6 +80,8 @@ P6_10_FORBIDDEN_PATHS = (
     "tests/fixtures", "tests/support", "scripts", "validation", "requirements.txt",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, theme, display font.
     *V3A_EXCLUDES,
+    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
+    *YOZORA_BACKEND_EXCLUDES,
 )
 # Existing modules that reach the LLM seam today (P6-10 adds exactly two).
 EXISTING_LLM_MODULES = {
@@ -114,7 +117,7 @@ def assert_p6_10_file_set() -> None:
     committed = git("diff", "--name-only", "main...HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     working = git("diff", "--name-only", "HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     assert committed == [] and working == [], committed + working
-    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS)  # V3-A allowance
+    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS)  # V3-A, Yozora allowances
     assert outside == [], outside
     llm_modules = {
         str(path.relative_to(REPO_ROOT))
