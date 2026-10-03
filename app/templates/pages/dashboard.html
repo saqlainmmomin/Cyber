@@ -16,6 +16,13 @@
   </a>
 </div>
 
+{% if unmigrated_count %}
+<p data-unmigrated-notice class="mb-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+  {{ unmigrated_count }} assessment{% if unmigrated_count != 1 %}s are{% else %} is{% endif %} not filed under a client.
+  <a href="/settings" class="font-medium underline">Review in Settings</a>
+</p>
+{% endif %}
+
 {% if clients %}
 <div class="space-y-4">
   {% for c in clients %}

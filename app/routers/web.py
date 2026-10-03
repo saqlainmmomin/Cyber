@@ -186,6 +186,11 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         )
         .all()
     )
+    unmigrated_count = (
+        db.query(func.count(Assessment.id))
+        .filter(Assessment.engagement_id.is_(None), Assessment.status != "archived")
+        .scalar()
+    )
     assessments_by_engagement = defaultdict(list)
     for assessment in linked:
         assessments_by_engagement[assessment.engagement_id].append(assessment)
@@ -210,6 +215,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "clients": client_cards,
             "total_client_count": len(clients),
             "total_engagement_count": len(engagements),
+            "unmigrated_count": unmigrated_count,
         },
     )
 
@@ -399,6 +405,7 @@ def engagement_detail(
 ADD_ASSESSMENT_NO_FRAMEWORK = "Select at least one framework to assess against."
 ADD_ASSESSMENT_UNKNOWN_FRAMEWORK = "One or more selected frameworks are not available for assessment yet."
 ADD_ASSESSMENT_NAME_TOO_LONG = "Assessment name must be 255 characters or fewer."
+ADD_ASSESSMENT_DUPLICATE_NAME = "This engagement already has an assessment with that name."
 ADD_ASSESSMENT_FAILED = "Unable to add the assessment. Please try again."
 
 
@@ -417,6 +424,14 @@ def _reject_archived(db: Session, engagement: Engagement) -> None:
     # this keeps the form page and the handler fail-closed too.
     if retention.archived_engagement_ids(db, {engagement.id}):
         raise HTTPException(400, retention.ARCHIVED_READ_ONLY)
+
+
+def _assessment_name_taken(db: Session, engagement: Engagement, name: str) -> bool:
+    """True when a live assessment of the engagement already shows as `name` (case-insensitive)."""
+    existing = db.query(Assessment).filter(
+        Assessment.engagement_id == engagement.id, Assessment.status != "archived"
+    )
+    return any(a.display_name.casefold() == name.casefold() for a in existing)
 
 
 def _render_new_assessment(
@@ -475,6 +490,8 @@ async def create_engagement_assessment(
         error = ADD_ASSESSMENT_UNKNOWN_FRAMEWORK
     elif len(form_values["name"]) > 255:
         error = ADD_ASSESSMENT_NAME_TOO_LONG
+    elif form_values["name"] and _assessment_name_taken(db, engagement, form_values["name"]):
+        error = ADD_ASSESSMENT_DUPLICATE_NAME
     if error:
         return _with_toast(
             _render_new_assessment(

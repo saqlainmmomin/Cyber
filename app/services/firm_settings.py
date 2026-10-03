@@ -51,7 +51,12 @@ RETENTION_INVALID = "Retention must be a whole number of years from 1 to 50."
 ACCENT_INVALID = "Choose one of the accent themes."
 HEX_INVALID = "Enter a colour as a six-digit hex code like #1C3A72."
 
-_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s.]+$")
+# Plain addresses only: no "?", "&", "%", "," or ";" (they would let a stored address add headers or
+# recipients once it is placed in a mailto: link).
+_EMAIL_PATTERN = re.compile(
+    r"[A-Za-z0-9.!#$'*+/=^_`{|}~-]+@"
+    r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+"
+)
 _HEX_PATTERN = re.compile(r"^#?([0-9A-Fa-f]{6})$")
 
 

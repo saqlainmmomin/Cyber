@@ -98,6 +98,9 @@ def test_normalize_hex_and_email_check():
     assert firm_settings.valid_email("partner@northgate.example")
     for bad in ("", "partner", "partner@", "partner@northgate", "a b@c.de", "a@b@c.de", "x" * 250 + "@a.com"):
         assert not firm_settings.valid_email(bad), bad
+    # Characters that would turn a mailto: link into extra headers or recipients.
+    for bad in ("a?bcc=x@y.com@z.com", "a@b.com?bcc=x@y.com", "a%3Fbcc=x@y.com", "a&b@c.de", "a,b@c.de", "a;b@c.de"):
+        assert not firm_settings.valid_email(bad), bad
 
 
 def test_validate_reports_every_field_at_once():
@@ -388,3 +391,13 @@ def test_downgrade_refuses_to_drop_a_stored_contact_email(tmp_path):
     with pytest.raises(RuntimeError, match="Refusing to downgrade past Yozora backend revision"):
         command.downgrade(config, "-1")
     assert _firm_row(path)[0][1] == "partner@northgate.example"
+
+
+def test_dashboard_flags_unfiled_assessments_and_links_to_settings(db, http):
+    assert "data-unmigrated-notice" not in http.get("/").text
+    legacy = Assessment(company_name="Legacy Co", industry="technology", company_size="small", selected_frameworks='["iso27001"]')
+    db.add(legacy)
+    db.commit()
+    page = http.get("/").text
+    assert "data-unmigrated-notice" in page and "1 assessment is not filed under a client" in page
+    assert 'href="/settings"' in page

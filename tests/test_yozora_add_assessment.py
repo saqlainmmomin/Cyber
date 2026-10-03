@@ -146,3 +146,13 @@ def test_name_column_migration_and_guarded_downgrade(tmp_path):
     with sqlite3.connect(path) as connection:
         assert "name" not in {row[1] for row in connection.execute("PRAGMA table_info(assessments)")}
         assert connection.execute("SELECT company_name FROM assessments WHERE id='a1'").fetchone() == ("Acme",)
+
+
+def test_duplicate_assessment_name_is_refused_case_insensitively(db, http):
+    _client, engagement, first = seed_engagement(db)
+    for name in (first.display_name, first.display_name.upper()):
+        response = _post(http, engagement.id, name=name, selected_frameworks="dpdpa")
+        assert response.status_code == 400 and web.ADD_ASSESSMENT_DUPLICATE_NAME in response.text, name
+    assert _post(http, engagement.id, name="Head office", selected_frameworks="dpdpa").status_code == 303
+    again = _post(http, engagement.id, name="head OFFICE", selected_frameworks="dpdpa")
+    assert again.status_code == 400
