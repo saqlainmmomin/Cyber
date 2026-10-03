@@ -173,4 +173,31 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+### Built
+
+- `design/tokens.json` is now the source for `app/static/css/yozora-tokens.css`, `tailwind.tokens.cjs`, and byte-identical generated copies of the component and pattern CSS. `design/yozora-tokens.css` was removed; the gallery, mockups, and mockup guides now point at the generated app token CSS. The deferred `--line-strong` values were preserved exactly.
+- `base.html` now provides the Yozora shell: responsive side navigation/drawer, top bar, breadcrumb and page-header slots, firm account menu, theme choices, `data-theme`, `data-accent`, and IA-based `aria-current`. Only Home is available in S1; later-slice destinations are not rendered as dead links. Review-count calculation is a single context-processor query when a request database session is available.
+- Inter 4.1 400/500/600, the supplied OFL licence/README, and `htmx-2.0.4.min.js` were preserved in place. The shell loads both locally; no app template requests Google Fonts or unpkg.
+- Added the pinned visual harness (`design/harness/`), lint tests/allow-list, and `tests/yozora_paths.py`. The existing white-label assertion changed from `background-color: #8b0000` to the new custom-accent contract `--accent: #8b0000`.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `python3 design/tokens_tool.py check` | Pass |
+| Focused design/shell tests | **13 passed, 6 skipped** (`RUN_VISUAL` is unset) |
+| Python compilation and `git diff --check` | Pass |
+| Tailwind config load | Pass; `darkMode` is the `[data-theme="dark"]` selector |
+| Tailwind CSS build | Not rerun: this checkout has no local `node_modules`; the generated config loads successfully with Node, but `npx` could not complete offline. |
+| Visual screenshots/baselines | Not run: this environment has neither the Playwright Python package nor a Chromium installation. The harness exits with the documented install instruction; no baseline images were fabricated. |
+| Full `pytest -q` | Collection blocked by the pre-existing environment missing `boto3`: **34 errors during collection**. |
+
+### Guards and decisions
+
+- Added `YOZORA_S1_PATHS`, `YOZORA_DESIGN_FILES`, and `YOZORA_EXCLUDES` in `tests/yozora_paths.py`. No existing scope guard was weakened or deleted.
+- Kept the S1 availability gate conservative: unavailable Clients, Engagements, Review, Evidence, Reports, and Settings links are omitted until their slices/routes land. The account menu is firm-level and theme-only while Settings is unavailable.
+- The backend accent integration from PR #99 was not present, so S1 uses the approved `midnight` default and leaves the integration point in `template_config.py`.
+
+### Open items
+
+- Install the pinned dev dependencies and Chromium, then render the S1 mockup states and commit the approved shell baselines under `design/baselines/` before the visual gate can be closed.

@@ -25,20 +25,20 @@
   transition: all 200ms ease;
 }
 .drop-zone.drag-over {
-  border-color: #1e1e50;
-  background-color: rgba(30, 30, 80, 0.04);
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
 }
 
 /* Dark mode drag-over state */
-.dark .drag-over {
-  border-color: #676fb7 !important;
-  background-color: rgba(103, 111, 183, 0.08) !important;
+[data-theme="dark"] .drag-over {
+  border-color: var(--accent) !important;
+  background-color: var(--accent-soft) !important;
 }
 
 /* Tab active state */
 .tab-active {
-  border-bottom: 2px solid #1e1e50;
-  color: #1e1e50;
+  border-bottom: 2px solid var(--accent-text);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
@@ -48,6 +48,6 @@ details[open] > summary .details-chevron {
 }
 
 /* Dark mode scrollbar */
-.dark ::-webkit-scrollbar { width: 8px; }
-.dark ::-webkit-scrollbar-track { background: #1a1a2e; }
-.dark ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar { width: var(--s-2); }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--canvas-mid); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--text-2); border-radius: var(--r-xs); }
