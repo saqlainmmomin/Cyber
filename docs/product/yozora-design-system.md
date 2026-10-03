@@ -1,6 +1,6 @@
 # Yozora design system
 
-Status: **approved by Saqlain, 3 Oct 2026**, to match the 61 screens in `docs/product/2026-10-01-app-design-mockups/screens/`. Values are not retyped here: `design/yozora-tokens.css` is the source until the generator lands, `design/tokens.json` is its checked copy (`python design/tokens_tool.py check`), `design/yozora-components.css` and `design/yozora-patterns.css` hold every component and page pattern. If this document and those files disagree, the files win and this document is wrong. The component gallery is `docs/product/2026-10-01-app-design-mockups/screens/gallery.html`. Direction: `v3-polish.html`. Where things live: `screens/IA-SPEC.md` and `flow-map.html`.
+Status: **approved by Saqlain, 3 Oct 2026**, to match the 61 screens in `docs/product/2026-10-01-app-design-mockups/screens/`. Values are not retyped here: `design/tokens.json` is the source and `design/tokens_tool.py` generates the checked application copy at `app/static/css/yozora-tokens.css`; `design/yozora-components.css` and `design/yozora-patterns.css` hold every component and page pattern. If this document and those files disagree, the files win and this document is wrong. The component gallery is `docs/product/2026-10-01-app-design-mockups/screens/gallery.html`. Direction: `v3-polish.html`. Where things live: `screens/IA-SPEC.md` and `flow-map.html`.
 
 ## Principles (each one is checkable)
 

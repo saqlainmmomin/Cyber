@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from fastapi import Request
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
@@ -58,8 +59,9 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db():
+def get_db(request: Request):
     db = SessionLocal()
+    request.state.db = db
     try:
         yield db
     finally:

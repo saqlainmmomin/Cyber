@@ -1175,6 +1175,7 @@ P6_10_APP_FILES = (
 
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 
 
 def _changed(*args: str) -> set[str]:
@@ -1195,6 +1196,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
     changed -= set(LLM_DEADLINE_FILES)
     changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
     changed -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend (tasks/handoffs/2026-10-03-yozora-backend-features.md)
+    changed -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
     p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
@@ -1202,6 +1204,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
     p6_2b += [f":(exclude){path}" for path in LLM_DEADLINE_FILES]
     p6_2b += V3A_EXCLUDES
     p6_2b += YOZORA_BACKEND_EXCLUDES  # Yozora backend
+    p6_2b += YOZORA_EXCLUDES  # Yozora S1
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
     assert forbidden == []
