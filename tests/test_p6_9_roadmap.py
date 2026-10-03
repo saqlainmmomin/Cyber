@@ -211,7 +211,7 @@ def test_scenario_4_document_roadmap_keeps_b1_actions_and_adds_groups(db, http, 
         assert section.count(f'data-initiative="{initiative["ref"]}"') == 1
         assert section.count(f'data-initiative-row="{initiative["ref"]}"') == 1
         assert initiative["title"] in section
-    assert "Access Control Baseline" in section and "2026-11-01" in section
+    assert "Access Control Baseline" in section and "1 Nov 2026" in section
 
 
 def test_scenario_5_no_actions_keeps_the_empty_state(db, http, gate, monkeypatch):
