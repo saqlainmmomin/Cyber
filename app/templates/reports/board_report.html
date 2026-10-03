@@ -1,187 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en"{% if doc.snapshot.version_label == 'Preview (not a report version)' %} data-preview="{{ doc.snapshot.version_label }}"{% endif %}>
 <head>
-  <meta charset="utf-8">
-  <title>Board report: {{ doc.company_name }}</title>
-  <meta name="author" content="{{ doc.firm_name }}">
-  <meta name="dcterms.created" content="{{ doc.snapshot.generated_at }}">
-  <style>
-    {{ font_face_css }}
-    html { font-family: {{ font_stack }}; color: #202030; font-size: 10pt; }
-    @page {
-      size: A4;
-      margin: 18mm 16mm 20mm;
-      font-family: {{ font_stack }};
-      @top-center { content: string(running-header); font-size: 8pt; color: #606070; }
-      @bottom-center { content: string(running-footer); font-size: 8pt; color: #606070; }
-      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #606070; }
-    }
-    @page :first { @top-center { content: none; } }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: {{ font_stack }}; line-height: 1.42; }
-    .running-header, .running-footer { height: 0; margin: 0; overflow: hidden; font-size: 0; }
-    .running-header { string-set: running-header content(); }
-    .running-footer { string-set: running-footer content(); }
-    h1 { font-size: 28pt; margin: 0 0 12pt; color: #1e1e50; }
-    h2 { font-size: 17pt; margin: 0 0 14pt; color: #1e1e50; }
-    h3 { font-size: 12pt; margin: 14pt 0 6pt; color: #303050; }
-    h4 { font-size: 10pt; margin: 10pt 0 4pt; color: #303050; }
-    p { margin: 4pt 0; }
-    section { break-before: page; }
-    section.cover { break-before: auto; min-height: 230mm; }
-    .eyebrow { color: #606070; font-size: 9pt; }
-    .preview { border: 1px solid #c58c00; background: #fff8dc; padding: 7pt; }
-    .meta { color: #505060; margin: 5pt 0; }
-    .callout { border-left: 3pt solid #303070; background: #f5f5fa; padding: 8pt 10pt; margin: 8pt 0; }
-    .muted { color: #606070; }
-    .small { font-size: 8.5pt; }
-    .risk { border: 1px solid #d6d6df; padding: 8pt; margin: 7pt 0; break-inside: avoid; }
-    .risk-title { font-weight: 700; color: #1e1e50; }
-    .pill { display: inline-block; border: 1px solid #c8c8d5; padding: 2pt 5pt; font-size: 8pt; }
-    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 8.5pt; }
-    th, td { border: 1px solid #d6d6df; padding: 5pt; vertical-align: top; text-align: left; }
-    th { background: #f0f0f6; color: #303050; font-weight: 700; }
-    thead { display: table-header-group; }
-    tr { break-inside: avoid; }
-    ul, ol { margin: 5pt 0 8pt; padding-left: 18pt; }
-    .empty { color: #606070; font-style: italic; }
-    .preline { white-space: pre-line; }
-    .page-break { break-before: page; }
-  </style>
+<meta charset="utf-8">
+<title>Board report: {{ doc.company_name }}</title>
+<style>
+{{ font_face_css }}
+{{ display_font_face_css }}
+@page { size: 338.67mm 190.5mm; margin: 0; }
+:root { --p1: {{ v.p1 }}; --p2: {{ v.p2 }}; --acc: {{ v.acc }}; --ink:#0B0E26; --mut:#66708B; --line:#DDE2EE; --panel:#F2F4F9; --crit:#9B1C1C; --high:#D9481E; --med:#F0A030; --low:#3C9D6B; }
+* { box-sizing:border-box; } html { font-family:{{ font_stack }}; color:var(--ink); font-size:9pt; line-height:1.3; } body { margin:0; }
+.slide { width:338.67mm; height:190.5mm; position:relative; overflow:hidden; break-after:page; background:#fff; padding:16mm 14mm 13mm; }
+.slide:last-child { break-after:auto; } .cover { background:var(--p1); color:#fff; padding:0; } .cover:after { content:""; position:absolute; right:-20mm; bottom:-55mm; width:205mm; height:205mm; border-radius:50%; background:var(--p2); opacity:.75; box-shadow:0 0 0 25mm rgba(255,255,255,.06),0 0 0 55mm rgba(18,179,166,.28); }
+.display,h1,h2,h3,.big { font-family:'Display',{{ font_stack }}; } h1 { font-size:25pt; margin:0 0 3mm; color:var(--p1); } h2 { font-size:15pt; color:var(--p1); margin:0 0 2mm; } h3 { font-size:11pt; color:var(--p2); margin:0 0 1.5mm; } p { margin:0 0 2mm; }
+.head { position:absolute; top:8mm; left:14mm; right:14mm; border-bottom:0.5mm solid var(--p1); padding:0 0 3mm 18mm; } .head:before { content:""; position:absolute; left:0; top:0; width:12mm; height:12mm; background:var(--p1); border-right:3mm solid var(--acc); } .head .number { position:absolute; left:3mm; top:2mm; color:#fff; font-family:'Display'; font-weight:700; font-size:15pt; z-index:1; } .head .section { position:absolute; right:0; top:2mm; font-size:6.5pt; letter-spacing:1.1pt; text-transform:uppercase; color:var(--mut); } .take { margin:0 0 4mm 18mm; color:#3D4665; font-size:10pt; }
+footer { position:absolute; left:0; right:0; bottom:0; height:9mm; border-top:.3mm solid var(--line); padding:2.5mm 14mm; color:var(--mut); font-size:6.5pt; } footer .brand { color:var(--p1); font-weight:700; letter-spacing:.7pt; text-transform:uppercase; } footer .page { float:right; color:#fff; background:var(--p1); padding:1mm 2mm; margin-top:-1mm; }
+.content { position:absolute; left:14mm; right:14mm; top:39mm; bottom:13mm; overflow:hidden; } .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:4mm; } .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; } .card { background:var(--panel); padding:3mm; border-left:1mm solid var(--acc); } .muted { color:var(--mut); } .small { font-size:7pt; } .tiny { font-size:6.4pt; } .pill { display:inline-block; padding:.7mm 2mm; border-radius:3mm; background:var(--p2); color:#fff; font-size:7pt; font-weight:700; } .sev-critical { background:var(--crit); } .sev-high { background:var(--high); } .sev-medium { background:var(--med); color:var(--ink); } .sev-low { background:var(--low); }
+table { width:100%; border-collapse:collapse; } th { background:var(--p1); color:#fff; text-align:left; padding:1.4mm 1.8mm; font-size:7pt; } td { border-bottom:.25mm solid var(--line); padding:1.3mm 1.8mm; vertical-align:top; font-size:7.2pt; } tr:nth-child(even) td { background:#F8F9FC; } .not-recorded { color:var(--mut); font-style:italic; } .ref { color:var(--p2); font-weight:700; white-space:nowrap; } .tag { color:var(--p2); border:.25mm solid #B9C3EB; padding:.2mm 1mm; font-size:6.3pt; border-radius:1mm; } .responsibility { display:inline-block; color:var(--acc); font-weight:700; font-size:6pt; }
+.cover .brand { position:absolute; left:18mm; top:17mm; color:#fff; letter-spacing:1.8pt; text-transform:uppercase; font-size:9pt; font-weight:700; z-index:2; } .cover .draft { position:absolute; left:18mm; top:35mm; z-index:2; background:#F2C14E; color:var(--ink); padding:1mm 2mm; font-size:7pt; font-weight:700; letter-spacing:1pt; } .cover .eyebrow { position:absolute; left:18mm; top:59mm; color:#7DE1D6; font-size:8pt; letter-spacing:1.5pt; text-transform:uppercase; z-index:2; } .cover .client { position:absolute; left:18mm; top:68mm; width:175mm; font-size:34pt; line-height:1.1; font-weight:700; z-index:2; } .cover .title { position:absolute; left:18mm; top:102mm; width:190mm; color:#C9D0FF; font-family:'Display'; font-size:25pt; line-height:1.05; z-index:2; } .cover .chips { position:absolute; left:18mm; top:135mm; z-index:2; } .cover .chips span { display:inline-block; border:.3mm solid #7785E2; color:#E4E8FF; padding:1mm 2.5mm; border-radius:3mm; margin-right:2mm; font-size:7pt; } .cover .meta { position:absolute; left:18mm; right:18mm; bottom:15mm; display:flex; gap:10mm; z-index:2; } .cover .meta b { display:block; color:#9BA7EF; font-size:6pt; letter-spacing:1pt; text-transform:uppercase; } .cover .meta span { display:block; margin-top:1mm; font-size:8pt; }
+.toc { margin:16mm 0 0 120mm; } .toc:before { content:"Contents"; position:absolute; left:0; top:45mm; background:var(--p1); color:#fff; font-family:'Display'; font-size:42pt; padding:20mm 17mm 45mm 14mm; width:104mm; } .toc-row { display:flex; gap:5mm; align-items:center; border-bottom:.3mm solid var(--line); padding:4mm 0; } .toc-row b { font-family:'Display'; color:var(--p2); font-size:25pt; width:17mm; } .toc-row strong { font-family:'Display'; font-size:15pt; } .toc-row small { display:block; color:var(--mut); }
+.score { background:var(--p1); color:#fff; padding:3mm; } .score strong { display:block; font-family:'Display'; font-size:25pt; } .bar { height:6mm; display:flex; margin-top:2mm; } .bar span { height:100%; } .narrative { background:var(--panel); border-left:1mm solid var(--acc); padding:2.5mm 3mm; margin-bottom:3mm; } .narrative p { margin-bottom:1mm; }
+.status-framework { padding:3mm; background:var(--panel); } .status-domain { display:flex; justify-content:space-between; padding:1.7mm 0; border-bottom:.2mm solid var(--line); } .status-pill { color:#fff; background:var(--low); padding:.6mm 1.5mm; font-size:6.5pt; border-radius:2mm; } .status-pill.gap { background:var(--high); } .status-pill.out { background:#7D879B; }
+.risk-panel { background:var(--panel); padding:3mm; border-top:2mm solid var(--p2); min-height:35mm; } .risk-panel strong { font-family:'Display'; font-size:26pt; display:block; } .risk-panel ul { margin:1mm 0 0; padding-left:4mm; font-size:6.6pt; }
+.ask { background:var(--p1); color:#fff; padding:4mm; margin-bottom:3mm; min-height:20mm; border-left:2mm solid var(--acc); } .ask b { color:#8DE3D6; } .attention { background:var(--panel); padding:3mm; min-height:55mm; } .attention li { margin:1.4mm 0; font-size:7.5pt; }
+.obs-table td { height:31mm; } .legend { position:absolute; right:14mm; top:27mm; color:var(--mut); font-size:6.3pt; } .obs-table .refcell { font-family:'Display'; font-size:13pt; color:var(--p2); } .mark { color:var(--acc); font-weight:700; }
+.roadmap-columns { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; } .roadmap-column { background:var(--panel); padding:2mm; min-height:112mm; } .roadmap-column h3 { background:#DDE3FF; padding:1.5mm; } .initiative { background:#fff; border:1mm solid var(--p2); padding:2.2mm; margin:2mm 0; } .initiative.overdue { border-color:var(--crit); } .initiative .refs { margin-top:1mm; } .overdue { color:var(--crit); font-weight:700; } .glyph { letter-spacing:1mm; color:var(--p2); } .glyph.medium { color:var(--med); } .glyph.low { color:var(--low); }
+.divider { background:var(--p1); color:#fff; padding:40mm 18mm; } .divider .big { font-size:54pt; color:#fff; } .divider .label { color:#8DE3D6; font-size:24pt; } .method { columns:2; column-gap:10mm; white-space:pre-line; color:#3D4665; font-size:8pt; } .soa-summary { padding:3mm; background:var(--panel); } .evidence { max-height:112mm; overflow:hidden; }
+</style>
 </head>
 <body>
-  <p class="running-header">{{ doc.firm_name }} | Board report</p>
-  <p class="running-footer">{{ doc.company_name }} | {{ doc.snapshot.version_label }}</p>
-
-  <section class="cover" data-section="cover">
-    <p class="eyebrow">{{ doc.firm_name }}</p>
-    <h1>Board report</h1>
-    <h2>{{ doc.company_name }}</h2>
-    {% if doc.engagement_name %}<p class="meta">{{ doc.engagement_name }}</p>{% endif %}
-    <p class="meta">Frameworks: {% for framework in doc.frameworks %}{{ framework.name }} ({{ framework.version }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
-    <p class="meta">Assessment period: {{ doc.basis.period_label }} | Evidence cut-off: {{ doc.basis.cutoff_label }}</p>
-    <p class="meta">Report generated: {{ doc.snapshot.generated_on }}</p>
-    {% if doc.snapshot.id %}<p class="meta">Version {{ doc.snapshot.version_label }} | Snapshot {{ doc.snapshot.id[:8] }}</p>{% endif %}
-    {% if doc.release.released_by %}<p class="meta">Released for reporting by {{ doc.release.released_by }} on {{ doc.release.released_on }}</p>{% endif %}
-    {% if not doc.snapshot.id %}<p class="preview" data-preview>{{ doc.snapshot.version_label }}. Generate a report version to produce the PDF.</p>{% endif %}
-    <div class="callout">{{ doc.sign_off.issue_status }}</div>
-  </section>
-
-  <section data-section="summary">
-    <h2>Management summary</h2>
-    <h3>Basis of assessment</h3>
-    <p>{{ doc.summary.basis_of_assessment }}</p>
-    <h3>Scope</h3>
-    <ul>{% for line in doc.summary.scope %}<li>{{ line }}</li>{% endfor %}</ul>
-    <h3>Limitations</h3>
-    {% for limitation in doc.summary.limitations %}<p>{{ limitation }}</p>{% endfor %}
-    <h3>Confidentiality</h3><p>{{ doc.summary.confidentiality }}</p>
-    <h3>Scores and coverage</h3>
-    <table><thead><tr><th>Framework</th><th>Headline</th><th>In scope</th><th>Compliant</th><th>Partial</th><th>Non-compliant</th><th>Insufficient evidence</th><th>Not applicable</th></tr></thead><tbody>
-      {% for framework in doc.summary.frameworks %}<tr><td>{{ framework.name }}</td><td>{{ framework.headline }}</td><td>{{ framework.coverage.in_scope }}</td><td>{{ framework.coverage.compliant }}</td><td>{{ framework.coverage.partially_compliant }}</td><td>{{ framework.coverage.non_compliant }}</td><td>{{ framework.coverage.insufficient_evidence }}</td><td>{{ framework.coverage.not_applicable }}</td></tr>{% endfor %}
-    </tbody></table>
-    <p class="small">Scores are computed and reported independently for each framework; no score is combined across frameworks.</p>
-    <p><strong>{{ doc.summary.totals.requirements }} requirements assessed | {{ doc.summary.totals.gaps }} gaps identified ({{ doc.summary.totals.critical_high_gaps }} critical or high)</strong></p>
-    {% if doc.summary.narrative.executive or doc.summary.narrative.cross_framework or (doc.summary.frameworks | selectattr('narrative') | list) %}
-    {% if doc.summary.narrative.executive %}<div data-narrative="executive"><h3>Overview</h3><p>{% for sentence in doc.summary.narrative.executive %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}
-    {% for framework in doc.summary.frameworks %}{% if framework.narrative %}<div data-narrative="framework-{{ framework.framework_id }}"><h3>{{ framework.name }}: posture</h3><p>{% for sentence in framework.narrative %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}{% endfor %}
-    {% if doc.summary.narrative.cross_framework %}<div data-narrative="cross-framework"><h3>Across frameworks</h3><p>{% for sentence in doc.summary.narrative.cross_framework %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}
-    <p class="small" data-narrative-note>{{ narrative_note }}</p>
-    {% endif %}
-  </section>
-
-  <section data-section="top-risks">
-    <h2>Top risks</h2>
-    {% if doc.top_risks %}{% for risk in doc.top_risks %}
-    <article class="risk"><p class="risk-title">{{ risk.rank }}. {{ risk.title }}</p><p>{{ risk.description }}</p><p class="small">{{ risk.framework_name }} | {{ risk.requirement_id }}: {{ risk.requirement_title }} | {{ risk.outcome_label }} | Severity: {{ risk.severity }} | Priority: {{ risk.priority }}</p>
-      {% for citation in risk.citations %}<p class="small">{{ citation.filename }} v{{ citation.version_number }}, {{ citation.location_ref }} (SHA-256 {{ citation.sha256_prefix }})</p>{% endfor %}
-      <p class="small">Owner: {{ risk.owner or 'Unassigned' }} | Target: {{ risk.target_date|display_date if risk.target_date else 'No target date' }}</p>{% if risk.action_title %}<p class="small">Action: {{ risk.action_title }}</p>{% endif %}
-    </article>{% endfor %}{% else %}<p class="empty">No approved findings are recorded.</p>{% endif %}
-  </section>
-
-  <section data-section="roadmap">
-    <h2>Remediation roadmap</h2>
-    <p>Actions recorded against approved findings, grouped by shared control: findings in different frameworks that cover the same control concern are listed together, so one remediation is tracked once. Groups are ordered by their earliest target date. Owners and dates are set by the consultant; nothing on this page is estimated.</p>
-    {% if doc.roadmap.groups %}
-    {% for group in doc.roadmap.groups %}
-    <article class="risk" data-roadmap-group="{{ group.group_id }}">
-      <p class="risk-title">{{ group.topic }}</p>
-      <p class="small">{{ group.headline }}</p>
-      <table><thead><tr><th>Action</th><th>Owner</th><th>Target date</th><th>Status</th><th>Finding</th></tr></thead><tbody>
-        {% for action in group.actions %}<tr><td>{{ action.title }}</td><td>{{ action.owner or 'Unassigned' }}</td><td>{{ action.target_date|display_date if action.target_date else 'No target date' }}</td><td>{{ action.status_label }}</td><td>{{ action.framework_name }}: {{ action.requirement_id }} ({{ action.finding_title }})</td></tr>{% endfor %}
-      </tbody></table>
-      <p class="small"><strong>Findings addressed:</strong> {% for close in group.closes %}{{ close.framework_name }}: {{ close.requirement_id }} ({{ close.finding_title }}){% if not loop.last %}; {% endif %}{% endfor %}</p>
-    </article>
-    {% endfor %}
-    {% else %}<p class="empty">No remediation actions are recorded for the approved findings yet.</p>{% endif %}
-  </section>
-
-  <section data-section="not-assessed">
-    <h2>What we could not assess</h2>
-    {% if doc.not_assessed.insufficient_evidence %}<h3>Insufficient evidence</h3><ul>{% for row in doc.not_assessed.insufficient_evidence %}<li>{{ row.framework_id }}: {{ row.requirement_id }} - {{ row.requirement_title }}</li>{% endfor %}</ul>{% else %}<p class="empty">No requirement was concluded as insufficient evidence.</p>{% endif %}
-    <h3>Request for information</h3>
-    {% if doc.not_assessed.rfi['items'] %}<p>Issued version {{ doc.not_assessed.rfi.version_label }}</p><ul>{% for item in doc.not_assessed.rfi['items'] %}<li>{{ item.item_id }}: {{ item.title }} ({{ 'Required' if item.required else 'Recommended' }})</li>{% endfor %}</ul>{% else %}<p class="empty">No request for information has been issued for this assessment.</p>{% endif %}
-  </section>
-
-  {% for framework in doc.framework_sections %}
-  <section data-section="framework" data-framework="{{ framework.framework_id }}">
-    <h2>{{ framework.name }} ({{ framework.version }})</h2>
-    <p>Score: {{ framework.score if framework.score is not none else 'Not scored' }}{% if framework.rating %} ({{ framework.rating }}){% endif %}</p>
-    <h3>Domains</h3><table><thead><tr><th>Domain</th><th>Score</th><th>Rating</th></tr></thead><tbody>{% for domain in framework.domains %}<tr><td>{{ domain.title }}</td><td>{{ domain.score if domain.score is not none else 'Not applicable' }}</td><td>{{ domain.rating or 'Not applicable' }}</td></tr>{% endfor %}</tbody></table>
-    <h3>Gaps</h3>{% if framework.gaps %}<table><thead><tr><th>Requirement</th><th>Outcome</th><th>Risk</th><th>Priority</th></tr></thead><tbody>{% for gap in framework.gaps %}<tr><td>{{ gap.requirement_id }}: {{ gap.requirement_title }}</td><td>{{ gap.outcome_label }}</td><td>{{ gap.risk_level }}</td><td>{{ gap.priority }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No approved gaps are recorded.</p>{% endif %}
-  </section>
-  {% endfor %}
-
-  <section data-section="comparison">
-    <h2>Prior-period comparison</h2>
-    {% if doc.prior_period.status == 'compared' %}
-    <p>{{ doc.prior_period.intro }}</p>
-    <p>Compared with version {{ doc.prior_period.prior.version_label }} (snapshot {{ doc.prior_period.prior.snapshot_id[:8] }}) for the assessment period {{ doc.prior_period.prior.period_label }}, evidence cut-off {{ doc.prior_period.prior.cutoff_label }}, generated {{ doc.prior_period.prior.generated_on }}.</p>
-    {% for note in doc.prior_period.notes %}<p class="small">{{ note }}</p>{% endfor %}
-    <table><thead><tr><th>Framework</th><th>Prior score</th><th>Current score</th><th>Change</th><th>Improved</th><th>Regressed</th><th>Changed</th><th>Newly assessed</th><th>No longer assessed</th></tr></thead><tbody>
-      {% for framework in doc.prior_period.frameworks %}<tr data-comparison-framework="{{ framework.framework_id }}"><td>{{ framework.name }}</td>{% if framework.compared %}<td>{{ framework.prior_score if framework.prior_score is not none else 'Not scored' }}</td><td>{{ framework.current_score if framework.current_score is not none else 'Not scored' }}</td><td>{% if framework.score_delta is not none %}{{ '%+.1f'|format(framework.score_delta) }} points{% else %}Not compared{% endif %}</td><td>{{ framework.counts.improved }}</td><td>{{ framework.counts.regressed }}</td><td>{{ framework.counts.changed }}</td><td>{{ framework.counts.new }}</td><td>{{ framework.counts.no_longer_assessed }}</td>{% else %}<td colspan="8">Not compared</td>{% endif %}</tr>{% endfor %}
-    </tbody></table>
-    <p>Gaps identified: {{ doc.prior_period.totals.prior.gaps }} in the prior period, {{ doc.prior_period.totals.current.gaps }} in this period.</p>
-    {% if doc.prior_period.changes %}<table><thead><tr><th>Requirement</th><th>Prior outcome</th><th>Current outcome</th><th>Change</th></tr></thead><tbody>{% for change in doc.prior_period.changes %}<tr><td>{{ change.framework_name }}: {{ change.requirement_id }} - {{ change.requirement_title }}</td><td>{{ change.prior_outcome_label or 'Not assessed' }}</td><td>{{ change.current_outcome_label or 'Not assessed' }}</td><td>{{ change.direction_label }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No requirement outcome changed between the two periods.</p>{% endif %}
-    {% else %}{% for note in doc.prior_period.notes %}<p class="empty">{{ note }}</p>{% endfor %}{% endif %}
-  </section>
-
-  <section data-section="sign-off">
-    <h2>Sign-off</h2>
-    <p>Prepared by: {{ doc.sign_off.prepared_by or 'not recorded' }}</p>
-    <p>Reviewed by: {{ doc.sign_off.reviewed_by or 'not recorded' }}</p>
-    <p>Assessment period: {{ doc.basis.period_label }}</p>
-    <p>Evidence cut-off: {{ doc.basis.cutoff_label }}</p>
-    <p>Report generated: {{ doc.snapshot.generated_on }}</p>
-    <p>{{ doc.sign_off.issue_status }}</p>
-    <p class="small">{{ doc.sign_off.names_note }}</p>
-  </section>
-
-  <section data-section="methodology">
-    <h2>Appendix A: Methodology</h2>
-    <div class="callout preline">{{ doc.appendices.methodology }}</div>
-  </section>
-
-  <section data-section="requirement-register">
-    <h2>Appendix B: Requirement register</h2>
-    <table><thead><tr><th>Framework</th><th>Requirement</th><th>Outcome</th><th>Risk</th><th>Priority</th><th>Decision</th><th>Decided by</th><th>Decided on</th><th>Citation</th></tr></thead><tbody>{% for row in doc.appendices.requirement_register %}<tr><td>{{ row.framework_id }}</td><td>{{ row.requirement_id }}: {{ row.requirement_title }}</td><td>{{ row.outcome_label }}</td><td>{{ row.risk_level }}</td><td>{{ row.priority }}</td><td>{{ row.decision_label }}</td><td>{{ row.decided_by }}</td><td>{{ row.decided_on|display_date if row.decided_on else 'Not recorded' }}</td><td>{{ row.citation or row.citation_note }}</td></tr>{% endfor %}</tbody></table>
-  </section>
-
-  <section data-section="evidence-register">
-    <h2>Appendix C: Evidence register</h2>
-    {% if doc.appendices.evidence_register %}<table><thead><tr><th>File</th><th>Version</th><th>Added</th><th>Status</th><th>SHA-256</th><th>Cited</th></tr></thead><tbody>{% for row in doc.appendices.evidence_register %}<tr><td>{{ row.filename }}</td><td>v{{ row.version_number }}</td><td>{{ row.added_on|display_date if row.added_on else 'Not recorded' }}</td><td>{{ row.status }}</td><td>{{ row.sha256_prefix }}</td><td>{{ 'Yes' if row.cited else 'No' }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No evidence documents are recorded for this assessment.</p>{% endif %}
-  </section>
-
-  {% if doc.soa %}
-  <section data-section="soa">
-    <h2>Appendix D: Statement of Applicability</h2>
-    <p>{{ doc.soa.intro }}</p>
-    <p class="small">{{ doc.soa.reliance }}</p>
-    {% for note in doc.soa.notes %}<p class="small">{{ note }}</p>{% endfor %}
-    <table><thead><tr><th>Control</th><th>Theme</th><th>Applicability</th><th>Implementation</th><th>Justification</th></tr></thead><tbody>
-      {% for row in doc.soa.rows %}<tr data-soa-control="{{ row.control_id }}"><td>{{ row.reference }} {{ row.title }}</td><td>{{ row.theme }}</td><td>{{ row.applicability_label }}</td><td>{{ row.implementation_label }}</td><td>{% if row.justification %}{{ row.justification }}{% else %}<span class="muted">Justification not recorded</span>{% endif %}</td></tr>{% endfor %}
-    </tbody></table>
-  </section>
-  {% endif %}
+{% set obs_index = namespace(value=0) %}
+{% set reg_index = namespace(value=0) %}
+{% macro footer(number) %}<footer data-slide-footer><span class="brand">{{ doc.firm_name }}</span> · {{ doc.company_name }} · {{ doc.basis.period_label }} · {{ doc.basis.cutoff_label }} · {{ doc.snapshot.version_label }} · Confidential <span class="page">{{ number }}</span></footer>{% endmacro %}
+{% macro header(slide, title) %}<div class="head"><span class="number">{{ slide.number }}</span><h1>{{ title }}</h1><span class="section">{{ slide.section }}</span></div>{% endmacro %}
+{% macro narrative_block(items, name) %}{% if items %}<div data-narrative="{{ name }}" class="narrative"><small data-narrative-note>{{ narrative_note }}</small>{% for sentence in items %}<p data-narrative-sentence>{{ sentence.text }} {% for finding_id in sentence.finding_ids if finding_id in v.ref_by_finding %}<span class="ref">{{ v.ref_by_finding[finding_id] }}</span>{% endfor %}</p>{% endfor %}</div>{% endif %}{% endmacro %}
+{% macro glyph(value, dimension) %}<span class="glyph {{ value or 'low' }}" data-{{ dimension }}="{{ value or '' }}">{{ '●' * ({'high':3,'medium':2,'low':1}.get(value,0)) }}{{ '○' * (3-({'high':3,'medium':2,'low':1}.get(value,0))) }}</span>{% endmacro %}
+{% for slide in v.slides %}
+{% if slide.slide == 'cover' %}
+<section class="slide cover" data-slide="cover"><div class="brand">{{ doc.firm_name }}</div><div class="draft">Draft until issued</div><div class="eyebrow">Board report · {{ doc.engagement_name or 'Assessment' }}</div><div class="client">{{ doc.company_name }}</div><div style="position:absolute;left:18mm;bottom:8mm;font-family:'Noto Sans Devanagari';font-size:1pt;white-space:nowrap;z-index:2">{{ doc.company_name }}</div><div class="title">{% if doc.frameworks|selectattr('legal')|list %}Privacy and information security compliance assessment{% else %}Information security compliance assessment{% endif %}</div><div class="chips">{% for framework in doc.frameworks %}<span>{{ framework.name }} {{ framework.version }}</span>{% endfor %}</div><div class="meta"><div><b>Assessment period</b><span>{{ doc.basis.period_label }}</span></div><div><b>Evidence cut-off</b><span>{{ doc.basis.cutoff_label }}</span></div><div><b>Version</b><span>{{ doc.snapshot.version_label }}</span></div></div>{% if doc.theme.logo %}<img src="data:{{ doc.theme.logo.media_type }};base64,{{ doc.theme.logo.data_base64 }}" alt="{{ doc.firm_name }}" style="position:absolute;right:20mm;top:20mm;width:32mm;z-index:3">{% endif %}</section>
+{% elif slide.slide == 'contents' %}
+<section class="slide" data-slide="contents"><div class="toc"><div class="toc-row"><b>01</b><div><strong>Assessment overview</strong><small>Scope and ratings</small></div></div><div class="toc-row"><b>02</b><div><strong>Executive summary</strong><small>Posture, risks and decisions</small></div></div><div class="toc-row"><b>03</b><div><strong>Key observations</strong><small>Approved findings</small></div></div><div class="toc-row"><b>04</b><div><strong>Remediation roadmap</strong><small>Initiatives and ownership</small></div></div><div class="toc-row"><b>05</b><div><strong>Annexure</strong><small>Methodology and registers</small></div></div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'overview' %}
+<section class="slide" data-slide="overview">{{ header(slide, 'Assessment overview') }}<div class="content"><p class="take">Evidence-based assessment across {{ doc.frameworks|length }} frameworks and {{ doc.summary.totals.requirements }} requirements through {{ doc.basis.cutoff_label }}.</p><div class="grid2">{% for framework in doc.frameworks %}<div class="card"><h2>{{ framework.name }} {{ framework.version }}</h2><p>{{ doc.summary.scope[loop.index0] }}</p><p class="muted small">{{ doc.framework_sections[loop.index0].status|title }} · {{ doc.framework_sections[loop.index0].rating or 'Not scored' }}</p></div>{% endfor %}</div><div class="grid3" style="margin-top:5mm"><div class="score"><strong>{{ doc.summary.totals.requirements }}</strong>Requirements</div><div class="score"><strong>{{ doc.summary.totals.gaps }}</strong>Approved gaps</div><div class="score"><strong>{{ doc.summary.totals.insufficient_evidence }}</strong>Not concluded</div></div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'ratings' %}
+<section class="slide" data-slide="ratings">{{ header(slide, 'Framework ratings') }}<div class="content"><div class="grid2">{% for framework in doc.summary.frameworks %}<div class="card"><h2>{{ framework.name }}</h2><div class="score"><strong data-framework-score="{{ framework.framework_id }}">{{ '%.0f'|format(framework.score or 0) }}%</strong>{{ framework.rating or 'Not scored' }}</div><p style="margin-top:3mm">{{ framework.headline }}</p><div class="bar" data-outcome-bar="{{ framework.framework_id }}"><span style="width:{{ (framework.coverage.compliant / framework.coverage.in_scope * 100) if framework.coverage.in_scope else 0 }}%;background:#3C9D6B"></span><span style="width:{{ (framework.coverage.partially_compliant / framework.coverage.in_scope * 100) if framework.coverage.in_scope else 0 }}%;background:#F0A030"></span><span style="width:{{ (framework.coverage.non_compliant / framework.coverage.in_scope * 100) if framework.coverage.in_scope else 0 }}%;background:#D9481E"></span></div></div>{% endfor %}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'executive-summary' %}
+<section class="slide" data-slide="executive-summary">{{ header(slide, 'Executive summary') }}<div class="content"><div data-total-requirements class="card"><b>{{ doc.summary.totals.requirements }}</b> requirements assessed · {{ doc.summary.totals.gaps }} approved gaps · {{ doc.summary.totals.critical_high_gaps }} critical/high · {{ v.never_combined_note }}</div>{{ narrative_block(doc.summary.narrative.executive, 'executive') }}<div class="grid2">{% for framework in doc.summary.frameworks %}<div><div class="card" data-framework-score="{{ framework.framework_id }}"><h2>{{ framework.name }} · {{ '%.0f'|format(framework.score or 0) }}%</h2><p>{{ framework.rating or 'Not scored' }}</p><div class="bar" data-outcome-bar="{{ framework.framework_id }}"><span style="width:30%;background:#3C9D6B"></span><span style="width:30%;background:#F0A030"></span><span style="width:20%;background:#D9481E"></span></div></div>{{ narrative_block(framework.narrative, 'framework-' ~ framework.framework_id) }}</div>{% endfor %}</div><div class="card" style="margin-top:3mm"><b>Top risks</b> {% for observation in doc.observations[:3] %}<span data-top-risk="{{ observation.ref }}" class="tag">{{ observation.ref }} {{ observation.title }}</span> {% endfor %}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'status-board' %}
+<section class="slide" data-slide="status-board">{{ header(slide, 'Status board') }}<div class="content"><p data-takeaway="status-board" class="take">{{ doc.takeaways.status_board }}</p><div class="grid2">{% for framework in doc.status_board %}<div class="status-framework" data-status-framework="{{ framework.framework_id }}"><h2>{{ framework.name }} · {{ '%.0f'|format(framework.score or 0) }}%</h2>{% for domain in framework.domains %}<div class="status-domain" data-status-domain="{{ domain.title }}"><span>{{ domain.title }}</span>{% if domain.in_scope == 0 %}<span class="status-pill out">Out of scope</span>{% elif domain.gaps == 0 %}<span class="status-pill">No gaps</span>{% else %}<span class="status-pill gap">{{ domain.gaps }} gaps · {{ domain.crit_high }} crit/high</span>{% endif %}</div>{% endfor %}</div>{% endfor %}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'risk-dashboard' %}
+<section class="slide" data-slide="risk-dashboard">{{ header(slide, 'Risk dashboard') }}<div class="content"><p data-takeaway="dashboard" class="take">{{ doc.takeaways.dashboard }}</p><div class="grid2">{% for severity, panel in doc.severity_dashboard.items() %}<div class="risk-panel" data-severity-panel="{{ severity }}" style="border-color:{% if severity == 'critical' %}var(--crit){% elif severity == 'high' %}var(--high){% elif severity == 'medium' %}var(--med){% else %}var(--low){% endif %}"><h2>{{ severity|title }} risk gaps</h2><strong>{{ panel.total }}</strong><span class="muted">Where they sit</span><ul>{% for item in panel.top %}<li>{{ item.label }} · {{ item.count }}</li>{% endfor %}</ul></div>{% endfor %}</div><table style="margin-top:4mm"><tr><th>Framework</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th></tr>{% for framework_id, counts in doc.summary.risk_matrix.items() %}<tr data-risk-matrix="{{ framework_id }}"><td>{{ v.framework_names.get(framework_id, framework_id) }}</td><td>{{ counts.critical }}</td><td>{{ counts.high }}</td><td>{{ counts.medium }}</td><td>{{ counts.low }}</td></tr>{% endfor %}</table>{{ narrative_block(doc.summary.narrative.cross_framework, 'cross-framework') }}</div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'board-asks' %}
+<section class="slide" data-slide="board-asks">{{ header(slide, 'Board asks') }}<div class="content grid2"><div>{% for ask in doc.board_asks.consultant[:3] %}<div class="ask" data-board-ask><b>Decision {{ loop.index }}</b><br>{{ ask }}<div class="tiny">By {{ doc.board_asks.consultant_by or 'consultant' }}</div></div>{% endfor %}</div><div class="attention"><h2>Needs attention</h2><ul>{% for ask in doc.board_asks.derived %}<li data-derived-ask>{{ ask }}</li>{% endfor %}</ul></div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'observations' %}
+{% set page = v.obs_pages[obs_index.value] %}{% set obs_index.value = obs_index.value + 1 %}<section class="slide" data-slide="observations">{{ header(slide, 'Key observations') }}<div class="legend" data-responsibility-legend>Client · Consultant · Shared responsibility</div><div class="content"><table class="obs-table"><tr><th>Ref</th><th>Domain / framework / responsibility</th><th>Observation</th><th>Risk</th><th>Rating</th><th>Recommendation</th><th>Reference</th></tr>{% for observation in page %}<tr data-observation="{{ observation.ref }}"><td class="refcell">{{ observation.ref }}</td><td>{{ observation.domain }}<br>{{ observation.framework_name }}{% if observation.responsibility %}<br><span class="responsibility" data-responsibility="{{ observation.responsibility }}">{{ observation.responsibility|title }}</span>{% endif %}</td><td><b>{{ observation.title }}</b><br>{{ observation.observation }}</td><td>{% if observation.risk %}{{ observation.risk }}{% else %}<span class="not-recorded">Not recorded</span>{% endif %}</td><td><span class="pill sev-{{ observation.rating }}">{{ observation.rating|title }}</span></td><td>{% if observation.recommendation %}{{ observation.recommendation }}{% else %}<span class="not-recorded">Not recorded</span>{% endif %}</td><td>{% for reference in observation.references %}<b>{{ reference.framework_name }}</b>: {{ reference.clauses|join('; ') }}<br>{% endfor %}</td></tr>{% endfor %}</table></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'roadmap' %}
+<section class="slide" data-slide="roadmap">{{ header(slide, 'Remediation roadmap') }}<div class="content"><p data-takeaway="roadmap" class="take">{{ doc.takeaways.roadmap }}</p><div class="roadmap-columns">{% for horizon in ('short','medium','long') %}<div class="roadmap-column" data-horizon-column="{{ horizon }}"><h3>{{ {'short':'Short term','medium':'Medium term','long':'Long term'}[horizon] }}</h3>{% for initiative in doc.initiatives if initiative.horizon == horizon or (horizon == 'long' and initiative.horizon == 'unscheduled') %}<div class="initiative{% if initiative.overdue %} overdue{% endif %}" data-initiative="{{ initiative.ref }}"><b>{{ initiative.ref }} · {{ initiative.title }}</b>{% if initiative.overdue %}<span class="overdue"> OVERDUE</span>{% endif %}<div class="refs">{% for ref in initiative.obs_refs %}<span class="tag">{{ ref }}</span> {% endfor %}</div><div class="tiny">{{ initiative.owner or 'Owner not set' }} · {% if initiative.target_date %}{{ initiative.target_date }}{% else %}Not scheduled{% endif %}</div></div>{% endfor %}</div>{% endfor %}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'initiatives' %}
+<section class="slide" data-slide="initiatives">{{ header(slide, 'Initiatives and actions') }}<div class="content"><table><tr><th>Ref</th><th>Initiative</th><th>Observations</th><th>Horizon</th><th>Owner</th><th>Priority</th><th>Complexity</th><th>Benefit</th></tr>{% for initiative in doc.initiatives %}<tr data-initiative-row="{{ initiative.ref }}"><td>{{ initiative.ref }}</td><td><b>{{ initiative.title }}</b><br><span class="muted tiny">{{ initiative.topic }}</span></td><td>{{ initiative.obs_refs|join(' / ') }}</td><td>{{ initiative.horizon|title }}</td><td>{{ initiative.owner or 'Not set' }}</td><td>{{ glyph(initiative.priority, 'priority') }}</td><td>{{ glyph(initiative.complexity, 'complexity') }}</td><td>{{ glyph(initiative.benefit, 'benefit') }}</td></tr>{% endfor %}</table></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'comparison' %}
+<section class="slide" data-slide="comparison">{{ header(slide, 'Prior-period comparison') }}<div class="content grid2">{% for framework in doc.prior_period.frameworks %}<div class="card"><h2>{{ framework.name }}</h2><p>Current {{ framework.current_score }}% · Prior {{ framework.prior_score }}%</p><p class="muted">Improved {{ framework.counts.improved }} · Regressed {{ framework.counts.regressed }} · New {{ framework.counts.new }}</p></div>{% endfor %}</div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'limits' %}
+<section class="slide" data-slide="limits">{{ header(slide, 'Limits and assumptions') }}<div class="content grid2"><div><h2>Not concluded</h2>{% for row in doc.not_assessed.insufficient_evidence[:12] %}<p class="small">{{ row.framework_id }} · {{ row.requirement_id }} · {{ row.requirement_title }}</p>{% endfor %}</div><div><h2>Limitations</h2>{% for limitation in doc.summary.limitations %}<p>{{ limitation }}</p>{% endfor %}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'sign-off' %}
+<section class="slide" data-slide="sign-off">{{ header(slide, 'Sign-off') }}<div class="content grid2"><div class="card"><h2>Prepared by</h2><p>{{ doc.sign_off.prepared_by or 'Not recorded' }}</p><h2>Reviewed by</h2><p>{{ doc.sign_off.reviewed_by or 'Not recorded' }}</p></div><div class="card"><h2>Issue status</h2><p>{{ doc.sign_off.issue_status }}</p><p>{{ doc.sign_off.names_note }}</p></div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'annexure' %}
+<section class="slide divider" data-slide="annexure"><div class="label">05</div><div class="big">Annexure</div><p style="margin-top:8mm">Methodology · Requirement register · Evidence register{% if doc.soa %} · Statement of Applicability{% endif %}</p>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'methodology' %}
+<section class="slide" data-slide="methodology">{{ header(slide, 'Methodology') }}<div class="content"><div class="method">{{ doc.appendices.methodology }}</div></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'requirement-register' %}
+{% set page = v.reg_pages[reg_index.value] %}{% set reg_index.value = reg_index.value + 1 %}<section class="slide" data-slide="requirement-register">{{ header(slide, 'Requirement register') }}<div class="content"><table><tr><th>Framework</th><th>Requirement</th><th>Title</th><th>Domain</th><th>Outcome</th><th>Risk</th><th>Decision</th><th>Evidence</th></tr>{% for row in page %}<tr data-register-row><td>{{ row.framework_id }}</td><td>{{ row.requirement_id }}</td><td>{{ row.requirement_title }}</td><td>{{ row.domain_title }}</td><td>{{ row.outcome_label }}</td><td>{{ row.risk_level|title }}</td><td>{{ row.decision_label }}</td><td>{{ row.citation or row.citation_note or 'Not recorded' }}</td></tr>{% endfor %}</table></div>{{ footer(slide.number) }}</section>
+{% elif slide.slide == 'evidence-and-soa' %}
+<section class="slide" data-slide="evidence-and-soa">{{ header(slide, 'Evidence register' if not doc.soa else 'Evidence and statement of applicability') }}<div class="content grid2"><div class="evidence"><h2>Evidence register</h2><table><tr><th>Document</th><th>Version</th><th>Added</th><th>Cited</th></tr>{% for item in doc.appendices.evidence_register %}<tr><td>{{ item.filename }}</td><td>v{{ item.version_number }}</td><td>{{ item.added_on }}</td><td>{{ 'Yes' if item.cited else 'No' }}</td></tr>{% endfor %}</table></div><div>{% if doc.soa %}<div class="soa-summary"><h2>Statement of Applicability</h2><p>{{ doc.soa.framework_name }} {{ doc.soa.framework_version }} · {{ doc.soa.totals.controls }} controls</p><p>Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</p></div><h3 style="margin-top:3mm">Excluded controls</h3>{% for row in doc.soa.rows if row.applicability == 'excluded' %}<p class="small"><b>{{ row.reference }}</b> {{ row.title }} · {{ row.justification or 'Not recorded' }}</p>{% endfor %}{% endif %}</div></div>{{ footer(slide.number) }}</section>
+{% endif %}
+{% endfor %}
 </body>
 </html>

@@ -390,6 +390,9 @@ def _board_export_route(
         if fmt == "docx":
             content = board_exports.render_docx(document, document_sha256=document_sha256)
             media_type = board_exports.DOCX_MEDIA_TYPE
+        elif fmt == "pptx":
+            content = board_exports.render_pptx(document, document_sha256=document_sha256)
+            media_type = board_exports.PPTX_MEDIA_TYPE
         else:
             content = board_exports.render_xlsx(document, document_sha256=document_sha256)
             media_type = board_exports.XLSX_MEDIA_TYPE
@@ -427,3 +430,12 @@ def board_report_xlsx_route(
     db: Session = Depends(get_db),
 ):
     return _board_export_route(assessment_id, snapshot_id, "xlsx", db)
+
+
+@router.get("/{assessment_id}/snapshots/{snapshot_id}/pptx")
+def board_report_pptx_route(
+    assessment_id: str,
+    snapshot_id: str,
+    db: Session = Depends(get_db),
+):
+    return _board_export_route(assessment_id, snapshot_id, "pptx", db)

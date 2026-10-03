@@ -8,13 +8,14 @@ import zipfile
 from copy import copy
 from datetime import date, datetime, timezone
 
-from app.services import board_report, report_snapshots
+from app.services import board_report, board_view, report_snapshots
 
 
 EXPORT_FORMAT_VERSION = 1
 SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 DERIVATION_LABEL = (
     "Derived from board report snapshot {snapshot_id8}, {version_label} (document SHA-256 "
     "{sha_prefix}). Edits to this file do not change the report version it was derived from."
@@ -33,6 +34,15 @@ XLSX_SHEETS = (
     "Top risks",
     "Action tracker",
     "Evidence register",
+)
+XLSX_SHEETS_V3 = (
+    "Executive Summary",
+    "Detailed Assessment",
+    "Observation Register",
+    "Remediation Tracker",
+    "Statement of Applicability",
+    "Evidence Register",
+    "Definitions",
 )
 XLSX_OPTIONAL_SHEETS = ("Prior-period changes", "Statement of Applicability")
 XLSX_COLUMNS = {
@@ -172,6 +182,13 @@ MISSING_FILL = "FFFFF2CC"
 
 class UnsupportedDocument(report_snapshots.SnapshotError):
     status_code = 409
+
+
+class DocumentSuperseded(report_snapshots.SnapshotError):
+    status_code = 410
+
+
+DOCX_SUPERSEDED_MESSAGE = "DOCX is retired for v3 board reports; download the PPTX or XLSX export instead."
 
 
 _ILLEGAL_XML_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
@@ -644,6 +661,8 @@ def _render_docx_soa(word, source: dict, schema_version: int) -> None:
 
 def render_docx(document: dict, *, document_sha256: str) -> bytes:
     schema_version = _schema(document)
+    if schema_version >= 3:
+        raise DocumentSuperseded(DOCX_SUPERSEDED_MESSAGE)
     from docx import Document
     from docx.oxml.ns import qn
 
@@ -968,7 +987,7 @@ def _render_xlsx_soa(book, document) -> None:
     _style_xlsx_table(sheet, header_row, len(XLSX_COLUMNS[sheet.title]))
 
 
-def render_xlsx(document: dict, *, document_sha256: str) -> bytes:
+def _render_xlsx_legacy(document: dict, *, document_sha256: str) -> bytes:
     schema_version = _schema(document)
     from openpyxl import Workbook
 
@@ -1001,6 +1020,324 @@ def render_xlsx(document: dict, *, document_sha256: str) -> bytes:
     buffer = io.BytesIO()
     book.save(buffer)
     return _pin_package(buffer.getvalue(), generated_at)
+
+
+def _v3_title_block(sheet, document: dict, title: str, purpose: str) -> None:
+    from openpyxl.styles import Font, PatternFill
+
+    _set_xlsx_cell(sheet["A1"], title)
+    _set_xlsx_cell(sheet["A2"], purpose)
+    _set_xlsx_cell(
+        sheet["A3"],
+        " | ".join(
+            (
+                _clean(document["firm_name"]),
+                _clean(document["company_name"]),
+                _clean(document["basis"]["period_label"]),
+                _clean(document["basis"]["cutoff_label"]),
+                f"Board report {document['snapshot']['version_label']} (snapshot {document['snapshot']['id'][:8]})",
+                "Draft until issued",
+            )
+        ),
+    )
+    sheet["A1"].font = Font(bold=True, size=16, color="161A5C")
+    sheet["A2"].font = Font(italic=True, color="66708B")
+    sheet["A3"].font = Font(size=9, color="66708B")
+    sheet.sheet_properties.tabColor = document.get("theme", {}).get("primary", "#161A5C").lstrip("#")
+
+
+def _v3_header(sheet, headers) -> None:
+    from openpyxl.styles import Font, PatternFill
+
+    _write_xlsx_row(sheet, 6, headers)
+    fill = PatternFill(fill_type="solid", fgColor="161A5C")
+    for cell in sheet[6]:
+        if cell.column <= len(headers):
+            cell.fill = fill
+            cell.font = Font(bold=True, color="FFFFFF")
+    sheet.freeze_panes = "A7"
+    from openpyxl.utils import get_column_letter
+
+    sheet.auto_filter.ref = f"A6:{get_column_letter(len(headers))}{max(sheet.max_row, 6)}"
+
+
+V3_DETAILED_HEADERS = (
+    "Requirement", "Framework", "Domain", "Requirement title", "Outcome", "Risk rating",
+    "Evidence cited", "Decision", "Linked observation",
+)
+V3_OBSERVATION_HEADERS = (
+    "Obs.", "Domain", "Framework", "Observation", "Associated risk", "Risk rating",
+    "Actionable recommendation", "Reference", "Responsibility",
+)
+V3_TRACKER_HEADERS = (
+    "Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Priority",
+    "Horizon", "Target date", "Complexity", "Benefit", "Status", "Client update", "Evidence of closure",
+)
+
+
+def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
+    from openpyxl import Workbook
+    from openpyxl.chart import BarChart, PieChart, Reference
+    from openpyxl.formatting.rule import FormulaRule
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    book = Workbook()
+    book.active.title = XLSX_SHEETS_V3[0]
+    for name in XLSX_SHEETS_V3[1:]:
+        book.create_sheet(name)
+    _v3_title_block(book["Executive Summary"], document, "Executive Summary", "Per-framework board posture and decision context")
+    _v3_title_block(book["Detailed Assessment"], document, "Detailed Assessment", "One row for every assessed requirement and its linked observation")
+    _v3_title_block(book["Observation Register"], document, "Observation Register", "Approved observations, risk and actionable recommendation")
+    _v3_title_block(book["Remediation Tracker"], document, "Remediation Tracker", "Initiatives and actions derived from the approved roadmap")
+    _v3_title_block(book["Statement of Applicability"], document, "Statement of Applicability", "Editable applicability and justification register")
+    _v3_title_block(book["Evidence Register"], document, "Evidence Register", "Evidence documents and citation status")
+    _v3_title_block(book["Definitions"], document, "Definitions", "Report scales and interpretation")
+
+    summary = book["Executive Summary"]
+    summary_headers = ("Framework", "Score (%)", "Rating", "In scope", "Approved gaps", "Insufficient evidence")
+    _v3_header(summary, summary_headers)
+    for row_number, framework in enumerate(document["summary"]["frameworks"], start=7):
+        coverage = framework["coverage"]
+        _write_xlsx_row(summary, row_number, [
+            framework["name"], framework["score"], framework["rating"], coverage["in_scope"],
+            coverage["partially_compliant"] + coverage["non_compliant"], coverage["insufficient_evidence"],
+        ])
+    _set_xlsx_cell(summary["A10"], board_report.board_view.NEVER_COMBINED_NOTE)
+    chart = BarChart()
+    chart.type = "bar"
+    chart.grouping = "stacked"
+    chart.overlap = 100
+    chart.title = "Per-framework outcomes"
+    chart.add_data(Reference(summary, min_col=5, max_col=6, min_row=6, max_row=6 + len(document["summary"]["frameworks"])), titles_from_data=True)
+    chart.set_categories(Reference(summary, min_col=1, min_row=7, max_row=6 + len(document["summary"]["frameworks"])))
+    summary.add_chart(chart, "H6")
+    pie = PieChart()
+    pie.title = "Approved gaps by severity"
+    _set_xlsx_cell(summary["A13"], "Severity")
+    _set_xlsx_cell(summary["B13"], "Count")
+    for number, severity in enumerate(("critical", "high", "medium", "low"), start=14):
+        _write_xlsx_row(summary, number, [severity.title(), document["severity_dashboard"][severity]["total"]])
+    pie.add_data(Reference(summary, min_col=2, min_row=13, max_row=17), titles_from_data=True)
+    pie.set_categories(Reference(summary, min_col=1, min_row=14, max_row=17))
+    summary.add_chart(pie, "H20")
+
+    names = _framework_name_map(document)
+    linked = {(observation["framework_name"], observation["requirement_id"]): observation["ref"] for observation in document["observations"]}
+    detail = book["Detailed Assessment"]
+    _v3_header(detail, V3_DETAILED_HEADERS)
+    for row_number, row in enumerate(document["appendices"]["requirement_register"], start=7):
+        _write_xlsx_row(detail, row_number, [
+            row["requirement_id"], names.get(row["framework_id"], row["framework_id"]), row["domain_title"].split(" — ", 1)[-1],
+            row["requirement_title"], row["outcome_label"], row["risk_level"], "Yes" if row.get("citation") else "No",
+            row["decision_label"], linked.get((names.get(row["framework_id"], row["framework_id"]), row["requirement_id"])),
+        ])
+    _v3_header(book["Observation Register"], V3_OBSERVATION_HEADERS)
+    observation_sheet = book["Observation Register"]
+    for row_number, observation in enumerate(document["observations"], start=7):
+        refs = "; ".join(f"{ref['framework_name']}: {', '.join(ref['clauses'])}" for ref in observation["references"])
+        _write_xlsx_row(observation_sheet, row_number, [
+            observation["ref"], observation["domain"], observation["framework_name"], observation["observation"],
+            observation["risk"] or "Not recorded", observation["rating"], observation["recommendation"] or "Not recorded",
+            refs, observation["responsibility"] or "Not recorded",
+        ])
+
+    tracker = book["Remediation Tracker"]
+    _v3_header(tracker, V3_TRACKER_HEADERS)
+    row_number = 7
+    priority_label = {"high": "High", "medium": "Medium", "low": "Low"}
+    horizon_label = {"short": "Short term", "medium": "Medium term", "long": "Long term", "unscheduled": "Not scheduled"}
+    for initiative in document["initiatives"]:
+        banner = (
+            f"{initiative['ref']}  {initiative['title']}   |   {' / '.join(initiative['obs_refs'])}   |   "
+            f"{horizon_label[initiative['horizon']]}   |   Priority: {priority_label[initiative['priority']]}   |   "
+            f"Complexity: {(initiative['complexity'] or 'Not recorded').title()}   |   Benefit: {(initiative['benefit'] or 'Not recorded').title()}"
+        )
+        _set_xlsx_cell(tracker.cell(row=row_number, column=1), banner)
+        tracker.cell(row=row_number, column=1).font = Font(bold=True, color="161A5C")
+        row_number += 1
+        for action in initiative["actions"]:
+            _write_xlsx_row(tracker, row_number, [
+                action["ref"], action["obs_ref"], next((o["domain"] for o in document["observations"] if o["ref"] == action["obs_ref"]), ""),
+                action["title"], action["owner"] or "Unassigned", action["responsibility"] or "Not recorded", priority_label[initiative["priority"]],
+                horizon_label[initiative["horizon"]], action["target_date"], initiative["complexity"] or "Not recorded", initiative["benefit"] or "Not recorded",
+                action["status_label"], None, None,
+            ], date_columns=(9,))
+            row_number += 1
+    status_validation = DataValidation(type="list", formula1='"Open,In progress,Done,Blocked"', allow_blank=True)
+    tracker.add_data_validation(status_validation)
+    status_validation.add(f"L7:L{max(row_number, 7)}")
+    red = PatternFill(fill_type="solid", fgColor="FFC0392B")
+    from openpyxl.styles import Font
+    tracker.conditional_formatting.add(
+        f"I7:I{max(row_number, 7)}",
+        FormulaRule(formula=['AND($I7<TODAY(),$L7<>"Done")'], fill=red, font=Font(color="C0392B")),
+    )
+    tracker.conditional_formatting.add(
+        f"E7:E{max(row_number, 7)}",
+        FormulaRule(formula=['$E7="Unassigned"'], fill=red, font=Font(color="C0392B")),
+    )
+
+    if document.get("soa"):
+        soa_sheet = book["Statement of Applicability"]
+        soa_headers = ("Control ID", "Reference", "Control", "Theme", "Applicability", "Implementation", "Justification", "Justification status", "Justified by", "Justified on")
+        _v3_header(soa_sheet, soa_headers)
+        for row_number, row in enumerate(document["soa"]["rows"], start=7):
+            _write_xlsx_row(soa_sheet, row_number, [row["control_id"], row["reference"], row["title"], row["theme"], row["applicability_label"], row["implementation_label"], row["justification"], JUSTIFICATION_STATUS[bool(row["justification"])], row["justification_by"], row["justification_on"]], date_columns=(10,))
+        applicability = DataValidation(type="list", formula1='"Applicable,Excluded,Not determined"', allow_blank=True)
+        soa_sheet.add_data_validation(applicability)
+        applicability.add(f"E7:E{6 + len(document['soa']['rows'])}")
+
+    evidence = book["Evidence Register"]
+    evidence_headers = ("Document", "Version", "Added", "SHA-256 prefix", "Cited")
+    _v3_header(evidence, evidence_headers)
+    for row_number, row in enumerate(document["appendices"]["evidence_register"], start=7):
+        _write_xlsx_row(evidence, row_number, [row["filename"], row["version_number"], row["added_on"], row["sha256_prefix"], "Yes" if row["cited"] else "No"], date_columns=(3,))
+
+    definitions = book["Definitions"]
+    _v3_header(definitions, ("Term", "Meaning"))
+    definitions_rows = [
+        ("Compliant", "Requirement outcome is supported and implemented."),
+        ("Partially compliant", "Some implementation or evidence remains incomplete."),
+        ("Non-compliant", "The approved conclusion identifies a material gap."),
+        ("Insufficient evidence", "The requirement could not be concluded from submitted evidence."),
+        ("Critical / High / Medium / Low", "Risk rating scale used in the report."),
+        ("Complexity", "High, Medium or Low consultant assessment of implementation effort."),
+        ("Benefit", "High, Medium or Low expected risk-reduction benefit."),
+        ("Short / Medium / Long", "Remediation horizon derived from the target date."),
+        ("Client / Consultant / Shared", "Responsibility recorded against an action."),
+    ]
+    for row_number, values in enumerate(definitions_rows, start=7):
+        _write_xlsx_row(definitions, row_number, values)
+    extra_row = 7 + len(definitions_rows)
+    for initiative in document["initiatives"]:
+        _write_xlsx_row(definitions, extra_row, ["Initiative title", initiative["title"]])
+        extra_row += 1
+    for ask in document["board_asks"].get("consultant", []):
+        _write_xlsx_row(definitions, extra_row, ["Board ask", ask])
+        extra_row += 1
+
+    generated_at = _generated_at(document)
+    book.properties.creator = _clean(document["firm_name"])
+    book.properties.lastModifiedBy = _clean(document["firm_name"])
+    book.properties.title = _clean(f"Board report: {document['company_name']}")
+    book.properties.description = _clean(derivation_label(document, document_sha256))
+    book.properties.identifier = _clean(document["snapshot"]["id"])
+    book.properties.created = generated_at
+    book.properties.modified = generated_at
+    buffer = io.BytesIO()
+    book.save(buffer)
+    return _pin_package(buffer.getvalue(), generated_at)
+
+
+def render_xlsx(document: dict, *, document_sha256: str) -> bytes:
+    schema_version = _schema(document)
+    if schema_version >= 3:
+        return _render_xlsx_v3(document, document_sha256=document_sha256)
+    return _render_xlsx_legacy(document, document_sha256=document_sha256)
+
+
+def _pptx_color(value: str):
+    from pptx.dml.color import RGBColor
+
+    return RGBColor.from_string(str(value or "#161A5C").lstrip("#"))
+
+
+def render_pptx(document: dict, *, document_sha256: str) -> bytes:
+    if _schema(document) != 3:
+        raise UnsupportedDocument(UNSUPPORTED_DOCUMENT_MESSAGE)
+    from pptx import Presentation
+    from pptx.chart.data import ChartData
+    from pptx.enum.chart import XL_CHART_TYPE
+    from pptx.enum.shapes import MSO_SHAPE
+    from pptx.enum.text import PP_ALIGN
+    from pptx.util import Inches, Mm, Pt
+
+    presentation = Presentation()
+    presentation.slide_width = Mm(338.67)
+    presentation.slide_height = Mm(190.5)
+    blank = presentation.slide_layouts[6]
+    primary = _pptx_color(document.get("theme", {}).get("primary", "#161A5C"))
+    secondary = _pptx_color(document.get("theme", {}).get("secondary", "#2D3FD3"))
+    accent = _pptx_color(document.get("theme", {}).get("accent", "#12B3A6"))
+    slides = board_report.board_view.view(document)["slides"]
+    obs_index = reg_index = 0
+    label = derivation_label(document, document_sha256)
+
+    def text_box(slide, text, left, top, width, height, *, size=14, color=None, bold=False):
+        shape = slide.shapes.add_textbox(Mm(left), Mm(top), Mm(width), Mm(height))
+        frame = shape.text_frame
+        frame.word_wrap = True
+        frame.text = _clean(text)
+        for paragraph in frame.paragraphs:
+            paragraph.font.name = "Calibri"
+            paragraph.font.size = Pt(size)
+            paragraph.font.bold = bold
+            if color:
+                paragraph.font.color.rgb = color
+        return shape
+
+    def native_table(slide, headers, rows, top=50, height=70):
+        rows = rows[:8]
+        table_shape = slide.shapes.add_table(len(rows) + 1, len(headers), Mm(14), Mm(top), Mm(310), Mm(height))
+        table = table_shape.table
+        for col, header in enumerate(headers):
+            table.cell(0, col).text = _clean(header)
+        for row, values in enumerate(rows, start=1):
+            for col, value in enumerate(values):
+                table.cell(row, col).text = _clean(value)
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.text_frame.paragraphs:
+                    paragraph.font.name = "Calibri"
+                    paragraph.font.size = Pt(7)
+        return table_shape
+
+    for slide_data in slides:
+        slide = presentation.slides.add_slide(blank)
+        background = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, presentation.slide_width, Mm(5))
+        background.fill.solid(); background.fill.fore_color.rgb = primary; background.line.fill.background()
+        text_box(slide, slide_data["title"], 14, 10, 270, 15, size=24, color=primary, bold=True)
+        text_box(slide, f"{document['firm_name']} · {document['basis']['period_label']} · {document['basis']['cutoff_label']} · {document['snapshot']['version_label']} · Confidential", 14, 181, 300, 6, size=7, color=primary)
+        name = slide_data["slide"]
+        if name == "cover":
+            cover = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, presentation.slide_width, presentation.slide_height)
+            cover.fill.solid(); cover.fill.fore_color.rgb = primary; cover.line.fill.background()
+            text_box(slide, document["firm_name"], 18, 18, 170, 10, size=12, color=_pptx_color("#FFFFFF"), bold=True)
+            text_box(slide, document["company_name"], 18, 62, 200, 25, size=28, color=_pptx_color("#FFFFFF"), bold=True)
+            title = "Privacy and information security compliance assessment" if any(f.get("legal") for f in document["frameworks"]) else "Information security compliance assessment"
+            text_box(slide, title, 18, 100, 220, 30, size=21, color=_pptx_color("#C9D0FF"), bold=True)
+            text_box(slide, document["company_name"], 18, 143, 180, 8, size=7, color=_pptx_color("#FFFFFF"))
+        elif name == "executive-summary":
+            text_box(slide, f"{document['summary']['totals']['requirements']} requirements · {document['summary']['totals']['gaps']} approved gaps · {board_view.NEVER_COMBINED_NOTE}", 14, 32, 300, 15, size=12, color=primary, bold=True)
+            native_table(slide, ["Framework", "Score", "Rating"], [[f["name"], f"{f['score']}%", f["rating"]] for f in document["summary"]["frameworks"]])
+            data = ChartData(); data.categories = [f["name"] for f in document["summary"]["frameworks"]]; data.add_series("Score", [f["score"] or 0 for f in document["summary"]["frameworks"]])
+            slide.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Mm(215), Mm(50), Mm(100), Mm(60), data)
+        elif name == "risk-dashboard":
+            native_table(slide, ["Framework", "Critical", "High", "Medium", "Low"], [[document["frameworks"][0]["name"], *[str(document["summary"]["risk_matrix"][document["frameworks"][0]["framework_id"]][s]) for s in ("critical", "high", "medium", "low")]]])
+            data = ChartData(); data.categories = ["Critical", "High", "Medium", "Low"]; data.add_series("Gaps", [document["severity_dashboard"][s]["total"] for s in ("critical", "high", "medium", "low")])
+            slide.shapes.add_chart(XL_CHART_TYPE.DOUGHNUT, Mm(215), Mm(55), Mm(90), Mm(70), data)
+        elif name == "observations":
+            page = document["observations"][obs_index:obs_index + 4]; obs_index += 4
+            native_table(slide, ["Ref", "Domain", "Observation", "Risk", "Rating"], [[o["ref"], o["domain"], o["title"], o["risk"] or "Not recorded", o["rating"]] for o in page])
+            text_box(slide, " · ".join(o["title"] for o in page), 18, 145, 295, 20, size=9, color=primary)
+        elif name == "initiatives":
+            native_table(slide, ["Ref", "Initiative", "Horizon", "Owner", "Priority"], [[i["ref"], i["title"], i["horizon"], i["owner"] or "Not set", i["priority"].title()] for i in document["initiatives"]])
+            text_box(slide, " · ".join(i["title"] for i in document["initiatives"]), 18, 145, 295, 20, size=9, color=primary)
+        elif name == "requirement-register":
+            page = document["appendices"]["requirement_register"][reg_index:reg_index + 21]; reg_index += 21
+            native_table(slide, ["Framework", "Requirement", "Outcome", "Risk"], [[r["framework_id"], r["requirement_id"], r["outcome_label"], r["risk_level"]] for r in page])
+        elif name == "board-asks":
+            text_box(slide, "\n".join(document["board_asks"]["consultant"][:3] + document["board_asks"]["derived"]), 18, 42, 290, 110, size=14, color=primary)
+        elif name == "roadmap":
+            text_box(slide, document["takeaways"]["roadmap"], 18, 35, 295, 15, size=12, color=primary, bold=True)
+            native_table(slide, ["Ref", "Initiative", "Horizon", "Owner"], [[i["ref"], i["title"], i["horizon"], i["owner"] or "Not set"] for i in document["initiatives"]])
+        else:
+            text_box(slide, document["takeaways"].get("status_board", "") if name == "status-board" else document["summary"].get("basis_of_assessment", ""), 18, 40, 295, 90, size=14, color=primary)
+        slide.notes_slide.notes_text_frame.text = label
+    buffer = io.BytesIO()
+    presentation.save(buffer)
+    return buffer.getvalue()
 
 
 def _pin_package(content: bytes, generated_at: datetime) -> bytes:

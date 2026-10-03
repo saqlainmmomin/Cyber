@@ -344,9 +344,9 @@ def test_scenario_6_comparison_section_renders_between_frameworks_and_sign_off(d
     document = build(db, p2)
     html = board.render_html(document, embed_fonts=False)
     positions = [
-        html.index('data-section="framework"'),
-        html.index('data-section="comparison"'),
-        html.index('data-section="sign-off"'),
+        html.index('data-slide="overview"'),
+        html.index('data-slide="comparison"'),
+        html.index('data-slide="sign-off"'),
     ]
     assert positions == sorted(positions)
     section = html[positions[1]:positions[2]]

@@ -75,6 +75,7 @@ DOCUMENT_KEYS = {
     "assessment_id", "frameworks", "basis", "release", "summary", "top_risks", "roadmap",
     "not_assessed", "framework_sections", "sign_off", "appendices", "source",
     "soa", "prior_period",  # P6-9 (D-P6-9-E): schema v2
+    "observations", "initiatives", "status_board", "severity_dashboard", "takeaways", "board_asks", "theme",
 }
 SECTION_HEADINGS = (
     "Management summary",
@@ -628,8 +629,8 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
 
     approved = approved_report.build_approved_report(db, assessment)
     register = document["appendices"]["requirement_register"]
-    assert [(r["framework_id"], r["requirement_id"], r["outcome"], r["risk_level"], r["priority"]) for r in register] == [
-        (row.framework_id, row.requirement_id, row.compliance_status, row.risk_level, row.remediation_priority)
+    assert [(r["framework_id"], r["requirement_id"], r["outcome"], r["risk_level"]) for r in register] == [
+        (row.framework_id, row.requirement_id, row.compliance_status, row.risk_level)
         for row in approved.rows
     ]
     by_key = {(r["framework_id"], r["requirement_id"]): r for r in register}

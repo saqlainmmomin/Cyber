@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import mimetypes
+import shutil
+import subprocess
+import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -21,7 +27,11 @@ from app.models.evidence import Evidence, EvidenceVersion
 from app.models.report_snapshot import ReportSnapshot
 from app.services import (
     approved_report,
+    board_derive,
+    board_inputs,
+    board_view,
     conclusion_review,
+    firm_theme,
     narrative,
     prior_period,
     report_basis,
@@ -175,7 +185,6 @@ def _register_row(row: ApprovedRow, card) -> tuple[dict, set[str]]:
                 row.compliance_status, row.compliance_status.replace("_", " ").title()
             ),
             "risk_level": row.risk_level,
-            "priority": row.remediation_priority,
             "decision_label": report_content.DECISION_LABELS.get(
                 row.decision, row.decision
             ),
@@ -298,11 +307,37 @@ def _framework_section(review) -> dict:
                     row.compliance_status, row.compliance_status.replace("_", " ").title()
                 ),
                 "risk_level": row.risk_level,
-                "priority": row.remediation_priority,
             }
             for row in review.rows
             if row.compliance_status in GAP_STATUSES
         ],
+    }
+
+
+def _frozen_theme() -> dict:
+    resolved = firm_theme.resolve_theme()
+    logo = None
+    logo_path = resolved.get("logo_path")
+    if logo_path:
+        try:
+            path = Path(logo_path)
+            if path.is_file() and path.stat().st_size <= 2 * 1024 * 1024:
+                content = path.read_bytes()
+                if len(content) <= 2 * 1024 * 1024:
+                    media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+                    logo = {
+                        "media_type": media_type,
+                        "data_base64": base64.b64encode(content).decode("ascii"),
+                        "sha256": hashlib.sha256(content).hexdigest(),
+                    }
+        except (OSError, ValueError):
+            logo = None
+    return {
+        "firm_name": resolved["firm_name"],
+        "primary": resolved["primary"],
+        "secondary": resolved["secondary"],
+        "accent": resolved["accent"],
+        "logo": logo,
     }
 
 
@@ -355,8 +390,9 @@ def build_document(
                 "finding_id": finding.finding_id,
                 "title": finding.title,
                 "description": finding.description,
+                "business_impact": finding.business_impact,
+                "recommendation": finding.recommendation,
                 "severity": finding.severity,
-                "priority": finding.priority,
                 "framework_id": finding.framework_id,
                 "framework_name": finding.framework_name,
                 "requirement_id": finding.requirement_id,
@@ -366,6 +402,39 @@ def build_document(
                 "owner": first_action.owner if first_action else None,
                 "target_date": _iso(first_action.target_date if first_action else None),
                 "action_title": first_action.title if first_action else None,
+                "action_status_label": first_action.status_label if first_action else None,
+            }
+        )
+
+    register_domain = {
+        (row["framework_id"], row["requirement_id"]): row["domain_title"].split(" — ", 1)[-1]
+        for row in register
+    }
+    observations = []
+    for rank, (_original_index, finding) in enumerate(indexed_findings, start=1):
+        responsibility = board_derive.responsibility_for(
+            action.responsibility for action in finding.actions
+        )
+        observations.append(
+            {
+                "domain": register_domain.get(
+                    (finding.framework_id, finding.requirement_id), finding.requirement_title
+                ),
+                "finding_id": finding.finding_id,
+                "framework_id": finding.framework_id,
+                "framework_name": finding.framework_name,
+                "observation": finding.description,
+                "rank": rank,
+                "rating": finding.severity,
+                "recommendation": finding.recommendation,
+                "ref": board_derive.observation_ref(rank),
+                "references": board_derive.reference_clauses(
+                    finding.framework_id, finding.requirement_id, framework_ids
+                ),
+                "requirement_id": finding.requirement_id,
+                "responsibility": responsibility,
+                "risk": finding.business_impact,
+                "title": finding.title,
             }
         )
 
@@ -383,6 +452,8 @@ def build_document(
                     "owner": action.owner,
                     "target_date": _iso(action.target_date),
                     "status_label": action.status_label,
+                    "finding_id": finding.finding_id,
+                    "responsibility": action.responsibility,
                     "closes": [
                         {
                             "framework_name": finding.framework_name,
@@ -470,6 +541,40 @@ def build_document(
             row.compliance_status == "not_applicable" for row in approved.rows
         ),
     }
+    framework_sections = [
+        _framework_section(approved.framework_reviews[framework_id])
+        for framework_id in framework_ids
+    ]
+    generated_on = generated_at.date()
+    initiative_metadata = board_inputs.initiative_metadata(db, assessment.id)
+    initiatives = board_derive.build_initiatives(
+        roadmap_groups,
+        initiative_metadata,
+        observations,
+        generated_on,
+    )
+    status_board = board_derive.build_status_board(framework_sections, register)
+    risk_matrix = board_derive.build_risk_matrix(framework_sections, register)
+    severity_dashboard = board_derive.build_severity_dashboard(framework_sections, register)
+    status_counts = {label: 0 for label in report_content.ACTION_STATUS_LABELS.values()}
+    for action in roadmap_actions:
+        status_counts[action["status_label"]] = status_counts.get(action["status_label"], 0) + 1
+    overdue_count = sum(
+        board_derive.is_overdue(action.get("target_date"), generated_on, action.get("status_label"))
+        for action in roadmap_actions
+    )
+    asks = board_inputs.board_asks(assessment)
+    board_asks = {
+        "derived": board_derive.derived_asks(
+            initiatives,
+            observations,
+            insufficient_evidence=totals["insufficient_evidence"],
+            rfi_open=len(rfi["items"]),
+        ),
+        "consultant": asks.get("consultant", []),
+        "consultant_by": asks.get("consultant_by"),
+    }
+    theme = _frozen_theme()
     document = {
         "schema_version": DOCUMENT_SCHEMA_VERSION,
         "kind": SNAPSHOT_TYPE,
@@ -506,12 +611,24 @@ def build_document(
             ),
             "frameworks": summary_frameworks,
             "totals": totals,
+            "risk_matrix": risk_matrix,
         },
         "top_risks": top_risks,
+        "observations": observations,
+        "initiatives": initiatives,
+        "status_board": status_board,
+        "severity_dashboard": severity_dashboard,
+        "takeaways": board_derive.build_takeaways(
+            status_board, severity_dashboard, totals, initiatives, observations
+        ),
+        "board_asks": board_asks,
+        "theme": theme,
         "roadmap": {
             "actions": roadmap_actions,
             "unplanned_gap_count": unplanned_gap_count,
             "groups": roadmap_groups,
+            "status_counts": status_counts,
+            "overdue_count": overdue_count,
         },
         "not_assessed": {
             "insufficient_evidence": [
@@ -525,10 +642,7 @@ def build_document(
             ],
             "rfi": rfi,
         },
-        "framework_sections": [
-            _framework_section(approved.framework_reviews[framework_id])
-            for framework_id in framework_ids
-        ],
+        "framework_sections": framework_sections,
         "sign_off": {
             "prepared_by": basis.prepared_by,
             "reviewed_by": basis.reviewed_by,
@@ -549,9 +663,43 @@ def build_document(
 
 
 def render_html(document: dict, *, embed_fonts: bool) -> str:
+    # The preview view may normalize an absent owner for text-only consumers;
+    # issued documents are rendered with embedded fonts and keep the sidecar null.
+    if not embed_fonts:
+        for initiative in document.get("initiatives", []):
+            if initiative.get("owner") is None:
+                initiative["owner"] = ""
+    presentation = board_view.view(document)
+    presentation.update(
+        {
+            "p1": document.get("theme", {}).get("primary", "#161A5C"),
+            "p2": document.get("theme", {}).get("secondary", "#2D3FD3"),
+            "acc": document.get("theme", {}).get("accent", "#12B3A6"),
+            "obs_pages": [
+                document.get("observations", [])[start : start + 4]
+                for start in range(0, presentation["observation_pages"] * 4, 4)
+            ] or [[]],
+            "reg_pages": [
+                document.get("appendices", {}).get("requirement_register", [])[start : start + 21]
+                for start in range(0, presentation["register_pages"] * 21, 21)
+            ] or [[]],
+            "ref_by_finding": {
+                observation.get("finding_id"): observation.get("ref")
+                for observation in document.get("observations", [])
+            },
+            "framework_names": {
+                framework.get("framework_id"): framework.get("name")
+                for framework in document.get("frameworks", [])
+            },
+        }
+    )
     return _templates.get_template(TEMPLATE).render(
         doc=document,
+        v=presentation,
         font_face_css=Markup(html_pdf.font_face_css()) if embed_fonts else Markup(""),
+        display_font_face_css=(
+            Markup(html_pdf.display_font_face_css()) if embed_fonts else Markup("")
+        ),
         font_stack=Markup(html_pdf.FONT_STACK),
         embed_fonts=embed_fonts,
         narrative_note=narrative.NARRATIVE_NOTE,
@@ -559,7 +707,60 @@ def render_html(document: dict, *, embed_fonts: bool) -> str:
 
 
 def render_pdf(document: dict) -> bytes:
-    return html_pdf.render_pdf(render_html(document, embed_fonts=True))
+    rendered = html_pdf.render_pdf(render_html(document, embed_fonts=True))
+    # Pango's Devanagari shaping is visually correct but some PDF text
+    # extractors split conjuncts.  When Poppler is available, replace only the
+    # cover with an fpdf2 text layer whose ToUnicode map preserves the client
+    # name; all deck pages and the embedded display font remain WeasyPrint's.
+    company = str(document.get("company_name") or "")
+    if not any("\u0900" <= character <= "\u097f" for character in company):
+        return rendered
+    pdfseparate = shutil.which("pdfseparate")
+    pdfunite = shutil.which("pdfunite")
+    if not pdfseparate or not pdfunite:
+        return rendered
+    try:
+        from fpdf import FPDF
+
+        with tempfile.TemporaryDirectory(prefix="cyberassess-board-") as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source.pdf"
+            source.write_bytes(rendered)
+            cover = root / "cover.pdf"
+            cover_pdf = FPDF(unit="pt", format=(960, 540))
+            cover_pdf.add_page()
+            cover_pdf.set_fill_color(22, 26, 92)
+            cover_pdf.rect(0, 0, 960, 540, style="F")
+            cover_pdf.add_font(
+                "Noto Devanagari",
+                fname=str(html_pdf.FONT_DIR / "NotoSansDevanagari-Regular.ttf"),
+            )
+            cover_pdf.set_text_color(255, 255, 255)
+            cover_pdf.set_font("helvetica", size=11)
+            cover_pdf.text(52, 55, str(document["firm_name"]))
+            cover_pdf.set_font("helvetica", size=26)
+            cover_pdf.text(52, 180, "Board report")
+            cover_pdf.set_font("Noto Devanagari", size=18)
+            cover_pdf.text(52, 230, company)
+            cover_pdf.set_font("helvetica", size=13)
+            cover_pdf.text(52, 275, "Privacy and information security compliance assessment")
+            cover_pdf.set_font("helvetica", size=9)
+            cover_pdf.text(52, 480, str(document["basis"]["period_label"]))
+            cover_pdf.text(300, 480, str(document["basis"]["cutoff_label"]))
+            cover_pdf.text(650, 480, str(document["snapshot"]["version_label"]))
+            cover.write_bytes(bytes(cover_pdf.output()))
+            rest_pattern = str(root / "rest-%d.pdf")
+            subprocess.run(
+                [pdfseparate, "-f", "2", "-l", str(len(board_view.view(document)["slides"])), str(source), rest_pattern],
+                check=True,
+                capture_output=True,
+            )
+            parts = [str(cover)] + [str(root / f"rest-{index}.pdf") for index in range(2, len(board_view.view(document)["slides"]) + 1)]
+            output = root / "combined.pdf"
+            subprocess.run([pdfunite, *parts, str(output)], check=True, capture_output=True)
+            return output.read_bytes()
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        return rendered
 
 
 def generate_version(

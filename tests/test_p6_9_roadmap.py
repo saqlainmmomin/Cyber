@@ -193,7 +193,7 @@ def test_scenario_4_document_roadmap_keeps_b1_actions_and_adds_groups(db, http, 
     assert grouped == sorted(a["title"] for a in roadmap["actions"])  # every action in exactly one group
 
     html = board.render_html(document, embed_fonts=False)
-    section = html[html.index('data-section="roadmap"'):html.index('data-section="not-assessed"')]
+    section = html[html.index('data-slide="roadmap"'):html.index('data-slide="initiatives"')]
     assert "grouped by shared control" in section
     assert section.count("data-roadmap-group=") == 2
     assert "Access Control Baseline" in section and access["headline"] in section
