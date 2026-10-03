@@ -2433,6 +2433,8 @@ def comparison_page(
             "framework_deltas": framework_deltas,
             "deltas": result["deltas"],
             "delta_summary": result["summary"],
+            # The same URL as the assessment's Report tab.
+            "current_report_url": f"/assessments/{assessment.id}?tab=report",
         },
     )
 
