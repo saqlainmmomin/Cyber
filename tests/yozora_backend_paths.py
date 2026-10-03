@@ -11,7 +11,7 @@ YOZORA_BACKEND_APP_PATHS = (
     "app/models/__init__.py", "app/models/firm_settings.py", "app/models/client.py",
     "app/models/assessment.py", "app/models/magic_link.py",
     # Services
-    "app/services/firm_settings.py", "app/services/retention.py", "app/services/actions_export.py",
+    "app/services/firm_settings.py", "app/services/retention.py", "app/services/engagement_factory.py", "app/services/actions_export.py",
     "app/services/magic_links.py", "app/services/rfi_requests.py", "app/services/findings.py",
     "app/services/evidence_inventory.py", "app/services/assessment_stage.py",
     "app/services/prefill_freshness.py", "app/services/request_summary.py",
@@ -43,12 +43,9 @@ YOZORA_BACKEND_OTHER_PATHS = (
     "tests/test_p6_6_report_foundations.py", "tests/test_p6_8_v3a_data_capture.py",
     "tests/test_startup_invariants.py", "tests/test_retention.py",
     # File-set guards: one scoped allowance each
-    "tests/p6_10_support.py", "tests/test_longitudinal_demo.py", "tests/test_p6_0c_dev_hygiene.py",
-    "tests/test_p6_1_llm_plumbing.py", "tests/test_p6_1b_framework_batching.py",
-    "tests/test_p6_2b_dpdpa_criteria.py", "tests/test_p6_3a_grounding.py", "tests/test_p6_3b_v2_flag.py",
-    "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_v2_judge.py", "tests/test_p6_4_whats_missing.py",
+    "tests/p6_10_support.py", "tests/test_p6_2b_dpdpa_criteria.py", "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_v2_judge.py", "tests/test_p6_4_whats_missing.py",
     "tests/test_p6_7_requirement_card.py", "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_8_b2_docx_xlsx.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py", "tests/test_p6_nist_csf2_alignment.py",
-    "tests/test_validation_harness.py", "tests/test_remediation_tracking.py", "tests/test_magic_links.py",
+    "tests/test_validation_harness.py",
 )
 YOZORA_BACKEND_FILES = YOZORA_BACKEND_APP_PATHS + YOZORA_BACKEND_OTHER_PATHS
