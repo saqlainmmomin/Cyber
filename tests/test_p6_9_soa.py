@@ -69,7 +69,7 @@ def test_scenario_1_document_schema_v2_and_soa_rows_cover_every_annex_a_control(
     assessment, _ = _fixture(db, http, gate, monkeypatch)
     document = build(db, assessment)
 
-    assert board.DOCUMENT_SCHEMA_VERSION == 2 and document["schema_version"] == 2
+    assert board.DOCUMENT_SCHEMA_VERSION == 3 and document["schema_version"] == 3
     assert set(document) == P6_8_DOCUMENT_KEYS | {"soa", "prior_period"}
     assert all("pack_version" in framework for framework in document["frameworks"])
 

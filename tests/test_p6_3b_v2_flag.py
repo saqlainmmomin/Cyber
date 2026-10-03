@@ -937,7 +937,12 @@ def test_scenario_11_only_desk_review_v2_imports_grounding():
     # P6-4 (tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md) allows exactly one
     # more importer, the v2 analysis service. Any other importer still fails.
     assert "app/services/desk_review_v2.py" in importers
-    assert set(importers) <= {"app/services/desk_review_v2.py", "app/services/analysis_v2.py"}
+    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) adds the two
+    # drafting services, which reuse grounding.prompts.wrap_untrusted only.
+    assert set(importers) <= {
+        "app/services/desk_review_v2.py", "app/services/analysis_v2.py",
+        "app/services/remediation_draft.py", "app/services/narrative.py",
+    }
 
 
 def test_scenario_11_p6_3a_prompts_unchanged():

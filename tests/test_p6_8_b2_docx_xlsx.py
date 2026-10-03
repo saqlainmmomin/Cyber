@@ -351,7 +351,7 @@ def test_scenario_1_openpyxl_is_pinned_and_the_exporters_take_only_the_document(
     exports = _exports()
     assert exports.EXPORT_FORMAT_VERSION == 1
     # Schema v1 sidecars (pre-P6-9) stay exportable; v2 is the current builder (D-P6-8-B2-J).
-    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2)
+    assert exports.SUPPORTED_SCHEMA_VERSIONS == (1, 2, 3)
     assert _board().DOCUMENT_SCHEMA_VERSION in exports.SUPPORTED_SCHEMA_VERSIONS
     assert exports.XLSX_OPTIONAL_SHEETS == XLSX_OPTIONAL_SHEETS
     # The roadmap intro mirrors the PDF of the document's own schema: v2 is the live template's text.
@@ -396,7 +396,7 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
     paragraphs = [paragraph.text for paragraph in word.paragraphs]
     label = _label(document, sha)
 
-    assert document["schema_version"] == 2 and document["soa"] is not None  # DPDPA + ISO fixture
+    assert document["schema_version"] == 3 and document["soa"] is not None  # DPDPA + ISO fixture
     assert _headings(word, 1) == [
         *B1_HEADINGS_HEAD,
         *[f"{section['name']} ({section['version']})" for section in document["framework_sections"]],
@@ -539,7 +539,7 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert about_rows["Report version"] == "v1"
     assert about_rows["Document SHA-256"] == sha
     assert about_rows["Report generated"] == document["snapshot"]["generated_at"]
-    assert about_rows["Document schema version"] == 2
+    assert about_rows["Document schema version"] == 3
     assert about_rows["Prior-period comparison"] == " ".join(document["prior_period"]["notes"])
     assert about_rows["Export format version"] == 1
     assert about_rows["Assessment period"] == document["basis"]["period_label"]
@@ -911,6 +911,8 @@ def test_scenario_9b_a_dpdpa_only_export_has_no_statement_of_applicability(db, h
 # 10. No LLM, no live readers, and the B2 file set
 # ---------------------------------------------------------------------------
 
+from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+
 P6_8_B2_APP_ALLOWLIST = (
     "app/services/board_exports.py",
     "app/routers/snapshots.py",
@@ -938,7 +940,20 @@ P6_8_B2_FORBIDDEN_PATHS = (
     ":(exclude)scripts/validation/run_company.py",
     # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the synthetic v3 deck document.
     ":(exclude)tests/golden/p6_8_v3_deck_document.json",
+    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme.
+    *V3A_EXCLUDES,
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): lands after
+# B2 and P6-9; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard this set.
+P6_10_APP_FILES = {
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/main.py", "app/templates/partials/remediation_draft.html",
+    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
+    "app/services/board_report.py", "app/templates/reports/board_report.html",
+    "app/templates/pages/report_snapshots.html", "app/services/board_exports.py",
+}
+P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
+P6_8_B2_FORBIDDEN_PATHS += tuple(f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS))
 LIVE_READER_TOKENS = (
     "llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai",
     "build_document", "approved_report", "report_content", "report_basis", "conclusion_review",
@@ -975,6 +990,8 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
+    changed_app -= set(V3A_APP_PATHS)  # P6-8 V3-A
+    changed_app -= P6_10_APP_FILES  # P6-10 lands after B2 (its own contract tests guard that set)
     outside = sorted(path for path in changed_app if not path.startswith(P6_8_B2_APP_ALLOWLIST))
     assert outside == [], outside
 

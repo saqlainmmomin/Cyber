@@ -12,7 +12,7 @@ from app.services import board_report, report_snapshots
 
 
 EXPORT_FORMAT_VERSION = 1
-SUPPORTED_SCHEMA_VERSIONS = (1, 2)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 DERIVATION_LABEL = (
@@ -165,6 +165,7 @@ ROADMAP_INTROS = {
         "nothing on this page is estimated."
     ),
 }
+ROADMAP_INTROS[3] = ROADMAP_INTROS[2]
 JUSTIFICATION_STATUS = {True: "Recorded", False: "Missing"}
 MISSING_FILL = "FFFFF2CC"
 

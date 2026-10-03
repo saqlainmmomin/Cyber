@@ -82,6 +82,12 @@
     </tbody></table>
     <p class="small">Scores are computed and reported independently for each framework; no score is combined across frameworks.</p>
     <p><strong>{{ doc.summary.totals.requirements }} requirements assessed | {{ doc.summary.totals.gaps }} gaps identified ({{ doc.summary.totals.critical_high_gaps }} critical or high)</strong></p>
+    {% if doc.summary.narrative.executive or doc.summary.narrative.cross_framework or (doc.summary.frameworks | selectattr('narrative') | list) %}
+    {% if doc.summary.narrative.executive %}<div data-narrative="executive"><h3>Overview</h3><p>{% for sentence in doc.summary.narrative.executive %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}
+    {% for framework in doc.summary.frameworks %}{% if framework.narrative %}<div data-narrative="framework-{{ framework.framework_id }}"><h3>{{ framework.name }}: posture</h3><p>{% for sentence in framework.narrative %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}{% endfor %}
+    {% if doc.summary.narrative.cross_framework %}<div data-narrative="cross-framework"><h3>Across frameworks</h3><p>{% for sentence in doc.summary.narrative.cross_framework %}<span data-narrative-sentence>{{ sentence.text }} <span class="small">[{% for citation in sentence.citations %}{{ citation.requirement_id }}{% if not loop.last %}; {% endif %}{% endfor %}]</span></span>{% endfor %}</p></div>{% endif %}
+    <p class="small" data-narrative-note>{{ narrative_note }}</p>
+    {% endif %}
   </section>
 
   <section data-section="top-risks">

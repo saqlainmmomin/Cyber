@@ -529,13 +529,61 @@ REPORT_FORMAT_FILES = (
     "docs/product/2026-10-01-board-report-format.md", "docs/product/2026-10-01-board-report-mockup/",
     "tasks/handoffs/2026-10-01-report-format-reevaluation.md", "tests/test_p6_2b_dpdpa_criteria.py",
 )
-# P6-8 v3 board deck, part V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the handoff and the V3-B
-# contract tests with their synthetic document. V3-A's own allowances ride on its branch (merge: keep both).
-P6_8_V3B_FILES = (
+# P6-8 v3 board deck (tasks/handoffs/2026-10-01-board-report-v3-deck.md): V3-A data capture and the
+# V3-B contract tests. tests/test_p6_8_v3a_data_capture.py guards V3-A's app file set.
+from tests.p6_8_v3a_paths import V3A_APP_PATHS  # noqa: E402
+
+P6_8_V3_FILES = (
     "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/p6_8_v3_support.py",
-    "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_document.py",
-    "tests/golden/p6_8_v3_deck_document.json", "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/p6_8_v3a_paths.py", "tests/test_p6_8_v3a_data_capture.py", "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py",
+    "tests/test_p6_8_v3b_document.py", "tests/test_p6_8_v3a_extra.py", *V3A_APP_PATHS,
+    # existing tests: the "Alembic head" pins and the per-PR guard allowances
+    "tests/test_p6_6_report_foundations.py", "tests/test_retention.py", "tests/test_p5_6_rfi_rebuild.py",
+    "tests/test_startup_invariants.py", "tests/test_p5_3_framework_desk_review.py",
+    "tests/test_p5_4_adaptive_ucc_questionnaire.py", "tests/test_alembic_baseline_immutable.py",
+    "tests/test_data_integrity.py", "tests/test_correctness_bundle.py", "tests/test_p5_2_reader_migration.py",
+    "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_v2_judge.py",
+    "tests/test_p6_4_whats_missing.py", "tests/test_p6_7_requirement_card.py", "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py",
+    "tests/test_p6_nist_csf2_alignment.py",
 )
+# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): Stage 3/4 drafting;
+# tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard its app file set.
+P6_10_FILES = (
+    "tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md",
+    "tests/p6_10_support.py", "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py",
+    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
+    "app/templates/partials/remediation_draft.html", "app/templates/pages/narrative.html",
+    "app/templates/components/conclusion_card.html", "app/services/board_exports.py",
+    "tests/test_p6_9_soa.py", "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_9_file_set.py", "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/golden/p6_8_board_document.json", "tests/test_p6_10_extra.py",
+)
+
+
+# App-design kickoff (claude/app-design-kickoff): handoff docs only.
+APP_DESIGN_KICKOFF_FILES = (
+    "tasks/handoffs/2026-10-01-app-design-kickoff.md", "tasks/handoffs/2026-10-01-next-session-kickoff.md",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tasks/handoffs/2026-10-01-app-design-system-handoff.md",
+)
+# Design exploration artifacts: mockups and baseline screenshots (docs only, no app code).
+APP_DESIGN_DOC_DIRS = (
+    "docs/product/2026-10-01-app-design-baseline/", "docs/product/2026-10-01-app-design-mockups/",
+    "design/",
+)
+# Yozora design system docs and slice handoffs (docs only, no app code).
+YOZORA_DESIGN_FILES = (
+    "docs/product/yozora-design-system.md", "docs/product/yozora-fidelity-gate.md",
+    "docs/product/yozora-migration-map.md",
+) + tuple(f"tasks/handoffs/2026-10-01-yozora-s{n}-handoff.md" for n in range(1, 10)) + (
+    "tasks/handoffs/2026-10-01-yozora-mockup-approvals.md", "tasks/handoffs/2026-10-01-yozora-mockup-revisions-kickoff.md",
+    "tasks/handoffs/2026-10-03-yozora-design-guide-and-slice-handoffs.md",
+    "tasks/handoffs/2026-10-03-yozora-codex-orchestration.md",
+)
+
+# P6-8 V3-B: the synthetic v3 deck document (golden).
+P6_8_V3B_EXTRA = ("tests/golden/p6_8_v3_deck_document.json",)
 
 
 def test_scenario_11_only_p6_2b_files_change():
@@ -548,6 +596,8 @@ def test_scenario_11_only_p6_2b_files_change():
         if f not in P6_2B_ALLOWED_FILES and not f.startswith(P6_8_B1_FILES)
         and not f.startswith(P6_5_FILES) and not f.startswith(P6_9_FILES) and f not in P6_7B_FILES
         and f not in LLM_DEADLINE_FILES and f not in P6_5C_RECORD_FILES and f not in P6_8_B2_FILES
-        and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3B_FILES
+        and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_8_V3B_EXTRA and f not in P6_10_FILES
+        and f not in APP_DESIGN_KICKOFF_FILES and not f.startswith(APP_DESIGN_DOC_DIRS)
+        and f not in YOZORA_DESIGN_FILES
     ]
     assert offenders == [], offenders

@@ -544,7 +544,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     assert retention.ARCHIVABLE_STATUSES == ("active", "closed")
     assert retention.RETENTION_YEARS_RANGE == (1, 50)
     assert retention.PURGE_ORDER == (
-        "evidence_uses", "actions", "findings", "conclusion_revisions", "conclusions",
+        "evidence_uses", "actions", "findings", "initiative_metadata", "conclusion_revisions", "conclusions",
         "analysis_runs", "initiatives", "gap_items", "gap_reports", "desk_review_findings",
         "desk_review_summaries", "questionnaire_responses", "rfi_documents", "assessment_packs",
         "report_snapshots", "evidence_versions", "evidence", "assessment_documents",
@@ -622,7 +622,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     heads = subprocess.run(
         [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout
-    assert "8b2d5f7e1c34 (head)" in heads
+    assert "5e9a2c7d4b18 (head)" in heads  # P6-8 V3-A migration
     assert not list(REPO_ROOT.joinpath("app/models").rglob("*.py")) or all(
         "relationship(" not in path.read_text() for path in REPO_ROOT.joinpath("app/models").rglob("*.py")
     )

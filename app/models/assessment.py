@@ -24,6 +24,7 @@ class Assessment(Base):
     industry: Mapped[str] = mapped_column(String(100))
     company_size: Mapped[str] = mapped_column(String(50))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    board_asks_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="created")
     # Phase 0 — scope
     scope_answers: Mapped[str | None] = mapped_column(Text, nullable=True)          # JSON: {SCP.1: ..., ...}

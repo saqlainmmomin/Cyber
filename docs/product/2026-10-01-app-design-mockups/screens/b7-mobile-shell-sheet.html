@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="midnight">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile app shell at 390 px</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../design/yozora-tokens.css">
+<link rel="stylesheet" href="../../../../design/yozora-components.css">
+<link rel="stylesheet" href="../../../../design/yozora-patterns.css">
+<link rel="stylesheet" href="../../../../design/mockup-chrome.css">
+</head>
+<body>
+<div class="sheet"><h1>Mobile app shell at 390 px</h1>
+<div class="strip"><figure><figcaption>Navigation closed</figcaption><iframe class="dev" title="Navigation closed" src="b7-mobile-shell.html" width="390" height="780"></iframe></figure><figure><figcaption>Drawer open</figcaption><iframe class="dev" title="Drawer open" src="b7-mobile-shell.html?drawer" width="390" height="780"></iframe></figure><figure><figcaption>Drawer with account menu</figcaption><iframe class="dev" title="Drawer with account menu" src="b7-mobile-shell.html?drawer&menu" width="390" height="780"></iframe></figure><figure><figcaption>Confirm dialog</figcaption><iframe class="dev" title="Confirm dialog" src="b7-mobile-shell.html?modal" width="390" height="780"></iframe></figure><figure><figcaption>Toast</figcaption><iframe class="dev" title="Toast" src="b7-mobile-shell.html?toast" width="390" height="780"></iframe></figure></div></div>
+<script>
+const q=new URLSearchParams(location.search);
+if(q.has('dark'))document.documentElement.dataset.theme='dark';
+document.querySelectorAll('iframe').forEach(f=>{{if(q.has('dark'))f.src+=(f.src.includes('?')?'&':'?')+'dark'}});
+</script>
+</body></html>
