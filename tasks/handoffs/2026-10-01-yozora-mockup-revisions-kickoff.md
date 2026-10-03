@@ -110,3 +110,16 @@ Append a `## Results` section here: what changed, screens added or removed, the 
    - Should "Pre-fill questionnaire" be a ghost button on the inventory (current) or go in the "Add from" menu?
    - Framework tabs inside Report, SoA and Compare are still a `.tabs` row under the assessment tabs. Keep, or switch to a `.seg`?
 4. Trademark search for Yozora (gates Track 4).
+
+### Update 2026-10-03
+- **RFI page:** now has one row of views (Items, Versions, Client links). The breadcrumb leads back to Evidence and Requests.
+- **Name boxes:** the leftover reviewer and consultant name boxes are removed from the RFI, statement of applicability and report versions pages.
+- **Framework tabs:** they keep their tab row inside Report, statement of applicability and Compare (Saqlain's decision).
+- **Pre-fill (desk review) moved to the Questionnaire tab** (Saqlain's decision; it runs per assessment and its output is the pre-filled answers).
+  - The questionnaire has new "Pre-fill ready" and "Pre-filling" states, plus a compact done card with "What the documents show" and "Pre-fill again".
+  - `b4-desk_review` is now Assessment / Questionnaire / Pre-fill from documents.
+  - The assessment Overview's Questionnaire-stage main button is "Pre-fill questionnaire".
+  - The Evidence list only notes new documents since the last pre-fill.
+  - The spec, flow map and migration map are updated.
+- **Answer wording:** the short answer labels (Full, Partial, No, N/A) on three questionnaire screens now use the approved five-label wording.
+- **Checks:** 996 Playwright loads, all clean apart from the stacked b5 files (as before). The tokens check and the P6-2b guard pass.

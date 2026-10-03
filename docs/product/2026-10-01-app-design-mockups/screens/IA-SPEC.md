@@ -24,16 +24,17 @@ Use one `.seg` group under the tab row (buttons that navigate), never a second `
 ## Where each screen lives
 | Screen | Level / tab | Notes |
 |---|---|---|
-| b4-evidence (new) | Engagement / Evidence / Inventory | Every item: name, source (Upload, AWS, Client link, Reused), assessment, supports (control codes, muted), status (Scanning, Available, Rejected, Out of date), updated. Filters: source, status, assessment. Primary: Upload evidence. Secondary menu or buttons: Pull from AWS (`b4-aws_evidence`), Reuse from another assessment (`b4-evidence_reuse`), Pre-fill questionnaire (`b4-desk_review`). `?state=all` = cross-engagement view from the side menu (adds Engagement column, no engagement tabs). |
+| b4-evidence (new) | Engagement / Evidence / Inventory | Every item: name, source (Upload, AWS, Client link, Reused), assessment, supports (control codes, muted), status (Scanning, Available, Rejected, Out of date), updated. Filters: source, status, assessment. Primary: Upload evidence. Secondary menu or buttons: Pull from AWS (`b4-aws_evidence`), Reuse from another assessment (`b4-evidence_reuse`). A note under the table links to the questionnaire when new documents arrive after the last pre-fill. `?state=all` = cross-engagement view from the side menu (adds Engagement column, no engagement tabs). |
 | b6-magic_links | Engagement / Evidence / Requests | Already redesigned; only re-shell it. |
 | b6-rfi | Engagement / Evidence / Requests / <assessment> request | RFI items and versions for one assessment; its client links show in Requests. |
-| b4-desk_review, b4-aws_evidence, b4-evidence_reuse, b4-evidence_detail, b4-evidence_span | Engagement / Evidence (sub-pages) | Evidence tab selected. |
+| b4-aws_evidence, b4-evidence_reuse, b4-evidence_detail, b4-evidence_span | Engagement / Evidence (sub-pages) | Evidence tab selected. |
 | b4-documents_tab, b4-document_list | superseded by b4-evidence | Moved to `../superseded/`. |
 | b2-engagement_detail | Engagement / Overview | Assessments table with Stage and Next step; Add assessment primary; Archive ghost. Note: an engagement with one assessment opens straight on that assessment's Overview. |
 | b2-remediation_tracker | Engagement / Findings and actions | Title "Findings and actions". Export actions stays (secondary). |
 | b5-finding-card | Engagement / Findings and actions / <finding> | |
 | b2-integrated_reports | Engagement / Reports | |
 | b3-* | Assessment / Overview, Scope, Questionnaire | b3-hub is Overview. |
+| b4-desk_review | Assessment / Questionnaire / Pre-fill from documents | Pre-fill (desk review) runs per assessment and starts from the Questionnaire tab (decided 3 Oct 2026); its results feed the pre-filled answers. |
 | b5-analysis, b5-review-queue, b5-conclusions, b5-conclusion-card, b5-requirement-card, b5-review-finding-card, b5-findings, b4-workpaper, b4-workpaper_entry | Assessment / Review | |
 | b5-report, b5-no-report, b5-basis, b5-release, b6-report_snapshots, b6-soa, b6-comparison | Assessment / Report | Open current report stays on comparison. |
 

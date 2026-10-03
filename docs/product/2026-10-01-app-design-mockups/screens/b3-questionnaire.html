@@ -75,7 +75,7 @@
       <button class="btn ghost icon menu-btn" aria-label="Open navigation"><svg class="i"><use href="#i-menu"/></svg></button>
       <div class="crumb"><a class="hide-sm" href="b1-client_detail.html">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="b2-engagement_detail.html">FY2026 privacy readiness</a><svg class="i sl"><use href="#i-slash"/></svg><a href="b3-hub.html">Head office</a><svg class="i sl"><use href="#i-slash"/></svg><b>Questionnaire</b></div>
     </div>
-    <div class="state-bar"><div class="seg" id="states" aria-label="Screen state"><button aria-pressed="false" data-s="default">Default</button><button aria-pressed="false" data-s="context">Context first</button><button aria-pressed="false" data-s="screened">Screening done</button><button aria-pressed="false" data-s="noscreen">No screening</button><button aria-pressed="false" data-s="error">Context error</button><button aria-pressed="false" data-s="running">Analysis running</button><button aria-pressed="false" data-s="complete">Analysis complete</button></div></div>
+    <div class="state-bar"><div class="seg" id="states" aria-label="Screen state"><button aria-pressed="false" data-s="prefill">Pre-fill ready</button><button aria-pressed="false" data-s="prefilling">Pre-filling</button><button aria-pressed="false" data-s="default">Default</button><button aria-pressed="false" data-s="context">Context first</button><button aria-pressed="false" data-s="screened">Screening done</button><button aria-pressed="false" data-s="noscreen">No screening</button><button aria-pressed="false" data-s="error">Context error</button><button aria-pressed="false" data-s="running">Analysis running</button><button aria-pressed="false" data-s="complete">Analysis complete</button></div></div>
     <div class="page">
       <div class="page-head">
         <div>
@@ -88,13 +88,25 @@
       <nav class="tabs" aria-label="Assessment"><a href="b3-hub.html">Overview</a><a href="b3-scope.html">Scope</a><a href="b3-questionnaire.html" aria-selected="true">Questionnaire</a><a href="b5-review-queue.html">Review</a><a href="b5-report.html">Report</a></nav>
 
       <div class="mt-lg stack">
+        <div class="solid card" data-state="prefill" hidden>
+  <div class="between"><div><h2>Pre-fill from documents</h2><p class="sub">5 documents are ready. Answers they support are filled in with the quoted passage, for you to confirm.</p></div>
+  <a class="btn primary" href="b3-questionnaire.html?state=prefilling">Pre-fill answers</a></div>
+</div>
+        <div class="solid card" data-state="prefilling" hidden role="status">
+  <h2>Reading 5 documents</h2><p class="sub">This takes a few minutes. You can keep answering; pre-filled answers appear as they are found.</p>
+  <div class="mt"><div class="skel-stack" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:35%"></span></div></div>
+</div>
+        <div class="solid card" id="desk-review-area" data-state="default error screened noscreen running complete" hidden>
+  <div class="between"><div><h2>Pre-filled from 5 documents</h2><p class="sub">14 Mar 2026 · 6 answers wait for confirmation · 2 missing provisions · 1 red flag</p><p class="sub tight">3 new documents since then.</p></div>
+  <div class="hrow"><a class="btn ghost" href="b4-desk_review.html?state=findings">What the documents show</a><a class="btn secondary" href="b3-questionnaire.html?state=prefilling">Pre-fill again</a></div></div>
+</div>
         <div class="alert c-medium" data-state="error" hidden><svg class="i"><use href="#i-alert"/></svg><div><b>Context profiling failed</b>The questionnaire will run without adaptive weighting. You can submit context again from this tab.</div></div>
         <div class="solid card" data-state="context" hidden>
   <h2>Context</h2>
   <p class="sub">Tell us about the organisation's data and risk exposure. This shapes the questionnaire.</p>
   <div class="hrow mt-lg"><a class="btn primary" href="b3-question-step.html">Start context questions</a></div>
 </div>
-        <div class="solid card" data-state="default error running complete" hidden>
+        <div class="solid card" data-state="default error running complete prefill prefilling" hidden>
   <div class="between"><div><h2>Domain screening</h2><p class="sub">Optional. AI proposes answers for DPDPA requirements it is confident about, and you confirm them.</p></div>
   <a class="btn secondary" href="b3-screening-form.html">Start screening</a></div>
 </div>
@@ -105,7 +117,7 @@
   <h2>Domain screening</h2><p class="sub">Screening is available for DPDPA only. Answer the questionnaire directly.</p>
 </div>
       </div>
-      <div class="split mt" data-state="default error screened noscreen running complete" hidden>
+      <div class="split mt" data-state="default error screened noscreen running complete prefill prefilling" hidden>
   <div class="glass split-list" id="sections">
   <div class="grp">To answer</div>
   <a class="item sel" href="#"><div class="txt"><b>Notice and consent</b><span>4 of 6 answered · 2 deep review</span></div></a>
@@ -132,7 +144,7 @@
 <label class="field"><input name="evidence_q2" placeholder="Document name or link" aria-label="Evidence reference"></label></div></details>
 </div><div class="solid qcard quick" id="q3">
   <div class="between"><h3>Is each consent stored with a timestamp and the notice version?</h3><span class="ai">Inferred from screening</span></div>
-  <div class="opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a3" checked>Full</label><label class="choice"><input type="radio" name="a3">Partial</label><label class="choice"><input type="radio" name="a3">Planned</label><label class="choice"><input type="radio" name="a3">No</label><label class="choice"><input type="radio" name="a3">N/A</label></div>
+  <div class="opts inline" role="radiogroup" aria-label="Answer"><label class="choice"><input type="radio" name="a3" checked>Fully implemented</label><label class="choice"><input type="radio" name="a3">Partially implemented</label><label class="choice"><input type="radio" name="a3">Planned</label><label class="choice"><input type="radio" name="a3">Not implemented</label><label class="choice"><input type="radio" name="a3">Not applicable</label></div>
 </div><div class="solid qcard" id="q5">
   <h3>Are notices offered in the languages your data principals read?</h3>
   <p class="help">Count the languages used in your apps and customer support.</p>
@@ -147,6 +159,10 @@
       <div class="solid card mt-lg" data-state="default error screened noscreen" hidden>
   <div class="between"><div><h2>Analysis</h2><p class="sub"><span class="num">18 of 42</span> questions answered. Evidence items received: 7. Results appear in the Review tab.</p></div>
   <button class="btn primary" type="button">Run analysis</button></div>
+</div>
+<div class="solid card mt-lg" data-state="prefill prefilling" hidden>
+  <div class="between"><div><h2>Analysis</h2><p class="sub">Pre-fill first, so the analysis can cite your documents. Results appear in the Review tab.</p></div>
+  <button class="btn secondary" type="button">Run analysis</button></div>
 </div>
 <div class="solid card mt-lg" data-state="running" hidden role="status">
   <div class="between"><div><h2>Analysis is running</h2><p class="sub">This takes a few minutes. You can leave this page.</p></div></div>

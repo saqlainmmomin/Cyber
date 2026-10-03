@@ -46,12 +46,12 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `partials/aws_evidence_panel.html` | S6 | Panel | `aws-evidence-panel` | `#aws-evidence-panel` | `outerHTML` | `data-aws-error`, `data-aws-evidence-row`, `data-aws-pull-form`, `data-aws-result`, `data-aws-source-row` | test_aws_evidence.py |
 | `partials/client_picker.html` | S3 | Menu/popover list | `client_id`, `company_name`, `company_size`, `industry` | - | - | - | - |
 | `partials/context_complete.html` | S5 | Alert/empty | - | - | - | - | - |
-| `partials/desk_review_error.html` | S6 | Alert | - | `#desk-review-area` | `innerHTML` | - | - |
-| `partials/desk_review_findings.html` | S6 | Table/cards | - | `#desk-review-area` | `innerHTML` | `data-desk-review-failed-frameworks` | - |
-| `partials/desk_review_ready.html` | S6 | Empty/CTA | `dr-spinner` | `#desk-review-area` | `innerHTML` | - | - |
-| `partials/desk_review_running.html` | S6 | Loading | - | - | `outerHTML` | - | - |
+| `partials/desk_review_error.html` | S6 | Alert on the assessment Questionnaire tab (pre-fill from documents) | - | `#desk-review-area` | `innerHTML` | - | - |
+| `partials/desk_review_findings.html` | S6 | Table/cards on the assessment Questionnaire tab (pre-fill from documents) | - | `#desk-review-area` | `innerHTML` | `data-desk-review-failed-frameworks` | - |
+| `partials/desk_review_ready.html` | S6 | Empty/CTA on the assessment Questionnaire tab (pre-fill from documents) | `dr-spinner` | `#desk-review-area` | `innerHTML` | - | - |
+| `partials/desk_review_running.html` | S6 | Loading on the assessment Questionnaire tab (pre-fill from documents) | - | - | `outerHTML` | - | - |
 | `partials/document_list.html` | S6 | Folded into the engagement Evidence inventory table (`b4-evidence`) | - | `#document-list` | `innerHTML` | - | - |
-| `partials/documents_tab.html` | S6 | Folded into the engagement Evidence inventory (`b4-evidence`): upload panel | `desk-review-area`, `document-list`, `drop-zone`, `file-input`, `file-name-display`, `upload-progress`, `upload-progress-bar` | `#document-list` | `innerHTML` | `data-evidence-reuse-link` | - |
+| `partials/documents_tab.html` | S6 | Folded into the engagement Evidence inventory (`b4-evidence`): upload panel; `desk-review-area` moves to the Questionnaire tab pre-fill card | `desk-review-area`, `document-list`, `drop-zone`, `file-input`, `file-name-display`, `upload-progress`, `upload-progress-bar` | `#document-list` | `innerHTML` | `data-evidence-reuse-link` | - |
 | `partials/engagement_list.html` | S4 | Table | - | - | - | - | - |
 | `partials/engagement_retention.html` | S3 | Split: retention period moves to firm Settings (data housekeeping); engagement keeps only the archive/unarchive action and archived banner | `reviewer-name` | - | - | `data-archive-control`, `data-archived-banner`, `data-purge-preview-link`, `data-retention-panel`, `data-unarchive-control` | - |
 | `partials/followup_questions.html` | S5 | Form | - | - | - | - | - |
