@@ -1038,7 +1038,7 @@ def _v3_title_block(sheet, document: dict, title: str, purpose: str) -> None:
                 f"Board report {document['snapshot']['version_label']} (snapshot {document['snapshot']['id'][:8]})",
                 "Draft until issued",
             )
-        ),
+        ) + f" · Report generated: {_clean(document['snapshot']['generated_on'])} · Confidential",
     )
     sheet["A1"].font = Font(bold=True, size=16, color="161A5C")
     sheet["A2"].font = Font(italic=True, color="66708B")
@@ -1298,7 +1298,20 @@ def render_pptx(document: dict, *, document_sha256: str) -> bytes:
         background = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, presentation.slide_width, Mm(5))
         background.fill.solid(); background.fill.fore_color.rgb = primary; background.line.fill.background()
         text_box(slide, slide_data["title"], 14, 10, 270, 15, size=24, color=primary, bold=True)
-        text_box(slide, f"{document['firm_name']} · {document['basis']['period_label']} · {document['basis']['cutoff_label']} · {document['snapshot']['version_label']} · Confidential", 14, 181, 300, 6, size=7, color=primary)
+        snapshot_id = document.get("snapshot", {}).get("id")
+        snapshot_label = f" · Snapshot {snapshot_id[:8]}" if snapshot_id else ""
+        text_box(
+            slide,
+            f"{document['firm_name']} · {document['basis']['period_label']} · {document['basis']['cutoff_label']} · "
+            f"{document['snapshot']['version_label']}{snapshot_label} · Report generated: "
+            f"{document['snapshot']['generated_on']} · Confidential · Page {slide_data['number']} of {len(slides)}",
+            14,
+            181,
+            310,
+            6,
+            size=7,
+            color=primary,
+        )
         name = slide_data["slide"]
         if name == "cover":
             cover = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, presentation.slide_width, presentation.slide_height)
@@ -1331,7 +1344,75 @@ def render_pptx(document: dict, *, document_sha256: str) -> bytes:
             text_box(slide, "\n".join(document["board_asks"]["consultant"][:3] + document["board_asks"]["derived"]), 18, 42, 290, 110, size=14, color=primary)
         elif name == "roadmap":
             text_box(slide, document["takeaways"]["roadmap"], 18, 35, 295, 15, size=12, color=primary, bold=True)
-            native_table(slide, ["Ref", "Initiative", "Horizon", "Owner"], [[i["ref"], i["title"], i["horizon"], i["owner"] or "Not set"] for i in document["initiatives"]])
+            if document["initiatives"]:
+                native_table(slide, ["Ref", "Initiative", "Horizon", "Owner"], [[i["ref"], i["title"], i["horizon"], i["owner"] or "Not set"] for i in document["initiatives"]])
+            else:
+                text_box(slide, board_view.EMPTY_ROADMAP_TEXT, 18, 58, 295, 20, size=15, color=primary)
+        elif name == "comparison":
+            prior = document["prior_period"]["prior"]
+            text_box(
+                slide,
+                f"Compared with {prior['version_label']} (snapshot {prior['snapshot_id'][:8]}) for the assessment period "
+                f"{prior['period_label']}, evidence cut-off {prior['cutoff_label']}, generated {prior['generated_on']}.",
+                18,
+                30,
+                300,
+                12,
+                size=9,
+                color=primary,
+            )
+            comparison_rows = []
+            for framework in document["prior_period"]["frameworks"]:
+                if framework["compared"]:
+                    delta = (
+                        "Not compared" if framework["score_delta"] is None
+                        else "No change" if framework["score_delta"] == 0
+                        else f"{framework['score_delta']:+.1f} points"
+                    )
+                    comparison_rows.append([
+                        framework["name"],
+                        framework["current_score"] if framework["current_score"] is not None else "Not scored",
+                        framework["prior_score"] if framework["prior_score"] is not None else "Not scored",
+                        delta,
+                    ])
+                else:
+                    comparison_rows.append([framework["name"], "Not compared", "Not compared", "Not compared"])
+            native_table(slide, ["Framework", "Current", "Prior", "Change"], comparison_rows, top=48, height=42)
+            changes = document["prior_period"].get("changes", [])
+            for index, framework in enumerate(document["prior_period"]["frameworks"]):
+                if not framework["compared"]:
+                    lines = ["Not compared"]
+                else:
+                    delta = (
+                        "Not compared" if framework["score_delta"] is None
+                        else "No change" if framework["score_delta"] == 0
+                        else f"{framework['score_delta']:+.1f} points"
+                    )
+                    lines = []
+                    lines.append(
+                        f"Current {framework['current_score'] if framework['current_score'] is not None else 'Not scored'}% · "
+                        f"Prior {framework['prior_score'] if framework['prior_score'] is not None else 'Not scored'}% · Change {delta}"
+                    )
+                    for direction, direction_label in (
+                        ("improved", "Improved"),
+                        ("regressed", "Regressed"),
+                        ("new", "Newly assessed"),
+                        ("no_longer_assessed", "No longer assessed"),
+                    ):
+                        listed = [
+                            f"{change['requirement_id']} · {change['requirement_title']}"
+                            for change in changes
+                            if (
+                                change.get("framework_id") == framework["framework_id"]
+                                or change.get("framework_name") == framework["name"]
+                            )
+                            and (
+                                change.get("direction") == direction
+                                or change.get("direction_label") == direction_label
+                            )
+                        ]
+                        lines.append(f"{direction_label} ({framework['counts'][direction]}): {'; '.join(listed) or 'None'}")
+                text_box(slide, "\n".join(lines), 18, 98 + index * 38, 300, 34, size=7, color=primary)
         else:
             text_box(slide, document["takeaways"].get("status_board", "") if name == "status-board" else document["summary"].get("basis_of_assessment", ""), 18, 40, 295, 90, size=14, color=primary)
         slide.notes_slide.notes_text_frame.text = label

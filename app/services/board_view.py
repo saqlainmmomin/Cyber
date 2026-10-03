@@ -7,6 +7,7 @@ from typing import Mapping
 
 
 NEVER_COMBINED_NOTE = "Scores are per framework and are never combined; the totals above are counts."
+EMPTY_ROADMAP_TEXT = "No remediation actions are recorded for the approved findings yet."
 
 
 def _pages(count: int, per_page: int) -> int:
@@ -47,7 +48,8 @@ def view(document: Mapping) -> dict:
     for index in range(observation_pages):
         add("observations", "observations", "Key observations")
     add("roadmap", "roadmap", "Remediation roadmap")
-    add("initiatives", "initiatives", "Initiatives and actions")
+    if document.get("initiatives"):
+        add("initiatives", "initiatives", "Initiatives and actions")
     if prior.get("status") == "compared":
         add("comparison", "comparison", "Prior-period comparison")
     add("limits", "limits", "Limits and assumptions")
@@ -69,4 +71,5 @@ def view(document: Mapping) -> dict:
         "observation_pages": observation_pages,
         "register_pages": register_pages,
         "never_combined_note": NEVER_COMBINED_NOTE,
+        "empty_roadmap_text": EMPTY_ROADMAP_TEXT,
     }

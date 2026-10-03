@@ -47,6 +47,7 @@ from app.utils import html_pdf
 from app.utils.pdf_export import (
     GAP_STATUSES,
     LEGAL_FRAMEWORK_IDS,
+    S,
     _follow_on_text,
     _nature_text,
     methodology_text,
@@ -789,6 +790,20 @@ def render_pdf(document: dict) -> bytes:
             cover_pdf.text(52, 480, str(document["basis"]["period_label"]))
             cover_pdf.text(300, 480, str(document["basis"]["cutoff_label"]))
             cover_pdf.text(650, 480, str(document["snapshot"]["version_label"]))
+            snapshot_id = document.get("snapshot", {}).get("id")
+            snapshot_label = f" · Snapshot {snapshot_id[:8]}" if snapshot_id else ""
+            cover_pdf.set_font("Noto Sans", size=6)
+            cover_pdf.text(
+                52,
+                520,
+                S(
+                    f"{document['firm_name']} · {document['company_name']} · "
+                    f"{document['basis']['period_label']} · {document['basis']['cutoff_label']} · "
+                    f"{document['snapshot']['version_label']}{snapshot_label} · Report generated: "
+                    f"{document['snapshot']['generated_on']} · Confidential · Page 1 of "
+                    f"{len(board_view.view(document)['slides'])}"
+                ),
+            )
             cover.write_bytes(bytes(cover_pdf.output()))
             rest_pattern = str(root / "rest-%d.pdf")
             subprocess.run(
