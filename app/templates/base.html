@@ -77,7 +77,7 @@
           <nav class="nav" aria-label="Firm">
             {% for item in nav_items %}
             {% if item.key == 'settings' %}
-            <a href="{{ item.href }}" data-nav-key="{{ item.key }}"{% if item.current %} aria-current="page"{% endif %}><svg class="i"><use href="#i-settings"/></svg>{{ item.label }}</a>
+            <a href="{{ item.href }}" data-settings-link data-nav-key="{{ item.key }}"{% if item.current %} aria-current="page"{% endif %}><svg class="i"><use href="#i-settings"/></svg>{{ item.label }}</a>
             {% endif %}
             {% endfor %}
           </nav>
@@ -87,7 +87,7 @@
             {% if firm_words | length > 1 %}{% set firm_initials = firm_initials ~ firm_words[-1][0] | upper %}{% endif %}
             <div class="who"><span class="avatar">{{ firm_initials }}</span><span><b>{{ branding.firm_name }}</b><span>Compliance workspace</span></span></div>
             {% for item in nav_items %}
-            {% if item.key == 'settings' %}<a href="{{ item.href }}" role="menuitem"><svg class="i"><use href="#i-settings"/></svg>{{ item.label }}</a>{% endif %}
+            {% if item.key == 'settings' %}<a href="{{ item.href }}" data-settings-link role="menuitem"><svg class="i"><use href="#i-settings"/></svg>{{ item.label }}</a>{% endif %}
             {% endfor %}
             <div class="gh">Theme</div>
             <button class="mi" type="button" role="menuitem" data-theme-choice="light"><svg class="i"><use href="#i-sun"/></svg>Light</button>

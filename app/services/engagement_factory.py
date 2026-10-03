@@ -30,28 +30,76 @@ def create_engagement_with_assessment(
         )
         db.add(engagement)
         db.flush()
-        assessment = Assessment(
-            company_name=client.name,
-            industry=client.industry,
-            company_size=client.size,
-            description=description or None,
-            selected_frameworks=json.dumps(framework_ids),
-            engagement_id=engagement.id,
+        _add_assessment(
+            db,
+            engagement=engagement,
+            client=client,
+            description=description,
+            framework_ids=framework_ids,
         )
-        db.add(assessment)
-        db.flush()
-        for framework_id in framework_ids:
-            framework = FrameworkRegistry.get_or_none(framework_id)
-            db.add(
-                AssessmentPack(
-                    assessment_id=assessment.id,
-                    framework_id=framework_id,
-                    pack_version=framework.pack_version if framework else "unknown",
-                )
-            )
         db.commit()
         db.refresh(engagement)
         return engagement
+    except Exception:
+        db.rollback()
+        raise
+
+
+def _add_assessment(
+    db: Session,
+    *,
+    engagement: Engagement,
+    client: Client,
+    description: str | None,
+    framework_ids: list[str],
+    name: str | None = None,
+) -> Assessment:
+    """An assessment in the engagement, inheriting the client's name, industry and size, with its packs."""
+    assessment = Assessment(
+        company_name=client.name,
+        industry=client.industry,
+        company_size=client.size,
+        name=name or None,
+        description=description or None,
+        selected_frameworks=json.dumps(framework_ids),
+        engagement_id=engagement.id,
+    )
+    db.add(assessment)
+    db.flush()
+    for framework_id in framework_ids:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        db.add(
+            AssessmentPack(
+                assessment_id=assessment.id,
+                framework_id=framework_id,
+                pack_version=framework.pack_version if framework else "unknown",
+            )
+        )
+    return assessment
+
+
+def add_assessment_to_engagement(
+    db: Session,
+    *,
+    engagement: Engagement,
+    client: Client,
+    name: str | None,
+    description: str | None,
+    framework_ids: list[str],
+) -> Assessment:
+    """Add one more assessment to an existing engagement (Yozora "Add assessment"); commits."""
+    try:
+        assessment = _add_assessment(
+            db,
+            engagement=engagement,
+            client=client,
+            description=description,
+            framework_ids=framework_ids,
+            name=name,
+        )
+        db.commit()
+        db.refresh(assessment)
+        return assessment
     except Exception:
         db.rollback()
         raise

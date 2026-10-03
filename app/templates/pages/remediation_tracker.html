@@ -15,6 +15,7 @@
 <div class="mb-8">
   <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Remediation tracker</h1>
   <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">Actions across every assessment in this engagement. These are action counts, not compliance scores. Each action keeps its assessment, framework and requirement.</p>
+  <a data-export-actions href="/engagements/{{ engagement.id }}/remediation/export.xlsx" hx-boost="false" download class="mt-3 inline-block rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">Export actions</a>
 </div>
 
 {% if rollup.counts.total == 0 %}<p class="mb-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-4 text-sm text-gray-500 dark:text-gray-400">No actions in this engagement yet.</p>{% endif %}

@@ -561,6 +561,14 @@ P6_10_FILES = (
 )
 
 
+# Yozora backend features (claude/yozora-backend-features): the implementing session adds every file it touches.
+from tests.yozora_backend_paths import YOZORA_BACKEND_FILES as _YOZORA_BACKEND_FILE_SET  # noqa: E402
+
+YOZORA_BACKEND_FILES = (
+    "tasks/handoffs/2026-10-03-yozora-backend-features.md",
+) + _YOZORA_BACKEND_FILE_SET
+
+
 # App-design kickoff (claude/app-design-kickoff): handoff docs only.
 APP_DESIGN_KICKOFF_FILES = (
     "tasks/handoffs/2026-10-01-app-design-kickoff.md", "tasks/handoffs/2026-10-01-next-session-kickoff.md",
@@ -596,5 +604,6 @@ def test_scenario_11_only_p6_2b_files_change():
         and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_10_FILES
         and f not in APP_DESIGN_KICKOFF_FILES and not f.startswith(APP_DESIGN_DOC_DIRS)
         and f not in YOZORA_DESIGN_FILES
+        and f not in YOZORA_BACKEND_FILES
     ]
     assert offenders == [], offenders

@@ -12,7 +12,7 @@ NAV_ITEMS = (
     {"key": "review", "label": "Review", "href": "/review", "icon": "inbox", "available": False},
     {"key": "evidence", "label": "Evidence", "href": "/evidence", "icon": "folder", "available": False},
     {"key": "reports", "label": "Reports", "href": "/reports", "icon": "report", "available": False},
-    {"key": "settings", "label": "Settings", "href": "/settings", "icon": "settings", "available": False},
+    {"key": "settings", "label": "Settings", "href": "/settings", "icon": "settings", "available": True},
 )
 
 

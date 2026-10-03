@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, literal_column
 from sqlalchemy.exc import IntegrityError
@@ -23,7 +23,7 @@ from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.services.followup_engine import generate_followups
-from app.services.engagement_factory import create_engagement_with_assessment
+from app.services.engagement_factory import add_assessment_to_engagement, create_engagement_with_assessment
 from app.services.portfolio import (
     build_client_card,
     build_engagement_card,
@@ -41,6 +41,7 @@ from app.models.report_snapshot import ReportSnapshot
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
 from app.services import (
+    actions_export,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -185,16 +186,11 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         )
         .all()
     )
-    unmigrated = (
-        db.query(Assessment)
-        .filter(
-            Assessment.engagement_id.is_(None),
-            Assessment.status != "archived",
-        )
-        .order_by(Assessment.created_at.desc())
-        .all()
+    unmigrated_count = (
+        db.query(func.count(Assessment.id))
+        .filter(Assessment.engagement_id.is_(None), Assessment.status != "archived")
+        .scalar()
     )
-
     assessments_by_engagement = defaultdict(list)
     for assessment in linked:
         assessments_by_engagement[assessment.engagement_id].append(assessment)
@@ -217,9 +213,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         {
             "request": request,
             "clients": client_cards,
-            "unmigrated_assessments": unmigrated,
             "total_client_count": len(clients),
             "total_engagement_count": len(engagements),
+            "unmigrated_count": unmigrated_count,
         },
     )
 
@@ -379,6 +375,7 @@ def engagement_detail(
         {
             "id": assessment.id,
             "company_name": assessment.company_name,
+            "display_name": assessment.display_name,
             "description": assessment.description,
             "status": assessment.status,
             "created_at": assessment.created_at,
@@ -401,6 +398,123 @@ def engagement_detail(
             "retention": retention_state,
         },
     )
+
+
+# --- Add assessment to an engagement (Yozora) ---
+
+ADD_ASSESSMENT_NO_FRAMEWORK = "Select at least one framework to assess against."
+ADD_ASSESSMENT_UNKNOWN_FRAMEWORK = "One or more selected frameworks are not available for assessment yet."
+ADD_ASSESSMENT_NAME_TOO_LONG = "Assessment name must be 255 characters or fewer."
+ADD_ASSESSMENT_DUPLICATE_NAME = "This engagement already has an assessment with that name."
+ADD_ASSESSMENT_FAILED = "Unable to add the assessment. Please try again."
+
+
+def _engagement_and_client_or_404(db: Session, engagement_id: str) -> tuple[Engagement, Client]:
+    engagement = db.get(Engagement, engagement_id)
+    if not engagement:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    return engagement, client
+
+
+def _reject_archived(db: Session, engagement: Engagement) -> None:
+    # POSTs to an archived engagement are already refused (409) by the shared archive write guard;
+    # this keeps the form page and the handler fail-closed too.
+    if retention.archived_engagement_ids(db, {engagement.id}):
+        raise HTTPException(400, retention.ARCHIVED_READ_ONLY)
+
+
+def _assessment_name_taken(db: Session, engagement: Engagement, name: str) -> bool:
+    """True when a live assessment of the engagement already shows as `name` (case-insensitive)."""
+    existing = db.query(Assessment).filter(
+        Assessment.engagement_id == engagement.id, Assessment.status != "archived"
+    )
+    return any(a.display_name.casefold() == name.casefold() for a in existing)
+
+
+def _render_new_assessment(
+    request: Request,
+    engagement: Engagement,
+    client: Client,
+    *,
+    error: str | None = None,
+    form_values: dict | None = None,
+    status_code: int = 200,
+):
+    return templates.TemplateResponse(
+        "pages/new_assessment.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "frameworks": [fw for fw in _framework_catalog() if fw["enabled"]],
+            "error": error,
+            "form_values": form_values or {"name": "", "description": "", "selected_frameworks": []},
+        },
+        status_code=status_code,
+    )
+
+
+@router.get("/engagements/{engagement_id}/assessments/new", response_class=HTMLResponse)
+def new_engagement_assessment_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    _reject_archived(db, engagement)
+    return _render_new_assessment(request, engagement, client)
+
+
+@router.post("/engagements/{engagement_id}/assessments")
+async def create_engagement_assessment(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    _reject_archived(db, engagement)
+    form = await request.form()
+    framework_ids = list(dict.fromkeys(str(value) for value in form.getlist("selected_frameworks")))
+    form_values = {
+        "name": str(form.get("name") or "").strip(),
+        "description": str(form.get("description") or "").strip(),
+        "selected_frameworks": framework_ids,
+    }
+    error = None
+    if not framework_ids:
+        error = ADD_ASSESSMENT_NO_FRAMEWORK
+    elif any(framework_id not in ENABLED_ASSESSMENT_FRAMEWORKS for framework_id in framework_ids):
+        error = ADD_ASSESSMENT_UNKNOWN_FRAMEWORK
+    elif len(form_values["name"]) > 255:
+        error = ADD_ASSESSMENT_NAME_TOO_LONG
+    elif form_values["name"] and _assessment_name_taken(db, engagement, form_values["name"]):
+        error = ADD_ASSESSMENT_DUPLICATE_NAME
+    if error:
+        return _with_toast(
+            _render_new_assessment(
+                request, engagement, client, error=error, form_values=form_values, status_code=400
+            ),
+            error,
+            "error",
+        )
+    try:
+        assessment = add_assessment_to_engagement(
+            db,
+            engagement=engagement,
+            client=client,
+            name=form_values["name"] or None,
+            description=form_values["description"] or None,
+            framework_ids=framework_ids,
+        )
+    except Exception:
+        logger.exception("Adding an assessment to engagement %s failed", engagement_id)
+        return _render_new_assessment(
+            request, engagement, client, error=ADD_ASSESSMENT_FAILED, form_values=form_values, status_code=500
+        )
+    return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
 
 
 @router.get("/engagements/{engagement_id}/integrated-reports", response_class=HTMLResponse)
@@ -456,6 +570,23 @@ def remediation_tracker_page(
             "client": client,
             "rollup": rollup,
             "today": datetime.now(timezone.utc).date(),
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/remediation/export.xlsx")
+def remediation_actions_export(
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    content = actions_export.render_xlsx(actions_export.action_rows(db, engagement))
+    return Response(
+        content=content,
+        media_type=actions_export.MEDIA_TYPE,
+        headers={
+            "Content-Disposition": attachment_disposition(actions_export.export_filename(client, engagement)),
+            "Cache-Control": "no-store",
         },
     )
 
@@ -2319,6 +2450,8 @@ def comparison_page(
             "framework_deltas": framework_deltas,
             "deltas": result["deltas"],
             "delta_summary": result["summary"],
+            # The same URL as the assessment's Report tab.
+            "current_report_url": f"/assessments/{assessment.id}?tab=report",
         },
     )
 

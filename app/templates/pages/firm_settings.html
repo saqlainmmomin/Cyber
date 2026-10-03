@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firm details, branding and data housekeeping.</p>
+</div>
+
+{% if saved %}
+<div data-settings-saved class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200">{{ saved }}</div>
+{% endif %}
+
+<form data-settings-form method="post" action="/settings" hx-boost="false" class="space-y-6">
+  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Branding</h2>
+
+    <div class="mt-4">
+      <p class="block text-sm font-medium text-gray-700 dark:text-gray-300">Firm name</p>
+      <p data-firm-name class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ firm.firm_name }}</p>
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Shown on the sign-in page and on reports. Set by the deployment for now.</p>
+    </div>
+
+    <div class="mt-5">
+      <label for="contact-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact email for clients</label>
+      <input id="contact-email" type="email" name="contact_email" value="{{ values.contact_email }}" maxlength="254" placeholder="name@example.com" class="mt-1 w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Clients with an expired or revoked link are offered this address.</p>
+      {% if errors.contact_email %}<p data-field-error="contact_email" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.contact_email }}</p>{% endif %}
+    </div>
+
+    <fieldset class="mt-5">
+      <legend class="block text-sm font-medium text-gray-700 dark:text-gray-300">Accent theme</legend>
+      <div class="mt-2 flex flex-wrap gap-2">
+        {% for name, hex in accent_presets.items() %}
+        <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+          <input type="radio" name="accent_theme" value="{{ name }}" {% if values.accent_theme == name %}checked{% endif %}>
+          <span class="inline-block h-4 w-4 rounded" style="background-color: {{ hex }}"></span>
+          {{ name | capitalize }}
+        </label>
+        {% endfor %}
+        <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+          <input type="radio" name="accent_theme" value="{{ custom_accent }}" {% if values.accent_theme == custom_accent %}checked{% endif %}>
+          Custom colour
+        </label>
+      </div>
+      <label for="accent-custom-hex" class="mt-3 block text-xs text-gray-500 dark:text-gray-400">Hex</label>
+      <input id="accent-custom-hex" name="accent_custom_hex" value="{{ values.accent_custom_hex }}" maxlength="7" placeholder="#1C3A72" class="mt-1 w-32 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 font-mono text-sm text-gray-900 dark:text-gray-100">
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Checked for contrast when you save.</p>
+      {% if errors.accent_theme %}<p data-field-error="accent_theme" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.accent_theme }}</p>{% endif %}
+      {% if errors.accent_custom_hex %}<p data-field-error="accent_custom_hex" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.accent_custom_hex }}</p>{% endif %}
+    </fieldset>
+  </section>
+
+  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Data housekeeping</h2>
+
+    <div class="mt-4" data-retention-form>
+      <label for="retention-years" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Keep archived engagements for</label>
+      <div class="mt-1 flex items-center gap-2">
+        <input id="retention-years" type="number" name="archived_retention_years" min="{{ retention_range[0] }}" max="{{ retention_range[1] }}" value="{{ values.archived_retention_years }}" class="w-24 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+        <span class="text-sm text-gray-600 dark:text-gray-300">years</span>
+      </div>
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Archived engagements become eligible for permanent deletion after this period. Applies to engagements archived from now on.</p>
+      {% if errors.archived_retention_years %}<p data-field-error="archived_retention_years" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.archived_retention_years }}</p>{% endif %}
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="w-56 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Save changes</button>
+  </div>
+</form>
+
+<section data-unmigrated-assessments class="mt-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Unmigrated assessments</h2>
+  {% if unmigrated_assessments %}
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">These assessments predate clients and engagements. Run <code class="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-xs">scripts/migrate_legacy.py</code> to file them under a client.</p>
+  <div class="mt-3 space-y-2">
+    {% for assessment in unmigrated_assessments %}
+    <a data-unmigrated-assessment href="/assessments/{{ assessment.id }}" class="flex items-center justify-between gap-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 hover:border-amber-300 dark:hover:border-amber-700">
+      <div class="min-w-0">
+        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ assessment.company_name }}</span>
+        <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">Created {{ assessment.created_at.strftime('%d %b %Y') }}</span>
+      </div>
+      <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Open assessment &rarr;</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Every assessment is filed under a client.</p>
+  {% endif %}
+</section>
+{% endblock %}

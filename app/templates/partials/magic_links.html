@@ -18,6 +18,14 @@
   <form hx-post="/engagements/{{ engagement_id }}/magic-links" hx-target="#magic-links" hx-swap="outerHTML" class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="requested-items">Requested items (one per line)</label>
     <textarea id="requested-items" name="items" rows="4" required class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"></textarea>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client contact name (optional)
+        <input type="text" name="contact_name" maxlength="200" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
+      </label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client contact email (optional)
+        <input type="email" name="contact_email" maxlength="254" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
+      </label>
+    </div>
     <div class="mt-4 grid gap-4 sm:grid-cols-3">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expires in days
         <input type="number" name="expires_in_days" value="7" min="1" max="30" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
@@ -35,13 +43,14 @@
   <div class="mt-6 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
     <table class="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-800">
       <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-        <tr><th class="px-4 py-3">Link</th><th class="px-4 py-3">Requested items</th><th class="px-4 py-3">Usage</th><th class="px-4 py-3">Expires</th><th class="px-4 py-3"></th></tr>
+        <tr><th class="px-4 py-3">Link</th><th class="px-4 py-3">Contact</th><th class="px-4 py-3">Requested items</th><th class="px-4 py-3">Usage</th><th class="px-4 py-3">Expires</th><th class="px-4 py-3"></th></tr>
       </thead>
       <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-950">
         {% for link in magic_links %}
         {% set status_labels = {"active": "Active", "expired": "Expired", "revoked": "Revoked"} %}
         <tr class="text-gray-700 dark:text-gray-300">
           <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ link.id_prefix }}<span class="ml-2 rounded-full bg-gray-100 px-2 py-1 font-sans text-xs dark:bg-gray-800">{{ status_labels[link.status] }}</span></td>
+          <td data-link-contact class="px-4 py-3">{% if link.contact_name or link.contact_email %}{{ link.contact_name or "" }}{% if link.contact_email %}<span class="block text-xs text-gray-500 dark:text-gray-400">{{ link.contact_email }}</span>{% endif %}{% else %}—{% endif %}</td>
           <td class="px-4 py-3">{{ link["items"] | join(", ") }}</td>
           <td class="whitespace-nowrap px-4 py-3">{{ link.uploads_used }} of {{ link.max_uploads }} uploads</td>
           <td class="whitespace-nowrap px-4 py-3">{{ link.expires_at.strftime('%Y-%m-%d %H:%M') }} UTC</td>
@@ -52,7 +61,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">No client evidence links yet.</td></tr>
+        <tr><td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">No client evidence links yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

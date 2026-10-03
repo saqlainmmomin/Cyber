@@ -47,6 +47,7 @@ from app.services.scoring import compute_framework_scores, failed_framework_scor
 from app.utils.rfi_export import generate_rfi_docx, generate_rfi_pdf
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -1016,7 +1017,8 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
          "app/services/approved_report.py", "app/utils/pdf_export.py",
          "app/services/scope_profiler.py", "app/services/retention.py",
          # P6-0e: DPDPA readiness paragraph (pdf_export) and breach-intimation reason (scope_profiler).
-         ":!app/utils/pdf_export.py", ":!app/services/scope_profiler.py", *V3A_EXCLUDES],
+         ":!app/utils/pdf_export.py", ":!app/services/scope_profiler.py", *V3A_EXCLUDES,
+         *YOZORA_BACKEND_EXCLUDES],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert not protected.stdout.strip()
@@ -1024,4 +1026,4 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
         [sys.executable, "-m", "alembic", "heads"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
-    assert heads.returncode == 0 and "5e9a2c7d4b18" in heads.stdout  # P6-8 V3-A migration is the head
+    assert heads.returncode == 0 and "b7d41c9e2a63" in heads.stdout  # Yozora backend features migration is the head
