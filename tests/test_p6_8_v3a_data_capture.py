@@ -58,6 +58,8 @@ from tests.p6_8_v3_support import (  # noqa: F401 - fixtures are used by name
 from tests.p6_8_v3a_paths import V3A_APP_PATHS
 from tests.test_p6_8_board_report_v2 import _require_renderer
 
+YOZORA_REVISION = "b7d41c9e2a63"  # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md)
+
 ACTOR = f"consultant:{REVIEWER}"
 FONT_DIR = REPO_ROOT / "app" / "assets" / "fonts" / "noto"
 NOTO_FILES = {
@@ -114,7 +116,8 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
     path = tmp_path / "v3a.sqlite3"
     config = _alembic_config(path)
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_current_head() == V3A_REVISION
+    assert scripts.get_current_head() == YOZORA_REVISION  # Yozora backend features sits on V3-A
+    assert scripts.get_revision(YOZORA_REVISION).down_revision == V3A_REVISION
     assert scripts.get_revision(V3A_REVISION).down_revision == PREVIOUS_REVISION
 
     command.upgrade(config, PREVIOUS_REVISION)
@@ -146,7 +149,7 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
             "SELECT title, owner, responsibility FROM actions WHERE id='x1'"
         ).fetchone() == ("Kept action", "Anita", None)
         assert connection.execute("SELECT board_asks_json FROM assessments WHERE id='a1'").fetchone() == (None,)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (V3A_REVISION,)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (YOZORA_REVISION,)
         # One metadata row per (assessment, group): a second insert with the same pair is refused.
         connection.execute(
             "INSERT INTO initiative_metadata (id, assessment_id, group_id, created_at, updated_at) "
@@ -197,6 +200,7 @@ def test_scenario_1b_downgrade_refuses_to_drop_consultant_entered_data(tmp_path,
         connection.execute(text(statement))
     engine.dispose()
 
+    command.downgrade(config, V3A_REVISION)  # the Yozora revision above holds no consultant data here
     with pytest.raises(RuntimeError, match="Refusing to downgrade past"):
         command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:

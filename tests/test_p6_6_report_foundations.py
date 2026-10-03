@@ -44,7 +44,7 @@ from app.services import approved_report, conclusion_review, report_snapshots
 from app.utils import pdf_export
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-ALEMBIC_HEAD = "5e9a2c7d4b18"  # P6-6 added no migration (D-P6-6-A); P6-8 V3-A adds 5e9a2c7d4b18
+ALEMBIC_HEAD = "b7d41c9e2a63"  # P6-6 added no migration (D-P6-6-A); P6-8 V3-A adds 5e9a2c7d4b18, Yozora backend b7d41c9e2a63
 PERIOD = {
     "period_start": date(2026, 4, 1),
     "period_end": date(2026, 6, 30),

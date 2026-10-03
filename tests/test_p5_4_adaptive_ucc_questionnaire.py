@@ -978,7 +978,7 @@ def test_scenario_13_structural_guards(db):
     assert "llm_client" not in findings_source and "app.services.desk_review" not in findings_source
     assert UNCONFIRMED_ANSWER_SOURCES == ("document", "inferred")
     assert GROUNDED_CITATION_LOCATION_TYPE == "text_span"
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "5e9a2c7d4b18 (head)"
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "b7d41c9e2a63 (head)"  # Yozora backend features head
     for template in (
         "app/templates/partials/questionnaire_tab.html",
         "app/templates/partials/screening_form.html",

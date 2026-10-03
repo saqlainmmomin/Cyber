@@ -1024,4 +1024,4 @@ def test_scenario_22_standing_guards_remain_satisfied(db):
         [sys.executable, "-m", "alembic", "heads"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
-    assert heads.returncode == 0 and "5e9a2c7d4b18" in heads.stdout  # P6-8 V3-A migration is the head
+    assert heads.returncode == 0 and "b7d41c9e2a63" in heads.stdout  # Yozora backend features migration is the head

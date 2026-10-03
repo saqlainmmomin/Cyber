@@ -809,4 +809,4 @@ def test_scenario_19_source_and_worktree_guards(db_path):
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "5e9a2c7d4b18 (head)"  # P6-8 V3-A head
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "b7d41c9e2a63 (head)"  # Yozora backend features head

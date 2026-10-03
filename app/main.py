@@ -23,6 +23,7 @@ from app.routers import (
     evidence,
     evidence_reuse,
     findings,
+    firm_settings as firm_settings_router,
     integrated_reports,
     magic,
     questionnaire,
@@ -154,6 +155,7 @@ app.include_router(soa_router.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(board_inputs.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(retention_router.router)
+app.include_router(firm_settings_router.router)
 
 # Web portal routes
 app.include_router(aws.router, dependencies=_ARCHIVE_GUARD)

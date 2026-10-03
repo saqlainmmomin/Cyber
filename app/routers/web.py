@@ -185,16 +185,6 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         )
         .all()
     )
-    unmigrated = (
-        db.query(Assessment)
-        .filter(
-            Assessment.engagement_id.is_(None),
-            Assessment.status != "archived",
-        )
-        .order_by(Assessment.created_at.desc())
-        .all()
-    )
-
     assessments_by_engagement = defaultdict(list)
     for assessment in linked:
         assessments_by_engagement[assessment.engagement_id].append(assessment)
@@ -217,7 +207,6 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         {
             "request": request,
             "clients": client_cards,
-            "unmigrated_assessments": unmigrated,
             "total_client_count": len(clients),
             "total_engagement_count": len(engagements),
         },

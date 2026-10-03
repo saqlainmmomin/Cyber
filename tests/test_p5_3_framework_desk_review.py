@@ -226,7 +226,7 @@ def _analysis_payload(framework_id):
 def test_scenario_1_alembic_schema_backfill_and_guarded_downgrade(tmp_path):
     """Scenario 1: P5-3 is the sole head, backfills legacy rows, and refuses lossy downgrades."""
     scripts = ScriptDirectory.from_config(_cfg(tmp_path / "unused.sqlite3"))
-    assert scripts.get_current_head() == "5e9a2c7d4b18"  # P6-8 V3-A; REVISION is its parent
+    assert scripts.get_current_head() == "b7d41c9e2a63"  # Yozora backend, on P6-8 V3-A; REVISION is V3-A's parent
     assert scripts.get_revision("5e9a2c7d4b18").down_revision == REVISION
     assert scripts.get_revision(REVISION).down_revision == PREVIOUS_REVISION
 
