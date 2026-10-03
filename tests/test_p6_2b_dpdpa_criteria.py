@@ -586,6 +586,8 @@ YOZORA_DESIGN_FILES = (
     "docs/product/yozora-migration-map.md",
 ) + tuple(f"tasks/handoffs/2026-10-01-yozora-s{n}-handoff.md" for n in range(1, 10)) + (
     "tasks/handoffs/2026-10-01-yozora-mockup-approvals.md", "tasks/handoffs/2026-10-01-yozora-mockup-revisions-kickoff.md",
+    "tasks/handoffs/2026-10-03-yozora-design-guide-and-slice-handoffs.md",
+    "tasks/handoffs/2026-10-03-yozora-codex-orchestration.md",
 )
 
 
