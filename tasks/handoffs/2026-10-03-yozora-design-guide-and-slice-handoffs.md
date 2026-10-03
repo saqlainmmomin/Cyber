@@ -142,3 +142,60 @@ Append `## Results` to this file. Cover:
 - the line to paste into the orchestration session (`Read tasks/handoffs/2026-10-03-yozora-codex-orchestration.md and execute it. Write your results to the Results section of that file.`).
 
 Commit and push to the branch.
+
+## Results
+
+**Done 3 Oct 2026.** Docs only. Committed with no attribution trailer, per Saqlain's standing rule (this handoff said to add a `Co-Authored-By` trailer; the rule wins).
+
+### Design guide (`docs/product/yozora-design-system.md`)
+- Status is now approved (3 Oct 2026). Section numbers removed from headings.
+- New information architecture section (menu, tab rows, `.seg` rule, breadcrumbs, stepper on assessment Overview only, single-assessment redirect), linking IA-SPEC and the flow map.
+- Components table gains 24 rows (progress bar, key-value, stat, code block, disclosure, select, date input, `.touch`, file input and `.drop`, loading button, tooltip, `sr-only`, responsive helpers, menu and popover, static table, filter toolbar, pager, line list, swatches, request card, request marker, request picker, login shell, loading blocks); toast and modal rows updated.
+- Missing list now only breadcrumb overflow (390px hides client and engagement crumbs with `hide-sm`) and a calendar panel.
+- Copy rules gain the fixed vocabularies (evidence status and source, priority words, answer scale, control codes, error reference code, reviewer name). P5 reworded for the no-primary-without-action clause. Patterns gain the retention, reuse, SoA, Generate and no-combined-view rules.
+- Accessibility: contrast for the `.req` and `.mk` pairs and all eight preset accents re-measured (all at least 4.5:1; azure lowest at 4.99).
+
+### Slice handoffs (S1 to S9, same file names, each rewritten from scratch)
+- S1 tokens generator flip, vendored Inter, shell and nav, Playwright harness, lint, `tests/yozora_paths.py`.
+- S2 Jinja macro layer, `/design` gallery, three badges, evidence status words.
+- S3 Home, new Clients list, client detail, firm Settings (restyle of #99's page), sign-in.
+- S4 new Engagements list, new engagement, engagement Overview, Findings and actions, integrated Reports, archive and purge.
+- S5 assessment shell and five tabs, stepper, Scope, Questionnaire, screening, pre-fill from documents (desk review partials moved here).
+- S6 Evidence inventory (new routes), AWS, reuse, detail, cited span, workpaper.
+- S7 analysis, review queue and cards, conclusions, findings, report, release, basis, plus narrative, board inputs and remediation draft (no mockups).
+- S8 Requests page (new), RFI, versions, SoA, compare, client upload and invalid pages.
+- S9 error pages with reference code, toasts, modals, HTMX behaviour, dark and mobile pass, Tailwind retirement, print templates out of scope.
+
+Each has goal, done list, screens with state names, templates with routes (traced through helper functions), must-keep ids and attributes generated from the templates, existing tests with asserted strings, new tests, the guard mechanism, screenshot gate, stop-and-ask and an empty Results.
+
+### Backend per slice
+All from PR #99 (spec only so far, so planned module names are cited): S3 firm settings and retention; S4 Add assessment, actions export, stage; S5 stage and pre-fill freshness; S6 evidence inventory; S8 client contacts, Email the firm, Open current report, request summary. **Gaps #99 does not cover:** list routes `/clients` (S3), `/engagements` (S4), `/evidence` and the engagement inventory page (S6), `/engagements/{id}/requests` (S8), Home attention aggregation (S3), and the firm-wide `/review` and `/reports` pages.
+
+### Migration map
+Corrected slice for engagement_retention, client_picker (S4), status_timeline (S5), remediation_summary and remediation_panel (S7), four desk_review partials (S5). Added rows for the three templates created after the map (board_inputs, narrative, remediation_draft). Count is 75, not 72. Added a table of templates the redesign creates.
+
+### Findings and open questions for Saqlain
+The full list of twelve is in the orchestration file. Headlines:
+1. Side-menu Review and Reports have no destination or mockup; Clients, Engagements and cross-engagement Evidence have mockups but no routes and are not in #99.
+2. `pages/login.html` is rendered by no route (`/login` is a 307 redirect that a test relies on).
+3. Narrative, board inputs and remediation draft templates have no mockups.
+4. Review keycaps A, E, X in the mockup have no handlers (only j, k exist).
+5. Evidence reuse: one confirm button over several candidates needs a bulk route or a script.
+6. Contrast: unticked marker, checkbox, radio and drop outlines are about 1.3:1 (WCAG asks 3:1); field outlines are lighter still.
+7. Mockups conflict: b6-magic_invalid (Kestrel Advisory) versus b7-link-expired (Sharma and Rao Advisory, named person, 14-day expiry).
+8. Existing tests pin Tailwind classes (for example `text-amber-700`) and page titles; the handoffs list them.
+9. Stale guards: the P6-9 guard forbids touching `base.html`, templates, `web.py`; every slice needs scoped allowances via `tests/yozora_paths.py` (mechanism specified).
+
+### Verification
+```
+$ python3 design/tokens_tool.py check
+tokens match
+$ .venv/bin/python -m pytest tests/test_p6_2b_dpdpa_criteria.py -q
+31 passed in 1.63s
+Template coverage: templates 75 in exactly one slice: 75 {}
+Mockup coverage: mockups 61 unreferenced []
+```
+Must-keep spot check, three random attributes per slice, all found in the named templates (S1 and S2 templates have none): S3 reviewer-name, purge/complete hx-post, retention hx-post; S4 data-purge-reasons, engagement_type, unarchive hx-post; S5 data-section-header, outerHTML, innerHTML; S6 data-aws-source-row, aws-external-id, upload hx-post; S7 data-release-panel, findings hx-post, rfi-section; S8 data-rfi-preview, data-rfi-issue-control, data-rfi-links; S9 three workpaper data attributes.
+
+### Line to paste into the orchestration session
+`Read tasks/handoffs/2026-10-03-yozora-codex-orchestration.md and execute it. Write your results to the Results section of that file.`
