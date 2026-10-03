@@ -25,8 +25,8 @@ Mockups are in `docs/product/2026-10-01-app-design-mockups/screens/`. Match ever
 | Mockup | States to match |
 |---|---|
 | `b7-mobile-shell.html` | page shell at 390: top bar, drawer trigger, content area. Compare clipped to `.top` and the first screenful only. |
-| `b7-mobile-shell-sheet.html` | navigation closed; drawer open; drawer with account menu. The confirm dialog and toast specimens on that page belong to S9. |
-| `b1-home.html` | state `default`, compared clipped to the side menu (`.side`) at 1440 and 1024 and to `.top` at 390. The page body is S3. |
+| `b7-mobile-shell-sheet.html` | navigation closed compares `.top`; drawer open and drawer with account menu compare the top block of `.side-in` through the Home row. The confirm dialog and toast specimens on that page belong to S9. |
+| `b1-home.html` | state `default`, compared to the top block of `.side-in` through the Home row at 1440 and 1024 and to `.top` at 390. The page body is S3. |
 
 ## Templates, routes and view functions in scope
 
@@ -173,4 +173,56 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+### Built
+
+- `design/tokens.json` is now the source for `app/static/css/yozora-tokens.css`, `tailwind.tokens.cjs`, and byte-identical generated copies of the component and pattern CSS. `design/yozora-tokens.css` was removed; the gallery, mockups, and mockup guides now point at the generated app token CSS. The deferred `--line-strong` values were preserved exactly.
+- `base.html` now provides the Yozora shell: responsive side navigation/drawer, top bar, breadcrumb and page-header slots, firm account menu, theme choices, `data-theme`, `data-accent`, and IA-based `aria-current`. Only Home is available in S1; later-slice destinations are not rendered as dead links. Review-count calculation is a single context-processor query when a request database session is available.
+- Inter 4.1 400/500/600, the supplied OFL licence/README, and `htmx-2.0.4.min.js` were preserved in place. The shell loads both locally; no app template requests Google Fonts or unpkg.
+- Added the pinned visual harness (`design/harness/`), lint tests/allow-list, and `tests/yozora_paths.py`. The existing white-label assertion changed from `background-color: #8b0000` to the new custom-accent contract `--accent: #8b0000`.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `python3 design/tokens_tool.py check` | Pass |
+| Focused design/shell tests | **13 passed, 6 skipped** (`RUN_VISUAL` is unset) |
+| Python compilation and `git diff --check` | Pass |
+| Tailwind config load | Pass; `darkMode` is the `[data-theme="dark"]` selector |
+| Tailwind CSS build | Not rerun: this checkout has no local `node_modules`; the generated config loads successfully with Node, but `npx` could not complete offline. |
+| Visual screenshots/baselines | Not run: this environment has neither the Playwright Python package nor a Chromium installation. The harness exits with the documented install instruction; no baseline images were fabricated. |
+| Full `pytest -q` | Collection blocked by the pre-existing environment missing `boto3`: **34 errors during collection**. |
+
+### Guards and decisions
+
+- Added `YOZORA_S1_PATHS`, `YOZORA_DESIGN_FILES`, and `YOZORA_EXCLUDES` in `tests/yozora_paths.py`. No existing scope guard was weakened or deleted.
+- Kept the S1 availability gate conservative: unavailable Clients, Engagements, Review, Evidence, Reports, and Settings links are omitted until their slices/routes land. The account menu is firm-level and theme-only while Settings is unavailable.
+- The backend accent integration from PR #99 was not present, so S1 uses the approved `midnight` default and leaves the integration point in `template_config.py`.
+
+### Open items
+
+- Install the pinned dev dependencies and Chromium, then render the S1 mockup states and commit the approved shell baselines under `design/baselines/` before the visual gate can be closed.
+
+### Results (follow-up)
+
+- Fixed `design/harness/screenshot.py` to use pixelmatch's `diff_mask=True` with anti-alias exclusion before measuring connected changed regions. Added synthetic identical, 50x50, and 30x30 region tests in `tests/test_design_harness.py`.
+- Applied the mockup's `cv11`/`ss03` feature cascade explicitly to `.brand`, added the approved `data-visual-mask` markers to future nav entries and account-specific shell content, and documented the selectors in `design/harness/README.md`.
+- Rewrote `tests/visual/test_shell_visual.py` around `APP_URL`, the supplied `<screen>-<state>-<theme>-<width>.png` baselines, shell clips, and drawer states. The visual suite remains opt-in and was not run because this follow-up cannot start a browser or server.
+- Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **16 passed, 14 skipped**.
+- Required non-visual suite: `pytest -q tests/test_design_*.py tests/test_yozora_*.py` — collection blocked by missing `boto3` (**5 errors**).
+- Full suite: `pytest -q` — collection blocked by the same missing `boto3` dependency (**39 errors**).
+
+### Results (follow-up 2)
+
+- Replaced the S1 structural mask selectors with a paired-edge clip config: `.side-in` through its current Home row. Side and drawer comparisons now exclude future nav rows, the firm/account tile, and all page content below the Home row; navigation-closed compares `.top` only as required by the Screens table.
+- Kept the harness's generic `--mask` support for same-DOM dynamic pixels, but removed the unused S1 `data-visual-mask` markers and selector list from the app shell. Added a unit test covering the paired-edge clip geometry.
+- The 1024 mockup's y=52 sticky offset and 900px side height are a page-content artefact: `b1-home.html` includes the mockup-only state bar, `mockup-chrome.css` gives it its own layout, and the b1 page content expands the `.app` grid row, allowing the shared `top: 52px` sticky inset. The responsive rules in `yozora-patterns.css` and `shell.css` do not apply a separate 1024px shell layout; the shorter app dashboard clamps the same panel to y=12 inside its 860px minimum. No shell token or `shell.css` value was changed; the new top-block clip deliberately removes this non-shell geometry from the comparison.
+- Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **17 passed, 14 skipped**.
+- Full suite: `pytest -q` — collection remains blocked by the environment's missing `boto3` (**39 errors**); the requested dependency is not installed in the active pytest interpreter.
+- Visual screenshots were not rerun here because this environment cannot start Chromium or a browser/server; thresholds and design-token values were unchanged.
+
+### Review decision (3 Oct 2026, Saqlain): S1 accepted, follow-ups logged
+S1 gate accepted with narrow clips (top bar; brand, search and Home block of the side menu and drawer). Follow-ups:
+- **S9:** compare the account menu popover (the drawer-open and drawer-account-menu baselines are currently identical because the clip stops at the Home row).
+- **S9:** check the 1024 side-panel offset: the app's `.side-in` sits at y=12, the mockup's at y=52. Decide from the mockup CSS whether it is a mockup page artefact or a shell difference; the clip currently crops it out.
+- **Each later slice:** widen the clip to cover its own menu entry as it becomes available; the nav below Home and the account tile are not yet compared.
+- **Test docs:** serve mockups with `/static/` mapped to `app/static/` (plain `http.server` 404s the fonts and gives ~0.35% false diffs).

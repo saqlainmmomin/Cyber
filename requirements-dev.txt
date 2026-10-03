@@ -1,3 +1,6 @@
 -r requirements.txt
 pytest==9.1.1
 httpx==0.28.1
+playwright==1.55.0
+pixelmatch==0.3.0
+Pillow==11.3.0
