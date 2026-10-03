@@ -592,6 +592,7 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-mockup-approvals.md", "tasks/handoffs/2026-10-01-yozora-mockup-revisions-kickoff.md",
     "tasks/handoffs/2026-10-03-yozora-design-guide-and-slice-handoffs.md",
     "tasks/handoffs/2026-10-03-yozora-codex-orchestration.md",
+    ".gitignore",  # Yozora S1 (PR #100): ignore design/candidates/
 )
 
 
