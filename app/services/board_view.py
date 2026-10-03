@@ -42,7 +42,9 @@ def view(document: Mapping) -> dict:
     add("status-board", "status-board", "Status board")
     add("risk-dashboard", "risk-dashboard", "Risk dashboard")
     add("board-asks", "board-asks", "Board asks")
-    for index in range(max(3, _pages(len(observations), 4))):
+    observation_pages = _pages(len(observations), 4)
+    register_pages = _pages(len(register), 21)
+    for index in range(observation_pages):
         add("observations", "observations", "Key observations")
     add("roadmap", "roadmap", "Remediation roadmap")
     add("initiatives", "initiatives", "Initiatives and actions")
@@ -52,7 +54,7 @@ def view(document: Mapping) -> dict:
     add("sign-off", "sign-off", "Sign-off")
     add("annexure", "annexure", "Annexure")
     add("methodology", "methodology", "Methodology")
-    for index in range(max(6, _pages(len(register), 21))):
+    for index in range(register_pages):
         add("requirement-register", "requirement-register", "Requirement register")
     add("evidence-and-soa", "evidence-and-soa", "Evidence and statement of applicability")
 
@@ -64,7 +66,7 @@ def view(document: Mapping) -> dict:
     return {
         "slides": numbered,
         "theme": dict(document.get("theme") or {}),
-        "observation_pages": max(3, _pages(len(observations), 4)),
-        "register_pages": max(6, _pages(len(register), 21)),
+        "observation_pages": observation_pages,
+        "register_pages": register_pages,
         "never_combined_note": NEVER_COMBINED_NOTE,
     }

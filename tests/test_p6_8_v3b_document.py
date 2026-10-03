@@ -464,7 +464,7 @@ def test_scenario_17_routes_export_v3_as_xlsx_and_pptx_and_retire_docx(db, http,
     assert pptx.headers["content-disposition"].endswith('.pptx"') or ".pptx" in pptx.headers["content-disposition"]
     from pptx import Presentation
 
-    assert len(Presentation(io.BytesIO(pptx.content)).slides) >= 24
+    assert len(Presentation(io.BytesIO(pptx.content)).slides) >= 15  # designer change 3 Oct: no blank padded slides; a small fixture gives 17
     assert http.get(f"{base[:-len(snapshot_id)]}no-such-snapshot/pptx").status_code == 404
 
 

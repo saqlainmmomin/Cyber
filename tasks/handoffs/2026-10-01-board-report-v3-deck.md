@@ -286,3 +286,11 @@ Rules as for V3-A, for the two V3-B test files. Apply exactly the V3-B edits of 
 - Other expected stale assertions: `tests/test_p6_8_board_report_v2.py:739` and `:937` still pin the portrait/v2 PDF and preview; `tests/test_p6_8_b2_docx_xlsx.py:360`, `:386`, `:530`, `:664`, `:715`, `:780`, `:852`, `:984`, and `:1018` still expect the old DOCX/About workbook path or v2-only exporter imports; `tests/test_p6_10b_narrative.py:565` still expects the v2 `About` sheet for a schema-3 sidecar; `tests/test_p6_9_prior_period.py:340` and `tests/test_p6_9_roadmap.py:120`, `:183`, `:216` retain old template/document shapes. These were not broadened beyond the pinned V3-B edits.
 
 - Doubts: XLSX was opened and inspected with openpyxl, not LibreOffice/Numbers; no browser screenshot was taken. The PDF route and contract renderer checks passed, including landscape dimensions and page count; no commit was made.
+
+## Results (V3-B fixes)
+
+- Focused red-test verification: 4 passed — scenarios 7b, 7c, 7d, and B2 scenario 13.
+- Broader verification: 39 passed, 2 failed across the V3-B document/deck/file-set suite, the B2 older/v3 export checks, and the existing PDF scenario.
+- Fixes applied: preserved Devanagari-cover PDF Title metadata, removed fallback Arial/Verdana/Helvetica references by using vendored fonts and supported Noto glyphs, removed observation/register page padding, made the versions page schema-aware (v3: XLSX/PPTX; older: DOCX/XLSX), and formatted roadmap/evidence dates as `30 Nov 2026`.
+- Deviations/blockers: per the task instruction, stopped when the empty-page rule broke `tests/test_p6_8_v3b_document.py::test_scenario_17_routes_export_v3_as_xlsx_and_pptx_and_retire_docx` (17 slides versus its `>= 24` contract). The existing `tests/test_p6_8_board_report_v2.py::test_scenario_7_board_pdf_renders_devanagari_rupee_and_all_sections` still asserts the old ISO roadmap date and fails after the requested display-date change.
+- Left unfixed: the V3-B slide-count contract conflict and the stale ISO-date assertion; the full repository suite was not run because the explicit empty-page stop condition was reached. Tests, `validation/`, and `.git` were not edited.

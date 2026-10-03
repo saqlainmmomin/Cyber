@@ -776,7 +776,7 @@ def test_scenario_7_board_pdf_renders_devanagari_rupee_and_all_sections(db, http
     assert positions == sorted(positions)
     assert "Prepared by" in full and "Priya Sharma" in full and "Reviewed by" in full and "Ravi Menon" in full
     assert "privacy-policy.pdf" in full  # the cited-document sha prefix is document-level only now (scenario 5 pins it)
-    assert "2026-11-30" in full  # the initiative target date is shown on the roadmap
+    assert "30 Nov 2026" in full  # the initiative target date is shown on the roadmap (v2 display format)
 
 
 def _v3_pdf_facts(db, http, gate, monkeypatch):

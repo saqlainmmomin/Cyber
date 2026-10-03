@@ -6,6 +6,7 @@ import base64
 import hashlib
 import json
 import mimetypes
+import re
 import shutil
 import subprocess
 import tempfile
@@ -706,6 +707,36 @@ def render_html(document: dict, *, embed_fonts: bool) -> str:
     )
 
 
+def _set_pdf_title(pdf: bytes, title: str) -> bytes:
+    """Add a Unicode document title without rewriting the merged PDF pages."""
+    object_numbers = [
+        int(match.group(1))
+        for match in re.finditer(rb"(?m)^(\d+)\s+0\s+obj\b", pdf)
+    ]
+    root = re.search(rb"/Root\s+(\d+)\s+0\s+R", pdf)
+    previous_xref = re.search(rb"(?m)^startxref\s+(\d+)\s+%%EOF\s*$", pdf)
+    if not object_numbers or root is None or previous_xref is None:
+        return pdf
+
+    info_number = max(object_numbers) + 1
+    info_offset = len(pdf)
+    title_hex = (b"\xfe\xff" + title.encode("utf-16-be")).hex().upper().encode("ascii")
+    info = (
+        f"{info_number} 0 obj\n".encode("ascii")
+        + b"<< /Title <"
+        + title_hex
+        + b"> >>\nendobj\n"
+    )
+    xref_offset = info_offset + len(info)
+    xref = f"xref\n{info_number} 1\n{info_offset:010d} 00000 n \n".encode("ascii")
+    trailer = (
+        f"trailer\n<< /Size {info_number + 1} /Root {int(root.group(1))} 0 R "
+        f"/Info {info_number} 0 R /Prev {int(previous_xref.group(1))} >>\n"
+        f"startxref\n{xref_offset}\n%%EOF\n"
+    ).encode("ascii")
+    return pdf + info + xref + trailer
+
+
 def render_pdf(document: dict) -> bytes:
     rendered = html_pdf.render_pdf(render_html(document, embed_fonts=True))
     # Pango's Devanagari shaping is visually correct but some PDF text
@@ -732,19 +763,29 @@ def render_pdf(document: dict) -> bytes:
             cover_pdf.set_fill_color(22, 26, 92)
             cover_pdf.rect(0, 0, 960, 540, style="F")
             cover_pdf.add_font(
-                "Noto Devanagari",
+                "Noto Sans",
+                fname=str(html_pdf.FONT_DIR / "NotoSans-Regular.ttf"),
+            )
+            cover_pdf.add_font(
+                "Noto Sans Devanagari",
                 fname=str(html_pdf.FONT_DIR / "NotoSansDevanagari-Regular.ttf"),
             )
+            cover_pdf.add_font(
+                "Noto Sans Bold",
+                fname=str(html_pdf.FONT_DIR / "NotoSans-Bold.ttf"),
+            )
+            title = f"Board report: {company}"
+            cover_pdf.set_title(title)
             cover_pdf.set_text_color(255, 255, 255)
-            cover_pdf.set_font("helvetica", size=11)
+            cover_pdf.set_font("Noto Sans", size=11)
             cover_pdf.text(52, 55, str(document["firm_name"]))
-            cover_pdf.set_font("helvetica", size=26)
+            cover_pdf.set_font("Noto Sans Bold", size=26)
             cover_pdf.text(52, 180, "Board report")
-            cover_pdf.set_font("Noto Devanagari", size=18)
+            cover_pdf.set_font("Noto Sans Devanagari", size=18)
             cover_pdf.text(52, 230, company)
-            cover_pdf.set_font("helvetica", size=13)
+            cover_pdf.set_font("Noto Sans", size=13)
             cover_pdf.text(52, 275, "Privacy and information security compliance assessment")
-            cover_pdf.set_font("helvetica", size=9)
+            cover_pdf.set_font("Noto Sans", size=9)
             cover_pdf.text(52, 480, str(document["basis"]["period_label"]))
             cover_pdf.text(300, 480, str(document["basis"]["cutoff_label"]))
             cover_pdf.text(650, 480, str(document["snapshot"]["version_label"]))
@@ -757,8 +798,10 @@ def render_pdf(document: dict) -> bytes:
             )
             parts = [str(cover)] + [str(root / f"rest-{index}.pdf") for index in range(2, len(board_view.view(document)["slides"]) + 1)]
             output = root / "combined.pdf"
-            subprocess.run([pdfunite, *parts, str(output)], check=True, capture_output=True)
-            return output.read_bytes()
+            subprocess.run(
+                [pdfunite, *parts, str(output)], check=True, capture_output=True
+            )
+            return _set_pdf_title(output.read_bytes(), title)
     except (OSError, RuntimeError, subprocess.SubprocessError):
         return rendered
 

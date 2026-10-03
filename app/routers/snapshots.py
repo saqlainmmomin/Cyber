@@ -1,13 +1,16 @@
 """Assessment report snapshot endpoints."""
 
+import json
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.routers import reports
@@ -25,6 +28,30 @@ from app.utils.http_headers import attachment_disposition
 from app.utils.review_gate import require_review_approval
 
 router = APIRouter(prefix="/api/assessments", tags=["snapshots"])
+
+
+def _board_document_schema_version(snapshot) -> int | None:
+    if snapshot.type != report_snapshots.BOARD_REPORT_SNAPSHOT_TYPE:
+        return None
+    try:
+        sidecar = (
+            Path(settings.upload_dir)
+            / report_snapshots.document_storage_path(snapshot.storage_path)
+        )
+        return json.loads(sidecar.read_text(encoding="utf-8")).get("schema_version")
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _document_schema_version(row):
+    return _board_document_schema_version(row.snapshot)
+
+
+setattr(
+    report_snapshots.SnapshotRow,
+    "document_schema_version",
+    property(_document_schema_version),
+)
 
 def _error(status_code: int, message: str) -> JSONResponse:
     response = JSONResponse({"detail": message}, status_code=status_code)
