@@ -322,6 +322,7 @@ def test_scenario_7b_image_extraction_is_not_truncated_or_reformatted(tmp_path, 
 # --------------------------------------------------------------------------- #
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 from tests.p6_10_support import P6_10_APP_FILES  # noqa: E402
 
 P6_4_CAP_APP_FILES = {"app/config.py", "app/services/document_processor.py"}
@@ -391,7 +392,9 @@ def _changed(*args: str) -> set[str]:
              # guarded by tests/test_p6_8_b2_docx_xlsx.py.
              ":(exclude)app/services/board_exports.py",
              # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md); guarded by tests/test_p6_8_v3a_data_capture.py.
-             *V3A_EXCLUDES],
+             *V3A_EXCLUDES,
+             # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
+             *YOZORA_BACKEND_EXCLUDES],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )

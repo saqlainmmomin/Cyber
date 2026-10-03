@@ -36,6 +36,7 @@
 <body>
   <main>
     <h1>{{ firm_name }} evidence upload</h1>
+    {% if contact_first_name %}<p data-contact-greeting>{{ contact_first_name }}, {{ firm_name }} needs these items.</p>{% endif %}
     <p class="muted">Upload the requested evidence securely through this link.</p>
 
     {% if success_filename %}

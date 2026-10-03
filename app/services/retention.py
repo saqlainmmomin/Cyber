@@ -1,4 +1,6 @@
-"""Engagement retention (P4-4): reversible archive as an engagement status flip inferred by every child, per-client retention, and a manual two-phase permanent purge that commits the DB deletion first and removes the engagement's storage folders second, with audit events as the ledger. Never purges automatically."""
+"""Engagement retention (P4-4): reversible archive as an engagement status flip inferred by every child, firm-level retention (Yozora; per-client before), and a manual two-phase permanent purge that commits the DB deletion first and removes the engagement's storage folders second, with audit events as the ledger. Never purges automatically.
+
+Retention rules. An archive event records the retention in force at archive time. Since Yozora it is the firm setting (app.services.firm_settings), recorded with "retention_source": "firm", and that snapshot alone decides eligibility: the firm setting "applies to engagements archived from now on". Archive events written before Yozora have no retention_source; they keep the per-client rule unchanged, max(the client's current retention_years, the snapshot), so purge eligibility of an engagement archived before the change does not move. clients.retention_years can no longer be edited, so that rule is frozen in practice."""
 
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
 from app.models.report_snapshot import ReportSnapshot
 from app.models.rfi import RFIDocument
-from app.services import conclusion_review
+from app.services import conclusion_review, firm_settings
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,7 @@ PURGE_ORDER = (
     "assessments",
     "engagements",
 )
-RETAINED_TABLES = ("clients", "audit_events")
+RETAINED_TABLES = ("clients", "audit_events", "firm_settings")
 
 REFUSAL_REASONS = (
     "not_archived",
@@ -91,7 +93,9 @@ UNARCHIVED_EVENT = "engagement.unarchived"
 PURGE_REFUSED_EVENT = "engagement.purge_refused"
 PURGED_EVENT = "engagement.purged"
 PURGE_BLOBS_REMOVED_EVENT = "engagement.purge_blobs_removed"
-RETENTION_CHANGED_EVENT = "client.retention_changed"
+RETENTION_CHANGED_EVENT = "client.retention_changed"  # historical: client-level retention was retired by Yozora
+FIRM_RETENTION_SOURCE = "firm"
+CLIENT_RETENTION_SOURCE = "client"
 EVENT_SCHEMA_VERSION = 1
 COMPLETION_SCRIPT_ACTOR = "system:purge-completion"
 
@@ -105,7 +109,6 @@ ARCHIVE_CONFLICT = "This engagement changed while you were archiving it. Reload 
 NOT_ARCHIVED = "This engagement is not archived."
 UNARCHIVE_CONFLICT = "This engagement changed while you were restoring it. Reload and try again."
 RETENTION_YEARS_INVALID = "Retention must be a whole number of years from 1 to 50."
-RETENTION_CONFLICT = "The retention of this client changed while you were editing it. Reload and try again."
 CONFIRM_MISMATCH = "Type the engagement name exactly as shown to confirm permanent deletion."
 ALREADY_PURGED = "This engagement has already been purged."
 PURGE_FAILED = "The purge could not be completed. Nothing was deleted."
@@ -184,6 +187,7 @@ class ArchiveRecord:
     actor: str
     previous_status: str | None
     retention_years_at_archive: int | None
+    retention_source: str
 
 
 @dataclass(frozen=True)
@@ -193,6 +197,7 @@ class RetentionState:
     archived: bool
     record: ArchiveRecord | None
     client_retention_years: int | None
+    firm_retention_years: int
     retention_years_applied: int | None
     eligible_at: datetime | None
     elapsed: bool
@@ -386,6 +391,11 @@ def archive_record(db: Session, engagement_id: str) -> ArchiveRecord | None:
             retention_years_at_archive=(
                 retention_years if _valid_retention(retention_years) else None
             ),
+            retention_source=(
+                FIRM_RETENTION_SOURCE
+                if metadata.get("retention_source") == FIRM_RETENTION_SOURCE
+                else CLIENT_RETENTION_SOURCE
+            ),
         )
     return None
 
@@ -402,13 +412,16 @@ def retention_state(
     record = archive_record(db, engagement.id) if archived else None
     applied = None
     eligible_at = None
-    if record is not None and current_years is not None:
+    if record is not None and record.retention_source == FIRM_RETENTION_SOURCE:
+        applied = record.retention_years_at_archive
+    elif record is not None and current_years is not None:
         applied = max(
             current_years,
             record.retention_years_at_archive
             if record.retention_years_at_archive is not None
             else current_years,
         )
+    if record is not None and applied is not None:
         eligible_at = add_years(record.archived_at, applied)
     current = _now(now)
     return RetentionState(
@@ -417,6 +430,7 @@ def retention_state(
         archived=archived,
         record=record,
         client_retention_years=current_years,
+        firm_retention_years=firm_settings.archived_retention_years(db),
         retention_years_applied=applied,
         eligible_at=eligible_at,
         elapsed=eligible_at is not None and current >= eligible_at,
@@ -516,7 +530,8 @@ def archive_engagement(
             "schema_version": EVENT_SCHEMA_VERSION,
             "client_id": client.id,
             "previous_status": previous_status,
-            "retention_years": client.retention_years,
+            "retention_years": firm_settings.archived_retention_years(db),
+            "retention_source": FIRM_RETENTION_SOURCE,
         },
     )
     db.flush()
@@ -563,53 +578,6 @@ def unarchive_engagement(
     )
     db.flush()
     return engagement
-
-
-def set_client_retention(
-    db: Session,
-    *,
-    client_id: str,
-    retention_years: str | int | None,
-    actor: str,
-) -> tuple[Client, bool]:
-    if isinstance(retention_years, bool):
-        raise InvalidRetentionRequest(RETENTION_YEARS_INVALID)
-    raw = str(retention_years).strip() if retention_years is not None else ""
-    if not re.fullmatch(r"[0-9]{1,3}", raw):
-        raise InvalidRetentionRequest(RETENTION_YEARS_INVALID)
-    value = int(raw)
-    if not _valid_retention(value):
-        raise InvalidRetentionRequest(RETENTION_YEARS_INVALID)
-    client = db.get(Client, client_id)
-    if client is None:
-        raise RetentionNotFound(CLIENT_NOT_FOUND)
-    previous = client.retention_years
-    if previous == value:
-        return client, False
-    timestamp = _now()
-    result = db.execute(
-        update(Client)
-        .where(Client.id == client_id, Client.retention_years == previous)
-        .values(retention_years=value, updated_at=timestamp)
-        .execution_options(synchronize_session=False)
-    )
-    if result.rowcount != 1:
-        raise RetentionConflict(RETENTION_CONFLICT)
-    db.expire(client)
-    _audit(
-        db,
-        actor=actor,
-        action=RETENTION_CHANGED_EVENT,
-        entity_type=CLIENT_ENTITY,
-        entity_id=client_id,
-        metadata={
-            "schema_version": EVENT_SCHEMA_VERSION,
-            "from": previous,
-            "to": value,
-        },
-    )
-    db.flush()
-    return client, True
 
 
 def _blob_roots(engagement_id: str, assessment_ids: tuple[str, ...]) -> tuple[str, ...]:

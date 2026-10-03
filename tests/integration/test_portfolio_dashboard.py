@@ -172,7 +172,9 @@ def test_orphaned_assessment_is_surfaced_and_empty_orphan_section_is_omitted(cli
     orphan = _assessment(db_session, None, company_name="Legacy Co")
     db_session.commit()
 
-    response = client.get("/")
+    # Yozora: the list moved from the dashboard to Settings (data housekeeping).
+    assert "Unmigrated assessments" not in client.get("/").text
+    response = client.get("/settings")
     assert response.status_code == 200
     assert "Unmigrated assessments" in response.text
     assert orphan.company_name in response.text
@@ -180,9 +182,9 @@ def test_orphaned_assessment_is_surfaced_and_empty_orphan_section_is_omitted(cli
 
     db_session.delete(orphan)
     db_session.commit()
-    response = client.get("/")
+    response = client.get("/settings")
     assert response.status_code == 200
-    assert "Unmigrated assessments" not in response.text
+    assert "data-unmigrated-assessment " not in response.text and "Every assessment is filed under a client." in response.text
 
 
 def test_new_engagement_existing_client_creates_hierarchy_and_packs(client, db_session):

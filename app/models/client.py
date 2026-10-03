@@ -14,6 +14,8 @@ class Client(Base):
     name: Mapped[str] = mapped_column(String(255), unique=True)
     industry: Mapped[str] = mapped_column(String(100))
     size: Mapped[str] = mapped_column(String(50))
+    # Deprecated (Yozora): retention is firm-level now (FirmSettings.archived_retention_years). Kept, not
+    # dropped: it is no longer edited or read for new archives, only for engagements archived before.
     retention_years: Mapped[int] = mapped_column(Integer, default=7)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(

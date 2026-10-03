@@ -1260,6 +1260,7 @@ def test_scenario_15_rerun_respects_locked_conclusions(db, monkeypatch, flag_v2)
 
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 
 
 def _merge_base() -> str:
@@ -1308,6 +1309,8 @@ def test_scenario_16_v1_and_stage_0_1_modules_unchanged():
         ":(exclude)app/services/grounding/pipeline.py",
         # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
         *V3A_EXCLUDES,
+        # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md): models and migration.
+        *YOZORA_BACKEND_EXCLUDES,
     )
     assert diff == ""
     from app.services.grounding import prompts

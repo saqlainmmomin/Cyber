@@ -9,6 +9,7 @@ from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.finding import Finding
+from app.models.firm_settings import FirmSettings
 from app.models.initiative import Initiative
 from app.models.initiative_metadata import InitiativeMetadata
 from app.models.magic_link import MagicLink
@@ -34,6 +35,7 @@ __all__ = [
     "EvidenceUse",
     "EvidenceVersion",
     "Finding",
+    "FirmSettings",
     "Initiative",
     "InitiativeMetadata",
     "MagicLink",

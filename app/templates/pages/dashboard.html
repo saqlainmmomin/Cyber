@@ -16,6 +16,13 @@
   </a>
 </div>
 
+{% if unmigrated_count %}
+<p data-unmigrated-notice class="mb-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+  {{ unmigrated_count }} assessment{% if unmigrated_count != 1 %}s are{% else %} is{% endif %} not filed under a client.
+  <a href="/settings" class="font-medium underline">Review in Settings</a>
+</p>
+{% endif %}
+
 {% if clients %}
 <div class="space-y-4">
   {% for c in clients %}
@@ -71,23 +78,4 @@
 </div>
 {% endif %}
 
-{% if unmigrated_assessments %}
-<section class="mt-8">
-  <div class="mb-3">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Unmigrated assessments</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400">These assessments predate the Client/Engagement hierarchy. Run <code class="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-xs">scripts/migrate_legacy.py</code> to file them under a client.</p>
-  </div>
-  <div class="space-y-2">
-    {% for assessment in unmigrated_assessments %}
-    <a href="/assessments/{{ assessment.id }}" class="flex items-center justify-between gap-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 hover:border-amber-300 dark:hover:border-amber-700">
-      <div class="min-w-0">
-        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ assessment.company_name }}</span>
-        <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{{ assessment.created_at.strftime('%d %b %Y') }}</span>
-      </div>
-      <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Open assessment &rarr;</span>
-    </a>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
 {% endblock %}

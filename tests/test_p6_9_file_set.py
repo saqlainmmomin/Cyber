@@ -21,6 +21,7 @@ P6_9_APP_ALLOWLIST = (
     "app/templates/pages/report_snapshots.html",
 )
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 
 P6_9_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and goldens (D-P6-H).
@@ -60,6 +61,8 @@ P6_9_FORBIDDEN_PATHS = (
     ":(exclude)requirements.txt",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme, display font.
     *V3A_EXCLUDES,
+    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
+    *YOZORA_BACKEND_EXCLUDES,
     # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): the
     # recommended-action draft control and partial; tests/test_p6_10a_remediation_draft.py guards them.
     ":(exclude)app/templates/components/conclusion_card.html",
@@ -104,4 +107,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     outside = [path for path in outside if path not in ("app/services/board_exports.py", "app/routers/snapshots.py")]  # P6-8 B2
     outside = [path for path in outside if path not in V3A_APP_PATHS]  # P6-8 V3-A
     outside = [path for path in outside if path not in P6_10_APP_FILES]  # P6-10
+    outside = [path for path in outside if path not in YOZORA_BACKEND_APP_PATHS]  # Yozora backend
     assert outside == [], outside

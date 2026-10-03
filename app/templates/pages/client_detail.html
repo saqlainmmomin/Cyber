@@ -12,23 +12,12 @@
 
 <input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="mb-6 w-full max-w-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
 
-<section class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Retention</h2>
-  <form class="mt-3" data-retention-form hx-post="/api/clients/{{ client.id }}/retention" hx-include="#reviewer-name">
-    <label for="retention-years" class="block text-sm text-gray-600 dark:text-gray-300">Retention period in years</label>
-    <input id="retention-years" type="number" name="retention_years" min="1" max="50" value="{{ client.retention_years }}" class="mt-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm">
-    <button type="submit" class="ml-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Save retention</button>
-    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Applies from archive. An engagement that is already archived keeps at least the retention it was archived with.</p>
-  </form>
-</section>
-
 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
   <div>
     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ client.name }}</h1>
     <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
       <span>{{ client.industry | replace("_", " ") | title }}</span>
       <span>{{ client.size | replace("_", " ") | title }}</span>
-      <span>{{ client.retention_years }}-year retention</span>
       <span>{{ assessment_count }} assessment{% if assessment_count != 1 %}s{% endif %}</span>
     </div>
   </div>
