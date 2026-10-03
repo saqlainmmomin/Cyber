@@ -28,10 +28,16 @@ def _source_url(source: str, base_url: str, state: str | None, theme: str) -> st
     if source.startswith(("http://", "https://")):
         url = source
     else:
-        path = Path(source)
+        source_parts = urlsplit(source)
+        path = Path(source_parts.path)
         if path.is_absolute():
             path = path.relative_to(REPO_ROOT)
         url = f"{base_url.rstrip('/')}/{path.as_posix()}"
+        if source_parts.query or source_parts.fragment:
+            url_parts = urlsplit(url)
+            url = urlunsplit(
+                (url_parts.scheme, url_parts.netloc, url_parts.path, source_parts.query, source_parts.fragment)
+            )
     return _with_query(url, state=state, **({"dark": ""} if theme == "dark" else {}))
 
 
@@ -40,7 +46,14 @@ def _diff_pixels(baseline: Image.Image, candidate: Image.Image, diff: Image.Imag
     try:
         from pixelmatch.contrib.PIL import pixelmatch
 
-        return pixelmatch(baseline, candidate, diff, threshold=0.1)
+        return pixelmatch(
+            baseline,
+            candidate,
+            diff,
+            threshold=0.1,
+            includeAA=False,
+            diff_mask=True,
+        )
     except ImportError:
         baseline_rgba = baseline.convert("RGBA")
         candidate_rgba = candidate.convert("RGBA")
@@ -51,7 +64,7 @@ def _diff_pixels(baseline: Image.Image, candidate: Image.Image, diff: Image.Imag
 
 
 def _largest_changed_region(diff: Image.Image) -> tuple[int, int, int]:
-    """Return (area, width, height) for the largest changed component."""
+    """Return (area, width, height) for the largest changed diff-mask component."""
     mask = diff.convert("RGBA")
     pixels = mask.load()
     width, height = mask.size
@@ -59,7 +72,7 @@ def _largest_changed_region(diff: Image.Image) -> tuple[int, int, int]:
         (x, y)
         for y in range(height)
         for x in range(width)
-        if pixels[x, y][0] or pixels[x, y][1] or pixels[x, y][2]
+        if pixels[x, y][3]
     }
     largest_area = 0
     largest_width = 0
@@ -88,6 +101,36 @@ def _largest_changed_region(diff: Image.Image) -> tuple[int, int, int]:
     return largest_area, largest_width, largest_height
 
 
+def _apply_state(page, state: str | None) -> None:
+    """Apply the shell-only states used by the S1 mobile baselines."""
+    if state not in {"drawer-open", "drawer-account-menu"}:
+        return
+    page.evaluate(
+        """
+        (showMenu) => {
+          document.documentElement.classList.add('drawer-open');
+          if (showMenu) {
+            document.getElementById('userMenu')?.classList.add('open');
+            document.getElementById('userBtn')?.setAttribute('aria-expanded', 'true');
+          }
+        }
+        """,
+        state == "drawer-account-menu",
+    )
+
+
+def _mask_locators(page, selectors: list[str] | tuple[str, ...] | None):
+    masks = page.locator("[data-visual-mask]").all()
+    if isinstance(selectors, str):
+        selectors = (selectors,)
+    for selector_list in selectors or ():
+        for selector in selector_list.split(","):
+            selector = selector.strip()
+            if selector:
+                masks.extend(page.locator(selector).all())
+    return masks
+
+
 def render(args: argparse.Namespace) -> int:
     try:
         from playwright.sync_api import sync_playwright
@@ -110,16 +153,29 @@ def render(args: argparse.Namespace) -> int:
         if hasattr(page, "clock"):
             page.clock.install(time="2026-10-03T12:00:00Z")
         page.goto(url, wait_until="networkidle")
+        _apply_state(page, args.state)
         page.add_style_tag(
             content="*,:before,:after{animation:none!important;transition:none!important;caret-color:transparent!important}"
         )
         page.evaluate("document.fonts && document.fonts.ready")
-        masks = page.locator("[data-visual-mask]").all()
+        clip = None
+        clip_selector = getattr(args, "clip", None)
+        if clip_selector:
+            box = page.locator(clip_selector).bounding_box()
+            if box is None:
+                raise RuntimeError(f"clip selector did not resolve to a visible element: {clip_selector}")
+            clip = {
+                "x": round(box["x"]),
+                "y": round(box["y"]),
+                "width": round(box["width"]),
+                "height": round(box["height"]),
+            }
         page.screenshot(
             path=str(output),
-            full_page=args.full_page,
+            full_page=args.full_page and clip is None,
             animations="disabled",
-            mask=masks,
+            mask=_mask_locators(page, getattr(args, "mask", None)),
+            **({"clip": clip} if clip else {}),
         )
         browser.close()
 
@@ -136,6 +192,7 @@ def render(args: argparse.Namespace) -> int:
     diff = Image.new("RGBA", baseline.size, (0, 0, 0, 0))
     changed = _diff_pixels(baseline, candidate, diff)
     diff_path = Path(args.diff or output.with_name(output.stem + "-diff.png"))
+    diff_path.parent.mkdir(parents=True, exist_ok=True)
     diff.save(diff_path)
     percentage = changed / (baseline.width * baseline.height) * 100
     largest_area, largest_width, largest_height = _largest_changed_region(diff)
@@ -159,6 +216,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", required=True)
     parser.add_argument("--baseline")
     parser.add_argument("--diff")
+    parser.add_argument("--clip", help="CSS selector whose bounding box should be captured")
+    parser.add_argument(
+        "--mask",
+        action="append",
+        default=[],
+        help="CSS selector to mask; repeat or pass a comma-separated selector list",
+    )
     parser.add_argument("--max-diff-percent", type=float, default=0.4)
     parser.add_argument("--full-page", action="store_true")
     return parser.parse_args()

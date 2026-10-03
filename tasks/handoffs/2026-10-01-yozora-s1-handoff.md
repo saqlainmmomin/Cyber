@@ -201,3 +201,12 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 ### Open items
 
 - Install the pinned dev dependencies and Chromium, then render the S1 mockup states and commit the approved shell baselines under `design/baselines/` before the visual gate can be closed.
+
+### Results (follow-up)
+
+- Fixed `design/harness/screenshot.py` to use pixelmatch's `diff_mask=True` with anti-alias exclusion before measuring connected changed regions. Added synthetic identical, 50x50, and 30x30 region tests in `tests/test_design_harness.py`.
+- Applied the mockup's `cv11`/`ss03` feature cascade explicitly to `.brand`, added the approved `data-visual-mask` markers to future nav entries and account-specific shell content, and documented the selectors in `design/harness/README.md`.
+- Rewrote `tests/visual/test_shell_visual.py` around `APP_URL`, the supplied `<screen>-<state>-<theme>-<width>.png` baselines, shell clips, and drawer states. The visual suite remains opt-in and was not run because this follow-up cannot start a browser or server.
+- Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **16 passed, 14 skipped**.
+- Required non-visual suite: `pytest -q tests/test_design_*.py tests/test_yozora_*.py` — collection blocked by missing `boto3` (**5 errors**).
+- Full suite: `pytest -q` — collection blocked by the same missing `boto3` dependency (**39 errors**).
