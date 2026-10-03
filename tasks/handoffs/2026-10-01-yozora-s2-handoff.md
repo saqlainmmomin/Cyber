@@ -150,4 +150,41 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+### Built
+
+- Added explicit UI macros in `app/templates/components/ui.html` and page/layout macros in `app/templates/components/layout.html` for the component-table inventory, including navigation, forms, request cards, review patterns, feedback, and login helpers.
+- Added the debug-only `/design` gallery from those macros. It supports light/dark (`?dark`), the empty `PREVIEW_PAGES` registry and preview 404s, and returns 404 when `ENV=production`. No database or fixture route state is used.
+- Migrated the engagement, evidence, and assessment status badges to `pill()` and the approved sentence-case vocabulary. Evidence maps `quarantined` → `Scanning`, `active` → `Available`, `rejected` → `Rejected`, `invalidated` → `Out of date`; archived evidence renders nothing.
+- Added `ENV`/`settings.env`, removed the three migrated badges from the design-lint allowlist, and added focused S2 route, macro-class, badge, and token tests.
+- Added `--line-control` to `design/tokens.json` in both themes and regenerated the checked token, Tailwind, component, and pattern CSS copies. Values are `rgba(30,36,56,.52)` light and `rgba(255,255,255,.36)` dark: approximately 3.2:1 and 3.3:1 against the measured panels. Secondary button outlines, checkboxes/radios, switches, file controls, swatches, drop zones, and unticked request markers now use it. `--line-strong` and card/table borders were not changed.
+
+### Screenshots and baselines
+
+Per the S1 note, no server or browser was run. The orchestrator owns the pixel gate, so percentages and diff images are intentionally pending:
+
+| Target | Theme | 1440 | 1024 | 390 |
+|---|---|---|---|---|
+| `/design` | light | N/A — not run | N/A — not run | N/A — not run |
+| `/design?dark` | dark | N/A — not run | N/A — not run | N/A — not run |
+
+Baselines changed: none in this worktree. No `/design` baseline PNGs are present here, and no existing b1/b7 shell baselines were regenerated. The orchestrator should re-baseline only pixels caused by the new control-boundary token; `--line-strong`, card borders, and table borders must remain on their existing baselines.
+
+### Tests and string changes
+
+- New `tests/test_yozora_s2.py`: 18 focused tests pass. It covers light/dark gallery rendering, production and unknown-preview 404s, every macro's shared CSS class vocabulary, four evidence labels plus archived omission, and generated control-token usage.
+- `tests/test_design_lint.py`: the old assertion `unmigrated <= ALLOWLIST` now permits the explicit `MIGRATED_TEMPLATES` set; `tests/design_lint_allowlist.txt` removes the three migrated badge paths. New component/gallery templates remain outside the legacy allowlist.
+- `tests/yozora_paths.py`: added `YOZORA_S2_PATHS` and changed `YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_DESIGN_FILES` to include S2 paths. No stale guard was weakened or edited elsewhere.
+- Badge copy changed from legacy `Quarantined`, `Active`, `Invalidated`, `Archived` and title-cased labels such as `Documents Uploaded` to `Scanning`, `Available`, `Out of date`, omitted archived output, and sentence case such as `Documents uploaded`.
+
+### Verification
+
+- `python3 design/tokens_tool.py check` — passed (`generated design files match tokens.json`).
+- `pytest -q tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/test_yozora_s2.py` — **18 passed, 2 warnings** (existing Starlette `TemplateResponse` signature deprecation).
+- `git diff --check` — passed.
+- `pytest -q` — blocked during collection by the existing environment dependency gap: **39 errors**, all rooted in `ModuleNotFoundError: No module named 'boto3'`; no S2 test failure was reached. No server/browser or screenshot gate was run.
+
+### Decisions and open questions
+
+- The route is always registered but performs an internal production guard so tests can monkeypatch `settings.env`; both production and unknown preview pages return 404.
+- `PREVIEW_PAGES` starts empty as required. Evidence labels remain inline until the backend evidence-inventory service is merged; the later service slice should own that mapping if it becomes authoritative.
+- No implementation open questions remain. The only pending S2 gate is the orchestrator-run visual comparison and narrowly scoped control-outline re-baseline described above.

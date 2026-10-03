@@ -17,6 +17,7 @@ from app.routers import (
     aws,
     board_inputs,
     conclusions,
+    design,
     desk_review,
     drafting,
     documents,
@@ -156,6 +157,7 @@ app.include_router(board_inputs.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(integrated_reports.router, dependencies=_ARCHIVE_GUARD)
 app.include_router(retention_router.router)
 app.include_router(firm_settings_router.router, dependencies=_ARCHIVE_GUARD)  # no engagement in its paths: a no-op guard
+app.include_router(design.router)
 
 # Web portal routes
 app.include_router(aws.router, dependencies=_ARCHIVE_GUARD)
