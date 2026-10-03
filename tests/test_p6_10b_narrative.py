@@ -541,8 +541,8 @@ def test_scenario_11_sidecar_refs_join_to_top_risk_ranks_without_the_database(db
     assert set(metadata(accepted)["sentences"][0]) == {"text", "finding_ids"}
 
 
-def test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout(db, http, gate, monkeypatch):
-    """Revision 2026-10-01 (D-P6-10-K): a v3 sidecar still exports until the v3 deck work replaces the layout."""
+def test_scenario_12_board_exports_accept_schema_v3_with_the_v3_layout(db, http, gate, monkeypatch):
+    """Revision 2026-10-01 (D-P6-10-K) and P6-8 V3-B: a v3 sidecar exports through the v3 XLSX; DOCX is retired for v3."""
     import io
 
     import openpyxl
@@ -561,9 +561,13 @@ def test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout(db, http,
     assert frozen["schema_version"] == 3
     sha = "ab" * 32
 
+    # P6-8 V3-B: a v3 sidecar exports the v3 workbook (not the v2 About layout) and DOCX is retired for v3.
     book = openpyxl.load_workbook(io.BytesIO(exports.render_xlsx(frozen, document_sha256=sha)))
-    about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
-    assert about["Document schema version"] == 3
-    assert exports.render_docx(frozen, document_sha256=sha)[:2] == b"PK"
+    assert tuple(book.sheetnames) == tuple(
+        name for name in exports.XLSX_SHEETS_V3 if name != "Statement of Applicability" or frozen["soa"]
+    )
+    assert "About" not in book.sheetnames
+    with pytest.raises(exports.DocumentSuperseded):
+        exports.render_docx(frozen, document_sha256=sha)
     with pytest.raises(exports.UnsupportedDocument):
         exports.render_docx(dict(frozen, schema_version=4), document_sha256=sha)

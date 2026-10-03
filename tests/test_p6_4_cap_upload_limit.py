@@ -322,6 +322,7 @@ def test_scenario_7b_image_extraction_is_not_truncated_or_reformatted(tmp_path, 
 # --------------------------------------------------------------------------- #
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.p6_10_support import P6_10_APP_FILES  # noqa: E402
 
 P6_4_CAP_APP_FILES = {"app/config.py", "app/services/document_processor.py"}
@@ -391,7 +392,9 @@ def _changed(*args: str) -> set[str]:
              # guarded by tests/test_p6_8_b2_docx_xlsx.py.
              ":(exclude)app/services/board_exports.py",
              # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md); guarded by tests/test_p6_8_v3a_data_capture.py.
-             *V3A_EXCLUDES],
+             *V3A_EXCLUDES,
+             # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md); guarded by tests/test_p6_8_v3b_file_set.py.
+             *V3B_EXCLUDES],
             cwd=REPO_ROOT, check=True, capture_output=True, text=True,
         ).stdout.split()
     )
@@ -400,5 +403,6 @@ def _changed(*args: str) -> set[str]:
 def test_scenario_9_only_config_and_document_processor_change_under_app():
     changed = _changed("main...HEAD") | _changed("HEAD")
     changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
+    changed = {path for path in changed if not is_v3b_path(path)}  # P6-8 V3-B
     changed -= set(P6_10_APP_FILES)  # P6-10 lands after the cap work (its own contract tests guard that set).
     assert changed <= P6_4_CAP_APP_FILES, sorted(changed - P6_4_CAP_APP_FILES)
