@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, literal_column
 from sqlalchemy.exc import IntegrityError
@@ -41,6 +41,7 @@ from app.models.report_snapshot import ReportSnapshot
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
 from app.services import (
+    actions_export,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -552,6 +553,23 @@ def remediation_tracker_page(
             "client": client,
             "rollup": rollup,
             "today": datetime.now(timezone.utc).date(),
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/remediation/export.xlsx")
+def remediation_actions_export(
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    content = actions_export.render_xlsx(actions_export.action_rows(db, engagement))
+    return Response(
+        content=content,
+        media_type=actions_export.MEDIA_TYPE,
+        headers={
+            "Content-Disposition": attachment_disposition(actions_export.export_filename(client, engagement)),
+            "Cache-Control": "no-store",
         },
     )
 

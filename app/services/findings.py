@@ -51,6 +51,8 @@ FINDING_STATUS_LABELS = {
 }
 ELIGIBLE_STATES = ("approved", "edited")
 PRIORITIES = (1, 2, 3, 4)
+# Words for the 1 to 4 priority wherever it can reach a client (Yozora); the number stays internal.
+PRIORITY_WORDS = {1: "Do first", 2: "Next", 3: "Planned", 4: "Backlog"}
 PRIORITY_BY_SEVERITY = {"critical": 1, "high": 1, "medium": 2, "low": 3}
 HISTORY_KEYS = ("actor", "action", "timestamp", "notes", "changes")
 HISTORY_ACTIONS = ("created", "status_changed", "updated", "closed", "verified", "reopened")
@@ -173,6 +175,10 @@ class EligibleConclusion:
 class FindingsPage:
     eligible: list[EligibleConclusion]
     findings: list[FindingView]
+
+
+def priority_word(priority: int) -> str:
+    return PRIORITY_WORDS.get(priority, "")
 
 
 def load_history(raw: str) -> list[dict]:
