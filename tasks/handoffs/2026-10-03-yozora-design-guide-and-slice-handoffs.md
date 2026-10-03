@@ -1,6 +1,6 @@
 # Yozora: update the design guide to the approved mockups, then regenerate the nine build handoffs
 
-**Written:** 2026-10-03. **For:** a fresh Claude session. **Repo/worktree:** `/Users/saqlainmomin/cyberassess-docs`, branch `claude/app-design-kickoff`, PR https://github.com/saqlainmmomin/Cyber/pull/97 (open; merging is Saqlain's). If PR #97 has been merged when you start, branch `claude/yozora-slice-handoffs` from `main` instead and open a new PR. Commit with the standard `Co-Authored-By` trailer only, no other attribution.
+**Written:** 2026-10-03. **For:** a fresh Claude session. **Repo/worktree:** `/Users/saqlainmomin/cyberassess-docs`, branch `claude/app-design-kickoff`. PR #97 (mockups) is merged; this file and the last mockup follow-ups are in PR https://github.com/saqlainmmomin/Cyber/pull/98 (open; merging is Saqlain's). Keep committing to `claude/app-design-kickoff` while #98 is open; if it has been merged when you start, branch `claude/yozora-slice-handoffs` from `main` and open a new PR. Commit with the standard `Co-Authored-By` trailer only, no other attribution.
 
 ## Goal
 The approved mockups are now the source of truth, but two downstream documents still describe the earlier design. You will:
@@ -97,11 +97,7 @@ A later fresh Claude session will orchestrate Codex through S1 to S9 and review 
    - **Templates in scope**, plus routes and view functions, found by grepping `app/routers/web.py` and friends.
    - **Must-keep ids, `hx-*` and `data-*`**, copied from the migration map and verified against the template.
    - **Tests that reference those templates, and the asserted strings likely to change.** Grep each test for the strings and list them, so test edits are deliberate.
-   - **Backend changes** the slice needs. Examples:
-     - S3: firm contact email and firm-level retention fields plus a migration
-     - S4: Add assessment, Export actions
-     - S6: evidence inventory query across assessments, statuses
-     - S8: magic-link contact fields; Open current report link
+   - **Backend dependency.** The server-side work for the redesign is a separate PR, https://github.com/saqlainmmomin/Cyber/pull/99 (spec: `tasks/handoffs/2026-10-03-yozora-backend-features.md` on branch `claude/yozora-backend-features`). It covers firm settings, firm-level retention, Add assessment, the actions export, Open current report, magic-link client contacts, "Email the firm", and read models (evidence inventory, assessment stage and next step, pre-fill freshness, request summary). Slice handoffs must not re-specify that work. Name PR #99 as a dependency in the slices that use it (S3 settings and retention, S4 engagement Overview and Findings and actions, S5 stage and pre-fill, S6 evidence inventory, S8 client links, comparison and invalid page), and say which service or route each template calls. If #99 is merged by then, cite the real function names from the code.
    - **The temporary reviewer-name field rule.**
    - **File-set guard:** the per-slice `:(exclude)` / allow-list entry to add. Never delete a guard.
    - **Screenshot gate:** widths, themes, thresholds, baselines from the approved mockups.
