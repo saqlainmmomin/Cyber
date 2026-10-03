@@ -1090,6 +1090,8 @@ P6_8_B1_APP_ALLOWLIST = (
 )
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1136,6 +1138,9 @@ P6_8_FORBIDDEN_PATHS = (
     *V3A_EXCLUDES,
     # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
     *V3B_EXCLUDES,
+    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
+    *YOZORA_BACKEND_EXCLUDES,
+    *YOZORA_EXCLUDES,  # Yozora S1
 )
 # P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
 P6_7B_APP_FILES = (
@@ -1174,6 +1179,8 @@ def test_scenario_14_no_llm_and_b1_file_set():
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
         and path not in V3A_APP_PATHS  # P6-8 V3-A
         and not is_v3b_path(path)  # P6-8 V3-B
+        and path not in YOZORA_BACKEND_APP_PATHS  # Yozora backend
+        and path not in YOZORA_S1_PATHS  # Yozora S1
     )
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside

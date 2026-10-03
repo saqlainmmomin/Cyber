@@ -15,6 +15,7 @@
   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
     {{ current_report.generated_at.strftime('%d %b %Y') }} vs {{ previous_report.generated_at.strftime('%d %b %Y') }}
   </p>
+  <a data-current-report-link href="{{ current_report_url }}" class="mt-2 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Open current report →</a>
 </div>
 
 {# Summary cards #}

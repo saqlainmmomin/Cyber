@@ -46,6 +46,7 @@ from app.services.scoring import (
 )
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
+from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 _register_frameworks()
 DPDPA_IDS = [control.id for control in FrameworkRegistry.get_all_controls("dpdpa")]
@@ -805,8 +806,8 @@ def test_scenario_19_source_and_worktree_guards(db_path):
     )
     # P6-1: explicit llm_calls persistence (D-P6-1-E)
     protected = subprocess.run(
-        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic", *V3A_EXCLUDES],
+        ["git", "diff", "--stat", "main...HEAD", "--", "app/models", "alembic", *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
     assert protected.stdout == ""
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "5e9a2c7d4b18 (head)"  # P6-8 V3-A head
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "b7d41c9e2a63 (head)"  # Yozora backend features head

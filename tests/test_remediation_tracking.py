@@ -1038,7 +1038,10 @@ def test_scenario_11_structural_guards_and_read_models():
         if "/remediation" in route.path
         for method in route.methods
         if method in {"GET", "POST", "PATCH", "PUT", "DELETE"}
-    } == {("GET", "/engagements/{engagement_id}/remediation")}
+    } == {
+        ("GET", "/engagements/{engagement_id}/remediation"),
+        ("GET", "/engagements/{engagement_id}/remediation/export.xlsx"),  # Yozora: Export actions (read-only)
+    }
     sources = [
         (REPO_ROOT / "app/services/findings.py").read_text(),
         (REPO_ROOT / "app/routers/findings.py").read_text(),

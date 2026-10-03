@@ -45,7 +45,7 @@ from app.models.report_snapshot import ReportSnapshot
 from app.models.rfi import RFIDocument
 from app.routers import retention as retention_router
 from app.services import evidence as evidence_service
-from app.services import retention
+from app.services import firm_settings, retention
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQ = get_all_requirements()[0]["id"]
@@ -550,7 +550,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
         "report_snapshots", "evidence_versions", "evidence", "assessment_documents",
         "magic_links", "assessments", "engagements",
     )
-    assert retention.RETAINED_TABLES == ("clients", "audit_events")
+    assert retention.RETAINED_TABLES == ("clients", "audit_events", "firm_settings")  # Yozora: firm settings are never purged
     assert retention.REFUSAL_REASONS == (
         "not_archived", "archive_record_missing", "retention_invalid",
         "retention_not_elapsed", "active_dependencies", "storage_layout_invalid",
@@ -601,12 +601,10 @@ def test_scenario_1_constants_structure_and_fk_order(db):
         ("GET", "/engagements/{engagement_id}/purge"),
         ("POST", "/api/engagements/{engagement_id}/purge"),
         ("POST", "/api/engagements/{engagement_id}/purge/complete"),
-        ("POST", "/api/clients/{client_id}/retention"),
-    }
+    }  # Yozora: the client retention route is retired; retention is a firm setting (/settings)
     for function in (
         retention.archive_engagement,
         retention.unarchive_engagement,
-        retention.set_client_retention,
         retention.build_purge_plan,
         retention.evaluate_purge,
         retention.retention_state,
@@ -622,7 +620,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     heads = subprocess.run(
         [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout
-    assert "5e9a2c7d4b18 (head)" in heads  # P6-8 V3-A migration
+    assert "b7d41c9e2a63 (head)" in heads  # Yozora backend features migration
     assert not list(REPO_ROOT.joinpath("app/models").rglob("*.py")) or all(
         "relationship(" not in path.read_text() for path in REPO_ROOT.joinpath("app/models").rglob("*.py")
     )
@@ -654,9 +652,10 @@ def test_scenario_2_archive_state_machine_and_views(db, http, upload_root, engin
     assert events[0].actor == "consultant:Priya"
     assert events[0].entity_type == "engagement"
     metadata = _metadata(events[0])
-    assert set(metadata) == {"schema_version", "client_id", "previous_status", "retention_years"}
+    assert set(metadata) == {"schema_version", "client_id", "previous_status", "retention_years", "retention_source"}
     assert metadata["previous_status"] == "active"
-    assert metadata["retention_years"] == 7
+    assert metadata["retention_years"] == 7  # the firm setting (seeded at 7 with no clients)
+    assert metadata["retention_source"] == "firm"
     record = retention.archive_record(db, engagement.id)
     assert record is not None and record.archived_at.tzinfo is not None
     client_page = http.get(f"/clients/{client.id}").text
@@ -768,6 +767,7 @@ def test_scenario_3_guard_matrix_reads_magic_links_and_isolation(db, http, uploa
         ("POST", "/assessments/new"),
         ("POST", "/api/assessments"),
         ("POST", "/magic/{token}"),
+        ("POST", "/settings"),  # Yozora firm settings: no engagement in the path
     }
     mutating = {"POST", "PUT", "PATCH", "DELETE"}
     exercised = set()
@@ -938,59 +938,82 @@ def test_scenario_4_unarchive_restore_restart_and_conflicts(db, http, engine, up
     assert _audit_rows(db) == before_audits
 
 
-def test_scenario_5_retention_validation_floor_and_cas(db, http, engine, upload_root, monkeypatch):
-    """Scenario 5: retention settings validate, audit once, use CAS, and honor the archive-time floor."""
+def _set_archive_metadata(db, engagement_id, **changes):
+    """Rewrite the latest archive event's metadata; a None value removes the key (an event written before Yozora)."""
+    record = retention.archive_record(db, engagement_id)
+    assert record is not None
+    event = db.get(AuditEvent, record.event_id)
+    metadata = _metadata(event)
+    for key, value in changes.items():
+        if value is None:
+            metadata.pop(key, None)
+        else:
+            metadata[key] = value
+    db.execute(update(AuditEvent).where(AuditEvent.id == event.id).values(metadata_json=json.dumps(metadata, sort_keys=True)))
+    db.commit()
+
+
+def _save_firm_retention(http, years):
+    return http.post(
+        "/settings",
+        data={"archived_retention_years": years, "accent_theme": "midnight", "reviewer_name": "Priya"},
+        follow_redirects=False,
+    )
+
+
+def test_scenario_5_firm_retention_snapshot_and_legacy_floor(db, http, engine, upload_root):
+    """Scenario 5 (Yozora): retention is a firm setting. The client route is retired, new archives snapshot the
+    firm value and keep it, and an engagement archived before the change keeps the per-client floor."""
     client, engagement, _ = _seed(db)
+    before = _snapshot(db, upload_root)
     response = http.post(f"/api/clients/{client.id}/retention", data={"retention_years": "10", "reviewer_name": "Priya"})
-    assert response.status_code == 200 and response.json()["retention_years"] == 10
-    db.expire_all()
-    assert db.get(Client, client.id).retention_years == 10
-    event = _audit_rows(db, entity_id=client.id, action=retention.RETENTION_CHANGED_EVENT)[-1]
-    assert event.entity_type == "client"
-    assert _metadata(event) == {"from": 7, "schema_version": 1, "to": 10}
-    for invalid in ("", "0", "51", "7.5", "-1", "abc", None):
+    assert response.status_code == 404
+    assert _snapshot(db, upload_root) == before
+    page = http.get(f"/clients/{client.id}").text
+    assert "data-retention-form" not in page and "retention-years" not in page
+
+    response = _save_firm_retention(http, "10")
+    assert response.status_code == 303 and response.headers["location"] == "/settings?saved=1"
+    event = _audit_rows(db, entity_id="1", action=firm_settings.UPDATED_EVENT)[-1]
+    assert event.entity_type == "firm_settings" and event.actor == "consultant:Priya"
+    assert _metadata(event) == {"changes": {"archived_retention_years": {"from": 7, "to": 10}}}
+    for invalid in ("", "0", "51", "7.5", "-1", "abc"):
         before = _snapshot(db, upload_root)
-        data = {} if invalid is None else {"retention_years": invalid}
-        response = http.post(f"/api/clients/{client.id}/retention", data=data)
-        assert response.status_code == 400 and response.json()["detail"] == retention.RETENTION_YEARS_INVALID
+        response = _save_firm_retention(http, invalid)
+        assert response.status_code == 422 and firm_settings.RETENTION_INVALID in response.text
         assert _snapshot(db, upload_root) == before
     before = _snapshot(db, upload_root)
-    response = http.post(f"/api/clients/{client.id}/retention", data={"retention_years": "10"})
-    assert response.status_code == 200
-    assert response.headers["X-Toast-Message"] == "Retention unchanged"
+    response = _save_firm_retention(http, "10")
+    assert response.status_code == 303 and response.headers["location"] == "/settings?saved=0"
     assert _snapshot(db, upload_root) == before
-    assert http.post("/api/clients/missing/retention", data={"retention_years": "10"}).status_code == 404
-
-    original_update = retention.update
-
-    def race_update(model, *args, **kwargs):
-        statement = original_update(model, *args, **kwargs)
-        if model is Client:
-            with engine.begin() as connection:
-                connection.execute(update(Client).where(Client.id == client.id).values(retention_years=11))
-        return statement
-
-    monkeypatch.setattr(retention, "update", race_update)
-    before = _snapshot(db, upload_root)
-    before_audits = _audit_rows(db)
-    response = http.post(f"/api/clients/{client.id}/retention", data={"retention_years": "12"})
-    assert response.status_code == 409 and response.json()["detail"] == retention.RETENTION_CONFLICT
-    assert _audit_rows(db) == before_audits
-    monkeypatch.undo()
-    db.execute(update(Client).where(Client.id == client.id).values(retention_years=7))
-    db.commit()
+    settings_page = http.get("/settings").text
+    assert 'data-retention-form' in settings_page and 'id="retention-years"' in settings_page and 'value="10"' in settings_page
+    assert "Retention: 10 years after archive (firm setting" in http.get(f"/engagements/{engagement.id}").text
 
     _archive(http, engagement.id)
+    metadata = _metadata(_audit_rows(db, entity_id=engagement.id, action=retention.ARCHIVED_EVENT)[-1])
+    assert metadata["retention_years"] == 10 and metadata["retention_source"] == "firm"
     state = retention.retention_state(db, db.get(Engagement, engagement.id))
-    assert state.retention_years_applied == 7
+    assert state.retention_years_applied == 10
+    assert state.eligible_at == retention.add_years(state.record.archived_at, 10)
+    # The firm value applies to engagements archived from now on; the deprecated client column is not read.
+    for years in ("3", "20"):
+        assert _save_firm_retention(http, years).status_code == 303
+        db.execute(update(Client).where(Client.id == client.id).values(retention_years=int(years) * 2))
+        db.commit()
+        assert retention.retention_state(db, db.get(Engagement, engagement.id)).retention_years_applied == 10
+
+    # Archived before Yozora (no retention_source): the per-client rule is unchanged, max(client now, snapshot).
+    _, legacy, _ = _seed(db, client=client, name="Archived before Yozora")
+    _archive(http, legacy.id)
+    _set_archive_metadata(db, legacy.id, retention_years=7, retention_source=None)
+    assert retention.archive_record(db, legacy.id).retention_source == "client"
     db.execute(update(Client).where(Client.id == client.id).values(retention_years=2))
     db.commit()
-    assert retention.retention_state(db, db.get(Engagement, engagement.id)).retention_years_applied == 7
-    db.execute(update(Client).where(Client.id == client.id).values(retention_years=10))
+    assert retention.retention_state(db, db.get(Engagement, legacy.id)).retention_years_applied == 7
+    db.execute(update(Client).where(Client.id == client.id).values(retention_years=12))
     db.commit()
-    assert retention.retention_state(db, db.get(Engagement, engagement.id)).retention_years_applied == 10
-    page = http.get(f"/clients/{client.id}")
-    assert 'data-retention-form' in page.text and 'value="10"' in page.text
+    assert retention.retention_state(db, db.get(Engagement, legacy.id)).retention_years_applied == 12
 
 
 def test_scenario_6_retention_refusal_preview_post_and_arithmetic(db, http, upload_root):
@@ -1189,9 +1212,17 @@ def test_scenario_8_other_refusals_both_layout_and_confirmation(db, http, upload
     _, invalid_retention, _ = _seed(db, client=client, name="Invalid retention")
     _archive(http, invalid_retention.id)
     _backdate_archive(db, invalid_retention.id, years=8)
+    _set_archive_metadata(db, invalid_retention.id, retention_years=0)  # a firm snapshot that is not valid
+    response = http.post(f"/api/engagements/{invalid_retention.id}/purge", data={"confirm_name": invalid_retention.name})
+    assert response.status_code == 409 and response.json()["reasons"] == ["retention_invalid"]
+
+    _, legacy_invalid, _ = _seed(db, client=client, name="Invalid legacy retention")
+    _archive(http, legacy_invalid.id)
+    _backdate_archive(db, legacy_invalid.id, years=8)
+    _set_archive_metadata(db, legacy_invalid.id, retention_source=None)  # archived before Yozora
     db.execute(update(Client).where(Client.id == client.id).values(retention_years=0))
     db.commit()
-    response = http.post(f"/api/engagements/{invalid_retention.id}/purge", data={"confirm_name": invalid_retention.name})
+    response = http.post(f"/api/engagements/{legacy_invalid.id}/purge", data={"confirm_name": legacy_invalid.name})
     assert response.status_code == 409 and response.json()["reasons"] == ["retention_invalid"]
     db.execute(update(Client).where(Client.id == client.id).values(retention_years=7))
     db.commit()

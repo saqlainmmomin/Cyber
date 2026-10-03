@@ -1037,7 +1037,7 @@ class TestAlembicRoundTrip:
         try:
             with engine.connect() as conn:
                 current = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert current == "5e9a2c7d4b18"  # P6-8 V3-A head
+            assert current == "b7d41c9e2a63"  # Yozora backend features head
 
             schema_after = _schema_snapshot(engine)
             assert schema_after == schema_before, (
@@ -1100,7 +1100,7 @@ class TestAdoptedDatabaseDowngradePolicy:
                 assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
                 assert conn.execute(
                     text("SELECT version_num FROM alembic_version")
-                ).scalar() == "5e9a2c7d4b18"  # P6-8 V3-A head
+                ).scalar() == "b7d41c9e2a63"  # Yozora backend features head
         finally:
             engine.dispose()
 
@@ -1431,7 +1431,7 @@ class TestEmptyAdoptedLegacyDowngrade:
             with engine.connect() as conn:
                 assert conn.execute(
                     text("SELECT version_num FROM alembic_version")
-                ).scalar() == "5e9a2c7d4b18"  # P6-8 V3-A head
+                ).scalar() == "b7d41c9e2a63"  # Yozora backend features head
                 indexes = inspect(conn).get_indexes("gap_items")
                 assert any(i["name"] == "ix_gap_items_null_framework_id" for i in indexes)
         finally:

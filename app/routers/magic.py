@@ -13,7 +13,7 @@ from app.database import get_db
 from app.models.assessment import Assessment
 from app.routers.web import templates
 from app.services import evidence as evidence_service
-from app.services import magic_links as magic_service, rfi_requests, report_snapshots
+from app.services import firm_settings, magic_links as magic_service, rfi_requests, report_snapshots
 from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(include_in_schema=False)
@@ -24,13 +24,16 @@ _CONSULTANT_HEADERS = {
 }
 
 
-def _render_invalid(request: Request):
+def _render_invalid(request: Request, db: Session):
+    # Firm-level only: the same page for every invalid, expired or revoked token (never the token,
+    # the engagement or the client).
     return templates.TemplateResponse(
         "magic/invalid.html",
         {
             "request": request,
             "firm_name": settings.firm_name,
             "message": magic_service.INVALID_LINK_MESSAGE,
+            "firm_contact_email": firm_settings.get(db).contact_email,
         },
         status_code=404,
         headers=magic_service.SECURITY_HEADERS,
@@ -48,6 +51,7 @@ def _upload_context(request: Request, db: Session, link: magic_service.MagicLink
         "request": request,
         "firm_name": settings.firm_name,
         "items": magic_service.scope_items(link),
+        "contact_first_name": magic_service.contact_first_name(link),
         "remaining": max(0, link.max_uploads - usage.uploads_total),
         "max_uploads": link.max_uploads,
         "expires_at": magic_service._as_utc(link.expires_at).strftime("%Y-%m-%d %H:%M"),
@@ -124,6 +128,11 @@ def _form_int(form, name: str, default: int, message: str) -> int:
         raise magic_service.MagicLinkValidationError(message) from exc
 
 
+def _form_text(form, name: str) -> str:
+    value = form.get(name)
+    return value if isinstance(value, str) else ""
+
+
 def _render_rfi_links(
     request: Request,
     db: Session,
@@ -169,7 +178,7 @@ def _render_rfi_links(
 def get_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
     link = magic_service.resolve_token(db, token)
     if link is None:
-        return _render_invalid(request)
+        return _render_invalid(request, db)
     return _render_upload(request, db, link)
 
 
@@ -177,7 +186,7 @@ def get_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
 async def post_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
     link = magic_service.resolve_token(db, token)
     if link is None:
-        return _render_invalid(request)
+        return _render_invalid(request, db)
 
     content_length = request.headers.get("content-length")
     try:
@@ -291,6 +300,9 @@ async def create_magic_link(
     items = form.get("items", "")
     item_titles = items.splitlines() if isinstance(items, str) else []
     try:
+        contact_name, contact_email = magic_service.validated_contact(
+            _form_text(form, "contact_name"), _form_text(form, "contact_email")
+        )
         created = magic_service.create_link(
             db,
             engagement_id=engagement_id,
@@ -313,6 +325,9 @@ async def create_magic_link(
                 100,
                 "Total size limit must be between 1 and 500 MB.",
             ),
+        )
+        magic_service.set_contact(
+            db, created.link, contact_name=contact_name, contact_email=contact_email
         )
         db.commit()
     except magic_service.MagicLinkNotFound as exc:
@@ -362,6 +377,9 @@ async def create_rfi_magic_link(
     form = await request.form()
     item_ids = [value for value in form.getlist("item_ids") if isinstance(value, str)]
     try:
+        contact_name, contact_email = magic_service.validated_contact(
+            _form_text(form, "contact_name"), _form_text(form, "contact_email")
+        )
         created = rfi_requests.create_client_link(
             db,
             assessment,
@@ -386,6 +404,9 @@ async def create_rfi_magic_link(
                 "Total size limit must be between 1 and 500 MB.",
             ),
             actor=reviewer_actor(form.get("reviewer_name", "")),
+        )
+        magic_service.set_contact(
+            db, created.link, contact_name=contact_name, contact_email=contact_email
         )
         db.commit()
     except rfi_requests.RfiError as exc:

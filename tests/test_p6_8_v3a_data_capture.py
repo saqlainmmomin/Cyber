@@ -57,7 +57,11 @@ from tests.p6_8_v3_support import (  # noqa: F401 - fixtures are used by name
 )
 from tests.p6_8_v3a_paths import V3A_APP_PATHS
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
+from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES, YOZORA_BACKEND_FILES  # Yozora backend per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 from tests.test_p6_8_board_report_v2 import _require_renderer
+
+YOZORA_REVISION = "b7d41c9e2a63"  # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 
 ACTOR = f"consultant:{REVIEWER}"
 FONT_DIR = REPO_ROOT / "app" / "assets" / "fonts" / "noto"
@@ -115,7 +119,8 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
     path = tmp_path / "v3a.sqlite3"
     config = _alembic_config(path)
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_current_head() == V3A_REVISION
+    assert scripts.get_current_head() == YOZORA_REVISION  # Yozora backend features sits on V3-A
+    assert scripts.get_revision(YOZORA_REVISION).down_revision == V3A_REVISION
     assert scripts.get_revision(V3A_REVISION).down_revision == PREVIOUS_REVISION
 
     command.upgrade(config, PREVIOUS_REVISION)
@@ -147,7 +152,7 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
             "SELECT title, owner, responsibility FROM actions WHERE id='x1'"
         ).fetchone() == ("Kept action", "Anita", None)
         assert connection.execute("SELECT board_asks_json FROM assessments WHERE id='a1'").fetchone() == (None,)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (V3A_REVISION,)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (YOZORA_REVISION,)
         # One metadata row per (assessment, group): a second insert with the same pair is refused.
         connection.execute(
             "INSERT INTO initiative_metadata (id, assessment_id, group_id, created_at, updated_at) "
@@ -198,6 +203,7 @@ def test_scenario_1b_downgrade_refuses_to_drop_consultant_entered_data(tmp_path,
         connection.execute(text(statement))
     engine.dispose()
 
+    command.downgrade(config, V3A_REVISION)  # the Yozora revision above holds no consultant data here
     with pytest.raises(RuntimeError, match="Refusing to downgrade past"):
         command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:
@@ -855,6 +861,9 @@ V3A_FORBIDDEN_PATHS = (
     "app/services/llm_client.py", "app/services/grounding", "app/services/claude_analyzer.py",
     "app/services/narrative.py", "app/services/remediation_draft.py", "app/routers/drafting.py",
     "requirements.txt", "scripts", "validation",
+    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
+    *YOZORA_BACKEND_EXCLUDES,
+    *YOZORA_EXCLUDES,  # Yozora S1
 )
 # Existing tests the designer or Codex edits: the "Alembic head" pins (D-P6-8-V3-S) ...
 V3A_EXISTING_TEST_EDITS = {
@@ -895,7 +904,7 @@ def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     changed = set(git("diff", "--name-only", "main...HEAD", "--", "app", "alembic").split())
     changed |= set(git("diff", "--name-only", "HEAD", "--", "app", "alembic").split())
     changed |= set(git("ls-files", "--others", "--exclude-standard", "app", "alembic").split())
-    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and not is_v3b_path(path))  # P6-8 V3-B
+    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and not is_v3b_path(path) and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS)  # Yozora allowances (backend, S1)
     assert outside == [], outside
     migrations = sorted(
         path.name for path in (REPO_ROOT / "alembic" / "versions").glob("*.py")
@@ -906,7 +915,7 @@ def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     changed_tests = set(git("diff", "--name-only", "main...HEAD", "--", "tests").split())
     changed_tests |= set(git("diff", "--name-only", "HEAD", "--", "tests").split())
     changed_tests |= set(git("ls-files", "--others", "--exclude-standard", "tests").split())
-    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES)
+    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES - set(YOZORA_BACKEND_FILES) - set(YOZORA_S1_PATHS))  # Yozora allowances (backend, S1)
     assert unexpected == [], unexpected
 
     for relative in ("app/services/board_inputs.py", "app/routers/board_inputs.py", "app/services/firm_theme.py"):

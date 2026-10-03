@@ -561,6 +561,18 @@ P6_10_FILES = (
 )
 
 
+# Yozora backend features (claude/yozora-backend-features): the implementing session adds every file it touches.
+from tests.yozora_backend_paths import YOZORA_BACKEND_FILES as _YOZORA_BACKEND_FILE_SET  # noqa: E402
+
+YOZORA_BACKEND_FILES = (
+    "tasks/handoffs/2026-10-03-yozora-backend-features.md",
+) + _YOZORA_BACKEND_FILE_SET
+
+
+# Yozora S1 design-system slice (tasks/handoffs/2026-10-01-yozora-s1-handoff.md): per-PR allowance.
+from tests.yozora_paths import YOZORA_ALL_PATHS as YOZORA_S1_FILES  # noqa: E402
+
+
 # App-design kickoff (claude/app-design-kickoff): handoff docs only.
 APP_DESIGN_KICKOFF_FILES = (
     "tasks/handoffs/2026-10-01-app-design-kickoff.md", "tasks/handoffs/2026-10-01-next-session-kickoff.md",
@@ -580,6 +592,7 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-mockup-approvals.md", "tasks/handoffs/2026-10-01-yozora-mockup-revisions-kickoff.md",
     "tasks/handoffs/2026-10-03-yozora-design-guide-and-slice-handoffs.md",
     "tasks/handoffs/2026-10-03-yozora-codex-orchestration.md",
+    ".gitignore",  # Yozora S1 (PR #100): ignore design/candidates/
 )
 
 # P6-8 V3-B: the synthetic v3 deck document (golden).
@@ -609,5 +622,7 @@ def test_scenario_11_only_p6_2b_files_change():
         and not f.startswith(REPORT_FORMAT_FILES) and f not in P6_8_V3_FILES and f not in P6_8_V3B_EXTRA and not is_v3b_path(f) and f not in P6_10_FILES
         and f not in APP_DESIGN_KICKOFF_FILES and not f.startswith(APP_DESIGN_DOC_DIRS)
         and f not in YOZORA_DESIGN_FILES
+        and f not in YOZORA_BACKEND_FILES
+        and f not in YOZORA_S1_FILES
     ]
     assert offenders == [], offenders

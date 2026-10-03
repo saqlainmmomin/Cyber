@@ -248,27 +248,3 @@ def complete_purge_route(
         "Nothing left to remove" if outcome.already_complete else "Stored files removed",
         refresh=True,
     )
-
-
-@router.post("/api/clients/{client_id}/retention")
-def set_client_retention_route(
-    client_id: str,
-    retention_years: str | None = Form(None),
-    reviewer_name: str = Form(""),
-    db: Session = Depends(get_db),
-):
-    try:
-        client, changed = retention.set_client_retention(
-            db,
-            client_id=client_id,
-            retention_years=retention_years,
-            actor=conclusion_review.reviewer_actor(reviewer_name),
-        )
-        db.commit()
-    except retention.RetentionError as exc:
-        return _handle_error(db, exc)
-    return _success(
-        {"client_id": client.id, "retention_years": client.retention_years},
-        "Retention updated" if changed else "Retention unchanged",
-        redirect=f"/clients/{client.id}",
-    )

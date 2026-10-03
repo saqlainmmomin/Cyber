@@ -107,6 +107,12 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [ ] **P6-3 / P6-4 / P6-5:** v2 claims pipeline, batched closed-set judge, A/B + default flip. P6-4 runs without test criteria: it falls back to the control description and records `criteria_source` (D-P6-L), so ISO and NIST are not blocked on criteria sign-off.
 - [ ] **Track 2 (P6-6 to P6-10):** period/cut-off, report defects, requirement card + review queue, WeasyPrint board report + DOCX/XLSX, SoA, post-approval narrative. Remaining: P6-10 (narrative, schema v3), then the v3 board deck (V3-A data capture, then V3-B deck/PPTX/XLSX; plan `tasks/handoffs/2026-10-01-board-report-v3-deck.md`).
 - [ ] **Order of work (Saqlain, 2026-10-01): Track 2 done, then app (UI/UX) design, then Track 4.** App-design kickoff: `tasks/handoffs/2026-10-01-app-design-kickoff.md`.
+- [ ] **Yozora S1 shell, tokens and visual-gate foundation** — implementation complete; visual-gate follow-up in progress. Execute `tasks/handoffs/2026-10-01-yozora-s1-handoff.md`; preserve the supplied official Inter 4.1 WOFF2/OFL/README and vendored htmx asset.
+  - [x] Correct pixelmatch region detection and add synthetic regression coverage.
+  - [x] Align the `.brand` font-feature cascade and document the approved visual comparison regions.
+  - [x] Rewrite the opt-in visual matrix against the supplied stateful baselines; run the non-visual and full suites, then record results.
+  - [x] Replace structural masks with paired-edge side/drawer clips and cover the clip geometry in the harness tests.
+  - [ ] Saqlain reruns the visual gate with the app server and Chromium environment.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
 - [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
 - [x] **2026-09-27 session PRs (all merged):** #67 harness screening-303, #68 LLM JSON reliability (+ this session's kickoff/Results), #69 small follow-ups (C1–C3), #70 P6-3b v2 flag/adapter. Guard-exclude conflicts between #68/#69/#70 resolve keep-both. Results: `tasks/handoffs/2026-09-27-next-session-kickoff.md#results`.

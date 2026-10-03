@@ -18,6 +18,6 @@
   </style>
 </head>
 <body>
-  <main><div class="card">{{ message }}</div></main>
+  <main><div class="card">{{ message }}{% if firm_contact_email %}<p><a data-firm-contact href="mailto:{{ firm_contact_email }}">Email {{ firm_name }}</a></p>{% endif %}</div></main>
 </body>
 </html>

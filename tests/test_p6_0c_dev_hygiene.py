@@ -29,7 +29,11 @@ def test_python_pin_and_dev_dependencies():
         line
         for line in (REPO_ROOT / "requirements-dev.txt").read_text().splitlines()
         if line.strip()
-    ] == ["-r requirements.txt", "pytest==9.1.1", "httpx==0.28.1"]
+    ] == [
+        "-r requirements.txt", "pytest==9.1.1", "httpx==0.28.1",
+        # Yozora S1 visual harness (tasks/handoffs/2026-10-01-yozora-s1-handoff.md): dev-only additions.
+        "playwright==1.55.0", "pixelmatch==0.3.0", "Pillow==11.3.0",
+    ]
     runtime_lines = (REPO_ROOT / "requirements.txt").read_text().splitlines()
     assert not any(line.startswith(("pytest", "httpx")) for line in runtime_lines)
 

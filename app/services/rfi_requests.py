@@ -92,6 +92,8 @@ class RfiLinkRow:
     items: tuple[tuple[str, str], ...]
     uploads_used: int
     max_uploads: int
+    contact_name: str | None = None
+    contact_email: str | None = None
 
 
 def _framework_label(assessment: Assessment) -> str:
@@ -512,6 +514,8 @@ def _link_rows(
                 items=items,
                 uploads_used=usage.uploads_total,
                 max_uploads=link.max_uploads,
+                contact_name=link.contact_name,
+                contact_email=link.contact_email,
             )
         )
         link_items[link.id] = {
