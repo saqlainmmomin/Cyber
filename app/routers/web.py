@@ -23,7 +23,7 @@ from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.services.followup_engine import generate_followups
-from app.services.engagement_factory import create_engagement_with_assessment
+from app.services.engagement_factory import add_assessment_to_engagement, create_engagement_with_assessment
 from app.services.portfolio import (
     build_client_card,
     build_engagement_card,
@@ -368,6 +368,7 @@ def engagement_detail(
         {
             "id": assessment.id,
             "company_name": assessment.company_name,
+            "display_name": assessment.display_name,
             "description": assessment.description,
             "status": assessment.status,
             "created_at": assessment.created_at,
@@ -390,6 +391,112 @@ def engagement_detail(
             "retention": retention_state,
         },
     )
+
+
+# --- Add assessment to an engagement (Yozora) ---
+
+ADD_ASSESSMENT_NO_FRAMEWORK = "Select at least one framework to assess against."
+ADD_ASSESSMENT_UNKNOWN_FRAMEWORK = "One or more selected frameworks are not available for assessment yet."
+ADD_ASSESSMENT_NAME_TOO_LONG = "Assessment name must be 255 characters or fewer."
+ADD_ASSESSMENT_FAILED = "Unable to add the assessment. Please try again."
+
+
+def _engagement_and_client_or_404(db: Session, engagement_id: str) -> tuple[Engagement, Client]:
+    engagement = db.get(Engagement, engagement_id)
+    if not engagement:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if not client:
+        raise HTTPException(404, "Client not found")
+    return engagement, client
+
+
+def _reject_archived(db: Session, engagement: Engagement) -> None:
+    # POSTs to an archived engagement are already refused (409) by the shared archive write guard;
+    # this keeps the form page and the handler fail-closed too.
+    if retention.archived_engagement_ids(db, {engagement.id}):
+        raise HTTPException(400, retention.ARCHIVED_READ_ONLY)
+
+
+def _render_new_assessment(
+    request: Request,
+    engagement: Engagement,
+    client: Client,
+    *,
+    error: str | None = None,
+    form_values: dict | None = None,
+    status_code: int = 200,
+):
+    return templates.TemplateResponse(
+        "pages/new_assessment.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "frameworks": [fw for fw in _framework_catalog() if fw["enabled"]],
+            "error": error,
+            "form_values": form_values or {"name": "", "description": "", "selected_frameworks": []},
+        },
+        status_code=status_code,
+    )
+
+
+@router.get("/engagements/{engagement_id}/assessments/new", response_class=HTMLResponse)
+def new_engagement_assessment_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    _reject_archived(db, engagement)
+    return _render_new_assessment(request, engagement, client)
+
+
+@router.post("/engagements/{engagement_id}/assessments")
+async def create_engagement_assessment(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement, client = _engagement_and_client_or_404(db, engagement_id)
+    _reject_archived(db, engagement)
+    form = await request.form()
+    framework_ids = list(dict.fromkeys(str(value) for value in form.getlist("selected_frameworks")))
+    form_values = {
+        "name": str(form.get("name") or "").strip(),
+        "description": str(form.get("description") or "").strip(),
+        "selected_frameworks": framework_ids,
+    }
+    error = None
+    if not framework_ids:
+        error = ADD_ASSESSMENT_NO_FRAMEWORK
+    elif any(framework_id not in ENABLED_ASSESSMENT_FRAMEWORKS for framework_id in framework_ids):
+        error = ADD_ASSESSMENT_UNKNOWN_FRAMEWORK
+    elif len(form_values["name"]) > 255:
+        error = ADD_ASSESSMENT_NAME_TOO_LONG
+    if error:
+        return _with_toast(
+            _render_new_assessment(
+                request, engagement, client, error=error, form_values=form_values, status_code=400
+            ),
+            error,
+            "error",
+        )
+    try:
+        assessment = add_assessment_to_engagement(
+            db,
+            engagement=engagement,
+            client=client,
+            name=form_values["name"] or None,
+            description=form_values["description"] or None,
+            framework_ids=framework_ids,
+        )
+    except Exception:
+        logger.exception("Adding an assessment to engagement %s failed", engagement_id)
+        return _render_new_assessment(
+            request, engagement, client, error=ADD_ASSESSMENT_FAILED, form_values=form_values, status_code=500
+        )
+    return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
 
 
 @router.get("/engagements/{engagement_id}/integrated-reports", response_class=HTMLResponse)

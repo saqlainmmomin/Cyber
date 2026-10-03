@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Add assessment — {{ engagement.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
+    <span>/</span>
+    <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>
+    <span>/</span>
+    <a href="/engagements/{{ engagement.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ engagement.name }}</a>
+  </div>
+  <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">Add assessment</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">A new assessment in this engagement for {{ client.name }}.</p>
+</div>
+
+{% if error %}
+<div data-add-assessment-error class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{{ error }}</div>
+{% endif %}
+
+<form data-add-assessment-form method="post" action="/engagements/{{ engagement.id }}/assessments" hx-boost="false" class="space-y-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+  <div>
+    <label for="assessment-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+    <input id="assessment-name" name="name" value="{{ form_values.name }}" maxlength="255" placeholder="Head office" class="mt-1 w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Optional. Without a name the assessment is listed under the client's name.</p>
+  </div>
+  <div>
+    <label for="assessment-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Scope</label>
+    <textarea id="assessment-description" name="description" rows="3" placeholder="Which sites, systems or business units this assessment covers" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ form_values.description }}</textarea>
+  </div>
+  <fieldset>
+    <legend class="block text-sm font-medium text-gray-700 dark:text-gray-300">Frameworks</legend>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Select one or more frameworks to assess against.</p>
+    <div class="space-y-2">
+      {% for fw in frameworks %}
+      <label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+        <input type="checkbox" name="selected_frameworks" value="{{ fw.id }}"{% if fw.id in form_values.selected_frameworks %} checked{% endif %} class="mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
+        <span>{{ fw.name }} <span class="text-xs text-gray-500 dark:text-gray-400">{{ fw.version }} · {{ fw.control_count }} controls</span></span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div class="flex items-center gap-3">
+    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Add assessment</button>
+    <a href="/engagements/{{ engagement.id }}" class="text-sm text-gray-600 dark:text-gray-300 hover:underline">Cancel</a>
+  </div>
+</form>
+{% endblock %}

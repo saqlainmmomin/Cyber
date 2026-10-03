@@ -1,4 +1,5 @@
-"""Yozora backend features: firm settings (with the firm-level archived-engagement retention).
+"""Yozora backend features: firm settings (with the firm-level archived-engagement retention) and
+assessments.name (display name within an engagement).
 
 Data migration: the firm_settings row is seeded with archived_retention_years taken from the
 clients' retention_years. If every client shares one value it is used; otherwise the largest,
@@ -75,18 +76,30 @@ def upgrade() -> None:
     )
     logger.info("Firm retention seeded at %s years: %s.", years, how)
 
+    with op.batch_alter_table("assessments", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("name", sa.String(length=255), nullable=True))
+
 
 def downgrade() -> None:
     bind = op.get_bind()
-    entered = bind.execute(
-        sa.text(
-            "SELECT COUNT(*) FROM firm_settings "
-            "WHERE contact_email IS NOT NULL OR accent_custom_hex IS NOT NULL"
-        )
-    ).scalar_one()
-    if entered:
+    data_counts = {
+        "firm_settings": bind.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM firm_settings "
+                "WHERE contact_email IS NOT NULL OR accent_custom_hex IS NOT NULL"
+            )
+        ).scalar_one(),
+        "assessments.name": bind.execute(
+            sa.text("SELECT COUNT(*) FROM assessments WHERE name IS NOT NULL")
+        ).scalar_one(),
+    }
+    present = {name: count for name, count in data_counts.items() if count}
+    if present:
+        details = ", ".join(f"{name}={count}" for name, count in present.items())
         raise RuntimeError(
             "Refusing to downgrade past Yozora backend revision b7d41c9e2a63: "
-            f"consultant-entered data would be lost (firm_settings={entered}); restore a verified backup instead."
+            f"consultant-entered data would be lost ({details}); restore a verified backup instead."
         )
+    with op.batch_alter_table("assessments", schema=None) as batch_op:
+        batch_op.drop_column("name")
     op.drop_table("firm_settings")

@@ -767,6 +767,7 @@ def test_scenario_3_guard_matrix_reads_magic_links_and_isolation(db, http, uploa
         ("POST", "/assessments/new"),
         ("POST", "/api/assessments"),
         ("POST", "/magic/{token}"),
+        ("POST", "/settings"),  # Yozora firm settings: no engagement in the path
     }
     mutating = {"POST", "PUT", "PATCH", "DELETE"}
     exercised = set()

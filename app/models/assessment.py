@@ -21,6 +21,8 @@ class Assessment(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     company_name: Mapped[str] = mapped_column(String(255))
+    # Yozora: display name within an engagement (e.g. "Head office"); None falls back to company_name.
+    name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     industry: Mapped[str] = mapped_column(String(100))
     company_size: Mapped[str] = mapped_column(String(50))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -78,6 +80,10 @@ class Assessment(Base):
             if not FrameworkRegistry.is_registered(framework):
                 raise ValueError(f"Unknown framework '{framework}'")
         return value
+
+    @property
+    def display_name(self) -> str:
+        return self.name or self.company_name
 
     @property
     def is_multi_framework(self) -> bool:
