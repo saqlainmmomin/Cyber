@@ -1,10 +1,7 @@
 # Templates remain on the legacy Tailwind shell until their migration slice.
 components/conclusion_card.html
-components/engagement_status_badge.html
-components/evidence_status_badge.html
 components/finding_card.html
 components/requirement_card_body.html
-components/status_badge.html
 components/workpaper_entry.html
 magic/invalid.html
 magic/upload.html

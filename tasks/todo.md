@@ -4,6 +4,14 @@
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
+## Current slice — Yozora S2
+
+- [x] Add the debug-only component gallery route and fixture template. **Verified:** direct route contract tests cover development light/dark responses, production/unknown-page 404s, and macro-rendered gallery output.
+- [x] Add explicit UI/layout macros and migrate the three status badges to them. **Verified:** gallery class vocabulary and evidence-status contract tests pass.
+- [x] Add the WCAG control-outline token and regenerate the design CSS copies. **Verified:** `design/tokens_tool.py check`; `--line-control` measures about 3.2:1 light and 3.3:1 dark while `--line-strong` remains unchanged.
+- [x] Add focused macro, gallery-route, badge, and control-token tests. **Verified:** 18 focused tests pass.
+- [x] Run the permitted non-browser verification and record results in the S2 handoff. **Verified:** focused suite and token check pass; full suite remains collection-blocked by the pre-existing missing `boto3` dependency; no server/browser or screenshot gate run per handoff.
+
 ## Done
 
 - [x] **Pre-work (PW-1–PW-5)** — migration safety, preserved rerun history, template setup, HTTP test harness, and SQLite foreign keys. **Verified:** PR #14, 163 tests.

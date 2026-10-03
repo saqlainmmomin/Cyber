@@ -1,28 +1,8 @@
-{% set status = a.status if a is defined else assessment.status %}
-{% set colors = {
-  'created': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
-  'documents_uploaded': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
-  'context_gathered': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
-  'questionnaire_done': 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400',
-  'analyzing': 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400',
-  'completed': 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
-  'error': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
-} %}
+{% from "components/ui.html" import pill %}
+{% set status = a.status if a is defined else assessment.status if assessment is defined else "created" %}
 {% set labels = {
-  'created': 'New',
-  'documents_uploaded': 'Documents Uploaded',
-  'context_gathered': 'Context Gathered',
-  'questionnaire_done': 'Questionnaire Done',
-  'analyzing': 'Analyzing...',
-  'completed': 'Completed',
-  'error': 'Error',
+  "created": "New", "documents_uploaded": "Documents uploaded", "context_gathered": "Context gathered",
+  "questionnaire_done": "Questionnaire done", "analyzing": "Analyzing…", "completed": "Completed", "error": "Error"
 } %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ colors.get(status, 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300') }}">
-  {% if status == 'analyzing' %}
-  <svg class="animate-spin -ml-0.5 mr-1.5 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-  </svg>
-  {% endif %}
-  {{ labels.get(status, status | replace("_", " ") | title) }}
-</span>
+{% set tones = {"documents_uploaded": "accent", "context_gathered": "accent", "questionnaire_done": "medium", "analyzing": "accent", "completed": "ok", "error": "non"} %}
+{{ pill(labels.get(status, status | replace("_", " ") | title), tones.get(status, "neutral")) }}

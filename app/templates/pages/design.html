@@ -1,0 +1,86 @@
+{% from "components/ui.html" import button, pill, chip, status, field, checkbox, radio, switch, alert, empty_state, skeleton, toast, modal, progress_bar, key_value, stat, disclosure, code_block, tooltip, request_card %}
+{% from "components/layout.html" import tabs, seg, table, filter_toolbar %}
+<!doctype html>
+<html lang="en" data-theme="{{ 'dark' if dark else 'light' }}" data-accent="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yozora component gallery</title>
+<link rel="stylesheet" href="/static/css/src/fonts.css">
+<link rel="stylesheet" href="/static/css/yozora-tokens.css">
+<link rel="stylesheet" href="/static/css/yozora-components.css">
+<link rel="stylesheet" href="/static/css/yozora-patterns.css">
+<style>.g{max-width:960px;margin:0 auto;padding:var(--s-8) var(--s-6) var(--s-16)}.g section{margin-top:var(--s-12)}.g .row{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;margin-top:var(--s-4)}.g .card{padding:var(--s-6);margin-top:var(--s-4)}.w{width:260px}</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+</svg>
+<div class="g">
+<h1>Components</h1><p class="sub" style="margin-top:6px">Every component in every state. Toggle dark with <code>?dark</code>.</p>
+
+<section><h2>Buttons</h2>
+<div class="glass card"><div class="row">
+{{ button("Primary") }}{{ button("Hover", "primary", style="filter:brightness(.9)") }}{{ button("Disabled", "primary", disabled=true) }}
+{{ button("Secondary", "secondary") }}{{ button("Ghost", "ghost") }}{{ button("Reject", "danger") }}{{ button("Delete", "destructive") }}
+</div><div class="row">
+{{ button("Small", "primary", "sm") }}{{ button("New engagement", "secondary", "sm", "plus", true) }}{{ button("", "ghost", "", "plus", false, false, false, "", "button", "Add") }}
+{{ button("Focus ring", "primary", element_id="focusme") }}{{ button("Approve", "primary", hint="A") }}
+</div></div></section>
+
+<section><h2>Pills, chips, status</h2>
+<div class="glass card"><div class="row">
+{{ pill("Critical", "critical") }}{{ pill("High", "high") }}{{ pill("Medium", "medium") }}{{ pill("Low", "low") }}
+</div><div class="row">
+{{ pill("Compliant", "ok") }}{{ pill("Partially compliant", "part") }}{{ pill("Non-compliant", "non") }}{{ pill("Insufficient evidence", "insuf") }}
+</div><div class="row">{{ chip("DPDPA") }}{{ chip("ISO 27001") }}{{ status("Open") }}{{ status("In progress", "in_progress") }}{{ status("In review", "open", "accent") }}</div></div></section>
+
+<section><h2>Form controls</h2>
+<div class="glass card"><div class="row" style="align-items:flex-start;gap:var(--s-8)">
+<div class="w">{{ field("Default", kind="input", placeholder="Search", icon_id="search") }}</div>
+<div class="w">{{ field("Invalid", value="finance@", state="invalid", error="Enter a full email address.") }}</div>
+<div class="w">{{ field("Disabled", value="Locked", disabled=true) }}</div>
+<div class="w">{{ field("Select", kind="select", value="Annual", options=["Annual", "Quarterly"]) }}</div>
+<div class="w">{{ field("Notes", kind="textarea", value="Scope excludes the Pune office.", help_text="Visible to the client.") }}</div>
+<div class="w">{{ checkbox("Include in report", checked=true) }}<br>{{ checkbox("Notify client") }}<br>{{ radio("Annual", "r", "annual", checked=true) }}<br>{{ radio("Quarterly", "r", "quarterly") }}<br>{{ switch("Firm theme", checked=true) }}</div>
+</div></div></section>
+
+<section><h2>Tabs, seg, alert</h2>
+<div class="glass card">{{ tabs([{"label":"DPDPA 2023", "href":"/design", "current":true}, {"label":"ISO 27001:2022", "href":"/design"}, {"label":"NIST CSF 2.0", "href":"/design"}]) }}
+<div class="row">{{ seg([{"label":"Light", "href":"/design"}, {"label":"Dark", "href":"/design?dark"}], "Light") }}</div>
+<div class="row">{{ alert("Evidence is past the cut-off", "Two files are dated after 15 Mar 2026 and were left out.", "medium", extra_class="w", style="width:100%") }}</div></div></section>
+
+<section><h2>Tables and empty state</h2>
+{% set finding_rows = [["No in-app consent withdrawal", pill("High", "high"), "4"], ["DR failover exceeded the 4-hour RTO", pill("Medium", "medium"), "2"]] %}
+{{ table(["Finding", "Severity", "Evidence"], finding_rows, numeric_columns=[2]) }}
+{{ empty_state("No evidence yet", "Upload documents or send the client a link to start the desk review.", "Upload documents", "/design", style="margin-top:var(--s-4)") }}</section>
+
+<section><h2>Loading, toast, modal</h2>
+<div class="glass card">{{ skeleton("60%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("40%", margin_top="10px") }}</div>
+<div class="row">{{ toast("Conclusion approved") }}</div>
+<div style="margin-top:var(--s-4)">{{ modal("Delete this engagement?", "This permanently removes its evidence, findings and reports. This can't be undone.", confirm_label="Delete engagement") }}</div></section>
+
+<section><h2>Consolidated components</h2>
+<div class="glass card"><div class="row" style="align-items:flex-start;gap:var(--s-8)">
+<div style="width:260px"><p class="label">Progress</p>{{ progress_bar(62) }}{{ progress_bar(indeterminate=true, style="margin-top:12px") }}</div>
+{{ key_value([{ "label":"Uploaded", "value":"12 Mar 2026" }, { "label":"Version", "value":"3" }], "width:340px") }}
+{{ stat("Approved", "3 of 6", style="width:160px") }}
+<div class="w">{{ disclosure("Add notes", "Notes are visible to the client.", true) }}</div>
+{{ button("Saving", "primary", loading=true) }}{{ button("Hover for tip", "secondary", aria_label="Copy link", tip="Copy link") }}
+<div class="w">{{ field(kind="input", placeholder="Touch size field", touch=true) }}</div>
+<div class="w">{{ field(kind="date", value="2026-03-15") }}</div>
+</div>{{ code_block("policy.json", '{ "Effect": "Allow", "Action": "s3:GetObject" }', style="margin-top:var(--s-4)") }}</div></section>
+
+<section><h2>Evidence request</h2>
+{% set request_items = [{"received":true, "title":"Consent withdrawal procedure", "detail":"consent-withdrawal-v3.pdf", "href":"/design", "action":""}, {"received":false, "title":"Breach notification runbook", "detail":"Not received yet", "href":"", "action":"Choose file"}] %}
+<div class="glass card">{{ request_card("Ananya Rao", "ananya.rao@meridianledger.example", "Active", 2, 4, "18 Oct 2026", request_items) }}</div></section>
+
+<section><h2>Filter row</h2>
+{{ filter_toolbar("Search evidence", [{"label":"Source", "options":[]}, {"label":"Status", "options":[]}, {"label":"Assessment", "options":[]}], "margin-top:var(--s-4)") }}</section>
+
+</div>
+<script>const q=new URLSearchParams(location.search);if(q.has('dark'))document.documentElement.dataset.theme='dark';if(q.has('focus'))document.getElementById('focusme')?.focus();</script>
+</body></html>
