@@ -30,7 +30,7 @@ from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion
 from app.models.report_snapshot import ReportSnapshot
-from app.services import report_snapshots
+from app.services import board_view, report_snapshots
 
 # Fixtures and helpers are shared with the B1 contract suite so both run on the same data.
 from tests.test_p6_8_board_report_v2 import (  # noqa: F401  (pytest fixtures are used by name)
@@ -139,6 +139,11 @@ DOCX_TABLE_HEADERS = {
     "comparison_changes": ("Requirement", "Prior outcome", "Current outcome", "Change"),
     "soa": ("Control", "Theme", "Applicability", "Implementation", "Justification"),
 }
+ROADMAP_INTRO_V2 = (
+    "Actions recorded against approved findings, grouped by shared control: findings in different frameworks that "
+    "cover the same control concern are listed together, so one remediation is tracked once. Groups are ordered "
+    "by their earliest target date. Owners and dates are set by the consultant; nothing on this page is estimated."
+)
 ROADMAP_INTRO_V1 = (
     "Actions recorded against approved findings, ordered by target date. Owners and dates are set by "
     "the consultant; nothing on this page is estimated."
@@ -270,6 +275,54 @@ def _has_table(word, headers) -> bool:
     return any(tuple(cell.text for cell in table.rows[0].cells) == headers for table in word.tables)
 
 
+SEVERITY_PRIORITY = {"critical": 1, "high": 2, "medium": 3, "low": 4}
+V3_NATIVE_TESTS = {
+    "test_scenario_12_v3_sidecars_export_xlsx_and_pptx_and_retire_docx",
+    "test_scenario_13_versions_page_offers_only_valid_export_links_for_v3",
+}
+
+
+def _v2(document: dict) -> dict:
+    """A schema-v2 (B2/P6-9, pre-V3-B) document built from the live v3 one.
+
+    P6-8 V3-B makes the live builder emit schema v3, which DOCX no longer renders (D-P6-8-V3-N). The frozen B2
+    renderers still serve schema v1/v2 sidecars, so these tests feed them a v2-shaped document: the v3 keys are
+    removed and the numeric `priority` that v2 carried is restored (derived from the severity, any value works
+    because the expectations are read from the same document).
+    """
+    old = copy.deepcopy(document)
+    old["schema_version"] = 2
+    for key in ("observations", "initiatives", "status_board", "severity_dashboard", "takeaways", "board_asks", "theme"):
+        old.pop(key, None)
+    old["summary"].pop("risk_matrix", None)
+    for key in ("status_counts", "overdue_count"):
+        old["roadmap"].pop(key, None)
+    for group in old["roadmap"]["groups"]:
+        for action in group["actions"]:
+            action.pop("finding_id", None)
+            action.pop("responsibility", None)
+    for risk in old["top_risks"]:
+        for key in ("business_impact", "recommendation", "action_status_label"):
+            risk.pop(key, None)
+        risk["priority"] = SEVERITY_PRIORITY[risk["severity"]]
+    for section in old["framework_sections"]:
+        for gap in section["gaps"]:
+            gap["priority"] = SEVERITY_PRIORITY[gap["risk_level"]]
+    for row in old["appendices"]["requirement_register"]:
+        row["priority"] = SEVERITY_PRIORITY[row["risk_level"]]
+    return old
+
+
+@pytest.fixture(autouse=True)
+def v2_documents(request, monkeypatch):
+    """The live builder's output is downgraded to schema v2 for every test here except the v3-native ones."""
+    if request.node.name in V3_NATIVE_TESTS:
+        return
+    board = _board()
+    live = board.build_document
+    monkeypatch.setattr(board, "build_document", lambda *args, **kwargs: _v2(live(*args, **kwargs)))
+
+
 def _v1(document: dict) -> dict:
     """A schema-v1 (B1, pre-P6-9) document: the same data without the keys P6-9 added (D-P6-9-E)."""
     old = copy.deepcopy(document)
@@ -356,8 +409,9 @@ def test_scenario_1_openpyxl_is_pinned_and_the_exporters_take_only_the_document(
     assert exports.XLSX_OPTIONAL_SHEETS == XLSX_OPTIONAL_SHEETS
     # The roadmap intro mirrors the PDF of the document's own schema: v2 is the live template's text.
     assert exports.ROADMAP_INTROS[1] == ROADMAP_INTRO_V1
-    template = (REPO_ROOT / "app" / "templates" / "reports" / "board_report.html").read_text(encoding="utf-8")
-    assert f"<p>{exports.ROADMAP_INTROS[2]}</p>" in template
+    # P6-8 V3-B: the live v3 deck no longer carries this sentence; the frozen DOCX/XLSX path still does, and
+    # schema v3 reuses it (P6-10 scenario 12 pins [3] == [2]).
+    assert exports.ROADMAP_INTROS[2] == ROADMAP_INTRO_V2
     assert exports.DOCX_MEDIA_TYPE == DOCX_MEDIA_TYPE
     assert exports.XLSX_MEDIA_TYPE == XLSX_MEDIA_TYPE
     assert exports.XLSX_SHEETS == XLSX_SHEETS
@@ -396,7 +450,7 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
     paragraphs = [paragraph.text for paragraph in word.paragraphs]
     label = _label(document, sha)
 
-    assert document["schema_version"] == 3 and document["soa"] is not None  # DPDPA + ISO fixture
+    assert document["schema_version"] == 2 and document["soa"] is not None  # DPDPA + ISO fixture
     assert _headings(word, 1) == [
         *B1_HEADINGS_HEAD,
         *[f"{section['name']} ({section['version']})" for section in document["framework_sections"]],
@@ -539,7 +593,7 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert about_rows["Report version"] == "v1"
     assert about_rows["Document SHA-256"] == sha
     assert about_rows["Report generated"] == document["snapshot"]["generated_at"]
-    assert about_rows["Document schema version"] == 3
+    assert about_rows["Document schema version"] == 2
     assert about_rows["Prior-period comparison"] == " ".join(document["prior_period"]["notes"])
     assert about_rows["Export format version"] == 1
     assert about_rows["Assessment period"] == document["basis"]["period_label"]
@@ -912,6 +966,7 @@ def test_scenario_9b_a_dpdpa_only_export_has_no_statement_of_applicability(db, h
 # ---------------------------------------------------------------------------
 
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 
@@ -940,8 +995,13 @@ P6_8_B2_FORBIDDEN_PATHS = (
     "app/templates/partials", "tests/fixtures", "tests/support", "scripts", "validation",
     # Stage C 2026-09-28 harness fix (#81) is on main; a stale local `main` still shows it.
     ":(exclude)scripts/validation/run_company.py",
+    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the synthetic v3 deck document.
+    ":(exclude)tests/golden/p6_8_v3_deck_document.json",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme.
     *V3A_EXCLUDES,
+    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
+    *V3B_EXCLUDES,
+    ":(exclude)tests/golden/p6_8_board_document.json",
     # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
     *YOZORA_BACKEND_EXCLUDES,
     *YOZORA_EXCLUDES,  # Yozora S1
@@ -984,7 +1044,8 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
             name.strip(" ()").split(" as ")[0] for name in names.split(",") if name.strip(" ()")
         }
     assert re.search(r"^\s*import app\b", source, re.M) is None
-    assert app_imports <= {"board_report", "report_snapshots"}, app_imports
+    # P6-8 V3-B: the v3 renderers also read the presenter's labels (board_view).
+    assert app_imports <= {"board_report", "report_snapshots", "board_view"}, app_imports
 
     committed = _git("diff", "--name-only", "main...HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
     working = _git("diff", "--name-only", "HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
@@ -994,6 +1055,7 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
     changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
     changed_app -= set(V3A_APP_PATHS)  # P6-8 V3-A
+    changed_app = {path for path in changed_app if not is_v3b_path(path)}  # P6-8 V3-B
     changed_app -= P6_10_APP_FILES  # P6-10 lands after B2 (its own contract tests guard that set)
     changed_app -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend
     changed_app -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
@@ -1003,7 +1065,8 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     requirements = _git("diff", "main...HEAD", "--", "requirements.txt")
     added = [line[1:] for line in requirements.splitlines() if line.startswith("+") and not line.startswith("+++")]
     removed = [line[1:] for line in requirements.splitlines() if line.startswith("-") and not line.startswith("---")]
-    assert added in ([], [OPENPYXL_PIN]) and removed == [], (added, removed)
+    # P6-8 V3-B adds the python-pptx pin (D-P6-8-V3-N).
+    assert added in ([], [OPENPYXL_PIN], ["python-pptx==1.0.2"], [OPENPYXL_PIN, "python-pptx==1.0.2"]) and removed == [], (added, removed)
 
 
 # ---------------------------------------------------------------------------
@@ -1097,3 +1160,43 @@ def test_scenario_11_schema_v1_and_v2_comparison_render_from_the_document(db, ht
     for render in (exports.render_docx, exports.render_xlsx):
         with pytest.raises(KeyError):
             render(broken, document_sha256=sha)
+
+
+# ---------------------------------------------------------------------------
+# 12-13. P6-8 V3-B: schema v3 sidecars (the live builder's output) retire DOCX
+# ---------------------------------------------------------------------------
+
+
+def test_scenario_12_v3_sidecars_export_xlsx_and_pptx_and_retire_docx(db, http, gate, monkeypatch, fake_pdf):
+    """D-P6-8-V3-N: a v3 sidecar serves the v3 XLSX and the PPTX; the DOCX route answers 410 and names the PPTX."""
+    assessment, snapshot, document, sha, *_ = _version(db, http, gate, monkeypatch)
+    exports = _exports()
+    assert document["schema_version"] == 3
+
+    gone = _get(http, assessment.id, snapshot.id, "docx")
+    assert gone.status_code == 410
+    assert gone.json() == {"detail": exports.DOCX_SUPERSEDED_MESSAGE} and "PPTX" in exports.DOCX_SUPERSEDED_MESSAGE
+
+    sheet_file = _get(http, assessment.id, snapshot.id, "xlsx")
+    assert sheet_file.status_code == 200 and sheet_file.headers["content-type"].startswith(XLSX_MEDIA_TYPE)
+    assert tuple(_xlsx(sheet_file.content).sheetnames) == tuple(
+        name for name in exports.XLSX_SHEETS_V3 if name != "Statement of Applicability" or document["soa"]
+    )
+
+    deck = _get(http, assessment.id, snapshot.id, "pptx")
+    assert deck.status_code == 200 and deck.headers["content-type"].startswith(exports.PPTX_MEDIA_TYPE)
+    from pptx import Presentation
+
+    assert len(Presentation(io.BytesIO(deck.content)).slides) == len(board_view.view(document)["slides"])
+
+
+def test_scenario_13_versions_page_offers_only_valid_export_links_for_v3(db, http, gate, monkeypatch, fake_pdf):
+    """D-P6-8-V3-N: the versions page offers PPTX and XLSX for a v3 version, and no DOCX link (the route is 410).
+
+    Kept red on purpose if the template still prints DOCX for every board report row (V3-B app bug).
+    """
+    assessment, snapshot, *_ = _version(db, http, gate, monkeypatch)
+    page = http.get(f"/assessments/{assessment.id}/snapshots").text
+    for fmt in ("xlsx", "pptx"):
+        assert f"/api/assessments/{assessment.id}/snapshots/{snapshot.id}/{fmt}" in page
+    assert f"/api/assessments/{assessment.id}/snapshots/{snapshot.id}/docx" not in page

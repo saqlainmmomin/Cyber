@@ -59,6 +59,7 @@ class ReportAction:
     target_date: date | None
     status: str
     status_label: str
+    responsibility: str | None = None
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,8 @@ class ReportFinding:
     citations_captured: bool
     citations: list[ReportCitation]
     actions: list[ReportAction]
+    business_impact: str | None = None
+    recommendation: str | None = None
 
 
 @dataclass(frozen=True)
@@ -233,6 +236,7 @@ def assessment_findings(db: Session, assessment: Assessment) -> AssessmentFindin
                 status_label=ACTION_STATUS_LABELS.get(
                     action_view.action.status, action_view.action.status
                 ),
+                responsibility=action_view.action.responsibility,
             )
             for action_view in view.actions
         ]
@@ -261,6 +265,8 @@ def assessment_findings(db: Session, assessment: Assessment) -> AssessmentFindin
                 citations_captured=card.citations_captured,
                 citations=citations,
                 actions=actions,
+                business_impact=view.finding.business_impact,
+                recommendation=view.finding.recommendation,
             )
         )
     return AssessmentFindings(findings=findings, omitted_count=omitted_count)

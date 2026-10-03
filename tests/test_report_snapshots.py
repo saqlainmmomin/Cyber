@@ -728,6 +728,8 @@ def test_snapshot_route_and_source_guards_are_exact():
         # P6-8 B2: read-only derived exports (D-P6-8-B2-G)
         ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/docx"),
         ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/xlsx"),
+        # P6-8 V3-B: read-only PPTX export for schema v3 (D-P6-8-V3-N)
+        ("GET", "/api/assessments/{assessment_id}/snapshots/{snapshot_id}/pptx"),
     }
     assert all(
         forbidden not in path.lower()
