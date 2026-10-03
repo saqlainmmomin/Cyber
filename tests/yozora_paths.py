@@ -36,6 +36,7 @@ YOZORA_S1_PATHS = (
     "tests/test_white_label.py",
     "tests/test_yozora_shell.py",
     "tests/visual/test_shell_visual.py",
+    "tests/visual/test_design_gallery_visual.py",
     "tests/yozora_paths.py",
 )
 
