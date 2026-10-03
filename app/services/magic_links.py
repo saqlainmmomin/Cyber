@@ -19,6 +19,7 @@ from app.models.evidence import Evidence, EvidenceVersion
 from app.models.engagement import Engagement
 from app.models.magic_link import MagicLink
 from app.services import evidence as evidence_service
+from app.services.firm_settings import MAX_EMAIL_CHARS, valid_email
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,9 @@ RFI_SCOPE_VERSION = 2
 RFI_UNKNOWN_ITEM_TEXT = "Choose requested items from this RFI version."
 INVALID_LINK_MESSAGE = "This link is invalid or has expired. Contact your consultant for a new link."
 FILE_TOO_LARGE_MESSAGE = "Files must be 25 MB or smaller."
+MAX_CONTACT_NAME_CHARS = 200
+CONTACT_NAME_TOO_LONG = "Contact name must be 200 characters or fewer."
+CONTACT_EMAIL_INVALID = "Enter the contact's email address like name@example.com."
 UPLOAD_LIMIT_MESSAGE = "This link has reached its upload limit. Contact your consultant."
 SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",
@@ -315,6 +319,39 @@ def create_rfi_link(
     )
 
 
+def validated_contact(
+    contact_name: str | None,
+    contact_email: str | None,
+) -> tuple[str | None, str | None]:
+    """The optional client contact of a new link, trimmed; blank values become None."""
+    name = " ".join((contact_name or "").split())
+    email = (contact_email or "").strip()
+    if len(name) > MAX_CONTACT_NAME_CHARS:
+        raise MagicLinkValidationError(CONTACT_NAME_TOO_LONG)
+    if email and (len(email) > MAX_EMAIL_CHARS or not valid_email(email)):
+        raise MagicLinkValidationError(CONTACT_EMAIL_INVALID)
+    return name or None, email or None
+
+
+def set_contact(
+    db: Session,
+    link: MagicLink,
+    *,
+    contact_name: str | None,
+    contact_email: str | None,
+) -> MagicLink:
+    """Record the client contact on a link just created (values from validated_contact)."""
+    link.contact_name = contact_name
+    link.contact_email = contact_email
+    db.flush()
+    return link
+
+
+def contact_first_name(link: MagicLink) -> str | None:
+    name = (link.contact_name or "").strip()
+    return name.split()[0] if name else None
+
+
 def revoke_link(
     db: Session,
     *,
@@ -497,6 +534,8 @@ def magic_link_rows(db: Session, engagement_id: str) -> list[dict]:
                 "created_at": link.created_at,
                 "expires_at": link.expires_at,
                 "items": [item["title"] for item in scope_items(link)],
+                "contact_name": link.contact_name,
+                "contact_email": link.contact_email,
                 "uploads_used": usage.uploads_total,
                 "max_uploads": link.max_uploads,
                 "bytes_used": usage.bytes_total,

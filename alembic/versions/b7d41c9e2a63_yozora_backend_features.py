@@ -1,5 +1,5 @@
 """Yozora backend features: firm settings (with the firm-level archived-engagement retention) and
-assessments.name (display name within an engagement).
+assessments.name (display name within an engagement) and the client contact on magic links.
 
 Data migration: the firm_settings row is seeded with archived_retention_years taken from the
 clients' retention_years. If every client shares one value it is used; otherwise the largest,
@@ -79,6 +79,10 @@ def upgrade() -> None:
     with op.batch_alter_table("assessments", schema=None) as batch_op:
         batch_op.add_column(sa.Column("name", sa.String(length=255), nullable=True))
 
+    with op.batch_alter_table("magic_links", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("contact_name", sa.String(length=200), nullable=True))
+        batch_op.add_column(sa.Column("contact_email", sa.String(length=254), nullable=True))
+
 
 def downgrade() -> None:
     bind = op.get_bind()
@@ -92,6 +96,12 @@ def downgrade() -> None:
         "assessments.name": bind.execute(
             sa.text("SELECT COUNT(*) FROM assessments WHERE name IS NOT NULL")
         ).scalar_one(),
+        "magic_links.contact": bind.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM magic_links "
+                "WHERE contact_name IS NOT NULL OR contact_email IS NOT NULL"
+            )
+        ).scalar_one(),
     }
     present = {name: count for name, count in data_counts.items() if count}
     if present:
@@ -100,6 +110,9 @@ def downgrade() -> None:
             "Refusing to downgrade past Yozora backend revision b7d41c9e2a63: "
             f"consultant-entered data would be lost ({details}); restore a verified backup instead."
         )
+    with op.batch_alter_table("magic_links", schema=None) as batch_op:
+        batch_op.drop_column("contact_email")
+        batch_op.drop_column("contact_name")
     with op.batch_alter_table("assessments", schema=None) as batch_op:
         batch_op.drop_column("name")
     op.drop_table("firm_settings")
