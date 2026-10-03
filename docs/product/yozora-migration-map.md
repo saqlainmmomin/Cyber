@@ -2,6 +2,8 @@
 
 Generated 2026-10-01 from `app/templates/` and `tests/`. Every template is listed. **Must-keep** = element ids, `hx-*` targets/swaps and `data-*` attributes found in the template (a migration may restyle but not rename these), plus the test files that reference the template. Strings asserted by tests must be checked per slice with `grep -n` on the listed test files; any intended change is listed in that slice's handoff so tests are updated deliberately.
 
+**Revised 2026-10-03:** slice membership follows the 3 Oct handoffs (desk review partials go with the questionnaire in S5; engagement archive, client picker and the engagement list partial in S4; the stepper in S5; the remediation summary and panel stay with the report in S7); three templates added after the first map are included.
+
 **Revised 2026-10-02 (approved flow map, `2026-10-01-app-design-mockups/flow-map.html`, and `screens/IA-SPEC.md`):** engagement tabs are Overview, Evidence, Findings and actions, Reports; assessment tabs are Overview, Scope, Questionnaire, Review, Report. One central Evidence inventory per engagement replaces the Documents tab, the AWS evidence tab and the standalone client-links page. Retention moves to firm Settings. A new firm field, contact email for clients, backs the "Email the firm" button on expired-link pages. Rows below are updated to match; must-keep ids and attributes are unchanged.
 
 Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, settings, S4 engagements, S5 assessment, scope, questionnaire, S6 documents, desk review, evidence, S7 analysis, report, review, S8 RFI, versions, client-facing, S9 system states, dark and mobile pass.
@@ -24,14 +26,14 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `pages/comparison.html` | S8 | Table | - | - | - | - | - |
 | `pages/conclusions.html` | S7 | List | `reviewer-name` | - | - | `data-count` | test_conclusion_approval.py, test_p6_3a_grounding.py, test_p6_4_cap_upload_limit.py, test_p6_4_whats_missing.py, test_p6_7_requirement_card.py |
 | `pages/dashboard.html` | S3 | Home: attention rows + engagement table | - | `#client-{{ c.id }}-engagements` | `innerHTML` | `data-shortcut-scope` | - |
-| `pages/engagement_detail.html` | S4 | Engagement Overview tab: assessments table with Stage and Next step, no stepper; single-assessment engagements open on the assessment | - | - | - | - | - |
+| `pages/engagement_detail.html` | S4 | Engagement Overview tab: assessments table with Stage and Next step, Add assessment, Archive; no stepper; single-assessment engagements open on the assessment. Includes the client-links partial until S8 | - | - | - | - | - |
 | `pages/engagement_purge.html` | S4 | Destructive confirm | `confirm-name`, `reviewer-name` | - | - | `data-purge-count`, `data-purge-dependency`, `data-purge-files`, `data-purge-form`, `data-purge-reason`, `data-purge-reasons` | - |
 | `pages/evidence_detail.html` | S6 | Detail page | - | - | - | - | - |
 | `pages/evidence_reuse.html` | S6 | Table | - | - | - | `data-reuse-candidate`, `data-reuse-confirm`, `data-reuse-error`, `data-reuse-warning`, `data-warnings` | test_longitudinal_demo.py |
 | `pages/evidence_span.html` | S6 | Citation block | `cited-span` | - | - | `data-cited-span`, `data-evidence-span-text`, `data-span-unavailable` | test_p6_3a_grounding.py, test_p6_4_cap_upload_limit.py, test_p6_4_whats_missing.py, test_p6_7_requirement_card.py |
 | `pages/findings.html` | S7 | Table | `reviewer-name` | - | `none` | `data-eligible-conclusion` | test_findings.py, test_remediation_tracking.py |
 | `pages/integrated_reports.html` | S4 | Engagement Reports tab | `reviewer-name` | - | - | `data-excluded-assessment`, `data-included-assessment`, `data-integrated-row`, `data-issue-control`, `data-snapshot-id`, `data-snapshot-state` | test_pdf_updates.py |
-| `pages/login.html` | S3 | Auth placeholder card | `password`, `username` | - | - | - | - |
+| `pages/login.html` | S3 | Auth placeholder card; no route renders it today (`GET /login` redirects). Previewed through the debug design router | `password`, `username` | - | - | - | - |
 | `pages/new_engagement.html` | S4 | Form page | `client-fields`, `create-engagement`, `description`, `engagement_name`, `engagement_type`, `new-engagement-form` | `#client-fields` | `innerHTML` | - | - |
 | `pages/remediation_tracker.html` | S4 | Engagement Findings and actions tab | - | - | - | `data-assessment-row`, `data-awaiting-action`, `data-overdue-action`, `data-owner-row`, `data-rollup-count`, `data-severity-row` | test_remediation_tracking.py |
 | `pages/report_snapshots.html` | S8 | Table | `reviewer-name` | - | - | `data-board-export`, `data-board-report-preview`, `data-issue-control`, `data-snapshot-id`, `data-snapshot-row`, `data-snapshot-state`, `data-snapshot-type`, `data-soa-link` | test_p6_2b_dpdpa_criteria.py, test_p6_3a_grounding.py, test_p6_4_cap_upload_limit.py, test_p6_4_whats_missing.py, test_p6_7_requirement_card.py, test_p6_7b_add_to_rfi.py, test_p6_8_b2_docx_xlsx.py, test_p6_8_board_report_v2.py, test_p6_9_file_set.py |
@@ -44,27 +46,27 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `partials/analysis_gate_blocked.html` | S7 | Alert | `override_reason` | `#analysis-area` | `innerHTML` | `data-completion-gate-blocked`, `data-completion-override-form` | test_correctness_bundle.py |
 | `partials/analysis_running.html` | S7 | Loading | - | - | `outerHTML` | - | - |
 | `partials/aws_evidence_panel.html` | S6 | Panel | `aws-evidence-panel` | `#aws-evidence-panel` | `outerHTML` | `data-aws-error`, `data-aws-evidence-row`, `data-aws-pull-form`, `data-aws-result`, `data-aws-source-row` | test_aws_evidence.py |
-| `partials/client_picker.html` | S3 | Menu/popover list | `client_id`, `company_name`, `company_size`, `industry` | - | - | - | - |
+| `partials/client_picker.html` | S4 | Swapped client fields on the new-engagement form (`b2-new_engagement`) | `client_id`, `company_name`, `company_size`, `industry` | - | - | - | - |
 | `partials/context_complete.html` | S5 | Alert/empty | - | - | - | - | - |
-| `partials/desk_review_error.html` | S6 | Alert | - | `#desk-review-area` | `innerHTML` | - | - |
-| `partials/desk_review_findings.html` | S6 | Table/cards | - | `#desk-review-area` | `innerHTML` | `data-desk-review-failed-frameworks` | - |
-| `partials/desk_review_ready.html` | S6 | Empty/CTA | `dr-spinner` | `#desk-review-area` | `innerHTML` | - | - |
-| `partials/desk_review_running.html` | S6 | Loading | - | - | `outerHTML` | - | - |
+| `partials/desk_review_error.html` | S5 | Alert on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | - | `#desk-review-area` | `innerHTML` | - | - |
+| `partials/desk_review_findings.html` | S5 | Table/cards on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | - | `#desk-review-area` | `innerHTML` | `data-desk-review-failed-frameworks` | - |
+| `partials/desk_review_ready.html` | S5 | Empty/CTA on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | `dr-spinner` | `#desk-review-area` | `innerHTML` | - | - |
+| `partials/desk_review_running.html` | S5 | Loading on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | - | - | `outerHTML` | - | - |
 | `partials/document_list.html` | S6 | Folded into the engagement Evidence inventory table (`b4-evidence`) | - | `#document-list` | `innerHTML` | - | - |
-| `partials/documents_tab.html` | S6 | Folded into the engagement Evidence inventory (`b4-evidence`): upload panel | `desk-review-area`, `document-list`, `drop-zone`, `file-input`, `file-name-display`, `upload-progress`, `upload-progress-bar` | `#document-list` | `innerHTML` | `data-evidence-reuse-link` | - |
+| `partials/documents_tab.html` | S6 | Folded into the engagement Evidence inventory (`b4-evidence`): upload panel; `desk-review-area` moves to the Questionnaire tab pre-fill card | `desk-review-area`, `document-list`, `drop-zone`, `file-input`, `file-name-display`, `upload-progress`, `upload-progress-bar` | `#document-list` | `innerHTML` | `data-evidence-reuse-link` | - |
 | `partials/engagement_list.html` | S4 | Table | - | - | - | - | - |
-| `partials/engagement_retention.html` | S3 | Split: retention period moves to firm Settings (data housekeeping); engagement keeps only the archive/unarchive action and archived banner | `reviewer-name` | - | - | `data-archive-control`, `data-archived-banner`, `data-purge-preview-link`, `data-retention-panel`, `data-unarchive-control` | - |
+| `partials/engagement_retention.html` | S4 | Engagement Overview: archive and unarchive action, archived banner, purge-preview link; the retention period itself is firm-level (Settings, S3), the text here reads the firm value | `reviewer-name` | - | - | `data-archive-control`, `data-archived-banner`, `data-purge-preview-link`, `data-retention-panel`, `data-unarchive-control` | - |
 | `partials/followup_questions.html` | S5 | Form | - | - | - | - | - |
 | `partials/framework_panel.html` | S7 | Framework card | - | - | - | - | - |
 | `partials/framework_tabs.html` | S5 | Tabs | `framework-panel` | `#framework-panel` | `innerHTML` | - | - |
-| `partials/magic_links.html` | S8 | Engagement Evidence tab, Requests view: request cards with requested items, received count, expiry | `magic-links`, `requested-items` | `#magic-links` | `outerHTML` | - | - |
+| `partials/magic_links.html` | S8 | Engagement Evidence tab, Requests view: request cards with requested items, received count, expiry; page `GET /engagements/{id}/requests` is new (S8). Included by `engagement_detail.html` until S8 | `magic-links`, `requested-items` | `#magic-links` | `outerHTML` | - | - |
 | `partials/no_report.html` | S7 | Empty state | - | - | - | - | - |
 | `partials/question_step.html` | S5 | Form step | `previous-answers` | `#context-wizard` | `innerHTML` | `data-depends-on`, `data-depends-value` | - |
 | `partials/questionnaire_sections.html` | S5 | Rows | `section-content` | `#section-content` | `innerHTML` | `data-collapsible-section`, `data-section`, `data-stat-answered`, `data-stat-awaiting-confirmation` | test_p5_4_adaptive_ucc_questionnaire.py |
 | `partials/questionnaire_tab.html` | S5 | Panel list | `analysis-area`, `context-wizard`, `questionnaire-content`, `screening-body`, `screening-section` | `#analysis-area`, `#screening-body` | `innerHTML` | `data-screening-unavailable`, `data-shortcut-scope` | test_p5_4_adaptive_ucc_questionnaire.py |
 | `partials/release_panel.html` | S7 | Panel + confirm | - | - | `none` | `data-release-blockers`, `data-release-form`, `data-release-panel`, `data-release-state` | test_p5_2_reader_migration.py |
-| `partials/remediation_panel.html` | S4 | Table | - | - | - | `data-legacy-remediation` | test_remediation_tracking.py |
-| `partials/remediation_summary.html` | S4 | Stat row | - | - | - | - | - |
+| `partials/remediation_panel.html` | S7 | Legacy remediation record inside the assessment report (included by `report_summary.html`) | - | - | - | `data-legacy-remediation` | test_remediation_tracking.py |
+| `partials/remediation_summary.html` | S7 | Stat row inside the assessment report (included by `report_summary.html`) | - | - | - | - | - |
 | `partials/report_basis_panel.html` | S7 | Panel | - | - | `none` | `data-period-locked`, `data-period-recorded`, `data-report-basis-form`, `data-report-basis-panel` | test_p6_3a_grounding.py |
 | `partials/report_summary.html` | S7 | Framework cards | `remediation-summary-area`, `review-banner`, `rfi-section` | - | - | `data-analysis-incomplete-banner`, `data-copy-target`, `data-copy-trigger`, `data-dpdpa-readiness-note`, `data-framework-coverage`, `data-framework-failed`, `data-framework-not-scored`, `data-framework-pending`, `data-legacy-remediation`, `data-release-blockers`, `data-release-state`, `data-rfi-link`, `data-view-mode` | test_correctness_bundle.py, test_p6_0e_dpdpa_pack_correctness.py, test_p6_3a_grounding.py, test_p6_6_report_foundations.py, test_report_snapshots.py |
 | `partials/report_tab.html` | S7 | Tabs + panels | `report-content` | - | `innerHTML` | - | - |
@@ -76,9 +78,30 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `partials/screening_form.html` | S5 | Form | `screening-indicator` | `#screening-section` | `innerHTML` | - | test_p5_4_adaptive_ucc_questionnaire.py |
 | `partials/section_questions.html` | S5 | Form | - | `#followup-{{ q.id }}`, `#section-content` | `innerHTML` | `data-pre-filled`, `data-prefill-badge`, `data-progress-counter`, `data-question-card`, `data-question-index`, `data-question-name`, `data-questionnaire-form`, `data-required-question`, `data-save-indicator`, `data-section-header`, `data-section-questionnaire`, `data-validation-summary` | - |
 | `partials/section_saved.html` | S5 | Toast/alert | - | - | - | - | - |
-| `partials/status_timeline.html` | S4 | Stepper | - | - | - | - | - |
+| `partials/status_timeline.html` | S5 | Five-stage stepper on the assessment Overview only (`b3-hub`), driven by `assessment_stage` | - | - | - | - | - |
 | `partials/upload_status.html` | S6 | Status rows | - | - | - | - | - |
 | `reports/board_report.html` | out of scope | Print template: tokens only | - | - | - | `data-comparison-framework`, `data-framework`, `data-preview`, `data-roadmap-group`, `data-section`, `data-soa-control` | test_p6_7b_add_to_rfi.py, test_p6_8_b2_docx_xlsx.py, test_p6_9_file_set.py |
 | `reports/workpaper_standalone.html` | out of scope | Print template | - | - | - | `data-count`, `data-decision-state`, `data-in-scope`, `data-report-basis`, `data-revision-action`, `data-run-stale`, `data-run-status`, `data-workpaper-entry`, `data-workpaper-finding`, `data-workpaper-section`, `data-workpaper-unconcluded` | test_p6_9_file_set.py |
 
-72 templates accounted for.
+| `pages/board_inputs.html` | S7 | Assessment / Report sub-page; no approved mockup, built from existing components only | `reviewer-name` | - | `none` | `data-board-action`, `data-board-asks`, `data-board-finding`, `data-board-initiative` | test_p6_8_v3a_data_capture.py |
+| `pages/narrative.html` | S7 | Assessment / Report sub-page; no approved mockup, built from existing components only | `reviewer-name` | - | `none` | `data-finding-ref`, `data-narrative-accept-form`, `data-narrative-blocker`, `data-narrative-dropped`, `data-narrative-section`, `data-narrative-unreleased` | test_p6_10b_narrative.py |
+| `partials/remediation_draft.html` | S7 | Draft button and field inside the requirement card; no approved mockup | `recommended-action-{{ conclusion_id }}` | `#recommended-action-{{ conclusion_id }}` | `outerHTML` | `data-recommended-action-field`, `data-remediation-draft`, `data-remediation-draft-button`, `data-remediation-draft-error`, `data-suggested-owner-role` | test_p6_10a_remediation_draft.py |
+
+75 templates accounted for (72 original rows plus three added by P6-8 V3-A and P6-10 after the map was generated; the two `reports/` print templates are out of scope).
+
+## Templates the redesign adds
+
+| Template | Slice | Notes |
+|---|---|---|
+| `components/ui.html`, `components/layout.html` | S2 | Macro files for the component layer |
+| `pages/design.html` | S2 | Debug-only gallery (`GET /design`) |
+| `pages/clients.html` | S3 | Firm-wide clients list (`GET /clients`, new route) |
+| `pages/firm_settings.html` | S3 | Created by PR #99, restyled in S3 |
+| `pages/engagements.html` | S4 | Firm-wide engagements list (`GET /engagements`, new route) |
+| Add assessment form page | S4 | Created by PR #99, restyled in S4 |
+| `pages/evidence_inventory.html` | S6 | Engagement and cross-engagement inventory (new routes) |
+| `pages/requests.html` | S8 | Engagement Requests view (`GET /engagements/{id}/requests`, new route) |
+| `pages/error.html` | S9 | 404 and 500 with reference code |
+
+Deleted by the redesign: `partials/documents_tab.html` (S6).
+
