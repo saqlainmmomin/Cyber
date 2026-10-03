@@ -39,7 +39,7 @@ INVALID_LINK_MESSAGE = "This link is invalid or has expired. Contact your consul
 FILE_TOO_LARGE_MESSAGE = "Files must be 25 MB or smaller."
 MAX_CONTACT_NAME_CHARS = 200
 CONTACT_NAME_TOO_LONG = "Contact name must be 200 characters or fewer."
-CONTACT_EMAIL_INVALID = "Enter the contact's email address like name@example.com."
+CONTACT_EMAIL_INVALID = "Enter the contact email as an address like name@example.com."
 UPLOAD_LIMIT_MESSAGE = "This link has reached its upload limit. Contact your consultant."
 SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",

@@ -46,6 +46,7 @@ YOZORA_BACKEND_OTHER_PATHS = (
     "tests/p6_10_support.py", "tests/test_p6_2b_dpdpa_criteria.py", "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py", "tests/test_p6_4_v2_judge.py", "tests/test_p6_4_whats_missing.py",
     "tests/test_p6_7_requirement_card.py", "tests/test_p6_7b_add_to_rfi.py", "tests/test_p6_8_b2_docx_xlsx.py",
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_9_file_set.py", "tests/test_p6_nist_csf2_alignment.py",
-    "tests/test_validation_harness.py",
+    # Deliberate test-string changes: the unmigrated list moved to Settings; the export route
+    "tests/integration/test_portfolio_dashboard.py", "tests/test_remediation_tracking.py",
 )
 YOZORA_BACKEND_FILES = YOZORA_BACKEND_APP_PATHS + YOZORA_BACKEND_OTHER_PATHS
