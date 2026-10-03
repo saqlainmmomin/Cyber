@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw
 
-from design.harness.screenshot import _diff_pixels, _largest_changed_region
+from design.harness.screenshot import _clip_box, _diff_pixels, _largest_changed_region
 
 
 def _changed_block(size: tuple[int, int], block_size: int) -> tuple[Image.Image, Image.Image]:
@@ -46,3 +46,29 @@ def test_thirty_pixel_changed_block_stays_within_region_limit():
     assert changed > 0
     assert region[1:] == (30, 30)
     assert not (region[1] > 40 and region[2] > 40)
+
+
+def test_clip_config_spans_from_panel_top_to_home_row():
+    class Locator:
+        def __init__(self, box):
+            self.box = box
+
+        def bounding_box(self):
+            return self.box
+
+    class Page:
+        boxes = {
+            ".side-in": {"x": 12, "y": 52, "width": 244, "height": 836},
+            '.side-in > .nav > a[aria-current="page"]': {"x": 20, "y": 160, "width": 228, "height": 32},
+        }
+
+        def locator(self, selector):
+            return Locator(self.boxes[selector])
+
+    assert _clip_box(
+        Page(),
+        {
+            "top": ".side-in",
+            "bottom": '.side-in > .nav > a[aria-current="page"]',
+        },
+    ) == {"x": 12, "y": 52, "width": 244, "height": 140}

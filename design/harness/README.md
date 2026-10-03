@@ -32,21 +32,18 @@ Use `--state <name>` for mockup states, `--full-page` for a complete page, and
 beside the candidate when a baseline is supplied and fails above the fidelity
 gate threshold or when a changed region is wider or taller than 40 pixels.
 
-## S1 visual masks
+## S1 comparison clips
 
-The S1 visual tests pass the following selectors to both the approved mockup
-render and the app candidate with `--mask`:
+S1 does not mask structurally different regions. The approved mockup renders
+future navigation rows and a different firm/account tile; the app correctly
+omits those destinations and uses different account copy until later slices.
+Painting masks would therefore compare different rectangles. Side-menu and
+drawer states use a paired-edge clip instead: from `.side-in` down to
+`.side-in > .nav > a[aria-current="page"]`, so only the brand, search field,
+and Home row are compared. The navigation-closed mobile state compares `.top`
+only; its page body belongs to S3.
 
-- `.nav a:not(:first-child)` masks future navigation entries below Home; those
-  entries are present in the mockup but intentionally unavailable in S1.
-- `.side-foot .nav a` masks the firm navigation item until its slice owns the
-  destination.
-- `.user .avatar, .user .name` masks the firm-specific account initial and
-  name in the account tile.
-- `.menu` masks the account-menu body, whose contents are intentionally
-  workspace-specific in S1.
-
-The app shell also marks these regions with `data-visual-mask`, so later slices
-can remove a selector from the test and unmask their own content. The harness
-always combines both sources of masks; `--mask` may be repeated or receive a
-comma-separated selector list.
+`--clip <selector>` still captures one element for command-line use. The visual
+matrix may pass a `{ "top": ..., "bottom": ... }` clip config when the region
+must be bounded by two shared DOM edges. `--mask` remains available for
+same-DOM dynamic pixels in later slices; it must not hide missing structure.

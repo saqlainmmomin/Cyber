@@ -25,8 +25,8 @@ Mockups are in `docs/product/2026-10-01-app-design-mockups/screens/`. Match ever
 | Mockup | States to match |
 |---|---|
 | `b7-mobile-shell.html` | page shell at 390: top bar, drawer trigger, content area. Compare clipped to `.top` and the first screenful only. |
-| `b7-mobile-shell-sheet.html` | navigation closed; drawer open; drawer with account menu. The confirm dialog and toast specimens on that page belong to S9. |
-| `b1-home.html` | state `default`, compared clipped to the side menu (`.side`) at 1440 and 1024 and to `.top` at 390. The page body is S3. |
+| `b7-mobile-shell-sheet.html` | navigation closed compares `.top`; drawer open and drawer with account menu compare the top block of `.side-in` through the Home row. The confirm dialog and toast specimens on that page belong to S9. |
+| `b1-home.html` | state `default`, compared to the top block of `.side-in` through the Home row at 1440 and 1024 and to `.top` at 390. The page body is S3. |
 
 ## Templates, routes and view functions in scope
 
@@ -210,3 +210,12 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 - Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **16 passed, 14 skipped**.
 - Required non-visual suite: `pytest -q tests/test_design_*.py tests/test_yozora_*.py` — collection blocked by missing `boto3` (**5 errors**).
 - Full suite: `pytest -q` — collection blocked by the same missing `boto3` dependency (**39 errors**).
+
+### Results (follow-up 2)
+
+- Replaced the S1 structural mask selectors with a paired-edge clip config: `.side-in` through its current Home row. Side and drawer comparisons now exclude future nav rows, the firm/account tile, and all page content below the Home row; navigation-closed compares `.top` only as required by the Screens table.
+- Kept the harness's generic `--mask` support for same-DOM dynamic pixels, but removed the unused S1 `data-visual-mask` markers and selector list from the app shell. Added a unit test covering the paired-edge clip geometry.
+- The 1024 mockup's y=52 sticky offset and 900px side height are a page-content artefact: `b1-home.html` includes the mockup-only state bar, `mockup-chrome.css` gives it its own layout, and the b1 page content expands the `.app` grid row, allowing the shared `top: 52px` sticky inset. The responsive rules in `yozora-patterns.css` and `shell.css` do not apply a separate 1024px shell layout; the shorter app dashboard clamps the same panel to y=12 inside its 860px minimum. No shell token or `shell.css` value was changed; the new top-block clip deliberately removes this non-shell geometry from the comparison.
+- Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **17 passed, 14 skipped**.
+- Full suite: `pytest -q` — collection remains blocked by the environment's missing `boto3` (**39 errors**); the requested dependency is not installed in the active pytest interpreter.
+- Visual screenshots were not rerun here because this environment cannot start Chromium or a browser/server; thresholds and design-token values were unchanged.

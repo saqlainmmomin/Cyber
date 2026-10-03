@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -131,6 +132,45 @@ def _mask_locators(page, selectors: list[str] | tuple[str, ...] | None):
     return masks
 
 
+def _clip_box(page, clip: str | Mapping[str, str]) -> dict[str, int]:
+    """Resolve a single-element or paired-edge clip into a screenshot box."""
+
+    def box_for(selector: str) -> dict[str, float]:
+        box = page.locator(selector).bounding_box()
+        if box is None:
+            raise RuntimeError(f"clip selector did not resolve to a visible element: {selector}")
+        return box
+
+    if isinstance(clip, str):
+        box = box_for(clip)
+        return {
+            "x": round(box["x"]),
+            "y": round(box["y"]),
+            "width": round(box["width"]),
+            "height": round(box["height"]),
+        }
+
+    try:
+        top_selector = clip["top"]
+        bottom_selector = clip["bottom"]
+    except (KeyError, TypeError) as exc:
+        raise ValueError("clip config must contain top and bottom selectors") from exc
+
+    top = box_for(top_selector)
+    bottom = box_for(bottom_selector)
+    top_y = round(top["y"])
+    bottom_y = round(bottom["y"] + bottom["height"])
+    height = bottom_y - top_y
+    if height <= 0:
+        raise ValueError(f"clip bottom must be below clip top: {top_selector!r}, {bottom_selector!r}")
+    return {
+        "x": round(top["x"]),
+        "y": top_y,
+        "width": round(top["width"]),
+        "height": height,
+    }
+
+
 def render(args: argparse.Namespace) -> int:
     try:
         from playwright.sync_api import sync_playwright
@@ -161,15 +201,7 @@ def render(args: argparse.Namespace) -> int:
         clip = None
         clip_selector = getattr(args, "clip", None)
         if clip_selector:
-            box = page.locator(clip_selector).bounding_box()
-            if box is None:
-                raise RuntimeError(f"clip selector did not resolve to a visible element: {clip_selector}")
-            clip = {
-                "x": round(box["x"]),
-                "y": round(box["y"]),
-                "width": round(box["width"]),
-                "height": round(box["height"]),
-            }
+            clip = _clip_box(page, clip_selector)
         page.screenshot(
             path=str(output),
             full_page=args.full_page and clip is None,

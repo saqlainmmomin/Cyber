@@ -39,9 +39,9 @@ def test_shell_uses_local_assets_and_attribute_theme_state():
     assert '<html lang="en" data-theme="light" data-accent="midnight"' in html
     assert 'data-nav-key="home" aria-current="page"' in html
     assert 'data-nav-key="clients"' not in html
-    assert 'data-nav-key="settings" data-visual-mask' in html
-    assert 'class="menu" id="userMenu"' in html and 'data-visual-mask' in html
-    assert 'class="avatar" data-visual-mask' in html and 'class="name" data-visual-mask' in html
+    assert 'data-nav-key="settings"' in html
+    assert 'class="menu" id="userMenu"' in html
+    assert 'data-visual-mask' not in html
 
 
 def test_navigation_marks_assessment_routes_as_engagements(monkeypatch):

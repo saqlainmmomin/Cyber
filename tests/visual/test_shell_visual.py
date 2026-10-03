@@ -13,22 +13,20 @@ pytestmark = pytest.mark.skipif(
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8000")
-MASKS = (
-    ".nav a:not(:first-child)",
-    ".side-foot .nav a",
-    ".user .avatar, .user .name",
-    ".menu",
-)
+SIDE_TOP_CLIP = {
+    "top": ".side-in",
+    "bottom": '.side-in > .nav > a[aria-current="page"]',
+}
 
 
 CASES = (
     ("b7-mobile-shell-top", None, 390, 780, ".top", False),
     ("b1-home-default-top", "default", 390, 780, ".top", False),
-    ("b7-mobile-shell-sheet-navigation-closed", "navigation-closed", 390, 780, None, False),
-    ("b7-mobile-shell-sheet-drawer-open", "drawer-open", 390, 780, None, False),
-    ("b7-mobile-shell-sheet-drawer-account-menu", "drawer-account-menu", 390, 780, None, False),
-    ("b1-home-default-side", "default", 1440, 860, ".side", False),
-    ("b1-home-default-side", "default", 1024, 900, ".side", False),
+    ("b7-mobile-shell-sheet-navigation-closed", "navigation-closed", 390, 780, ".top", False),
+    ("b7-mobile-shell-sheet-drawer-open", "drawer-open", 390, 780, SIDE_TOP_CLIP, False),
+    ("b7-mobile-shell-sheet-drawer-account-menu", "drawer-account-menu", 390, 780, SIDE_TOP_CLIP, False),
+    ("b1-home-default-side", "default", 1440, 860, SIDE_TOP_CLIP, False),
+    ("b1-home-default-side", "default", 1024, 900, SIDE_TOP_CLIP, False),
 )
 
 
@@ -55,6 +53,5 @@ def test_app_shell_against_approved_baseline(case_name, state, width, height, cl
             max_diff_percent=0.4,
             full_page=full_page,
             clip=clip,
-            mask=MASKS,
         )
     ) == 0

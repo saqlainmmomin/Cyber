@@ -103,8 +103,9 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [ ] **Order of work (Saqlain, 2026-10-01): Track 2 done, then app (UI/UX) design, then Track 4.** App-design kickoff: `tasks/handoffs/2026-10-01-app-design-kickoff.md`.
 - [ ] **Yozora S1 shell, tokens and visual-gate foundation** — implementation complete; visual-gate follow-up in progress. Execute `tasks/handoffs/2026-10-01-yozora-s1-handoff.md`; preserve the supplied official Inter 4.1 WOFF2/OFL/README and vendored htmx asset.
   - [x] Correct pixelmatch region detection and add synthetic regression coverage.
-  - [x] Align the `.brand` font-feature cascade and document/apply the approved visual masks.
+  - [x] Align the `.brand` font-feature cascade and document the approved visual comparison regions.
   - [x] Rewrite the opt-in visual matrix against the supplied stateful baselines; run the non-visual and full suites, then record results.
+  - [x] Replace structural masks with paired-edge side/drawer clips and cover the clip geometry in the harness tests.
   - [ ] Saqlain reruns the visual gate with the app server and Chromium environment.
 - [ ] **Track 3:** incremental re-analysis, override-rate report, retire `GapItem` writes and the DPDPA prompt stack.
 - [ ] **Track 4 (P6-11 to P6-14):** identity/auth, CSRF, encryption at rest/in transit, upload hardening, Bedrock `ap-south-1`, deploy.
