@@ -188,3 +188,11 @@ Baselines changed: none in this worktree. No `/design` baseline PNGs are present
 - The route is always registered but performs an internal production guard so tests can monkeypatch `settings.env`; both production and unknown preview pages return 404.
 - `PREVIEW_PAGES` starts empty as required. Evidence labels remain inline until the backend evidence-inventory service is merged; the later service slice should own that mapping if it becomes authoritative.
 - No implementation open questions remain. The only pending S2 gate is the orchestrator-run visual comparison and narrowly scoped control-outline re-baseline described above.
+
+### Orchestrator review (3 Oct 2026)
+
+- **Gate 3 (pixels):** `/design` vs `gallery.html`, light and dark at 1440, 1024 and 390, full page: **0.0000%** differing pixels, no changed region (rendered with `/static/` mapped to `app/static/`). One first-pass diff (modal confirm button said "Delete" instead of "Delete engagement") was fixed in `pages/design.html`. Baselines saved as `design/baselines/design-gallery-<theme>-<width>.png`, with `tests/visual/test_design_gallery_visual.py` (RUN_VISUAL=1). The baseline renders with the same `--line-control` CSS, so control outlines are not compared against the original mockup.
+- **Evidence badge fix:** Codex's badge rendered nothing for `superseded` and `legacy` versions, which the evidence version-history table shows. They now keep a neutral pill; archived still renders nothing. Test added. S6 swaps the inline map for `evidence_inventory.STATUS_LABELS`.
+- **Guards:** Codex could not run the suite (no boto3 in its sandbox), so 11 stale guards were fixed afterwards by adding `YOZORA_S2_PATHS`/`YOZORA_EXCLUDES` allowances (additions only): `p6_10_support.py`, `test_p6_3a_grounding.py`, `test_p6_7_requirement_card.py`, `test_p6_7b_add_to_rfi.py`, `test_p6_8_b2_docx_xlsx.py`, `test_p6_8_board_report_v2.py`, `test_p6_8_v3a_data_capture.py`, `test_p6_9_file_set.py`, `test_retention.py`, `test_p6_nist_csf2_alignment.py`.
+- **Full suite:** 1380 passed, 30 skipped (24 earlier skips plus 6 visual). Baseline on `origin/main`: 1370 passed, 24 skipped. `/design` returns 404 under `ENV=production`, checked over HTTP.
+- **Lint greps:** no uppercase, hex, forbidden effects in the new templates.
