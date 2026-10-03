@@ -2,7 +2,7 @@
   <input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="mb-4 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
   {% if not retention.archived %}
   <div data-retention-panel>
-    <p class="text-sm text-gray-600 dark:text-gray-300">Retention: {{ retention.client_retention_years }} years after archive (client setting)</p>
+    <p class="text-sm text-gray-600 dark:text-gray-300">Retention: {{ retention.firm_retention_years }} years after archive (firm setting, <a href="/settings" class="text-brand dark:text-navy-300 hover:underline">change in Settings</a>)</p>
     <form class="mt-4" data-archive-control hx-post="/api/engagements/{{ engagement.id }}/archive" hx-include="#reviewer-name" hx-confirm="Archive this engagement? It becomes read-only and leaves the portfolio views. You can unarchive it later.">
       <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Archive engagement</button>
     </form>
