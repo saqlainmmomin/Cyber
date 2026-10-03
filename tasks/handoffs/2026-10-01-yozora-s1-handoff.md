@@ -219,3 +219,10 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 - Focused non-visual check: `pytest -q tests/test_design_harness.py tests/test_yozora_shell.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/visual/test_shell_visual.py` — **17 passed, 14 skipped**.
 - Full suite: `pytest -q` — collection remains blocked by the environment's missing `boto3` (**39 errors**); the requested dependency is not installed in the active pytest interpreter.
 - Visual screenshots were not rerun here because this environment cannot start Chromium or a browser/server; thresholds and design-token values were unchanged.
+
+### Review decision (3 Oct 2026, Saqlain): S1 accepted, follow-ups logged
+S1 gate accepted with narrow clips (top bar; brand, search and Home block of the side menu and drawer). Follow-ups:
+- **S9:** compare the account menu popover (the drawer-open and drawer-account-menu baselines are currently identical because the clip stops at the Home row).
+- **S9:** check the 1024 side-panel offset: the app's `.side-in` sits at y=12, the mockup's at y=52. Decide from the mockup CSS whether it is a mockup page artefact or a shell difference; the clip currently crops it out.
+- **Each later slice:** widen the clip to cover its own menu entry as it becomes available; the nav below Home and the account tile are not yet compared.
+- **Test docs:** serve mockups with `/static/` mapped to `app/static/` (plain `http.server` 404s the fonts and gives ~0.35% false diffs).
