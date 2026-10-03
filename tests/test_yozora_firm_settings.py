@@ -73,9 +73,10 @@ def test_every_preset_accent_passes_both_checks():
     assert set(firm_settings.ACCENT_PRESETS) == {
         "graphite", "azure", "cobalt", "midnight", "slate", "teal", "violet", "plum",
     }
-    tokens = (REPO_ROOT / "design" / "yozora-tokens.css").read_text(encoding="utf-8")
+    tokens = (REPO_ROOT / "app" / "static" / "css" / "yozora-tokens.css").read_text(encoding="utf-8")
     for name, hex_colour in firm_settings.ACCENT_PRESETS.items():
-        assert f"[data-accent={name}]{{--accent:{hex_colour};" in tokens, name
+        compact = "".join(tokens.split())  # the generated stylesheet is pretty-printed
+        assert f"[data-accent={name}]{{--accent:{hex_colour};" in compact, name
 
 
 def test_accent_contrast_problem_names_the_failing_ratio():

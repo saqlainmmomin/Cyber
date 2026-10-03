@@ -73,3 +73,5 @@ partials/status_timeline.html
 partials/upload_status.html
 reports/board_report.html
 reports/workpaper_standalone.html
+pages/firm_settings.html
+pages/new_assessment.html

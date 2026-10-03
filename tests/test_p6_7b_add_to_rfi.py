@@ -844,6 +844,7 @@ P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
 
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 
 
 def _changed(*args: str) -> set[str]:
@@ -861,6 +862,7 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
     changed -= P6_10_APP_FILES
     changed -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend (tasks/handoffs/2026-10-03-yozora-backend-features.md)
+    changed -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
     p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.
@@ -870,6 +872,7 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     p6_9 += [f":(exclude){path}" for path in sorted(P6_8_B2_APP_FILES | {"requirements.txt"})]  # P6-8 B2
     p6_9 += V3A_EXCLUDES  # P6-8 V3-A
     p6_9 += YOZORA_BACKEND_EXCLUDES  # Yozora backend
+    p6_9 += YOZORA_EXCLUDES  # Yozora S1
     p6_9 += [f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS)]  # P6-10
     forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
     forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()

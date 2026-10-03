@@ -30,6 +30,7 @@ YOZORA_S1_PATHS = (
     "tasks/todo.md",
     "tests/design_lint_allowlist.txt",
     "tests/test_design_lint.py",
+    "tests/test_p6_0c_dev_hygiene.py",  # dev-requirements pin gained the S1 visual-harness packages
     "tests/test_design_tokens_in_sync.py",
     "tests/test_white_label.py",
     "tests/test_yozora_shell.py",

@@ -14,17 +14,17 @@
       document.documentElement.dataset.theme = theme;
     })();
   </script>
-  {% set custom_accent = accent_custom_hex or (branding.firm_primary_hex if branding.has_custom_nav_color else none) %}
-  {% if custom_accent %}
+  {% set yz_custom_accent = accent_custom_hex or (branding.firm_primary_hex if branding.has_custom_nav_color else none) %}
+  {% if yz_custom_accent %}
   <style>
     :root {
-      --accent: {{ custom_accent }};
-      --accent-text: {{ custom_accent }};
+      --accent: {{ yz_custom_accent }};
+      --accent-text: {{ yz_custom_accent }};
       --on-accent: {{ accent_on_accent }};
     }
     [data-theme="dark"] {
-      --accent: {{ accent_dark_hex or custom_accent }};
-      --accent-text: {{ accent_dark_hex or custom_accent }};
+      --accent: {{ accent_dark_hex or yz_custom_accent }};
+      --accent-text: {{ accent_dark_hex or yz_custom_accent }};
       --on-accent: {{ accent_on_accent }};
     }
   </style>
