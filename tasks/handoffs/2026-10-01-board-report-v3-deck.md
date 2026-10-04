@@ -264,3 +264,43 @@ Rules as for V3-A, for the two V3-B test files. Apply exactly the V3-B edits of 
 - Deviations: None. The V3-A contract tests, support/paths/guard files, and existing tests were not edited. Changes stayed within the V3-A file set.
 - Doubts: No blocking doubts. Browser-level screenshot verification and upstream font-license comparison were not performed; the offline font rendering contract passed.
 - Review fix: responsibility forms now submit on `change`; targeted command: 21 passed, 1 failed (the V3-A file-set guard requires an allowance for `tests/test_p6_8_v3a_extra.py`); full suite not run.
+
+## Results (V3-B)
+
+- Baseline focused V3-B run: 36 failed, 1 passed before implementation.
+- Focused V3-B verification: 38 passed across `tests/test_p6_8_v3b_document.py`, `tests/test_p6_8_v3b_deck.py`, and `tests/test_p6_8_v3b_file_set.py`. The updated SoA compatibility file adds 5 passed checks. Narrative compatibility checks pass at 43 passed, 7 deselected.
+- Golden: re-recorded once with `P6_8_RECORD_GOLDEN=1 ... -k golden`; the subsequent golden check passes.
+- Artifact smoke: the V3-B contract suite verifies the 25-slide 16:9 PDF deck, native-table/native-chart PPTX opening through `python-pptx==1.0.2`, XLSX sheet structure/validation/formula-injection protection, and the live export route. `python-pptx==1.0.2` is pinned in `requirements.txt`.
+- Full repository run: 1,286 passed, 10 skipped, 32 failed. The failures are expected compatibility/dirty-tree checks listed below; no contract test was edited and `.git` was not written.
+
+- Deviations: `tests/test_p6_8_board_report_v2.py`'s base fixture remains empty for optional V3-A board-input fields, so the recorded golden uses the empty defaults. This avoids changing the older fixture's capture-only assertions; V3-B's synthetic deck fixture covers populated risk, responsibility, initiative, and board-ask fields. The V3-B SoA edit follows F9: the PDF/deck asserts the summary and excluded control, while the XLSX retains all 93 rows. The existing B2 v1/v2 test path was left unchanged.
+
+- Expected stale guard failures caused by V3-B files/routes (not edited):
+  - `tests/test_longitudinal_demo.py:579` protected-surface guard sees `app/services/report_content.py` and `requirements.txt`.
+  - `tests/test_p6_10a_remediation_draft.py:353` and `tests/test_p6_10b_narrative.py:521` P6-10 guards see `app/routers/snapshots.py`, `app/services/report_content.py`, and `requirements.txt`.
+  - `tests/test_p6_2b_dpdpa_criteria.py:603`, `tests/test_p6_4_cap_upload_limit.py:404`, `tests/test_p6_4_whats_missing.py:958`, `tests/test_p6_7_requirement_card.py:1196/1204`, `tests/test_p6_7b_add_to_rfi.py:862/873`, and `tests/test_p6_9_file_set.py:97` see the V3-B application files or `report_content.py`.
+  - `tests/test_p6_8_board_report_v2.py:1110`, `tests/test_p6_8_v3a_data_capture.py:876`, and `tests/test_p6_8_b2_docx_xlsx.py:984/988` reject the V3-B working-tree files; `tests/test_p6_8_v3a_data_capture.py:734` also retains the V3-A capture-only document invariant.
+  - `tests/test_report_snapshots.py:723` has the pre-V3-B snapshot route set and rejects the new PPTX route.
+  - `tests/test_retention.py:1629` is the known dirty-tree-only guard.
+
+- Other expected stale assertions: `tests/test_p6_8_board_report_v2.py:739` and `:937` still pin the portrait/v2 PDF and preview; `tests/test_p6_8_b2_docx_xlsx.py:360`, `:386`, `:530`, `:664`, `:715`, `:780`, `:852`, `:984`, and `:1018` still expect the old DOCX/About workbook path or v2-only exporter imports; `tests/test_p6_10b_narrative.py:565` still expects the v2 `About` sheet for a schema-3 sidecar; `tests/test_p6_9_prior_period.py:340` and `tests/test_p6_9_roadmap.py:120`, `:183`, `:216` retain old template/document shapes. These were not broadened beyond the pinned V3-B edits.
+
+- Doubts: XLSX was opened and inspected with openpyxl, not LibreOffice/Numbers; no browser screenshot was taken. The PDF route and contract renderer checks passed, including landscape dimensions and page count; no commit was made.
+
+## Results (V3-B fixes)
+
+- Focused red-test verification: 4 passed — scenarios 7b, 7c, 7d, and B2 scenario 13.
+- Broader verification: 39 passed, 2 failed across the V3-B document/deck/file-set suite, the B2 older/v3 export checks, and the existing PDF scenario.
+- Fixes applied: preserved Devanagari-cover PDF Title metadata, removed fallback Arial/Verdana/Helvetica references by using vendored fonts and supported Noto glyphs, removed observation/register page padding, made the versions page schema-aware (v3: XLSX/PPTX; older: DOCX/XLSX), and formatted roadmap/evidence dates as `30 Nov 2026`.
+- Deviations/blockers: per the task instruction, stopped when the empty-page rule broke `tests/test_p6_8_v3b_document.py::test_scenario_17_routes_export_v3_as_xlsx_and_pptx_and_retire_docx` (17 slides versus its `>= 24` contract). The existing `tests/test_p6_8_board_report_v2.py::test_scenario_7_board_pdf_renders_devanagari_rupee_and_all_sections` still asserts the old ISO roadmap date and fails after the requested display-date change.
+- Left unfixed: the V3-B slide-count contract conflict and the stale ISO-date assertion; the full repository suite was not run because the explicit empty-page stop condition was reached. Tests, `validation/`, and `.git` were not edited.
+
+## Results (V3-B gaps)
+
+- Added `tests/test_p6_8_v3b_extra.py` with six focused regression tests. The V3-B/adjacent focused run passed: **40 passed, 1 warning**.
+- Restored v2 comparison content in the PDF/HTML deck: prior version and period label, current/prior per-framework scores, `+x.x points`/`No change`, and improved/regressed/newly-assessed/no-longer-assessed counts with requirement lists. First-period behavior remains unchanged: the comparison slide is omitted and `NO_PRIOR_TEXT` remains in the document.
+- Empty roadmaps now show the exact v2 sentence, and the empty initiatives slide is omitted rather than emitted as a blank table slide.
+- Added full provenance to every PDF slide footer, including the Devanagari fpdf2 cover path: period, evidence cut-off, version, short snapshot id, generated date, Confidential, and `Page n of N`. The generated artifact smoke passed at **25 pages**.
+- Mirrored the comparison slide in PPTX, including the prior-period label, score delta and requirement lists. PPTX footers now carry the same snapshot/date/page labels. Existing V3 XLSX sheets were preserved; their existing title blocks now include generated date and Confidential, with no comparison sheet invented.
+- Full repository run: **1328 passed, 10 skipped, 1 failed, 290 warnings**. The sole failure is the existing V3-A file-set assertion `tests/test_p6_8_v3a_data_capture.py::test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm`, which hard-codes a V3-A `V3_TEST_FILES` allowlist and rejects the explicitly allowed new `tests/test_p6_8_v3b_extra.py`. The standalone retention scenario passed (**1 passed, 12 deselected**); no existing tests were edited to work around the stale guard.
+- Left: no product-content gap remains in scope. The V3-A guard would need its test allowlist extended for a fully green repository run, but that is outside the instruction not to edit existing tests. No `.git` or `validation/` files were touched.

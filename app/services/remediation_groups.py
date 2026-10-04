@@ -114,6 +114,8 @@ def build_groups(
                         "owner": action.owner,
                         "target_date": _date_value(action.target_date),
                         "status_label": action.status_label,
+                        "finding_id": finding.finding_id,
+                        "responsibility": action.responsibility,
                         "framework_name": finding.framework_name,
                         "requirement_id": finding.requirement_id,
                         "finding_title": finding.title,

@@ -331,28 +331,32 @@ def test_scenario_5_tampered_prior_is_reported_not_silently_skipped(db, http, ga
 
 
 def test_scenario_6_comparison_section_renders_between_frameworks_and_sign_off(db, http, gate, monkeypatch, stub_render):
-    """D-P6-9-G: always rendered; per-framework only (no combined score); first period shows the empty text."""
+    """D-P6-9-G: per-framework only (no combined score). P6-8 V3-B: the slide appears only with a prior period; the empty text stays in the document."""
     board = stub_render
     prior = _prior()
     engagement = new_engagement(db)
     first, _ = _issued_period(db, http, gate, monkeypatch, engagement, period=PERIOD_1)
     first_html = board.render_html(build(db, first), embed_fonts=False)
-    assert "<h2>Prior-period comparison</h2>" in first_html
-    assert prior.NO_PRIOR_TEXT in first_html
+    # P6-8 V3-B (D-P6-8-V3-G): the v3 deck has no comparison slide without a prior period; the empty
+    # text stays in the document (notes), which the sidecar and the XLSX carry.
+    assert 'data-slide="comparison"' not in first_html
+    assert build(db, first)["prior_period"]["notes"] == [prior.NO_PRIOR_TEXT]
 
     p2 = _current(db, http, gate, monkeypatch, engagement)
     document = build(db, p2)
     html = board.render_html(document, embed_fonts=False)
     positions = [
-        html.index('data-section="framework"'),
-        html.index('data-section="comparison"'),
-        html.index('data-section="sign-off"'),
+        html.index('data-slide="overview"'),
+        html.index('data-slide="comparison"'),
+        html.index('data-slide="sign-off"'),
     ]
     assert positions == sorted(positions)
     section = html[positions[1]:positions[2]]
-    assert section.count("data-comparison-framework=") == 2
+    # P6-8 V3-B: one card per framework with the current and prior score and the change counts.
+    assert section.count('<div class="card">') == len(document["prior_period"]["frameworks"]) == 2
     for framework in document["prior_period"]["frameworks"]:
-        assert f"{framework['score_delta']:+.1f} points" in section
-    assert "Regressed" in section and "No longer assessed" in section and "Newly assessed" in section
-    assert "01 Jan 2026 to 31 Mar 2026" in section
+        assert f"<h2>{framework['name']}</h2>" in section
+        assert f"Current {framework['current_score']}% \u00b7 Prior {framework['prior_score']}%" in section
+        counts = framework["counts"]
+        assert f"Improved {counts['improved']} \u00b7 Regressed {counts['regressed']} \u00b7 New {counts['new']}" in section
     assert "combined" not in section.lower() and "overall" not in section.lower()

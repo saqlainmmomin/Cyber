@@ -39,6 +39,7 @@ from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.services import approved_report, report_basis
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S4_PATHS  # Yozora per-PR allowance
 
@@ -81,6 +82,8 @@ P6_10_FORBIDDEN_PATHS = (
     "tests/fixtures", "tests/support", "scripts", "validation", "requirements.txt",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, theme, display font.
     *V3A_EXCLUDES,
+    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck, exports.
+    *V3B_EXCLUDES,
     # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
     *YOZORA_BACKEND_EXCLUDES,
     *YOZORA_EXCLUDES,  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
@@ -119,7 +122,7 @@ def assert_p6_10_file_set() -> None:
     committed = git("diff", "--name-only", "main...HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     working = git("diff", "--name-only", "HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     assert committed == [] and working == [], committed + working
-    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and path not in YOZORA_S2_PATHS and path not in YOZORA_S4_PATHS)  # V3-A, Yozora allowances (backend, S1, S2, S4)
+    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S4_PATHS)  # V3-A, Yozora allowances (backend, S1, S2, S4)
     assert outside == [], outside
     llm_modules = {
         str(path.relative_to(REPO_ROOT))

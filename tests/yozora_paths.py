@@ -116,5 +116,16 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-s1-handoff.md",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S4_PATHS + YOZORA_DESIGN_FILES
+# Per-PR allowance: V3-C board deck design pass (mockup, scope, dumbbell backend handoff).
+V3C_MOCKUP_PATHS = (
+    "docs/product/2026-10-04-board-deck-v3c-mockup/deck_template.html",
+    "docs/product/2026-10-04-board-deck-v3c-mockup/render_deck.py",
+    "docs/product/2026-10-04-board-deck-v3c-mockup/deck.pdf",
+    "docs/product/2026-10-04-board-deck-v3c-mockup/deck-sparse.pdf",
+    "tasks/2026-10-04-deliverables-quality-scope.md",
+    "tasks/handoffs/2026-10-04-v3c-prior-domain-scores.md",
+    "tests/test_p6_8_v3b_file_set.py",
+)
+
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S4_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]
