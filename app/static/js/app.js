@@ -111,8 +111,10 @@ document.body.addEventListener('htmx:afterSwap', (event) => {
   if (!indicator) return;
 
   const target = event.detail.target;
-  // Only a questionnaire save (POST) counts; loading a section is not a save.
-  const isSave = event.detail.requestConfig && event.detail.requestConfig.verb === 'post';
+  // Only a questionnaire save counts; loading a section or other posts are not a save.
+  const config = event.detail.requestConfig;
+  const path = config && config.path ? config.path.split('?')[0] : '';
+  const isSave = path.endsWith('/questionnaire/save');
   if (isSave && target && (target.id === 'section-content' || target.closest('[data-questionnaire-form]'))) {
     const now = new Date();
     indicator.textContent = `Saved ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
