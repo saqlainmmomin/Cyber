@@ -341,3 +341,86 @@ Partial-only preview URLs (each accepts the listed `state` exactly):
 - `/design/pages/b3-sections?state=default`, `saved`, `loading`, `empty`, `error`.
 - `/design/pages/b3-section-questions?state=default`, `errors`, `saved`, `loading`.
 - `/design/pages/b4-desk_review?state=ready`, `running`, `findings`, `rerun`, `error`.
+
+### Pixel gate and review, cloud orchestrator (4 Oct 2026)
+
+Visual fitting was done by subagents, one per page group, as Saqlain decided on 4 Oct 2026. On 4 Oct Saqlain also approved the live Pre-fill from documents page (`GET /assessments/{id}/desk-review`). The Questionnaire tab now shows only the pre-fill summary and links to that page.
+
+**How states are produced now.** Live routes ignore `?state=`. Seeded data drives every real state. Transient states come only from debug previews of a real assessment, rendered with the real page and partials:
+
+- `/design/pages/b3-hub?state=loading|error&assessment_id=…`
+- `/design/pages/b3-scope?state=error|saving&assessment_id=…`
+- `/design/pages/b3-scope-complete?state=loading|error&assessment_id=…`
+
+The partial-only previews listed above are unchanged. A real scope error now exists too: an incomplete scope form is re-rendered with each unanswered question marked, and nothing is saved.
+
+**Final gate** (exact pixelmatch, 47 states, light/dark × 1440/1024): 60 of 188 shots pass, up from 56 before the review fixes. No shot that passed before now fails.
+
+| State | Pass | Range % |
+|---|---|---|
+| b3-hub default, loading, error, archived | 4/4 each | 0.00 |
+| b3-hub empty | 4/4 (was 0/4) | 0.00-0.04 |
+| b3-hub evidence, report, prefill | 4/4 each | 0.05-0.33 |
+| b3-hub questionnaire | 0/4 | 0.58-3.19 |
+| b3-scope default, error, saving, edit | 0/4 | 37.5-42.4 |
+| b3-scope-complete default, iso | 0/4 | 54.8-64.8 |
+| b3-scope-complete loading, error | 2/4 each | 0.30-0.48 |
+| b3-questionnaire context | 0/4 | 1.36-3.26 |
+| b3-questionnaire, other 9 states | 0/4 | 32.4-57.4 |
+| b3-sections saved | 4/4 | 0.13-0.29 |
+| b3-sections default, empty; b3-section-questions default | 0/4 | 0.63-1.10 |
+| b4 ready, running, error | 4/4 each | 0.07-0.25 |
+| b4 findings | 0/4 | 7.7-9.6 |
+| b4 rerun | 0/4 | 8.6-50.3 |
+| screening form complete; context complete | 4/4 each | 0.00 |
+| screening form default, loading, error, screened | 0/4 | 13.7-15.6 |
+| context question steps (4 states) | 0/4 | 21.1-28.0 |
+| follow-ups loaded | 0/4 | 2.7-13.2 |
+
+**Real-data exceptions by state**
+
+- Hub questionnaire: the seed is partly answered, so the step says "10 of 45 answered" and "Continue questionnaire". The mockup shows pre-fill-ready copy.
+- Scope form (all states): the registry has 10 long scope questions, and the mockup has 7 short ones, so the page is about 830 px taller.
+- Scope complete default and ISO: there are 39 real evidence requests against the mockup's 8. The counts come from the registry (130 of 134).
+- Scope complete loading and error at 1024: the remaining difference is the count text plus the shell sidebar and breadcrumb, which other slices own.
+- Questionnaire (all states): the real DPDPA questionnaire has 20+ sections against the mockup's 6. Context state: the pre-fill card stays above the Context card, as the reviewer decided. Noscreen: the copy names no framework, as the brief requires. Running and complete: the analysis partials belong to S7.
+- Sections and section questions: there is no data for `<mark>` highlights, and Save stays secondary because the tab can have only one primary button.
+- b4 findings and rerun: real control titles are longer than the mockup's. Each red flag now also shows the requirement it affects (review fix 5), which adds about 94 px, so these states got worse on purpose (0.8% → 8%). Rerun uses the live `hx-confirm` dialog instead of the mockup's modal.
+- Screening form: the 9 real screening domains have longer question text. Context steps: there are 4 real context blocks with different questions. Follow-ups: the real follow-up block sits inside the question card, which another partial owns.
+
+**Accepted exceptions (no mockup change)**
+
+- The current stepper step is drawn at 50% fill; the mockup draws 0% for the scope and report stages.
+- On the Questionnaire tab, until context is done, "Pre-fill answers" and "Retry desk review" are secondary buttons. The mockup's context state hides the pre-fill card. Here the card stays visible, so the Context card keeps the only primary button.
+- The header meta line does not show the assessment description or a framework label. The mockups draw company · engagement · period · cut-off for single- and multi-framework assessments alike. Real descriptions also wrap the line, which pushed every hub state 21 px down.
+
+**Review fixes**
+
+1. Live routes no longer honour `?state=`. The fabricated report "generating" card and the questionnaire "prefilling"/"running" placeholders are removed.
+2. Switching framework tabs on the Overview returns the hub panel in the same state the page computed. Before, it returned S7's raw panel.
+3. The hub state is chosen from the stage and its next-step constants, not from note text. A running pre-fill or analysis now shows the "No scores yet" questionnaire state instead of a skeleton that never updates.
+4. Pre-fill and retry buttons are secondary until context is done.
+5. Red flags and evidence items show the requirement title and code again.
+6. "Saved HH:MM" appears only after a questionnaire save.
+7. The report snapshot test checks each file separately again.
+8. Header: see the accepted exceptions above.
+9. The "Desk review failed for X" alert is back on the Questionnaire summary card.
+10. Added a `SCREENING_UNAVAILABLE_COPY` constant.
+11. Smaller fixes:
+    - running-card labels use `framework_label`
+    - the tier counts at the end of the context wizard can no longer cause a server error
+    - 34 unused S5 CSS rules are removed
+    - preview filler questions now read like real questions
+    - added `.solid.form-narrow{max-width:720px}`, and the question-step preview no longer needs its extra wrapper
+12. The stepper no longer shows "Scope not set" on the scope step. The stage service is unchanged.
+
+Tests: the focused S5 set passed, and the full suite passed (1472 passed, 30 skipped). `app/services/screening.py` was added to `YOZORA_S5_PATHS`, add-only.
+
+**Open questions for Saqlain**
+
+- Some stage outcomes have no exact mockup state, so they reuse the nearest one. Is that right?
+  - "Continue questionnaire" and "Run analysis" use the questionnaire state.
+  - "Generate board report" and "board report generated" use the report state.
+  - A running pre-fill or analysis uses the questionnaire state ("No scores yet").
+- Should the live context wizard narrow to the question-step width (720 px) inside the Questionnaire tab? Today it runs inside the full-width Context card, which matches the b3-questionnaire context mockup.
+- The scope form marks unanswered questions only for the app's own form, which sends `scope_form=1`. Validation scripts and API-style posts can still save a partial scope, which the profiler fills with defaults. Keep that?
