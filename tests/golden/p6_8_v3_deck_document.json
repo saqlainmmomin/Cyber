@@ -1,0 +1,5644 @@
+{
+ "appendices": {
+  "evidence_register": [
+   {
+    "added_on": "2026-07-01",
+    "cited": true,
+    "filename": "access-control-policy.pdf",
+    "sha256_prefix": "cd072fd1a9b9",
+    "status": "active",
+    "version_number": 2
+   },
+   {
+    "added_on": "2026-07-02",
+    "cited": true,
+    "filename": "access-review-export.xlsx",
+    "sha256_prefix": "03c3beb9183c",
+    "status": "active",
+    "version_number": 1
+   },
+   {
+    "added_on": "2026-07-03",
+    "cited": true,
+    "filename": "bcp-2024.pdf",
+    "sha256_prefix": "5a83eec521a9",
+    "status": "active",
+    "version_number": 1
+   },
+   {
+    "added_on": "2026-07-04",
+    "cited": true,
+    "filename": "data-retention-policy.pdf",
+    "sha256_prefix": "a159d6175aaa",
+    "status": "active",
+    "version_number": 1
+   },
+   {
+    "added_on": "2026-07-05",
+    "cited": true,
+    "filename": "incident-response-plan.docx",
+    "sha256_prefix": "154f0237f3ea",
+    "status": "active",
+    "version_number": 2
+   },
+   {
+    "added_on": "2026-07-06",
+    "cited": true,
+    "filename": "isms-manual.pdf",
+    "sha256_prefix": "9d25772e52dd",
+    "status": "active",
+    "version_number": 4
+   },
+   {
+    "added_on": "2026-07-07",
+    "cited": true,
+    "filename": "privacy-policy.pdf",
+    "sha256_prefix": "b582f7695b7d",
+    "status": "active",
+    "version_number": 3
+   },
+   {
+    "added_on": "2026-07-08",
+    "cited": true,
+    "filename": "questionnaire-response.pdf",
+    "sha256_prefix": "7bd7980b0a2b",
+    "status": "active",
+    "version_number": 1
+   },
+   {
+    "added_on": "2026-07-09",
+    "cited": true,
+    "filename": "vendor-contracts-index.xlsx",
+    "sha256_prefix": "b231220b5006",
+    "status": "active",
+    "version_number": 2
+   },
+   {
+    "added_on": "2026-07-01",
+    "cited": true,
+    "filename": "vuln-scan-summary.pdf",
+    "sha256_prefix": "3fec5195e1c5",
+    "status": "active",
+    "version_number": 1
+   },
+   {
+    "added_on": "2026-07-02",
+    "cited": false,
+    "filename": "board-minutes-q1.pdf",
+    "sha256_prefix": "72466e7676a1",
+    "status": "active",
+    "version_number": 1
+   }
+  ],
+  "methodology": "This assessment evaluates compliance against the following framework(s): India DPDPA, ISO 27001, across 120 in-scope requirements.\n\nBasis of Assessment:\nEach in-scope requirement receives one conclusion. The analysis engine reviews the submitted documents and questionnaire responses and proposes an outcome with cited evidence. A consultant reviews the evidence and individually approves, edits or rejects every proposal. Only individually approved conclusions appear in this report; no outcome, score or finding is produced by the AI on its own.\n\nOutcome Definitions:\n- Compliant: the requirement is met and supported by evidence\n- Partially Compliant: the requirement is met in part\n- Non-Compliant: the requirement is not met\n- Insufficient Evidence: the evidence provided does not support a conclusion either way\n- Not Applicable: the requirement does not apply within the assessed scope\n\nScoring Basis:\nScores are computed only from conclusions a consultant has individually approved. Each approved outcome counts as follows: Compliant 100 points, Partially Compliant 50 points, Non-Compliant 0 points. Not Applicable and Insufficient Evidence are excluded from the scoring denominator. Insufficient Evidence is not treated as Non-Compliant; the number of requirements with insufficient evidence is reported next to each framework score. Requirements excluded at scoping are not scored. A framework is scored only when every in-scope requirement has an approved conclusion. Section scores are the average of their requirement points; domain and framework scores are weighted averages using the published weights below.\n\nFramework Structure and Weights:\n- India DPDPA (2023): 41 requirements in 6 domains. Domain weights: Obligations of Data Fiduciary 30%, Rights of Data Principal 20%, Special Provisions 20%, Consent Management (Detailed) 10%, Cross-Border Data Transfer 10%, Breach Notification 10%.\n- ISO 27001 (2022): 93 requirements in 4 domains. Domain weights: Organizational Controls 35%, People Controls 15%, Physical Controls 15%, Technological Controls 35%.\nRequirements are referenced by clause or control identifier for each selected framework; requirement descriptions are summarised for assessment purposes and do not reproduce the source standard. Scores are computed and reported independently for each framework; no score is combined across frameworks.\n\nRating Thresholds:\n- 80-100%: Compliant\n- 60-79%: Partially Compliant\n- 40-59%: Needs Significant Improvement\n- 0-39%: Non-Compliant\n\nRisk Classification:\nEach gap carries the risk level (Critical, High, Medium, Low) approved by the consultant, reflecting regulatory exposure, potential penalties under INDIA DPDPA and impact on affected individuals (for INDIA DPDPA), and likely impact on the confidentiality, integrity and availability of information (for ISO 27001). Remediation priority on each gap is derived from its approved risk level.\n\nDisclaimer:\nThis assessment provides guidance based on the information and evidence provided and is not legal advice. Consult qualified legal counsel for definitive compliance determinations under INDIA DPDPA. For ISO 27001, it is not a certification audit; certification decisions rest with an accredited certification body or qualified assessor.",
+  "requirement_register": [
+   {
+    "citation": "privacy-policy.pdf v3, s.4.2, p.6",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "CH2.CONSENT.1",
+    "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.28",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CH2.CONSENT.2",
+    "requirement_title": "Itemised consent for multiple purposes",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.CONSENT.3",
+    "requirement_title": "Consent withdrawal mechanism",
+    "risk_level": "high"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CH2.CONSENT.4",
+    "requirement_title": "Consent Manager registration and interoperability",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.28",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CH2.CONSENT.5",
+    "requirement_title": "Verifiable parental consent for children's data",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.20",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.NOTICE.1",
+    "requirement_title": "Notice accompanying the consent request",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.3",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.NOTICE.2",
+    "requirement_title": "Notice for previously collected data",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.6",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.NOTICE.3",
+    "requirement_title": "Notice contains contact details of DPO or grievance officer",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.PURPOSE.1",
+    "requirement_title": "Processing only for stated purpose",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.PURPOSE.2",
+    "requirement_title": "Legitimate uses without consent properly identified",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.21",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.MINIMIZE.1",
+    "requirement_title": "Collection limited to what is necessary",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "data-retention-policy.pdf v1, s.3, p.2",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.MINIMIZE.2",
+    "requirement_title": "Data retention limited to purpose fulfilment",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.16",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "CH2.MINIMIZE.3",
+    "requirement_title": "Retention schedule and deletion procedures",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.9",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.ACCURACY.1",
+    "requirement_title": "Data accuracy ensured for decision-making and onward disclosure",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.SECURITY.1",
+    "requirement_title": "Reasonable security safeguards implemented",
+    "risk_level": "high"
+   },
+   {
+    "citation": "isms-manual.pdf v4, Annex B, p.22",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.SECURITY.2",
+    "requirement_title": "Encryption and access controls",
+    "risk_level": "high"
+   },
+   {
+    "citation": "vendor-contracts-index.xlsx v2, rows 3-11",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Obligations of Data Fiduciary",
+    "framework_id": "dpdpa",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "CH2.SECURITY.3",
+    "requirement_title": "Data Processor contractual safeguards",
+    "risk_level": "high"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "CH3.ACCESS.1",
+    "requirement_title": "Summary of personal data and processing activities",
+    "risk_level": "high"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CH3.CORRECT.1",
+    "requirement_title": "Mechanism for correction and completion of data",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.17",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH3.CORRECT.2",
+    "requirement_title": "Mechanism for erasure of personal data",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.26",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH3.GRIEVANCE.1",
+    "requirement_title": "Grievance redressal mechanism available",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.12",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH3.GRIEVANCE.2",
+    "requirement_title": "Timely response to grievances",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Rights of Data Principal",
+    "framework_id": "dpdpa",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "CH3.NOMINATE.1",
+    "requirement_title": "Nomination mechanism for death or incapacity",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH4.CHILD.1",
+    "requirement_title": "No tracking or behavioural monitoring of children",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.22",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH4.CHILD.2",
+    "requirement_title": "No processing detrimental to child's well-being",
+    "risk_level": "high"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.11",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH4.CHILD.3",
+    "requirement_title": "Age verification mechanism",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.2",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH4.SDF.1",
+    "requirement_title": "Data Protection Officer (DPO) appointed",
+    "risk_level": "high"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "CH4.SDF.2",
+    "requirement_title": "Independent Data Auditor appointed",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.26",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CH4.SDF.3",
+    "requirement_title": "Data Protection Impact Assessment (DPIA) conducted",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.14",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Special Provisions",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CH4.SDF.4",
+    "requirement_title": "Periodic audit completed",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Consent Management (Detailed)",
+    "framework_id": "dpdpa",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "CM.RECORDS.1",
+    "requirement_title": "Consent records maintained",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.30",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Consent Management (Detailed)",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CM.RECORDS.2",
+    "requirement_title": "Fresh consent for a new or changed purpose",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Consent Management (Detailed)",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CM.GRANULAR.1",
+    "requirement_title": "Granular consent options available",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.9",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Consent Management (Detailed)",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "CM.GRANULAR.2",
+    "requirement_title": "No consent bundling with service access",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.23",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Cross-Border Data Transfer",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CB.TRANSFER.1",
+    "requirement_title": "Data transfers only to non-restricted jurisdictions",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.10",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Cross-Border Data Transfer",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CB.TRANSFER.2",
+    "requirement_title": "Transfers comply with s.16 restrictions and stricter sectoral law",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.21",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Cross-Border Data Transfer",
+    "framework_id": "dpdpa",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "CB.TRANSFER.3",
+    "requirement_title": "Data localisation where required",
+    "risk_level": "low"
+   },
+   {
+    "citation": "incident-response-plan.docx v2, s.5, p.3",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Breach Notification",
+    "framework_id": "dpdpa",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "BN.NOTIFY.1",
+    "requirement_title": "Breach notification to Data Protection Board",
+    "risk_level": "critical"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Breach Notification",
+    "framework_id": "dpdpa",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "BN.NOTIFY.2",
+    "requirement_title": "Breach notification to affected Data Principals",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.16",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Breach Notification",
+    "framework_id": "dpdpa",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "BN.NOTIFY.3",
+    "requirement_title": "Incident response plan documented",
+    "risk_level": "medium"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "India DPDPA — Breach Notification",
+    "framework_id": "dpdpa",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "BN.NOTIFY.4",
+    "requirement_title": "Breach register maintained",
+    "risk_level": "medium"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A5.1",
+    "requirement_title": "Policies for information security",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.17",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.2",
+    "requirement_title": "Information security roles and responsibilities",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.8",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.3",
+    "requirement_title": "Segregation of duties",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.4",
+    "requirement_title": "Management responsibilities",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.13",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.5",
+    "requirement_title": "Contact with authorities",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.21",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.6",
+    "requirement_title": "Contact with special interest groups",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.21",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.7",
+    "requirement_title": "Threat intelligence",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.16",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.8",
+    "requirement_title": "Information security in project management",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.9",
+    "requirement_title": "Inventory of information and other associated assets",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.28",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.10",
+    "requirement_title": "Acceptable use of information and other associated assets",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.11",
+    "requirement_title": "Return of assets",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.26",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.12",
+    "requirement_title": "Classification of information",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.13",
+    "requirement_title": "Labelling of information",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.13",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A5.14",
+    "requirement_title": "Information transfer",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.22",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.15",
+    "requirement_title": "Access control",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.27",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.16",
+    "requirement_title": "Identity management",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.8",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.17",
+    "requirement_title": "Authentication information",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-review-export.xlsx v1, Sheet 'Leavers', rows 2-15",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A5.18",
+    "requirement_title": "Access rights",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.2",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.19",
+    "requirement_title": "Information security in supplier relationships",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A5.20",
+    "requirement_title": "Addressing information security within supplier agreements",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.13",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.21",
+    "requirement_title": "Managing information security in the ICT supply chain",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.8",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.22",
+    "requirement_title": "Monitoring, review and change management of supplier services",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.17",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.23",
+    "requirement_title": "Information security for use of cloud services",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A5.24",
+    "requirement_title": "Information security incident management planning and preparation",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.14",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.25",
+    "requirement_title": "Assessment and decision on information security events",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.30",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.26",
+    "requirement_title": "Response to information security incidents",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.27",
+    "requirement_title": "Learning from information security incidents",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.16",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A5.28",
+    "requirement_title": "Collection of evidence",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.7",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.29",
+    "requirement_title": "Information security during disruption",
+    "risk_level": "low"
+   },
+   {
+    "citation": "bcp-2024.pdf v1, whole",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.30",
+    "requirement_title": "ICT readiness for business continuity",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.27",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.31",
+    "requirement_title": "Legal, statutory, regulatory and contractual requirements",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.23",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.32",
+    "requirement_title": "Intellectual property rights",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A5.33",
+    "requirement_title": "Protection of records",
+    "risk_level": "high"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.34",
+    "requirement_title": "Privacy and protection of personal information",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.28",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.35",
+    "requirement_title": "Independent review of information security",
+    "risk_level": "medium"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A5.36",
+    "requirement_title": "Compliance with policies, rules and standards",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.10",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Organizational Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A5.37",
+    "requirement_title": "Documented operating procedures",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.25",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A6.1",
+    "requirement_title": "Screening",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.28",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A6.2",
+    "requirement_title": "Terms and conditions of employment",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A6.3",
+    "requirement_title": "Information security awareness, education and training",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.29",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A6.4",
+    "requirement_title": "Disciplinary process",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.26",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A6.5",
+    "requirement_title": "Responsibilities after termination or change of employment",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.21",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A6.6",
+    "requirement_title": "Confidentiality or non-disclosure agreements",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.23",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A6.7",
+    "requirement_title": "Remote working",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.30",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — People Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A6.8",
+    "requirement_title": "Information security event reporting",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.3",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.1",
+    "requirement_title": "User endpoint devices",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.26",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.2",
+    "requirement_title": "Privileged access rights",
+    "risk_level": "high"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A8.3",
+    "requirement_title": "Information access restriction",
+    "risk_level": "high"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.4",
+    "requirement_title": "Access to source code",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.5",
+    "requirement_title": "Secure authentication",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.19",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "not_applicable",
+    "outcome_label": "Not Applicable",
+    "requirement_id": "ISO.A8.6",
+    "requirement_title": "Capacity management",
+    "risk_level": "medium"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A8.7",
+    "requirement_title": "Protection against malware",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "vuln-scan-summary.pdf v1, p.2",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "non_compliant",
+    "outcome_label": "Non-Compliant",
+    "requirement_id": "ISO.A8.8",
+    "requirement_title": "Management of technical vulnerabilities",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.9",
+    "requirement_title": "Configuration management",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.23",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.10",
+    "requirement_title": "Information deletion",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.11",
+    "requirement_title": "Data masking",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.30",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.12",
+    "requirement_title": "Data leakage prevention",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.14",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.13",
+    "requirement_title": "Information backup",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A8.14",
+    "requirement_title": "Redundancy of information processing facilities",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.15",
+    "requirement_title": "Logging",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.12",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.16",
+    "requirement_title": "Monitoring activities",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.19",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.17",
+    "requirement_title": "Clock synchronization",
+    "risk_level": "low"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.12",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.18",
+    "requirement_title": "Use of privileged utility programs",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.19",
+    "requirement_title": "Installation of software on operational systems",
+    "risk_level": "low"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "not_applicable",
+    "outcome_label": "Not Applicable",
+    "requirement_id": "ISO.A8.20",
+    "requirement_title": "Networks security",
+    "risk_level": "critical"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.10",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.21",
+    "requirement_title": "Security of network services",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.14",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.22",
+    "requirement_title": "Segregation of networks",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.24",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.23",
+    "requirement_title": "Web filtering",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.15",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.24",
+    "requirement_title": "Use of cryptography",
+    "risk_level": "low"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A8.25",
+    "requirement_title": "Secure development life cycle",
+    "risk_level": "high"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.4",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.26",
+    "requirement_title": "Application security requirements",
+    "risk_level": "low"
+   },
+   {
+    "citation": "questionnaire-response.pdf v1, p.29",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.27",
+    "requirement_title": "Secure system architecture and engineering principles",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.10",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.28",
+    "requirement_title": "Secure coding",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.5",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.29",
+    "requirement_title": "Security testing in development and acceptance",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.8",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "not_applicable",
+    "outcome_label": "Not Applicable",
+    "requirement_id": "ISO.A8.30",
+    "requirement_title": "Outsourced development",
+    "risk_level": "medium"
+   },
+   {
+    "citation": null,
+    "citation_note": "No supporting citation",
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "insufficient_evidence",
+    "outcome_label": "Insufficient Evidence",
+    "requirement_id": "ISO.A8.31",
+    "requirement_title": "Separation of development, test and production environments",
+    "risk_level": "high"
+   },
+   {
+    "citation": "access-control-policy.pdf v2, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.32",
+    "requirement_title": "Change management",
+    "risk_level": "medium"
+   },
+   {
+    "citation": "isms-manual.pdf v4, p.10",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Approved",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "partially_compliant",
+    "outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.33",
+    "requirement_title": "Test information",
+    "risk_level": "low"
+   },
+   {
+    "citation": "privacy-policy.pdf v3, p.18",
+    "citation_note": null,
+    "decided_by": "Priya Sharma",
+    "decided_on": "2026-09-24",
+    "decision_label": "Edited",
+    "domain_title": "ISO 27001 — Technological Controls",
+    "framework_id": "iso27001",
+    "outcome": "compliant",
+    "outcome_label": "Compliant",
+    "requirement_id": "ISO.A8.34",
+    "requirement_title": "Protection of information systems during audit testing",
+    "risk_level": "low"
+   }
+  ]
+ },
+ "assessment_id": "a7c41e2d-0000-4000-8000-000000000042",
+ "basis": {
+  "cutoff_label": "15 Jul 2026",
+  "evidence_cutoff": "2026-07-15",
+  "period_end": "2026-06-30",
+  "period_label": "01 Apr 2026 to 30 Jun 2026",
+  "period_start": "2026-04-01",
+  "prepared_by": "Priya Sharma",
+  "reviewed_by": "Ravi Menon"
+ },
+ "board_asks": {
+  "consultant": [
+   "Approve funding for a consent-management platform before the May 2027 DPDPA commencement.",
+   "Confirm the CISO as accountable owner for vulnerability management and set the patch SLA as a board-tracked KPI."
+  ],
+  "consultant_by": "Priya Sharma",
+  "derived": [
+   "1 remediation action(s) past their target date.",
+   "1 action(s) on critical or high findings have no owner.",
+   "1 action(s) have no target date.",
+   "15 requirement(s) could not be concluded; 4 evidence request(s) are open."
+  ]
+ },
+ "company_name": "भारत डेटा प्राइवेट लिमिटेड",
+ "engagement_name": "FY26 privacy and security review",
+ "firm_name": "Golden Advisory",
+ "framework_sections": [
+  {
+   "domains": [
+    {
+     "domain_id": "chapter_2",
+     "rating": "Needs Significant Improvement",
+     "score": 49.2,
+     "title": "Obligations of Data Fiduciary"
+    },
+    {
+     "domain_id": "chapter_3",
+     "rating": "Needs Significant Improvement",
+     "score": 45.0,
+     "title": "Rights of Data Principal"
+    },
+    {
+     "domain_id": "chapter_4",
+     "rating": "Partially Compliant",
+     "score": 60.0,
+     "title": "Special Provisions"
+    },
+    {
+     "domain_id": "consent_management",
+     "rating": "Compliant",
+     "score": 87.5,
+     "title": "Consent Management (Detailed)"
+    },
+    {
+     "domain_id": "cross_border",
+     "rating": "Compliant",
+     "score": 100.0,
+     "title": "Cross-Border Data Transfer"
+    },
+    {
+     "domain_id": "breach_notification",
+     "rating": "Non-Compliant",
+     "score": 25.0,
+     "title": "Breach Notification"
+    }
+   ],
+   "framework_id": "dpdpa",
+   "gaps": [
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "BN.NOTIFY.1",
+     "requirement_title": "Breach notification to Data Protection Board",
+     "risk_level": "critical"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "CH2.CONSENT.1",
+     "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+     "risk_level": "critical"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.CONSENT.3",
+     "requirement_title": "Consent withdrawal mechanism",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.MINIMIZE.2",
+     "requirement_title": "Data retention limited to purpose fulfilment",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.NOTICE.1",
+     "requirement_title": "Notice accompanying the consent request",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.PURPOSE.1",
+     "requirement_title": "Processing only for stated purpose",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.SECURITY.1",
+     "requirement_title": "Reasonable security safeguards implemented",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.SECURITY.2",
+     "requirement_title": "Encryption and access controls",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "CH2.SECURITY.3",
+     "requirement_title": "Data Processor contractual safeguards",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH4.CHILD.1",
+     "requirement_title": "No tracking or behavioural monitoring of children",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH4.CHILD.2",
+     "requirement_title": "No processing detrimental to child's well-being",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH4.SDF.1",
+     "requirement_title": "Data Protection Officer (DPO) appointed",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CM.GRANULAR.2",
+     "requirement_title": "No consent bundling with service access",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "BN.NOTIFY.3",
+     "requirement_title": "Incident response plan documented",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.MINIMIZE.1",
+     "requirement_title": "Collection limited to what is necessary",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "CH2.MINIMIZE.3",
+     "requirement_title": "Retention schedule and deletion procedures",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.NOTICE.2",
+     "requirement_title": "Notice for previously collected data",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.PURPOSE.2",
+     "requirement_title": "Legitimate uses without consent properly identified",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH3.CORRECT.2",
+     "requirement_title": "Mechanism for erasure of personal data",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH3.GRIEVANCE.1",
+     "requirement_title": "Grievance redressal mechanism available",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH3.GRIEVANCE.2",
+     "requirement_title": "Timely response to grievances",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "CH3.NOMINATE.1",
+     "requirement_title": "Nomination mechanism for death or incapacity",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH4.CHILD.3",
+     "requirement_title": "Age verification mechanism",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH4.SDF.3",
+     "requirement_title": "Data Protection Impact Assessment (DPIA) conducted",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.ACCURACY.1",
+     "requirement_title": "Data accuracy ensured for decision-making and onward disclosure",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "CH2.NOTICE.3",
+     "requirement_title": "Notice contains contact details of DPO or grievance officer",
+     "risk_level": "low"
+    }
+   ],
+   "name": "India DPDPA",
+   "rating": "Needs Significant Improvement",
+   "score": 57.0,
+   "status": "scored",
+   "version": "2023"
+  },
+  {
+   "domains": [
+    {
+     "domain_id": "organizational",
+     "rating": "Partially Compliant",
+     "score": 65.3,
+     "title": "Organizational Controls"
+    },
+    {
+     "domain_id": "people",
+     "rating": "Partially Compliant",
+     "score": 60.0,
+     "title": "People Controls"
+    },
+    {
+     "domain_id": "physical",
+     "rating": null,
+     "scope_note": "Out of scope",
+     "score": null,
+     "title": "Physical Controls"
+    },
+    {
+     "domain_id": "technological",
+     "rating": "Partially Compliant",
+     "score": 75.5,
+     "title": "Technological Controls"
+    }
+   ],
+   "framework_id": "iso27001",
+   "gaps": [
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A5.18",
+     "requirement_title": "Access rights",
+     "risk_level": "critical"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A8.8",
+     "requirement_title": "Management of technical vulnerabilities",
+     "risk_level": "critical"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A5.14",
+     "requirement_title": "Information transfer",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.15",
+     "requirement_title": "Access control",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.19",
+     "requirement_title": "Information security in supplier relationships",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A5.20",
+     "requirement_title": "Addressing information security within supplier agreements",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.26",
+     "requirement_title": "Response to information security incidents",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.34",
+     "requirement_title": "Privacy and protection of personal information",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.2",
+     "requirement_title": "Privileged access rights",
+     "risk_level": "high"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.21",
+     "requirement_title": "Managing information security in the ICT supply chain",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.25",
+     "requirement_title": "Assessment and decision on information security events",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A5.28",
+     "requirement_title": "Collection of evidence",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.3",
+     "requirement_title": "Segregation of duties",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.30",
+     "requirement_title": "ICT readiness for business continuity",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.35",
+     "requirement_title": "Independent review of information security",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A6.1",
+     "requirement_title": "Screening",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "non_compliant",
+     "outcome_label": "Non-Compliant",
+     "requirement_id": "ISO.A6.6",
+     "requirement_title": "Confidentiality or non-disclosure agreements",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A6.7",
+     "requirement_title": "Remote working",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.1",
+     "requirement_title": "User endpoint devices",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.10",
+     "requirement_title": "Information deletion",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.12",
+     "requirement_title": "Data leakage prevention",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.15",
+     "requirement_title": "Logging",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.22",
+     "requirement_title": "Segregation of networks",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.27",
+     "requirement_title": "Secure system architecture and engineering principles",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.29",
+     "requirement_title": "Security testing in development and acceptance",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.32",
+     "requirement_title": "Change management",
+     "risk_level": "medium"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.10",
+     "requirement_title": "Acceptable use of information and other associated assets",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.11",
+     "requirement_title": "Return of assets",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.13",
+     "requirement_title": "Labelling of information",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.32",
+     "requirement_title": "Intellectual property rights",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A5.6",
+     "requirement_title": "Contact with special interest groups",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A6.4",
+     "requirement_title": "Disciplinary process",
+     "risk_level": "low"
+    },
+    {
+     "outcome": "partially_compliant",
+     "outcome_label": "Partially Compliant",
+     "requirement_id": "ISO.A8.33",
+     "requirement_title": "Test information",
+     "risk_level": "low"
+    }
+   ],
+   "name": "ISO 27001",
+   "rating": "Partially Compliant",
+   "score": 68.6,
+   "status": "scored",
+   "version": "2022"
+  }
+ ],
+ "frameworks": [
+  {
+   "framework_id": "dpdpa",
+   "legal": true,
+   "name": "India DPDPA",
+   "pack_version": null,
+   "version": "2023"
+  },
+  {
+   "framework_id": "iso27001",
+   "legal": false,
+   "name": "ISO 27001",
+   "pack_version": null,
+   "version": "2022"
+  }
+ ],
+ "initiatives": [
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-003",
+     "finding_title": "Access rights are never reviewed",
+     "framework_name": "ISO 27001",
+     "obs_ref": "R-03",
+     "overdue": true,
+     "owner": "Vikram Iyer (CISO)",
+     "ref": "A-01",
+     "requirement_id": "ISO.A5.18",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2026-09-15",
+     "title": "Run quarterly access reviews for production and customer-data systems"
+    },
+    {
+     "finding_id": "fnd-005",
+     "finding_title": "Customer database access is not restricted by role",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-05",
+     "overdue": false,
+     "owner": "Vikram Iyer (CISO)",
+     "ref": "A-02",
+     "requirement_id": "CH2.SECURITY.2",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2026-12-15",
+     "title": "Introduce role-based access to the customer database"
+    }
+   ],
+   "benefit": "high",
+   "complexity": "high",
+   "cross_framework": true,
+   "frameworks": [
+    "ISO 27001",
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_001",
+   "horizon": "short",
+   "obs_refs": [
+    "R-03",
+    "R-05"
+   ],
+   "overdue": true,
+   "owner": "Vikram Iyer (CISO)",
+   "priority": "high",
+   "ref": "I-1",
+   "responsibility": "client",
+   "target_date": "2026-09-15",
+   "title": "Establish role-based access and quarterly recertification",
+   "topic": "Access control and privileged access"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-002",
+     "finding_title": "No procedure to notify the Data Protection Board of a breach",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-02",
+     "overdue": false,
+     "owner": "Vikram Iyer (CISO)",
+     "ref": "A-03",
+     "requirement_id": "BN.NOTIFY.1",
+     "responsibility": "shared",
+     "status_label": "In progress",
+     "target_date": "2026-10-31",
+     "title": "Adopt a breach-notification runbook with owner, 72-hour timeline and regulator templates"
+    },
+    {
+     "finding_id": "fnd-002",
+     "finding_title": "No procedure to notify the Data Protection Board of a breach",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-02",
+     "overdue": false,
+     "owner": "Vikram Iyer (CISO)",
+     "ref": "A-04",
+     "requirement_id": "BN.NOTIFY.1",
+     "responsibility": "shared",
+     "status_label": "Open",
+     "target_date": "2027-01-31",
+     "title": "Run a tabletop exercise covering Board and data-principal notification"
+    }
+   ],
+   "benefit": "high",
+   "complexity": "medium",
+   "cross_framework": false,
+   "frameworks": [
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_002",
+   "horizon": "short",
+   "obs_refs": [
+    "R-02"
+   ],
+   "overdue": false,
+   "owner": "Vikram Iyer (CISO)",
+   "priority": "high",
+   "ref": "I-2",
+   "responsibility": "shared",
+   "target_date": "2026-10-31",
+   "title": "Stand up regulator-ready breach notification",
+   "topic": "Incident and breach response"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-004",
+     "finding_title": "No defined cadence for patching technical vulnerabilities",
+     "framework_name": "ISO 27001",
+     "obs_ref": "R-04",
+     "overdue": false,
+     "owner": null,
+     "ref": "A-05",
+     "requirement_id": "ISO.A8.8",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2026-11-15",
+     "title": "Set patch SLAs (critical 15 days) and report monthly to the risk committee"
+    }
+   ],
+   "benefit": "high",
+   "complexity": "medium",
+   "cross_framework": false,
+   "frameworks": [
+    "ISO 27001"
+   ],
+   "group_id": "CLUSTER_005",
+   "horizon": "short",
+   "obs_refs": [
+    "R-04"
+   ],
+   "overdue": false,
+   "owner": null,
+   "priority": "high",
+   "ref": "I-3",
+   "responsibility": "client",
+   "target_date": "2026-11-15",
+   "title": "Introduce risk-based patch SLAs with board reporting",
+   "topic": "Vulnerability and patch management"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-001",
+     "finding_title": "Consent is collected through pre-ticked boxes",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-01",
+     "overdue": false,
+     "owner": "Anita Rao (DPO)",
+     "ref": "A-06",
+     "requirement_id": "CH2.CONSENT.1",
+     "responsibility": "client",
+     "status_label": "In progress",
+     "target_date": "2026-11-30",
+     "title": "Replace pre-ticked consent with an affirmative opt-in and log the notice version shown"
+    }
+   ],
+   "benefit": "high",
+   "complexity": "high",
+   "cross_framework": false,
+   "frameworks": [
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_004",
+   "horizon": "short",
+   "obs_refs": [
+    "R-01"
+   ],
+   "overdue": false,
+   "owner": "Anita Rao (DPO)",
+   "priority": "high",
+   "ref": "I-4",
+   "responsibility": "client",
+   "target_date": "2026-11-30",
+   "title": "Rebuild consent capture with versioned notices",
+   "topic": "Consent and notice"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-006",
+     "finding_title": "Data Processor contracts lack data-protection clauses",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-06",
+     "overdue": false,
+     "owner": "Anita Rao (DPO)",
+     "ref": "A-07",
+     "requirement_id": "CH2.SECURITY.3",
+     "responsibility": "shared",
+     "status_label": "Open",
+     "target_date": "2027-02-28",
+     "title": "Issue a data-processing addendum to all processors"
+    },
+    {
+     "finding_id": "fnd-007",
+     "finding_title": "Supplier security is not assessed before onboarding",
+     "framework_name": "ISO 27001",
+     "obs_ref": "R-07",
+     "overdue": false,
+     "owner": "Anita Rao (DPO)",
+     "ref": "A-08",
+     "requirement_id": "ISO.A5.19",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2027-02-28",
+     "title": "Tier suppliers by data access and assess tier-1 suppliers annually"
+    }
+   ],
+   "benefit": "medium",
+   "complexity": "medium",
+   "cross_framework": true,
+   "frameworks": [
+    "ISO 27001",
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_003",
+   "horizon": "medium",
+   "obs_refs": [
+    "R-06",
+    "R-07"
+   ],
+   "overdue": false,
+   "owner": "Anita Rao (DPO)",
+   "priority": "high",
+   "ref": "I-5",
+   "responsibility": "shared",
+   "target_date": "2027-02-28",
+   "title": "Contract and assess processors and suppliers",
+   "topic": "Third-party and processor security"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-008",
+     "finding_title": "Customer data is retained indefinitely",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-08",
+     "overdue": false,
+     "owner": "Ravi Menon (COO)",
+     "ref": "A-09",
+     "requirement_id": "CH2.MINIMIZE.2",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2027-03-31",
+     "title": "Define retention periods for customer and KYC data and automate deletion"
+    }
+   ],
+   "benefit": "medium",
+   "complexity": "high",
+   "cross_framework": false,
+   "frameworks": [
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_006",
+   "horizon": "long",
+   "obs_refs": [
+    "R-08"
+   ],
+   "overdue": false,
+   "owner": "Ravi Menon (COO)",
+   "priority": "high",
+   "ref": "I-6",
+   "responsibility": "client",
+   "target_date": "2027-03-31",
+   "title": "Automate retention and deletion for customer data",
+   "topic": "Data retention and deletion"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-009",
+     "finding_title": "Business continuity plan has never been tested",
+     "framework_name": "ISO 27001",
+     "obs_ref": "R-09",
+     "overdue": false,
+     "owner": "Ravi Menon (COO)",
+     "ref": "A-10",
+     "requirement_id": "ISO.A5.30",
+     "responsibility": "client",
+     "status_label": "Open",
+     "target_date": "2027-03-31",
+     "title": "Test the BCP for the payments platform and record results"
+    }
+   ],
+   "benefit": "medium",
+   "complexity": "medium",
+   "cross_framework": false,
+   "frameworks": [
+    "ISO 27001"
+   ],
+   "group_id": "CLUSTER_007",
+   "horizon": "long",
+   "obs_refs": [
+    "R-09"
+   ],
+   "overdue": false,
+   "owner": "Ravi Menon (COO)",
+   "priority": "medium",
+   "ref": "I-7",
+   "responsibility": "client",
+   "target_date": "2027-03-31",
+   "title": "Test continuity for the payments platform",
+   "topic": "Business continuity"
+  },
+  {
+   "actions": [
+    {
+     "finding_id": "fnd-010",
+     "finding_title": "Grievance channel has no response timeline",
+     "framework_name": "India DPDPA",
+     "obs_ref": "R-10",
+     "overdue": false,
+     "owner": null,
+     "ref": "A-11",
+     "requirement_id": "CH3.GRIEVANCE.1",
+     "responsibility": "consultant",
+     "status_label": "Open",
+     "target_date": null,
+     "title": "Publish a grievance form with tracking and a 30-day response commitment"
+    }
+   ],
+   "benefit": "medium",
+   "complexity": "low",
+   "cross_framework": false,
+   "frameworks": [
+    "India DPDPA"
+   ],
+   "group_id": "CLUSTER_008",
+   "horizon": "unscheduled",
+   "obs_refs": [
+    "R-10"
+   ],
+   "overdue": false,
+   "owner": null,
+   "priority": "medium",
+   "ref": "I-8",
+   "responsibility": "consultant",
+   "target_date": null,
+   "title": "Track grievances against a published timeline",
+   "topic": "Data-principal rights and grievances"
+  }
+ ],
+ "kind": "board_report",
+ "not_assessed": {
+  "insufficient_evidence": [
+   {
+    "framework_id": "dpdpa",
+    "requirement_id": "CH3.ACCESS.1",
+    "requirement_title": "Summary of personal data and processing activities"
+   },
+   {
+    "framework_id": "dpdpa",
+    "requirement_id": "CH4.SDF.2",
+    "requirement_title": "Independent Data Auditor appointed"
+   },
+   {
+    "framework_id": "dpdpa",
+    "requirement_id": "CM.RECORDS.1",
+    "requirement_title": "Consent records maintained"
+   },
+   {
+    "framework_id": "dpdpa",
+    "requirement_id": "BN.NOTIFY.2",
+    "requirement_title": "Breach notification to affected Data Principals"
+   },
+   {
+    "framework_id": "dpdpa",
+    "requirement_id": "BN.NOTIFY.4",
+    "requirement_title": "Breach register maintained"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A5.1",
+    "requirement_title": "Policies for information security"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A5.24",
+    "requirement_title": "Information security incident management planning and preparation"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A5.33",
+    "requirement_title": "Protection of records"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A5.36",
+    "requirement_title": "Compliance with policies, rules and standards"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A6.3",
+    "requirement_title": "Information security awareness, education and training"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A8.3",
+    "requirement_title": "Information access restriction"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A8.7",
+    "requirement_title": "Protection against malware"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A8.14",
+    "requirement_title": "Redundancy of information processing facilities"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A8.25",
+    "requirement_title": "Secure development life cycle"
+   },
+   {
+    "framework_id": "iso27001",
+    "requirement_id": "ISO.A8.31",
+    "requirement_title": "Separation of development, test and production environments"
+   }
+  ],
+  "rfi": {
+   "items": [
+    {
+     "item_id": "RFI-01",
+     "required": true,
+     "title": "Consent records export for July 2026"
+    },
+    {
+     "item_id": "RFI-02",
+     "required": true,
+     "title": "Cross-border transfer register and destination list"
+    },
+    {
+     "item_id": "RFI-03",
+     "required": true,
+     "title": "DPIA for the loan-underwriting model"
+    },
+    {
+     "item_id": "RFI-04",
+     "required": false,
+     "title": "Last two backup-restore test reports"
+    }
+   ],
+   "version_label": "v2"
+  }
+ },
+ "observations": [
+  {
+   "domain": "Obligations of Data Fiduciary",
+   "finding_id": "fnd-001",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "The sign-up journey and the marketing preference centre both pre-select consent. No record links a consent to the notice the user saw.",
+   "rank": 1,
+   "rating": "critical",
+   "recommendation": "Replace pre-selected consent with an unticked, purpose-specific opt-in on every channel. Log each consent with the notice version shown, timestamp and channel, and re-collect consent for the existing marketing base before relying on it.",
+   "ref": "R-01",
+   "references": [
+    {
+     "clauses": [
+      "Section 6(1), 6(3)",
+      "Section 6",
+      "Section 6(1)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    }
+   ],
+   "requirement_id": "CH2.CONSENT.1",
+   "responsibility": "client",
+   "risk": "Consent obtained this way is unlikely to be valid, so processing that depends on it would lack a lawful basis once DPDPA obligations commence; this affects the full 2.1 million-customer marketing base.",
+   "title": "Consent is collected through pre-ticked boxes"
+  },
+  {
+   "domain": "Breach Notification",
+   "finding_id": "fnd-002",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "The incident response plan covers containment only. It names no owner, timeline or template for notifying the Board or affected individuals.",
+   "rank": 2,
+   "rating": "critical",
+   "recommendation": "Extend the incident response plan with a notification runbook: named decision owner, 72-hour clock, Board and data-principal templates, and an evidence log. Test it in a tabletop exercise each year.",
+   "ref": "R-02",
+   "references": [
+    {
+     "clauses": [
+      "Section 8(6); DPDP Rules 2025 r.7(2)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    },
+    {
+     "clauses": [
+      "Annex A.5.5"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "BN.NOTIFY.1",
+   "responsibility": "shared",
+   "risk": "A breach handled under the current plan would miss the statutory notification, which carries the highest penalty tier under the Act.",
+   "title": "No procedure to notify the Data Protection Board of a breach"
+  },
+  {
+   "domain": "Organizational Controls",
+   "finding_id": "fnd-003",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "observation": "No periodic review of user access is evidenced for production systems. 14 leaver accounts were still active at the cut-off.",
+   "rank": 3,
+   "rating": "critical",
+   "recommendation": "Run quarterly access recertification for production and customer-data systems with manager sign-off. Disable leaver accounts within 24 hours through an HR-triggered workflow and keep review evidence.",
+   "ref": "R-03",
+   "references": [
+    {
+     "clauses": [
+      "Annex A.5.18",
+      "Annex A.5.3",
+      "Annex A.5.16",
+      "Annex A.5.11"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "ISO.A5.18",
+   "responsibility": "client",
+   "risk": "Former staff and over-privileged users can reach customer data, the most common root cause of insider and credential-based breaches.",
+   "title": "Access rights are never reviewed"
+  },
+  {
+   "domain": "Technological Controls",
+   "finding_id": "fnd-004",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "observation": "Scans run ad hoc; 23 critical CVEs older than 90 days were open on internet-facing hosts at the cut-off.",
+   "rank": 4,
+   "rating": "critical",
+   "recommendation": "Adopt patch SLAs by severity (critical 15 days, high 30 days), scan internet-facing assets weekly, and report open critical vulnerabilities to the risk committee monthly.",
+   "ref": "R-04",
+   "references": [
+    {
+     "clauses": [
+      "Annex A.8.8"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "ISO.A8.8",
+   "responsibility": "client",
+   "risk": "Known, exploitable weaknesses on public systems are the leading entry point for ransomware.",
+   "title": "No defined cadence for patching technical vulnerabilities"
+  },
+  {
+   "domain": "Obligations of Data Fiduciary",
+   "finding_id": "fnd-005",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "Encryption at rest is in place, but 41 engineers hold read access to the customer database with no role-based restriction.",
+   "rank": 5,
+   "rating": "high",
+   "recommendation": "Define role-based access profiles for the customer database, remove standing engineer access, and route exceptions through time-bound, approved break-glass access with session logging.",
+   "ref": "R-05",
+   "references": [
+    {
+     "clauses": [
+      "Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b)",
+      "Section 8(5)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    },
+    {
+     "clauses": [
+      "Annex A.5.15",
+      "Annex A.8.3",
+      "Annex A.6.7"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "CH2.SECURITY.2",
+   "responsibility": "client",
+   "risk": "Broad access raises the likelihood and scale of a personal-data breach and weakens the 'reasonable security safeguards' defence.",
+   "title": "Customer database access is not restricted by role"
+  },
+  {
+   "domain": "Obligations of Data Fiduciary",
+   "finding_id": "fnd-006",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "Seven of nine processor contracts reviewed contain no security, breach-notice or deletion obligations.",
+   "rank": 6,
+   "rating": "high",
+   "recommendation": "Issue a data-processing addendum covering security, breach notice within 24 hours, sub-processing, audit rights and deletion at exit, and track signature to completion.",
+   "ref": "R-06",
+   "references": [
+    {
+     "clauses": [
+      "Section 8(2)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    },
+    {
+     "clauses": [
+      "Annex A.5.19"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "CH2.SECURITY.3",
+   "responsibility": "shared",
+   "risk": "The company remains liable for its processors' failures with no contractual recourse or audit right.",
+   "title": "Data Processor contracts lack data-protection clauses"
+  },
+  {
+   "domain": "Organizational Controls",
+   "finding_id": "fnd-007",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "observation": "A supplier questionnaire exists but is not used; no supplier risk tiering is recorded.",
+   "rank": 7,
+   "rating": "high",
+   "recommendation": "Tier suppliers by data access, assess tier-1 suppliers before onboarding and annually, and record the risk decision in the supplier register.",
+   "ref": "R-07",
+   "references": [
+    {
+     "clauses": [
+      "Section 8(2)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    },
+    {
+     "clauses": [
+      "Annex A.5.19"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "ISO.A5.19",
+   "responsibility": "client",
+   "risk": "Third-party compromise cannot be anticipated or contracted against.",
+   "title": "Supplier security is not assessed before onboarding"
+  },
+  {
+   "domain": "Obligations of Data Fiduciary",
+   "finding_id": "fnd-008",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "The retention policy sets periods for HR records only; customer and KYC data have no retention period or deletion job.",
+   "rank": 8,
+   "rating": "high",
+   "recommendation": "Set retention periods for customer and KYC data by purpose and legal basis, and automate deletion or anonymisation at expiry with a monthly exception report.",
+   "ref": "R-08",
+   "references": [
+    {
+     "clauses": [
+      "Section 8(7)",
+      "Section 8(7); DPDP Rules 2025 r.8(3)",
+      "Section 12(3)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    },
+    {
+     "clauses": [
+      "Annex A.8.10"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "CH2.MINIMIZE.2",
+   "responsibility": "client",
+   "risk": "Holding data beyond its purpose enlarges breach impact and conflicts with the storage-limitation duty.",
+   "title": "Customer data is retained indefinitely"
+  },
+  {
+   "domain": "Organizational Controls",
+   "finding_id": "fnd-009",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "observation": "The BCP is approved but no test or exercise has been recorded since it was written in 2024.",
+   "rank": 9,
+   "rating": "medium",
+   "recommendation": "Test the BCP for the payments platform against target recovery times, record the results and fix gaps found before the next test cycle.",
+   "ref": "R-09",
+   "references": [
+    {
+     "clauses": [
+      "Annex A.5.30",
+      "Annex A.5.29",
+      "Annex A.8.6",
+      "Annex A.8.13"
+     ],
+     "framework_id": "iso27001",
+     "framework_name": "ISO 27001"
+    }
+   ],
+   "requirement_id": "ISO.A5.30",
+   "responsibility": "client",
+   "risk": "Recovery times for core platforms are unknown; an outage could exceed customer contractual commitments.",
+   "title": "Business continuity plan has never been tested"
+  },
+  {
+   "domain": "Rights of Data Principal",
+   "finding_id": "fnd-010",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "observation": "Grievances are received through a shared mailbox with no tracking or response-time commitment.",
+   "rank": 10,
+   "rating": "medium",
+   "recommendation": "Publish a grievance form with ticket tracking and a 30-day response commitment, and report volumes and ageing to the DPO monthly.",
+   "ref": "R-10",
+   "references": [
+    {
+     "clauses": [
+      "Section 13(1)",
+      "Section 6(3), 8(9); DPDP Rules 2025 r.9",
+      "Section 13(2)"
+     ],
+     "framework_id": "dpdpa",
+     "framework_name": "India DPDPA"
+    }
+   ],
+   "requirement_id": "CH3.GRIEVANCE.1",
+   "responsibility": "consultant",
+   "risk": "Unresolved complaints can be escalated to the Data Protection Board.",
+   "title": "Grievance channel has no response timeline"
+  }
+ ],
+ "prior_period": {
+  "changes": [
+   {
+    "current_outcome_label": "Compliant",
+    "direction_label": "Improved",
+    "framework_name": "India DPDPA",
+    "prior_outcome_label": "Non-Compliant",
+    "requirement_id": "CH2.CONSENT.2",
+    "requirement_title": "Itemised consent for multiple purposes"
+   },
+   {
+    "current_outcome_label": "Compliant",
+    "direction_label": "Improved",
+    "framework_name": "India DPDPA",
+    "prior_outcome_label": "Partially Compliant",
+    "requirement_id": "CH2.CONSENT.4",
+    "requirement_title": "Consent Manager registration and interoperability"
+   },
+   {
+    "current_outcome_label": "Compliant",
+    "direction_label": "Improved",
+    "framework_name": "India DPDPA",
+    "prior_outcome_label": "Non-Compliant",
+    "requirement_id": "CH2.CONSENT.5",
+    "requirement_title": "Verifiable parental consent for children's data"
+   },
+   {
+    "current_outcome_label": "Non-Compliant",
+    "direction_label": "Regressed",
+    "framework_name": "ISO 27001",
+    "prior_outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A5.18",
+    "requirement_title": "Access rights"
+   },
+   {
+    "current_outcome_label": "Non-Compliant",
+    "direction_label": "Regressed",
+    "framework_name": "ISO 27001",
+    "prior_outcome_label": "Partially Compliant",
+    "requirement_id": "ISO.A8.8",
+    "requirement_title": "Management of technical vulnerabilities"
+   }
+  ],
+  "frameworks": [
+   {
+    "compared": true,
+    "counts": {
+     "changed": 1,
+     "improved": 9,
+     "new": 3,
+     "no_longer_assessed": 0,
+     "regressed": 2,
+     "unchanged": 26
+    },
+    "current_score": 57.0,
+    "framework_id": "dpdpa",
+    "name": "India DPDPA",
+    "prior_score": 41.0,
+    "score_delta": 16.0
+   },
+   {
+    "compared": true,
+    "counts": {
+     "changed": 0,
+     "improved": 6,
+     "new": 0,
+     "no_longer_assessed": 0,
+     "regressed": 3,
+     "unchanged": 52
+    },
+    "current_score": 68.6,
+    "framework_id": "iso27001",
+    "name": "ISO 27001",
+    "prior_score": 58.5,
+    "score_delta": 10.1
+   }
+  ],
+  "intro": "Compared with the last issued board report for the previous assessment period in this engagement. The earlier report is read from its stored, hash-checked document and is never regenerated. Scores are compared within each framework only.",
+  "notes": [],
+  "prior": {
+   "cutoff_label": "15 Jan 2026",
+   "generated_on": "02 Feb 2026",
+   "period_label": "01 Oct 2025 to 31 Dec 2025",
+   "snapshot_id": "c0ffee12-aaaa-4bbb-8ccc-000000000001",
+   "version_label": "v3"
+  },
+  "status": "compared",
+  "totals": {
+   "current": {
+    "gaps": 59
+   },
+   "prior": {
+    "gaps": 65
+   }
+  }
+ },
+ "release": {
+  "released_by": "Priya Sharma",
+  "released_on": "27 Sep 2026"
+ },
+ "roadmap": {
+  "actions": [
+   {
+    "closes": [
+     {
+      "finding_title": "Access rights are never reviewed",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.18"
+     }
+    ],
+    "owner": "Vikram Iyer (CISO)",
+    "status_label": "Open",
+    "target_date": "2026-09-15",
+    "title": "Run quarterly access reviews for production and customer-data systems"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "No procedure to notify the Data Protection Board of a breach",
+      "framework_name": "India DPDPA",
+      "requirement_id": "BN.NOTIFY.1"
+     }
+    ],
+    "owner": "Vikram Iyer (CISO)",
+    "status_label": "In progress",
+    "target_date": "2026-10-31",
+    "title": "Adopt a breach-notification runbook with owner, 72-hour timeline and regulator templates"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "No defined cadence for patching technical vulnerabilities",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A8.8"
+     }
+    ],
+    "owner": null,
+    "status_label": "Open",
+    "target_date": "2026-11-15",
+    "title": "Set patch SLAs (critical 15 days) and report monthly to the risk committee"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Consent is collected through pre-ticked boxes",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.CONSENT.1"
+     }
+    ],
+    "owner": "Anita Rao (DPO)",
+    "status_label": "In progress",
+    "target_date": "2026-11-30",
+    "title": "Replace pre-ticked consent with an affirmative opt-in and log the notice version shown"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Customer database access is not restricted by role",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.SECURITY.2"
+     }
+    ],
+    "owner": "Vikram Iyer (CISO)",
+    "status_label": "Open",
+    "target_date": "2026-12-15",
+    "title": "Introduce role-based access to the customer database"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "No procedure to notify the Data Protection Board of a breach",
+      "framework_name": "India DPDPA",
+      "requirement_id": "BN.NOTIFY.1"
+     }
+    ],
+    "owner": "Vikram Iyer (CISO)",
+    "status_label": "Open",
+    "target_date": "2027-01-31",
+    "title": "Run a tabletop exercise covering Board and data-principal notification"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Data Processor contracts lack data-protection clauses",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.SECURITY.3"
+     }
+    ],
+    "owner": "Anita Rao (DPO)",
+    "status_label": "Open",
+    "target_date": "2027-02-28",
+    "title": "Issue a data-processing addendum to all processors"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Supplier security is not assessed before onboarding",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.19"
+     }
+    ],
+    "owner": "Anita Rao (DPO)",
+    "status_label": "Open",
+    "target_date": "2027-02-28",
+    "title": "Tier suppliers by data access and assess tier-1 suppliers annually"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Customer data is retained indefinitely",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.MINIMIZE.2"
+     }
+    ],
+    "owner": "Ravi Menon (COO)",
+    "status_label": "Open",
+    "target_date": "2027-03-31",
+    "title": "Define retention periods for customer and KYC data and automate deletion"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Business continuity plan has never been tested",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.30"
+     }
+    ],
+    "owner": "Ravi Menon (COO)",
+    "status_label": "Open",
+    "target_date": "2027-03-31",
+    "title": "Test the BCP for the payments platform and record results"
+   },
+   {
+    "closes": [
+     {
+      "finding_title": "Grievance channel has no response timeline",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH3.GRIEVANCE.1"
+     }
+    ],
+    "owner": null,
+    "status_label": "Open",
+    "target_date": null,
+    "title": "Publish a grievance form with tracking and a 30-day response commitment"
+   }
+  ],
+  "groups": [
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-003",
+      "finding_title": "Access rights are never reviewed",
+      "framework_name": "ISO 27001",
+      "owner": "Vikram Iyer (CISO)",
+      "requirement_id": "ISO.A5.18",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2026-09-15",
+      "title": "Run quarterly access reviews for production and customer-data systems"
+     },
+     {
+      "finding_id": "fnd-005",
+      "finding_title": "Customer database access is not restricted by role",
+      "framework_name": "India DPDPA",
+      "owner": "Vikram Iyer (CISO)",
+      "requirement_id": "CH2.SECURITY.2",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2026-12-15",
+      "title": "Introduce role-based access to the customer database"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Access rights are never reviewed",
+      "framework_id": "iso27001",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.18",
+      "requirement_title": "Access rights",
+      "severity": "critical"
+     },
+     {
+      "finding_title": "Customer database access is not restricted by role",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.SECURITY.2",
+      "requirement_title": "Encryption and access controls",
+      "severity": "high"
+     }
+    ],
+    "cross_framework": true,
+    "finding_count": 2,
+    "frameworks": [
+     "ISO 27001",
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_001",
+    "headline": "Fix once, closes 2 findings across ISO 27001 and India DPDPA",
+    "target_date": "2026-09-15",
+    "topic": "Access control and privileged access"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-002",
+      "finding_title": "No procedure to notify the Data Protection Board of a breach",
+      "framework_name": "India DPDPA",
+      "owner": "Vikram Iyer (CISO)",
+      "requirement_id": "BN.NOTIFY.1",
+      "responsibility": "shared",
+      "status_label": "In progress",
+      "target_date": "2026-10-31",
+      "title": "Adopt a breach-notification runbook with owner, 72-hour timeline and regulator templates"
+     },
+     {
+      "finding_id": "fnd-002",
+      "finding_title": "No procedure to notify the Data Protection Board of a breach",
+      "framework_name": "India DPDPA",
+      "owner": "Vikram Iyer (CISO)",
+      "requirement_id": "BN.NOTIFY.1",
+      "responsibility": "shared",
+      "status_label": "Open",
+      "target_date": "2027-01-31",
+      "title": "Run a tabletop exercise covering Board and data-principal notification"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "No procedure to notify the Data Protection Board of a breach",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "BN.NOTIFY.1",
+      "requirement_title": "Breach notification to Data Protection Board",
+      "severity": "critical"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_002",
+    "headline": "Addresses 1 finding in India DPDPA",
+    "target_date": "2026-10-31",
+    "topic": "Incident and breach response"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-004",
+      "finding_title": "No defined cadence for patching technical vulnerabilities",
+      "framework_name": "ISO 27001",
+      "owner": null,
+      "requirement_id": "ISO.A8.8",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2026-11-15",
+      "title": "Set patch SLAs (critical 15 days) and report monthly to the risk committee"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "No defined cadence for patching technical vulnerabilities",
+      "framework_id": "iso27001",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A8.8",
+      "requirement_title": "Management of technical vulnerabilities",
+      "severity": "critical"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "group_id": "CLUSTER_005",
+    "headline": "Addresses 1 finding in ISO 27001",
+    "target_date": "2026-11-15",
+    "topic": "Vulnerability and patch management"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-001",
+      "finding_title": "Consent is collected through pre-ticked boxes",
+      "framework_name": "India DPDPA",
+      "owner": "Anita Rao (DPO)",
+      "requirement_id": "CH2.CONSENT.1",
+      "responsibility": "client",
+      "status_label": "In progress",
+      "target_date": "2026-11-30",
+      "title": "Replace pre-ticked consent with an affirmative opt-in and log the notice version shown"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Consent is collected through pre-ticked boxes",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.CONSENT.1",
+      "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+      "severity": "critical"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_004",
+    "headline": "Addresses 1 finding in India DPDPA",
+    "target_date": "2026-11-30",
+    "topic": "Consent and notice"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-006",
+      "finding_title": "Data Processor contracts lack data-protection clauses",
+      "framework_name": "India DPDPA",
+      "owner": "Anita Rao (DPO)",
+      "requirement_id": "CH2.SECURITY.3",
+      "responsibility": "shared",
+      "status_label": "Open",
+      "target_date": "2027-02-28",
+      "title": "Issue a data-processing addendum to all processors"
+     },
+     {
+      "finding_id": "fnd-007",
+      "finding_title": "Supplier security is not assessed before onboarding",
+      "framework_name": "ISO 27001",
+      "owner": "Anita Rao (DPO)",
+      "requirement_id": "ISO.A5.19",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2027-02-28",
+      "title": "Tier suppliers by data access and assess tier-1 suppliers annually"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Data Processor contracts lack data-protection clauses",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.SECURITY.3",
+      "requirement_title": "Data Processor contractual safeguards",
+      "severity": "high"
+     },
+     {
+      "finding_title": "Supplier security is not assessed before onboarding",
+      "framework_id": "iso27001",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.19",
+      "requirement_title": "Information security in supplier relationships",
+      "severity": "high"
+     }
+    ],
+    "cross_framework": true,
+    "finding_count": 2,
+    "frameworks": [
+     "ISO 27001",
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_003",
+    "headline": "Fix once, closes 2 findings across ISO 27001 and India DPDPA",
+    "target_date": "2027-02-28",
+    "topic": "Third-party and processor security"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-008",
+      "finding_title": "Customer data is retained indefinitely",
+      "framework_name": "India DPDPA",
+      "owner": "Ravi Menon (COO)",
+      "requirement_id": "CH2.MINIMIZE.2",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2027-03-31",
+      "title": "Define retention periods for customer and KYC data and automate deletion"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Customer data is retained indefinitely",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH2.MINIMIZE.2",
+      "requirement_title": "Data retention limited to purpose fulfilment",
+      "severity": "high"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_006",
+    "headline": "Addresses 1 finding in India DPDPA",
+    "target_date": "2027-03-31",
+    "topic": "Data retention and deletion"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-009",
+      "finding_title": "Business continuity plan has never been tested",
+      "framework_name": "ISO 27001",
+      "owner": "Ravi Menon (COO)",
+      "requirement_id": "ISO.A5.30",
+      "responsibility": "client",
+      "status_label": "Open",
+      "target_date": "2027-03-31",
+      "title": "Test the BCP for the payments platform and record results"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Business continuity plan has never been tested",
+      "framework_id": "iso27001",
+      "framework_name": "ISO 27001",
+      "requirement_id": "ISO.A5.30",
+      "requirement_title": "ICT readiness for business continuity",
+      "severity": "medium"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "group_id": "CLUSTER_007",
+    "headline": "Addresses 1 finding in ISO 27001",
+    "target_date": "2027-03-31",
+    "topic": "Business continuity"
+   },
+   {
+    "actions": [
+     {
+      "finding_id": "fnd-010",
+      "finding_title": "Grievance channel has no response timeline",
+      "framework_name": "India DPDPA",
+      "owner": null,
+      "requirement_id": "CH3.GRIEVANCE.1",
+      "responsibility": "consultant",
+      "status_label": "Open",
+      "target_date": null,
+      "title": "Publish a grievance form with tracking and a 30-day response commitment"
+     }
+    ],
+    "closes": [
+     {
+      "finding_title": "Grievance channel has no response timeline",
+      "framework_id": "dpdpa",
+      "framework_name": "India DPDPA",
+      "requirement_id": "CH3.GRIEVANCE.1",
+      "requirement_title": "Grievance redressal mechanism available",
+      "severity": "medium"
+     }
+    ],
+    "cross_framework": false,
+    "finding_count": 1,
+    "frameworks": [
+     "India DPDPA"
+    ],
+    "group_id": "CLUSTER_008",
+    "headline": "Addresses 1 finding in India DPDPA",
+    "target_date": null,
+    "topic": "Data-principal rights and grievances"
+   }
+  ],
+  "overdue_count": 1,
+  "status_counts": {
+   "Closed and verified": 0,
+   "Closed, awaiting verification": 0,
+   "In progress": 2,
+   "Open": 9
+  },
+  "unplanned_gap_count": 49
+ },
+ "schema_version": 3,
+ "severity_dashboard": {
+  "critical": {
+   "distinct": 4,
+   "top": [
+    {
+     "count": 1,
+     "label": "ISO 27001 · Organizational Controls"
+    },
+    {
+     "count": 1,
+     "label": "ISO 27001 · Technological Controls"
+    },
+    {
+     "count": 1,
+     "label": "India DPDPA · Breach Notification"
+    },
+    {
+     "count": 1,
+     "label": "India DPDPA · Obligations of Data Fiduciary"
+    }
+   ],
+   "total": 4
+  },
+  "high": {
+   "distinct": 5,
+   "top": [
+    {
+     "count": 7,
+     "label": "India DPDPA · Obligations of Data Fiduciary"
+    },
+    {
+     "count": 6,
+     "label": "ISO 27001 · Organizational Controls"
+    },
+    {
+     "count": 3,
+     "label": "India DPDPA · Special Provisions"
+    },
+    {
+     "count": 1,
+     "label": "ISO 27001 · Technological Controls"
+    }
+   ],
+   "total": 18
+  },
+  "low": {
+   "distinct": 4,
+   "top": [
+    {
+     "count": 5,
+     "label": "ISO 27001 · Organizational Controls"
+    },
+    {
+     "count": 2,
+     "label": "India DPDPA · Obligations of Data Fiduciary"
+    },
+    {
+     "count": 1,
+     "label": "ISO 27001 · People Controls"
+    },
+    {
+     "count": 1,
+     "label": "ISO 27001 · Technological Controls"
+    }
+   ],
+   "total": 9
+  },
+  "medium": {
+   "distinct": 7,
+   "top": [
+    {
+     "count": 8,
+     "label": "ISO 27001 · Technological Controls"
+    },
+    {
+     "count": 6,
+     "label": "ISO 27001 · Organizational Controls"
+    },
+    {
+     "count": 4,
+     "label": "India DPDPA · Obligations of Data Fiduciary"
+    },
+    {
+     "count": 4,
+     "label": "India DPDPA · Rights of Data Principal"
+    }
+   ],
+   "total": 28
+  }
+ },
+ "sign_off": {
+  "issue_status": "This version is a draft until it is issued. Whether it was issued, who issued it and the SHA-256 of the issued file are recorded in the report version history.",
+  "names_note": "Names are recorded as entered by the consultant; they are not verified sign-ins.",
+  "prepared_by": "Priya Sharma",
+  "reviewed_by": "Ravi Menon"
+ },
+ "snapshot": {
+  "generated_at": "2026-09-28T10:00:00+00:00",
+  "generated_on": "28 Sep 2026",
+  "id": "5f2c9e1a-4d7b-4e2a-9c3f-0b1d2e3f4a5b",
+  "version_label": "v2"
+ },
+ "soa": {
+  "framework_id": "iso27001",
+  "framework_name": "ISO 27001",
+  "framework_version": "2022",
+  "intro": "Every Annex A control of ISO 27001:2022, with its applicability, implementation status and justification. Applicability and implementation status are derived from the consultant-approved conclusion for each control; justifications are recorded by the consultant.",
+  "notes": [
+   "14 Annex A control(s) were outside the scope of this assessment. Their applicability has not been determined; the organization must decide it before relying on this statement.",
+   "90 control(s) have no recorded justification."
+  ],
+  "reliance": "This statement records the assessor's view at the evidence cut-off. It does not replace the organization's own Statement of Applicability.",
+  "rows": [
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.1",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.5.1",
+    "theme": "Organizational Controls",
+    "title": "Policies for information security"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.2",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.2",
+    "theme": "Organizational Controls",
+    "title": "Information security roles and responsibilities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.3",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.3",
+    "theme": "Organizational Controls",
+    "title": "Segregation of duties"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.4",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.4",
+    "theme": "Organizational Controls",
+    "title": "Management responsibilities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.5",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.5",
+    "theme": "Organizational Controls",
+    "title": "Contact with authorities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.6",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.6",
+    "theme": "Organizational Controls",
+    "title": "Contact with special interest groups"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.7",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.7",
+    "theme": "Organizational Controls",
+    "title": "Threat intelligence"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.8",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.8",
+    "theme": "Organizational Controls",
+    "title": "Information security in project management"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.9",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.9",
+    "theme": "Organizational Controls",
+    "title": "Inventory of information and other associated assets"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.10",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.10",
+    "theme": "Organizational Controls",
+    "title": "Acceptable use of information and other associated assets"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.11",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.11",
+    "theme": "Organizational Controls",
+    "title": "Return of assets"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.12",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.12",
+    "theme": "Organizational Controls",
+    "title": "Classification of information"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.13",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.13",
+    "theme": "Organizational Controls",
+    "title": "Labelling of information"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.14",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.5.14",
+    "theme": "Organizational Controls",
+    "title": "Information transfer"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.15",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.15",
+    "theme": "Organizational Controls",
+    "title": "Access control"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.16",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.16",
+    "theme": "Organizational Controls",
+    "title": "Identity management"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.17",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.17",
+    "theme": "Organizational Controls",
+    "title": "Authentication information"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.18",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.5.18",
+    "theme": "Organizational Controls",
+    "title": "Access rights"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.19",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.19",
+    "theme": "Organizational Controls",
+    "title": "Information security in supplier relationships"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.20",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.5.20",
+    "theme": "Organizational Controls",
+    "title": "Addressing information security within supplier agreements"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.21",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.21",
+    "theme": "Organizational Controls",
+    "title": "Managing information security in the ICT supply chain"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.22",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.22",
+    "theme": "Organizational Controls",
+    "title": "Monitoring, review and change management of supplier services"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.23",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.23",
+    "theme": "Organizational Controls",
+    "title": "Information security for use of cloud services"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.24",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.5.24",
+    "theme": "Organizational Controls",
+    "title": "Information security incident management planning and preparation"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.25",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.25",
+    "theme": "Organizational Controls",
+    "title": "Assessment and decision on information security events"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.26",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.26",
+    "theme": "Organizational Controls",
+    "title": "Response to information security incidents"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.27",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.27",
+    "theme": "Organizational Controls",
+    "title": "Learning from information security incidents"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.28",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.5.28",
+    "theme": "Organizational Controls",
+    "title": "Collection of evidence"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.29",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.29",
+    "theme": "Organizational Controls",
+    "title": "Information security during disruption"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.30",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.30",
+    "theme": "Organizational Controls",
+    "title": "ICT readiness for business continuity"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.31",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.31",
+    "theme": "Organizational Controls",
+    "title": "Legal, statutory, regulatory and contractual requirements"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.32",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.32",
+    "theme": "Organizational Controls",
+    "title": "Intellectual property rights"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.33",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.5.33",
+    "theme": "Organizational Controls",
+    "title": "Protection of records"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.34",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.34",
+    "theme": "Organizational Controls",
+    "title": "Privacy and protection of personal information"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.35",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.5.35",
+    "theme": "Organizational Controls",
+    "title": "Independent review of information security"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.36",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.5.36",
+    "theme": "Organizational Controls",
+    "title": "Compliance with policies, rules and standards"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A5.37",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.5.37",
+    "theme": "Organizational Controls",
+    "title": "Documented operating procedures"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.1",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.6.1",
+    "theme": "People Controls",
+    "title": "Screening"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.2",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.6.2",
+    "theme": "People Controls",
+    "title": "Terms and conditions of employment"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.3",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.6.3",
+    "theme": "People Controls",
+    "title": "Information security awareness, education and training"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.4",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.6.4",
+    "theme": "People Controls",
+    "title": "Disciplinary process"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.5",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.6.5",
+    "theme": "People Controls",
+    "title": "Responsibilities after termination or change of employment"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.6",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.6.6",
+    "theme": "People Controls",
+    "title": "Confidentiality or non-disclosure agreements"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.7",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.6.7",
+    "theme": "People Controls",
+    "title": "Remote working"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A6.8",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.6.8",
+    "theme": "People Controls",
+    "title": "Information security event reporting"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.1",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.1",
+    "theme": "Physical Controls",
+    "title": "Physical security perimeters"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.2",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.2",
+    "theme": "Physical Controls",
+    "title": "Physical entry"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.3",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.3",
+    "theme": "Physical Controls",
+    "title": "Securing offices, rooms and facilities"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.4",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.4",
+    "theme": "Physical Controls",
+    "title": "Physical security monitoring"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.5",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.5",
+    "theme": "Physical Controls",
+    "title": "Protecting against physical and environmental threats"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.6",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.6",
+    "theme": "Physical Controls",
+    "title": "Working in secure areas"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.7",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.7",
+    "theme": "Physical Controls",
+    "title": "Clear desk and clear screen"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.8",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.8",
+    "theme": "Physical Controls",
+    "title": "Equipment siting and protection"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.9",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.9",
+    "theme": "Physical Controls",
+    "title": "Security of assets off-premises"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.10",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.10",
+    "theme": "Physical Controls",
+    "title": "Storage media"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.11",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.11",
+    "theme": "Physical Controls",
+    "title": "Supporting utilities"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.12",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.12",
+    "theme": "Physical Controls",
+    "title": "Cabling security"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.13",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.13",
+    "theme": "Physical Controls",
+    "title": "Equipment maintenance"
+   },
+   {
+    "applicability": "not_assessed",
+    "applicability_label": "Not determined",
+    "control_id": "ISO.A7.14",
+    "implementation_label": "Not assessed",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": null,
+    "reference": "Annex A.7.14",
+    "theme": "Physical Controls",
+    "title": "Secure disposal or re-use of equipment"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.1",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.1",
+    "theme": "Technological Controls",
+    "title": "User endpoint devices"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.2",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.2",
+    "theme": "Technological Controls",
+    "title": "Privileged access rights"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.3",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.8.3",
+    "theme": "Technological Controls",
+    "title": "Information access restriction"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.4",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.4",
+    "theme": "Technological Controls",
+    "title": "Access to source code"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.5",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.5",
+    "theme": "Technological Controls",
+    "title": "Secure authentication"
+   },
+   {
+    "applicability": "excluded",
+    "applicability_label": "Excluded",
+    "control_id": "ISO.A8.6",
+    "implementation_label": "Not applicable",
+    "justification": "Not relevant to the cloud-only operating model.",
+    "justification_by": "Priya Sharma",
+    "justification_on": "2026-09-24",
+    "outcome": "not_applicable",
+    "reference": "Annex A.8.6",
+    "theme": "Technological Controls",
+    "title": "Capacity management"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.7",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.8.7",
+    "theme": "Technological Controls",
+    "title": "Protection against malware"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.8",
+    "implementation_label": "Not implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "non_compliant",
+    "reference": "Annex A.8.8",
+    "theme": "Technological Controls",
+    "title": "Management of technical vulnerabilities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.9",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.9",
+    "theme": "Technological Controls",
+    "title": "Configuration management"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.10",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.10",
+    "theme": "Technological Controls",
+    "title": "Information deletion"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.11",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.11",
+    "theme": "Technological Controls",
+    "title": "Data masking"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.12",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.12",
+    "theme": "Technological Controls",
+    "title": "Data leakage prevention"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.13",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.13",
+    "theme": "Technological Controls",
+    "title": "Information backup"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.14",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.8.14",
+    "theme": "Technological Controls",
+    "title": "Redundancy of information processing facilities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.15",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.15",
+    "theme": "Technological Controls",
+    "title": "Logging"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.16",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.16",
+    "theme": "Technological Controls",
+    "title": "Monitoring activities"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.17",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.17",
+    "theme": "Technological Controls",
+    "title": "Clock synchronization"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.18",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.18",
+    "theme": "Technological Controls",
+    "title": "Use of privileged utility programs"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.19",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.19",
+    "theme": "Technological Controls",
+    "title": "Installation of software on operational systems"
+   },
+   {
+    "applicability": "excluded",
+    "applicability_label": "Excluded",
+    "control_id": "ISO.A8.20",
+    "implementation_label": "Not applicable",
+    "justification": "Not relevant to the cloud-only operating model.",
+    "justification_by": "Priya Sharma",
+    "justification_on": "2026-09-24",
+    "outcome": "not_applicable",
+    "reference": "Annex A.8.20",
+    "theme": "Technological Controls",
+    "title": "Networks security"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.21",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.21",
+    "theme": "Technological Controls",
+    "title": "Security of network services"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.22",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.22",
+    "theme": "Technological Controls",
+    "title": "Segregation of networks"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.23",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.23",
+    "theme": "Technological Controls",
+    "title": "Web filtering"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.24",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.24",
+    "theme": "Technological Controls",
+    "title": "Use of cryptography"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.25",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.8.25",
+    "theme": "Technological Controls",
+    "title": "Secure development life cycle"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.26",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.26",
+    "theme": "Technological Controls",
+    "title": "Application security requirements"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.27",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.27",
+    "theme": "Technological Controls",
+    "title": "Secure system architecture and engineering principles"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.28",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.28",
+    "theme": "Technological Controls",
+    "title": "Secure coding"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.29",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.29",
+    "theme": "Technological Controls",
+    "title": "Security testing in development and acceptance"
+   },
+   {
+    "applicability": "excluded",
+    "applicability_label": "Excluded",
+    "control_id": "ISO.A8.30",
+    "implementation_label": "Not applicable",
+    "justification": "No on-premises development; all development is outsourced under contract.",
+    "justification_by": "Priya Sharma",
+    "justification_on": "2026-09-24",
+    "outcome": "not_applicable",
+    "reference": "Annex A.8.30",
+    "theme": "Technological Controls",
+    "title": "Outsourced development"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.31",
+    "implementation_label": "Not determined",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "insufficient_evidence",
+    "reference": "Annex A.8.31",
+    "theme": "Technological Controls",
+    "title": "Separation of development, test and production environments"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.32",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.32",
+    "theme": "Technological Controls",
+    "title": "Change management"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.33",
+    "implementation_label": "Partially implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "partially_compliant",
+    "reference": "Annex A.8.33",
+    "theme": "Technological Controls",
+    "title": "Test information"
+   },
+   {
+    "applicability": "applicable",
+    "applicability_label": "Applicable",
+    "control_id": "ISO.A8.34",
+    "implementation_label": "Implemented",
+    "justification": null,
+    "justification_by": null,
+    "justification_on": null,
+    "outcome": "compliant",
+    "reference": "Annex A.8.34",
+    "theme": "Technological Controls",
+    "title": "Protection of information systems during audit testing"
+   }
+  ],
+  "totals": {
+   "applicable": 76,
+   "controls": 93,
+   "excluded": 3,
+   "implemented": 33,
+   "justification_missing": 90,
+   "not_assessed": 14,
+   "not_determined": 10,
+   "not_implemented": 6,
+   "partially_implemented": 27,
+   "pending": 0
+  }
+ },
+ "source": {
+  "conclusion_versions": [
+   [
+    "<id:3>",
+    2
+   ],
+   [
+    "<id:4>",
+    2
+   ],
+   [
+    "<id:5>",
+    2
+   ],
+   [
+    "<id:6>",
+    2
+   ],
+   [
+    "<id:7>",
+    2
+   ]
+  ],
+  "gap_report_id": "<id:8>"
+ },
+ "status_board": [
+  {
+   "domains": [
+    {
+     "crit_high": 8,
+     "gaps": 14,
+     "ie": 0,
+     "in_scope": 17,
+     "rating": "Needs Significant Improvement",
+     "score": 49.2,
+     "title": "Obligations of Data Fiduciary"
+    },
+    {
+     "crit_high": 0,
+     "gaps": 4,
+     "ie": 1,
+     "in_scope": 6,
+     "rating": "Needs Significant Improvement",
+     "score": 45.0,
+     "title": "Rights of Data Principal"
+    },
+    {
+     "crit_high": 3,
+     "gaps": 5,
+     "ie": 1,
+     "in_scope": 7,
+     "rating": "Partially Compliant",
+     "score": 60.0,
+     "title": "Special Provisions"
+    },
+    {
+     "crit_high": 1,
+     "gaps": 1,
+     "ie": 1,
+     "in_scope": 4,
+     "rating": "Compliant",
+     "score": 87.5,
+     "title": "Consent Management (Detailed)"
+    },
+    {
+     "crit_high": 0,
+     "gaps": 0,
+     "ie": 0,
+     "in_scope": 3,
+     "rating": "Compliant",
+     "score": 100.0,
+     "title": "Cross-Border Data Transfer"
+    },
+    {
+     "crit_high": 1,
+     "gaps": 2,
+     "ie": 2,
+     "in_scope": 4,
+     "rating": "Non-Compliant",
+     "score": 25.0,
+     "title": "Breach Notification"
+    }
+   ],
+   "framework_id": "dpdpa",
+   "in_scope": 41,
+   "name": "India DPDPA",
+   "rating": "Needs Significant Improvement",
+   "score": 57.0,
+   "version": "2023"
+  },
+  {
+   "domains": [
+    {
+     "crit_high": 7,
+     "gaps": 18,
+     "ie": 4,
+     "in_scope": 37,
+     "rating": "Partially Compliant",
+     "score": 65.3,
+     "title": "Organizational Controls"
+    },
+    {
+     "crit_high": 0,
+     "gaps": 4,
+     "ie": 1,
+     "in_scope": 8,
+     "rating": "Partially Compliant",
+     "score": 60.0,
+     "title": "People Controls"
+    },
+    {
+     "crit_high": 0,
+     "gaps": 0,
+     "ie": 0,
+     "in_scope": 0,
+     "rating": null,
+     "score": null,
+     "title": "Physical Controls"
+    },
+    {
+     "crit_high": 2,
+     "gaps": 11,
+     "ie": 5,
+     "in_scope": 34,
+     "rating": "Partially Compliant",
+     "score": 75.5,
+     "title": "Technological Controls"
+    }
+   ],
+   "framework_id": "iso27001",
+   "in_scope": 79,
+   "name": "ISO 27001",
+   "rating": "Partially Compliant",
+   "score": 68.6,
+   "version": "2022"
+  }
+ ],
+ "summary": {
+  "basis_of_assessment": "This document constitutes an evidence-based compliance gap assessment. It is not a formal compliance audit and does not constitute legal advice. Findings are based on documents submitted for review and information disclosed by the organization's representatives, and every conclusion was individually approved by a consultant. These conclusions reflect the evidence considered up to the evidence cut-off stated above.",
+  "confidentiality": "This report is prepared solely for the use of the named organization. It should not be shared with third parties without the organization's explicit consent. Golden Advisory and the named organization are the intended recipients of this report.",
+  "frameworks": [
+   {
+    "coverage": {
+     "awaiting": 0,
+     "compliant": 10,
+     "eligible": 41,
+     "in_scope": 41,
+     "insufficient_evidence": 5,
+     "missing": 0,
+     "non_compliant": 5,
+     "not_applicable": 0,
+     "out_of_scope": 0,
+     "partially_compliant": 21,
+     "scored": 36
+    },
+    "framework_id": "dpdpa",
+    "headline": "57% (Needs Significant Improvement); 5 requirement(s) insufficient evidence",
+    "name": "India DPDPA",
+    "narrative": [
+     {
+      "citations": [
+       {
+        "finding_id": "fnd-001",
+        "framework_id": "dpdpa",
+        "requirement_id": "CH2.CONSENT.1"
+       },
+       {
+        "finding_id": "fnd-002",
+        "framework_id": "dpdpa",
+        "requirement_id": "BN.NOTIFY.1"
+       },
+       {
+        "finding_id": "fnd-006",
+        "framework_id": "dpdpa",
+        "requirement_id": "CH2.SECURITY.3"
+       }
+      ],
+      "finding_ids": [
+       "fnd-001",
+       "fnd-002",
+       "fnd-006"
+      ],
+      "finding_refs": [
+       "F1",
+       "F2",
+       "F6"
+      ],
+      "text": "Consent, breach notification and processor contracts are the weakest areas; rights handling and notices are largely in place."
+     }
+    ],
+    "rating": "Needs Significant Improvement",
+    "score": 57.0,
+    "status": "scored"
+   },
+   {
+    "coverage": {
+     "awaiting": 0,
+     "compliant": 33,
+     "eligible": 79,
+     "in_scope": 79,
+     "insufficient_evidence": 10,
+     "missing": 0,
+     "non_compliant": 6,
+     "not_applicable": 3,
+     "out_of_scope": 14,
+     "partially_compliant": 27,
+     "scored": 66
+    },
+    "framework_id": "iso27001",
+    "headline": "69% (Partially Compliant); 10 requirement(s) insufficient evidence",
+    "name": "ISO 27001",
+    "narrative": [
+     {
+      "citations": [
+       {
+        "finding_id": "fnd-003",
+        "framework_id": "iso27001",
+        "requirement_id": "ISO.A5.18"
+       },
+       {
+        "finding_id": "fnd-005",
+        "framework_id": "dpdpa",
+        "requirement_id": "CH2.SECURITY.2"
+       }
+      ],
+      "finding_ids": [
+       "fnd-003",
+       "fnd-005"
+      ],
+      "finding_refs": [
+       "F3",
+       "F5"
+      ],
+      "text": "Policies and organisational controls are mostly implemented; access reviews and vulnerability management are the material gaps."
+     }
+    ],
+    "rating": "Partially Compliant",
+    "score": 68.6,
+    "status": "scored"
+   }
+  ],
+  "limitations": [
+   "This assessment does not include technical penetration testing, source code review, network security assessment, or any form of independent technical verification. Where the selected framework(s) include physical or environmental controls, findings on those controls are based on disclosed information and submitted documents, not on physical inspection or testing.",
+   "All findings reflect the information provided to the assessor at the time of the assessment. The assessor has not independently verified the accuracy or completeness of information provided. Material omissions or inaccuracies in disclosed information would affect the reliability of findings.",
+   "For requirements rated as Non-Compliant or Partially Compliant at a Critical or High risk level, independent verification by qualified legal counsel or a certified privacy professional (for INDIA DPDPA requirements), or by a qualified information security auditor (for ISO 27001), is strongly recommended before relying on those findings for regulatory submissions, board reporting, or contractual representations.",
+   "Most DPDPA 2023 obligations on Data Fiduciaries, and its penalty provisions, commence in mid-May 2027 (DPDP Rules 2025, G.S.R. 846(E)); findings against those obligations are a readiness assessment, not a determination of current non-compliance. Until then, obligations under the Information Technology Act, 2000, s.43A and the SPDI Rules, 2011 continue to apply and were not assessed."
+  ],
+  "narrative": {
+   "cross_framework": [
+    {
+     "citations": [
+      {
+       "finding_id": "fnd-003",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.18"
+      },
+      {
+       "finding_id": "fnd-004",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A8.8"
+      }
+     ],
+     "finding_ids": [
+      "fnd-003",
+      "fnd-004"
+     ],
+     "finding_refs": [
+      "F3",
+      "F4"
+     ],
+     "text": "Weak access governance appears under both DPDPA security safeguards and ISO 27001 access-rights controls."
+    }
+   ],
+   "executive": [
+    {
+     "citations": [
+      {
+       "finding_id": "fnd-003",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.18"
+      },
+      {
+       "finding_id": "fnd-005",
+       "framework_id": "dpdpa",
+       "requirement_id": "CH2.SECURITY.2"
+      },
+      {
+       "finding_id": "fnd-007",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.19"
+      }
+     ],
+     "finding_ids": [
+      "fnd-003",
+      "fnd-005",
+      "fnd-007"
+     ],
+     "finding_refs": [
+      "F3",
+      "F5",
+      "F7"
+     ],
+     "text": "The organisation has a sound policy base, but several controls that protect customer data exist on paper only and are not operated."
+    },
+    {
+     "citations": [
+      {
+       "finding_id": "fnd-001",
+       "framework_id": "dpdpa",
+       "requirement_id": "CH2.CONSENT.1"
+      },
+      {
+       "finding_id": "fnd-002",
+       "framework_id": "dpdpa",
+       "requirement_id": "BN.NOTIFY.1"
+      },
+      {
+       "finding_id": "fnd-003",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.18"
+      }
+     ],
+     "finding_ids": [
+      "fnd-001",
+      "fnd-002",
+      "fnd-003"
+     ],
+     "finding_refs": [
+      "F1",
+      "F2",
+      "F3"
+     ],
+     "text": "The most serious exposures are consent that is unlikely to be valid, no procedure for notifying the regulator of a breach, and access rights that are never reviewed."
+    },
+    {
+     "citations": [
+      {
+       "finding_id": "fnd-003",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.18"
+      },
+      {
+       "finding_id": "fnd-004",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A8.8"
+      },
+      {
+       "finding_id": "fnd-006",
+       "framework_id": "dpdpa",
+       "requirement_id": "CH2.SECURITY.3"
+      },
+      {
+       "finding_id": "fnd-007",
+       "framework_id": "iso27001",
+       "requirement_id": "ISO.A5.19"
+      }
+     ],
+     "finding_ids": [
+      "fnd-003",
+      "fnd-004",
+      "fnd-006",
+      "fnd-007"
+     ],
+     "finding_refs": [
+      "F3",
+      "F4",
+      "F6",
+      "F7"
+     ],
+     "text": "Most gaps are process gaps with clear owners, and closing access control and supplier security once addresses findings under both frameworks."
+    }
+   ]
+  },
+  "risk_matrix": {
+   "dpdpa": {
+    "critical": 2,
+    "high": 11,
+    "low": 2,
+    "medium": 11
+   },
+   "iso27001": {
+    "critical": 2,
+    "high": 7,
+    "low": 7,
+    "medium": 17
+   }
+  },
+  "scope": [
+   "India DPDPA: 41 requirements in scope",
+   "ISO 27001: 79 requirements in scope (Physical Controls excluded: single cloud-hosted office)"
+  ],
+  "totals": {
+   "critical_high_gaps": 22,
+   "gaps": 59,
+   "insufficient_evidence": 15,
+   "not_applicable": 3,
+   "requirements": 120
+  }
+ },
+ "takeaways": {
+  "dashboard": "59 approved gap(s), 22 of them critical or high; 4 critical gap(s) in 4 domain(s).",
+  "roadmap": "8 initiative(s) cover 10 of 10 key observations; 2 close a weakness once across more than one framework.",
+  "status_board": "1 of 9 in-scope domain(s) have no approved gaps; the weakest are Breach Notification (25%) and Rights of Data Principal (45%)."
+ },
+ "theme": {
+  "accent": "#12B3A6",
+  "firm_name": "Golden Advisory",
+  "logo": null,
+  "primary": "#161A5C",
+  "secondary": "#2D3FD3"
+ },
+ "top_risks": [
+  {
+   "action_status_label": "In progress",
+   "action_title": "Replace pre-ticked consent with an affirmative opt-in and log the notice version shown",
+   "business_impact": "Consent obtained this way is unlikely to be valid, so processing that depends on it would lack a lawful basis once DPDPA obligations commence; this affects the full 2.1 million-customer marketing base.",
+   "citations": [
+    {
+     "filename": "privacy-policy.pdf",
+     "is_current": true,
+     "location_ref": "s.4.2, p.6",
+     "sha256_prefix": "a3f19c0e7b21",
+     "version_number": 3
+    }
+   ],
+   "description": "The sign-up journey and the marketing preference centre both pre-select consent. No record links a consent to the notice the user saw.",
+   "finding_id": "fnd-001",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Non-Compliant",
+   "owner": "Anita Rao (DPO)",
+   "rank": 1,
+   "recommendation": "Replace pre-selected consent with an unticked, purpose-specific opt-in on every channel. Log each consent with the notice version shown, timestamp and channel, and re-collect consent for the existing marketing base before relying on it.",
+   "requirement_id": "CH2.CONSENT.1",
+   "requirement_title": "Lawful basis for processing with free, specific, informed consent",
+   "severity": "critical",
+   "target_date": "2026-11-30",
+   "title": "Consent is collected through pre-ticked boxes"
+  },
+  {
+   "action_status_label": "In progress",
+   "action_title": "Adopt a breach-notification runbook with owner, 72-hour timeline and regulator templates",
+   "business_impact": "A breach handled under the current plan would miss the statutory notification, which carries the highest penalty tier under the Act.",
+   "citations": [
+    {
+     "filename": "incident-response-plan.docx",
+     "is_current": true,
+     "location_ref": "s.5, p.3",
+     "sha256_prefix": "77c1d02e9a40",
+     "version_number": 2
+    }
+   ],
+   "description": "The incident response plan covers containment only. It names no owner, timeline or template for notifying the Board or affected individuals.",
+   "finding_id": "fnd-002",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Non-Compliant",
+   "owner": "Vikram Iyer (CISO)",
+   "rank": 2,
+   "recommendation": "Extend the incident response plan with a notification runbook: named decision owner, 72-hour clock, Board and data-principal templates, and an evidence log. Test it in a tabletop exercise each year.",
+   "requirement_id": "BN.NOTIFY.1",
+   "requirement_title": "Breach notification to Data Protection Board",
+   "severity": "critical",
+   "target_date": "2026-10-31",
+   "title": "No procedure to notify the Data Protection Board of a breach"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Run quarterly access reviews for production and customer-data systems",
+   "business_impact": "Former staff and over-privileged users can reach customer data, the most common root cause of insider and credential-based breaches.",
+   "citations": [
+    {
+     "filename": "access-review-export.xlsx",
+     "is_current": true,
+     "location_ref": "Sheet 'Leavers', rows 2-15",
+     "sha256_prefix": "4be0d6a91c33",
+     "version_number": 1
+    }
+   ],
+   "description": "No periodic review of user access is evidenced for production systems. 14 leaver accounts were still active at the cut-off.",
+   "finding_id": "fnd-003",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "outcome_label": "Non-Compliant",
+   "owner": "Vikram Iyer (CISO)",
+   "rank": 3,
+   "recommendation": "Run quarterly access recertification for production and customer-data systems with manager sign-off. Disable leaver accounts within 24 hours through an HR-triggered workflow and keep review evidence.",
+   "requirement_id": "ISO.A5.18",
+   "requirement_title": "Access rights",
+   "severity": "critical",
+   "target_date": "2026-09-15",
+   "title": "Access rights are never reviewed"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Set patch SLAs (critical 15 days) and report monthly to the risk committee",
+   "business_impact": "Known, exploitable weaknesses on public systems are the leading entry point for ransomware.",
+   "citations": [
+    {
+     "filename": "vuln-scan-summary.pdf",
+     "is_current": true,
+     "location_ref": "p.2",
+     "sha256_prefix": "e81a2c44f0d9",
+     "version_number": 1
+    }
+   ],
+   "description": "Scans run ad hoc; 23 critical CVEs older than 90 days were open on internet-facing hosts at the cut-off.",
+   "finding_id": "fnd-004",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "outcome_label": "Non-Compliant",
+   "owner": null,
+   "rank": 4,
+   "recommendation": "Adopt patch SLAs by severity (critical 15 days, high 30 days), scan internet-facing assets weekly, and report open critical vulnerabilities to the risk committee monthly.",
+   "requirement_id": "ISO.A8.8",
+   "requirement_title": "Management of technical vulnerabilities",
+   "severity": "critical",
+   "target_date": "2026-11-15",
+   "title": "No defined cadence for patching technical vulnerabilities"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Introduce role-based access to the customer database",
+   "business_impact": "Broad access raises the likelihood and scale of a personal-data breach and weakens the 'reasonable security safeguards' defence.",
+   "citations": [
+    {
+     "filename": "isms-manual.pdf",
+     "is_current": true,
+     "location_ref": "Annex B, p.22",
+     "sha256_prefix": "bb02f7a8d114",
+     "version_number": 4
+    }
+   ],
+   "description": "Encryption at rest is in place, but 41 engineers hold read access to the customer database with no role-based restriction.",
+   "finding_id": "fnd-005",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Partially Compliant",
+   "owner": "Vikram Iyer (CISO)",
+   "rank": 5,
+   "recommendation": "Define role-based access profiles for the customer database, remove standing engineer access, and route exceptions through time-bound, approved break-glass access with session logging.",
+   "requirement_id": "CH2.SECURITY.2",
+   "requirement_title": "Encryption and access controls",
+   "severity": "high",
+   "target_date": "2026-12-15",
+   "title": "Customer database access is not restricted by role"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Issue a data-processing addendum to all processors",
+   "business_impact": "The company remains liable for its processors' failures with no contractual recourse or audit right.",
+   "citations": [
+    {
+     "filename": "vendor-contracts-index.xlsx",
+     "is_current": true,
+     "location_ref": "rows 3-11",
+     "sha256_prefix": "0cd4e5f6a7b8",
+     "version_number": 2
+    }
+   ],
+   "description": "Seven of nine processor contracts reviewed contain no security, breach-notice or deletion obligations.",
+   "finding_id": "fnd-006",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Non-Compliant",
+   "owner": "Anita Rao (DPO)",
+   "rank": 6,
+   "recommendation": "Issue a data-processing addendum covering security, breach notice within 24 hours, sub-processing, audit rights and deletion at exit, and track signature to completion.",
+   "requirement_id": "CH2.SECURITY.3",
+   "requirement_title": "Data Processor contractual safeguards",
+   "severity": "high",
+   "target_date": "2027-02-28",
+   "title": "Data Processor contracts lack data-protection clauses"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Tier suppliers by data access and assess tier-1 suppliers annually",
+   "business_impact": "Third-party compromise cannot be anticipated or contracted against.",
+   "citations": [],
+   "description": "A supplier questionnaire exists but is not used; no supplier risk tiering is recorded.",
+   "finding_id": "fnd-007",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "outcome_label": "Partially Compliant",
+   "owner": "Anita Rao (DPO)",
+   "rank": 7,
+   "recommendation": "Tier suppliers by data access, assess tier-1 suppliers before onboarding and annually, and record the risk decision in the supplier register.",
+   "requirement_id": "ISO.A5.19",
+   "requirement_title": "Information security in supplier relationships",
+   "severity": "high",
+   "target_date": "2027-02-28",
+   "title": "Supplier security is not assessed before onboarding"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Define retention periods for customer and KYC data and automate deletion",
+   "business_impact": "Holding data beyond its purpose enlarges breach impact and conflicts with the storage-limitation duty.",
+   "citations": [
+    {
+     "filename": "data-retention-policy.pdf",
+     "is_current": true,
+     "location_ref": "s.3, p.2",
+     "sha256_prefix": "9d8e7f6a5b4c",
+     "version_number": 1
+    }
+   ],
+   "description": "The retention policy sets periods for HR records only; customer and KYC data have no retention period or deletion job.",
+   "finding_id": "fnd-008",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Partially Compliant",
+   "owner": "Ravi Menon (COO)",
+   "rank": 8,
+   "recommendation": "Set retention periods for customer and KYC data by purpose and legal basis, and automate deletion or anonymisation at expiry with a monthly exception report.",
+   "requirement_id": "CH2.MINIMIZE.2",
+   "requirement_title": "Data retention limited to purpose fulfilment",
+   "severity": "high",
+   "target_date": "2027-03-31",
+   "title": "Customer data is retained indefinitely"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Test the BCP for the payments platform and record results",
+   "business_impact": "Recovery times for core platforms are unknown; an outage could exceed customer contractual commitments.",
+   "citations": [
+    {
+     "filename": "bcp-2024.pdf",
+     "is_current": true,
+     "location_ref": "whole",
+     "sha256_prefix": "1a2b3c4d5e6f",
+     "version_number": 1
+    }
+   ],
+   "description": "The BCP is approved but no test or exercise has been recorded since it was written in 2024.",
+   "finding_id": "fnd-009",
+   "framework_id": "iso27001",
+   "framework_name": "ISO 27001",
+   "outcome_label": "Partially Compliant",
+   "owner": "Ravi Menon (COO)",
+   "rank": 9,
+   "recommendation": "Test the BCP for the payments platform against target recovery times, record the results and fix gaps found before the next test cycle.",
+   "requirement_id": "ISO.A5.30",
+   "requirement_title": "ICT readiness for business continuity",
+   "severity": "medium",
+   "target_date": "2027-03-31",
+   "title": "Business continuity plan has never been tested"
+  },
+  {
+   "action_status_label": "Open",
+   "action_title": "Publish a grievance form with tracking and a 30-day response commitment",
+   "business_impact": "Unresolved complaints can be escalated to the Data Protection Board.",
+   "citations": [],
+   "description": "Grievances are received through a shared mailbox with no tracking or response-time commitment.",
+   "finding_id": "fnd-010",
+   "framework_id": "dpdpa",
+   "framework_name": "India DPDPA",
+   "outcome_label": "Partially Compliant",
+   "owner": null,
+   "rank": 10,
+   "recommendation": "Publish a grievance form with ticket tracking and a 30-day response commitment, and report volumes and ageing to the DPO monthly.",
+   "requirement_id": "CH3.GRIEVANCE.1",
+   "requirement_title": "Grievance redressal mechanism available",
+   "severity": "medium",
+   "target_date": null,
+   "title": "Grievance channel has no response timeline"
+  }
+ ]
+}

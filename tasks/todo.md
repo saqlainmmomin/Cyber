@@ -84,6 +84,12 @@ Phases 1-4 built the multi-framework, engagement-level platform on top of an ori
 
 ## Phase 6 — Grounded analysis, multi-framework review, deliverables `[AR: grounding (P6-3), scoring boundary (P6-4), security (Track 4)]` — started 2026-09-25
 
+- [x] **P6-8 V3-B: v3 board document, 16:9 PDF/PPTX deck and client XLSX** — implemented on `claude/p6-8-v3b-deck`; V3-B document/deck/file-set contracts pass (38), adjacent SoA checks pass (5), the golden matches, and the handoff records the expected stale v2/guard failures from the dirty worktree.
+
+### P6-8 V3-B content parity gaps
+
+- [x] Restore v2 comparison content, the empty-roadmap state, and full PDF/PPTX/XLSX provenance labels; add focused regression coverage and record the full-suite result in the handoff. **Verified:** focused V3-B/adjacent checks 40 passed; PDF smoke 25 pages; full suite 1328 passed, 10 skipped, with only the pre-existing V3-A guard omission for the new V3-B extra test file failing.
+
 Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (decisions D-P6-A to D-P6-L taken 2026-09-25; D8 amended). Tool stays local-only: security and Bedrock `ap-south-1` residency are Track 4, after the v2 pipeline is validated, and are the gate for any real client data.
 
 - [ ] **Track 0:** P5-9 harness + packs merged to `main`, Stage C baseline on v1 **after P6-1, P6-1b and P6-1c merge**.

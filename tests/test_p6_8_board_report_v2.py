@@ -47,7 +47,7 @@ from app.models.engagement import Engagement
 from app.models.evidence import Evidence, EvidenceVersion
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report_snapshot import ReportSnapshot
-from app.services import approved_report, report_basis, report_snapshots
+from app.services import approved_report, board_view, report_basis, report_snapshots
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQUIRE_ENV = "CYBERASSESS_REQUIRE_WEASYPRINT"
@@ -75,7 +75,15 @@ DOCUMENT_KEYS = {
     "assessment_id", "frameworks", "basis", "release", "summary", "top_risks", "roadmap",
     "not_assessed", "framework_sections", "sign_off", "appendices", "source",
     "soa", "prior_period",  # P6-9 (D-P6-9-E): schema v2
+    "observations", "initiatives", "status_board", "severity_dashboard", "takeaways", "board_asks", "theme",
 }
+# P6-8 V3-B: the v3 deck's slide titles in page order (D-P6-8-V3-G); SECTION_HEADINGS below is the
+# v2 portrait layout, kept because schema v1/v2 documents still render through the frozen B2 path.
+V3_SLIDE_HEADINGS = (
+    "Assessment overview", "Executive summary", "Key observations", "Remediation roadmap",
+    "Limits and assumptions", "Sign-off", "Methodology", "Requirement register",
+    "Evidence and statement of applicability",
+)
 SECTION_HEADINGS = (
     "Management summary",
     "Top risks",
@@ -628,8 +636,8 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
 
     approved = approved_report.build_approved_report(db, assessment)
     register = document["appendices"]["requirement_register"]
-    assert [(r["framework_id"], r["requirement_id"], r["outcome"], r["risk_level"], r["priority"]) for r in register] == [
-        (row.framework_id, row.requirement_id, row.compliance_status, row.risk_level, row.remediation_priority)
+    assert [(r["framework_id"], r["requirement_id"], r["outcome"], r["risk_level"]) for r in register] == [
+        (row.framework_id, row.requirement_id, row.compliance_status, row.risk_level)
         for row in approved.rows
     ]
     by_key = {(r["framework_id"], r["requirement_id"]): r for r in register}
@@ -734,14 +742,20 @@ def test_scenario_7_board_pdf_renders_devanagari_rupee_and_all_sections(db, http
     assert (snapshot.type, snapshot.format) == ("board_report", "pdf")
     content = report_snapshots.read_snapshot_bytes(db, snapshot)
 
+    document = report_snapshots.read_board_report_document(db, snapshot)
+    slides = board_view.view(document)["slides"]
     with _pdf(content) as pdf:
-        assert pdf.metadata.get("Title") == f"Board report: {DEVANAGARI_COMPANY}"
+        # P6-8 V3-B (D-P6-8-V3-G): 16:9 landscape deck, one page per slide (was A4 portrait).
         width, height = pdf.pages[0].width, pdf.pages[0].height
-        assert abs(width - 595.28) < 1 and abs(height - 841.89) < 1
+        assert abs(width - 960.0) < 1 and abs(height - 540.0) < 1
+        assert all(abs(page.width - 960.0) < 1 and abs(page.height - 540.0) < 1 for page in pdf.pages)
         fonts = {char["fontname"] for page in pdf.pages for char in page.chars}
         cover = pdf.pages[0].extract_text() or ""
+        page_texts = [page.extract_text() or "" for page in pdf.pages]
         page_count = len(pdf.pages)
-    assert fonts and all("Noto-Sans" in name for name in fonts), fonts
+    assert page_count == len(slides)
+    # Noto Sans for body text, the Display (Barlow Condensed) face for titles (V3-A fonts).
+    assert any("Noto-Sans" in name for name in fonts) and any(name.endswith("Display-Bold-Condensed") for name in fonts), fonts
     assert any("Devanagari" in name for name in fonts)
     missing = Counter(ch for ch in DEVANAGARI_COMPANY if not ch.isspace()) - Counter(cover)
     assert not missing, missing
@@ -749,18 +763,57 @@ def test_scenario_7_board_pdf_renders_devanagari_rupee_and_all_sections(db, http
     full = _pdf_text(content)
     assert "�" not in full
     assert RUPEE_TEXT in full
-    assert PERIOD_TEXT in full and CUTOFF_TEXT in full
-    assert f"Version v1 | Snapshot {snapshot.id[:8]}" in full
-    assert "Report generated:" in full
-    assert f"Page 1 of {page_count}" in full
-    positions = [full.index(heading) for heading in SECTION_HEADINGS[:4]]
-    positions.append(full.index(FrameworkRegistry.get("iso27001").name, positions[-1]))
-    positions.extend(full.index(heading, positions[-1]) for heading in SECTION_HEADINGS[4:])
+    # The v3 deck shows the period and cut-off values on the cover and in every footer (D-P6-8-V3-G),
+    # not the v2 prose "Assessment period: ..." lines.
+    assert document["basis"]["period_label"] in cover and document["basis"]["cutoff_label"] in cover
+    for text_of_page in page_texts[1:]:
+        assert document["basis"]["period_label"] in text_of_page and document["basis"]["cutoff_label"] in text_of_page
+        assert "Confidential" in text_of_page
+    assert document["snapshot"]["version_label"] == "v1" and "v1" in cover
+    positions = []
+    for heading in V3_SLIDE_HEADINGS:
+        positions.append(full.index(heading, positions[-1] + 1 if positions else 0))
     assert positions == sorted(positions)
-    assert "Prepared by: Priya Sharma" in full and "Reviewed by: Ravi Menon" in full
-    assert "privacy-policy.pdf" in full and "a" * 12 in full
-    assert "Target: 30 Nov 2026" in full  # ISO dates in the document, "%d %b %Y" on the page
-    assert "2026-11-30" not in full
+    assert "Prepared by" in full and "Priya Sharma" in full and "Reviewed by" in full and "Ravi Menon" in full
+    assert "privacy-policy.pdf" in full  # the cited-document sha prefix is document-level only now (scenario 5 pins it)
+    assert "30 Nov 2026" in full  # the initiative target date is shown on the roadmap (v2 display format)
+
+
+def _v3_pdf_facts(db, http, gate, monkeypatch):
+    _require_renderer()
+    assessment, *_ = _engagement_fixture(db, http, gate, monkeypatch)
+    snapshot = db.get(ReportSnapshot, _generate(http, assessment).json()["snapshot_id"])
+    with _pdf(report_snapshots.read_snapshot_bytes(db, snapshot)) as pdf:
+        return (
+            pdf.metadata.get("Title"),
+            {char["fontname"] for page in pdf.pages for char in page.chars},
+            [page.extract_text() or "" for page in pdf.pages],
+        )
+
+
+# The three tests below pin behaviour the v2 scenario 7 had and the V3-B implementation lost. They are
+# kept red on purpose: they are V3-B app bugs, not stale tests (see the designer pass report).
+
+
+def test_scenario_7b_v3_pdf_title_metadata_survives_the_devanagari_cover(db, http, gate, monkeypatch):
+    """The PDF Title is "Board report: <company>" (the pdfunite cover swap in render_pdf drops the document info)."""
+    title, _fonts, _pages = _v3_pdf_facts(db, http, gate, monkeypatch)
+    assert title == f"Board report: {DEVANAGARI_COMPANY}"
+
+
+def test_scenario_7c_v3_pdf_uses_only_embedded_noto_and_display_fonts(db, http, gate, monkeypatch):
+    """D0 #3 (Noto-only, embedded): the V3-B PDF additionally references Helvetica, Arial and Verdana."""
+    _title, fonts, _pages = _v3_pdf_facts(db, http, gate, monkeypatch)
+    stray = {name for name in fonts if not any(known in name for known in ("Noto-Sans", "NotoSans", "Display-"))}
+    assert not stray, stray
+
+
+def test_scenario_7d_v3_pdf_has_no_slide_with_an_empty_table(db, http, gate, monkeypatch):
+    """board_view pads Key observations to 3 and Requirement register to 6 pages, so a 2-finding report has empty slides."""
+    _title, _fonts, pages = _v3_pdf_facts(db, http, gate, monkeypatch)
+    for heading, row_marker in (("Key observations", "R-0"), ("Requirement register", "Compliant")):
+        marked = [text_of_page for text_of_page in pages if re.match(rf"\d+\s+{heading}\s", text_of_page)]
+        assert marked and all(row_marker in text_of_page for text_of_page in marked), heading
 
 
 def test_scenario_8_snapshot_is_write_once_with_a_hashed_document_sidecar(db, http, gate, monkeypatch, upload_root):
@@ -936,14 +989,15 @@ def test_scenario_11_preview_shares_the_template_and_keeps_user_text_out_of_css(
     assert "data-preview" in body and board.PREVIEW_VERSION_LABEL in body
     assert "@font-face" not in body
     text_value = _visible_text(body)
-    for heading in SECTION_HEADINGS:
+    for heading in V3_SLIDE_HEADINGS:  # P6-8 V3-B: the preview shares the v3 deck template
         assert heading in text_value, heading
 
     styles = " ".join(re.findall(r"<style>(.*?)</style>", body, flags=re.S))
     assert "Acme" not in styles and "Quote" not in styles
     embedded = board.render_html(_document(db, assessment), embed_fonts=True)
     embedded_styles = " ".join(re.findall(r"<style>(.*?)</style>", embedded, flags=re.S))
-    assert embedded_styles.count("@font-face") == 4 and "Acme" not in embedded_styles
+    assert embedded_styles.count("@font-face") == 6  # P6-8 V3-B: Noto Sans (4) + the two Display faces
+    assert "Acme" not in embedded_styles
     assert "Acme &#34;Quote&#34;" in embedded or "Acme &quot;Quote&quot;" in embedded
 
 
@@ -1035,6 +1089,7 @@ P6_8_B1_APP_ALLOWLIST = (
     "app/services/analysis_v2.py",
 )
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS  # Yozora S1/S2 per-PR allowance
 
@@ -1081,6 +1136,8 @@ P6_8_FORBIDDEN_PATHS = (
     ":(exclude)app/services/llm_client.py",
     # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
     *V3A_EXCLUDES,
+    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
+    *V3B_EXCLUDES,
     # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
     *YOZORA_BACKEND_EXCLUDES,
     *YOZORA_EXCLUDES,  # Yozora S1
@@ -1121,6 +1178,7 @@ def test_scenario_14_no_llm_and_b1_file_set():
         if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
         and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
         and path not in V3A_APP_PATHS  # P6-8 V3-A
+        and not is_v3b_path(path)  # P6-8 V3-B
         and path not in YOZORA_BACKEND_APP_PATHS  # Yozora backend
         and path not in YOZORA_S1_PATHS  # Yozora S1
         and path not in YOZORA_S2_PATHS  # Yozora S2

@@ -35,6 +35,7 @@ P6_8_DOCUMENT_KEYS = {
     "schema_version", "kind", "snapshot", "firm_name", "company_name", "engagement_name",
     "assessment_id", "frameworks", "basis", "release", "summary", "top_risks", "roadmap",
     "not_assessed", "framework_sections", "sign_off", "appendices", "source",
+    "observations", "initiatives", "status_board", "severity_dashboard", "takeaways", "board_asks", "theme",
 }
 ISO_OUTCOMES = {
     "ISO.A5.1": ("compliant", "low"),
@@ -62,8 +63,8 @@ def _fixture(db, http, gate, monkeypatch, frameworks=("dpdpa", "iso27001")):
     return assessment, conclusions
 
 
-def test_scenario_1_document_schema_v2_and_soa_rows_cover_every_annex_a_control(db, http, gate, monkeypatch):
-    """D-P6-9-B/E: schema v2 adds `soa` and `prior_period`; one SoA row per Annex A control, in pack order."""
+def test_scenario_1_document_schema_v3_and_soa_rows_cover_every_annex_a_control(db, http, gate, monkeypatch):
+    """D-P6-9-B/E: schema v3 retains `soa` and `prior_period`; XLSX carries every Annex A control."""
     soa = _soa()
     board = module("app.services.board_report")
     assessment, _ = _fixture(db, http, gate, monkeypatch)
@@ -236,7 +237,7 @@ def test_scenario_3_soa_page_and_save_route(db, http, gate, monkeypatch):
 
 
 def test_scenario_4_soa_is_conditional_on_iso_and_rendered_as_appendix_d(db, http, gate, monkeypatch):
-    """D-P6-9-B/G: no SoA without ISO; with ISO it is the last section, 'Appendix D', one row per control."""
+    """D-P6-9-B/G: no SoA without ISO; the deck carries its summary and excluded controls."""
     board = module("app.services.board_report")
     dpdpa_only, _ = released_assessment(
         db, http, gate, monkeypatch, new_engagement(db), frameworks=["dpdpa"],
@@ -247,14 +248,15 @@ def test_scenario_4_soa_is_conditional_on_iso_and_rendered_as_appendix_d(db, htt
     document = build(db, dpdpa_only)
     assert document["soa"] is None
     html = board.render_html(document, embed_fonts=False)
-    assert 'data-section="soa"' not in html and "Statement of Applicability" not in html
+    assert 'data-slide="evidence-and-soa"' in html
+    assert "Statement of Applicability" not in html
 
     assessment, _ = _fixture(db, http, gate, monkeypatch)
     html = board.render_html(build(db, assessment), embed_fonts=False)
-    assert "<h2>Appendix D: Statement of Applicability</h2>" in html
-    assert html.index('data-section="evidence-register"') < html.index('data-section="soa"')
-    assert html.count("data-soa-control=") == 93
-    assert "Justification not recorded" in html
+    section = html[html.index('data-slide="evidence-and-soa"'):]
+    assert "Statement of Applicability" in section
+    assert "Applicable 4 · Excluded 1 · Not determined 88" in section
+    assert "Annex A.5.5" in section
     style = html[html.index("<style>"):html.index("</style>")]
     assert "ISO.A5" not in style
 
