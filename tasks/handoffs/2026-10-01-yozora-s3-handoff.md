@@ -204,7 +204,13 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ### Screenshot gate
 
-Attempted in this environment, but no gate percentages were obtained. The mockup and app server binds on ports 8791/8792/8793 were denied with `operation not permitted`, and the fallback Chromium launch was denied with `MachPort Permission denied (1100)`. Therefore `domcmp.py` and `gate2.py` are `N/A` for every screen/state/theme/width; the orchestrator must rerun the browser gate. The source fixes were derived from the mockup HTML/CSS and the supplied domcmp findings.
+Orchestrator run, 4 Oct 2026, content region (right of sidebar, below top bar) against the approved mockups, light and dark, 1440 and 1024 (sign-in also 390): **86 of 90 captures pass** at 0.4% with no changed region over 40x40. Worst passing value 0.18% (Home empty at 1024). Most states are 0.000%.
+
+The four that fail are `settings-default` and `settings-saved`, light only, at 1440 and 1024: a 44x42 px region (0.01 to 0.03%) on the Midnight swatch. The mockup draws Midnight without the selected ring in its default state because its radios share one `name` across hidden state blocks, so only the last block's choice counts; the app correctly shows the stored accent as selected. Accepted as a mockup artifact, not fixed. Dark passes.
+
+The shell (sidebar, nav rows, account tile) is compared by `tests/visual/test_shell_visual.py` with a clip, not in these captures. Gate tooling lives outside the repo (`/private/tmp/claude-501/gate2.py`).
+
+Not covered by a baseline: `/review` has no mockup (built from the table and empty-state macros); the whole-row click on tables in the mockup is not implemented (rows contain real links).
 
 ### Tests and compatibility updates
 
