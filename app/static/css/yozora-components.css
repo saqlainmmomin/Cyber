@@ -29,9 +29,9 @@ svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .btn.primary:active{background-image:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.22),inset 0 0 0 1px rgba(0,0,0,.12)}
 .btn.primary:focus-visible{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
 /* secondary */
-.btn.secondary{color:var(--text);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 2px rgba(20,24,44,.05)}
-.btn.secondary:hover{background:#FFFFFF;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 22%,transparent),0 1px 3px rgba(20,24,44,.08)}
-.btn.secondary:active{background:#F3F4F8;box-shadow:inset 0 0 0 1px var(--line-strong),inset 0 1px 2px rgba(20,24,44,.06)}
+.btn.secondary{color:var(--text);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-control),0 1px 2px rgba(20,24,44,.05)}
+.btn.secondary:hover{background:#FFFFFF;box-shadow:inset 0 0 0 1px var(--line-control),0 1px 3px rgba(20,24,44,.08)}
+.btn.secondary:active{background:#F3F4F8;box-shadow:inset 0 0 0 1px var(--line-control),inset 0 1px 2px rgba(20,24,44,.06)}
 [data-theme=dark] .btn.secondary{background:rgba(255,255,255,.07)}
 [data-theme=dark] .btn.secondary:hover{background:rgba(255,255,255,.11)}
 [data-theme=dark] .btn.secondary:active{background:rgba(255,255,255,.05)}
@@ -294,7 +294,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:1px 2px;box-
 .field textarea{min-height:76px;line-height:1.5}
 .field[aria-disabled=true]{opacity:.45;pointer-events:none}
 .choice{display:flex;align-items:center;gap:10px;font-size:var(--t-sm);color:var(--text)}
-.choice input{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;border-radius:var(--r-xs);background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px var(--line-strong);display:grid;place-items:center;cursor:pointer;transition:background-color .14s var(--ease),box-shadow .14s var(--ease)}
+.choice input{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;border-radius:var(--r-xs);background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px var(--line-control);display:grid;place-items:center;cursor:pointer;transition:background-color .14s var(--ease),box-shadow .14s var(--ease)}
 [data-theme=dark] .choice input{background:rgba(255,255,255,.06)}
 .choice input[type=radio]{border-radius:var(--r-full)}
 .choice input:checked{background:var(--accent);box-shadow:none}
@@ -302,9 +302,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:1px 2px;box-
 .choice input[type=radio]:checked::after{width:6px;height:6px;border:0;border-radius:var(--r-full);background:var(--on-accent);transform:none}
 .choice input:focus-visible{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
 .choice input:disabled{opacity:.45}
-.choice input.switch,.switch{appearance:none;-webkit-appearance:none;width:34px;height:20px;margin:0;border-radius:var(--r-full);background:var(--track);box-shadow:none;display:block;position:relative;cursor:pointer;transition:background-color .14s var(--ease)}
+.choice input.switch,.switch{appearance:none;-webkit-appearance:none;width:34px;height:20px;margin:0;border-radius:var(--r-full);background:var(--track);box-shadow:inset 0 0 0 1px var(--line-control);display:block;position:relative;cursor:pointer;transition:background-color .14s var(--ease)}
 .choice input.switch::after,.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:var(--r-full);background:#fff;box-shadow:0 1px 2px rgba(20,24,44,.25);transition:transform .14s var(--ease)}
-.choice input.switch:checked,.switch:checked{background:var(--accent)}
+.choice input.switch:checked,.switch:checked{background:var(--accent);box-shadow:inset 0 0 0 1px var(--line-control)}
 .choice input.switch:checked::after,.switch:checked::after{transform:translateX(14px);width:16px;height:16px;border:0;background:#fff}
 .switch:focus-visible{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
 
@@ -371,5 +371,5 @@ details.disclose>summary:focus-visible{box-shadow:0 0 0 2px var(--accent-ring)}
 [data-theme=dark] .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2396A1B3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
 @media (max-width:1100px){.hide-md{display:none}}
 .field input[type=file]{padding:6px 0;cursor:pointer;color:var(--text-2)}
-.field input[type=file]::file-selector-button{margin-right:var(--s-3);height:24px;padding:0 12px;border:0;border-radius:var(--r-full);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-strong);font:500 var(--t-xs) var(--font);color:var(--text);cursor:pointer}
+.field input[type=file]::file-selector-button{margin-right:var(--s-3);height:24px;padding:0 12px;border:0;border-radius:var(--r-full);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-control);font:500 var(--t-xs) var(--font);color:var(--text);cursor:pointer}
 [data-theme=dark] .field input[type=file]::file-selector-button{background:rgba(255,255,255,.1)}

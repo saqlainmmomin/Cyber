@@ -1,0 +1,145 @@
+{# Small Yozora components. Every macro takes its display data explicitly. #}
+
+{% macro icon(symbol, label="", style="") -%}
+<svg class="i"{% if label %} aria-label="{{ label }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}><use href="#i-{{ symbol }}"/></svg>
+{%- endmacro %}
+
+{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false) -%}
+{% set classes = "btn " ~ variant %}
+{% if size %}{% set classes = classes ~ " " ~ size %}{% endif %}
+{% if lead %}{% set classes = classes ~ " lead" %}{% endif %}
+{% if icon_id and not label %}{% set classes = classes ~ " icon" %}{% endif %}
+{% if loading %}{% set classes = classes ~ " loading" %}{% endif %}
+{% if touch %}{% set classes = classes ~ " touch" %}{% endif %}
+<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
+  {% if icon_id %}{{ icon(icon_id) }}{% endif %}{{ label }}{% if hint %}<kbd>{{ hint }}</kbd>{% endif %}
+</button>
+{%- endmacro %}
+
+{% macro link_button(label, href, variant="secondary", size="", icon_id="", lead=false, aria_label="") -%}
+{% set classes = "btn " ~ variant %}
+{% if size %}{% set classes = classes ~ " " ~ size %}{% endif %}
+{% if lead %}{% set classes = classes ~ " lead" %}{% endif %}
+<a class="{{ classes }}" href="{{ href }}"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}>{% if icon_id %}{{ icon(icon_id) }}{% endif %}{{ label }}</a>
+{%- endmacro %}
+
+{% macro pill(label, tone="neutral") -%}
+{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} %}
+<span class="pill {{ tones.get(tone, 'c-neutral') }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro chip(label) -%}<span class="chip">{{ label }}</span>{%- endmacro %}
+
+{% macro status(label, state="open", tone="") -%}
+{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} %}
+{% if tone %}<span class="status"><span class="dot {{ tones.get(tone, 'c-neutral') }}"></span>{{ label }}</span>
+{% elif state == "in_progress" %}<span class="status"><span class="st prog"></span>{{ label }}</span>
+{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro field(label="", name="", value="", kind="input", placeholder="", options=[], state="", help_text="", error="", icon_id="", touch=false, disabled=false, required=false, input_type="text") -%}
+{% if label %}<label class="label"{% if name %} for="{{ name }}"{% endif %}>{{ label }}</label>{% endif %}
+{% set classes = "field" %}
+{% if state %}{% set classes = classes ~ " " ~ state %}{% endif %}
+{% if kind == "textarea" %}{% set classes = classes ~ " area" %}{% endif %}
+{% if touch %}{% set classes = classes ~ " touch" %}{% endif %}
+<label class="{{ classes }}"{% if disabled %} aria-disabled="true"{% endif %}>
+  {% if icon_id %}{{ icon(icon_id) }}{% endif %}
+  {% if kind == "select" %}<select{% if name %} name="{{ name }}" id="{{ name }}"{% endif %}{% if disabled %} disabled{% endif %}{% if required %} required{% endif %}>{% for option in options %}<option value="{{ option.value if option.value is defined else option }}"{% if (option.value if option.value is defined else option) == value %} selected{% endif %}>{{ option.label if option.label is defined else option }}</option>{% endfor %}</select>
+  {% elif kind == "textarea" %}<textarea{% if name %} name="{{ name }}" id="{{ name }}"{% endif %} placeholder="{{ placeholder }}"{% if disabled %} disabled{% endif %}{% if required %} required{% endif %}>{{ value }}</textarea>
+  {% else %}<input type="{{ input_type if kind != 'date' and kind != 'file' else kind }}"{% if name %} name="{{ name }}" id="{{ name }}"{% endif %}{% if value and kind != 'file' %} value="{{ value }}"{% endif %}{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if disabled %} disabled{% endif %}{% if required %} required{% endif %}>
+  {% endif %}
+</label>
+{% if error %}<p class="err">{{ error }}</p>{% elif help_text %}<p class="help">{{ help_text }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro checkbox(label, name="", checked=false, disabled=false, value="on") -%}
+<label class="choice"><input type="checkbox"{% if name %} name="{{ name }}"{% endif %} value="{{ value }}"{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</label>
+{%- endmacro %}
+
+{% macro radio(label, name, value, checked=false, disabled=false) -%}
+<label class="choice"><input type="radio" name="{{ name }}" value="{{ value }}"{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</label>
+{%- endmacro %}
+
+{% macro switch(label, name="", checked=false, disabled=false) -%}
+<label class="choice"><input type="checkbox" class="switch"{% if name %} name="{{ name }}"{% endif %}{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</label>
+{%- endmacro %}
+
+{% macro empty_state(title, body, action_label="", action_href="", icon_id="folder", tall=false, style="") -%}
+{% set classes = "glass empty" %}{% if tall %}{% set classes = classes ~ " tall" %}{% endif %}
+<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id, "", "width:24px;height:24px;color:var(--muted)") }}<h3>{{ title }}</h3><p>{{ body }}</p>{% if action_label %}{{ link_button(action_label, action_href, "primary") }}{% endif %}</div>
+{%- endmacro %}
+
+{% macro skeleton(width="100%", shape="line", margin_top="") -%}
+{% set classes = "skel" %}{% if shape != "line" %}{% set classes = classes ~ " " ~ shape %}{% endif %}
+<span class="{{ classes }}" style="width:{{ width }}{% if margin_top %};margin-top:{{ margin_top }}{% endif %}"></span>
+{%- endmacro %}
+
+{% macro alert(title, body="", tone="medium", icon_id="alert", extra_class="", style="") -%}
+{% set tones = {"medium": "c-medium", "noncompliant": "c-non", "accent": "c-accent", "info": "c-accent"} %}
+<div class="alert {{ tones.get(tone, 'c-medium') }}{% if extra_class %} {{ extra_class }}{% endif %}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id) }}<div><b>{{ title }}</b>{% if body %}{{ body }}{% endif %}</div></div>
+{%- endmacro %}
+
+{% macro progress_bar(percent=0, indeterminate=false, style="") -%}
+<div class="progress-bar{% if indeterminate %} indeterminate{% endif %}"{% if style %} style="{{ style }}"{% endif %}><i{% if not indeterminate %} style="width:{{ percent }}%"{% endif %}></i></div>
+{%- endmacro %}
+
+{% macro key_value(items, style="") -%}
+<dl class="kv"{% if style %} style="{{ style }}"{% endif %}>{% for item in items %}<div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>{% endfor %}</dl>
+{%- endmacro %}
+
+{% macro stat(label, value, surface=true, style="") -%}
+{% set classes = "stat" %}{% if surface %}{% set classes = "glass " ~ classes %}{% endif %}
+<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}><span class="l">{{ label }}</span><span class="v">{{ value }}</span></div>
+{%- endmacro %}
+
+{% macro ring(score, label="") -%}
+{% set value = score|float %}<div class="ring"><svg viewBox="0 0 100 100" aria-label="{{ label or score ~ ' percent' }}"><circle class="tr" cx="50" cy="50" r="42"></circle><circle class="val" cx="50" cy="50" r="42" stroke-dasharray="{{ value * 2.64 }} 264"></circle></svg><b>{{ score }}</b></div>
+{%- endmacro %}
+
+{% macro distribution(items) -%}
+<div class="dist">{% for item in items %}<div><span class="dot {{ {'critical':'c-critical','high':'c-high','medium':'c-medium','low':'c-low','ok':'c-ok','part':'c-part','non':'c-non','insuf':'c-insuf','accent':'c-accent','neutral':'c-neutral'}.get(item.tone, 'c-neutral') }}"></span><span>{{ item.label }}</span><b>{{ item.value }}</b></div>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro toast(message, tone="success", action_label="") -%}
+{% set classes = "toast" %}{% if tone == "error" %}{% set classes = classes ~ " bad" %}{% elif tone == "information" %}{% set classes = classes ~ " info" %}{% endif %}
+<div class="{{ classes }}">{{ icon("check" if tone == "success" else "alert", "") }}<span class="msg grow">{{ message }}</span>{% if action_label %}{{ button(action_label, "ghost", "sm") }}{% endif %}</div>
+{%- endmacro %}
+
+{% macro toast_container(items) -%}<div class="toasts">{% for item in items %}{{ toast(item.message, item.tone, item.action_label if item.action_label is defined else "") }}{% endfor %}</div>{%- endmacro %}
+
+{% macro modal(title, body, cancel_label="Cancel", confirm_label="Delete", destructive=true) -%}
+<div class="modal"><h2>{{ title }}</h2><p>{{ body }}</p><div class="foot">{{ button(cancel_label, "ghost") }}{{ button(confirm_label, "destructive" if destructive else "primary") }}</div></div>
+{%- endmacro %}
+
+{% macro menu(items, open=false, heading="") -%}
+<div class="menu{% if open %} open{% endif %}" role="menu">{% if heading %}<div class="gh">{{ heading }}</div>{% endif %}{% for item in items %}{% if item.href is defined %}<a href="{{ item.href }}" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</a>{% else %}<button class="mi{% if item.bad is defined and item.bad %} bad{% endif %}" type="button" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</button>{% endif %}{% endfor %}</div>
+{%- endmacro %}
+
+{% macro code_block(filename, code, copy_label="Copy", style="") -%}
+<div class="code"{% if style %} style="{{ style }}"{% endif %}><div class="code-head">{{ filename }}{{ button(copy_label, "ghost", "sm") }}</div><pre>{{ code }}</pre></div>
+{%- endmacro %}
+
+{% macro disclosure(summary, body="", open=false) -%}
+<details class="disclose"{% if open %} open{% endif %}><summary>{{ summary }}</summary>{% if body %}<p class="help">{{ body }}</p>{% endif %}</details>
+{%- endmacro %}
+
+{% macro tooltip(label, tip, aria_label="") -%}<span data-tip="{{ tip }}"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}>{{ label }}</span>{%- endmacro %}
+
+{% macro swatches(items, selected) -%}
+<div class="swatches">{% for item in items %}<label><input type="radio" name="accent" value="{{ item.value }}"{% if item.value == selected %} checked{% endif %}><i style="--accent:{{ item.color }}">{{ icon("check") }}</i><span>{{ item.label }}</span></label>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro drop(title, body="", action_label="Choose file", icon_id="folder") -%}
+<div class="drop"><span class="tile">{{ icon(icon_id) }}</span><span class="txt"><b>{{ title }}</b>{% if body %}<span class="help">{{ body }}</span>{% endif %}</span>{{ button(action_label, "secondary", "sm", "upload", false) }}</div>
+{%- endmacro %}
+
+{% macro request_marker(received=false) -%}<span class="mk{% if received %} on{% endif %}">{{ icon("check") }}</span>{%- endmacro %}
+
+{% macro request_picker(items) -%}
+<div class="req-picks">{% for item in items %}<label class="choice req-pick"><input type="checkbox"{% if item.checked %} checked{% endif %}><span class="grow"><b>{{ item.label }}</b>{% if item.help %}<span class="help">{{ item.help }}</span>{% endif %}</span></label>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro request_card(contact, email, status_label, received, total, expires, items) -%}
+<div class="req solid"><div class="req-head"><div class="grow"><b>{{ contact }}</b><div class="req-meta"><span>{{ email }}</span>{{ chip("From RFI version 2") }}</div></div>{{ pill(status_label, "accent") }}</div><div class="req-prog"><span class="num">{{ received }} of {{ total }} received</span>{{ progress_bar((received / total * 100) if total else 0) }}</div><ul class="req-items">{% for item in items %}<li>{{ request_marker(item.received) }}<div class="body"><b>{{ item.title }}</b><span>{% if item.href %}<a href="{{ item.href }}">{{ item.detail }}</a>{% else %}{{ item.detail }}{% endif %}</span></div>{% if item.action %}<div class="end">{{ button(item.action, "secondary", "sm", touch=true) }}</div>{% endif %}</li>{% endfor %}</ul><div class="req-foot"><span>Expires {{ expires }}</span>{{ button("Revoke", "danger", "sm") }}</div></div>
+{%- endmacro %}

@@ -1610,6 +1610,7 @@ def test_scenario_16_load_source_documents(db, monkeypatch):
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES  # Yozora per-PR allowance
 
 PROTECTED_PATHS = [
     "app/services/claude_analyzer.py", "app/services/desk_review.py",
@@ -1691,6 +1692,7 @@ PROTECTED_PATHS = [
     *V3A_EXCLUDES,
     # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
     *YOZORA_BACKEND_EXCLUDES,
+    *YOZORA_EXCLUDES,  # Yozora per-PR allowance
 ]
 
 # P6-3b adds the package's first and only importer outside it: the v2

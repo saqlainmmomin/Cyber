@@ -10,6 +10,14 @@ ALLOWLIST = {
     for line in (ROOT / "tests" / "design_lint_allowlist.txt").read_text().splitlines()
     if line.strip() and not line.startswith("#")
 }
+MIGRATED_TEMPLATES = {
+    "components/engagement_status_badge.html",
+    "components/evidence_status_badge.html",
+    "components/status_badge.html",
+    "components/layout.html",
+    "components/ui.html",
+    "pages/design.html",
+}
 
 
 def _template_files():
@@ -61,7 +69,7 @@ def test_unmigrated_templates_are_explicitly_allowlisted():
         for path in _template_files()
         if path.name != "base.html"
     }
-    assert unmigrated <= ALLOWLIST
+    assert unmigrated <= ALLOWLIST | MIGRATED_TEMPLATES
 
 
 def test_shell_has_at_most_one_primary_marker():

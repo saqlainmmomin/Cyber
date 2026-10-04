@@ -35,7 +35,7 @@ Binding spec: `screens/IA-SPEC.md`; picture: `flow-map.html`. Summary:
 
 ## Tokens
 
-Canvas gradient (top, mid at 52%, bottom) light and dark; surfaces (`--glass`, `--glass-strong`, `--solid`, `--glass-edge`); lines and states (`--line`, `--hover`, `--press`, `--track`); text (`--text`, `--text-2`, `--muted`); elevation (`--e-1` card, `--e-2` raised, `--e-3` popover/drawer); fixed semantic colours; radius (`--r-xs` 5, `--r-sm` 8, `--r-md` 10, `--r-lg` 16, `--r-full`); spacing 4/8/12/16/20/24/32/40/48/64; type 12/13/14/16/20/28 (40 reserved for framework scores, not yet in the file: add `--t-score` before use); accent set. Inter 400/500/600, tabular figures for numbers, vendored under `/static/fonts`, no CDN. Motion 140 ms colour and shadow, 80 ms press, none under `prefers-reduced-motion` (enforced in the stylesheet).
+Canvas gradient (top, mid at 52%, bottom) light and dark; surfaces (`--glass`, `--glass-strong`, `--solid`, `--glass-edge`); lines and states (`--line`, `--line-control`, `--hover`, `--press`, `--track`); text (`--text`, `--text-2`, `--muted`); elevation (`--e-1` card, `--e-2` raised, `--e-3` popover/drawer); fixed semantic colours; radius (`--r-xs` 5, `--r-sm` 8, `--r-md` 10, `--r-lg` 16, `--r-full`); spacing 4/8/12/16/20/24/32/40/48/64; type 12/13/14/16/20/28 (40 reserved for framework scores, not yet in the file: add `--t-score` before use); accent set. Inter 400/500/600, tabular figures for numbers, vendored under `/static/fonts`, no CDN. Motion 140 ms colour and shadow, 80 ms press, none under `prefers-reduced-motion` (enforced in the stylesheet).
 
 Deviation from the kickoff table: the mockup uses radius 5 and 8 where the kickoff said 4 and 6. The file is canonical, so 5 and 8 stand.
 
@@ -119,7 +119,7 @@ Contrast measured 2026-10-01 against the nearest solid surface (light panel appr
 
 Measured 3 Oct 2026 for the request-card components (`.req`, `.mk`): item text and links reuse measured pairs (muted 5.9, accent text 9.8 on Midnight, on-accent on accent 11.1). The `.mk.on` marker is on-accent on accent, so it is covered by the per-accent upload rule. Accent text on the light panel for the preset accents: graphite 13.9, azure 5.0, cobalt 6.0, midnight 9.8, teal 5.2, violet 5.8, plum 7.0, slate 7.3 (all at least 4.5). Dark muted on the dark panel `#141824` is 6.8.
 
-Known gap, for Saqlain: the outline of unticked `.mk`, `.choice` checkboxes and radios and `.drop` uses `--line-strong`, about 1.3:1 on the light panel (1.5:1 dark), and field outlines use the lighter `--line`. WCAG 1.4.11 asks 3:1 for the boundary of a control. State is also carried by text beside the marker and by fill when ticked, but the empty control is hard to see. Not changed here; see Results.
+Resolved 3 Oct 2026: control boundaries use the dedicated `--line-control` token. The light value composites to about 3.2:1 against the light panel and the dark value to about 3.3:1 against the dark panel. This covers secondary button outlines, checkboxes, radios, switches, swatches, file controls, drop zones and unticked request markers; `--line-strong` remains unchanged for non-control keycaps, chips, citations and code blocks, and field outlines continue to use `--line`.
 
 ## Wordmark and favicon
 
