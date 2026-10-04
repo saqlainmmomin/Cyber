@@ -335,6 +335,50 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
 
 
+DETAIL_SHA256 = "9f2c41d7a0b85e63c1d4f7a29b30e8156ad0c7f3e2b49a817c6d5e0f3a1b2c48"
+
+
+def _seed_detail_state(db: Session, state: str) -> None:
+    """Shape the Privacy notice record for the evidence detail states.
+
+    current: three versions, mapped to three requirements; quarantined: the newest
+    version is still being scanned (the item and v2 stay active, as in receive_version);
+    unused: the same file with no requirement mappings.
+    """
+    evidence = db.get(Evidence, "meridian-evidence-000")
+    evidence.uploaded_by = "consultant:Aarav Mehta"
+    evidence.document_category = "privacy_policy"
+    evidence.file_hash_sha256 = DETAIL_SHA256
+    history = (
+        (1, datetime(2025, 11, 3, 12, tzinfo=timezone.utc), 2_100_000, "Original upload"),
+        (2, datetime(2026, 1, 21, 12, tzinfo=timezone.utc), 2_300_000, "Updated retention periods"),
+        (3, datetime(2026, 3, 12, 12, tzinfo=timezone.utc), 2_400_000, "Added grievance officer details"),
+    )
+    for number, created_at, size, reason in history:
+        version = db.get(EvidenceVersion, f"version-{evidence.id}-{number}")
+        version.original_filename = evidence.original_filename
+        version.created_at = created_at
+        version.file_size_bytes = size
+        version.change_reason = reason
+        if number == 1:
+            version.file_hash_sha256 = DETAIL_SHA256
+    if state == "quarantined":
+        # A new version is held in quarantine; the prior version stays active until it clears.
+        db.get(EvidenceVersion, f"version-{evidence.id}-3").status = "quarantined"
+        db.get(EvidenceVersion, f"version-{evidence.id}-2").status = "active"
+    db.query(EvidenceUse).filter(EvidenceUse.evidence_id == evidence.id).delete()
+    if state != "unused":
+        mapped_at = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
+        db.add_all(
+            [
+                EvidenceUse(id="use-detail-notice", evidence_id=evidence.id, assessment_id="assessment-meridian-head", framework_id="dpdpa", requirement_id="CH2.NOTICE.1", relevance="primary", created_at=mapped_at),
+                EvidenceUse(id="use-detail-grievance", evidence_id=evidence.id, assessment_id="assessment-meridian-head", framework_id="dpdpa", requirement_id="CH3.GRIEVANCE.1", relevance="primary", created_at=mapped_at + timedelta(minutes=1)),
+                EvidenceUse(id="use-detail-policy", evidence_id=evidence.id, assessment_id="assessment-meridian-head", framework_id="iso27001", requirement_id="ISO.A5.1", relevance="supporting", created_at=mapped_at + timedelta(minutes=2)),
+            ]
+        )
+    db.commit()
+
+
 def _stamp_head(database_url: str) -> None:
     config = Config(str(REPO_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(REPO_ROOT / "alembic"))
@@ -375,7 +419,7 @@ def _seed_aws_screen(db: Session, data: dict[str, object]) -> None:
     db.commit()
 
 
-def seed(database_path: Path, screen: str | None = None) -> dict[str, object]:
+def seed(database_path: Path, screen: str | None = None, state: str | None = None) -> dict[str, object]:
     if database_path.exists():
         database_path.unlink()
     database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -388,6 +432,8 @@ def seed(database_path: Path, screen: str | None = None) -> dict[str, object]:
         data = _seed_inventory(db)
         if screen == "aws_evidence":
             _seed_aws_screen(db, data)
+        if screen == "evidence_detail":
+            _seed_detail_state(db, state or SCREEN_STATES[screen][0])
     engine.dispose()
     return data
 
@@ -400,7 +446,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.state and args.state not in SCREEN_STATES[args.screen]:
         parser.error(f"state {args.state!r} is not valid for {args.screen}")
-    data = seed(args.database, args.screen)
+    data = seed(args.database, args.screen, args.state)
     manifest = {
         "database": str(args.database),
         "frozen_now": FROZEN_NOW.isoformat(),

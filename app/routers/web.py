@@ -1445,6 +1445,23 @@ def evidence_detail_page(
         (use_assessments.get(item["assessment_id"]) for item in evidence.get("uses", []) if item.get("assessment_id")),
         None,
     )
+    from app.frameworks.registry import FrameworkRegistry
+    from app.models.magic_link import MagicLink
+
+    requirement_titles = {}
+    for item in evidence.get("uses", []):
+        framework = FrameworkRegistry.get_or_none(item["framework_id"])
+        control = framework.get_control(item["requirement_id"]) if framework else None
+        if control is not None:
+            requirement_titles[(item["framework_id"], item["requirement_id"])] = control.title
+    origin = evidence_inventory.origin_of(evidence["uploaded_by"])
+    uploader_name = None
+    if origin == "client_link":
+        link = db.get(MagicLink, evidence["uploaded_by"].removeprefix(evidence_inventory.CLIENT_LINK_PREFIX))
+        uploader_name = link.contact_name if link else None
+    elif evidence["uploaded_by"].startswith("consultant:"):
+        uploader_name = evidence["uploaded_by"].removeprefix("consultant:") or None
+    span_version = evidence["current_version"] or (evidence["versions"][-1] if evidence["versions"] else None)
     return templates.TemplateResponse(
         "pages/evidence_detail.html",
         {
@@ -1455,6 +1472,11 @@ def evidence_detail_page(
             "originating_assessment": originating_assessment,
             "use_assessments": use_assessments,
             "action_assessment": action_assessment,
+            "requirement_titles": requirement_titles,
+            "source_label": evidence_inventory.SOURCE_LABELS[origin],
+            "uploader_name": uploader_name,
+            "type_label": evidence_inventory.type_label(evidence["mime_type"], evidence["original_filename"], origin),
+            "span_version": span_version,
         },
     )
 

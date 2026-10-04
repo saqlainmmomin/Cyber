@@ -51,6 +51,8 @@ def _nav_section(path: str) -> str:
         return "engagements"
     if path.startswith("/review"):
         return "review"
+    if path.startswith(("/evidence/", "/evidence-versions/")):
+        return "engagements"  # an item's detail and cited text sit inside its engagement
     if path.startswith("/evidence"):
         return "evidence"
     if path.startswith("/reports"):
