@@ -387,6 +387,7 @@ def _seed_detail_state(db: Session, state: str) -> None:
                 EvidenceUse(id="use-detail-policy", evidence_id=evidence.id, assessment_id="assessment-meridian-head", framework_id="iso27001", requirement_id="ISO.A5.1", relevance="supporting", created_at=mapped_at + timedelta(minutes=2)),
             ]
         )
+    db.commit()
 
 
 def _apply_screen_state(db: Session, screen: str, state: str | None) -> None:
