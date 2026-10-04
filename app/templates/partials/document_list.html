@@ -22,7 +22,7 @@
       <tr data-evidence-id="{{ row.evidence_id }}">
         <td>
           <a class="t-title" href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a>
-          <div class="t-sub">{{ row.type_label }} · {% if row.size_bytes >= 1000000 %}{{ "%.1f"|format(row.size_bytes / 1000000) }} MB{% else %}{{ "%.0f"|format(row.size_bytes / 1000) }} KB{% endif %}</div>
+          <div class="t-sub">{{ row.type_label }} · {% if row.size_bytes >= 1000000 %}{{ "%.1f"|format(row.size_bytes / 1000000) }} MB{% elif row.size_bytes >= 500 %}{{ "%.0f"|format(row.size_bytes / 1000) }} KB{% else %}{{ row.size_bytes }} bytes{% endif %}</div>
           <div class="t-sub show-sm">{{ row.source_label }}{% if source_detail %} · {{ source_detail }}{% endif %}</div>
         </td>
         {% if cross_engagement %}<td class="hide-sm" style="white-space:nowrap"><a class="t-title" href="/engagements/{{ row.engagement_id }}/evidence">{{ row.engagement_name }}</a><div class="t-sub">{{ row.client_name }}</div></td>{% endif %}

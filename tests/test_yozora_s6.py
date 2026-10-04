@@ -61,6 +61,8 @@ def test_inventory_and_documents_redirect_are_http_surfaces(db, http, monkeypatc
     assert "Privacy Policy.pdf" in uploaded.text
     assert 'data-evidence-id=' in uploaded.text
     evidence = db.query(Evidence).one()
+    assert evidence.file_size_bytes < 500
+    assert f"· {evidence.file_size_bytes} bytes</div>" in uploaded.text and "· 0 KB" not in uploaded.text
 
     inventory = http.get(f"/engagements/{engagement.id}/evidence")
     assert inventory.status_code == 200
@@ -131,6 +133,8 @@ def test_evidence_status_badge_keeps_service_labels_and_legacy_rows():
         ("legacy", "Legacy (not migrated)"),
     ):
         assert label in templates.get_template("components/evidence_status_badge.html").render(status=status)
+    # "Out of date" uses the medium tone everywhere (inventory, AWS, detail, this macro).
+    assert "c-medium" in templates.get_template("components/evidence_status_badge.html").render(status="invalidated")
 
 
 def test_unlinked_documents_redirects_to_assessment_overview(db, http):

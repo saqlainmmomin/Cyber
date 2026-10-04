@@ -30,7 +30,7 @@
 
 {% macro evidence_status(status) -%}
 {% if status != "archived" and status in EVIDENCE_STATUS_LABELS %}
-  {{ pill(EVIDENCE_STATUS_LABELS[status], "accent" if status == "quarantined" else "ok" if status == "active" else "non") }}
+  {{ pill(EVIDENCE_STATUS_LABELS[status], "accent" if status == "quarantined" else "ok" if status == "active" else "medium" if status == "invalidated" else "non") }}
 {% elif status == "superseded" %}
   {{ pill("Superseded", "neutral") }}
 {% elif status == "legacy" %}
@@ -127,7 +127,7 @@
 {%- endmacro %}
 
 {% macro code_block(filename, code, copy_label="Copy", style="", copy_target="") -%}
-<div class="code"{% if style %} style="{{ style }}"{% endif %}><div class="code-head">{{ filename }}{{ button(copy_label, "ghost", "sm", copy_trigger=copy_target) }}</div>{% if copy_target %}<span class="sr-only" data-copy-target="{{ copy_target }}">{{ code }}</span>{% endif %}<pre>{{ code }}</pre></div>
+<div class="code"{% if style %} style="{{ style }}"{% endif %}><div class="code-head">{{ filename }}{{ button(copy_label, "ghost", "sm", copy_trigger=copy_target) }}</div><pre{% if copy_target %} data-copy-target="{{ copy_target }}"{% endif %}>{{ code }}</pre></div>
 {%- endmacro %}
 
 {% macro disclosure(summary, body="", open=false) -%}

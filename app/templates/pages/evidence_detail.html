@@ -2,7 +2,7 @@
 {% from "components/ui.html" import icon, button, chip, status, alert, empty_state %}
 {% macro evidence_dot(state) -%}
 {% if state == "quarantined" %}{{ status(EVIDENCE_STATUS_LABELS[state], "in_progress") }}
-{%- elif state in EVIDENCE_STATUS_LABELS %}{{ status(EVIDENCE_STATUS_LABELS[state], tone="ok" if state == "active" else "non") }}
+{%- elif state in EVIDENCE_STATUS_LABELS %}{{ status(EVIDENCE_STATUS_LABELS[state], tone="ok" if state == "active" else "medium" if state == "invalidated" else "non") }}
 {%- elif state == "superseded" %}{{ status("Superseded", tone="neutral") }}
 {%- elif state == "legacy" %}{{ status("Legacy (not migrated)", tone="neutral") }}
 {%- endif %}
