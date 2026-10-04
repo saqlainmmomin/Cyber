@@ -3,6 +3,8 @@
 **Rewritten:** 2026-10-03 (replaces the 2026-10-01 template). **Owner:** Codex builds; Claude reviews every diff and screenshot before merge; Saqlain merges. **Depends on:** S1 and S2 merged; S5 (assessment shell) and S6 (workpaper seg row) recommended first.
 **Repo:** `/Users/saqlainmomin/dpdpa-gap-tool` (work in your own git worktree of it, one branch per slice, named `codex/yozora-s7-...`). Paths below are relative to your worktree root. The specs below exist on `main` once the docs PR for this series has merged; until then branch from `claude/yozora-slice-handoffs`.
 
+**Orchestrator addenda (4 Oct 2026):** `tasks/handoffs/2026-10-04-yozora-s7-orchestration.md` supersedes the Review inbox and "No mockup" notes below (the inbox shipped in S3; the three screens now have mockups) and sets the S5/S6 dependency order. Where they differ, the addenda win.
+
 **Read first, in this order:** `docs/product/yozora-design-system.md` (the design guide), `docs/product/yozora-fidelity-gate.md`, `docs/product/2026-10-01-app-design-mockups/screens/IA-SPEC.md`, `docs/product/yozora-migration-map.md` (rows for this slice), then the mockups listed under Screens (serve them with `python3 -m http.server` from the repo root and open `/docs/product/2026-10-01-app-design-mockups/screens/<file>?state=<name>` and `&dark`). Background if you need it: `tasks/agent-ownership.md`, `CLAUDE.md`.
 
 ## Goal
