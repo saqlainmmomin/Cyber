@@ -1,16 +1,15 @@
 # CyberAssess implementation tracker
 
-**Updated:** 2026-09-24 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
+**Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
-## Current slice — Yozora S2
+## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
-- [x] Add the debug-only component gallery route and fixture template. **Verified:** direct route contract tests cover development light/dark responses, production/unknown-page 404s, and macro-rendered gallery output.
-- [x] Add explicit UI/layout macros and migrate the three status badges to them. **Verified:** gallery class vocabulary and evidence-status contract tests pass.
-- [x] Add the WCAG control-outline token and regenerate the design CSS copies. **Verified:** `design/tokens_tool.py check`; `--line-control` measures about 3.2:1 light and 3.3:1 dark while `--line-strong` remains unchanged.
-- [x] Add focused macro, gallery-route, badge, and control-token tests. **Verified:** 18 focused tests pass.
-- [x] Run the permitted non-browser verification and record results in the S2 handoff. **Verified:** focused suite and token check pass; full suite remains collection-blocked by the pre-existing missing `boto3` dependency; no server/browser or screenshot gate run per handoff.
+- [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
+- [ ] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
+- [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
+- Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 
 ## Done
 
