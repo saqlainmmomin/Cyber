@@ -1,20 +1,22 @@
 # Yozora: scope and dispatch S7, review it
 
-**Written:** 4 Oct 2026. **For:** a fresh Claude session on Saqlain's machine. **Repo:** `/Users/saqlainmomin/dpdpa-gap-tool` (GitHub `saqlainmmomin/Cyber`). **Merging and pushing are Saqlain's.** You dispatch, review and report; you never merge or enable auto-merge, and you hand Saqlain exact `git push` and `gh pr create` commands.
+**Status: NOT DISPATCHED (4 Oct 2026). Waits on S5 merging and on Saqlain's approval of the S7 mockups.** **For:** a fresh Claude session on Saqlain's machine. **Repo:** `/Users/saqlainmomin/dpdpa-gap-tool` (GitHub `saqlainmmomin/Cyber`). **Merging and pushing are Saqlain's.** You dispatch, review and report; you never merge or enable auto-merge, and you hand Saqlain exact `git push` and `gh pr create` commands.
 
 ## Goal
 Run S7 (analysis states, review queue and cards, conclusions, findings, report tab, release and basis, narrative, board inputs, recommended-action draft) through Codex in its own worktree, review it against the gates, show Saqlain the pixel evidence, and hand back one ready PR. **Done when** the S7 PR is open with Results filled in, reviewed (12-point checklist), screenshots shown (gate 4), and open questions answered or recorded.
 
+**Out of scope:** S5 and S6 (their own orchestration file), S8, S9.
+
 ## Read first
 1. This file.
 2. `tasks/handoffs/2026-10-03-yozora-codex-orchestration.md` (standing procedure: dispatch recipe, 12-point review checklist; if it is still only on the local branch `claude/yozora-slice-handoffs`, read it with `git -C /Users/saqlainmomin/cyberassess-docs show claude/yozora-slice-handoffs:tasks/handoffs/2026-10-03-yozora-codex-orchestration.md`).
-3. `tasks/handoffs/2026-10-04-yozora-s3-s4-orchestration.md` and the S5/S6 orchestration file (`2026-10-04-yozora-s5-s6-orchestration.md`) with their Results: what S3 to S6 actually shipped and which scoping decisions Saqlain changed. Where they differ from this file, theirs win for shared files.
+3. `tasks/handoffs/2026-10-04-yozora-s3-s4-orchestration.md` (dispatch recipe, stall watch, review lessons, gate procedure, constraints; this file reuses them) and `tasks/handoffs/2026-10-04-yozora-s5-s6-orchestration.md` (its collision rules for the assessment page and its Results). Read both Results sections: what S3 to S6 actually shipped and which scoping decisions Saqlain changed. Where they differ from this file on a file S5 or S6 owns, theirs win.
 4. `tasks/handoffs/2026-10-01-yozora-s7-handoff.md` (the slice brief Codex executes) and `tasks/handoffs/2026-10-03-yozora-s7-mockups.md` (the mockup review and Saqlain's answers A to D).
 5. `docs/product/yozora-fidelity-gate.md`, `docs/product/yozora-design-system.md`, memory notes `feedback_codex_dispatch`, `reference_github_repo`, `feedback_subagent_model_budget`.
 
 ## State (4 Oct 2026)
-- `main` is at `0d91638` (S3 #106 and S4 #107 merged on top of S1, S2, backend #99 and the S7 mockups #102). Re-run the full suite once on a clean `origin/main` worktree before reviewing and record the line here.
-- S5 and S6 are being dispatched now from their own orchestration file. S7 has not started.
+- `main` is at `7bc7b00` (S3 #106, S4 #107 and V3-B #101 merged on top of S1, S2, backend #99 and the S7 mockups #102). Baseline full suite: **1450 passed, 30 skipped**. Re-run it on a clean `origin/main` worktree once S5 has merged, since that is the line S7 branches from.
+- S5 and S6 are dispatched in parallel from `2026-10-04-yozora-s5-s6-orchestration.md`, S5 merging first. S7 has not started.
 - **Approval gate.** The status log (`tasks/2026-10-04-status-log.md`) still says the S7 build needs Saqlain's approval of the merged mockups' final state (commit `279d1ef` revisions, now on `main` via #102). Ask him once before dispatch; do not dispatch until he says yes.
 - Already done elsewhere, do not rebuild: `GET /review` (S3, `app/routers/web.py::review_page`, lists assessments whose `assessment_stage.stage` is `review`, `NAV_ITEMS` entry available). Review keycaps are settled (decision 6: leave A, E, X out; only `j` and `k`).
 
@@ -23,12 +25,22 @@ S7 shares templates and view code with both. The slice briefs allow parallel wor
 
 | Shared piece | Owner | What S7 needs from it |
 |---|---|---|
-| `pages/assessment.html` tab row (Overview, Scope, Questionnaire, Review, Report) and `assessment_tabs` macro | S5 | Every S7 page sits under that row; the Report tab content (`partials/report_tab.html`, `#report-content`) is hosted by the S5 shell. |
+| `pages/assessment.html` tab row (Overview, Scope, Questionnaire, Review, Report) and the `assessment_tabs` macro in `layout.html` | S5 | Every S7 page sits under that row; the Report tab content (`partials/report_tab.html`, `#report-content`) is hosted by the S5 shell. |
+| S4's engagement-context block on the Overview (`data-assessment-identity`, the masked AWS link, retention and magic links) | S5, then S8 | Nothing; S7 leaves it alone. |
 | `partials/questionnaire_tab.html` and `#analysis-area` | S5 | The four analysis partials S7 restyles render into it. |
 | `partials/framework_tabs.html` (`#framework-panel`) | S5 | Wraps `partials/framework_panel.html`, which S7 restyles. |
 | Review `.seg` row (Queue, Conclusions, Findings, Workpaper) via the S2 `seg` macro | S6 (workpaper) and S7 (the other three) | Same items, same order, same macro on all four pages. |
 | Evidence detail and cited-span pages, `evidence_inventory.STATUS_LABELS` | S6 | The requirement card links to the span view and shows evidence status words. |
 | `app/routers/web.py`, `tests/yozora_paths.py`, the file-set guards, `PREVIEW_PAGES` in `app/routers/design.py` | all three | Mechanical merges; keep both sides. |
+
+**Collision rules** (same shape as the S5/S6 table; put the S7 side in the prompt):
+
+| Collision | Rule |
+|---|---|
+| Assessment tab row on every S7 page | S7 calls `assessment_tabs(assessment, "review")` or `assessment_tabs(assessment, "report")` plus `seg`, and **does not edit `layout.html`'s tab macros or `pages/assessment.html`**. If the Report tab needs a change in `pages/assessment.html`, stop and ask. |
+| Review seg row shared with S6's workpaper | Both use the S2 `seg` macro with Queue, Conclusions, Findings, Workpaper. Whichever of S6 and S7 merges second matches the first exactly (items, order, hrefs). |
+| `framework_panel.html` inside S5's `framework_tabs.html` | S7 restyles the panel body only and keeps `#framework-panel` and the S5 strip untouched. |
+| `#analysis-area` inside S5's `questionnaire_tab.html` | S7 restyles the four analysis partials only; it does not edit `questionnaire_tab.html`. |
 
 **Order (my scoping default; Saqlain can overrule).** Dispatch S7 only after S5 has merged, so the shell, `#analysis-area` and the framework strip exist. S7 may run in parallel with S6. Whichever of S6 and S7 merges second merges `origin/main` in and makes its Review seg row match the first one's exactly (items, order, `current` keys). If S6 is still open when S7 starts, S7 builds the seg row with the S2 `seg` macro and links Workpaper to the existing `/assessments/{id}/workpaper` route. S8 waits for both S6 and S7.
 
@@ -51,7 +63,7 @@ Update the three `yozora-migration-map.md` rows (`pages/board_inputs.html`, `pag
 
 **5. Finding reference aliases.** The mockups label references `R-xx`; the app emits `F1`, `F2`... (`narrative.finding_refs`, `alias=f"F{index}"`), and those aliases are embedded in the narrative prompt and in the 422 accept error ("[F1, F3]"). Renaming them is a prompt change, which S7 must not make. Default: keep `F` aliases, accept the text diff in the narrative and recommended-action states as a recorded copy exception, and ask Saqlain whether he wants `R-xx` as a separate prompt-owning change.
 
-**6. Pixel gate seed.** As in S3/S4: `design/harness/seed_s7.py`, a deterministic throwaway SQLite seed matching the mockup content (Meridian Ledger Technologies, Loomwire Labs, Kestrel Advisory) for every state in the Screens table, frozen clock. States hard to reach by data (loading, generating, drafting, error) go through `PREVIEW_PAGES` fixtures or the mockup's own `?state=`; Codex lists how each was produced. Reuse `seed_s3.py`/`seed_s4.py` helpers by import if that keeps the file small; do not edit them.
+**6. Pixel gate seed.** As in S3/S4: `design/harness/seed_s7.py`, a deterministic throwaway SQLite seed matching the mockup content (Meridian Ledger Technologies, Loomwire Labs, Kestrel Advisory) for every state in the Screens table, frozen clock. States hard to reach by data (loading, generating, drafting, error) go through `PREVIEW_PAGES` fixtures or the mockup's own `?state=`; Codex lists how each was produced. Like S5 and S6, **import** the builders from `seed_s4.py` (`_client`, `_engagement`, `_assessment`, `SCREEN_STATES`, which already seed findings and actions) and do not edit it or any other slice's seed. Keep S4's 30 Sep clock unless a mockup shows other dates, and say so.
 
 **7. Shell clip.** S7 makes no new nav entry live (Review already is), so `tests/visual/test_shell_visual.py` needs no widening unless the assessment shell clip from S5 misses the Review or Report seg rows; extend it to cover them if so.
 
@@ -73,7 +85,7 @@ nohup codex exec -C /Users/saqlainmomin/cyberassess-yozora-s7 -m gpt-5.6-luna -c
 ```
 Prompt:
 
-> Read tasks/handoffs/2026-10-01-yozora-s7-handoff.md and execute it. Write your results to the Results section of that file. Addenda from the orchestrator (see tasks/handoffs/2026-10-04-yozora-s7-orchestration.md, Scoping decisions; they override the brief where they differ): (a) The review inbox `GET /review` already exists (S3); do not build or change it, and drop it from your done list. Keycaps: leave A, E, X out. (b) The "No mockup" note is superseded: build narrative, board inputs and the recommended-action draft to `b5-narrative.html`, `b5-board-inputs.html` and `b5-recommended-action.html`; add their states to the Screens table and update their three migration-map rows. (c) Report seg row: Report, Versions, Applicability (ISO 27001 only), Narrative, Board inputs. Review seg row: Queue, Conclusions, Findings, Workpaper, with the S2 `seg` macro; if S6 has merged, match its row exactly. (d) Busy buttons are non-primary `.btn.loading`; no disabled primaries; do not edit shared CSS. (e) Toast states: assert `X-Toast-Type` and a non-empty `X-Toast-Message` with the mockup's copy; add the missing message on narrative generation failures and limits in `app/routers/drafting.py`. No pixel compare for toast states. (f) Keep the `F` finding aliases; do not touch `app/services/narrative.py` prompts; record the R-xx text diff in Results. (g) Create `design/harness/seed_s7.py` (deterministic throwaway seed, mockup companies, frozen clock); list how each state was produced. (h) You have no network or boto3 and cannot run servers or a browser; the orchestrator runs the full suite and the pixel gate. Allowances for stale guards go in `tests/yozora_paths.py` (add `YOZORA_S7_PATHS`; add only, never delete or weaken a guard). (i) No attribution in commits.
+> Read tasks/handoffs/2026-10-01-yozora-s7-handoff.md and execute it. Write your results to the Results section of that file. Addenda from the orchestrator (see tasks/handoffs/2026-10-04-yozora-s7-orchestration.md, Scoping decisions; they override the brief where they differ): (a) Collision rules: [paste the S7 collision table above]. The review inbox `GET /review` already exists (S3); do not build or change it, and drop it from your done list. Keycaps: leave A, E, X out. (b) The "No mockup" note is superseded: build narrative, board inputs and the recommended-action draft to `b5-narrative.html`, `b5-board-inputs.html` and `b5-recommended-action.html`; add their states to the Screens table and update their three migration-map rows. (c) Report seg row: Report, Versions, Applicability (ISO 27001 only), Narrative, Board inputs. Review seg row: Queue, Conclusions, Findings, Workpaper, with the S2 `seg` macro; if S6 has merged, match its row exactly. (d) Busy buttons are non-primary `.btn.loading`; no disabled primaries; do not edit shared CSS. (e) Toast states: assert `X-Toast-Type` and a non-empty `X-Toast-Message` with the mockup's copy; add the missing message on narrative generation failures and limits in `app/routers/drafting.py`. No pixel compare for toast states. (f) Keep the `F` finding aliases; do not touch `app/services/narrative.py` prompts; record the R-xx text diff in Results. (g) Create `design/harness/seed_s7.py` (deterministic throwaway seed, mockup companies, frozen clock); list how each state was produced. (h) You have no network or boto3 and cannot run servers or a browser; the orchestrator runs the full suite and the pixel gate. Allowances for stale guards go in `tests/yozora_paths.py` (add `YOZORA_S7_PATHS`; add only, never delete or weaken a guard). (i) No attribution in commits.
 
 Watch for stalls: if the log is idle 15 minutes, kill the Codex process and restart it. Use a Monitor with a log-mtime check, not `sleep` chains.
 
