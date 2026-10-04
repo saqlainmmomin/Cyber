@@ -72,6 +72,7 @@ YOZORA_S2_PATHS = (
 )
 
 YOZORA_S4_PATHS = (
+    "docs/product/yozora-migration-map.md",
     "app/routers/web.py",
     "app/routers/retention.py",
     "app/template_config.py",
