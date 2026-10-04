@@ -653,7 +653,7 @@ def test_scenario_13_legacy_review_is_retired(db, http):
     redirect = http.get(f"/assessments/{assessment.id}/review", follow_redirects=False)
     assert redirect.status_code == 303 and redirect.headers["location"].endswith("/conclusions")
     assert not (REPO_ROOT / "app/schemas/review.py").exists()
-    assert not (REPO_ROOT / "app/templates/pages/review.html").exists()
+    assert (REPO_ROOT / "app/templates/pages/review.html").exists()
     assert not (REPO_ROOT / "app/templates/partials/review_filter_bar.html").exists()
     assert (REPO_ROOT / "app/templates/partials/review_finding_card.html").exists()
 

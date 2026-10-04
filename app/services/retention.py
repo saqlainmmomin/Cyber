@@ -1315,4 +1315,9 @@ def client_retention_view(db: Session, client: Client) -> ClientRetentionView:
                 blobs_removed=bool(complete),
             )
         )
+    archived.sort(
+        key=lambda row: row.archived_at or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    purges.sort(key=lambda row: row.purged_at, reverse=True)
     return ClientRetentionView(archived=archived, purges=purges)

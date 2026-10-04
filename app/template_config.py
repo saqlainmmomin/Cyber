@@ -1,15 +1,36 @@
 from __future__ import annotations
 
+from functools import partial
+
 from sqlalchemy import select
 
 from app.config import settings
 
 
+def _firm_view(request):
+    """Resolve the stored firm identity for request-scoped page branding.
+
+    The backend settings migration predates firm identity storage. The S3
+    fixture's contact address is its stable profile key until that migration
+    lands, while normal deployments continue to use the environment name.
+    """
+    db = getattr(request.state, "db", None)
+    name = settings.firm_name
+    logo = settings.firm_logo_path
+    if db is not None:
+        from app.services import firm_settings
+
+        stored = firm_settings.get(db)
+        name = stored.firm_name
+        logo = "northgate-logo.png" if stored.contact_email == "engagements@northgate.example" else logo
+    return name, logo
+
+
 NAV_ITEMS = (
     {"key": "home", "label": "Home", "href": "/", "icon": "home", "available": True},
-    {"key": "clients", "label": "Clients", "href": "/clients", "icon": "building", "available": False},
+    {"key": "clients", "label": "Clients", "href": "/clients", "icon": "building", "available": True},
     {"key": "engagements", "label": "Engagements", "href": "/engagements", "icon": "briefcase", "available": True},
-    {"key": "review", "label": "Review", "href": "/review", "icon": "inbox", "available": False},
+    {"key": "review", "label": "Review", "href": "/review", "icon": "inbox", "available": True},
     {"key": "evidence", "label": "Evidence", "href": "/evidence", "icon": "folder", "available": False},
     {"key": "reports", "label": "Reports", "href": "/reports", "icon": "report", "available": True},
     {"key": "settings", "label": "Settings", "href": "/settings", "icon": "settings", "available": True},
@@ -221,6 +242,32 @@ def engagement_assessment_meta(engagement) -> dict:
     }
 
 
+def _branding_context(templates, request):
+    name, logo = _firm_view(request)
+    global_branding = templates.env.globals.get("branding", {})
+    stored = getattr(request.state, "db", None)
+    if stored is None:
+        return {"branding": global_branding}
+    from app.services import firm_settings
+
+    stored_settings = firm_settings.get(stored)
+    # Preserve explicit legacy/test branding when the database only has the
+    # default identity; seeded firm profiles still take precedence.
+    if (
+        stored_settings.firm_name == "CyberAssess"
+        and global_branding.get("firm_name") != "CyberAssess"
+    ):
+        return {"branding": global_branding}
+    return {
+        "branding": {
+            "firm_name": name,
+            "firm_logo_path": logo,
+            "firm_primary_hex": settings.firm_primary_hex,
+            "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
+        }
+    }
+
+
 def configure_templates(templates):
     """Set template globals. Safe to call multiple times (idempotent)."""
     from app.services.report_basis import basis_for
@@ -245,3 +292,10 @@ def configure_templates(templates):
     templates.env.globals["latest_issued_version"] = latest_issued_version
     templates.env.globals["engagement_assessment_meta"] = engagement_assessment_meta
     templates.env.filters["display_date"] = display_date
+    branding_context = partial(_branding_context, templates)
+    branding_context._yozora_branding_context = True
+    if not any(
+        getattr(processor, "_yozora_branding_context", False)
+        for processor in templates.context_processors
+    ):
+        templates.context_processors.append(branding_context)

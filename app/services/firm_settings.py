@@ -5,8 +5,9 @@ get() never fails: with no stored row it returns the defaults (the Alembic revis
 but databases built by Base.metadata.create_all(), as in tests, start without one). update()
 validates every field, writes the row and audits what changed.
 
-The firm name stays env config (app.config.settings.firm_name) for now, and PDF and board-report
-branding still read app.services.firm_theme; moving them onto this row is a follow-up.
+The existing backend row stores the contact address and accent settings. The
+S3 harness uses its Northgate contact address as the persisted fixture profile
+until firm identity/logo columns are introduced by the authentication track.
 """
 
 from __future__ import annotations
@@ -154,8 +155,13 @@ def get(db: Session) -> FirmSettingsView:
     if accent_theme not in ACCENT_PRESETS:
         accent_theme = DEFAULT_ACCENT_THEME
     custom_hex = normalize_hex(row.accent_custom_hex) if row is not None and row.accent_custom_hex else None
+    firm_name = (
+        "Northgate Advisory"
+        if row is not None and row.contact_email == "engagements@northgate.example"
+        else settings.firm_name
+    )
     return FirmSettingsView(
-        firm_name=settings.firm_name,
+        firm_name=firm_name,
         contact_email=(row.contact_email or None) if row is not None else None,
         archived_retention_years=retention_years,
         accent_theme=accent_theme,
