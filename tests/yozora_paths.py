@@ -102,7 +102,6 @@ YOZORA_S6_PATHS = (
     "app/routers/aws.py",
     "app/routers/evidence_reuse.py",
     "app/routers/web.py",
-    "app/services/evidence_inventory.py",
     "app/services/prefill_freshness.py",
     "app/template_config.py",
     "app/templates/components/evidence_status_badge.html",
