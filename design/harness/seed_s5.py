@@ -125,6 +125,7 @@ def _seed_documents(
     count: int,
     prefix: str,
     uploaded_start: int = -30,
+    filenames: tuple[str, ...] | None = None,
 ) -> None:
     """Seed both S4 evidence rows and the legacy documents consumed by analysis_documents()."""
     _seed_evidence(db, engagement, assessment, count, prefix)
@@ -134,7 +135,7 @@ def _seed_documents(
             AssessmentDocument(
                 id=document_id,
                 assessment_id=assessment.id,
-                filename=f"policy-{index + 1}.pdf",
+                filename=filenames[index] if filenames else f"policy-{index + 1}.pdf",
                 file_path=f"evidence/{engagement.id}/{document_id}.pdf",
                 file_type="pdf",
                 document_category="policy",
@@ -284,6 +285,100 @@ def _desk_summary(
     db.add_all(findings)
 
 
+# s5-prefill: b4 desk-review results (mockup b4-desk_review.html, findings state).
+B4_DOCUMENTS = (
+    "Breach response procedure.docx",
+    "Consent form, mobile app.pdf",
+    "Retention schedule.pdf",
+    "Privacy notice.pdf",
+    "Data flow diagram, payments.png",
+    "Information security policy.pdf",
+)
+B4_ERROR_MESSAGE = "The analysis service did not respond within 10 minutes. Your documents are unchanged."
+
+
+def _b4_doc(index: int) -> str:
+    return f"evidence-s5-legacy-{index:03d}"
+
+
+def _b4_desk_review(db: Session, assessment: Assessment, state: str) -> None:
+    """Seed the b4 results page: 34 findings (18 evidence, 9 gaps, 7 red flags), ISO failed."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    status = {"running": "analyzing", "error": "error"}.get(state, "completed")
+    dpdpa = [control.id for control in FrameworkRegistry.get_all_controls("dpdpa")]
+    levels = ["adequate"] * 14 + ["partial"] * 9 + ["absent"] * 6 + ["not_covered"] * 3
+    summary = DeskReviewSummary(
+        assessment_id=assessment.id,
+        document_catalog=json.dumps([{"id": _b4_doc(i), "filename": name} for i, name in enumerate(B4_DOCUMENTS)]),
+        coverage_summary=json.dumps(dict(zip(dpdpa, levels))) if status == "completed" else None,
+        raw_ai_response=json.dumps({
+            "schema_version": 2,
+            "frameworks": {"dpdpa": {"status": "completed"}, "iso27001": {"status": "error"}},
+        }) if status == "completed" else "{}",
+        status=status,
+        error_message=B4_ERROR_MESSAGE if status == "error" else None,
+        started_at=_time(-3),
+        completed_at=_time(-1) if status == "completed" else None,
+    )
+    db.add(summary)
+    if status != "completed":
+        return
+    db.flush()
+
+    def finding(kind: str, **values) -> DeskReviewFinding:
+        return DeskReviewFinding(
+            assessment_id=assessment.id, finding_type=kind, framework_id="dpdpa", created_at=_time(-1), **values,
+        )
+
+    signals = [
+        ("Breach notice promises customers 72 hours and never mentions the Data Protection Board", "critical", 0, "Page 3",
+         "We will notify affected customers within 72 hours of confirming a personal data breach.", "BN.NOTIFY.1"),
+        ("Marketing consent is pre-selected on the sign-up form", "high", 1, "Page 1",
+         "[x] I agree to receive offers and updates from Meridian Ledger partners.", "CH2.CONSENT.1"),
+        ("KYC records are kept with no end date", "medium", 2, "Page 2",
+         "KYC records are retained for the life of the account and thereafter until further notice.", "CH2.MINIMIZE.2"),
+        ("The privacy notice is available in English only", "medium", 3, "Page 1",
+         "This notice is published in English.", "CH2.CONSENT.1"),
+        ("Withdrawal of consent needs a written request", "medium", 1, "Page 2",
+         "To withdraw consent, write to the Data Protection Officer.", "CH2.CONSENT.3"),
+        ("Processors are not bound to delete data at the end of the contract", "low", 5, "Page 6",
+         "The vendor may retain copies of customer data for its records.", "CH2.SECURITY.3"),
+        ("Grievances have no stated response time", "low", 3, "Page 4",
+         "We will look into every complaint we receive.", "CH3.GRIEVANCE.2"),
+    ]
+    rows = [
+        finding("signal", content=content, severity=severity, document_id=_b4_doc(doc), source_location=page,
+                source_quote=quote, requirement_id=requirement, flag_type="evidence_gap",
+                signal_group_id=f"s5-b4-signal-{index}")
+        for index, (content, severity, doc, page, quote, requirement) in enumerate(signals)
+    ]
+    absences = [
+        ("CH2.CONSENT.5", "No process for verifiable parental consent for users under 18", "high"),
+        ("CH3.GRIEVANCE.2", "The privacy notice names no response time", "medium"),
+        ("CB.TRANSFER.1", "The hosting agreement does not list processing locations", "medium"),
+        ("CH2.CONSENT.4", "No Consent Manager is registered or named", "medium"),
+        ("CH4.SDF.3", "No data protection impact assessment is on file", "medium"),
+        ("CH4.SDF.4", "No periodic audit report is on file", "low"),
+        ("CM.RECORDS.1", "Consent records are not retained after withdrawal", "low"),
+        ("BN.NOTIFY.4", "No breach register is kept", "low"),
+        ("CH3.NOMINATE.1", "No nomination mechanism is described", "low"),
+    ]
+    rows += [finding("absence", requirement_id=requirement, content=content, severity=severity)
+             for requirement, content, severity in absences]
+    evidence = [
+        ("CH3.GRIEVANCE.1", 3, "Page 4", "Complaints can be sent to our Data Protection Officer, who acknowledges every complaint within 48 hours."),
+        ("CB.TRANSFER.3", 4, "Whole image", "Customer records flow from the app to the payments service hosted in ap-south-1."),
+    ] + [
+        (requirement, index % len(B4_DOCUMENTS), f"Page {index + 2}", "The policy describes the control and its operating owner.")
+        for index, requirement in enumerate(dpdpa[:16])
+    ]
+    rows += [finding("evidence", requirement_id=requirement, document_id=_b4_doc(doc), source_location=page,
+                     source_quote=quote, content=quote, severity="low")
+             for requirement, doc, page, quote in evidence]
+    db.add_all(rows)
+
+
 def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, engagement: Engagement) -> dict:
     data_state = (
         "preview-state"
@@ -399,15 +494,11 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
     elif screen == "b4-desk_review":
         _scope(assessment)
         _context(assessment)
-        _seed_documents(db, engagement, assessment, 6, "evidence-s5")
-        if state in {"ready", "running", "findings", "rerun", "error"}:
-            assessment.desk_review_status = {"ready": None, "running": "analyzing", "findings": "completed", "rerun": "completed", "error": "error"}[state]
-        if state == "running":
-            _desk_summary(db, assessment, status="analyzing")
-        elif state in {"findings", "rerun"}:
-            _desk_summary(db, assessment, status="completed", findings=True)
-        elif state == "error":
-            _desk_summary(db, assessment, status="error")
+        _seed_documents(db, engagement, assessment, 6, "evidence-s5", filenames=B4_DOCUMENTS)
+        assessment.desk_review_status = {"ready": None, "running": "analyzing", "error": "error"}.get(state, "completed")
+        if state != "ready":
+            _b4_desk_review(db, assessment, state)
+        data_state = "preview-state" if state in {"running", "rerun"} else "database"
     return {"assessment_id": assessment.id, "data_state": data_state}
 
 

@@ -1,10 +1,17 @@
 {% from "components/ui.html" import skeleton %}
-<div class="glass card" role="status" aria-live="polite"
-     {% if not preview_static %}hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
+{% set poll %}{% if not preview_static %}hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
      hx-trigger="every 3s"
-     hx-swap="outerHTML"{% endif %}>
-  <div class="between"><div><h2>Desk review is running</h2><p class="sub">Documents are being analysed against the selected frameworks. You can keep answering while the pre-fill is prepared.</p></div><span class="status"><span class="st prog"></span>Analysing</span></div>
-  <div class="stack" style="margin-top:var(--s-5)" aria-busy="true" aria-label="Loading">
-    {{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}
+     hx-swap="outerHTML"{% endif %}{% endset %}
+{% if questionnaire_surface %}
+<div {{ poll }}>
+  {% include "partials/desk_review_prefilling.html" %}
+</div>
+{% else %}
+<div class="glass dr-card" role="status" aria-live="polite" {{ poll }}>
+  <h2>Desk review</h2>
+  <div class="dr-status"><span class="status"><span class="st prog"></span>Analysing {{ document_count }} document{{ 's' if document_count != 1 else '' }}{% if framework_text %} against {{ framework_text }}{% endif %}</span></div>
+  <div class="dr-skels" aria-busy="true" aria-label="Loading">
+    {{ skeleton("70%") }}{{ skeleton("90%") }}{{ skeleton("55%") }}
   </div>
 </div>
+{% endif %}

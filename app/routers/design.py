@@ -41,15 +41,53 @@ S5_PREVIEW_STATES = {
     "b3-followups": ("loaded",),
     "b3-sections": ("default", "saved"),
     "b3-section-questions": ("default",),
-    "b4-desk_review": ("ready", "running", "findings", "error"),
+    "b4-desk_review": ("ready", "running", "findings", "rerun", "error"),
 }
 
 
-def _s5_preview(request: Request, screen: str) -> Response:
+def _b4_desk_review_live(request: Request, db: Session, state: str) -> Response | None:
+    """s5-prefill: render the b4 results page from a real assessment.
+
+    With ``?assessment_id=`` the page shows exactly what the live desk-review
+    status endpoint returns for that assessment, inside the assessment chrome.
+    ``rerun`` shows the findings; the live re-run asks through ``hx-confirm``.
+    """
+    from app.models.assessment import Assessment
+    from app.models.engagement import Engagement
+    from app.routers.web import desk_review_status_view
+    from app.template_config import engagement_period
+
+    assessment_id = request.query_params.get("assessment_id")
+    assessment = db.get(Assessment, assessment_id) if assessment_id else None
+    if assessment is None:
+        return None
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    template_name, context = desk_review_status_view(request, db, assessment)
+    period = engagement_period(engagement) if engagement else None
+    context.update({
+        "screen": "b4-desk_review",
+        "state": state,
+        "desk_review_partial": template_name,
+        "assessment": assessment,
+        "engagement": engagement,
+        "period": period,
+        "tab": "questionnaire",
+        "active_framework": None,
+        "preview_static": True,
+        "page_title": "Pre-fill from documents",
+    })
+    return templates.TemplateResponse("pages/design_assessment_preview.html", context)
+
+
+def _s5_preview(request: Request, screen: str, db: Session | None = None) -> Response:
     states = S5_PREVIEW_STATES[screen]
     state = request.query_params.get("state", states[0])
     if state not in states:
         state = states[0]
+    if screen == "b4-desk_review" and db is not None:
+        live = _b4_desk_review_live(request, db, state)
+        if live is not None:
+            return live
 
     assessment_id = "assessment-s5-preview"
     assessment = SimpleNamespace(
@@ -163,13 +201,20 @@ def _s5_preview(request: Request, screen: str) -> Response:
         "coverage": {"CH2.CONSENT.1": "partial", "CH4.SDF.1": "absent"},
         "failed_framework_names": [],
         "total_findings": 3,
+        "document_count": 6,
+        "framework_text": "India DPDPA and ISO 27001",
+        "desk_review_partial": {
+            "ready": "partials/desk_review_ready.html",
+            "running": "partials/desk_review_running.html",
+            "error": "partials/desk_review_error.html",
+        }.get(state, "partials/desk_review_findings.html"),
         "questionnaire_surface": False,
     })
     return templates.TemplateResponse("pages/design_assessment_preview.html", common)
 
 
 for _screen in S5_PREVIEW_STATES:
-    PREVIEW_PAGES[_screen] = lambda request, screen=_screen: _s5_preview(request, screen)
+    PREVIEW_PAGES[_screen] = lambda request, screen=_screen, db=None: _s5_preview(request, screen, db)
 
 
 def _debug_only() -> None:
@@ -196,4 +241,6 @@ def design_preview(request: Request, name: str, db: Session = Depends(get_db)) -
     preview = PREVIEW_PAGES.get(name)
     if preview is None:
         raise HTTPException(status_code=404, detail="Not found")
+    if name == "b4-desk_review":
+        return preview(request, db=db)
     return preview(request)

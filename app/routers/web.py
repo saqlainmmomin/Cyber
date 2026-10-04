@@ -3084,14 +3084,32 @@ def rfi_page(
 # --- Desk Review (web endpoints) ---
 
 
-@router.get("/assessments/{assessment_id}/desk-review-status", response_class=HTMLResponse)
-def desk_review_status_web(
+def _framework_list_text(names: list[str]) -> str:
+    """Join framework names for prose: "A", "A and B", "A, B and C"."""
+    if len(names) < 2:
+        return "".join(names)
+    return f"{', '.join(names[:-1])} and {names[-1]}"
+
+
+def _desk_review_running_context(db: Session, assessment: Assessment) -> dict:
+    """Document count and framework names for the running desk-review card."""
+    return {
+        "document_count": prefill_freshness.freshness(db, assessment).available,
+        "framework_text": _framework_list_text(_selected_framework_names(assessment)),
+    }
+
+
+def desk_review_status_view(
     request: Request,
-    assessment_id: str,
+    db: Session,
+    assessment: Assessment,
     surface: str | None = None,
-    db: Session = Depends(get_db),
-):
-    """Return desk review status/findings as HTML partial."""
+) -> tuple[str, dict]:
+    """Choose the desk-review partial and build its context for one assessment.
+
+    Shared by the status endpoint and the debug-only design preview, so the
+    preview renders exactly what the endpoint would return.
+    """
     from app.frameworks.registry import FrameworkRegistry
     from app.models.desk_review import DeskReviewSummary
     from app.services.desk_review_findings import (
@@ -3101,9 +3119,12 @@ def desk_review_status_web(
     )
     from app.services import question_engine
 
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment:
-        raise HTTPException(404)
+    assessment_id = assessment.id
+    base = {
+        "request": request,
+        "assessment_id": assessment_id,
+        "questionnaire_surface": surface == "questionnaire",
+    }
 
     summary = (
         db.query(DeskReviewSummary)
@@ -3112,33 +3133,21 @@ def desk_review_status_web(
     )
 
     if not summary or summary.status == "not_started":
-        return templates.TemplateResponse(
-            "partials/desk_review_ready.html",
-            {
-                "request": request,
-                "assessment_id": assessment_id,
-                "prefill_freshness": prefill_freshness.freshness(db, assessment),
-                "framework_names": _selected_framework_labels(assessment),
-                "questionnaire_surface": surface == "questionnaire",
-            },
-        )
+        return "partials/desk_review_ready.html", {
+            **base,
+            "prefill_freshness": prefill_freshness.freshness(db, assessment),
+            "framework_names": _selected_framework_labels(assessment),
+        }
 
     if summary.status == "analyzing":
-        return templates.TemplateResponse(
-            "partials/desk_review_running.html",
-            {"request": request, "assessment_id": assessment_id, "questionnaire_surface": surface == "questionnaire"},
-        )
+        return "partials/desk_review_running.html", {
+            **base,
+            **_desk_review_running_context(db, assessment),
+            "prefill_freshness": prefill_freshness.freshness(db, assessment),
+        }
 
     if summary.status == "error":
-        return templates.TemplateResponse(
-            "partials/desk_review_error.html",
-            {
-                "request": request,
-                "assessment_id": assessment_id,
-                "error": summary.error_message,
-                "questionnaire_surface": surface == "questionnaire",
-            },
-        )
+        return "partials/desk_review_error.html", {**base, "error": summary.error_message}
 
     # Completed — load findings
     findings = scoped_findings(db, assessment)
@@ -3146,8 +3155,8 @@ def desk_review_status_web(
     absences = [f for f in findings if f.finding_type == "absence"]
     signals = group_signal_findings(findings)
 
-    control_ids = {
-        control.id
+    controls = {
+        control.id: control
         for framework_id in assessment.frameworks
         for control in FrameworkRegistry.get(framework_id).all_controls()
     }
@@ -3155,12 +3164,29 @@ def desk_review_status_web(
     coverage = {
         requirement_id: level
         for requirement_id, level in raw_coverage.items()
-        if requirement_id in control_ids
+        if requirement_id in controls
     }
-    catalog = json.loads(summary.document_catalog) if summary.document_catalog else []
-    failed_framework_names = [
+    coverage_framework_names = [
         FrameworkRegistry.get(framework_id).name
-        for framework_id in failed_desk_review_frameworks(summary)
+        for framework_id in assessment.frameworks
+        if any(control.id in coverage for control in FrameworkRegistry.get(framework_id).all_controls())
+    ]
+    requirement_details = {
+        requirement_id: {"title": control.title, "reference": control.reference}
+        for requirement_id, control in controls.items()
+    }
+    document_names = dict(
+        db.query(AssessmentDocument.id, AssessmentDocument.filename)
+        .filter(AssessmentDocument.assessment_id == assessment_id)
+        .all()
+    )
+    catalog = json.loads(summary.document_catalog) if summary.document_catalog else []
+    failed_ids = failed_desk_review_frameworks(summary)
+    failed_framework_names = [FrameworkRegistry.get(framework_id).name for framework_id in failed_ids]
+    saved_framework_names = [
+        FrameworkRegistry.get(framework_id).name
+        for framework_id in assessment.frameworks
+        if framework_id not in failed_ids
     ]
     questionnaire_stats = None
     if surface == "questionnaire":
@@ -3177,23 +3203,38 @@ def desk_review_status_web(
                 exc_info=True,
             )
 
-    return templates.TemplateResponse(
-        "partials/desk_review_findings.html",
-        {
-            "request": request,
-            "assessment_id": assessment_id,
-            "evidence": evidence,
-            "absences": absences,
-            "signals": signals,
-            "coverage": coverage,
-            "catalog": catalog,
-            "failed_framework_names": failed_framework_names,
-            "total_findings": len(evidence) + len(absences) + len(signals),
-            "prefill_freshness": prefill_freshness.freshness(db, assessment),
-            "questionnaire_surface": surface == "questionnaire",
-            "questionnaire_stats": questionnaire_stats,
-        },
-    )
+    return "partials/desk_review_findings.html", {
+        **base,
+        "evidence": evidence,
+        "absences": absences,
+        "signals": signals,
+        "coverage": coverage,
+        "coverage_framework_text": _framework_list_text(coverage_framework_names),
+        "requirement_details": requirement_details,
+        "document_names": document_names,
+        "catalog": catalog,
+        "failed_framework_names": failed_framework_names,
+        "failed_framework_text": _framework_list_text(failed_framework_names),
+        "saved_framework_text": _framework_list_text(saved_framework_names),
+        "total_findings": len(evidence) + len(absences) + len(signals),
+        "prefill_freshness": prefill_freshness.freshness(db, assessment),
+        "questionnaire_stats": questionnaire_stats,
+    }
+
+
+@router.get("/assessments/{assessment_id}/desk-review-status", response_class=HTMLResponse)
+def desk_review_status_web(
+    request: Request,
+    assessment_id: str,
+    surface: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Return desk review status/findings as HTML partial."""
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+    template_name, context = desk_review_status_view(request, db, assessment, surface)
+    return templates.TemplateResponse(template_name, context)
 
 
 @router.post("/assessments/{assessment_id}/run-desk-review", response_class=HTMLResponse)
@@ -3271,5 +3312,11 @@ def run_desk_review_web(
 
     return templates.TemplateResponse(
         "partials/desk_review_running.html",
-        {"request": request, "assessment_id": assessment_id, "questionnaire_surface": surface == "questionnaire"},
+        {
+            "request": request,
+            "assessment_id": assessment_id,
+            "questionnaire_surface": surface == "questionnaire",
+            **_desk_review_running_context(db, assessment),
+            "prefill_freshness": prefill_freshness.freshness(db, assessment),
+        },
     )

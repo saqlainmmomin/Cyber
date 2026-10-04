@@ -1,26 +1,44 @@
 {% from "components/ui.html" import icon, skeleton %}
-{% if standalone_preview %}<h2>Desk review</h2>{% endif %}
+{% set count = prefill_freshness.available %}
+{% if questionnaire_surface %}
 <div class="between">
   <div>
     <h2>Pre-fill from documents</h2>
-    {% if prefill_freshness.available %}
-    <p class="sub">{{ prefill_freshness.available }} document{{ 's' if prefill_freshness.available != 1 else '' }} are ready to analyse. The review finds evidence, gaps and red flags before the questionnaire.</p>
-    {% if framework_names %}<div class="chips" style="margin-top:var(--s-3)">{% for name in framework_names %}<span class="chip">{{ name }}</span>{% endfor %}</div>{% endif %}
-    <div class="hrow" style="margin-top:var(--s-5)">
-      <button class="btn primary lead" type="button"
-              hx-post="/assessments/{{ assessment_id }}/run-desk-review"
-              hx-target="#desk-review-area"
-              hx-swap="innerHTML"
-              hx-indicator="#dr-spinner">{{ icon("search") }}Pre-fill answers</button>
-      <span class="help">Takes 15 to 30 seconds.</span>
-    </div>
+    {% if count %}
+    <p class="sub">{{ count }} document{{ 's are' if count != 1 else ' is' }} ready. Answers they support are filled in with the quoted passage, for you to confirm.</p>
     {% else %}
-    <p class="sub">Upload evidence before running a desk review. <a href="/assessments/{{ assessment_id }}?tab=documents">Upload evidence</a></p>
+    <p class="sub">Upload evidence before pre-filling answers. <a href="/assessments/{{ assessment_id }}?tab=documents">Upload evidence</a></p>
     {% endif %}
   </div>
+  {% if count %}
+  <button class="btn primary" type="button"
+          hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
+          hx-target="#desk-review-area"
+          hx-swap="innerHTML"
+          hx-indicator="#dr-spinner">Pre-fill answers</button>
+  {% endif %}
 </div>
+{% else %}
+<div class="glass dr-card">
+  <h2>Desk review</h2>
+  {% if count %}
+  <p class="dr-lede">{{ count }} document{{ 's are' if count != 1 else ' is' }} ready to analyse. The review finds evidence, gaps and red flags before the questionnaire.</p>
+  {% if framework_names %}<div class="chips dr-chips">{% for name in framework_names %}<span class="chip">{{ name }}</span>{% endfor %}</div>{% endif %}
+  <div class="dr-actions">
+    <button class="btn primary lead" type="button"
+            hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+            hx-target="#desk-review-area"
+            hx-swap="innerHTML"
+            hx-indicator="#dr-spinner">{{ icon("search") }}Run desk review</button>
+    <span class="help">Takes 15 to 30 seconds.</span>
+  </div>
+  {% else %}
+  <p class="dr-lede">Upload evidence before running a desk review. <a href="/assessments/{{ assessment_id }}?tab=documents">Upload evidence</a></p>
+  {% endif %}
+{% endif %}
 <div id="dr-spinner" class="htmx-indicator" role="status" aria-live="polite">
   <div class="hrow" style="margin-top:var(--s-4)">
     {{ skeleton("32px", "circle") }}
   </div>
 </div>
+{% if not questionnaire_surface %}</div>{% endif %}

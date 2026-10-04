@@ -3,10 +3,26 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block crumbs %}
+{% if screen == "b4-desk_review" %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}?tab=questionnaire">Questionnaire</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% else %}
 <a href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% endif %}
 {% endblock %}
 
 {% block content %}
+{% if screen == "b4-desk_review" %}
+{# s5-prefill: b4 results page, the status endpoint's partial inside the assessment chrome. #}
+{% from "components/layout.html" import assessment_tabs %}
+<div class="page-head">
+  <div>
+    <h1>{{ page_title }}</h1>
+    <p class="meta-line">{{ assessment.display_name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p>
+  </div>
+</div>
+<div class="desk-review-tabs">{{ assessment_tabs(assessment, "questionnaire", active_framework) }}</div>
+{% include desk_review_partial %}
+{% else %}
 {% include "partials/assessment_header.html" %}
 
 <div class="stack mt-lg">
@@ -23,11 +39,7 @@
   {% if state == "saved" %}{% include "partials/section_saved.html" %}{% endif %}
 {% elif screen == "b3-section-questions" %}
   {% include "partials/section_questions.html" %}
-{% elif screen == "b4-desk_review" %}
-  {% if state == "ready" %}{% include "partials/desk_review_ready.html" %}
-  {% elif state == "running" %}{% include "partials/desk_review_running.html" %}
-  {% elif state == "error" %}{% include "partials/desk_review_error.html" %}
-  {% else %}{% include "partials/desk_review_findings.html" %}{% endif %}
 {% endif %}
 </div>
+{% endif %}
 {% endblock %}

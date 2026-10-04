@@ -1,41 +1,53 @@
 {% from "components/ui.html" import icon, pill %}
-<div class="stack">
-  <div class="glass card between">
-    <div class="hrow">
-      <span class="ico accent">{{ icon("circle-check") }}</span>
-      <div>
-        {% if questionnaire_surface %}
-        <h2>Pre-filled from {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}</h2>
-        <p class="sub">{% if prefill_freshness.last_prefill_at %}{{ prefill_freshness.last_prefill_at.strftime("%-d %b %Y") }} · {% endif %}{{ questionnaire_stats.awaiting_confirmation if questionnaire_stats else 0 }} answers wait for confirmation · {{ absences | length }} missing provisions · {{ signals | length }} red flag{{ 's' if signals | length != 1 else '' }}</p>
-        {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
-        {% else %}
-        <h2>Desk review complete</h2><p class="sub">{{ total_findings }} findings across {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}: {{ evidence | length }} evidence items, {{ absences | length }} gaps, {{ signals | length }} red flags.</p>{% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
-        {% endif %}
-      </div>
+{% set doc_names = document_names if document_names is defined and document_names else {} %}
+{% set requirements = requirement_details if requirement_details is defined and requirement_details else {} %}
+{% set doc_count = catalog | length %}
+{% set shown = 3 %}
+{% macro severity_pill(severity) -%}{{ pill(severity | title, severity if severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}{%- endmacro %}
+{% macro show_more(total) -%}{% if total > shown %}<button class="btn ghost sm" type="button" data-show-more onclick="this.closest('[data-more-group]').querySelectorAll('[data-more-row]').forEach(function(row){row.hidden=false});this.remove()">Show {{ total - shown }} more</button>{% endif %}{%- endmacro %}
+{% macro cite(document_id, location, quote) -%}
+<div class="cite"><div class="cite-head">{{ icon("file") }}<span>{{ doc_names.get(document_id) or "Document" }}</span>{% if location %}<span class="pg">{{ location }}</span>{% endif %}</div><blockquote>{{ quote[:240] }}{% if quote | length > 240 %}…{% endif %}</blockquote></div>
+{%- endmacro %}
+<div class="dr-findings">
+  {% if questionnaire_surface %}
+  <div class="between">
+    <div>
+      <h2>Pre-filled from {{ doc_count }} document{{ 's' if doc_count != 1 else '' }}</h2>
+      <p class="sub">{% if prefill_freshness.last_prefill_at %}{{ prefill_freshness.last_prefill_at.strftime("%-d %b %Y") }} · {% endif %}{{ questionnaire_stats.awaiting_confirmation if questionnaire_stats else 0 }} answers wait for confirmation · {{ absences | length }} missing provisions · {{ signals | length }} red flag{{ 's' if signals | length != 1 else '' }}</p>
+      {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub tight">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
     </div>
-    {% if questionnaire_surface %}<button class="btn secondary" type="button"
+    <div class="hrow"><button class="btn secondary" type="button"
             hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
             hx-target="#desk-review-area"
             hx-swap="innerHTML"
-            hx-confirm="Pre-fill again? This will replace the current findings.">Pre-fill again</button>{% else %}<a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>{% endif %}
+            hx-confirm="Pre-fill again? This will replace the current findings.">Pre-fill again</button></div>
   </div>
-
-  {% if failed_framework_names %}
-  <div data-desk-review-failed-frameworks class="alert c-medium" role="alert">
-    {{ icon("alert") }}<div><b>Some frameworks could not be reviewed</b>Desk review failed for {{ failed_framework_names | join(", ") }}. Findings for the other frameworks were saved.</div>
+  {% else %}
+  <div class="glass dr-done">
+    <span class="ico accent">{{ icon("circle-check") }}</span>
+    <div class="dr-done-txt">
+      <h2>Desk review complete</h2>
+      <p class="sub">{{ total_findings }} finding{{ 's' if total_findings != 1 else '' }} across {{ doc_count }} document{{ 's' if doc_count != 1 else '' }}: {{ evidence | length }} evidence item{{ 's' if evidence | length != 1 else '' }}, {{ absences | length }} gap{{ 's' if absences | length != 1 else '' }}, {{ signals | length }} red flag{{ 's' if signals | length != 1 else '' }}</p>
+      {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
+    </div>
+    <a class="btn primary" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire{{ icon("arrow-r") }}</a>
   </div>
   {% endif %}
 
+  {% if failed_framework_names %}
+  <div class="dr-partial"><div data-desk-review-failed-frameworks class="alert c-medium" role="alert">
+    {{ icon("alert") }}<div><b>Desk review failed for {{ failed_framework_text if failed_framework_text is defined and failed_framework_text else failed_framework_names | join(", ") }}</b>Findings for {{ saved_framework_text if saved_framework_text is defined and saved_framework_text else "the other frameworks" }} were saved. Run the desk review again to complete {{ failed_framework_text if failed_framework_text is defined and failed_framework_text else failed_framework_names | join(", ") }}.</div>
+  </div></div>
+  {% endif %}
+
   {% if signals %}
-  <div>
-    <div class="sec"><h2>Red flags ({{ signals | length }})</h2></div>
+  <div data-more-group>
+    <div class="sec dr-sec"><h2>Red flags <span class="muted">{{ signals | length }}</span></h2>{{ show_more(signals | length) }}</div>
     <div class="solid">
       {% for flag in signals %}
-      <div class="review-row">
-        <div class="between"><span class="t-title">{{ flag.content }}</span>{{ pill(flag.severity | title, flag.severity if flag.severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}</div>
-        {% if flag.source_quote %}<blockquote>{{ flag.source_quote[:240] }}{% if flag.source_quote | length > 240 %}…{% endif %}</blockquote>{% endif %}
-        {% if flag.source_location %}<span class="t-sub">{{ flag.source_location }}</span>{% endif %}
-        {% if flag.requirement_ids %}<span class="t-sub">Related: {{ flag.requirement_ids | join(", ") }}</span>{% endif %}
+      <div class="dr-flag"{% if loop.index > shown %} data-more-row hidden{% endif %}{% if flag.requirement_ids %} data-requirement-ids="{{ flag.requirement_ids | join(', ') }}"{% endif %}>
+        <div class="dr-flag-head"><div class="t-title">{{ flag.content }}</div>{{ severity_pill(flag.severity) }}</div>
+        {% if flag.source_quote %}{{ cite(flag.document_id, flag.source_location, flag.source_quote) }}{% elif flag.source_location %}<span class="t-sub">{{ flag.source_location }}</span>{% endif %}
       </div>
       {% endfor %}
     </div>
@@ -43,38 +55,37 @@
   {% endif %}
 
   {% if absences %}
-  <div>
-    <div class="sec"><h2>Missing provisions <span class="muted">{{ absences | length }}</span></h2></div>
+  <div data-more-group>
+    <div class="sec dr-sec"><h2>Missing provisions <span class="muted">{{ absences | length }}</span></h2>{{ show_more(absences | length) }}</div>
     <div class="solid table-scroll"><table><thead><tr><th>Requirement</th><th>What is missing</th><th>Severity</th></tr></thead><tbody>
-      {% for absence in absences %}<tr><td><div class="t-title">{{ absence.requirement_id }}</div></td><td>{{ absence.content }}{% if absence.source_location %}<span class="t-sub">{{ absence.source_location }}</span>{% endif %}</td><td>{{ pill(absence.severity | title, absence.severity if absence.severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}</td></tr>{% endfor %}
+      {% for absence in absences %}{% set requirement = requirements.get(absence.requirement_id) %}<tr{% if loop.index > shown %} data-more-row hidden{% endif %}><td>{% if requirement %}<div class="t-title">{{ requirement.title }}</div><div class="t-sub">{{ absence.requirement_id }} · {{ requirement.reference }}</div>{% else %}<div class="t-title">{{ absence.requirement_id }}</div>{% endif %}</td><td>{{ absence.content }}{% if absence.source_location %}<span class="t-sub">{{ absence.source_location }}</span>{% endif %}</td><td>{{ severity_pill(absence.severity) }}</td></tr>{% endfor %}
     </tbody></table></div>
   </div>
   {% endif %}
 
   {% if coverage %}
   <div>
-    <div class="sec"><h2>Requirement coverage</h2></div>
-    <div class="glass card"><div class="dist coverage-dist">
+    <div class="sec dr-sec"><h2>Requirement coverage{% if coverage_framework_text is defined and coverage_framework_text %} <span class="muted">{{ coverage_framework_text }}</span>{% endif %}</h2></div>
+    <div class="glass dr-card"><div class="dist dr-dist">
       {% set coverage_labels = {"adequate": ("Adequate", "ok"), "partial": ("Partially covered", "part"), "absent": ("Absent", "non"), "not_covered": ("Not covered", "insuf")} %}
       {% for level in ("adequate", "partial", "absent", "not_covered") %}
       {% set count = coverage.values() | select("equalto", level) | list | length %}
       <div><span class="dot c-{{ coverage_labels[level][1] }}"></span><span>{{ coverage_labels[level][0] }}</span><b>{{ count }}</b></div>
       {% endfor %}
     </div></div>
-    <div class="solid table-scroll" style="margin-top:var(--s-3)"><table><thead><tr><th>Requirement</th><th>Coverage</th></tr></thead><tbody>{% for requirement_id, level in coverage.items() %}<tr><td class="t-title">{{ requirement_id }}</td><td>{{ level | replace("_", " ") | title }}</td></tr>{% endfor %}</tbody></table></div>
   </div>
   {% endif %}
 
   {% if evidence %}
-  <details class="glass card disclose"><summary>Evidence found <span class="muted">{{ evidence | length }} items</span></summary>
-    <div class="stack" style="margin-top:var(--s-4)">{% for item in evidence %}<div class="cite"><div class="cite-head">{{ icon("folder") }}<span>{{ item.requirement_id }}</span>{% if item.source_location %}<span class="pg">{{ item.source_location }}</span>{% endif %}</div><blockquote>{{ item.source_quote or item.content }}</blockquote></div>{% endfor %}</div>
-  </details>
+  <div class="dr-evidence"><details class="glass dr-disclose"><summary class="t-title">Evidence found <span class="muted">{{ evidence | length }} item{{ 's' if evidence | length != 1 else '' }}</span></summary>
+    <div class="dr-evidence-list">{% for item in evidence %}<div class="cite"><div class="cite-head">{{ icon("file") }}<span>{{ doc_names.get(item.document_id) or item.requirement_id }}</span>{% if item.source_location %}<span class="pg">{{ item.source_location }}</span>{% endif %}</div><blockquote>{{ item.source_quote or item.content }}</blockquote></div>{% endfor %}</div>
+  </details></div>
   {% endif %}
 
-  {% if not questionnaire_surface %}<div class="action-row"><button class="btn ghost sm lead" type="button"
-      hx-post="/assessments/{{ assessment_id }}/run-desk-review{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
+  {% if not questionnaire_surface %}<div class="dr-rerun"><button class="btn ghost sm lead" type="button"
+      hx-post="/assessments/{{ assessment_id }}/run-desk-review"
       hx-target="#desk-review-area"
       hx-swap="innerHTML"
-      hx-confirm="Re-run desk review? This will replace the current findings.">{{ icon("chev-r") }}Re-run desk review</button></div>
+      hx-confirm="Re-run desk review? This replaces the {{ total_findings }} current findings.">{{ icon("rotate") }}Re-run desk review</button></div>
   {% endif %}
 </div>
