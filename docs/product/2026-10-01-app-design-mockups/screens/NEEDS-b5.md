@@ -2,3 +2,8 @@
 - Popover or disclosure: the "Create finding", "Add action", domains and history controls use native `details` with `.btn.ghost.sm` on the summary. A styled disclosure component would replace this.
 - Stacked bar for domain distribution: the report shows domain status as dot and text rows because the system has no bar chart. The old template had a stacked compliance bar per chapter.
 - Contained modal: the confirm-release state positions `.scrim-modal` absolutely inside a wrapper so it can sit inside a state section. The real modal is fixed, as in the shared CSS.
+- Saved indicator (S7 mockups, b5-board-inputs, b5-narrative): per-row save state (Saved, Saving, Unsaved changes, Not saved) is built from `.status` with a `.dot`. A small inline save-state component would replace it.
+- Character counter: board inputs have limits (1,200, 1,500, 120 and 400 characters). The mockup shows the limit only in the error text. A counter on `.field` would show it before the limit is hit.
+- Citation chips as links (b5-narrative): finding references use `.chip` as anchors to the findings list; the system has no reference-chip component outside `.meta .ref`.
+- Wrapping segmented control: the Report seg row has five buttons and wraps to a second row at 390 (inline `flex-wrap` and a smaller radius). A seg that scrolls or collapses to a menu on narrow screens would replace it.
+- Narrative draft failures and the draft limit are drawn as toasts. The code sends a toast type but no message for these outcomes, so S7 must add a message header (for example the failed section label) for the toast to show.
