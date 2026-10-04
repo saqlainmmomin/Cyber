@@ -223,6 +223,8 @@ Implemented S4 and the 4 Oct addenda.
 - Added `design/harness/seed_s4.py` with fixed clock `2026-09-30T12:00:00Z`, deterministic Meridian Ledger Technologies, Loomwire Labs and Kestrel Advisory fixtures, and throwaway SQLite output. No schema, scoring, analyzer, prompt or PDF changes were made.
 - Widened the shell visual clip through the live Reports nav row. The magic-links include remains inside `data-visual-mask` as the handoff’s temporary S4 exception until S8.
 - Added the `/reports` migration-map row and `YOZORA_S4_PATHS` allowances. The pre-existing `node_modules` untracked entry was not touched.
+- Restored the single-assessment overview's engagement context without removing its 303 redirect: the AWS evidence action, firm retention copy, and DOM-rendered magic-link/contact/upload content are available on the Yozora assessment overview, with the magic-link region still under `data-visual-mask`.
+- Restored the three disabled-framework roadmap tooltips and the `New Engagement` document title on the legacy `/assessments/new` entry point. Wired the existing S4 path tuple into the two stale P6-8 file-set guards and added the assessment overview template to that tuple.
 
 ### Seed state production
 
@@ -267,4 +269,7 @@ Focused verification passed:
 30/30 seed states generated; git diff --check and Python compileall passed
 ```
 
-Full suite and visual/pixel gate: not run here by instruction; the orchestrator owns those checks.
+Visual/pixel gate: not run here; the orchestrator owns that check.
+
+- Regression reruns: all seven requested tests, both authorized stale file-set guards, the single-assessment redirect contract, and the protected-surface guard passed individually.
+- Full suite (`OPENROUTER_KEY="" .venv/bin/python -m pytest`): 1,385 passed, 30 skipped, and one known ignored failure remains: `tests/test_longitudinal_demo.py::test_scenario_2_dashboard_has_both_clients_and_hierarchy` depends on S3 Home. The visual/pixel gate remains for the orchestrator environment.

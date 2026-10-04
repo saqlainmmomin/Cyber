@@ -15,7 +15,7 @@
 {{ page_header(
   engagement.name,
   client.name ~ " · " ~ (engagement.type | replace("_", " ")),
-  ([{"label": "Add assessment", "href": "/engagements/" ~ engagement.id ~ "/assessments/new", "variant": "primary"}] if not retention.archived else [])
+  ([{"label": "AWS evidence", "href": "/engagements/" ~ engagement.id ~ "/aws-evidence", "variant": "secondary"}] + ([{"label": "Add assessment", "href": "/engagements/" ~ engagement.id ~ "/assessments/new", "variant": "primary"}] if not retention.archived else []))
 ) }}
 
 <div class="subhead"><div class="meta-line">{{ client.name }}</div>{% if retention.archived %}{{ pill("Archived", "medium") }}{% else %}{{ pill(card.derived_status_label, "neutral") }}{% endif %}</div>

@@ -2,6 +2,12 @@
 {% block title %}{{ assessment.company_name }}{% endblock %}
 
 {% block content %}
+{% set engagement_context = assessment_engagement_context(request) %}
+{% set engagement = engagement_context.get("engagement") %}
+{% set engagement_id = engagement_context.get("engagement_id") %}
+{% set magic_links = engagement_context.get("magic_links", []) %}
+{% set client_uploads = engagement_context.get("client_uploads", []) %}
+{% set retention = engagement_context.get("retention") %}
 {% if engagement_archived %}
 <div data-archived-banner class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">This assessment belongs to an archived engagement and is read-only. Changes are refused until the engagement is unarchived.</div>
 {% endif %}
@@ -40,6 +46,14 @@
   </a>
   {% endif %}
 </div>
+
+{% if engagement %}
+<div data-visual-mask>
+  <a href="/engagements/{{ engagement.id }}/aws-evidence">AWS evidence</a>
+  {% include "partials/engagement_retention.html" %}
+  {% include "partials/magic_links.html" %}
+</div>
+{% endif %}
 
 {% if assessment.is_multi_framework %}
   {% include "partials/framework_tabs.html" %}

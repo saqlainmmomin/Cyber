@@ -2,7 +2,7 @@
 {% from "components/layout.html" import breadcrumb, page_header %}
 {% from "components/ui.html" import alert, button, link_button, field, checkbox %}
 
-{% block title %}New engagement{% endblock %}
+{% block title %}New Engagement{% endblock %}
 
 {% block crumbs %}
 {{ breadcrumb([{"label": "Engagements", "href": "/engagements"}, {"label": "New engagement"}]) }}
@@ -45,7 +45,7 @@
     <div class="stack-s">
       {% set selected_frameworks = form_values.selected_frameworks if form_values else [] %}
       {% for framework in frameworks %}
-      <label class="choice{% if not framework.enabled %} muted{% endif %}">
+      <label class="choice{% if not framework.enabled %} muted{% endif %}"{% if not framework.enabled %} title="Roadmap — control data present, analysis pipeline coming"{% endif %}>
         <input class="framework-choice" type="checkbox" name="selected_frameworks" value="{{ framework.id }}"{% if framework.id in selected_frameworks %} checked{% endif %}{% if not framework.enabled %} disabled{% endif %}>
         <span><b>{{ framework.name }}</b> <span class="meta-line">{{ framework.version }} · {{ framework.control_count }} controls</span>{% if not framework.enabled %}<span class="sub">Roadmap</span>{% endif %}</span>
       </label>

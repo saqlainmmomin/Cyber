@@ -79,6 +79,7 @@ YOZORA_S4_PATHS = (
     "app/templates/pages/engagement_purge.html",
     "app/templates/pages/engagements.html",
     "app/templates/pages/integrated_reports.html",
+    "app/templates/pages/assessment.html",
     "app/templates/pages/new_assessment.html",
     "app/templates/pages/new_engagement.html",
     "app/templates/pages/reports.html",

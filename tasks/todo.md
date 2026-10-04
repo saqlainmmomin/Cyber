@@ -131,3 +131,4 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] Add the cross-engagement `/reports` issued-versions index and activate only the Engagements and Reports shell entries.
 - [x] Add deterministic S4 seed scenarios, visual clip coverage, migration-map rows, and stale-guard allowances.
 - [x] Run focused local checks available without a server, browser, network, or boto3; record limits in the S4 handoff.
+- [x] Restore orchestrator-detected S4 content regressions and complete the requested full-suite verification. Seven requested regressions, both stale file-set guards, the redirect/protected-surface contracts, and the full suite pass; only the authorized S3 Home longitudinal failure remains.
