@@ -188,6 +188,7 @@ YOZORA_S5_PATHS = (
     "app/templates/partials/analysis_complete.html",
     "app/templates/partials/analysis_error.html",
     "app/templates/partials/desk_review_prefilling.html",
+    "app/templates/pages/desk_review.html",  # s5-b4: live b4 "Pre-fill from documents" page
     "app/templates/partials/framework_hub_panel.html",
     "tests/test_p5_3_framework_desk_review.py",
     "tests/test_picker_and_scoring_contract.py",

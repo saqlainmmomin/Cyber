@@ -48,35 +48,20 @@ S5_PREVIEW_STATES = {
 def _b4_desk_review_live(request: Request, db: Session, state: str) -> Response | None:
     """s5-prefill: render the b4 results page from a real assessment.
 
-    With ``?assessment_id=`` the page shows exactly what the live desk-review
-    status endpoint returns for that assessment, inside the assessment chrome.
+    With ``?assessment_id=`` this is the live ``/assessments/{id}/desk-review``
+    page (same template and context) with polling switched off.
     ``rerun`` shows the findings; the live re-run asks through ``hx-confirm``.
     """
     from app.models.assessment import Assessment
-    from app.models.engagement import Engagement
-    from app.routers.web import desk_review_status_view
-    from app.template_config import engagement_period
+    from app.routers.web import desk_review_page_context
 
     assessment_id = request.query_params.get("assessment_id")
     assessment = db.get(Assessment, assessment_id) if assessment_id else None
     if assessment is None:
         return None
-    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
-    template_name, context = desk_review_status_view(request, db, assessment)
-    period = engagement_period(engagement) if engagement else None
-    context.update({
-        "screen": "b4-desk_review",
-        "state": state,
-        "desk_review_partial": template_name,
-        "assessment": assessment,
-        "engagement": engagement,
-        "period": period,
-        "tab": "questionnaire",
-        "active_framework": None,
-        "preview_static": True,
-        "page_title": "Pre-fill from documents",
-    })
-    return templates.TemplateResponse("pages/design_assessment_preview.html", context)
+    context = desk_review_page_context(request, db, assessment)
+    context.update({"screen": "b4-desk_review", "state": state, "preview_static": True})
+    return templates.TemplateResponse("pages/desk_review.html", context)
 
 
 # s5-quest: questionnaire sections fixture (b3-sections, b3-section-questions previews).
@@ -281,6 +266,8 @@ def _s5_preview(request: Request, screen: str, db: Session | None = None) -> Res
     })
     if screen in {"b3-sections", "b3-section-questions"}:
         common.update(_s5_questionnaire_fixture(screen, state))
+    if screen == "b4-desk_review":
+        return templates.TemplateResponse("pages/desk_review.html", common)
     return templates.TemplateResponse("pages/design_assessment_preview.html", common)
 
 

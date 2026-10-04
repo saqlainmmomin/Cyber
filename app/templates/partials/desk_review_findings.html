@@ -16,7 +16,7 @@
       <p class="sub">{% if prefill_freshness.last_prefill_at %}{{ prefill_freshness.last_prefill_at.strftime("%-d %b %Y") }} · {% endif %}{{ questionnaire_stats.awaiting_confirmation if questionnaire_stats else 0 }} answers wait for confirmation · {{ absences | length }} missing provisions · {{ signals | length }} red flag{{ 's' if signals | length != 1 else '' }}</p>
       {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub tight">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
     </div>
-    <div class="hrow"><button class="btn secondary" type="button"
+    <div class="hrow"><a class="btn ghost" href="/assessments/{{ assessment_id }}/desk-review">What the documents show</a><button class="btn secondary" type="button"
             hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
             hx-target="#desk-review-area"
             hx-swap="innerHTML"
@@ -32,7 +32,6 @@
     </div>
     <a class="btn primary" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire{{ icon("arrow-r") }}</a>
   </div>
-  {% endif %}
 
   {% if failed_framework_names %}
   <div class="dr-partial"><div data-desk-review-failed-frameworks class="alert c-medium" role="alert">
@@ -82,10 +81,11 @@
   </details></div>
   {% endif %}
 
-  {% if not questionnaire_surface %}<div class="dr-rerun"><button class="btn ghost sm lead" type="button"
+  <div class="dr-rerun"><button class="btn ghost sm lead" type="button"
       hx-post="/assessments/{{ assessment_id }}/run-desk-review"
       hx-target="#desk-review-area"
       hx-swap="innerHTML"
       hx-confirm="Re-run desk review? This replaces the {{ total_findings }} current findings.">{{ icon("rotate") }}Re-run desk review</button></div>
+  {# The Questionnaire tab shows only the summary above; the lists live on /assessments/{id}/desk-review. #}
   {% endif %}
 </div>

@@ -3231,6 +3231,41 @@ def desk_review_status_web(
     return templates.TemplateResponse(template_name, context)
 
 
+def desk_review_page_context(request: Request, db: Session, assessment: Assessment) -> dict:
+    """Context for the full "Pre-fill from documents" page (b4).
+
+    The page body is the status endpoint's own partial for this assessment, so
+    the page and its ``#desk-review-area`` polling always render the same thing.
+    """
+    from app.template_config import engagement_period
+
+    template_name, context = desk_review_status_view(request, db, assessment)
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    context.update({
+        "desk_review_partial": template_name,
+        "assessment": assessment,
+        "engagement": engagement,
+        "period": engagement_period(engagement) if engagement else None,
+        "active_framework": None,
+    })
+    return context
+
+
+@router.get("/assessments/{assessment_id}/desk-review", response_class=HTMLResponse)
+def desk_review_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Read-only page with the desk-review status and findings for one assessment."""
+    assessment = db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404)
+    return templates.TemplateResponse(
+        "pages/desk_review.html", desk_review_page_context(request, db, assessment)
+    )
+
+
 @router.post("/assessments/{assessment_id}/run-desk-review", response_class=HTMLResponse)
 def run_desk_review_web(
     request: Request,

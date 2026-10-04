@@ -21,6 +21,7 @@ MIGRATED_TEMPLATES = {
     "partials/framework_hub_panel.html",
     "pages/design_assessment_preview.html",
     "partials/desk_review_prefilling.html",
+    "pages/desk_review.html",  # s5-b4: live b4 page
 }
 
 

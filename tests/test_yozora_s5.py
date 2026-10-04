@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 
-from app.models.desk_review import DeskReviewSummary
+from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     _register_frameworks,
     db,
@@ -195,6 +195,100 @@ def test_b4_desk_review_preview_renders_the_status_endpoint_for_a_real_assessmen
     assert "The analysis service did not respond within 10 minutes." in page.text
     assert f'hx-post="/assessments/{assessment.id}/run-desk-review"' in page.text
     assert "Retry desk review" in fragment.text
+
+
+def _seed_completed_desk_review(db, assessment):
+    db.add(
+        DeskReviewSummary(
+            assessment_id=assessment.id,
+            status="completed",
+            document_catalog=json.dumps([{"filename": "privacy_notice.pdf"}]),
+            coverage_summary=json.dumps({"CH2.NOTICE.1": "partial"}),
+        )
+    )
+    db.add_all([
+        DeskReviewFinding(
+            assessment_id=assessment.id,
+            finding_type="signal",
+            framework_id="dpdpa",
+            requirement_id="CH2.NOTICE.1",
+            content="Breach notice never mentions the Data Protection Board",
+            severity="critical",
+            source_quote="We will notify affected customers within 72 hours.",
+            source_location="Page 3",
+        ),
+        DeskReviewFinding(
+            assessment_id=assessment.id,
+            finding_type="absence",
+            framework_id="dpdpa",
+            requirement_id="CH2.NOTICE.1",
+            content="The privacy notice names no grievance response time",
+            severity="medium",
+        ),
+        DeskReviewFinding(
+            assessment_id=assessment.id,
+            finding_type="evidence",
+            framework_id="dpdpa",
+            requirement_id="CH2.NOTICE.1",
+            content="Purposes are listed",
+            source_quote="We use your personal data to provide the ledger service.",
+        ),
+    ])
+    assessment.desk_review_status = "completed"
+    db.commit()
+
+
+def test_desk_review_page_renders_findings_for_a_real_assessment(db, http):
+    _client, engagement, assessment = seed_engagement(db)
+    _seed_completed_desk_review(db, assessment)
+
+    page = http.get(f"/assessments/{assessment.id}/desk-review")
+
+    assert page.status_code == 200
+    assert "<h1>Pre-fill from documents</h1>" in page.text
+    assert f'<a href="/assessments/{assessment.id}?tab=questionnaire">Questionnaire</a>' in page.text
+    assert f'href="/engagements/{engagement.id}"' in page.text
+    nav = _assessment_nav(page.text)
+    assert re.search(r'aria-(selected|current)="[^"]+"[^>]*>Questionnaire<', nav)
+    assert 'id="desk-review-area"' in page.text
+    assert "Desk review complete" in page.text
+    assert "Breach notice never mentions the Data Protection Board" in page.text
+    assert "The privacy notice names no grievance response time" in page.text
+    assert "We use your personal data to provide the ledger service." in page.text
+    assert f'hx-post="/assessments/{assessment.id}/run-desk-review"' in page.text
+    assert 'hx-target="#desk-review-area"' in page.text
+
+
+def test_desk_review_page_keeps_live_polling_while_running(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    db.add(DeskReviewSummary(assessment_id=assessment.id, status="analyzing"))
+    db.commit()
+
+    page = http.get(f"/assessments/{assessment.id}/desk-review")
+
+    assert page.status_code == 200
+    assert f'hx-get="/assessments/{assessment.id}/desk-review-status"' in page.text
+    assert 'hx-trigger="every 3s"' in page.text
+
+
+def test_desk_review_page_404_for_unknown_assessment(http):
+    assert http.get("/assessments/does-not-exist/desk-review").status_code == 404
+
+
+def test_questionnaire_desk_review_card_is_a_summary_linking_to_the_page(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    _seed_completed_desk_review(db, assessment)
+
+    card = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
+
+    assert card.status_code == 200
+    assert "Pre-filled from 1 document" in card.text
+    assert "1 missing provisions · 1 red flag" in card.text
+    assert f'href="/assessments/{assessment.id}/desk-review"' in card.text
+    assert "What the documents show" in card.text
+    assert "Breach notice never mentions the Data Protection Board" not in card.text
+    assert "The privacy notice names no grievance response time" not in card.text
+    assert "Evidence found" not in card.text
 
 
 def test_scope_edit_reopens_saved_answers_and_complete_view_links_to_it(db, http):
