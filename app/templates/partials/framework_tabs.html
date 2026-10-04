@@ -9,7 +9,7 @@
        aria-selected="{{ 'true' if framework.id == active_framework else 'false' }}"
        onclick="this.closest('[role=tablist]').querySelectorAll('[role=tab]').forEach((tab) => { tab.classList.remove('sel'); tab.setAttribute('aria-selected', 'false'); }); this.classList.add('sel'); this.setAttribute('aria-selected', 'true');"
        href="/assessments/{{ assessment.id }}?tab={{ tab }}&amp;framework={{ framework.id }}">
-      {{ framework.name }}{% if framework.version %} {{ framework.version }}{% endif %}
+      {{ framework_label(framework.id, full=True) }}
     </a>
     {% endfor %}
   </nav>

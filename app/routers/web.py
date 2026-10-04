@@ -63,7 +63,7 @@ from app.services.scoring import compute_delta
 from app.utils.http_headers import attachment_disposition
 from app.utils.review_gate import require_review_approval
 
-from app.template_config import configure_templates
+from app.template_config import configure_templates, framework_label
 
 router = APIRouter(tags=["web"])
 logger = logging.getLogger(__name__)
@@ -103,17 +103,8 @@ def _selected_framework_names(assessment: Assessment) -> list[str]:
 
 
 def _selected_framework_labels(assessment: Assessment) -> list[str]:
-    """Return the registry's real framework names with their versions for UI chips."""
-    from app.frameworks.registry import FrameworkRegistry
-
-    labels = []
-    for fw_id in _selected_framework_ids(assessment):
-        fw = FrameworkRegistry.get_or_none(fw_id)
-        if fw:
-            labels.append(f"{fw.name} {fw.version}" if fw.version else fw.name)
-        else:
-            labels.append(fw_id.upper())
-    return labels
+    """Framework chip labels in the house style ("DPDPA 2023", "ISO 27001:2022")."""
+    return [framework_label(fw_id, full=True) for fw_id in _selected_framework_ids(assessment)]
 
 
 def _live_document_prefill_ids(sections: list[dict]) -> set[str]:
@@ -3167,7 +3158,7 @@ def desk_review_status_view(
         if requirement_id in controls
     }
     coverage_framework_names = [
-        FrameworkRegistry.get(framework_id).name
+        framework_label(framework_id)
         for framework_id in assessment.frameworks
         if any(control.id in coverage for control in FrameworkRegistry.get(framework_id).all_controls())
     ]
@@ -3182,9 +3173,9 @@ def desk_review_status_view(
     )
     catalog = json.loads(summary.document_catalog) if summary.document_catalog else []
     failed_ids = failed_desk_review_frameworks(summary)
-    failed_framework_names = [FrameworkRegistry.get(framework_id).name for framework_id in failed_ids]
+    failed_framework_names = [framework_label(framework_id) for framework_id in failed_ids]
     saved_framework_names = [
-        FrameworkRegistry.get(framework_id).name
+        framework_label(framework_id)
         for framework_id in assessment.frameworks
         if framework_id not in failed_ids
     ]
