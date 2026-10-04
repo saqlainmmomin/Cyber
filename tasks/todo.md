@@ -169,3 +169,11 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] Add deterministic S6 seed data and frozen-clock manifest for Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory; stamp Alembic head after `create_all`.
 - [x] Add HTTP inventory/redirect/upload/delete/version tests and preserve Superseded/Legacy badge coverage.
 - [ ] Run orchestrator-only full suite and pixel gate after S5 merges; this environment has no server, browser, network, or boto3.
+
+# Yozora S6 review fixes, round 3 (2026-10-04)
+
+- [x] Remove production mockup state switchers and correct evidence/AWS/reuse/detail/span/workpaper page structure.
+- [x] Preserve evidence action/filter contracts, freshness and migration notices, and add the requested round-3 HTTP coverage.
+- [x] Restore the P6-6 reporting-basis contract and make the workpaper entry fixture render inside a page shell.
+- [x] Match the supplied S6 geometry/content fixture, including compact workpaper conclusions and the upload disclosure behavior.
+- [x] Run focused tests, the relevant regression suite, and static collision checks; record verified results in the S6 handoff. Full suite: 1463 passed, 30 skipped.

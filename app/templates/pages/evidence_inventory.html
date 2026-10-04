@@ -27,21 +27,21 @@
       <button class="btn secondary" type="button" id="add-from" aria-expanded="false">Add from {{ icon("updown") }}</button>
       <span class="menu" id="add-from-menu" role="menu">
         <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}Pull from AWS</a>
-        {% if assessment %}<a href="/assessments/{{ assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("copy") }}Reuse from another assessment</a>{% endif %}
-        <a href="/engagements/{{ engagement.id }}?tab=rfis" role="menuitem">{{ icon("users") }}Ask the client</a>
+        {% set menu_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
+        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("copy") }}Reuse from another assessment</a><a href="/assessments/{{ menu_assessment.id }}/rfi" role="menuitem">{{ icon("users") }}Ask the client</a>{% endif %}
       </span>
     </span>
-{% if upload_assessment_id and state not in ("upload", "empty") %}<button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% endif %}
+{% if upload_assessment_id and state != "upload" %}<button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% endif %}
   </div>
   {% endif %}
 </header>
 
 {% if engagement %}
 {{ engagement_tabs(engagement, "evidence") }}
-{{ seg([
-  {"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"},
-  {"label": "Requests", "key": "requests", "href": "/engagements/" ~ engagement.id ~ "?tab=rfis"}
-], "inventory") }}
+{% set evidence_sections = [{"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"}] %}
+{% set tab_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
+{% if tab_assessment %}{% set evidence_sections = evidence_sections + [{"label": "Requests", "key": "requests", "href": "/assessments/" ~ tab_assessment.id ~ "/rfi"}] %}{% endif %}
+{{ seg(evidence_sections, "inventory") }}
 {% endif %}
 
 {% if state == "loading" %}
@@ -51,8 +51,8 @@
 {% elif state == "error" %}
 {{ alert("Evidence inventory could not be loaded", "Try refreshing this page or check the engagement connection.", "noncompliant") }}
 {% else %}
-{% if upload_assessment_id and state == "upload" %}
-<details class="glass upload-panel" id="upload-panel" data-upload-panel{% if state == "upload" %} open{% endif %}>
+{% if upload_assessment_id %}
+<details class="glass upload-panel" id="upload-panel" data-upload-panel{% if state == "upload" %} open{% else %} hidden{% endif %}>
   <summary><span><p class="eyebrow">Add evidence</p><b>Upload a file</b><span class="sub">Files are scanned before they become available to the assessment.</span></span><span class="link">{{ "Hide" if state == "upload" else "Open" }}</span></summary>
   <form method="post" action="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" enctype="multipart/form-data" hx-post="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data" data-upload-form>
     {% if not assessment and assessment_options %}<label class="field sel"><span class="label">Assessment</span><select name="upload_assessment_id" data-upload-assessment>{% for option in assessment_options %}<option value="{{ option.id }}"{% if option.id == upload_assessment_id %} selected{% endif %}>{{ option.display_name }}</option>{% endfor %}</select></label>{% endif %}
@@ -64,7 +64,7 @@
 </details>
 {% endif %}
 
-<p class="meta-line count-strip">{{ inventory_counts.get("total", 0) }} items · {{ inventory_counts.get("Available", 0) }} available · {{ inventory_counts.get("Scanning", 0) }} scanning · {{ inventory_counts.get("Rejected", 0) }} rejected · {{ inventory_counts.get("Out of date", 0) }} out of date</p>
+<p class="meta-line count-strip">{{ inventory_counts.get("total", 0) }} item{% if inventory_counts.get("total", 0) != 1 %}s{% endif %} · {{ inventory_counts.get("Available", 0) }} available · {{ inventory_counts.get("Scanning", 0) }} scanning · {{ inventory_counts.get("Rejected", 0) }} rejected · {{ inventory_counts.get("Out of date", 0) }} out of date</p>
 
 <form class="tools keep-row" method="get" action="{{ request.url.path }}">
   <label class="field">{{ icon("search") }}<input name="search" value="{{ search }}" placeholder="Search files" aria-label="Search files"></label>
@@ -83,11 +83,7 @@
 {% endif %}
 
 <div id="document-list">
-  {% if not inventory_rows %}
-  <div class="glass empty"><span class="tile">{{ icon("folder") }}</span><h2>No evidence yet</h2><p>Upload the first file for this engagement or ask the client to provide it through a secure link.</p>{% if upload_assessment_id %}<button class="btn primary" type="button" data-upload-open>Upload evidence</button>{% endif %}</div>
-  {% else %}
   {% include "partials/document_list.html" %}
-  {% endif %}
 </div>
 {% if assessment and freshness and freshness.last_prefill_at and freshness.new_since_last_prefill %}
 <div class="alert c-accent" data-prefill-note>{{ icon("clock") }}<div><b>{{ freshness.new_since_last_prefill }} new document{% if freshness.new_since_last_prefill != 1 %}s{% endif %} since the {{ assessment.display_name }} questionnaire was last pre-filled</b><span><a href="/assessments/{{ assessment.id }}?tab=questionnaire">Pre-fill again</a>.</span></div></div>
@@ -108,7 +104,7 @@
     document.querySelectorAll('[data-upload-open]').forEach((button) => {
       button.addEventListener('click', () => {
         const panel = document.querySelector('[data-upload-panel]');
-        if (panel) { panel.open = true; panel.scrollIntoView({behavior: 'smooth'}); }
+        if (panel) { panel.hidden = false; panel.open = true; panel.scrollIntoView({behavior: 'smooth'}); }
         else { const url = new URL(window.location.href); url.searchParams.set('state', 'upload'); window.location.href = url.toString(); }
       });
     });
@@ -153,7 +149,7 @@
     });
     document.querySelector('[data-upload-cancel]')?.addEventListener('click', () => {
       const panel = document.querySelector('[data-upload-panel]');
-      if (panel) panel.open = false;
+      if (panel) { panel.open = false; panel.hidden = true; }
     });
   })();
 </script>

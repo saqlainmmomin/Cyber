@@ -1441,6 +1441,10 @@ def evidence_detail_page(
         for item in evidence.get("uses", [])
         if item.get("assessment_id")
     }
+    action_assessment = originating_assessment or next(
+        (use_assessments.get(item["assessment_id"]) for item in evidence.get("uses", []) if item.get("assessment_id")),
+        None,
+    )
     return templates.TemplateResponse(
         "pages/evidence_detail.html",
         {
@@ -1450,6 +1454,7 @@ def evidence_detail_page(
             "client": client,
             "originating_assessment": originating_assessment,
             "use_assessments": use_assessments,
+            "action_assessment": action_assessment,
         },
     )
 
@@ -1491,6 +1496,10 @@ def _inventory_fragment_context(
         status=status,
         search=search,
     ) if engagement_id else []
+    display_dates = {
+        row.id: row.created_at
+        for row in db.query(Evidence).filter(Evidence.id.in_([item.evidence_id for item in rows])).all()
+    } if rows else {}
     actions = {}
     legacy_documents = []
     for owner in owner_assessments:
@@ -1520,6 +1529,7 @@ def _inventory_fragment_context(
         "document_actions": actions,
         "assessment_id": scope_assessment_id,
         "legacy_documents": legacy_documents,
+        "inventory_display_dates": display_dates,
         "fragment_query": urlencode(fragment_params),
     }
 
@@ -1541,6 +1551,10 @@ def evidence_inventory_page(
         status=status,
         search=query.get("search") or None,
     )
+    display_dates = {
+        row.id: row.created_at
+        for row in db.query(Evidence).filter(Evidence.id.in_([item.evidence_id for item in rows])).all()
+    } if rows else {}
     engagements = (
         db.query(Engagement)
         .filter(Engagement.status != "archived")
@@ -1565,6 +1579,7 @@ def evidence_inventory_page(
             "view_state": query.get("state", "all"),
             "upload_assessment_id": None,
             "document_actions": {},
+            "inventory_display_dates": display_dates,
             "legacy_documents": [],
             "fragment_query": "",
             "doc_categories": [item.value for item in DocumentCategory],

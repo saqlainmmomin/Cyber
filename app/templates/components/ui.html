@@ -4,14 +4,14 @@
 <svg class="i"{% if label %} aria-label="{{ label }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}><use href="#i-{{ symbol }}"/></svg>
 {%- endmacro %}
 
-{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false, form_id="") -%}
+{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false, form_id="", copy_trigger="") -%}
 {% set classes = "btn " ~ variant %}
 {% if size %}{% set classes = classes ~ " " ~ size %}{% endif %}
 {% if lead %}{% set classes = classes ~ " lead" %}{% endif %}
 {% if icon_id and not label %}{% set classes = classes ~ " icon" %}{% endif %}
 {% if loading %}{% set classes = classes ~ " loading" %}{% endif %}
 {% if touch %}{% set classes = classes ~ " touch" %}{% endif %}
-<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if form_id %} form="{{ form_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
+<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if form_id %} form="{{ form_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}{% if copy_trigger %} data-copy-trigger="{{ copy_trigger }}"{% endif %}>
   {% if icon_id %}{{ icon(icon_id) }}{% endif %}{{ label }}{% if hint %}<kbd>{{ hint }}</kbd>{% endif %}
 </button>
 {%- endmacro %}
@@ -126,8 +126,8 @@
 <div class="menu{% if open %} open{% endif %}" role="menu">{% if heading %}<div class="gh">{{ heading }}</div>{% endif %}{% for item in items %}{% if item.href is defined %}<a href="{{ item.href }}" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</a>{% else %}<button class="mi{% if item.bad is defined and item.bad %} bad{% endif %}" type="button" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</button>{% endif %}{% endfor %}</div>
 {%- endmacro %}
 
-{% macro code_block(filename, code, copy_label="Copy", style="") -%}
-<div class="code"{% if style %} style="{{ style }}"{% endif %}><div class="code-head">{{ filename }}{{ button(copy_label, "ghost", "sm") }}</div><pre>{{ code }}</pre></div>
+{% macro code_block(filename, code, copy_label="Copy", style="", copy_target="") -%}
+<div class="code"{% if style %} style="{{ style }}"{% endif %}><div class="code-head">{{ filename }}{{ button(copy_label, "ghost", "sm", copy_trigger=copy_target) }}</div>{% if copy_target %}<span class="sr-only" data-copy-target="{{ copy_target }}">{{ code }}</span>{% endif %}<pre>{{ code }}</pre></div>
 {%- endmacro %}
 
 {% macro disclosure(summary, body="", open=false) -%}

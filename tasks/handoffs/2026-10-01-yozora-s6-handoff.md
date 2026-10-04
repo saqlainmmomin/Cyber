@@ -239,8 +239,18 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 - S1–S3: freshness comes from the selected assessment’s real pre-fill data; AWS error copy matches the approved preview; upload/archive/version fragments keep scope and filters, with a visible assessment choice for All assessments.
 - S4: reuse candidates are independently unchecked, warning acknowledgement remains required, one button submits selected forms sequentially, stops on the first error, reloads after success, and keeps empty errors hidden; warning copy includes framework lists.
 - S5–S6: upload categories come from `DocumentCategory` with the origin accept list, and evidence statuses use the shared display macro rather than raw state words.
-- S7–S9: legacy documents restore the migration notice; all S6 dates use the app filter, detail links use assessment names and plain provenance labels, and the AWS role name is restored. Policy blocks use the existing `code_block` macro; it has no clipboard binding, so no new copy component was introduced (the external ID keeps its existing copy action).
+- S7–S9: legacy documents restore the migration notice; all S6 dates use the app filter, detail links use assessment names and plain provenance labels, and the AWS role name is restored. Policy blocks use the existing `code_block` macro with its additive optional copy binding; the external ID keeps its existing copy action.
 - G1–G9: the approved header/table/card structures were rebuilt for inventory, detail/span, AWS, reuse, workpaper, and workpaper-entry states; Meridian now seeds the approved 11-item/4-run dataset with real reuse candidates, and `PREVIEW_PAGES["workpaper_entry"]` renders default, legacy, and excluded component fixtures without adding a production route.
+
+### Review fixes, round 3
+
+- Removed production mockup state switchers from AWS, reuse, detail, span, and workpaper; retained only transient loading/error/pulling/upload preview paths, and kept the workpaper Queue/Conclusions/Findings/Workpaper seg.
+- Wired inventory “Ask the client” and “Requests” to the existing `/assessments/{id}/rfi` route. Upload now opens the in-place disclosure; `?state=upload` remains only the open-panel preview.
+- Preserved assessment/source/status/search filters and per-row archive/version URLs in inventory fragments. Added HTTP coverage for fragment contracts, freshness and migration notices, non-available counts, filtered empty state, display labels/actions, reuse markup, and AWS preview/copy bindings.
+- Added minimal optional copy binding to the shared button/code-block macros; AWS policy blocks use it. Added debug-only `PREVIEW_PAGES["aws_evidence"]` using the real AWS page/panel templates with a fixture pull result; production query states do not fabricate an AWS result.
+- Restored the P6-6 `data-report-basis` attribute and exact reporting-basis wording. Workpaper now shows compact conclusions/runs while keeping full entries reachable in collapsed details; the workpaper-entry preview renders inside the real page shell.
+- Seeded distinct cited paragraphs and superseded-version text, and aligned the Meridian inventory fixture with real status counts/order/source/assessment/support/size/date data and freshness.
+- Verification: full suite passed with 1463 passed and 30 skipped; focused S6/P6/workpaper/AWS checks passed (31). Design lint/S2 checks passed (16). App server binding and Chromium pixel capture remain unavailable in this sandbox, so no pixel percentage is claimed.
 
 ### Built
 

@@ -1,26 +1,39 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/layout.html" import engagement_tabs %}
 {% from "components/ui.html" import evidence_status %}
 {% block title %}{{ evidence.original_filename }} · Evidence{% endblock %}
 {% block crumbs %}<a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ evidence.original_filename }}</b>{% endblock %}
 {% block content %}
 {% set uploaded_label = "AWS" if evidence.uploaded_by.startswith(("aws_config:", "aws_securityhub:")) else "Client link" if evidence.uploaded_by.startswith("client_link:") else "Upload" %}
 {% set period = engagement_period(engagement) %}
-{% set detail_state = "quarantined" if evidence.status == "quarantined" else "unused" if not evidence.uses else "current" %}
-{{ seg([{"label": "Current", "key": "current", "href": "?state=current"}, {"label": "Scanning", "key": "quarantined", "href": "?state=quarantined"}, {"label": "Not used yet", "key": "unused", "href": "?state=unused"}], detail_state) }}
+{% set category_labels = {"privacy_policy": "Privacy policy", "consent_form": "Consent form", "data_flow_diagram": "Data flow diagram", "dpia": "DPIA", "processing_records": "Processing records", "breach_procedure": "Breach procedure", "retention_policy": "Retention policy", "vendor_agreement": "Vendor agreement", "other": "Other"} %}
+{% set format_label = evidence.original_filename.rsplit('.', 1)[-1]|upper if '.' in evidence.original_filename else "File" %}
 <header class="page-head">
-  <div><p class="eyebrow">{{ client.name }} · {{ engagement.name }}</p><h1>{{ evidence.original_filename }}</h1><p class="meta-line">{{ uploaded_label }} · {{ evidence.created_at|display_date }}{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>
-  <div class="acts">{{ evidence_status(evidence.status) }}</div>
+  <div><p class="eyebrow">{{ client.name }} · {{ engagement.name }}</p><h1>{{ evidence.original_filename }}</h1><p class="meta-line">Received {{ evidence.created_at|display_date }}{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>
+  <div class="acts">
+    {% if action_assessment %}
+    <button class="btn ghost" type="button" hx-delete="/assessments/{{ action_assessment.id }}/documents/{{ evidence.id }}" hx-target="#detail-action-status" hx-swap="innerHTML" hx-confirm="Archive {{ evidence.original_filename }}? It will be retained but excluded from analysis.">Archive</button>
+    <details class="version-action"><summary class="btn secondary">Upload new version</summary><form class="stack" hx-post="/assessments/{{ action_assessment.id }}/evidence/{{ evidence.id }}/versions" hx-target="#detail-action-status" hx-swap="innerHTML" hx-encoding="multipart/form-data"><label class="field"><span class="label">File</span><input type="file" name="file" required></label><label class="field"><span class="label">Change reason</span><input type="text" name="change_reason" required></label><button class="btn primary sm" type="submit">Upload version</button></form></details>
+    {% endif %}
+  </div>
 </header>
 {{ engagement_tabs(engagement, "evidence") }}
-<section class="glass kv">
-  <div><dt>Category</dt><dd>{{ evidence.document_category or "Other" }}</dd></div>
-  <div><dt>Assessment</dt><dd>{% if originating_assessment %}<a href="/assessments/{{ originating_assessment.id }}">{{ originating_assessment.display_name }}</a>{% else %}Unmapped{% endif %}</dd></div>
-  <div><dt>Uploaded by</dt><dd>{{ uploaded_label }}</dd></div>
-  <div><dt>Received</dt><dd>{{ evidence.created_at|display_date }}</dd></div>
-  <div><dt>MIME type</dt><dd>{{ evidence.mime_type }}</dd></div>
-  <div><dt>Original v1 SHA-256</dt><dd class="code-inline" style="overflow-wrap:anywhere">{{ evidence.file_hash_sha256[:12] }}…</dd></div>
+<div id="detail-action-status" aria-live="polite"></div>
+
+<section class="glass stack" data-evidence-status>
+  <div class="section-head"><div><p class="eyebrow">Evidence status</p><h2>{{ evidence_status(evidence.status) }}</h2></div><span class="sub">{{ uploaded_label }} · {{ evidence.file_size_bytes|filesizeformat }}</span></div>
 </section>
-<section class="glass"><div class="section-head"><div><p class="eyebrow">Version history</p><h2>Versions</h2></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Version</th><th>Status</th><th>File</th><th>Type</th><th>Size</th><th>SHA-256</th><th>Received</th><th>Change reason</th></tr></thead><tbody>{% for version in evidence.versions %}<tr><td>v{{ version.version_number }}{% if version.status == "active" %} <span class="sub">current</span>{% endif %}</td><td>{{ evidence_status(version.status) }}</td><td>{{ version.original_filename }}</td><td>{{ version.mime_type }}</td><td>{{ version.file_size_bytes|filesizeformat }}</td><td class="code-inline" style="overflow-wrap:anywhere">{{ version.file_hash_sha256[:12] }}…</td><td>{{ version.created_at|display_date }}</td><td>{{ version.change_reason or "—" }}</td></tr>{% endfor %}</tbody></table></div></section>
-<section class="glass"><div class="section-head"><div><p class="eyebrow">Traceability</p><h2>Supports</h2></div></div>{% if evidence.uses %}<div class="table-wrap"><table class="data-table"><thead><tr><th>Assessment</th><th>Framework</th><th>Requirement</th><th>Relevance</th></tr></thead><tbody>{% for use in evidence.uses %}{% set use_assessment = use_assessments.get(use.assessment_id) %}<tr><td><a href="/assessments/{{ use.assessment_id }}">{{ use_assessment.display_name if use_assessment else "Assessment" }}</a></td><td>{{ use.framework_id }}</td><td>{{ use.requirement_id }}</td><td>{{ use.relevance }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No assessment mappings.</p></div>{% endif %}</section>
+
+<section class="glass kv">
+  <div><dt>Source</dt><dd>{{ uploaded_label }}</dd></div>
+  <div><dt>Assessment</dt><dd>{% if originating_assessment %}<a href="/assessments/{{ originating_assessment.id }}">{{ originating_assessment.display_name }}</a>{% else %}Unmapped{% endif %}</dd></div>
+  <div><dt>Category</dt><dd>{{ category_labels.get(evidence.document_category, "Other") }}</dd></div>
+  <div><dt>Uploaded by</dt><dd>{{ uploaded_label }}</dd></div>
+  <div><dt>Format</dt><dd>{{ format_label }}</dd></div>
+  <div><dt>SHA-256</dt><dd class="code-inline" style="overflow-wrap:anywhere">{{ evidence.file_hash_sha256[:12] }}…</dd></div>
+</section>
+
+<section class="glass"><div class="section-head"><div><p class="eyebrow">Version history</p><h2>Versions</h2></div></div><div class="table-wrap" style="overflow-x:auto"><table class="data-table"><thead><tr><th>Version</th><th>Status</th><th>File</th><th>Format</th><th>Received</th><th>SHA-256</th><th>Change reason</th></tr></thead><tbody>{% for version in evidence.versions %}<tr><td>v{{ version.version_number }}{% if version.status == "active" %} <span class="sub">current</span>{% endif %}</td><td>{{ evidence_status(version.status) }}</td><td>{{ version.original_filename }}</td><td>{{ version.original_filename.rsplit('.', 1)[-1]|upper if '.' in version.original_filename else "File" }}</td><td>{{ version.created_at|display_date }}</td><td class="code-inline" style="overflow-wrap:anywhere">{{ version.file_hash_sha256[:12] }}…</td><td>{{ version.change_reason or "—" }}</td></tr>{% endfor %}</tbody></table></div></section>
+
+<section class="glass"><div class="section-head"><div><p class="eyebrow">Traceability</p><h2>Supports</h2></div></div>{% if evidence.uses %}<div class="table-wrap" style="overflow-x:auto"><table class="data-table"><thead><tr><th>Assessment</th><th>Framework</th><th>Requirement</th><th>Relevance</th></tr></thead><tbody>{% for use in evidence.uses %}{% set use_assessment = use_assessments.get(use.assessment_id) %}<tr><td><a href="/assessments/{{ use.assessment_id }}">{{ use_assessment.display_name if use_assessment else "Assessment" }}</a></td><td>{{ framework_label(use.framework_id) }}</td><td>{{ use.requirement_id }}</td><td>{{ {"primary": "Primary support", "supporting": "Supporting evidence", "contextual": "Context only", "supports": "Supports"}.get(use.relevance, use.relevance|replace("_", " ")|title) }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No assessment mappings.</p></div>{% endif %}</section>
 {% endblock %}

@@ -18,17 +18,6 @@ from app.services import evidence_reuse
 router = APIRouter(include_in_schema=False)
 
 
-def _framework_names(assessment: Assessment) -> dict[str, str]:
-    return {
-        framework_id: (
-            FrameworkRegistry.get_or_none(framework_id).name
-            if FrameworkRegistry.get_or_none(framework_id)
-            else framework_id.upper()
-        )
-        for framework_id in assessment.frameworks
-    }
-
-
 def _page_context(
     request: Request,
     db: Session,

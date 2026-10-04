@@ -2,6 +2,8 @@
 
 from collections.abc import Callable
 from dataclasses import replace
+from datetime import datetime, timezone
+import json
 from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -11,8 +13,10 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.client import Client
+from app.models.engagement import Engagement
 from app.routers.web import templates
-from app.services import workpaper
+from app.services import aws_evidence, workpaper
 
 router = APIRouter(tags=["design"])
 
@@ -33,20 +37,90 @@ def login_preview(request: Request, db: Session | None = None) -> Response:
 PREVIEW_PAGES["login"] = login_preview
 
 
+def aws_evidence_preview(request: Request, db: Session) -> Response:
+    state = request.query_params.get("state", "ready")
+    if state not in {"ready", "pulling", "result", "error", "notconfigured"}:
+        state = "ready"
+    engagement = (
+        db.query(Engagement)
+        .join(Client, Client.id == Engagement.client_id)
+        .filter(Client.name == "Meridian Ledger Technologies")
+        .order_by(Engagement.created_at, Engagement.id)
+        .first()
+        or db.query(Engagement).order_by(Engagement.created_at, Engagement.id).first()
+    )
+    client = db.get(Client, engagement.client_id) if engagement else None
+    engagement = engagement or SimpleNamespace(id="preview-engagement", name="Preview engagement", client_id="preview-client")
+    client = client or SimpleNamespace(id="preview-client", name="Meridian Ledger Technologies")
+    context = aws_evidence.page_context(db, engagement)
+    external_id = "preview-external-id-1234567890"
+    context.update(
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "configured": True,
+            "external_id": external_id,
+            "suggested_role_name": "YozoraReadOnlyAudit",
+            "form_values": {
+                "account_id": aws_evidence.EXAMPLE_ACCOUNT_ID,
+                "role_arn": f"arn:aws:iam::{aws_evidence.EXAMPLE_ACCOUNT_ID}:role/YozoraReadOnlyAudit",
+                "regions": "ap-south-1, us-east-1",
+            },
+            "trust_policy_json": json.dumps(aws_evidence.trust_policy(external_id), indent=2),
+            "permissions_policy_json": json.dumps(aws_evidence.permissions_policy(aws_evidence.EXAMPLE_ACCOUNT_ID), indent=2),
+            "consultant_policy_json": json.dumps(aws_evidence.consultant_policy(), indent=2).replace("ComplianceEvidenceReadOnly", "YozoraReadOnlyAudit"),
+        }
+    )
+    if state == "result":
+        started_at = datetime(2026, 3, 21, 10, tzinfo=timezone.utc)
+        context["result"] = aws_evidence.PullResult(
+            pull_id="preview-pull-001",
+            account_id=aws_evidence.EXAMPLE_ACCOUNT_ID,
+            regions=("eu-west-1",),
+            sources=(
+                aws_evidence.SourceSummary("aws_config", "eu-west-1", "collected", 12, 8, 2, 2, 0, False, 0),
+                aws_evidence.SourceSummary("aws_securityhub", "eu-west-1", "collected", 6, 4, 1, 1, 0, False, 0),
+            ),
+            evidence_ids=(),
+            started_at=started_at,
+            finished_at=datetime(2026, 3, 21, 10, 4, tzinfo=timezone.utc),
+        )
+    return templates.TemplateResponse(
+        "pages/aws_evidence.html",
+        context,
+    )
+
+
+PREVIEW_PAGES["aws_evidence"] = aws_evidence_preview
+
+
 def workpaper_entry_preview(request: Request, db: Session) -> Response:
     state = request.query_params.get("state", "default")
     if state not in {"default", "legacy", "excluded"}:
         state = "default"
-    assessment = db.query(Assessment).order_by(Assessment.created_at, Assessment.id).first()
+    assessments = db.query(Assessment).order_by(Assessment.created_at, Assessment.id).all()
+    assessment = assessments[0] if assessments else None
     entry = None
-    if assessment:
-        read_model = workpaper.build_workpaper(db, assessment)
+    for candidate in assessments:
+        read_model = workpaper.build_workpaper(db, candidate)
         sections = read_model.sections
-        entry = next((item for section in sections for item in section.entries), None)
-        if entry is None:
-            entry = next((item for section in sections for item in section.excluded_entries), None)
+        candidate_entry = next((item for section in sections for item in section.entries), None)
+        candidate_entry = candidate_entry or next(
+            (item for section in sections for item in section.excluded_entries),
+            None,
+        )
+        if candidate_entry is not None:
+            assessment = candidate
+            entry = candidate_entry
+            break
     if entry is None:
-        assessment = assessment or SimpleNamespace(id="preview-assessment")
+        assessment = assessment or SimpleNamespace(
+            id="preview-assessment",
+            display_name="Preview assessment",
+            company_name="Meridian Ledger Technologies",
+            frameworks=["dpdpa"],
+        )
         conclusion = SimpleNamespace(
             framework_id="dpdpa", requirement_id="DPDPA-1", version=1, id="preview-conclusion",
             ai_proposed=True, outcome="compliant", risk_level="low", rationale="Documented practice",
@@ -75,8 +149,14 @@ def workpaper_entry_preview(request: Request, db: Session) -> Response:
         else:
             entry.in_scope = False
     return templates.TemplateResponse(
-        "components/workpaper_entry.html",
-        {"request": request, "assessment": assessment, "entry": entry},
+        "pages/workpaper.html",
+        {
+            "request": request,
+            "assessment": assessment,
+            "preview_entry": entry,
+            "preview_period_label": "01 Apr 2026 to 30 Jun 2026",
+            "preview_cutoff_label": "15 Jul 2026",
+        },
     )
 
 

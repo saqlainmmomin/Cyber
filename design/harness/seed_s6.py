@@ -95,9 +95,26 @@ def _version(
         status=status,
         original_filename=filename,
         mime_type=evidence.mime_type,
-        extracted_text=("Seeded extracted text for evidence inventory and pre-fill. " * 3)
-        if status == "active"
-        else None,
+        extracted_text=(
+            {
+                "meridian-evidence-000": (
+                    "The notice explains how Meridian collects and uses personal data.\n\n"
+                    "It describes withdrawal and complaint channels for data principals.\n\n"
+                    "The notice names the retention periods and responsible contact."
+                ),
+                "meridian-evidence-001": "The information security policy defines ownership, review and approval responsibilities.",
+                "meridian-evidence-002": "IAM users and policies snapshot for the read-only review.",
+                "meridian-evidence-003": "Access review export for the fourth quarter.",
+                "meridian-evidence-004": "The procedure records how consent withdrawals are handled.",
+                "meridian-evidence-005": "The retention policy defines deletion schedules and exceptions.",
+                "meridian-evidence-006": "The cloud hosting agreement records supplier security obligations.",
+                "meridian-evidence-007": "The vendor data processing agreement records processor duties.",
+                "meridian-evidence-008": "S3 encryption and logging configuration snapshot.",
+                "meridian-evidence-009": "The breach notification runbook records escalation and notice steps.",
+                "meridian-evidence-010": "The payments data flow diagram shows systems and transfers.",
+            }
+            .get(evidence.id, "Seeded extracted text for evidence inventory and pre-fill.")
+        ),
         created_at=created_at or _time(-20),
     )
 
@@ -157,54 +174,92 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     for row in rows.values():
         if row.status == "available":
             row.status = "active"
-    rows["meridian-evidence-002"].status = "quarantined"
+    rows["meridian-evidence-002"].status = "active"
     rows["meridian-evidence-003"].status = "rejected"
     rows["meridian-evidence-004"].status = "quarantined"
     rows["meridian-evidence-005"].status = "invalidated"
+    rows["meridian-evidence-010"].status = "quarantined"
     names = {
         "meridian-evidence-000": "Privacy notice.pdf",
         "meridian-evidence-001": "Information security policy.pdf",
-        "meridian-evidence-002": "IAM users and policies.pdf",
+        "meridian-evidence-002": "IAM users and policies",
         "meridian-evidence-003": "Access review export Q4.xlsx",
         "meridian-evidence-004": "Consent withdrawal procedure.docx",
         "meridian-evidence-005": "Data retention policy.pdf",
         "meridian-evidence-006": "Cloud hosting agreement.pdf",
         "meridian-evidence-007": "Vendor data processing agreement.pdf",
-        "meridian-evidence-008": "S3 encryption and logging.pdf",
+        "meridian-evidence-008": "S3 encryption and logging",
         "meridian-evidence-009": "Breach notification runbook.pdf",
-        "meridian-evidence-010": "Data flow mapping.png",
+        "meridian-evidence-010": "Data flow diagram, payments.png",
+    }
+    display_dates = {
+        "meridian-evidence-000": datetime(2026, 3, 12, 12, tzinfo=timezone.utc),
+        "meridian-evidence-001": datetime(2026, 3, 11, 12, tzinfo=timezone.utc),
+        "meridian-evidence-002": datetime(2026, 3, 14, 12, tzinfo=timezone.utc),
+        "meridian-evidence-003": datetime(2026, 3, 13, 12, tzinfo=timezone.utc),
+        "meridian-evidence-004": datetime(2026, 3, 15, 12, tzinfo=timezone.utc),
+        "meridian-evidence-005": datetime(2026, 3, 9, 12, tzinfo=timezone.utc),
+        "meridian-evidence-006": datetime(2026, 3, 10, 12, tzinfo=timezone.utc),
+        "meridian-evidence-007": datetime(2026, 3, 12, 12, tzinfo=timezone.utc),
+        "meridian-evidence-008": datetime(2026, 3, 14, 12, tzinfo=timezone.utc),
+        "meridian-evidence-009": datetime(2026, 3, 9, 12, tzinfo=timezone.utc),
+        "meridian-evidence-010": datetime(2026, 3, 15, 12, tzinfo=timezone.utc),
+    }
+    current_order_dates = {
+        evidence_id: datetime(2026, 4, 11 - index, 12, tzinfo=timezone.utc)
+        for index, evidence_id in enumerate(names)
+    }
+    display_sizes = {
+        "meridian-evidence-000": 2_400_000,
+        "meridian-evidence-001": 1_100_000,
+        "meridian-evidence-002": 340_000,
+        "meridian-evidence-003": 860_000,
+        "meridian-evidence-004": 96_000,
+        "meridian-evidence-005": 780_000,
+        "meridian-evidence-006": 3_200_000,
+        "meridian-evidence-007": 1_400_000,
+        "meridian-evidence-008": 212_000,
+        "meridian-evidence-009": 520_000,
+        "meridian-evidence-010": 1_100_000,
     }
     for evidence_id, filename in names.items():
         rows[evidence_id].original_filename = filename
-        rows[evidence_id].created_at = datetime(2026, 3, 10 + int(evidence_id[-3:]), 12, tzinfo=timezone.utc)
-        rows[evidence_id].file_size_bytes = 2_400_000 - int(evidence_id[-3:]) * 83_000
-    rows["meridian-evidence-001"].assessment_id = assessments[1].id
-    rows["meridian-evidence-005"].assessment_id = assessments[1].id
-    rows["meridian-evidence-009"].assessment_id = assessments[1].id
+        rows[evidence_id].created_at = display_dates[evidence_id]
+        rows[evidence_id].file_size_bytes = display_sizes[evidence_id] - 128
+    rows["meridian-evidence-001"].assessment_id = assessments[0].id
+    rows["meridian-evidence-005"].assessment_id = assessments[0].id
+    rows["meridian-evidence-009"].assessment_id = assessments[0].id
+    rows["meridian-evidence-008"].assessment_id = assessments[1].id
+    rows["meridian-evidence-006"].assessment_id = assessments[1].id
+    rows["meridian-evidence-007"].assessment_id = assessments[1].id
+    rows["meridian-evidence-010"].assessment_id = assessments[1].id
     rows["meridian-evidence-002"].uploaded_by = "aws_config:123456789012"
     rows["meridian-evidence-003"].uploaded_by = "client_link:magic-link-meridian"
     rows["meridian-evidence-004"].uploaded_by = "client_link:magic-link-meridian"
     rows["meridian-evidence-007"].uploaded_by = "client_link:magic-link-meridian-kiran"
     rows["meridian-evidence-008"].uploaded_by = "aws_config:123456789012"
+    rows["meridian-evidence-003"].mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    rows["meridian-evidence-004"].mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    rows["meridian-evidence-010"].mime_type = "image/png"
     rows["loomwire-evidence-000"].uploaded_by = "aws_config:123456789012"
     rows["loomwire-evidence-000"].original_filename = "aws-config-snapshot.txt"
     rows["loomwire-evidence-001"].uploaded_by = "client_link:magic-link-loomwire"
     rows["loomwire-evidence-001"].original_filename = "vendor-register.xlsx"
     db.add_all(
         [
-            _version(rows["meridian-evidence-000"], 1, status="superseded", created_at=datetime(2026, 3, 10, 12, tzinfo=timezone.utc), filename="Privacy notice v1.pdf", reason="Initial receipt"),
-            _version(rows["meridian-evidence-000"], 2, status="superseded", created_at=datetime(2026, 3, 11, 12, tzinfo=timezone.utc), filename="Privacy notice v2.pdf", reason="Updated notice"),
-            _version(rows["meridian-evidence-000"], 3, created_at=datetime(2026, 3, 12, 12, tzinfo=timezone.utc), filename="Privacy notice.pdf", reason="Added reviewer advice"),
-            _version(rows["meridian-evidence-001"], 1, created_at=datetime(2026, 3, 11, 12, tzinfo=timezone.utc), filename="Information security policy.pdf"),
-            _version(rows["meridian-evidence-002"], 1, status="quarantined", created_at=datetime(2026, 3, 12, 12, tzinfo=timezone.utc), filename="IAM users and policies.pdf"),
-            _version(rows["meridian-evidence-003"], 1, status="rejected", created_at=datetime(2026, 3, 13, 12, tzinfo=timezone.utc), filename="Access review export Q4.xlsx"),
-            _version(rows["meridian-evidence-004"], 1, status="quarantined", created_at=datetime(2026, 3, 14, 12, tzinfo=timezone.utc), filename="Consent withdrawal procedure.docx"),
-            _version(rows["meridian-evidence-005"], 1, status="invalidated", created_at=datetime(2026, 3, 15, 12, tzinfo=timezone.utc), filename="Data retention policy.pdf"),
-            _version(rows["meridian-evidence-006"], 1, created_at=datetime(2026, 3, 16, 12, tzinfo=timezone.utc), filename="Cloud hosting agreement.pdf"),
-            _version(rows["meridian-evidence-007"], 1, created_at=datetime(2026, 3, 17, 12, tzinfo=timezone.utc), filename="Vendor data processing agreement.pdf"),
-            _version(rows["meridian-evidence-008"], 1, created_at=datetime(2026, 3, 18, 12, tzinfo=timezone.utc), filename="S3 encryption and logging.pdf"),
-            _version(rows["meridian-evidence-009"], 1, created_at=datetime(2026, 3, 19, 12, tzinfo=timezone.utc), filename="Breach notification runbook.pdf"),
-            _version(rows["meridian-evidence-010"], 1, created_at=datetime(2026, 3, 20, 12, tzinfo=timezone.utc), filename="Data flow mapping.png"),
+            _version(rows["meridian-evidence-000"], 1, status="superseded", created_at=datetime(2026, 4, 1, 12, tzinfo=timezone.utc), filename="Privacy notice v1.pdf", reason="Initial receipt"),
+            _version(rows["meridian-evidence-000"], 2, status="superseded", created_at=datetime(2026, 4, 2, 12, tzinfo=timezone.utc), filename="Privacy notice v2.pdf", reason="Updated notice"),
+            _version(rows["meridian-evidence-000"], 3, created_at=current_order_dates["meridian-evidence-000"], filename="Privacy notice.pdf", reason="Added reviewer advice"),
+            _version(rows["meridian-evidence-001"], 1, created_at=current_order_dates["meridian-evidence-001"], filename="Information security policy.pdf"),
+            _version(rows["meridian-evidence-002"], 1, created_at=current_order_dates["meridian-evidence-002"], filename="IAM users and policies"),
+            _version(rows["meridian-evidence-003"], 1, status="rejected", created_at=current_order_dates["meridian-evidence-003"], filename="Access review export Q4.xlsx"),
+            _version(rows["meridian-evidence-004"], 1, status="quarantined", created_at=current_order_dates["meridian-evidence-004"], filename="Consent withdrawal procedure.docx"),
+            _version(rows["meridian-evidence-005"], 1, status="invalidated", created_at=current_order_dates["meridian-evidence-005"], filename="Data retention policy.pdf"),
+            _version(rows["meridian-evidence-006"], 1, created_at=current_order_dates["meridian-evidence-006"], filename="Cloud hosting agreement.pdf"),
+            _version(rows["meridian-evidence-007"], 1, created_at=current_order_dates["meridian-evidence-007"], filename="Vendor data processing agreement.pdf"),
+            _version(rows["meridian-evidence-008"], 1, created_at=current_order_dates["meridian-evidence-008"], filename="S3 encryption and logging"),
+            _version(rows["meridian-evidence-009"], 1, created_at=current_order_dates["meridian-evidence-009"], filename="Breach notification runbook.pdf"),
+            _version(rows["meridian-evidence-010"], 1, status="quarantined", created_at=current_order_dates["meridian-evidence-010"], filename="Data flow diagram, payments.png"),
             _version(rows["loomwire-evidence-000"], 1, created_at=_time(-6), filename="aws-config-snapshot.txt"),
             _version(rows["loomwire-evidence-001"], 1, created_at=_time(-5), filename="vendor-register.xlsx"),
             _version(rows["kestrel-evidence-000"], 1, created_at=_time(-4)),
@@ -212,22 +267,53 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     )
     db.add_all(
         [
-            EvidenceUse(id="use-meridian-privacy", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.8", relevance="supports"),
-            EvidenceUse(id="use-meridian-access", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
-            EvidenceUse(id="use-meridian-iam", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.2", relevance="supports"),
-            EvidenceUse(id="use-meridian-retention", evidence_id="meridian-evidence-005", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.34", relevance="supports"),
+            EvidenceUse(id="use-meridian-privacy-5", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.5", relevance="supports"),
+            EvidenceUse(id="use-meridian-privacy-6", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.6", relevance="supports"),
+            EvidenceUse(id="use-meridian-privacy-7", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.7", relevance="supports"),
+            EvidenceUse(id="use-meridian-privacy-8", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.8", relevance="supports"),
+            EvidenceUse(id="use-meridian-privacy-9", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.9", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-1", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.1", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-2", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.2", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-3", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.3", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-4", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.4", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-5", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.5", relevance="supports"),
+            EvidenceUse(id="use-reused-target", evidence_id="meridian-evidence-001", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.6", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-1", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.15", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-2", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.2", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-3", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.3", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-4", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.4", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-5", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.5", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-6", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.6", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam-head", evidence_id="meridian-evidence-002", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.8.2", relevance="supports"),
+            EvidenceUse(id="use-meridian-access", evidence_id="meridian-evidence-003", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
+            EvidenceUse(id="use-meridian-access-iam", evidence_id="meridian-evidence-003", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.8.2", relevance="supports"),
+            EvidenceUse(id="use-meridian-consent-6", evidence_id="meridian-evidence-004", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.6", relevance="supports"),
+            EvidenceUse(id="use-meridian-consent-7", evidence_id="meridian-evidence-004", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.7", relevance="supports"),
+            EvidenceUse(id="use-meridian-retention", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="s.8", relevance="supports"),
+            EvidenceUse(id="use-meridian-retention-iso", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.33", relevance="supports"),
             EvidenceUse(id="use-meridian-hosting", evidence_id="meridian-evidence-006", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
+            EvidenceUse(id="use-meridian-hosting-iso", evidence_id="meridian-evidence-006", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.23", relevance="supports"),
             EvidenceUse(id="use-meridian-vendor", evidence_id="meridian-evidence-007", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.20", relevance="supports"),
-            EvidenceUse(id="use-meridian-s3", evidence_id="meridian-evidence-008", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
-            EvidenceUse(id="use-meridian-breach", evidence_id="meridian-evidence-009", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.21", relevance="supports"),
+            EvidenceUse(id="use-meridian-vendor-iso", evidence_id="meridian-evidence-007", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
+            EvidenceUse(id="use-meridian-s3-15", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.15", relevance="supports"),
+            EvidenceUse(id="use-meridian-s3-20", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.20", relevance="supports"),
+            EvidenceUse(id="use-meridian-s3-24", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.24", relevance="supports"),
+            EvidenceUse(id="use-meridian-breach", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="s.8", relevance="supports"),
+            EvidenceUse(id="use-meridian-breach-24", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.24", relevance="supports"),
+            EvidenceUse(id="use-meridian-breach-25", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.25", relevance="supports"),
+            EvidenceUse(id="use-meridian-flow-14", evidence_id="meridian-evidence-010", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.14", relevance="supports"),
+            EvidenceUse(id="use-meridian-flow-20", evidence_id="meridian-evidence-010", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.20", relevance="supports"),
             EvidenceUse(id="use-loomwire-aws", evidence_id="loomwire-evidence-000", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
             EvidenceUse(id="use-loomwire-client", evidence_id="loomwire-evidence-001", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
-            EvidenceUse(id="use-reused-target", evidence_id="meridian-evidence-001", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
-            EvidenceUse(id="use-retention-target", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.7", relevance="supports"),
+            EvidenceUse(id="use-retention-target", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.8", relevance="supports"),
             EvidenceUse(id="use-breach-target", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.9", relevance="supports"),
         ]
     )
-    db.add(_audit("audit-reuse-meridian", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-reused-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-001", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    db.flush()
+    for use in db.query(EvidenceUse).filter(
+        EvidenceUse.assessment_id.in_((assessments[0].id, assessments[1].id))
+    ).all():
+        use.created_at = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
     db.add(_audit("audit-reuse-meridian-retention", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-retention-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-005", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
     db.add(_audit("audit-reuse-meridian-breach", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-breach-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-009", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
     for index, (framework_id, status, started_at, completed_at) in enumerate((
@@ -240,7 +326,7 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     basis_metadata = {"before": {"period_start": None, "period_end": None, "evidence_cutoff": None}, "after": {"period_start": "2025-04-01", "period_end": "2026-03-31", "evidence_cutoff": "2026-03-15", "prepared_by": "Priya Sharma", "reviewed_by": None}}
     db.add(_audit("audit-report-basis-meridian", action="assessment.report_basis_updated", entity_type="assessment", entity_id=assessments[0].id, created_at=datetime(2026, 3, 21, 12, tzinfo=timezone.utc), metadata=basis_metadata))
     assessments[0].desk_review_status = "completed"
-    db.add(DeskReviewSummary(assessment_id=assessments[0].id, document_catalog=json.dumps({"documents": 2}), coverage_summary=json.dumps({"covered": 1}), raw_ai_response="{}", status="completed", started_at=_time(-4), completed_at=_time(-3)))
+    db.add(DeskReviewSummary(assessment_id=assessments[0].id, document_catalog=json.dumps({"documents": 2}), coverage_summary=json.dumps({"covered": 1}), raw_ai_response="{}", status="completed", started_at=datetime(2026, 4, 4, 9, tzinfo=timezone.utc), completed_at=datetime(2026, 4, 5, 12, tzinfo=timezone.utc)))
     db.flush()
 
     _seed_review_stage(db, assessments[0], approved=3, pending=3)
