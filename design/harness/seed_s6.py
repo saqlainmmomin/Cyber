@@ -1,0 +1,239 @@
+"""Seed deterministic S6 evidence/workpaper data into throwaway SQLite.
+
+The seed imports the S4 builders and frozen clock, never starts the app, and
+does not make network or model calls. States that are interaction-only are
+selected with ``?state=...`` by the preview harness.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import timedelta
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+import app.models  # noqa: F401 - register every model before create_all()
+from app.database import Base
+from app.frameworks.registry import FrameworkRegistry
+from app.models.desk_review import DeskReviewSummary
+from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
+from app.models.firm_settings import FirmSettings
+from app.models.magic_link import MagicLink
+from app.models.audit_event import AuditEvent
+from design.harness.seed_s4 import (
+    FROZEN_NOW,
+    SEED_ACTOR,
+    _assessment,
+    _audit,
+    _client,
+    _engagement,
+    _seed_evidence,
+    _seed_review_stage,
+    _time,
+)
+
+
+SCREEN_STATES = {
+    "evidence": ("default", "upload", "filtered", "empty", "loading", "error", "prefill", "all"),
+    "aws_evidence": ("ready", "pulling", "result", "error", "notconfigured"),
+    "evidence_reuse": ("list", "error", "empty", "unlinked"),
+    "evidence_detail": ("current", "quarantined", "unused"),
+    "evidence_span": ("span", "whole", "superseded", "unavailable"),
+    "workpaper": ("list", "empty"),
+    "workpaper_entry": ("default", "legacy", "excluded"),
+}
+
+
+def _register_frameworks() -> None:
+    from app.frameworks.definitions.dpdpa import DPDPA_DEFINITION
+    from app.frameworks.definitions.gdpr import GDPR_DEFINITION
+    from app.frameworks.definitions.hipaa import HIPAA_DEFINITION
+    from app.frameworks.definitions.iso27001 import ISO27001_DEFINITION
+    from app.frameworks.definitions.nist_csf import NIST_CSF_DEFINITION
+    from app.frameworks.definitions.pci_dss import PCI_DSS_DEFINITION
+
+    for definition in (
+        DPDPA_DEFINITION,
+        ISO27001_DEFINITION,
+        GDPR_DEFINITION,
+        HIPAA_DEFINITION,
+        NIST_CSF_DEFINITION,
+        PCI_DSS_DEFINITION,
+    ):
+        FrameworkRegistry.register(definition)
+
+
+def _version(
+    evidence: Evidence,
+    number: int,
+    *,
+    status: str = "active",
+    created_at=None,
+    filename: str | None = None,
+    reason: str | None = None,
+) -> EvidenceVersion:
+    filename = filename or evidence.original_filename
+    return EvidenceVersion(
+        id=f"version-{evidence.id}-{number}",
+        evidence_id=evidence.id,
+        version_number=number,
+        storage_path=f"evidence/{evidence.engagement_id}/{evidence.id}-v{number}",
+        file_hash_sha256=(f"{evidence.id}-{number}" * 8)[:64].ljust(64, "0"),
+        file_size_bytes=evidence.file_size_bytes + number * 128,
+        change_reason=reason,
+        status=status,
+        original_filename=filename,
+        mime_type=evidence.mime_type,
+        extracted_text=("Seeded extracted text for evidence inventory and pre-fill. " * 3)
+        if status == "active"
+        else None,
+        created_at=created_at or _time(-20),
+    )
+
+
+def _magic_link(engagement_id: str) -> MagicLink:
+    return MagicLink(
+        id="magic-link-loomwire",
+        engagement_id=engagement_id,
+        token_digest="a" * 64,
+        scope_json=json.dumps({"assessment_ids": ["assessment-loomwire"]}),
+        max_uploads=20,
+        max_size_bytes=20_000_000,
+        expires_at=_time(30),
+        contact_name="Anika Rao",
+        contact_email="anika@loomwire.example",
+        created_at=_time(-8),
+    )
+
+
+def _seed_inventory(db: Session) -> dict[str, object]:
+    clients = [
+        _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large"),
+        _client("client-loomwire", "Loomwire Labs", "IT services", "medium"),
+        _client("client-kestrel", "Kestrel Advisory", "Professional services", "small"),
+    ]
+    engagements = [
+        _engagement("eng-meridian", clients[0].id, "FY2026 privacy readiness"),
+        _engagement("eng-loomwire", clients[1].id, "ISO 27001 surveillance review"),
+        _engagement("eng-kestrel", clients[2].id, "Advisory controls review"),
+    ]
+    assessments = [
+        _assessment("assessment-meridian-head", engagements[0].id, clients[0].name, "Head office", ("dpdpa", "iso27001"), status="questionnaire_done"),
+        _assessment("assessment-meridian-payments", engagements[0].id, clients[0].name, "Payments subsidiary", ("iso27001",)),
+        _assessment("assessment-loomwire", engagements[1].id, clients[1].name, "Platform review", ("iso27001",)),
+        _assessment("assessment-kestrel", engagements[2].id, clients[2].name, "Advisory review", ("dpdpa",)),
+    ]
+    db.add_all(clients + engagements + assessments)
+    db.add(FirmSettings(id=1, contact_email="engagements@northgate.example", archived_retention_years=7, accent_theme="midnight", updated_at=FROZEN_NOW))
+    db.add(_magic_link(engagements[1].id))
+    db.flush()
+
+    _seed_evidence(db, engagements[0], assessments[0], 5, "meridian-evidence")
+    _seed_evidence(db, engagements[1], assessments[2], 2, "loomwire-evidence")
+    _seed_evidence(db, engagements[2], assessments[3], 1, "kestrel-evidence")
+    db.flush()
+    rows = {row.id: row for row in db.query(Evidence).all()}
+    for row in rows.values():
+        if row.status == "available":
+            row.status = "active"
+    rows["meridian-evidence-002"].status = "quarantined"
+    rows["meridian-evidence-003"].status = "rejected"
+    rows["meridian-evidence-004"].status = "invalidated"
+    rows["meridian-evidence-000"].original_filename = "privacy-notice.pdf"
+    rows["meridian-evidence-001"].assessment_id = assessments[1].id
+    rows["meridian-evidence-001"].original_filename = "access-review.xlsx"
+    rows["loomwire-evidence-000"].uploaded_by = "aws_config:123456789012"
+    rows["loomwire-evidence-000"].original_filename = "aws-config-snapshot.txt"
+    rows["loomwire-evidence-001"].uploaded_by = "client_link:magic-link-loomwire"
+    rows["loomwire-evidence-001"].original_filename = "vendor-register.xlsx"
+    db.add_all(
+        [
+            _version(rows["meridian-evidence-000"], 1, status="superseded", created_at=_time(-12), filename="privacy-notice-v1.pdf", reason="Initial receipt"),
+            _version(rows["meridian-evidence-000"], 2, created_at=_time(-1), filename="privacy-notice.pdf", reason="Updated notice"),
+            _version(rows["meridian-evidence-001"], 1, created_at=_time(-2), filename="access-review.xlsx"),
+            _version(rows["meridian-evidence-002"], 1, status="quarantined", created_at=_time(-1)),
+            _version(rows["meridian-evidence-003"], 1, status="rejected", created_at=_time(-10)),
+            _version(rows["meridian-evidence-004"], 1, status="invalidated", created_at=_time(-8)),
+            _version(rows["loomwire-evidence-000"], 1, created_at=_time(-6), filename="aws-config-snapshot.txt"),
+            _version(rows["loomwire-evidence-001"], 1, created_at=_time(-5), filename="vendor-register.xlsx"),
+            _version(rows["kestrel-evidence-000"], 1, created_at=_time(-4)),
+        ]
+    )
+    db.add_all(
+        [
+            EvidenceUse(id="use-meridian-privacy", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.8", relevance="supports"),
+            EvidenceUse(id="use-meridian-access", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
+            EvidenceUse(id="use-loomwire-aws", evidence_id="loomwire-evidence-000", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
+            EvidenceUse(id="use-loomwire-client", evidence_id="loomwire-evidence-001", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
+            EvidenceUse(id="use-reused-target", evidence_id="meridian-evidence-001", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
+        ]
+    )
+    db.add(_audit("audit-reuse-meridian", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-reused-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-001", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    assessments[0].desk_review_status = "completed"
+    db.add(DeskReviewSummary(assessment_id=assessments[0].id, document_catalog=json.dumps({"documents": 2}), coverage_summary=json.dumps({"covered": 1}), raw_ai_response="{}", status="completed", started_at=_time(-4), completed_at=_time(-3)))
+    db.flush()
+
+    _seed_review_stage(db, assessments[0], approved=3, pending=3)
+    db.add(_audit("audit-upload-after-prefill", action="evidence.version.created", entity_type="evidence", entity_id="meridian-evidence-000", created_at=_time(-1), metadata={"version": 2}))
+    db.commit()
+    return {"clients": clients, "engagements": engagements, "assessments": assessments}
+
+
+def _stamp_head(database_url: str) -> None:
+    config = Config(str(REPO_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(REPO_ROOT / "alembic"))
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.stamp(config, "head")
+
+
+def seed(database_path: Path) -> dict[str, object]:
+    if database_path.exists():
+        database_path.unlink()
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    database_url = f"sqlite:///{database_path}"
+    engine = create_engine(database_url, future=True)
+    Base.metadata.create_all(engine)
+    _stamp_head(database_url)
+    _register_frameworks()
+    with Session(engine, expire_on_commit=False) as db:
+        data = _seed_inventory(db)
+    engine.dispose()
+    return data
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
+    parser.add_argument("--screen", choices=tuple(SCREEN_STATES), default="evidence")
+    parser.add_argument("--state", default=None)
+    args = parser.parse_args()
+    if args.state and args.state not in SCREEN_STATES[args.screen]:
+        parser.error(f"state {args.state!r} is not valid for {args.screen}")
+    data = seed(args.database)
+    manifest = {
+        "database": str(args.database),
+        "frozen_now": FROZEN_NOW.isoformat(),
+        "screen": args.screen,
+        "state": args.state or SCREEN_STATES[args.screen][0],
+        "produced_by": {
+            screen: {state: "seeded records for reachable data; use ?state for interaction-only preview state" for state in states}
+            for screen, states in SCREEN_STATES.items()
+        },
+        "clients": [client.name for client in data["clients"]],
+    }
+    print(json.dumps(manifest, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

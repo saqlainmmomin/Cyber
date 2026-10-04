@@ -38,7 +38,7 @@ from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links, remediation_rollup, report_content
 from app.services.report_snapshots import generated_event
 from app.services.evidence_reuse import AUDIT_METADATA_KEYS
-from tests.yozora_paths import YOZORA_S3_PATHS  # Yozora S3 per-PR allowance
+from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S6_PATHS  # Yozora per-PR allowance
 
 from scripts.seed_test_companies import (
     DEMO_CLIENT_A,
@@ -308,9 +308,9 @@ def test_scenario_4_reuse_prompt_requires_confirmation_and_audit(db, http, demo)
     repeated = http.post(f"/assessments/{validation_id}/evidence-reuse/{source_use_id}/confirm", data={"acknowledge_warnings": "yes"})
     assert repeated.status_code == 409
     assert evidence_reuse.REUSE_NOT_AVAILABLE in repeated.text
-    documents = http.get(f"/assessments/{validation_id}?tab=documents")
-    assert 'data-evidence-reuse-link' in documents.text
-    assert f'href="/assessments/{validation_id}/evidence-reuse"' in documents.text
+    documents = http.get(f"/assessments/{validation_id}?tab=documents", follow_redirects=False)
+    assert documents.status_code == 303
+    assert documents.headers["location"] == f"/engagements/{demo.engagement_ids['a']}/evidence?assessment={validation_id}"
 
 
 def test_scenario_5_boundaries_invalidation_unmigrated_and_query_bound(db, http, demo, engine):
@@ -577,5 +577,5 @@ def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
         text=True,
         check=True,
     ).stdout.splitlines()
-    changed = [path for path in changed if path not in YOZORA_S3_PATHS]
+    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S6_PATHS)]  # Yozora per-PR allowance
     assert changed == []

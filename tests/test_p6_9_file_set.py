@@ -23,7 +23,7 @@ P6_9_APP_ALLOWLIST = (
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S6_PATHS  # Yozora per-PR allowance
 
 P6_9_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and goldens (D-P6-H).
@@ -115,5 +115,5 @@ def test_scenario_1_no_llm_and_p6_9_file_set():
     outside = [path for path in outside if path not in P6_10_APP_FILES]  # P6-10
     outside = [path for path in outside if path not in YOZORA_BACKEND_APP_PATHS]  # Yozora backend
     outside = [path for path in outside if path not in YOZORA_S1_PATHS]  # Yozora S1
-    outside = [path for path in outside if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS)]  # Yozora S2/S4
+    outside = [path for path in outside if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S6_PATHS)]  # Yozora per-PR allowance
     assert outside == [], outside

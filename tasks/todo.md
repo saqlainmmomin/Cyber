@@ -151,3 +151,13 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] Add deterministic S4 seed scenarios, visual clip coverage, migration-map rows, and stale-guard allowances.
 - [x] Run focused local checks available without a server, browser, network, or boto3; record limits in the S4 handoff.
 - [x] Restore orchestrator-detected S4 content regressions and complete the requested full-suite verification. Seven requested regressions, both stale file-set guards, the redirect/protected-surface contracts, and the full suite pass; only the authorized S3 Home longitudinal failure remains.
+
+# Yozora S6 execution (2026-10-04)
+
+- [x] Wire engagement and cross-engagement Evidence inventory routes to `evidence_inventory` and `prefill_freshness`; redirect explicit assessment Documents links with HTTP 303.
+- [x] Move the upload panel into the inventory, preserve live HTMX upload/delete/version controls, delete the obsolete Documents partial, and update the migration map.
+- [x] Restyle AWS pull, reuse, evidence detail/span, and read-only workpaper surfaces with their must-keep ids and `hx-*`/`data-*` contracts.
+- [x] Add the sequential per-candidate reuse confirmation script; document its stop-on-first-error limitation.
+- [x] Add deterministic S6 seed data and frozen-clock manifest for Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory; stamp Alembic head after `create_all`.
+- [x] Add HTTP inventory/redirect/upload/delete/version tests and preserve Superseded/Legacy badge coverage.
+- [ ] Run orchestrator-only full suite and pixel gate after S5 merges; this environment has no server, browser, network, or boto3.

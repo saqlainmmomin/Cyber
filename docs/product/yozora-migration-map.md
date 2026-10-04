@@ -56,7 +56,7 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `partials/desk_review_ready.html` | S5 | Empty/CTA on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | `dr-spinner` | `#desk-review-area` | `innerHTML` | - | - |
 | `partials/desk_review_running.html` | S5 | Loading on the assessment Questionnaire tab (pre-fill from documents, `b3-questionnaire` and `b4-desk_review`) | - | - | `outerHTML` | - | - |
 | `partials/document_list.html` | S6 | Folded into the engagement Evidence inventory table (`b4-evidence`) | - | `#document-list` | `innerHTML` | - | - |
-| `partials/documents_tab.html` | S6 | Folded into the engagement Evidence inventory (`b4-evidence`): upload panel; `desk-review-area` moves to the Questionnaire tab pre-fill card | `desk-review-area`, `document-list`, `drop-zone`, `file-input`, `file-name-display`, `upload-progress`, `upload-progress-bar` | `#document-list` | `innerHTML` | `data-evidence-reuse-link` | - |
+| `partials/documents_tab.html` | deleted | Removed: upload panel now lives in the engagement Evidence inventory; desk review belongs to the Questionnaire tab | - | - | - | - | - |
 | `partials/engagement_list.html` | S4 | Table | - | - | - | - | - |
 | `partials/engagement_retention.html` | S4 | Engagement Overview: archive and unarchive action, archived banner, purge-preview link; the retention period itself is firm-level (Settings, S3), the text here reads the firm value | `reviewer-name` | - | - | `data-archive-control`, `data-archived-banner`, `data-purge-preview-link`, `data-retention-panel`, `data-unarchive-control` | test_yozora_firm_settings.py |
 | `partials/followup_questions.html` | S5 | Form | - | - | - | - | - |

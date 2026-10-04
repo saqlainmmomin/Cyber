@@ -17,6 +17,7 @@ MIGRATED_TEMPLATES = {
     "components/layout.html",
     "components/ui.html",
     "pages/design.html",
+    "pages/evidence_inventory.html",
 }
 
 

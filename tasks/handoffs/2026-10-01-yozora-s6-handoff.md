@@ -229,4 +229,53 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+### Built
+
+- Added the engagement and cross-engagement Evidence inventory routes, backed by the merged `evidence_inventory.inventory_rows`, `cross_engagement_rows`, `status_counts`, and `prefill_freshness.freshness` read models. The explicit `?tab=documents` assessment URL now returns a 303 to `/engagements/{engagement_id}/evidence?assessment={id}`; the assessment template and stepper were left to S5.
+- Moved the live upload panel and `#document-list` HTMX table into the inventory. Upload, delete, and version-upload still use the existing per-assessment routes and evidence service lifecycle; only the returned fragment context changed. The obsolete `partials/documents_tab.html` was deleted and its migration-map row is `deleted`. No `desk-review-area` was added.
+- Replaced the S2 evidence badge map with `EVIDENCE_STATUS_LABELS`, populated from `evidence_inventory.STATUS_LABELS`; `Superseded` and `Legacy (not migrated)` remain neutral version-history labels. Evidence is live in the shell navigation. The visual shell clip now ends at Evidence; it does not cover Reports, Settings, the account menu, or page content.
+- Restyled AWS pull, reuse, evidence detail, citation span, and read-only workpaper surfaces with Yozora components while retaining the required ids, `hx-*` targets/swaps, and `data-*` hooks. Reuse has one visible `Confirm reuse` button and a small sequential script over the existing per-candidate POST forms. It stops at the first error and shows that error; it does not provide atomic bulk confirmation, rollback, or a new route.
+- Added `design/harness/seed_s6.py`. It imports S4 builders and `FROZEN_NOW` (30 Sep 2026), seeds Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory, creates active/scanning/rejected/out-of-date/AWS/client-link/reused/versioned evidence, a completed desk review plus newer evidence for the pre-fill note, and real workpaper records. It runs `create_all` followed by `alembic stamp head` before closing the database.
+
+### Seed state production
+
+| Screen/state | How it is produced |
+|---|---|
+| Evidence `default` | `/engagements/eng-meridian/evidence` over seeded rows and real filters. |
+| Evidence `upload` | Same stamped DB with `?state=upload`; the real multipart form is open. |
+| Evidence `filtered` | Same DB with source/status/assessment query filters. |
+| Evidence `empty` | Explicit `?state=empty` preview branch; seed data is retained. |
+| Evidence `loading` / `error` | Explicit `?state=loading` or `?state=error` state branch; no backend data is fabricated. |
+| Evidence `prefill` | `DeskReviewSummary.completed_at` is 27 Sep 2026 and active evidence arrives later; `/engagements/eng-meridian/evidence?state=prefill` shows the real freshness note. |
+| Evidence `all` | `/evidence?state=all`, using the cross-engagement read model and Engagement column. |
+| AWS `ready` / `notconfigured` | Real AWS page context; this environment has no AWS SDK/configuration. `pulling` and `error` use the page's explicit state mechanism; `result` is rendered only from a real pull response. |
+| Reuse `list` / `empty` / `error` / `unlinked` | Real candidate/empty/error/unlinked contexts where reachable; explicit `?state=` branches cover the interaction-only specimens. |
+| Detail `current` / `quarantined` / `unused` | Seeded evidence/version status and mapping combinations, rendered by the real detail route. |
+| Span `span` / `whole` / `superseded` / `unavailable` | Real citation route data; current, superseded, whole-document, and unavailable-version branches are preserved. |
+| Workpaper `list` / `empty` | `_seed_review_stage` creates real conclusions for list; `?state=empty` exercises the empty branch. The entry component keeps real response/evidence/decision/revision data rather than mockup literals. |
+
+### Tests and verification
+
+- `pytest -q tests/test_design_lint.py tests/test_yozora_shell.py tests/test_design_harness.py tests/test_yozora_s2.py tests/test_p6_9_file_set.py tests/test_p6_8_v3b_file_set.py`: **26 passed, 2 warnings**.
+- `python -m compileall -q app design/harness tests`: passed.
+- `python design/harness/seed_s6.py --database /tmp/yozora-s6-test.sqlite3 --screen evidence --state prefill`: passed; the database was stamped at Alembic head. Direct read-model verification returned cross-engagement rows and `PrefillFreshness(available=2, new_since_last_prefill=2, ...)` for Meridian Head office.
+- A local minimal FastAPI/TestClient smoke (web router only, because importing the full app requires the missing AWS SDK) passed the 303 redirect and HTTP upload, version-upload, and delete round trips.
+- Added `tests/test_yozora_s6.py` for HTTP inventory/filter/redirect/fragment round trips and service-backed badge labels. The full fixture collection is blocked here by `ModuleNotFoundError: boto3`; the orchestrator should run it with project dependencies installed. No server, browser, network, or pixel capture is available in this environment, so no screenshot percentages are claimed.
+- Existing longitudinal assertion changed from following the Documents page and checking its old reuse link to asserting the new 303 `Location`. The old/new visible reuse and workpaper strings were retained where existing tests pin them.
+
+### Screenshots
+
+| Screen matrix | Result |
+|---|---|
+| All S6 states, light/dark, 1440/1024 | Not run: browser/server are unavailable in this environment; no percentages claimed. |
+
+### Guards, decisions, and follow-ups
+
+- Added `YOZORA_S6_PATHS` to `tests/yozora_paths.py`, included it in `YOZORA_EXCLUDES`, and added only scoped S6 allowances to the stale file-set guards (`test_p6_9_file_set`, `test_p6_7b_add_to_rfi`, `test_p6_7_requirement_card`, `test_p6_8_b2_docx_xlsx`, `test_p6_8_board_report_v2`, `p6_10_support`, `test_longitudinal_demo`, and the new inventory test/design-lint entries). No guard was removed or weakened.
+- The AWS Overview link on the assessment Overview remains unchanged as required; follow-up for S8: reconcile that link with the final Evidence navigation.
+- No changes were made to quarantine, scanning, versioning, scoring, analyzer, prompt, PDF, `assessment.html`, the layout tab macros, S5 questionnaire/desk-review surfaces, or the Overview page.
+- The worktree is on `codex/yozora-s6`. The requested commits could not be created because the managed workspace denies writes to the linked worktree metadata at `/Users/saqlainmomin/dpdpa-gap-tool/.git/worktrees/cyberassess-yozora-s6/index.lock` (`Operation not permitted`). No push or merge was attempted; the working-tree changes remain available for the orchestrator to commit after permissions are restored.
+
+### Open questions / orchestrator checks
+
+- Run the full suite with `boto3` and the S5 merge applied, then run the complete light/dark 1440/1024 pixel gate. In particular, verify the three standalone `b4-workpaper_entry` preview states and AWS result/pull states against the approved baselines.

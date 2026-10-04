@@ -28,6 +28,16 @@
 <span class="pill {{ tones.get(tone, 'c-neutral') }}">{{ label }}</span>
 {%- endmacro %}
 
+{% macro evidence_status(status) -%}
+{% if status != "archived" and status in EVIDENCE_STATUS_LABELS %}
+  {{ pill(EVIDENCE_STATUS_LABELS[status], "accent" if status == "quarantined" else "ok" if status == "active" else "non") }}
+{% elif status == "superseded" %}
+  {{ pill("Superseded", "neutral") }}
+{% elif status == "legacy" %}
+  {{ pill("Legacy (not migrated)", "neutral") }}
+{% endif %}
+{%- endmacro %}
+
 {% macro chip(label) -%}<span class="chip">{{ label }}</span>{%- endmacro %}
 
 {% macro status(label, state="open", tone="") -%}

@@ -44,6 +44,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services import (
     actions_export,
     assessment_stage,
+    evidence_inventory,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -55,6 +56,7 @@ from app.services import (
     workpaper,
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
+from app.services import prefill_freshness
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services import approved_report, conclusion_review, report_basis
 from app.services.conclusion_review import conclusion_cards
@@ -1445,6 +1447,135 @@ def evidence_detail_page(
     )
 
 
+def _inventory_fragment_context(db: Session, assessment: Assessment) -> dict:
+    rows = evidence_inventory.inventory_rows(
+        db,
+        assessment.engagement_id,
+        assessment_id=assessment.id,
+    )
+    actions = {
+        row["id"]: row
+        for row in evidence_panel_rows(db, assessment.id)
+        if row.get("source") == "evidence"
+    }
+    return {
+        "inventory_rows": rows,
+        "document_actions": actions,
+        "assessment_id": assessment.id,
+    }
+
+
+@router.get("/evidence", response_class=HTMLResponse)
+def evidence_inventory_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Cross-engagement evidence inventory."""
+    query = request.query_params
+    source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
+    status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
+    engagement_id = query.get("engagement") or None
+    rows = evidence_inventory.cross_engagement_rows(
+        db,
+        engagement_id=engagement_id,
+        source=source,
+        status=status,
+        search=query.get("search") or None,
+    )
+    engagements = (
+        db.query(Engagement)
+        .filter(Engagement.status != "archived")
+        .order_by(Engagement.name, Engagement.id)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "pages/evidence_inventory.html",
+        {
+            "request": request,
+            "engagement": None,
+            "client": None,
+            "assessment": None,
+            "inventory_rows": rows,
+            "inventory_counts": evidence_inventory.status_counts(rows),
+            "engagements": engagements,
+            "assessment_options": [],
+            "selected_engagement_id": engagement_id,
+            "selected_source": source,
+            "selected_status": status,
+            "search": query.get("search", ""),
+            "view_state": query.get("state", "all"),
+            "upload_assessment_id": None,
+            "document_actions": {},
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/evidence", response_class=HTMLResponse)
+def engagement_evidence_inventory_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    assessments = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement_id, Assessment.status != "archived")
+        .order_by(Assessment.created_at, Assessment.id)
+        .all()
+    )
+    query = request.query_params
+    preview_state = query.get("state", "default")
+    selected_assessment = next(
+        (item for item in assessments if item.id == query.get("assessment")),
+        None,
+    )
+    if selected_assessment is None and preview_state == "prefill" and assessments:
+        selected_assessment = assessments[0]
+    upload_assessment = selected_assessment or (assessments[0] if assessments else None)
+    source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
+    status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
+    rows = evidence_inventory.inventory_rows(
+        db,
+        engagement_id,
+        assessment_id=selected_assessment.id if selected_assessment else None,
+        source=source,
+        status=status,
+        search=query.get("search") or None,
+    )
+    actions = (
+        _inventory_fragment_context(db, upload_assessment)["document_actions"]
+        if upload_assessment
+        else {}
+    )
+    freshness = (
+        prefill_freshness.freshness(db, selected_assessment)
+        if selected_assessment
+        else None
+    )
+    return templates.TemplateResponse(
+        "pages/evidence_inventory.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "assessment": selected_assessment,
+            "inventory_rows": rows,
+            "inventory_counts": evidence_inventory.status_counts(rows),
+            "engagements": [engagement],
+            "assessment_options": assessments,
+            "selected_engagement_id": engagement_id,
+            "selected_source": source,
+            "selected_status": status,
+            "search": query.get("search", ""),
+            "view_state": preview_state,
+            "upload_assessment_id": upload_assessment.id if upload_assessment else None,
+            "document_actions": actions,
+            "freshness": freshness,
+        },
+    )
 @router.get("/assessments/{assessment_id}", response_class=HTMLResponse)
 def assessment_detail(
     request: Request,
@@ -1456,6 +1587,11 @@ def assessment_detail(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
+    if request.query_params.get("tab") == "documents" and assessment.engagement_id:
+        return RedirectResponse(
+            f"/engagements/{assessment.engagement_id}/evidence?assessment={assessment.id}",
+            status_code=303,
+        )
     engagement_archived = bool(
         assessment.engagement_id
         and retention.archived_engagement_ids(db, {assessment.engagement_id})
@@ -1819,11 +1955,7 @@ async def upload_document_web(
 
     response = templates.TemplateResponse(
         "partials/document_list.html",
-        {
-            "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
-        },
+        {"request": request, **_inventory_fragment_context(db, assessment)},
     )
     return _with_toast(response, "Document uploaded")
 
@@ -1847,6 +1979,9 @@ def delete_document_web(
         raise HTTPException(404)
     if evidence.assessment_id != assessment_id:
         raise HTTPException(404)
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404)
     try:
         evidence_service.transition_evidence(
             db,
@@ -1859,11 +1994,7 @@ def delete_document_web(
         raise HTTPException(exc.status_code, exc.message) from exc
     return templates.TemplateResponse(
         "partials/document_list.html",
-        {
-            "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
-        },
+        {"request": request, **_inventory_fragment_context(db, assessment)},
     )
 
 
@@ -1877,7 +2008,8 @@ async def upload_document_version_web(
     db: Session = Depends(get_db),
 ):
     evidence = db.get(evidence_service.Evidence, evidence_id)
-    if evidence is None or evidence.assessment_id != assessment_id:
+    assessment = db.get(Assessment, assessment_id)
+    if evidence is None or assessment is None or evidence.assessment_id != assessment_id:
         raise HTTPException(404)
     try:
         result = evidence_service.ingest_new_version(
@@ -1899,11 +2031,7 @@ async def upload_document_version_web(
         )
     response = templates.TemplateResponse(
         "partials/document_list.html",
-        {
-            "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
-        },
+        {"request": request, **_inventory_fragment_context(db, assessment)},
     )
     return _with_toast(response, "New version uploaded")
 

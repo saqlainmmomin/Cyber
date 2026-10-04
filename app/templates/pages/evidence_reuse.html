@@ -1,51 +1,64 @@
 {% extends "base.html" %}
-
+{% from "components/layout.html" import engagement_tabs %}
+{% from "components/ui.html" import alert, checkbox, icon, pill %}
 {% block title %}Evidence reuse — {{ assessment.description or assessment.company_name }}{% endblock %}
-
+{% block crumbs %}{% if client %}<a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}{% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}<b>Reuse evidence</b>{% endblock %}
 {% block content %}
-<nav class="mb-2 text-xs text-gray-400 dark:text-gray-500">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
-  {% if client %}<span class="mx-1.5">/</span><a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>{% endif %}
-  {% if engagement %}<span class="mx-1.5">/</span><a href="/engagements/{{ engagement.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ engagement.name }}</a>{% endif %}
-  <span class="mx-1.5">/</span><a href="/assessments/{{ assessment.id }}?tab=documents" class="hover:text-brand dark:hover:text-navy-300">{{ assessment.description or assessment.company_name }}</a>
-  <span class="mx-1.5">/</span><span class="text-gray-600 dark:text-gray-300">Evidence reuse</span>
-</nav>
+{% set state = request.query_params.get("state", "list") %}
+<header class="page-head"><div><p class="eyebrow">Evidence · Reuse</p><h1>Reuse evidence from earlier assessments</h1><p class="meta-line">Evidence can be reused only after you confirm it still applies. Conclusions are never copied.</p></div>{% if candidates %}<div class="acts"><button class="btn primary lead" type="button" id="confirm-reuse">Confirm reuse</button></div>{% endif %}</header>
+{% if engagement %}{{ engagement_tabs(engagement, "evidence") }}{% endif %}
+{% if error or state == "error" %}<div data-reuse-error>{{ alert("Evidence reuse could not be completed", error or "A reuse candidate could not be confirmed.", "noncompliant") }}</div>{% else %}<div data-reuse-error role="alert" class="alert c-non" aria-live="polite"></div>{% endif %}
 
-<div class="mb-8">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Reuse evidence from earlier assessments</h1>
-  <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Evidence already collected in this engagement can be reused here only after you confirm it still applies. Conclusions are never copied: this assessment reaches its own.</p>
-</div>
-
-{% if error %}<div data-reuse-error role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ error }}</div>{% endif %}
-
-{% if not assessment.engagement_id %}
-<p class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-8 text-sm text-gray-500 dark:text-gray-400">This assessment is not linked to an engagement, so no evidence can be reused.</p>
-{% elif candidates %}
-<ul class="space-y-4">
+{% if state == "unlinked" or not assessment.engagement_id %}
+<div class="glass empty"><h2>Evidence reuse is unavailable</h2><p>This assessment is not linked to an engagement, so no evidence can be reused.</p></div>
+{% elif candidates and state != "empty" %}
+<div class="stack" data-reuse-list>
   {% for c in candidates %}
-  <li data-reuse-candidate id="reuse-{{ c.source_use_id }}" data-warnings="{{ c.warnings|join(' ') }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <a href="/evidence/{{ c.evidence_id }}" class="font-semibold text-brand dark:text-navy-300 hover:underline">{{ c.filename }}</a>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">v{{ c.version_number }} · SHA-256 {{ c.sha256[:12] }} · Status: {{ c.evidence_status|title }}</p>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Received {{ c.received_on.strftime('%d %b %Y') }}, {{ c.age_days }} days before this assessment started</p>
-      </div>
-      <span class="text-xs text-gray-500 dark:text-gray-400">{{ c.source_assessment_label }}</span>
-    </div>
-    <p class="mt-4 text-sm text-gray-700 dark:text-gray-300">Original scope: {{ c.source_assessment_label }} ({% for framework_id in c.source_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %})</p>
-    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">Proposed use: {{ framework_names.get(c.framework_id, c.framework_id|upper) }} {{ c.requirement_id }} ({{ c.relevance }})</p>
-    {% if 'age' in c.warnings %}<p data-reuse-warning="age" class="mt-3 text-sm text-amber-700 dark:text-amber-300">Older than {{ threshold }} days when this assessment started. Confirm it still reflects current practice.</p>{% endif %}
-    {% if 'scope' in c.warnings %}<p data-reuse-warning="scope" class="mt-1 text-sm text-amber-700 dark:text-amber-300">Collected for a different scope ({% for framework_id in c.source_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %}); this assessment covers {% for framework_id in target_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %}. Confirm it applies to this scope.</p>{% endif %}
-    <form method="post" action="/assessments/{{ assessment.id }}/evidence-reuse/{{ c.source_use_id }}/confirm" hx-boost="false" data-reuse-confirm class="mt-4 space-y-3">
-      {% if c.warnings %}<label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" name="acknowledge_warnings" value="yes" class="mt-1"> <span>I confirm this evidence still applies despite the warnings above.</span></label>{% endif %}
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center"><input type="text" name="reviewer_name" placeholder="Your name" class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"><button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Confirm reuse</button></div>
+  <article data-reuse-candidate id="reuse-{{ c.source_use_id }}" data-warnings="{{ c.warnings|join(' ') }}" class="glass stack">
+    <div class="section-head"><div><h2><a href="/evidence/{{ c.evidence_id }}">{{ c.filename }}</a></h2><p class="sub">v{{ c.version_number }} · SHA-256 {{ c.sha256[:12] }} · {{ c.evidence_status|title }}</p></div><span class="sub">{{ c.source_assessment_label }}</span></div>
+    <p class="sub">Received {{ c.received_on.strftime('%d %b %Y') }}, {{ c.age_days }} days before this assessment started.</p>
+    <p>Original scope: {{ c.source_assessment_label }} ({% for framework_id in c.source_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %})</p>
+    <p>Proposed use: {{ framework_names.get(c.framework_id, c.framework_id|upper) }} {{ c.requirement_id }} ({{ c.relevance }})</p>
+    {% if 'age' in c.warnings %}<p data-reuse-warning="age" class="alert c-medium">Evidence is older than {{ threshold }} days. Confirm it still reflects current practice.</p>{% endif %}
+    {% if 'scope' in c.warnings %}<p data-reuse-warning="scope" class="alert c-medium">This evidence was collected for a different scope. Confirm it applies to this assessment.</p>{% endif %}
+    <form method="post" action="/assessments/{{ assessment.id }}/evidence-reuse/{{ c.source_use_id }}/confirm" hx-boost="false" data-reuse-confirm>
+      {% if c.warnings %}{{ checkbox("I confirm this evidence still applies despite the warnings above.", "acknowledge_warnings", false, false, "yes") }}{% endif %}
+      <label class="field"><span class="label">Reviewer name</span><input type="text" name="reviewer_name" placeholder="Your name"></label>
     </form>
-  </li>
+  </article>
   {% endfor %}
-</ul>
+</div>
 {% else %}
-<p class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-8 text-sm text-gray-500 dark:text-gray-400">No evidence from earlier assessments is waiting for confirmation.</p>
+<div class="glass empty"><h2>No evidence waiting for confirmation</h2><p>No evidence from earlier assessments is waiting for confirmation.</p></div>
 {% endif %}
-
-<p class="mt-6 text-sm text-gray-500 dark:text-gray-400">To decline a suggestion, leave it unconfirmed. Declining records nothing.</p>
+<p class="sub">To decline a suggestion, leave it unconfirmed. Declining records nothing.</p>
+{% endblock %}
+{% block scripts %}
+<script>
+  (() => {
+    const button = document.getElementById('confirm-reuse');
+    const forms = [...document.querySelectorAll('form[data-reuse-confirm]')];
+    const error = document.querySelector('[data-reuse-error]');
+    button?.addEventListener('click', async () => {
+      button.disabled = true;
+      const selected = forms.filter((form) => form.querySelector('input[type="checkbox"]')?.checked ?? true);
+      if (!selected.length) {
+        if (error) { error.hidden = false; error.textContent = 'Select at least one evidence item.'; }
+        button.disabled = false;
+        return;
+      }
+      for (const form of selected) {
+        const response = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin', redirect: 'follow'});
+        if (!response.ok) {
+          const html = await response.text();
+          const parsed = new DOMParser().parseFromString(html, 'text/html').querySelector('[data-reuse-error]');
+          if (error) { error.hidden = false; error.textContent = parsed?.textContent?.trim() || 'Evidence reuse failed.'; }
+          button.disabled = false;
+          return;
+        }
+      }
+      window.location.href = '/assessments/{{ assessment.id }}/evidence-reuse';
+    });
+  })();
+</script>
 {% endblock %}

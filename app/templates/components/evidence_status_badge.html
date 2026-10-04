@@ -1,4 +1,2 @@
-{% from "components/ui.html" import pill %}
-{# Four designed labels; S6 swaps this map for app/services/evidence_inventory.STATUS_LABELS. Version history also shows superseded and legacy rows, so those keep a neutral pill rather than vanishing. #}
-{% set labels = {"quarantined": "Scanning", "active": "Available", "rejected": "Rejected", "invalidated": "Out of date", "superseded": "Superseded", "legacy": "Legacy (not migrated)"} %}
-{% if status != "archived" and status in labels %}{{ pill(labels[status], "accent" if status == "quarantined" else "ok" if status == "active" else "non" if status in ("rejected", "invalidated") else "neutral") }}{% endif %}
+{% from "components/ui.html" import evidence_status %}
+{{ evidence_status(status) }}
