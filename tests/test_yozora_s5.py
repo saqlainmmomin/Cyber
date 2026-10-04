@@ -172,5 +172,26 @@ def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
 
     desk_review = http.get("/design/pages/b4-desk_review?state=running")
     assert desk_review.status_code == 200
-    assert "Documents are being analysed" in desk_review.text
+    assert "Analysing 6 documents against India DPDPA and ISO 27001" in desk_review.text
     assert 'hx-get="/assessments/assessment-s5-preview/desk-review-status' not in desk_review.text
+
+
+def test_b4_desk_review_preview_renders_the_status_endpoint_for_a_real_assessment(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    db.add(
+        DeskReviewSummary(
+            assessment_id=assessment.id,
+            status="error",
+            error_message="The analysis service did not respond within 10 minutes.",
+        )
+    )
+    db.commit()
+
+    page = http.get(f"/design/pages/b4-desk_review?state=error&assessment_id={assessment.id}")
+    fragment = http.get(f"/assessments/{assessment.id}/desk-review-status")
+
+    assert page.status_code == 200
+    assert "<h1>Pre-fill from documents</h1>" in page.text
+    assert "The analysis service did not respond within 10 minutes." in page.text
+    assert f'hx-post="/assessments/{assessment.id}/run-desk-review"' in page.text
+    assert "Retry desk review" in fragment.text
