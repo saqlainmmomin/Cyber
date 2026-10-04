@@ -231,8 +231,5 @@ td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
 .workpaper-section{display:flex;flex-direction:column}
 .workpaper-section>.workpaper-entry{order:1;display:none}
 .workpaper-section>.workpaper-entry:target{display:block}
-/* s6-fix: per-revision citations open from the citation count without moving the history row */
-.rev-cites{display:inline}
-.rev-cites>summary{display:inline;cursor:pointer;list-style:none;text-decoration:underline;text-underline-offset:2px}
-.rev-cites>summary::-webkit-details-marker{display:none}
+/* s6-fix: citations of earlier and withheld proposals, listed under their revision-history row */
 .rev-cites-list{display:flex;flex-direction:column;gap:var(--s-3);margin-top:var(--s-2)}
