@@ -499,8 +499,12 @@ def test_scenario_2_full_history_reconstructs_content_and_actors(
         "A newer AI proposal was withheld",
         "before this edit",
         "Edits carry no citations",
+        "Non-compliant to Compliant. Reason: Asha rationale",
     ):
         assert expected in page.text
+    history = page.text.split("data-revision-history", 1)[1]
+    assert "Reason: Asha rationale" in history
+    assert f'data-conclusion-id="{conclusion.id}"' in page.text
     assert "consultant:Priya" not in page.text
 
 
