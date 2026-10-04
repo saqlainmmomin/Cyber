@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs %}
-{% from "components/ui.html" import alert, icon %}
+{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/ui.html" import alert, code_block, icon %}
 {% block title %}AWS evidence — {{ engagement.name }}{% endblock %}
 
 {% block crumbs %}
@@ -9,19 +9,21 @@
 
 {% block content %}
 {% set state = request.query_params.get("state", "ready") %}
-<header class="page-head"><div><p class="eyebrow">Evidence · AWS</p><h1>Pull from AWS</h1><p class="meta-line">Read-only AWS Config and Security Hub evidence for {{ engagement.name }}.</p></div></header>
+{% set period = engagement_period(engagement) %}
+{{ seg([{"label": "Ready", "key": "ready", "href": "?state=ready"}, {"label": "Pulling", "key": "pulling", "href": "?state=pulling"}, {"label": "Pull complete", "key": "result", "href": "?state=result"}, {"label": "Error", "key": "error", "href": "?state=error"}, {"label": "Not set up", "key": "notconfigured", "href": "?state=notconfigured"}], state) }}
+<header class="page-head"><div><p class="eyebrow">{{ client.name }} · {{ engagement.name }}</p><h1>Pull from AWS</h1><p class="meta-line">Read-only{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div></header>
 {{ engagement_tabs(engagement, "evidence") }}
 
 {% if state == "notconfigured" or not configured %}
 <div data-aws-not-configured>{{ alert("AWS connection not configured", not_configured_message, "medium", "cloud") }}</div>
 {% else %}
 <section class="glass stack" data-aws-setup>
-  <div><p class="eyebrow">Client setup</p><h2>Connect the client account</h2><p class="sub">Create the suggested read-only role in the client's AWS account.</p></div>
-  <label class="label" for="aws-external-id">External ID</label>
-  <label class="field"><input id="aws-external-id" data-external-id readonly value="{{ external_id }}"></label>
-  <details class="disclose" open><summary>Trust policy</summary><p class="help">Replace the principal with your consultant role ARN. Never use an account root principal.</p><pre class="code" data-trust-policy>{{ trust_policy_json }}</pre></details>
-  <details class="disclose"><summary>Read-only permissions policy</summary><p class="help">Attach only this inline policy to the role.</p>{% if policy_account_note %}<p class="help">{{ policy_account_note }}</p>{% endif %}<pre class="code" data-permissions-policy>{{ permissions_policy_json }}</pre></details>
-  <details class="disclose"><summary>Consultant identity policy</summary><p class="help">Your own identity needs this to assume client roles.</p><pre class="code" data-consultant-policy>{{ consultant_policy_json }}</pre></details>
+  <div><p class="eyebrow">Client setup</p><h2>Connect the client account</h2><p class="sub">Create the suggested role <b>{{ suggested_role_name }}</b> in the client's AWS account, using the external ID below.</p></div>
+  <label class="label" for="aws-external-id">External ID for this engagement</label>
+  <div class="keep-row"><label class="field grow"><input id="aws-external-id" data-external-id readonly value="{{ external_id }}"></label><button class="btn secondary" type="button" data-copy-trigger="aws-external-id-copy">Copy</button><span class="sr-only" data-copy-target="aws-external-id-copy">{{ external_id }}</span></div>
+  <details class="disclose"><summary>Trust policy</summary><p class="help">Replace the principal with your consultant role ARN. Never use an account root principal.</p><div data-trust-policy>{{ code_block("Trust policy", trust_policy_json) }}</div></details>
+  <details class="disclose"><summary>Read-only permissions policy</summary><p class="help">Attach only this inline policy to the role.</p>{% if policy_account_note %}<p class="help">{{ policy_account_note }}</p>{% endif %}<div data-permissions-policy>{{ code_block("Read-only permissions policy", permissions_policy_json) }}</div></details>
+  <details class="disclose"><summary>Consultant identity policy</summary><p class="help">Your own identity needs this to assume client roles.</p><div data-consultant-policy>{{ code_block("Consultant identity policy", consultant_policy_json) }}</div></details>
 </section>
 {% include "partials/aws_evidence_panel.html" %}
 {% endif %}

@@ -1,4 +1,4 @@
-{% from "components/ui.html" import icon, skeleton %}
+{% from "components/ui.html" import evidence_status, icon, skeleton %}
 {% set state = request.query_params.get("state", "ready") %}
 <section id="aws-evidence-panel" class="stack">
   {% if state == "pulling" %}
@@ -16,14 +16,14 @@
   </form>
   {% endif %}
 
-  {% if error or state == "error" %}<div data-aws-error class="alert c-non">{{ icon("alert") }}<div>{{ error or "The AWS pull returned an error." }}</div></div>{% endif %}
+  {% if error or state == "error" %}<div data-aws-error class="alert c-non">{{ icon("alert") }}<div>{% if error %}{{ error }}{% else %}<b>AWS refused the role</b><span>Check the role ARN and the external ID, then pull again. No evidence was collected.</span>{% endif %}</div></div>{% endif %}
   {% if result %}
   <div data-aws-result class="alert c-ok"><div><b>Pull complete</b><span>Pull {{ result.pull_id }}</span></div></div>
   <div class="table-wrap solid"><table class="data-table"><thead><tr><th>Source</th><th>Region</th><th>Status</th><th>Items</th><th>Created</th><th>Versioned</th><th>Unchanged</th><th>Notes</th></tr></thead><tbody>{% for source in result.sources %}<tr data-aws-source-row><td>{{ "AWS Config" if source.source == "aws_config" else "Security Hub" }}</td><td>{{ source.region }}</td><td>{{ "Not enabled" if source.status == "not_enabled" else "Collected" }}</td><td>{{ source.items }}</td><td>{{ source.created }}</td><td>{{ source.versioned }}</td><td>{{ source.unchanged }}</td><td>{% if source.truncated %}Truncated{% endif %}</td></tr>{% endfor %}</tbody></table></div>
   {% endif %}
 
   <section class="glass"><div class="section-head"><div><p class="eyebrow">Inventory</p><h2>Collected AWS evidence</h2></div></div>
-  {% if rows %}<div class="table-wrap"><table class="data-table"><thead><tr><th>Evidence</th><th>Source</th><th>Status</th><th>Current version</th><th>Versions</th><th>Last collected</th></tr></thead><tbody>{% for row in rows %}<tr data-aws-evidence-row><td><a class="file-name" href="/evidence/{{ row.id }}">{{ row.filename }}</a></td><td>{{ "AWS Config" if row.source == "aws_config" else "Security Hub" }}</td><td>{{ row.status }}</td><td>{% if row.current_version_number is not none %}v{{ row.current_version_number }}{% else %}—{% endif %}</td><td>{{ row.version_count }}</td><td>{% if row.last_collected_at %}{{ row.last_collected_at.strftime('%d %b %Y %H:%M') }} UTC{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No AWS evidence collected yet.</p></div>{% endif %}
+  {% if rows %}<div class="table-wrap"><table class="data-table"><thead><tr><th>Evidence</th><th>Source</th><th>Status</th><th>Current version</th><th>Versions</th><th>Last collected</th></tr></thead><tbody>{% for row in rows %}<tr data-aws-evidence-row><td><a class="file-name" href="/evidence/{{ row.id }}">{{ row.filename }}</a></td><td>{{ "AWS Config" if row.source == "aws_config" else "Security Hub" }}</td><td>{{ evidence_status(row.status) }}</td><td>{% if row.current_version_number is not none %}v{{ row.current_version_number }}{% else %}—{% endif %}</td><td>{{ row.version_count }}</td><td>{% if row.last_collected_at %}{{ row.last_collected_at|display_date }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No AWS evidence collected yet.</p></div>{% endif %}
   </section>
   {% endif %}
 </section>

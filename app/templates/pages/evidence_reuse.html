@@ -1,29 +1,32 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs %}
-{% from "components/ui.html" import alert, checkbox, icon, pill %}
+{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/ui.html" import alert, evidence_status, icon, pill %}
 {% block title %}Evidence reuse — {{ assessment.description or assessment.company_name }}{% endblock %}
 {% block crumbs %}{% if client %}<a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}{% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}<b>Reuse evidence</b>{% endblock %}
 {% block content %}
 {% set state = request.query_params.get("state", "list") %}
-<header class="page-head"><div><p class="eyebrow">Evidence · Reuse</p><h1>Reuse evidence from earlier assessments</h1><p class="meta-line">Evidence can be reused only after you confirm it still applies. Conclusions are never copied.</p></div>{% if candidates %}<div class="acts"><button class="btn primary lead" type="button" id="confirm-reuse">Confirm reuse</button></div>{% endif %}</header>
+{% set period = engagement_period(engagement) if engagement else none %}
+{{ seg([{"label": "Waiting", "key": "waiting", "href": "?state=list"}, {"label": "Needs confirmation", "key": "list", "href": "?state=list"}, {"label": "Nothing waiting", "key": "empty", "href": "?state=empty"}, {"label": "Not linked", "key": "unlinked", "href": "?state=unlinked"}], "unlinked" if not assessment.engagement_id else "list" if candidates else "empty") }}
+<header class="page-head"><div><p class="eyebrow">{{ client.name if client else "Evidence" }}{% if engagement %} · {{ engagement.name }}{% endif %}</p><h1>Reuse from another assessment</h1><p class="meta-line">{% if period %}{{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %}Evidence is reused only after you confirm it still applies.{% endif %}</p></div>{% if candidates %}<div class="acts"><button class="btn primary lead" type="button" id="confirm-reuse">Confirm reuse of <span data-reuse-count>0</span></button></div>{% endif %}</header>
 {% if engagement %}{{ engagement_tabs(engagement, "evidence") }}{% endif %}
-{% if error or state == "error" %}<div data-reuse-error>{{ alert("Evidence reuse could not be completed", error or "A reuse candidate could not be confirmed.", "noncompliant") }}</div>{% else %}<div data-reuse-error role="alert" class="alert c-non" aria-live="polite"></div>{% endif %}
+{% if error or state == "error" %}<div data-reuse-error>{{ alert("Evidence reuse could not be completed", error or "A reuse candidate could not be confirmed.", "noncompliant") }}</div>{% else %}<div data-reuse-error role="alert" class="alert c-non" aria-live="polite" hidden></div>{% endif %}
 
-{% if state == "unlinked" or not assessment.engagement_id %}
+{% if not assessment.engagement_id %}
 <div class="glass empty"><h2>Evidence reuse is unavailable</h2><p>This assessment is not linked to an engagement, so no evidence can be reused.</p></div>
-{% elif candidates and state != "empty" %}
+{% elif candidates %}
 <div class="stack" data-reuse-list>
   {% for c in candidates %}
   <article data-reuse-candidate id="reuse-{{ c.source_use_id }}" data-warnings="{{ c.warnings|join(' ') }}" class="glass stack">
-    <div class="section-head"><div><h2><a href="/evidence/{{ c.evidence_id }}">{{ c.filename }}</a></h2><p class="sub">v{{ c.version_number }} · SHA-256 {{ c.sha256[:12] }} · {{ c.evidence_status|title }}</p></div><span class="sub">{{ c.source_assessment_label }}</span></div>
-    <p class="sub">Received {{ c.received_on.strftime('%d %b %Y') }}, {{ c.age_days }} days before this assessment started.</p>
+    <div class="section-head"><div><h2><a href="/evidence/{{ c.evidence_id }}">{{ c.filename }}</a></h2><p class="sub">v{{ c.version_number }} · {{ evidence_status(c.evidence_status) }}</p></div><span class="sub">{{ c.source_assessment_label }}</span></div>
+    <p class="sub">Received {{ c.received_on|display_date }}, {{ c.age_days }} days before this assessment started.</p>
     <p>Original scope: {{ c.source_assessment_label }} ({% for framework_id in c.source_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %})</p>
     <p>Proposed use: {{ framework_names.get(c.framework_id, c.framework_id|upper) }} {{ c.requirement_id }} ({{ c.relevance }})</p>
     {% if 'age' in c.warnings %}<p data-reuse-warning="age" class="alert c-medium">Evidence is older than {{ threshold }} days. Confirm it still reflects current practice.</p>{% endif %}
-    {% if 'scope' in c.warnings %}<p data-reuse-warning="scope" class="alert c-medium">This evidence was collected for a different scope. Confirm it applies to this assessment.</p>{% endif %}
+    {% if 'scope' in c.warnings %}<p data-reuse-warning="scope" class="alert c-medium">Collected for a different scope ({% for framework_id in c.source_framework_ids %}{{ framework_names.get(framework_id, framework_id|upper) }}{% if not loop.last %} + {% endif %}{% endfor %}); this assessment covers {{ framework_names.get(c.framework_id, c.framework_id|upper) }}. Confirm it applies to this scope.</p>{% endif %}
     <form method="post" action="/assessments/{{ assessment.id }}/evidence-reuse/{{ c.source_use_id }}/confirm" hx-boost="false" data-reuse-confirm>
-      {% if c.warnings %}{{ checkbox("I confirm this evidence still applies despite the warnings above.", "acknowledge_warnings", false, false, "yes") }}{% endif %}
-      <label class="field"><span class="label">Reviewer name</span><input type="text" name="reviewer_name" placeholder="Your name"></label>
+      <label class="choice"><input type="checkbox" name="selected_candidates" value="{{ c.source_use_id }}" data-reuse-select>Reuse this evidence</label>
+      {% if c.warnings %}<label class="choice"><input type="checkbox" name="acknowledge_warnings" value="yes" required> I confirm this evidence still applies despite the warnings above.</label>{% endif %}
+      <input type="hidden" name="reviewer_name" value="">
     </form>
   </article>
   {% endfor %}
@@ -39,25 +42,34 @@
     const button = document.getElementById('confirm-reuse');
     const forms = [...document.querySelectorAll('form[data-reuse-confirm]')];
     const error = document.querySelector('[data-reuse-error]');
+    const count = document.querySelector('[data-reuse-count]');
+    const selectedForms = () => forms.filter((form) => form.querySelector('[data-reuse-select]')?.checked);
+    const updateCount = () => { if (count) count.textContent = String(selectedForms().length); };
+    document.querySelectorAll('[data-reuse-select]').forEach((input) => input.addEventListener('change', updateCount));
+    updateCount();
     button?.addEventListener('click', async () => {
-      button.disabled = true;
-      const selected = forms.filter((form) => form.querySelector('input[type="checkbox"]')?.checked ?? true);
+      const selected = selectedForms();
       if (!selected.length) {
         if (error) { error.hidden = false; error.textContent = 'Select at least one evidence item.'; }
-        button.disabled = false;
         return;
       }
+      let succeeded = false;
       for (const form of selected) {
+        if (!form.reportValidity()) {
+          if (succeeded) window.setTimeout(() => window.location.reload(), 1200);
+          return;
+        }
         const response = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin', redirect: 'follow'});
         if (!response.ok) {
           const html = await response.text();
           const parsed = new DOMParser().parseFromString(html, 'text/html').querySelector('[data-reuse-error]');
           if (error) { error.hidden = false; error.textContent = parsed?.textContent?.trim() || 'Evidence reuse failed.'; }
-          button.disabled = false;
+          if (succeeded) window.setTimeout(() => window.location.reload(), 1200);
           return;
         }
+        succeeded = true;
       }
-      window.location.href = '/assessments/{{ assessment.id }}/evidence-reuse';
+      if (succeeded) window.location.reload();
     });
   })();
 </script>

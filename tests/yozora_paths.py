@@ -100,7 +100,9 @@ YOZORA_S4_PATHS = (
 
 YOZORA_S6_PATHS = (
     "app/routers/aws.py",
+    "app/routers/design.py",
     "app/routers/evidence_reuse.py",
+    "app/routers/requirement_review.py",
     "app/routers/web.py",
     "app/services/prefill_freshness.py",
     "app/template_config.py",
@@ -128,6 +130,8 @@ YOZORA_S6_PATHS = (
     "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_8_b2_docx_xlsx.py",
     "tests/test_p6_8_board_report_v2.py",
+    "tests/test_evidence_service.py",
+    "tests/test_workpaper.py",
     "tests/p6_10_support.py",
     "tests/test_yozora_s6.py",
     "tests/visual/test_shell_visual.py",

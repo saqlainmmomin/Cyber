@@ -13,24 +13,25 @@
 
 {% block content %}
 {% set state = view_state or "default" %}
-{% set shown_rows = [] if state == "empty" else inventory_rows %}
+{% set action_query = "?" ~ fragment_query if fragment_query else "" %}
+{% set period = engagement_period(engagement) if engagement else none %}
 <header class="page-head">
   <div>
     {% if engagement %}<p class="eyebrow">{{ client.name }} · {{ engagement.name }}</p>{% else %}<p class="eyebrow">Evidence</p>{% endif %}
-    <h1>{% if engagement %}Evidence inventory{% else %}Every file across your engagements{% endif %}</h1>
-    {% if engagement %}<p class="meta-line">{{ assessment.display_name if assessment else "All assessments" }} · Evidence collected for this engagement</p>{% else %}<p class="meta-line">Search and filter the evidence register across active engagements.</p>{% endif %}
+    <h1>{% if engagement %}{{ engagement.name }}{% else %}Evidence{% endif %}</h1>
+    {% if engagement %}<p class="meta-line">{{ client.name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence inventory{% endif %}</p>{% else %}<p class="meta-line">Every file across your engagements</p>{% endif %}
   </div>
   {% if engagement %}
   <div class="acts">
     <span class="anchor">
       <button class="btn secondary" type="button" id="add-from" aria-expanded="false">Add from {{ icon("updown") }}</button>
       <span class="menu" id="add-from-menu" role="menu">
-        <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}AWS</a>
-        {% if assessment %}<a href="/assessments/{{ assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("copy") }}Reuse evidence</a>{% endif %}
-        <a href="/engagements/{{ engagement.id }}?tab=rfis" role="menuitem">{{ icon("users") }}Ask client</a>
+        <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}Pull from AWS</a>
+        {% if assessment %}<a href="/assessments/{{ assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("copy") }}Reuse from another assessment</a>{% endif %}
+        <a href="/engagements/{{ engagement.id }}?tab=rfis" role="menuitem">{{ icon("users") }}Ask the client</a>
       </span>
     </span>
-    {% if upload_assessment_id and state not in ("upload", "empty") %}<button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% endif %}
+{% if upload_assessment_id and state not in ("upload", "empty") %}<button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% endif %}
   </div>
   {% endif %}
 </header>
@@ -50,24 +51,20 @@
 {% elif state == "error" %}
 {{ alert("Evidence inventory could not be loaded", "Try refreshing this page or check the engagement connection.", "noncompliant") }}
 {% else %}
-{% if upload_assessment_id and state not in ("loading", "error") %}
+{% if upload_assessment_id and state == "upload" %}
 <details class="glass upload-panel" id="upload-panel" data-upload-panel{% if state == "upload" %} open{% endif %}>
   <summary><span><p class="eyebrow">Add evidence</p><b>Upload a file</b><span class="sub">Files are scanned before they become available to the assessment.</span></span><span class="link">{{ "Hide" if state == "upload" else "Open" }}</span></summary>
-  <form method="post" action="/assessments/{{ upload_assessment_id }}/upload" enctype="multipart/form-data" hx-post="/assessments/{{ upload_assessment_id }}/upload" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
-    <label class="field sel"><span class="label">Category</span><select name="category"><option value="general">General</option><option value="privacy_policy">Privacy policy</option><option value="security_policy">Security policy</option><option value="vendor_contract">Vendor contract</option></select></label>
-    <label class="drop" id="drop-zone" data-drop-zone><input id="file-input" type="file" name="file" required data-upload-file><span class="tile">{{ icon("upload") }}</span><span class="txt"><b>Drop a file here or choose one</b><span class="sub" id="file-name-display" data-file-name>PDF, DOCX, XLSX or TXT</span></span></label>
+  <form method="post" action="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" enctype="multipart/form-data" hx-post="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data" data-upload-form>
+    {% if not assessment and assessment_options %}<label class="field sel"><span class="label">Assessment</span><select name="upload_assessment_id" data-upload-assessment>{% for option in assessment_options %}<option value="{{ option.id }}"{% if option.id == upload_assessment_id %} selected{% endif %}>{{ option.display_name }}</option>{% endfor %}</select></label>{% endif %}
+    <label class="field sel"><span class="label">Category</span><select name="category">{% for category in doc_categories %}<option value="{{ category }}">{{ category|replace("_", " ")|title }}</option>{% endfor %}</select></label>
+    <label class="drop" id="drop-zone" data-drop-zone><input id="file-input" type="file" name="file" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp" required data-upload-file><span class="tile">{{ icon("upload") }}</span><span class="txt"><b>Drop a file here or choose one</b><span class="sub" id="file-name-display" data-file-name>PDF, DOCX, PNG, JPG, JPEG or WEBP</span></span></label>
     <div id="upload-progress" class="progress-bar" aria-label="Upload progress"><i id="upload-progress-bar"></i></div>
     <div class="acts"><button class="btn {{ 'primary' if state == 'upload' else 'secondary' }}" type="submit">Upload file</button><button class="btn ghost" type="button" data-upload-cancel>Cancel</button></div>
   </form>
 </details>
 {% endif %}
 
-<section class="stat-row">
-  <div class="glass stat"><span class="l">Total files</span><span class="v">{{ shown_rows|length }}</span></div>
-  {% for key, label in [("active", "Available"), ("quarantined", "Scanning"), ("invalidated", "Out of date"), ("rejected", "Rejected")] %}
-  <div class="glass stat"><span class="l">{{ label }}</span><span class="v">{{ inventory_counts.get(key, 0) if state != "empty" else 0 }}</span></div>
-  {% endfor %}
-</section>
+<p class="meta-line count-strip">{{ inventory_counts.get("total", 0) }} items · {{ inventory_counts.get("Available", 0) }} available · {{ inventory_counts.get("Scanning", 0) }} scanning · {{ inventory_counts.get("Rejected", 0) }} rejected · {{ inventory_counts.get("Out of date", 0) }} out of date</p>
 
 <form class="tools keep-row" method="get" action="{{ request.url.path }}">
   <label class="field">{{ icon("search") }}<input name="search" value="{{ search }}" placeholder="Search files" aria-label="Search files"></label>
@@ -81,15 +78,19 @@
   <button class="btn secondary" type="submit">Filter</button>
 </form>
 
+{% if legacy_documents %}
+{{ alert("Legacy documents need migration", "Legacy documents are not in the evidence inventory. Run scripts/migrate_documents_to_evidence.py to migrate them before managing versions or archive actions.", "medium") }}
+{% endif %}
+
 <div id="document-list">
-  {% if state == "empty" %}
+  {% if not inventory_rows %}
   <div class="glass empty"><span class="tile">{{ icon("folder") }}</span><h2>No evidence yet</h2><p>Upload the first file for this engagement or ask the client to provide it through a secure link.</p>{% if upload_assessment_id %}<button class="btn primary" type="button" data-upload-open>Upload evidence</button>{% endif %}</div>
   {% else %}
   {% include "partials/document_list.html" %}
   {% endif %}
 </div>
-{% if state == "prefill" and freshness and freshness.last_prefill_at and freshness.new_since_last_prefill %}
-<div class="alert c-accent" data-prefill-note>{{ icon("clock") }}<div><b>New evidence since the last pre-fill</b><span>{{ freshness.new_since_last_prefill }} document{% if freshness.new_since_last_prefill != 1 %}s{% endif %} arrived after the questionnaire was last pre-filled. <a href="/assessments/{{ assessment.id }}?tab=questionnaire">Pre-fill again</a>.</span></div></div>
+{% if assessment and freshness and freshness.last_prefill_at and freshness.new_since_last_prefill %}
+<div class="alert c-accent" data-prefill-note>{{ icon("clock") }}<div><b>{{ freshness.new_since_last_prefill }} new document{% if freshness.new_since_last_prefill != 1 %}s{% endif %} since the {{ assessment.display_name }} questionnaire was last pre-filled</b><span><a href="/assessments/{{ assessment.id }}?tab=questionnaire">Pre-fill again</a>.</span></div></div>
 {% endif %}
 {% endif %}
 {% endblock %}
@@ -108,10 +109,23 @@
       button.addEventListener('click', () => {
         const panel = document.querySelector('[data-upload-panel]');
         if (panel) { panel.open = true; panel.scrollIntoView({behavior: 'smooth'}); }
+        else { const url = new URL(window.location.href); url.searchParams.set('state', 'upload'); window.location.href = url.toString(); }
       });
     });
     const fileInput = document.querySelector('[data-upload-file]');
     const dropZone = document.querySelector('[data-drop-zone]');
+    const uploadAssessment = document.querySelector('[data-upload-assessment]');
+    const uploadForm = document.querySelector('[data-upload-form]');
+    const fragmentQuery = {{ fragment_query|tojson }};
+    const updateUploadTarget = () => {
+      if (!uploadAssessment || !uploadForm) return;
+      const suffix = fragmentQuery ? `?${fragmentQuery}` : '';
+      const target = `/assessments/${encodeURIComponent(uploadAssessment.value)}/upload${suffix}`;
+      uploadForm.action = target;
+      uploadForm.setAttribute('hx-post', target);
+    };
+    uploadAssessment?.addEventListener('change', updateUploadTarget);
+    updateUploadTarget();
     const updateFileName = (file) => {
       const label = document.querySelector('[data-file-name]');
       if (file && label) label.textContent = file.name;

@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -1435,6 +1436,11 @@ def evidence_detail_page(
         if evidence["assessment_id"]
         else None
     )
+    use_assessments = {
+        item["assessment_id"]: db.get(Assessment, item["assessment_id"])
+        for item in evidence.get("uses", [])
+        if item.get("assessment_id")
+    }
     return templates.TemplateResponse(
         "pages/evidence_detail.html",
         {
@@ -1443,25 +1449,78 @@ def evidence_detail_page(
             "engagement": engagement,
             "client": client,
             "originating_assessment": originating_assessment,
+            "use_assessments": use_assessments,
         },
     )
 
 
-def _inventory_fragment_context(db: Session, assessment: Assessment) -> dict:
+def _inventory_query_context(request: Request) -> dict:
+    query = request.query_params
+    return {
+        "scope_assessment_id": query.get("assessment") or None,
+        "source": query.get("source") if query.get("source") in evidence_inventory.SOURCES else None,
+        "status": query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None,
+        "search": query.get("search") or None,
+    }
+
+
+def _inventory_fragment_context(
+    db: Session,
+    assessment: Assessment | None = None,
+    *,
+    engagement_id: str | None = None,
+    scope_assessment_id: str | None = None,
+    source: str | None = None,
+    status: str | None = None,
+    search: str | None = None,
+) -> dict:
+    engagement_id = engagement_id or (assessment.engagement_id if assessment else None)
+    owner_assessments = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement_id, Assessment.status != "archived")
+        .order_by(Assessment.created_at, Assessment.id)
+        .all()
+        if engagement_id
+        else []
+    )
     rows = evidence_inventory.inventory_rows(
         db,
-        assessment.engagement_id,
-        assessment_id=assessment.id,
-    )
-    actions = {
-        row["id"]: row
-        for row in evidence_panel_rows(db, assessment.id)
-        if row.get("source") == "evidence"
-    }
+        engagement_id,
+        assessment_id=scope_assessment_id,
+        source=source,
+        status=status,
+        search=search,
+    ) if engagement_id else []
+    actions = {}
+    legacy_documents = []
+    for owner in owner_assessments:
+        for row in evidence_panel_rows(db, owner.id):
+            if row.get("source") == "evidence":
+                action = dict(row)
+                action["action_assessment_id"] = owner.id
+                existing = actions.get(row["id"])
+                if existing is None or (existing.get("mapped_in") and not action.get("mapped_in")):
+                    actions[row["id"]] = action
+            elif row.get("source") == "legacy" and (
+                scope_assessment_id is None or scope_assessment_id == owner.id
+            ):
+                legacy_documents.append({**row, "assessment_id": owner.id})
+
+    fragment_params = {}
+    if scope_assessment_id:
+        fragment_params["assessment"] = scope_assessment_id
+    if source:
+        fragment_params["source"] = source
+    if status:
+        fragment_params["status"] = status
+    if search:
+        fragment_params["search"] = search
     return {
         "inventory_rows": rows,
         "document_actions": actions,
-        "assessment_id": assessment.id,
+        "assessment_id": scope_assessment_id,
+        "legacy_documents": legacy_documents,
+        "fragment_query": urlencode(fragment_params),
     }
 
 
@@ -1506,6 +1565,10 @@ def evidence_inventory_page(
             "view_state": query.get("state", "all"),
             "upload_assessment_id": None,
             "document_actions": {},
+            "legacy_documents": [],
+            "fragment_query": "",
+            "doc_categories": [item.value for item in DocumentCategory],
+            "cross_engagement": True,
         },
     )
 
@@ -1532,23 +1595,17 @@ def engagement_evidence_inventory_page(
         (item for item in assessments if item.id == query.get("assessment")),
         None,
     )
-    if selected_assessment is None and preview_state == "prefill" and assessments:
-        selected_assessment = assessments[0]
     upload_assessment = selected_assessment or (assessments[0] if assessments else None)
     source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
     status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
-    rows = evidence_inventory.inventory_rows(
+    fragment = _inventory_fragment_context(
         db,
-        engagement_id,
-        assessment_id=selected_assessment.id if selected_assessment else None,
+        upload_assessment,
+        engagement_id=engagement_id,
+        scope_assessment_id=selected_assessment.id if selected_assessment else None,
         source=source,
         status=status,
         search=query.get("search") or None,
-    )
-    actions = (
-        _inventory_fragment_context(db, upload_assessment)["document_actions"]
-        if upload_assessment
-        else {}
     )
     freshness = (
         prefill_freshness.freshness(db, selected_assessment)
@@ -1562,8 +1619,8 @@ def engagement_evidence_inventory_page(
             "engagement": engagement,
             "client": client,
             "assessment": selected_assessment,
-            "inventory_rows": rows,
-            "inventory_counts": evidence_inventory.status_counts(rows),
+            **fragment,
+            "inventory_counts": evidence_inventory.status_counts(fragment["inventory_rows"]),
             "engagements": [engagement],
             "assessment_options": assessments,
             "selected_engagement_id": engagement_id,
@@ -1572,10 +1629,13 @@ def engagement_evidence_inventory_page(
             "search": query.get("search", ""),
             "view_state": preview_state,
             "upload_assessment_id": upload_assessment.id if upload_assessment else None,
-            "document_actions": actions,
             "freshness": freshness,
+            "doc_categories": [item.value for item in DocumentCategory],
+            "cross_engagement": False,
         },
     )
+
+
 @router.get("/assessments/{assessment_id}", response_class=HTMLResponse)
 def assessment_detail(
     request: Request,
@@ -1587,11 +1647,13 @@ def assessment_detail(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-    if request.query_params.get("tab") == "documents" and assessment.engagement_id:
-        return RedirectResponse(
-            f"/engagements/{assessment.engagement_id}/evidence?assessment={assessment.id}",
-            status_code=303,
-        )
+    if request.query_params.get("tab") == "documents":
+        if assessment.engagement_id:
+            return RedirectResponse(
+                f"/engagements/{assessment.engagement_id}/evidence?assessment={assessment.id}",
+                status_code=303,
+            )
+        return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
     engagement_archived = bool(
         assessment.engagement_id
         and retention.archived_engagement_ids(db, {assessment.engagement_id})
@@ -1955,7 +2017,10 @@ async def upload_document_web(
 
     response = templates.TemplateResponse(
         "partials/document_list.html",
-        {"request": request, **_inventory_fragment_context(db, assessment)},
+        {
+            "request": request,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+        },
     )
     return _with_toast(response, "Document uploaded")
 
@@ -1994,7 +2059,10 @@ def delete_document_web(
         raise HTTPException(exc.status_code, exc.message) from exc
     return templates.TemplateResponse(
         "partials/document_list.html",
-        {"request": request, **_inventory_fragment_context(db, assessment)},
+        {
+            "request": request,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+        },
     )
 
 
@@ -2031,7 +2099,10 @@ async def upload_document_version_web(
         )
     response = templates.TemplateResponse(
         "partials/document_list.html",
-        {"request": request, **_inventory_fragment_context(db, assessment)},
+        {
+            "request": request,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+        },
     )
     return _with_toast(response, "New version uploaded")
 

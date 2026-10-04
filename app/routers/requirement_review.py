@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.client import Client
+from app.models.engagement import Engagement
+from app.models.evidence import Evidence
 from app.services import conclusion_review, requirement_card, review_queue, rfi_evidence_requests
 from app.template_config import configure_templates
 
@@ -203,8 +206,11 @@ def evidence_span(
         view = requirement_card.span_view(db, version_id, ref)
     except requirement_card.RequirementCardError as exc:
         raise HTTPException(exc.status_code, exc.message) from exc
+    evidence = db.get(Evidence, view.evidence_id)
+    engagement = db.get(Engagement, evidence.engagement_id) if evidence else None
+    client = db.get(Client, engagement.client_id) if engagement else None
     return _templates.TemplateResponse(
         request=request,
         name="pages/evidence_span.html",
-        context={"request": request, "view": view},
+        context={"request": request, "view": view, "engagement": engagement, "client": client},
     )

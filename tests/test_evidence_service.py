@@ -1230,7 +1230,8 @@ def test_htmx_document_routes_and_evidence_page(db, http, extractor):
 
     page = http.get(f"/evidence/{evidence.id}")
     assert page.status_code == 200
-    assert v1.file_hash_sha256 in page.text and v2.file_hash_sha256 in page.text
+    assert v1.file_hash_sha256[:12] in page.text and v2.file_hash_sha256[:12] in page.text
+    assert v1.file_hash_sha256 not in page.text and v2.file_hash_sha256 not in page.text
     assert "Superseded" in page.text
     assert client_row.name in page.text and engagement.name in page.text
     assert http.get("/evidence/does-not-exist").status_code == 404

@@ -545,7 +545,10 @@ def test_scenario_12_structural_guards(db, http, demo):
     assert "delete" not in service_source.lower()
     assert ".commit(" not in inspect.getsource(web.assessment_detail)
     assert re.search(r"confirm all|select all|approve all|\bmultiple\b|\|\s*safe\b|bulk", service_source + router_source + template_source, re.I) is None
-    assert template_source.count('type="checkbox"') == 1
+    # Each candidate has its own selection tick; warning acknowledgement is a separate required tick.
+    assert template_source.count('type="checkbox"') >= 2
+    assert 'name="selected_candidates"' in template_source
+    assert 'name="acknowledge_warnings"' in template_source
     assert "CyberAssess" not in template_source
     assert "overall_score" not in template_source
     from scripts import seed_test_companies

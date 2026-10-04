@@ -2,6 +2,14 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## S6 adversarial review fixes (2026-10-04)
+
+- [x] Add regression coverage for B1–B5 and S1–S9 contracts, including fixture imports.
+- [x] Repair S6 route context, filters, status counts, redirects, freshness, legacy visibility, and reuse/upload behavior without touching protected surfaces.
+- [x] Rebuild S6 templates against the approved structures: inventory, detail/span, AWS, reuse, workpaper, and workpaper-entry preview states.
+- [x] Align deterministic S6 seed data and register a design-only workpaper-entry preview fixture.
+- [x] Run focused HTTP/template/design checks plus smoke verification; append a Review fixes subsection to the S6 handoff.
+
 ## S4 visual gate repair (2026-10-04)
 
 - [ ] Capture baseline `domcmp.py` and `gate2.py` measurements for all S4 cases.

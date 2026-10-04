@@ -1,46 +1,45 @@
+{% from "components/ui.html" import evidence_status %}
 {% if inventory_rows %}
 <div class="table-wrap solid">
   <table class="data-table">
     <thead>
       <tr>
-        <th>File</th>
-        <th>Type</th>
+        <th>Item</th>
+        {% if cross_engagement %}<th>Engagement</th>{% endif %}
         <th>Source</th>
-        <th>Status</th>
-        <th>Used by</th>
+        <th>Assessment</th>
         <th>Supports</th>
-        <th>Updated</th>
+        <th>Status</th>
         <th><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
     <tbody>
       {% for row in inventory_rows %}
       {% set action = document_actions.get(row.evidence_id) if document_actions is defined else none %}
+      {% set action_assessment_id = action.action_assessment_id if action else none %}
       <tr data-evidence-id="{{ row.evidence_id }}">
         <td>
           <a class="file-name" href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a>
-          <span class="sub">{{ row.size_bytes | filesizeformat }}{% if row.mime_type %} · {{ row.mime_type }}{% endif %}</span>
+          <span class="sub">{{ row.type_label }} · {{ row.size_bytes | filesizeformat }}</span>
         </td>
-        <td>{{ row.type_label }}</td>
+        {% if cross_engagement %}<td><a class="sub link" href="/engagements/{{ row.engagement_id }}/evidence">{{ row.engagement_name }}</a></td>{% endif %}
         <td>
           <span class="source-label">{{ row.source_label }}</span>
-          {% if row.origin %}<span class="sub">{{ row.origin }}</span>{% endif %}
+          {% if row.contact_name %}<span class="sub">{{ row.contact_name }}</span>{% endif %}
+          {% if row.reused_from %}<span class="sub">From {{ row.reused_from }}</span>{% endif %}
         </td>
-        <td>{% with status=row.status %}{% include "components/evidence_status_badge.html" %}{% endwith %}</td>
         <td>
           {% if row.used_by %}
-            {% for use in row.used_by[:2] %}<a class="sub link" href="/assessments/{{ use.assessment_id }}">{{ use.display_name }}</a>{% endfor %}
+            {% for use in row.used_by[:2] %}<a class="sub link" href="/assessments/{{ use.assessment_id }}">{{ use.name }}</a>{% endfor %}
             {% if row.used_by|length > 2 %}<span class="sub">+{{ row.used_by|length - 2 }} more</span>{% endif %}
           {% else %}<span class="sub">Not mapped</span>{% endif %}
         </td>
-        <td>
-          {% if row.supports %}<span class="sub">{{ row.supports|join(", ") }}</span>{% else %}<span class="sub">—</span>{% endif %}
-        </td>
-        <td><span class="sub">{{ row.updated_at | display_date }}</span></td>
+        <td>{% if row.supports %}<span class="sub">{{ row.supports|join(", ") }}</span>{% else %}<span class="sub">—</span>{% endif %}</td>
+        <td>{{ evidence_status(row.status) }}<span class="sub">{{ row.updated_at|display_date }}</span></td>
         <td class="actions">
           {% if action and action.can_archive %}
           <button class="btn ghost sm" type="button"
-                  hx-delete="/assessments/{{ assessment_id }}/documents/{{ row.evidence_id }}"
+                  hx-delete="/assessments/{{ action_assessment_id }}/documents/{{ row.evidence_id }}{% if fragment_query %}?{{ fragment_query }}{% endif %}"
                   hx-target="#document-list"
                   hx-swap="innerHTML"
                   hx-confirm="Archive {{ row.filename }}? It will be excluded from analysis but retained.">Archive</button>
@@ -48,7 +47,7 @@
           {% if action and action.can_add_version %}
           <details class="version-action">
             <summary class="link">New version</summary>
-            <form hx-post="/assessments/{{ assessment_id }}/evidence/{{ row.evidence_id }}/versions"
+            <form hx-post="/assessments/{{ action_assessment_id }}/evidence/{{ row.evidence_id }}/versions{% if fragment_query %}?{{ fragment_query }}{% endif %}"
                   hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
               <label class="field"><input type="file" name="file" required></label>
               <label class="field"><input type="text" name="change_reason" required placeholder="Change reason"></label>
@@ -62,8 +61,6 @@
     </tbody>
   </table>
 </div>
-{% elif documents is defined and documents %}
-<div class="empty"><h3>No active evidence rows</h3><p>Legacy document rows remain available through the assessment migration path.</p></div>
 {% else %}
 <div class="glass empty" data-empty-evidence><h3>No evidence yet</h3><p>Upload a file or ask the client for the evidence needed for this review.</p></div>
 {% endif %}

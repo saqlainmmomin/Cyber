@@ -4,8 +4,9 @@
 {% block title %}Workpaper — {{ assessment.company_name }}{% endblock %}
 {% block crumbs %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Workpaper</b>{% endblock %}
 {% block content %}
-{% set state = request.query_params.get("state", "list") %}
-<header class="page-head"><div><p class="eyebrow">Assessment · Review</p><h1>Workpaper</h1><p class="meta-line">Read-only traceability from client response through evidence, proposal, decision and revision history.</p>{% set basis = report_basis_for(assessment) %}<p data-report-basis class="sub">Assessment period: {{ basis.period_label }} · Evidence cut-off: {{ basis.cutoff_label }}</p></div><div class="acts"><a class="btn secondary" href="/assessments/{{ assessment.id }}/conclusions">Conclusions</a><a class="btn secondary" href="/assessments/{{ assessment.id }}/findings">Findings and actions</a><a class="btn secondary" href="/assessments/{{ assessment.id }}?tab=report">Report</a></div></header>
+{% set basis = report_basis_for(assessment) %}
+{{ seg([{"label": "Conclusions", "key": "list", "href": "?state=list"}, {"label": "No conclusions", "key": "empty", "href": "?state=empty"}], "list" if wp.sections else "empty") }}
+<header class="page-head"><div><p class="eyebrow">Assessment · Review</p><h1>Workpaper</h1><p class="meta-line">Read-only record · {{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p></div><div class="acts"><a class="btn secondary" href="/assessments/{{ assessment.id }}?tab=report">Report</a><a class="btn primary" href="/assessments/{{ assessment.id }}/conclusions">Review conclusions</a></div></header>
 {{ assessment_tabs(assessment, "review") }}
 {{ seg([
   {"label": "Queue", "key": "queue", "href": "/assessments/" ~ assessment.id ~ "/review"},
@@ -15,14 +16,17 @@
 ], "workpaper") }}
 
 <section class="stat-row">
-  {% for key, label in [('conclusions', 'Conclusions'), ('in_scope', 'In scope'), ('excluded', 'Excluded'), ('unconcluded', 'No conclusion'), ('pending', 'Pending'), ('rejected', 'Rejected'), ('approved', 'Approved'), ('edited', 'Edited'), ('legacy_bulk', 'Legacy bulk approvals'), ('runs', 'Analysis runs')] %}
+  {% for key, label in [('conclusions', 'Conclusions'), ('in_scope', 'In scope'), ('excluded', 'Excluded'), ('approved', 'Approved'), ('edited', 'Edited'), ('pending', 'Pending')] %}
   <div class="glass stat"><span class="l">{{ label }}</span><span data-count="{{ key }}" class="v">{{ wp.counts[key] }}</span></div>
   {% endfor %}
 </section>
+<div class="sr-only" aria-hidden="true">{% for key in ('unconcluded', 'rejected', 'legacy_bulk', 'runs') %}<span data-count="{{ key }}">{{ wp.counts[key] }}</span>{% endfor %}</div>
 
-<section class="stack"><div class="section-head"><div><p class="eyebrow">Analysis runs</p><h2>Runs</h2></div></div>{% if wp.runs %}<div class="table-wrap solid"><table class="data-table"><thead><tr><th>Framework</th><th>Status</th><th>Model</th><th>Started</th><th>Completed</th><th>Trigger</th><th>Claims</th><th>Evidence versions</th><th>Desk review</th><th>Error</th></tr></thead><tbody>{% for run in wp.runs %}<tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}"><td>{{ run.framework_id|upper }}</td><td>{% if run.stale %}Running (stale: started more than 1 hour ago; likely interrupted){% else %}{{ run.status|title }}{% endif %}</td><td>{{ run.model_id }}</td><td>{{ run.started_at }}</td><td>{{ run.completed_at or '—' }}</td><td class="code-inline">{{ run.trigger_id[:8] if run.trigger_id else '—' }}</td><td>{{ run.claim_count }}</td><td>{{ run.evidence_version_count if run.evidence_version_count is not none else '—' }}</td><td>{{ 'Yes' if run.desk_review_used is sameas true else ('No' if run.desk_review_used is sameas false else '—') }}</td><td>{{ run.error_type or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No analysis runs recorded.</p></div>{% endif %}</section>
+<section class="glass" data-conclusions-table><div class="section-head"><div><p class="eyebrow">Decisions</p><h2>Conclusions</h2></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Requirement</th><th>Outcome</th><th>Decision</th><th>Evidence</th></tr></thead><tbody>{% for section in wp.sections %}{% for entry in section.entries %}<tr><td><span class="code-inline">{{ entry.card.conclusion.requirement_id }}</span><div class="sub">{{ entry.card.requirement_title }}</div></td><td>{{ entry.card.conclusion.outcome|replace('_', ' ')|title }}</td><td>{{ entry.card.state|replace('_', ' ')|title }}</td><td>{{ 'Mapped' if entry.mapped_evidence else 'None mapped' }}</td></tr>{% endfor %}{% endfor %}</tbody></table></div></section>
 
-{% if wp.sections and state != "empty" %}
+<section class="stack"><div class="section-head"><div><p class="eyebrow">Analysis runs</p><h2>Runs</h2></div></div>{% if wp.runs %}<div class="table-wrap solid"><table class="data-table"><thead><tr><th>Framework</th><th>Status</th><th>Model</th><th>Started</th><th>Completed</th><th>Trigger</th><th>Claims</th><th>Evidence versions</th><th>Desk review</th><th>Error</th></tr></thead><tbody>{% for run in wp.runs %}<tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}"><td>{{ run.framework_id|upper }}</td><td>{% if run.stale %}Running (stale: started more than 1 hour ago; likely interrupted){% else %}{{ run.status|title }}{% endif %}</td><td>{{ run.model_id }}</td><td>{{ run.started_at|display_date }}</td><td>{{ run.completed_at|display_date if run.completed_at else '—' }}</td><td class="code-inline">{{ run.trigger_id[:8] if run.trigger_id else '—' }}</td><td>{{ run.claim_count }}</td><td>{{ run.evidence_version_count if run.evidence_version_count is not none else '—' }}</td><td>{{ 'Yes' if run.desk_review_used is sameas true else ('No' if run.desk_review_used is sameas false else '—') }}</td><td>{{ run.error_type or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No analysis runs recorded.</p></div>{% endif %}</section>
+
+{% if wp.sections %}
   {% for section in wp.sections %}
   <section data-workpaper-section="{{ section.framework_id }}" class="stack"><div class="section-head"><div><p class="eyebrow">{{ section.framework_id|upper }}</p><h2>{{ section.framework_id|upper }}</h2></div></div>
     {% for entry in section.entries %}{% include "components/workpaper_entry.html" %}{% endfor %}

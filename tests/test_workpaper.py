@@ -531,7 +531,8 @@ def test_scenario_3_finding_to_history_to_evidence_path(db, http, gate, monkeypa
     assert f'href="/evidence/{evidence.id}"' in entry_html
     detail = http.get(f"/evidence/{evidence.id}")
     assert detail.status_code == 200
-    assert "a" * 64 in detail.text
+    assert "a" * 12 in detail.text
+    assert "a" * 64 not in detail.text
     source = (REPO_ROOT / "app/templates/components/workpaper_entry.html").read_text()
     assert "<details" not in source
 
@@ -1152,7 +1153,8 @@ def test_smoke_full_assessment_traceability(db, http, gate, monkeypatch, capsys)
     assert f'href="/evidence/{evidence.id}"' in page.text
     detail = http.get(f"/evidence/{evidence.id}")
     assert detail.status_code == 200
-    assert "a" * 64 in detail.text
+    assert "a" * 12 in detail.text
+    assert "a" * 64 not in detail.text
     with capsys.disabled():
         print(
             "WORKPAPER_SMOKE",

@@ -39,13 +39,25 @@ def _page_context(
 ) -> dict:
     engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
     client = db.get(Client, engagement.client_id) if engagement else None
+    candidates = candidates if candidates is not None else evidence_reuse.reuse_candidates(db, assessment.id)
+    framework_ids = set(assessment.frameworks)
+    for candidate in candidates:
+        framework_ids.update(candidate.source_framework_ids)
+        framework_ids.add(candidate.framework_id)
     return {
         "request": request,
         "assessment": assessment,
         "engagement": engagement,
         "client": client,
-        "candidates": candidates if candidates is not None else evidence_reuse.reuse_candidates(db, assessment.id),
-        "framework_names": _framework_names(assessment),
+        "candidates": candidates,
+        "framework_names": {
+            framework_id: (
+                FrameworkRegistry.get_or_none(framework_id).name
+                if FrameworkRegistry.get_or_none(framework_id)
+                else framework_id.upper()
+            )
+            for framework_id in framework_ids
+        },
         "target_framework_ids": assessment.frameworks,
         "threshold": evidence_reuse.REUSE_AGE_WARNING_DAYS,
         "error": error,

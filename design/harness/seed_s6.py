@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from alembic import command
@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
 import app.models  # noqa: F401 - register every model before create_all()
 from app.database import Base
 from app.frameworks.registry import FrameworkRegistry
+from app.models.analysis_run import AnalysisRun
 from app.models.desk_review import DeskReviewSummary
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.firm_settings import FirmSettings
@@ -44,7 +45,7 @@ from design.harness.seed_s4 import (
 
 
 SCREEN_STATES = {
-    "evidence": ("default", "upload", "filtered", "empty", "loading", "error", "prefill", "all"),
+    "evidence": ("default", "upload", "empty", "loading", "error", "prefill", "all"),
     "aws_evidence": ("ready", "pulling", "result", "error", "notconfigured"),
     "evidence_reuse": ("list", "error", "empty", "unlinked"),
     "evidence_detail": ("current", "quarantined", "unused"),
@@ -101,17 +102,24 @@ def _version(
     )
 
 
-def _magic_link(engagement_id: str) -> MagicLink:
+def _magic_link(
+    engagement_id: str,
+    *,
+    link_id: str = "magic-link-loomwire",
+    assessment_ids: tuple[str, ...] = ("assessment-loomwire",),
+    contact_name: str = "Anika Rao",
+    contact_email: str = "anika@loomwire.example",
+) -> MagicLink:
     return MagicLink(
-        id="magic-link-loomwire",
+        id=link_id,
         engagement_id=engagement_id,
         token_digest="a" * 64,
-        scope_json=json.dumps({"assessment_ids": ["assessment-loomwire"]}),
+        scope_json=json.dumps({"assessment_ids": list(assessment_ids)}),
         max_uploads=20,
         max_size_bytes=20_000_000,
         expires_at=_time(30),
-        contact_name="Anika Rao",
-        contact_email="anika@loomwire.example",
+        contact_name=contact_name,
+        contact_email=contact_email,
         created_at=_time(-8),
     )
 
@@ -133,12 +141,15 @@ def _seed_inventory(db: Session) -> dict[str, object]:
         _assessment("assessment-loomwire", engagements[1].id, clients[1].name, "Platform review", ("iso27001",)),
         _assessment("assessment-kestrel", engagements[2].id, clients[2].name, "Advisory review", ("dpdpa",)),
     ]
+    assessments.append(_assessment("assessment-unlinked", None, "Unlinked client", "Standalone review", ("dpdpa",)))
     db.add_all(clients + engagements + assessments)
     db.add(FirmSettings(id=1, contact_email="engagements@northgate.example", archived_retention_years=7, accent_theme="midnight", updated_at=FROZEN_NOW))
+    db.add(_magic_link(engagements[0].id, link_id="magic-link-meridian", assessment_ids=(assessments[0].id, assessments[1].id), contact_name="Ananya Rao", contact_email="ananya@meridian.example"))
+    db.add(_magic_link(engagements[0].id, link_id="magic-link-meridian-kiran", assessment_ids=(assessments[0].id, assessments[1].id), contact_name="Kiran Shah", contact_email="kiran@meridian.example"))
     db.add(_magic_link(engagements[1].id))
     db.flush()
 
-    _seed_evidence(db, engagements[0], assessments[0], 5, "meridian-evidence")
+    _seed_evidence(db, engagements[0], assessments[0], 11, "meridian-evidence")
     _seed_evidence(db, engagements[1], assessments[2], 2, "loomwire-evidence")
     _seed_evidence(db, engagements[2], assessments[3], 1, "kestrel-evidence")
     db.flush()
@@ -148,22 +159,52 @@ def _seed_inventory(db: Session) -> dict[str, object]:
             row.status = "active"
     rows["meridian-evidence-002"].status = "quarantined"
     rows["meridian-evidence-003"].status = "rejected"
-    rows["meridian-evidence-004"].status = "invalidated"
-    rows["meridian-evidence-000"].original_filename = "privacy-notice.pdf"
+    rows["meridian-evidence-004"].status = "quarantined"
+    rows["meridian-evidence-005"].status = "invalidated"
+    names = {
+        "meridian-evidence-000": "Privacy notice.pdf",
+        "meridian-evidence-001": "Information security policy.pdf",
+        "meridian-evidence-002": "IAM users and policies.pdf",
+        "meridian-evidence-003": "Access review export Q4.xlsx",
+        "meridian-evidence-004": "Consent withdrawal procedure.docx",
+        "meridian-evidence-005": "Data retention policy.pdf",
+        "meridian-evidence-006": "Cloud hosting agreement.pdf",
+        "meridian-evidence-007": "Vendor data processing agreement.pdf",
+        "meridian-evidence-008": "S3 encryption and logging.pdf",
+        "meridian-evidence-009": "Breach notification runbook.pdf",
+        "meridian-evidence-010": "Data flow mapping.png",
+    }
+    for evidence_id, filename in names.items():
+        rows[evidence_id].original_filename = filename
+        rows[evidence_id].created_at = datetime(2026, 3, 10 + int(evidence_id[-3:]), 12, tzinfo=timezone.utc)
+        rows[evidence_id].file_size_bytes = 2_400_000 - int(evidence_id[-3:]) * 83_000
     rows["meridian-evidence-001"].assessment_id = assessments[1].id
-    rows["meridian-evidence-001"].original_filename = "access-review.xlsx"
+    rows["meridian-evidence-005"].assessment_id = assessments[1].id
+    rows["meridian-evidence-009"].assessment_id = assessments[1].id
+    rows["meridian-evidence-002"].uploaded_by = "aws_config:123456789012"
+    rows["meridian-evidence-003"].uploaded_by = "client_link:magic-link-meridian"
+    rows["meridian-evidence-004"].uploaded_by = "client_link:magic-link-meridian"
+    rows["meridian-evidence-007"].uploaded_by = "client_link:magic-link-meridian-kiran"
+    rows["meridian-evidence-008"].uploaded_by = "aws_config:123456789012"
     rows["loomwire-evidence-000"].uploaded_by = "aws_config:123456789012"
     rows["loomwire-evidence-000"].original_filename = "aws-config-snapshot.txt"
     rows["loomwire-evidence-001"].uploaded_by = "client_link:magic-link-loomwire"
     rows["loomwire-evidence-001"].original_filename = "vendor-register.xlsx"
     db.add_all(
         [
-            _version(rows["meridian-evidence-000"], 1, status="superseded", created_at=_time(-12), filename="privacy-notice-v1.pdf", reason="Initial receipt"),
-            _version(rows["meridian-evidence-000"], 2, created_at=_time(-1), filename="privacy-notice.pdf", reason="Updated notice"),
-            _version(rows["meridian-evidence-001"], 1, created_at=_time(-2), filename="access-review.xlsx"),
-            _version(rows["meridian-evidence-002"], 1, status="quarantined", created_at=_time(-1)),
-            _version(rows["meridian-evidence-003"], 1, status="rejected", created_at=_time(-10)),
-            _version(rows["meridian-evidence-004"], 1, status="invalidated", created_at=_time(-8)),
+            _version(rows["meridian-evidence-000"], 1, status="superseded", created_at=datetime(2026, 3, 10, 12, tzinfo=timezone.utc), filename="Privacy notice v1.pdf", reason="Initial receipt"),
+            _version(rows["meridian-evidence-000"], 2, status="superseded", created_at=datetime(2026, 3, 11, 12, tzinfo=timezone.utc), filename="Privacy notice v2.pdf", reason="Updated notice"),
+            _version(rows["meridian-evidence-000"], 3, created_at=datetime(2026, 3, 12, 12, tzinfo=timezone.utc), filename="Privacy notice.pdf", reason="Added reviewer advice"),
+            _version(rows["meridian-evidence-001"], 1, created_at=datetime(2026, 3, 11, 12, tzinfo=timezone.utc), filename="Information security policy.pdf"),
+            _version(rows["meridian-evidence-002"], 1, status="quarantined", created_at=datetime(2026, 3, 12, 12, tzinfo=timezone.utc), filename="IAM users and policies.pdf"),
+            _version(rows["meridian-evidence-003"], 1, status="rejected", created_at=datetime(2026, 3, 13, 12, tzinfo=timezone.utc), filename="Access review export Q4.xlsx"),
+            _version(rows["meridian-evidence-004"], 1, status="quarantined", created_at=datetime(2026, 3, 14, 12, tzinfo=timezone.utc), filename="Consent withdrawal procedure.docx"),
+            _version(rows["meridian-evidence-005"], 1, status="invalidated", created_at=datetime(2026, 3, 15, 12, tzinfo=timezone.utc), filename="Data retention policy.pdf"),
+            _version(rows["meridian-evidence-006"], 1, created_at=datetime(2026, 3, 16, 12, tzinfo=timezone.utc), filename="Cloud hosting agreement.pdf"),
+            _version(rows["meridian-evidence-007"], 1, created_at=datetime(2026, 3, 17, 12, tzinfo=timezone.utc), filename="Vendor data processing agreement.pdf"),
+            _version(rows["meridian-evidence-008"], 1, created_at=datetime(2026, 3, 18, 12, tzinfo=timezone.utc), filename="S3 encryption and logging.pdf"),
+            _version(rows["meridian-evidence-009"], 1, created_at=datetime(2026, 3, 19, 12, tzinfo=timezone.utc), filename="Breach notification runbook.pdf"),
+            _version(rows["meridian-evidence-010"], 1, created_at=datetime(2026, 3, 20, 12, tzinfo=timezone.utc), filename="Data flow mapping.png"),
             _version(rows["loomwire-evidence-000"], 1, created_at=_time(-6), filename="aws-config-snapshot.txt"),
             _version(rows["loomwire-evidence-001"], 1, created_at=_time(-5), filename="vendor-register.xlsx"),
             _version(rows["kestrel-evidence-000"], 1, created_at=_time(-4)),
@@ -173,18 +214,37 @@ def _seed_inventory(db: Session) -> dict[str, object]:
         [
             EvidenceUse(id="use-meridian-privacy", evidence_id="meridian-evidence-000", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.8", relevance="supports"),
             EvidenceUse(id="use-meridian-access", evidence_id="meridian-evidence-001", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
+            EvidenceUse(id="use-meridian-iam", evidence_id="meridian-evidence-002", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.2", relevance="supports"),
+            EvidenceUse(id="use-meridian-retention", evidence_id="meridian-evidence-005", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.34", relevance="supports"),
+            EvidenceUse(id="use-meridian-hosting", evidence_id="meridian-evidence-006", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
+            EvidenceUse(id="use-meridian-vendor", evidence_id="meridian-evidence-007", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.20", relevance="supports"),
+            EvidenceUse(id="use-meridian-s3", evidence_id="meridian-evidence-008", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
+            EvidenceUse(id="use-meridian-breach", evidence_id="meridian-evidence-009", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.21", relevance="supports"),
             EvidenceUse(id="use-loomwire-aws", evidence_id="loomwire-evidence-000", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
             EvidenceUse(id="use-loomwire-client", evidence_id="loomwire-evidence-001", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
             EvidenceUse(id="use-reused-target", evidence_id="meridian-evidence-001", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.18", relevance="supports"),
+            EvidenceUse(id="use-retention-target", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.7", relevance="supports"),
+            EvidenceUse(id="use-breach-target", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.9", relevance="supports"),
         ]
     )
     db.add(_audit("audit-reuse-meridian", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-reused-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-001", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    db.add(_audit("audit-reuse-meridian-retention", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-retention-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-005", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    db.add(_audit("audit-reuse-meridian-breach", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-breach-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-009", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    for index, (framework_id, status, started_at, completed_at) in enumerate((
+        ("dpdpa", "completed", datetime(2026, 3, 20, 9, tzinfo=timezone.utc), datetime(2026, 3, 20, 9, 15, tzinfo=timezone.utc)),
+        ("iso27001", "completed", datetime(2026, 3, 20, 9, tzinfo=timezone.utc), datetime(2026, 3, 20, 9, 20, tzinfo=timezone.utc)),
+        ("dpdpa", "failed", datetime(2026, 3, 21, 10, tzinfo=timezone.utc), datetime(2026, 3, 21, 10, 2, tzinfo=timezone.utc)),
+        ("iso27001", "running", datetime(2026, 3, 21, 11, tzinfo=timezone.utc), None),
+    )):
+        db.add(AnalysisRun(id=f"analysis-run-meridian-{index + 1}", assessment_id=assessments[0].id, framework_id=framework_id, status=status, claims_json=json.dumps({"claims": [], "inputs": {"evidence_versions": ["version-meridian-evidence-000-2"]}}), model_id="anthropic/claude-sonnet-4.5", started_at=started_at, completed_at=completed_at))
+    basis_metadata = {"before": {"period_start": None, "period_end": None, "evidence_cutoff": None}, "after": {"period_start": "2025-04-01", "period_end": "2026-03-31", "evidence_cutoff": "2026-03-15", "prepared_by": "Priya Sharma", "reviewed_by": None}}
+    db.add(_audit("audit-report-basis-meridian", action="assessment.report_basis_updated", entity_type="assessment", entity_id=assessments[0].id, created_at=datetime(2026, 3, 21, 12, tzinfo=timezone.utc), metadata=basis_metadata))
     assessments[0].desk_review_status = "completed"
     db.add(DeskReviewSummary(assessment_id=assessments[0].id, document_catalog=json.dumps({"documents": 2}), coverage_summary=json.dumps({"covered": 1}), raw_ai_response="{}", status="completed", started_at=_time(-4), completed_at=_time(-3)))
     db.flush()
 
     _seed_review_stage(db, assessments[0], approved=3, pending=3)
-    db.add(_audit("audit-upload-after-prefill", action="evidence.version.created", entity_type="evidence", entity_id="meridian-evidence-000", created_at=_time(-1), metadata={"version": 2}))
+    db.add(_audit("audit-upload-after-prefill", action="evidence.version.created", entity_type="evidence", entity_id="meridian-evidence-000", created_at=_time(-1), metadata={"version": 3}))
     db.commit()
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
 

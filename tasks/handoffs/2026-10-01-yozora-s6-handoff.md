@@ -229,6 +229,19 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
+### Review fixes
+
+- B1: documents now redirect linked assessments to inventory and unlinked assessments to their overview; both HTTP cases are covered.
+- B2: inventory fragments carry the engagement scope and owner assessment, so Archive and New version never render an empty assessment id and round trips preserve filters.
+- B3: the inventory count strip reads the service’s `total`, `Available`, `Scanning`, `Rejected`, and `Out of date` keys.
+- B4: the cross-engagement table adds an Engagement header and links each cell to that engagement’s inventory.
+- B5: S6 imports the shared `db_path`, `engine`, `upload_root`, framework-registration, `db`, and `http` fixtures, so its tests collect and run.
+- S1–S3: freshness comes from the selected assessment’s real pre-fill data; AWS error copy matches the approved preview; upload/archive/version fragments keep scope and filters, with a visible assessment choice for All assessments.
+- S4: reuse candidates are independently unchecked, warning acknowledgement remains required, one button submits selected forms sequentially, stops on the first error, reloads after success, and keeps empty errors hidden; warning copy includes framework lists.
+- S5–S6: upload categories come from `DocumentCategory` with the origin accept list, and evidence statuses use the shared display macro rather than raw state words.
+- S7–S9: legacy documents restore the migration notice; all S6 dates use the app filter, detail links use assessment names and plain provenance labels, and the AWS role name is restored. Policy blocks use the existing `code_block` macro; it has no clipboard binding, so no new copy component was introduced (the external ID keeps its existing copy action).
+- G1–G9: the approved header/table/card structures were rebuilt for inventory, detail/span, AWS, reuse, workpaper, and workpaper-entry states; Meridian now seeds the approved 11-item/4-run dataset with real reuse candidates, and `PREVIEW_PAGES["workpaper_entry"]` renders default, legacy, and excluded component fixtures without adding a production route.
+
 ### Built
 
 - Added the engagement and cross-engagement Evidence inventory routes, backed by the merged `evidence_inventory.inventory_rows`, `cross_engagement_rows`, `status_counts`, and `prefill_freshness.freshness` read models. The explicit `?tab=documents` assessment URL now returns a 303 to `/engagements/{engagement_id}/evidence?assessment={id}`; the assessment template and stepper were left to S5.
@@ -243,16 +256,17 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 |---|---|
 | Evidence `default` | `/engagements/eng-meridian/evidence` over seeded rows and real filters. |
 | Evidence `upload` | Same stamped DB with `?state=upload`; the real multipart form is open. |
-| Evidence `filtered` | Same DB with source/status/assessment query filters. |
-| Evidence `empty` | Explicit `?state=empty` preview branch; seed data is retained. |
+| Evidence `filtered` | Same DB with real `source`, `status`, `assessment`, and `search` query filters. |
+| Evidence `empty` | A real no-match search query; `state=empty` no longer hides seeded rows. |
 | Evidence `loading` / `error` | Explicit `?state=loading` or `?state=error` state branch; no backend data is fabricated. |
-| Evidence `prefill` | `DeskReviewSummary.completed_at` is 27 Sep 2026 and active evidence arrives later; `/engagements/eng-meridian/evidence?state=prefill` shows the real freshness note. |
+| Evidence `prefill` | `DeskReviewSummary.completed_at` is 27 Sep 2026 and active evidence arrives later; `/engagements/eng-meridian/evidence?assessment=assessment-meridian-head&state=prefill` shows the real freshness note. |
 | Evidence `all` | `/evidence?state=all`, using the cross-engagement read model and Engagement column. |
 | AWS `ready` / `notconfigured` | Real AWS page context; this environment has no AWS SDK/configuration. `pulling` and `error` use the page's explicit state mechanism; `result` is rendered only from a real pull response. |
-| Reuse `list` / `empty` / `error` / `unlinked` | Real candidate/empty/error/unlinked contexts where reachable; explicit `?state=` branches cover the interaction-only specimens. |
+| Reuse `list` / `empty` / `error` / `unlinked` | Real candidate data, the Payments subsidiary with no candidates, the transient error preview, and the seeded `assessment-unlinked` assessment. |
 | Detail `current` / `quarantined` / `unused` | Seeded evidence/version status and mapping combinations, rendered by the real detail route. |
 | Span `span` / `whole` / `superseded` / `unavailable` | Real citation route data; current, superseded, whole-document, and unavailable-version branches are preserved. |
-| Workpaper `list` / `empty` | `_seed_review_stage` creates real conclusions for list; `?state=empty` exercises the empty branch. The entry component keeps real response/evidence/decision/revision data rather than mockup literals. |
+| Workpaper `list` / `empty` | `_seed_review_stage` creates real conclusions for list; the seeded Payments subsidiary has no conclusions for the empty view. The entry component keeps real response/evidence/decision/revision data rather than mockup literals. |
+| Workpaper entry `default` / `legacy` / `excluded` | Existing debug-only `/design/pages/workpaper_entry?state=...` uses `PREVIEW_PAGES` fixtures and renders the component without adding a production route. |
 
 ### Tests and verification
 
