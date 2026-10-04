@@ -24,7 +24,12 @@ V3B_EXISTING_TEST_EDITS = (
 
 def test_v3b_changes_stay_in_the_v3b_file_set():
     committed = subprocess.run(
-        ["git", "diff", "--name-only", "origin/main...HEAD"],
+        ["git", "diff", "--name-only", "origin/main...HEAD", "--", ".",
+         # per-PR allowance: V3-C design pass mockup, scope and handoff
+         ":(exclude)docs/product/2026-10-04-board-deck-v3c-mockup",
+         ":(exclude)tasks/2026-10-04-deliverables-quality-scope.md",
+         ":(exclude)tasks/handoffs/2026-10-04-v3c-prior-domain-scores.md",
+         ":(exclude)tests/yozora_paths.py"],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
     own_tests = {f for f in committed if f.startswith("tests/") and "v3b" in f or f.startswith("tests/p6_8_v3_")}

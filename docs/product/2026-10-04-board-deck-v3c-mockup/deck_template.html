@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Board report: {{ doc.company_name }}</title>
+<style>
+{{ font_face_css }}
+@page { size: 338.67mm 190.5mm; margin: 0; }
+:root {
+  --p1: {{ v.theme.p1 }}; --p2: {{ v.theme.p2 }}; --p3: {{ v.theme.p3 }}; --acc: {{ v.theme.acc }};
+  --ink: #0B0E26; --ink2: #3A4060; --mut: #626984; --line: #DDE1EB; --panel: #F1F3F8; --panel2: #E6E9F2;
+  --ok: #0E8F86; --part: #E39A1F; --nc: #C0392B; --ie: #9AA3B5;
+  --crit: #9B1C1C; --high: #D9481E; --med: #F0A030; --low: #3C9D6B;
+}
+* { box-sizing: border-box; }
+html { font-family: {{ font_stack }}; color: var(--ink); font-size: 10.5pt; line-height: 1.38; }
+body { margin: 0; }
+.disp { font-family: 'Display', {{ font_stack }}; }
+.slide { width: 338.67mm; height: 190.5mm; position: relative; overflow: hidden; break-after: page; background: #fff; }
+.slide:last-child { break-after: auto; }
+p { margin: 0; }
+
+/* ---------- frame: section badge, action title, plain-language subtitle ---------- */
+.tb { position: absolute; left: 0; top: 9mm; height: 17mm; width: 338.67mm; }
+.tb .wedge { position: absolute; left: 0; top: 0; width: 22mm; height: 17mm; background: var(--p1); }
+.tb .wedge2 { position: absolute; left: 18mm; top: 0; width: 8mm; height: 17mm; background: var(--p2); transform: skewX(-18deg); }
+.tb .wedge3 { position: absolute; left: 24mm; top: 0; width: 3mm; height: 17mm; background: var(--acc); transform: skewX(-18deg); }
+.tb .num { position: absolute; left: 5.5mm; top: 3.6mm; color: #fff; font-family: 'Display'; font-weight: 700; font-size: 21pt; line-height: 1; }
+.tb .sec { position: absolute; left: 33mm; top: -0.4mm; font-size: 8pt; letter-spacing: 1.3pt; text-transform: uppercase; color: var(--mut); font-weight: 700; }
+.tb h1 { position: absolute; left: 33mm; right: 14mm; top: 4.4mm; margin: 0; font-family: 'Display'; font-weight: 700; font-size: 23pt; line-height: 1.02; color: var(--ink); letter-spacing: -0.1pt; }
+.rule { position: absolute; left: 33mm; right: 14mm; top: 29mm; height: 0.6mm; background: var(--p1); }
+.rule:after { content: ""; position: absolute; left: 0; top: 0; width: 26mm; height: 0.6mm; background: var(--acc); }
+.take { position: absolute; left: 33mm; right: 14mm; top: 31.4mm; font-size: 11pt; color: var(--ink2); }
+.body { position: absolute; left: 14mm; right: 14mm; top: 42mm; bottom: 15mm; }
+.src { position: absolute; left: 0; right: 0; bottom: -1mm; font-size: 7.4pt; color: var(--mut); }
+.ft { position: absolute; left: 0; right: 0; bottom: 0; height: 10mm; border-top: 0.3mm solid var(--line); }
+.ft .brand { position: absolute; left: 14mm; top: 3mm; font-size: 7.6pt; font-weight: 700; color: var(--p1); letter-spacing: 0.8pt; text-transform: uppercase; }
+.ft .brand i { display: inline-block; width: 3mm; height: 3mm; background: var(--p1); margin-right: 1.5mm; vertical-align: -0.4mm; border-right: 1mm solid var(--acc); }
+.ft .mid { position: absolute; left: 70mm; right: 40mm; top: 3.2mm; text-align: center; font-size: 7.4pt; color: var(--mut); }
+.ft .pg { position: absolute; right: 14mm; top: 2mm; width: 8mm; height: 6mm; background: var(--p1); color: #fff; font-size: 7.6pt; font-weight: 700; text-align: center; line-height: 6mm; }
+.mocktag { position: absolute; right: 14mm; top: 1mm; background: #F2C14E; color: var(--ink); font-size: 7.4pt; font-weight: 700; padding: 0.6mm 2mm; letter-spacing: 0.6pt; }
+
+/* ---------- primitives ---------- */
+.h2 { font-family: 'Display'; font-weight: 700; font-size: 15pt; color: var(--p1); margin: 0 0 2mm; line-height: 1.1; }
+.h3 { font-family: 'Display'; font-weight: 600; font-size: 12.5pt; color: var(--p2); margin: 0 0 1.6mm; line-height: 1.1; }
+.cap { font-size: 8pt; letter-spacing: 0.9pt; text-transform: uppercase; color: var(--mut); font-weight: 700; }
+.mut { color: var(--mut); }
+.pill { display: inline-block; padding: 0.5mm 2.4mm; border-radius: 3mm; font-size: 8pt; font-weight: 700; color: #fff; white-space: nowrap; }
+.sev-critical { background: var(--crit); } .sev-high { background: var(--high); } .sev-medium { background: var(--med); color: var(--ink); } .sev-low { background: var(--low); }
+.tag { display: inline-block; font-size: 8pt; font-weight: 700; color: var(--p2); border: 0.25mm solid #B7C0EC; padding: 0 1.4mm; border-radius: 0.8mm; background: #F3F5FE; white-space: nowrap; }
+.ref { display: inline-block; font-size: 8pt; font-weight: 700; color: #fff; background: var(--p2); padding: 0 1.3mm; border-radius: 0.7mm; margin-right: 1mm; }
+.sq { display: inline-block; width: 3mm; height: 3mm; border-radius: 0.5mm; vertical-align: -0.3mm; margin-right: 1.2mm; }
+.mk { display: inline-block; width: 2.8mm; height: 2.8mm; position: relative; margin-right: 0.4mm; vertical-align: -0.3mm; }
+.mk:before { content: ""; position: absolute; left: 1mm; top: 0; width: 0.8mm; height: 2.8mm; }
+.mk:after { content: ""; position: absolute; left: 0; top: 1mm; width: 2.8mm; height: 0.8mm; }
+.mk.client:before, .mk.client:after { background: var(--p2); }
+.mk.consultant:before, .mk.consultant:after { background: var(--acc); }
+.glyph { display: inline-block; white-space: nowrap; }
+.glyph i { display: inline-block; width: 1.6mm; margin-right: 0.5mm; background: #D9DDE8; vertical-align: bottom; }
+.glyph i:nth-child(1) { height: 2mm; } .glyph i:nth-child(2) { height: 3mm; } .glyph i:nth-child(3) { height: 4mm; }
+.g-pri i.on { background: var(--p2); } .g-cx i.on { background: var(--ink); } .g-bn i.on { background: var(--acc); }
+.up { color: var(--ok); font-weight: 700; } .down { color: var(--nc); font-weight: 700; }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { background: var(--p1); color: #fff; font-size: 9pt; font-weight: 700; text-align: left; padding: 1.8mm 2.2mm; }
+table.t td { padding: 1.8mm 2.2mm; border-bottom: 0.25mm solid var(--line); vertical-align: top; font-size: 9pt; }
+table.t tr:nth-child(even) td { background: #F7F8FB; }
+.card { background: var(--panel); padding: 3.6mm 4mm; }
+
+/* ---------- cover ---------- */
+.cover { background: var(--p1); }
+.cover .art { position: absolute; right: 0; top: 0; width: 140mm; height: 190.5mm; }
+.cover .firm { position: absolute; left: 18mm; top: 16mm; color: #fff; font-size: 10pt; font-weight: 700; letter-spacing: 2pt; text-transform: uppercase; }
+.cover .firm i { display: inline-block; width: 4mm; height: 4mm; background: #fff; border-right: 1.4mm solid var(--acc); margin-right: 2mm; vertical-align: -0.6mm; }
+.cover .draft { position: absolute; left: 18mm; top: 34mm; background: #F2C14E; color: var(--ink); font-size: 8pt; font-weight: 700; letter-spacing: 1.4pt; padding: 1mm 2.6mm; }
+.cover .eyebrow { position: absolute; left: 18mm; top: 58mm; color: var(--acc); font-size: 10pt; font-weight: 700; letter-spacing: 2.4pt; text-transform: uppercase; }
+.cover .client { position: absolute; left: 18mm; top: 66mm; width: 190mm; color: #fff; font-size: 38pt; font-weight: 700; line-height: 1.15; }
+.cover .title { position: absolute; left: 18mm; top: 92mm; width: 190mm; color: #C9D0FF; font-family: 'Display'; font-weight: 600; font-size: 26pt; line-height: 1.05; }
+.cover .chips { position: absolute; left: 18mm; top: 124mm; }
+.cover .chips span { display: inline-block; border: 0.3mm solid #6D78D8; color: #E4E8FF; padding: 1mm 3mm; border-radius: 3mm; font-size: 9pt; margin-right: 2mm; }
+.cover .meta { position: absolute; left: 18mm; bottom: 16mm; width: 190mm; display: flex; gap: 10mm; }
+.cover .meta .k { color: #8F99E8; font-size: 7.6pt; letter-spacing: 1.2pt; text-transform: uppercase; font-weight: 700; }
+.cover .meta .v { color: #fff; font-size: 10pt; font-weight: 700; margin-top: 0.8mm; }
+
+/* ---------- contents ---------- */
+.toc-l { position: absolute; left: 0; top: 0; bottom: 0; width: 112mm; background: var(--p1); }
+.toc-l h1 { position: absolute; left: 18mm; top: 70mm; color: #fff; font-family: 'Display'; font-weight: 700; font-size: 44pt; margin: 0; }
+.toc-l .bar { position: absolute; left: 18mm; top: 92mm; width: 30mm; height: 1.2mm; background: var(--acc); }
+.toc-r { position: absolute; left: 128mm; right: 18mm; top: 20mm; }
+.toc-row { display: flex; align-items: center; border-bottom: 0.3mm solid var(--line); padding: 4.4mm 0; }
+.toc-row .n { font-family: 'Display'; font-weight: 700; font-size: 30pt; color: var(--p2); width: 22mm; flex: none; line-height: 1; }
+.toc-row .l { font-family: 'Display'; font-weight: 600; font-size: 18pt; color: var(--ink); line-height: 1.1; }
+.toc-row .s { font-size: 9pt; color: var(--mut); margin-top: 0.6mm; }
+.toc-row .p { margin-left: auto; padding-left: 6mm; font-size: 10pt; color: var(--mut); font-weight: 700; flex: none; }
+
+/* ---------- how to read ---------- */
+.legrow { display: flex; align-items: center; padding: 2.2mm 0; border-bottom: 0.25mm solid var(--line); }
+.legrow .nm { width: 46mm; flex: none; font-weight: 700; font-size: 10pt; }
+.legrow .tx { font-size: 9.6pt; color: var(--ink2); }
+
+/* ---------- executive summary ---------- */
+.fwcard { display: flex; align-items: center; background: var(--panel); padding: 3.2mm 4mm; height: 27mm; margin-bottom: 2.5mm; }
+.fwcard .nm { width: 44mm; flex: none; }
+.fwcard .nm b { font-size: 12pt; display: block; line-height: 1.15; }
+.fwcard .score { width: 30mm; flex: none; font-family: 'Display'; font-weight: 700; font-size: 34pt; line-height: 1; }
+.fwcard .trend { width: 30mm; flex: none; font-size: 9pt; }
+.fwcard .trend b { font-size: 12pt; display: block; }
+.brief { background: #fff; border-left: 1.4mm solid var(--acc); padding: 1mm 0 1mm 5mm; font-size: 10.8pt; line-height: 1.45; }
+.brief p { margin-bottom: 2.2mm; }
+.risk { flex: 1; background: var(--panel); border-top: 1.4mm solid; padding: 3mm 3.6mm; }
+.risk .tt { font-size: 10.4pt; font-weight: 700; line-height: 1.25; }
+.risk .tx { font-size: 9.4pt; color: var(--ink2); margin-top: 1.2mm; }
+.askstrip { display: flex; align-items: stretch; background: var(--p1); color: #fff; margin-top: 3mm; }
+.askstrip .lb { width: 40mm; flex: none; padding: 3mm 4mm; font-family: 'Display'; font-weight: 700; font-size: 14pt; line-height: 1.05; background: var(--ink); }
+.askstrip .a { flex: 1; padding: 4mm 5mm; font-size: 11pt; font-weight: 700; border-left: 0.3mm solid #3A428C; }
+.askstrip .a i { font-style: normal; color: var(--acc); font-family: 'Display'; font-size: 16pt; margin-right: 1.6mm; }
+
+/* ---------- posture ---------- */
+.wlist .r { display: flex; align-items: baseline; padding: 2.6mm 0; border-bottom: 0.25mm solid var(--line); font-size: 10pt; }
+.wlist .r .n { margin-left: auto; font-family: 'Display'; font-weight: 700; font-size: 17pt; line-height: 1; width: 14mm; text-align: right; }
+.wlist .r .p { width: 13mm; text-align: right; color: var(--mut); font-size: 9pt; }
+
+/* ---------- domain bullets ---------- */
+.dcol { flex: 1; }
+.dhead { display: flex; align-items: baseline; border-bottom: 0.5mm solid var(--p1); padding-bottom: 1.4mm; margin-bottom: 1mm; }
+.dhead b { font-size: 13pt; }
+.drow { display: flex; align-items: center; height: 15.5mm; border-bottom: 0.25mm solid var(--line); }
+.drow .nm { width: 60mm; flex: none; }
+.drow .nm b { font-size: 10.4pt; display: block; line-height: 1.15; }
+.drow .nm span { font-size: 8.4pt; color: var(--mut); }
+.drow .pc { width: 15mm; flex: none; text-align: right; font-family: 'Display'; font-weight: 700; font-size: 17pt; }
+.scale { display: flex; margin-left: 60mm; margin-right: 15mm; font-size: 7.6pt; color: var(--mut); position: relative; height: 4mm; }
+
+/* ---------- risk profile ---------- */
+.stile { flex: 1; padding: 4mm 4.4mm; color: #fff; height: 38mm; }
+.stile .n { font-family: 'Display'; font-weight: 700; font-size: 38pt; line-height: 1; }
+.stile .l { font-size: 11pt; font-weight: 700; }
+.stile .s { font-size: 9pt; opacity: 0.92; margin-top: 0.6mm; }
+
+/* ---------- decisions ---------- */
+.ask { background: var(--p1); color: #fff; padding: 5mm 6mm 5mm 26mm; margin-bottom: 4mm; position: relative; }
+.ask .n { font-family: 'Display'; font-weight: 700; font-size: 48pt; color: var(--acc); line-height: 1; position: absolute; left: 7mm; top: 4mm; }
+.ask .tx { font-size: 16pt; font-weight: 700; line-height: 1.32; }
+.ask.tall { padding-top: 30mm; } .ask.tall .n { top: 26mm; font-size: 64pt; } .ask.tall .tx { font-size: 20pt; }
+.ask .by { position: absolute; left: 26mm; bottom: 4.5mm; font-size: 8.4pt; color: #A9B2F0; }
+.attn { background: var(--panel); padding: 4.5mm 5mm; height: 124mm; }
+.attn .it { border-left: 1.2mm solid var(--high); background: #fff; padding: 2.8mm 3.4mm; margin-bottom: 2.4mm; font-size: 10.2pt; }
+.stat3 { display: flex; gap: 2mm; margin-bottom: 4mm; }
+.stat3 div { flex: 1; background: #fff; padding: 2.4mm; text-align: center; }
+.stat3 b { display: block; font-family: 'Display'; font-size: 26pt; line-height: 1; color: var(--high); }
+.stat3 span { font-size: 8pt; color: var(--mut); }
+
+/* ---------- observations ---------- */
+.legbox { position: absolute; right: 14mm; top: 31mm; font-size: 8pt; color: var(--ink2); }
+table.obs td { font-size: 9pt; line-height: 1.4; height: 40mm; }
+table.obs td.no { font-family: 'Display'; font-weight: 700; font-size: 15pt; color: var(--p2); }
+table.obs td.ti { font-weight: 700; color: var(--ink); }
+
+/* ---------- roadmap swimlanes ---------- */
+.sw { display: grid; gap: 1.6mm; }
+.sw .hd { background: #CFD6F6; color: var(--p1); padding: 1.8mm 2.6mm; font-size: 9.4pt; font-weight: 700; }
+.sw .hd span { font-weight: 400; font-size: 8.4pt; }
+.sw .ln { background: var(--p1); color: #fff; font-weight: 700; font-size: 10pt; padding: 3mm 2.6mm; }
+.sw .cell { background: var(--panel); padding: 1.8mm; }
+.sw .box { background: #fff; border-left: 1.2mm solid var(--p2); padding: 1.6mm 2.4mm; margin-bottom: 1.4mm; }
+.sw .box.od { border-left-color: var(--crit); }
+.sw .box .tt { font-size: 9.6pt; font-weight: 700; line-height: 1.25; }
+.sw .box .mt { font-size: 8.2pt; color: var(--mut); margin-top: 0.8mm; }
+.odtag { display: inline-block; background: var(--crit); color: #fff; font-size: 7.6pt; font-weight: 700; padding: 0 1.4mm; margin-left: 1mm; letter-spacing: 0.4pt; }
+
+/* ---------- matrix ---------- */
+.mx { border-collapse: separate; border-spacing: 1.4mm; margin: -1.4mm; }
+.mx td.c { width: 38mm; height: 36mm; background: var(--panel); padding: 2mm; vertical-align: top; }
+.mx td.c.hot { background: #E3F4F2; }
+.mx .q { font-size: 7.8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6pt; color: var(--mut); margin-bottom: 0.6mm; }
+.mx .chip { display: inline-block; background: var(--p1); color: #fff; font-size: 9.6pt; font-weight: 700; padding: 0.8mm 2.2mm; margin: 1mm 1mm 0 0; border-radius: 0.8mm; }
+.mx .chip.od { background: var(--crit); }
+.mx td.ax { font-size: 8.6pt; color: var(--mut); text-align: center; font-weight: 700; }
+.mx td.ay { font-size: 8.6pt; color: var(--mut); font-weight: 700; text-align: right; width: 14mm; vertical-align: middle; }
+table.init td { font-size: 9pt; vertical-align: middle; padding: 1.5mm 2mm; }
+
+/* ---------- annex ---------- */
+.div { background: var(--p1); }
+.div .big { position: absolute; left: 18mm; top: 60mm; color: #fff; font-family: 'Display'; font-weight: 700; font-size: 54pt; }
+.div .n { position: absolute; left: 18mm; top: 42mm; color: var(--acc); font-family: 'Display'; font-weight: 700; font-size: 26pt; }
+.div .list { position: absolute; left: 18mm; top: 96mm; color: #C9D0FF; font-size: 12pt; line-height: 1.9; }
+.cols2 { columns: 2; column-gap: 10mm; font-size: 9pt; line-height: 1.45; color: var(--ink2); white-space: pre-line; }
+table.reg td { font-size: 8pt; padding: 1.2mm 1.8mm; }
+table.reg th { font-size: 8pt; padding: 1.4mm 1.8mm; }
+</style>
+</head>
+<body>
+{% set ns = namespace(pg=1) %}
+{% macro frame(num, title, take, sec) -%}
+  <div class="tb"><div class="wedge"></div><div class="wedge2"></div><div class="wedge3"></div><div class="num">{{ num }}</div><div class="sec">{{ sec }}</div><h1>{{ title }}</h1></div>
+  <div class="rule"></div>
+  {% if take %}<div class="take">{{ take }}</div>{% endif %}
+{%- endmacro %}
+{% macro foot() -%}{% set ns.pg = ns.pg + 1 %}
+  <div class="ft"><div class="brand"><i></i>{{ doc.firm_name }}</div>
+  <div class="mid">{{ doc.company_name }} · Board report {{ doc.snapshot.version_label }} · Assessment period {{ doc.basis.period_label }} · Confidential</div>
+  <div class="pg">{{ ns.pg }}</div></div>
+{%- endmacro %}
+{% macro glyph(kind, lvl) -%}<span class="glyph g-{{ kind }}">{% for k in range(3) %}<i class="{{ 'on' if k < v.level[lvl] }}"></i>{% endfor %}</span>{%- endmacro %}
+{% macro marker(r) -%}{% if r == 'shared' %}<span class="mk client"></span><span class="mk consultant"></span>{% else %}<span class="mk {{ r }}"></span>{% endif %}{%- endmacro %}
+{# Bullet bar: rating bands behind, score as a dark bar, optional prior score as a tick. #}
+{% macro bullet(score, w, h=7, prior=None) -%}
+<svg width="{{ w }}mm" height="{{ h }}mm" viewBox="0 0 100 10" preserveAspectRatio="none" style="display:block">
+  {% for lo, hi, lbl, col in v.bands %}<rect x="{{ lo }}" y="0" width="{{ hi - lo }}" height="10" fill="{{ col }}"/>{% endfor %}
+  {% for x in (40, 60, 80) %}<rect x="{{ x - 0.15 }}" y="0" width="0.3" height="10" fill="#FFFFFF"/>{% endfor %}
+  <rect x="0" y="3" width="{{ score }}" height="4" fill="{{ v.theme.p1 }}"/>
+  {% if prior is not none %}<rect x="{{ prior - 0.4 }}" y="1" width="0.8" height="8" fill="#9AA3B5"/>{% endif %}
+</svg>
+{%- endmacro %}
+{% macro scale(w) -%}
+<div style="position:relative; width:{{ w }}mm; height:4mm; font-size:7.6pt; color:var(--mut)">{% for x in (0, 40, 60, 80, 100) %}<span style="position:absolute; left:{{ w * x / 100 - (3 if x else 0) - (3 if x == 100 else 0) }}mm">{{ x }}%</span>{% endfor %}</div>
+{%- endmacro %}
+
+<!-- 1 COVER -->
+<section class="slide cover" data-slide="cover">
+  <svg class="art" viewBox="0 0 140 190.5" width="140mm" height="190.5mm">
+    <rect x="0" y="0" width="140" height="190.5" fill="{{ v.theme.p1 }}"/>
+    <circle cx="140" cy="190.5" r="150" fill="#1F2575"/>
+    <circle cx="140" cy="190.5" r="118" fill="{{ v.theme.p2 }}" opacity="0.9"/>
+    <circle cx="140" cy="190.5" r="86" fill="{{ v.theme.p3 }}" opacity="0.85"/>
+    <circle cx="140" cy="190.5" r="54" fill="{{ v.theme.acc }}"/>
+    <g stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="0.35">{% for i in range(14) %}<line x1="{{ i*11 }}" y1="0" x2="{{ i*11 - 60 }}" y2="190.5"/>{% endfor %}</g>
+    <rect x="0" y="0" width="1.4" height="190.5" fill="{{ v.theme.acc }}"/>
+  </svg>
+  <div class="firm"><i></i>{{ doc.firm_name }}</div>
+  <div class="draft">DRAFT UNTIL ISSUED</div>
+  <div class="eyebrow">Board report · {{ doc.engagement_name }}</div>
+  <div class="client">{{ doc.company_name }}</div>
+  <div class="title">{% if doc.frameworks|selectattr('legal')|list %}Privacy and information security{% else %}Information security{% endif %} gap assessment</div>
+  <div class="chips">{% for f in doc.frameworks %}<span>{{ f.name }} {{ f.version }}</span>{% endfor %}</div>
+  <div class="meta">
+    <div><div class="k">Assessment period</div><div class="v">{{ doc.basis.period_label }}</div></div>
+    <div><div class="k">Evidence cut-off</div><div class="v">{{ doc.basis.cutoff_label }}</div></div>
+    <div><div class="k">Version</div><div class="v">{{ doc.snapshot.version_label }} · {{ doc.snapshot.generated_on }}</div></div>
+    <div><div class="k">Snapshot</div><div class="v">{{ doc.snapshot.id[:8] }}</div></div>
+  </div>
+</section>
+
+<!-- 2 CONTENTS -->
+<section class="slide" data-slide="contents">
+  <div class="toc-l"><h1>Contents</h1><div class="bar"></div></div>
+  <div class="toc-r">
+    {% for n, l, s, p in [('01','How to read this report','What the outcomes, risk levels and ratings mean', v.pg.read),('02','Executive summary','The position in one page, then posture, domains, risk and decisions', v.pg.exec),('03','Key observations','The ' ~ doc.observations|length ~ ' highest-ranked approved findings', v.pg.obs),('04','Remediation roadmap','Initiatives by horizon and owner, effort against benefit, change since the last report', v.pg.roadmap),('05','Annexure','Methodology, requirement and evidence registers' ~ (', Statement of Applicability' if doc.soa else ''), v.pg.annex)] %}
+    <div class="toc-row"><div class="n">{{ n }}</div><div><div class="l">{{ l }}</div><div class="s">{{ s }}</div></div><div class="p">{{ p }}</div></div>
+    {% endfor %}
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 3 HOW TO READ THIS REPORT -->
+<section class="slide" data-slide="how-to-read">
+  {{ frame('01', 'How to read this report', 'Every requirement gets one outcome, every gap gets a risk level, and each framework gets a score. This page explains all three.', 'How to read this report') }}
+  <div class="body" style="display:flex; gap:9mm">
+    <div style="flex:1">
+      <div class="h3">1 · What we concluded for each requirement</div>
+      {% for k, lbl, col in v.out %}
+      <div class="legrow" style="padding:3mm 0"><div class="nm"><span class="sq" style="background:{{ col }}"></span>{{ lbl }}</div>
+        <div class="tx">{{ {'compliant':'Met, and the evidence shows it.','partially_compliant':'Met in part; a gap remains.','non_compliant':'Not met.','insufficient_evidence':'The evidence does not support a conclusion either way. Left out of scores, not counted as a failure.','not_applicable':'Does not apply within the assessed scope.'}[k] }}</div></div>
+      {% endfor %}
+      <div class="h3" style="margin-top:5mm">2 · How serious each gap is</div>
+      <div style="display:flex; gap:1.8mm">{% for s, txt in [('critical','Material regulatory or breach exposure. Act now.'),('high','Significant exposure. Act this quarter.'),('medium','Moderate exposure. Plan within six months.'),('low','Limited exposure. Fix in the normal course.')] %}
+        <div class="card" style="flex:1; padding:3.6mm 3mm; height:30mm"><span class="pill sev-{{ s }}">{{ s|cap }}</span><div style="font-size:9.2pt; margin-top:1.6mm; color:var(--ink2)">{{ txt }}</div></div>{% endfor %}</div>
+    </div>
+    <div style="flex:1">
+      <div class="h3">3 · How a score becomes a rating</div>
+      <div style="font-size:9.6pt; color:var(--ink2); margin-bottom:2.4mm">A framework's score is a weighted average of its domain scores, where a met requirement counts in full and a partly met one counts half. Scores are computed in code, never by AI, and never combined across frameworks.</div>
+      {{ bullet(57, 150, 9) }}
+      <div style="display:flex; width:150mm; margin-top:1mm">{% for lo, hi, lbl, col in v.bands %}<div style="width:{{ (hi - lo) * 1.5 }}mm; font-size:8.4pt; padding-right:1mm"><b>{{ lo }} to {{ hi }}%</b><br><span class="mut">{{ lbl }}</span></div>{% endfor %}</div>
+      <div style="font-size:8.6pt; color:var(--mut); margin-top:1.6mm">Read a bar like this: the dark bar is the score (here 57%), the shaded bands are the rating thresholds behind it.</div>
+      <div class="h3" style="margin-top:5mm">4 · How we rate each fix</div>
+      <table class="t" style="margin-bottom:3mm">
+        <tr><th style="width:36mm">Dimension</th><th>What it means</th></tr>
+        <tr><td><b>Priority</b> {{ glyph('pri','high') }}</td><td>Set by the most serious gap the fix closes.</td></tr>
+        <tr><td><b>Effort</b> {{ glyph('cx','high') }}</td><td>Our estimate: high is over 40 person-hours or a cross-team change.</td></tr>
+        <tr><td><b>Benefit</b> {{ glyph('bn','high') }}</td><td>How much exposure the fix removes.</td></tr>
+      </table>
+      <div class="card" style="font-size:9.4pt; padding:3mm 3.6mm"><b style="color:var(--p1)">What this report does not do.</b> It does not guess the likelihood of an incident, so there is no likelihood heat map; risk levels describe the severity of approved gaps only.</div>
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 4 OVERVIEW -->
+<section class="slide" data-slide="overview">
+  {{ frame('01', 'We assessed ' ~ v.t.requirements ~ ' requirements across ' ~ doc.frameworks|length ~ ' framework' ~ ('s' if doc.frameworks|length > 1 else '') ~ ' against evidence received up to ' ~ doc.basis.cutoff_label, 'Scope, the evidence we used and how every outcome was approved.', 'Assessment overview') }}
+  <div class="body" style="display:flex; gap:8mm">
+    <div style="flex:1.1; display:flex; flex-direction:column; justify-content:space-between; padding-bottom:4mm">
+      <div><div class="h3">Scope</div>
+      {% for f in v.fw %}
+      <div class="card" style="display:flex; margin-bottom:2.5mm; align-items:center">
+        <div style="flex:1"><div style="font-weight:700; font-size:11pt">{{ f.name }} {{ doc.framework_sections[loop.index0].version }}</div>
+          <div class="mut" style="font-size:9pt">{{ doc.summary.scope[loop.index0] }}</div></div>
+        <div style="text-align:right"><div class="disp" style="font-weight:700; font-size:26pt; color:var(--p2); line-height:1">{{ f.coverage.in_scope }}</div><div class="cap">requirements</div></div>
+      </div>
+      {% endfor %}</div>
+      <div style="display:flex; gap:2.5mm; margin-top:4mm">
+        {% for n, l in [(v.docs_reviewed,'documents reviewed'),(v.concluded,'requirements concluded'),(doc.observations|length,'key observations'),(doc.initiatives|length,'initiatives'),(doc.not_assessed.rfi['items']|length,'open evidence requests')] %}
+        <div style="flex:1; border-top:1.2mm solid var(--p1); padding:2.4mm 0.6mm"><div class="disp" style="font-weight:700; font-size:26pt; line-height:1; color:var(--p1)">{{ n }}</div><div style="font-size:8.6pt; font-weight:700; margin-top:0.8mm; color:var(--ink2)">{{ l }}</div></div>
+        {% endfor %}
+      </div>
+      <div style="display:flex; gap:2.5mm; margin-top:4mm">
+        <div class="card" style="flex:1"><div class="cap">Assessment period</div><div style="font-weight:700; font-size:11pt; margin-top:0.8mm">{{ doc.basis.period_label }}</div></div>
+        <div class="card" style="flex:1"><div class="cap">Evidence cut-off</div><div style="font-weight:700; font-size:11pt; margin-top:0.8mm">{{ doc.basis.cutoff_label }}</div></div>
+      </div>
+    </div>
+    <div style="flex:1; padding-bottom:4mm">
+      <div class="h3">Approach</div>
+      {% for n, h, b in [('1','Collect evidence','Documents, questionnaire answers and walkthrough notes received up to the cut-off, each stored by version with a fingerprint.'),('2','Assess and approve','For each requirement an outcome is proposed with the evidence it rests on. A consultant reviews the evidence and approves, edits or rejects every outcome.'),('3','Score and report','Scores are computed in code from approved outcomes only. Findings, owners and dates are agreed with management.')] %}
+      <div style="display:flex; border:0.35mm solid var(--line); padding:3.4mm 4mm; align-items:center; margin-bottom:5mm; height:36mm">
+        <div style="width:10mm; height:10mm; border-radius:5mm; background:var(--p2); color:#fff; font-weight:700; text-align:center; line-height:10mm; flex:none">{{ n }}</div>
+        <div style="margin-left:3.4mm"><div style="font-weight:700; font-size:11pt; color:var(--p1)">{{ h }}</div><div style="font-size:9.6pt; color:var(--ink2); margin-top:0.6mm">{{ b }}</div></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 5 EXECUTIVE SUMMARY: the 30-second page -->
+<section class="slide" data-slide="executive-summary">
+  {{ frame('02', v.titles.exec, '', 'Executive summary') }}
+  <div class="body" style="top:34mm; display:flex; flex-direction:column; justify-content:space-between; padding-bottom:{{ 0 if v.fw|length > 1 else 6 }}mm">
+    <div style="display:flex; gap:7mm">
+      <div style="width:176mm; flex:none">
+        {% for f in v.fw %}
+        <div class="fwcard" style="height:{{ v.lay.fwcard }}mm">
+          <div class="nm"><b>{{ f.name }}</b><span style="font-size:9pt; color:{{ f.rating_col }}; font-weight:700"><span class="sq" style="background:{{ f.rating_col }}"></span>{{ f.rating }}</span></div>
+          <div class="score" style="color:var(--p1)">{{ '%.0f'|format(f.score) }}%</div>
+          <div class="trend">{% if f.prior %}<b class="{{ 'up' if f.delta >= 0 else 'down' }}">{{ '▲' if f.delta >= 0 else '▼' }} {{ '%+.0f'|format(f.delta) }} pts</b><span class="mut">from {{ '%.0f'|format(f.prior.prior_score) }}% last report</span>{% else %}<b class="mut">First report</b><span class="mut">no trend yet</span>{% endif %}</div>
+          <div style="flex:1">{{ bullet(f.score, 66, 7, f.prior.prior_score if f.prior else None) }}{{ scale(66) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="brief" style="flex:1">
+        <div class="cap" style="margin-bottom:1.6mm">In brief</div>
+        {% for s in doc.summary.narrative.executive %}<p>{{ s.text }}</p>{% endfor %}
+      </div>
+    </div>
+    <div style="display:flex; gap:2.5mm; margin-top:3mm{{ '; min-height:42mm' if v.fw|length == 1 }}">
+      {% for o in doc.observations[:3] %}
+      <div class="risk" style="border-top-color:{{ v.sev_col[o.rating] }}">
+        <div class="cap" style="margin-bottom:1mm"><span class="pill sev-{{ o.rating }}" style="margin-right:1.4mm">{{ o.rating|cap }}</span>Risk {{ loop.index }} · {{ o.framework_short }}</div>
+        <div class="tt">{{ o.title }}</div>
+        <div class="tx">{{ o.risk }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="askstrip">
+      <div class="lb">The board is asked to</div>
+      {% for a in doc.board_asks.consultant %}<div class="a"><i>{{ loop.index }}</i>{{ a }}</div>{% endfor %}
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 6 POSTURE: waffle per framework -->
+<section class="slide" data-slide="posture">
+  {{ frame('02', v.titles.posture, 'Each square is one requirement. Counts can be read across frameworks; scores cannot, so each framework has its own grid.', 'Executive summary') }}
+  <div class="body" style="display:flex; gap:10mm">
+    {% for f in v.fw %}
+    <div style="flex:{{ 1 if v.fw|length > 1 else 'none' }}; display:flex; gap:6mm">
+      <div>
+        <div style="font-weight:700; font-size:12pt; margin-bottom:2mm">{{ f.name }} <span class="mut" style="font-weight:400; font-size:9.4pt">· {{ f.coverage.in_scope }} requirements</span></div>
+        <svg width="{{ f.ncols * 9.6 }}mm" height="96mm" viewBox="0 0 {{ f.ncols * 8.2 }} 82">
+          {% for c in f.cells %}<rect x="{{ c.x * 8.2 }}" y="{{ c.y * 8.2 }}" width="7" height="7" rx="0.9" fill="{{ c.col }}"/>{% endfor %}
+        </svg>
+        <div class="mut" style="font-size:8pt; margin-top:1.4mm">Columns of ten, filled from the top</div>
+      </div>
+      <div style="flex:1; min-width:64mm">
+        <div style="display:flex; align-items:baseline; margin:7mm 0 2mm"><span class="disp" style="font-weight:700; font-size:30pt; color:var(--p1); line-height:1">{{ '%.0f'|format(f.score) }}%</span><span style="margin-left:2mm; font-size:9.6pt; font-weight:700; color:{{ f.rating_col }}">{{ f.rating }}</span></div>
+        <div class="wlist">{% for o in f.outcomes if o.n or o.k != 'not_applicable' %}
+          <div class="r"><span><span class="sq" style="background:{{ o.col }}"></span>{{ o.label }}</span><span class="n">{{ o.n }}</span><span class="p">{{ o.pct }}%</span></div>{% endfor %}</div>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="src">{{ v.source }} Not-concluded requirements are left out of the score.</div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 7 DOMAIN STATUS: sorted bullet bars -->
+<section class="slide" data-slide="domain-status">
+  {{ frame('02', v.titles.domain, 'Domains are sorted weakest first. The dark bar is the domain score; the shaded bands behind it are the rating thresholds.', 'Executive summary') }}
+  <div class="body" style="display:flex; gap:10mm">
+    {% for f in v.fw %}
+    <div class="dcol">
+      <div class="dhead"><b>{{ f.name }}</b><span style="margin-left:auto; font-size:10pt; font-weight:700">{{ '%.0f'|format(f.score) }}% · <span style="color:{{ f.rating_col }}">{{ f.rating }}</span></span></div>
+      <div style="display:flex"><div style="width:60mm"></div>{{ scale(v.lay.dom_bar) }}</div>
+      {% for dm in f.domains %}
+      <div class="drow" style="height:{{ v.lay.dom_row }}mm">
+        <div class="nm"><b>{{ dm.title }}</b><span>{{ dm.in_scope }} req · {{ dm.gaps }} gap{{ 's' if dm.gaps != 1 }}{% if dm.crit_high %} · <b style="display:inline; font-size:8.4pt; color:var(--high)">{{ dm.crit_high }} critical or high</b>{% endif %}{% if dm.ie %} · {{ dm.ie }} not concluded{% endif %}</span></div>
+        <div style="width:{{ v.lay.dom_bar }}mm; flex:none">{{ bullet(dm.score, v.lay.dom_bar, 7 if v.fw|length > 1 else 9) }}</div>
+        <div class="pc">{{ '%.0f'|format(dm.score) }}%</div>
+      </div>
+      {% endfor %}
+      {% for dm in f.out_domains %}<div class="drow" style="color:var(--mut); height:{{ v.lay.dom_row }}mm"><div class="nm"><b style="color:var(--mut)">{{ dm.title }}</b><span>Out of scope</span></div></div>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="src">{{ v.source }} Thresholds: 80% Compliant, 60% Partially compliant, 40% Needs significant improvement.</div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 8 RISK PROFILE: severity tiles, one stacked bar per framework, where critical/high gaps sit -->
+<section class="slide" data-slide="risk-profile">
+  {{ frame('02', v.titles.risk, 'Every approved gap carries one risk level. We count them; we do not estimate likelihood.', 'Executive summary') }}
+  <div class="body" style="display:flex; flex-direction:column; justify-content:space-between; padding-bottom:6mm">
+    <div style="display:flex; gap:2.5mm">
+      {% for s in v.sev %}
+      <div class="stile" style="height:{{ 38 if v.fw|length > 1 else 50 }}mm; background:{{ v.sev_col[s] }}; {{ 'color:#0B0E26' if s == 'medium' }}">
+        <div class="n">{{ v.sev_tot[s] }}</div><div class="l">{{ s|cap }} risk gaps</div>
+        <div class="s">{% for f in v.fw %}{{ f.sev[s] }} {{ f.short }}{{ ' · ' if not loop.last }}{% endfor %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="display:flex; gap:10mm; margin-top:6mm; flex:1{{ '; align-items:center' if v.fw|length == 1 }}">
+      <div style="flex:1">
+        <div class="h3">Gaps by risk level, per framework</div>
+        {% for f in v.fw %}{% set tot = f.sev.values()|sum %}
+        <div style="margin-bottom:6mm">
+          <div style="font-weight:700; font-size:10.4pt; margin-bottom:1mm">{{ f.name }} <span class="mut" style="font-weight:400">· {{ tot }} gaps</span></div>
+          <div style="display:flex; height:{{ 13 if v.fw|length > 1 else 18 }}mm">{% for s in v.sev if f.sev[s] %}<div style="width:{{ 100 * f.sev[s] / tot }}%; background:{{ v.sev_col[s] }}; color:{{ '#0B0E26' if s == 'medium' else '#fff' }}; font-weight:700; font-size:10.4pt; line-height:{{ 13 if v.fw|length > 1 else 18 }}mm; text-align:center; border-right:0.6mm solid #fff">{{ f.sev[s] }}</div>{% endfor %}</div>
+        </div>
+        {% endfor %}
+        <div style="font-size:8.6pt" class="mut">{% for s in v.sev %}<span class="sq" style="background:{{ v.sev_col[s] }}"></span>{{ s|cap }} &nbsp; {% endfor %}</div>
+      </div>
+      <div style="flex:1.1">
+        <div class="h3">Where the critical and high gaps sit</div>
+        {% set mx = (v.ch_doms|map(attribute='1')|map(attribute='crit_high')|max) if v.ch_doms else 1 %}
+        {% for fs, dm in v.ch_doms %}
+        <div style="display:flex; align-items:center; height:{{ v.lay.ch_row }}mm">
+          <div style="width:74mm; flex:none; font-size:9.6pt"><b>{{ dm.title }}</b> <span class="tag">{{ fs }}</span></div>
+          <div style="flex:1"><div style="width:{{ 88 * dm.crit_high / mx }}%; height:5mm; background:var(--p1); display:inline-block; vertical-align:middle"></div><b style="margin-left:2mm; font-size:10pt">{{ dm.crit_high }}</b></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="src">{{ v.source }}</div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- 9 DECISIONS -->
+<section class="slide" data-slide="board-asks">
+  {{ frame('02', v.titles.decision, 'The decisions are risk decisions: each one closes an exposure named in this report.', 'Executive summary') }}
+  <div class="body" style="display:flex; gap:6mm">
+    <div style="flex:1.35">
+      {% for a in doc.board_asks.consultant %}<div class="ask {{ 'tall' if v.lay.ask_h > 90 }}" style="height:{{ v.lay.ask_h }}mm"><div class="n">{{ loop.index }}</div><div class="tx">{{ a }}</div><div class="by">Recommended by {{ doc.board_asks.consultant_by }}, {{ doc.firm_name }}</div></div>{% endfor %}
+    </div>
+    <div style="flex:1" class="attn">
+      <div class="h3" style="color:var(--high)">Needs management attention</div>
+      <div class="stat3"><div><b>{{ doc.roadmap.overdue_count }}</b><span>overdue actions</span></div><div><b>{{ doc.roadmap.actions|rejectattr('owner')|list|length }}</b><span>actions without an owner</span></div><div><b>{{ v.t.insufficient_evidence }}</b><span>requirements not concluded</span></div></div>
+      {% for a in doc.board_asks.derived %}<div class="it">{{ a }}</div>{% endfor %}
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- KEY OBSERVATIONS -->
+{% for page in v.obs_pages %}
+<section class="slide" data-slide="observations">
+  {{ frame('03', v.titles.obs ~ ' (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', 'The highest-ranked approved findings, the risk each creates and what we recommend.', 'Key observations') }}
+  <div class="legbox"><span class="mk client"></span> Client &nbsp; <span class="mk consultant"></span> {{ doc.firm_name }} &nbsp; <span class="mk client"></span><span class="mk consultant"></span> Shared</div>
+  <div class="body">
+    <table class="t obs" style="table-layout:fixed">
+      <tr><th style="width:14mm">No.</th><th style="width:36mm">Domain</th><th style="width:66mm">Observation</th><th style="width:58mm">Risk</th><th style="width:21mm">Rating</th><th>Recommendation</th><th style="width:34mm">Reference</th></tr>
+      {% for o in page %}
+      <tr>
+        <td class="no">{{ o.ref }}</td>
+        <td>{{ marker(o.responsibility) }}<br><b>{{ o.domain }}</b><br><span class="tag">{{ o.framework_name }}</span></td>
+        <td><div class="ti">{{ o.title }}</div>{{ o.observation }}</td>
+        <td>{{ o.risk }}</td>
+        <td><span class="pill sev-{{ o.rating }}">{{ o.rating|cap }}</span></td>
+        <td>{{ o.recommendation }}</td>
+        <td style="font-size:8pt">{% for r in o.references %}<b>{{ r.framework }}</b> {{ r.clauses|join('; ') }}<br>{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {{ foot() }}
+</section>
+{% endfor %}
+
+<!-- ROADMAP: horizon columns x responsibility swimlanes -->
+<section class="slide" data-slide="roadmap">
+  {{ frame('04', v.titles.roadmap, 'Each card is one initiative, placed by when it should be done and who does it.', 'Remediation roadmap') }}
+  <div class="legbox"><span class="odtag">OVERDUE</span> past its target date</div>
+  <div class="body">
+    <div class="sw" style="height:100%; grid-template-rows: auto repeat({{ v.lanes|length }}, 1fr); grid-template-columns: 18mm 1.45fr 1fr 1fr{{ ' 0.8fr' if v.horizons|length > 3 }}">
+      <div></div>
+      {% for k, lbl, sub in v.horizons %}<div class="hd">{{ lbl }} <span>· {{ sub }}</span></div>{% endfor %}
+      {% for lk, llbl in v.lanes %}
+        <div class="ln">{{ marker(lk) }}<br>{{ llbl }}</div>
+        {% for hk, hl, hs in v.horizons %}
+        <div class="cell">{% for i in doc.initiatives if i.responsibility == lk and i.horizon == hk %}
+          <div class="box {{ 'od' if i.overdue }}">
+            <div class="tt"><span class="ref">{{ i.ref }}</span>{{ i.title }}{% if i.overdue %}<span class="odtag">OVERDUE</span>{% endif %}</div>
+            <div class="mt">{% if i.cross_framework %}<b style="color:var(--ok)">Fixes once for both frameworks</b> · {% endif %}{{ i.owner or 'Owner not set' }} · {{ (i.target_date|d) or 'no date set' }} · closes {{ i.obs_refs|join(', ') }}</div>
+            
+          </div>{% endfor %}</div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- EFFORT vs BENEFIT -->
+<section class="slide" data-slide="effort-benefit">
+  {{ frame('04', v.titles.matrix, 'Each initiative is placed by the effort it needs and the exposure it removes. Top left is where to start.', 'Remediation roadmap') }}
+  <div class="body" style="display:flex; gap:8mm">
+    <div style="flex:none">
+      <table class="mx">
+        {% for bn in ['high','medium','low'] %}<tr>
+          <td class="ay">{{ bn|cap }}<br>benefit</td>
+          {% for cx in ['low','medium','high'] %}{% set label = {'high-low':'Quick wins','high-high':'Big bets','low-low':'Fill-ins','low-high':'Reconsider'}.get(bn ~ '-' ~ cx) %}
+          <td class="c {{ 'hot' if bn == 'high' and cx == 'low' }}">{% if label %}<div class="q">{{ label }}</div>{% endif %}{% for i in v.grid[cx ~ '-' ~ bn] %}<span class="chip {{ 'od' if i.overdue }}">{{ i.ref }}</span>{% endfor %}</td>{% endfor %}
+        </tr>{% endfor %}
+        <tr><td></td>{% for cx in ['low','medium','high'] %}<td class="ax">{{ cx|cap }} effort</td>{% endfor %}</tr>
+      </table>
+      <div class="mut" style="font-size:8.4pt; margin-top:1.6mm">Benefit is the exposure an initiative removes; effort is our estimate of the work.</div>
+    </div>
+    <div style="flex:1">
+      <table class="t init">
+        <tr><th style="width:12mm">Ref</th><th>Initiative</th><th style="width:28mm">Horizon</th><th style="width:16mm">Priority</th><th style="width:15mm">Effort</th><th style="width:16mm">Benefit</th></tr>
+        {% for i in doc.initiatives %}
+        <tr>
+          <td><span class="ref">{{ i.ref }}</span></td>
+          <td><b>{{ i.title }}</b><br><span class="mut" style="font-size:8pt">{{ marker(i.responsibility) }} {{ i.owner or 'Owner not set' }} · closes {{ i.obs_refs|join(', ') }}</span></td>
+          <td>{{ {'short':'Short term','medium':'Medium term','long':'Long term','unscheduled':'Not scheduled'}[i.horizon] }}<br><span class="{{ 'down' if i.overdue else 'mut' }}" style="font-size:8pt">{{ (i.target_date|d) or 'No date set' }}{{ ' · overdue' if i.overdue }}</span></td>
+          <td>{{ glyph('pri', i.priority) }}</td><td>{{ glyph('cx', i.complexity) }}</td><td>{{ glyph('bn', i.benefit) }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- SINCE THE LAST REPORT: dumbbell per domain -->
+<section class="slide" data-slide="comparison">
+  {% if v.has_prior %}
+  {{ frame('04', v.titles.since, 'Grey dot: last report. Dark dot: this report. Compared within each framework only, from the stored earlier report.', 'Remediation roadmap') }}
+  <div class="mocktag" style="top:auto; bottom:17mm">MOCKUP DATA · per-domain prior scores are a new field</div>
+  <div class="body" style="display:flex; gap:9mm">
+    <div style="flex:none; width:188mm">
+      <div style="display:flex"><div style="width:62mm"></div>{{ scale(96) }}</div>
+      {% for g in v.dumb %}
+      <div style="font-weight:700; font-size:10.4pt; border-bottom:0.5mm solid var(--p1); padding:1.6mm 0 0.8mm; margin-bottom:0.6mm">{{ g.name }}</div>
+      {% for r in g.rows %}
+      <div style="display:flex; align-items:center; height:{{ v.lay.dumb_row }}mm">
+        <div style="width:62mm; flex:none; font-size:9.4pt">{{ r.title }}</div>
+        <svg width="96mm" height="7mm" viewBox="-1.5 0 103 7" preserveAspectRatio="none" style="flex:none">
+          {% for lo, hi, lbl, col in v.bands %}<rect x="{{ lo }}" y="0" width="{{ hi - lo }}" height="7" fill="{{ col }}"/>{% endfor %}
+          {% if r.was is not none %}<rect x="{{ [r.was, r.now]|min }}" y="3.1" width="{{ (r.now - r.was)|abs }}" height="0.8" fill="{{ '#0E8F86' if r.now >= r.was else '#C0392B' }}"/>
+          <ellipse cx="{{ r.was }}" cy="3.5" rx="1.1" ry="2.2" fill="#9AA3B5"/>{% endif %}
+          <ellipse cx="{{ r.now }}" cy="3.5" rx="1.1" ry="2.2" fill="{{ v.theme.p1 }}"/>
+        </svg>
+        <div style="width:30mm; text-align:right; font-size:9.6pt; white-space:nowrap">{% if r.was is not none %}{% set dd = r.now - r.was %}<span class="{{ 'up' if dd > 0 else 'down' if dd < 0 else 'mut' }}">{{ '▲ %+.0f'|format(dd) if dd > 0 else ('▼ %+.0f'|format(dd) if dd < 0 else 'no change') }}</span>{% else %}<span class="mut">new</span>{% endif %} <b>{{ '%.0f'|format(r.now) }}%</b></div>
+      </div>
+      {% endfor %}
+      {% endfor %}
+    </div>
+    <div style="flex:1">
+      {% for p in doc.prior_period.frameworks %}
+      <div class="card" style="margin-bottom:2.5mm; display:flex; align-items:center">
+        <div style="flex:1"><b style="font-size:11pt">{{ p.name }}</b><div class="mut" style="font-size:9pt">{{ '%.0f'|format(p.prior_score) }}% → {{ '%.0f'|format(p.current_score) }}%</div></div>
+        {% for k, lbl in [('improved','improved'),('regressed','regressed'),('new','new')] %}<div style="width:17mm; text-align:center"><div class="disp" style="font-weight:700; font-size:17pt; line-height:1">{{ p.counts[k] }}</div><div class="mut" style="font-size:7.8pt">{{ lbl }}</div></div>{% endfor %}
+        <div class="disp {{ 'up' if p.score_delta >= 0 else 'down' }}" style="width:30mm; text-align:right; font-size:20pt">{{ '▲' if p.score_delta >= 0 else '▼' }} {{ '%+.0f'|format(p.score_delta) }} pts</div>
+      </div>
+      {% endfor %}
+      <div class="h3" style="margin-top:3mm">Requirements that changed outcome</div>
+      <table class="t init"><tr><th>Requirement</th><th style="width:22mm">Change</th></tr>
+      {% for c in doc.prior_period.changes %}<tr><td><b>{{ c.requirement_id }}</b> {{ c.requirement_title }}<br><span class="mut" style="font-size:8pt">{{ c.prior_outcome_label }} → {{ c.current_outcome_label }}</span></td><td class="{{ 'up' if c.direction_label == 'Improved' else 'down' }}">{{ '▲' if c.direction_label == 'Improved' else '▼' }} {{ c.direction_label }}</td></tr>{% endfor %}
+      </table>
+    </div>
+    <div class="src">Compared with report {{ doc.prior_period.prior.version_label }} ({{ doc.prior_period.prior.period_label }}). Gaps: {{ doc.prior_period.totals.prior.gaps }} last report, {{ doc.prior_period.totals.current.gaps }} now.</div>
+  </div>
+  {% else %}
+  {{ frame('04', v.titles.since, 'This is the first issued report for this client. These domain scores are the baseline the next report is measured against.', 'Remediation roadmap') }}
+  <div class="body" style="display:flex; gap:9mm">
+    <div style="flex:none; width:188mm">
+      <div style="display:flex"><div style="width:62mm"></div>{{ scale(96) }}</div>
+      {% for g in v.dumb %}
+      <div style="font-weight:700; font-size:10.4pt; border-bottom:0.5mm solid var(--p1); padding:1.6mm 0 0.8mm; margin-bottom:0.6mm">{{ g.name }} · baseline</div>
+      {% for r in g.rows %}
+      <div style="display:flex; align-items:center; height:{{ v.lay.dumb_row }}mm">
+        <div style="width:62mm; flex:none; font-size:9.4pt">{{ r.title }}</div>
+        <svg width="96mm" height="7mm" viewBox="-1.5 0 103 7" preserveAspectRatio="none" style="flex:none">
+          {% for lo, hi, lbl, col in v.bands %}<rect x="{{ lo }}" y="0" width="{{ hi - lo }}" height="7" fill="{{ col }}"/>{% endfor %}
+          <ellipse cx="{{ r.now }}" cy="3.5" rx="1.1" ry="2.2" fill="{{ v.theme.p1 }}"/>
+        </svg>
+        <div style="width:30mm; text-align:right; font-size:9.6pt"><b>{{ '%.0f'|format(r.now) }}%</b></div>
+      </div>
+      {% endfor %}{% endfor %}
+    </div>
+    <div style="flex:1">
+      <div class="card" style="font-size:10.4pt; line-height:1.5"><b style="color:var(--p1)">What the next report will show.</b> For each domain, a grey dot for this report's score beside a dark dot for the new one, so movement reads at a glance, plus every requirement whose outcome changed.</div>
+    </div>
+  </div>
+  {% endif %}
+  {{ foot() }}
+</section>
+
+<!-- LIMITS -->
+<section class="slide" data-slide="limits">
+  {{ frame('04', doc.not_assessed.insufficient_evidence|length ~ ' requirements could not be concluded; ' ~ doc.not_assessed.rfi['items']|length ~ ' evidence requests are open', 'Not-concluded requirements are left out of scores, not counted as failures. The limits of this assessment follow.', 'Remediation roadmap') }}
+  <div class="body" style="display:flex; gap:8mm">
+    <div style="flex:0.9">
+      <div style="display:flex; gap:2.5mm; margin-bottom:4mm">{% for f in v.fw %}<div class="card" style="flex:1"><div class="disp" style="font-weight:700; font-size:30pt; line-height:1; color:#5A6385">{{ f.coverage.insufficient_evidence }}</div><div style="font-size:9.4pt">not concluded · {{ f.name }}</div></div>{% endfor %}</div>
+      <div class="h3">Open evidence requests ({{ doc.not_assessed.rfi.version_label }})</div>
+      <table class="t init">{% for i in doc.not_assessed.rfi['items'] %}<tr><td style="width:16mm"><b>{{ i.item_id }}</b></td><td>{{ i.title }}</td><td style="width:24mm"><span class="pill" style="background:{{ v.theme.p2 if i.required else '#6E7591' }}">{{ 'Required' if i.required else 'Recommended' }}</span></td></tr>{% endfor %}</table>
+      <div class="mut" style="font-size:8.4pt; margin-top:2mm">The full list is in Annexure A2 (outcome "Insufficient evidence").</div>
+    </div>
+    <div style="flex:1.3">
+      <div class="h3">Limitations</div>
+      <div style="columns:2; column-gap:7mm">{% for l in doc.summary.limitations %}<p style="font-size:9.2pt; color:var(--ink2); margin-bottom:3mm; padding-left:3mm; border-left:0.8mm solid var(--acc); break-inside:avoid">{{ l }}</p>{% endfor %}</div>
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- SIGN-OFF -->
+<section class="slide" data-slide="sign-off">
+  {{ frame('04', 'Sign-off', 'Prepared and reviewed by the engagement team; the issue record lives in the version history.', 'Remediation roadmap') }}
+  <div class="body">
+    <div style="display:flex; gap:6mm; margin-top:4mm">
+      {% for k, val, sub in [('Prepared by', doc.sign_off.prepared_by, doc.firm_name), ('Reviewed by', doc.sign_off.reviewed_by, doc.firm_name), ('Released for reporting', doc.release.released_by, 'on ' ~ doc.release.released_on), ('Issue record', 'Version history', 'Issuer, date and file fingerprint')] %}
+      <div style="flex:1; border-top:1.2mm solid var(--p1); padding-top:3mm"><div class="cap">{{ k }}</div><div style="font-size:14pt; font-weight:700; margin-top:1.4mm">{{ val }}</div><div class="mut" style="font-size:9pt">{{ sub }}</div><div style="border-bottom:0.3mm solid var(--ink2); height:24mm"></div><div class="mut" style="font-size:8pt; margin-top:1mm">Signature and date</div></div>
+      {% endfor %}
+    </div>
+    <div class="card" style="margin-top:10mm; font-size:9.6pt; color:var(--ink2); line-height:1.55; padding:5mm">
+      <b>Report version</b> {{ doc.snapshot.version_label }} · generated {{ doc.snapshot.generated_on }} · snapshot {{ doc.snapshot.id }}<br>
+      {{ doc.sign_off.names_note }} {{ doc.summary.confidentiality }}
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+<!-- ANNEXURE DIVIDER -->
+<section class="slide div" data-slide="annexure">
+  {% set ns.pg = ns.pg + 1 %}
+  <div class="n">05</div><div class="big">Annexure</div>
+  <div class="list">A1 &nbsp;Methodology<br>A2 &nbsp;Requirement register<br>A3 &nbsp;Evidence register{% if doc.soa %}<br>A4 &nbsp;Statement of Applicability summary{% endif %}</div>
+  <svg style="position:absolute; right:0; bottom:0" width="120mm" height="120mm" viewBox="0 0 120 120"><circle cx="120" cy="120" r="110" fill="{{ v.theme.p2 }}" opacity="0.7"/><circle cx="120" cy="120" r="72" fill="{{ v.theme.p3 }}" opacity="0.8"/><circle cx="120" cy="120" r="38" fill="{{ v.theme.acc }}"/></svg>
+  <div style="position:absolute; left:18mm; bottom:6mm; font-size:7.6pt; color:#8F99E8">{{ doc.company_name }} · Board report {{ doc.snapshot.version_label }} · Confidential · {{ ns.pg }}</div>
+</section>
+
+<!-- A1 METHODOLOGY -->
+<section class="slide" data-slide="methodology">
+  {{ frame('A1', 'Methodology', '', 'Annexure') }}
+  <div class="body" style="top:34mm"><div class="cols2">{{ doc.appendices.methodology }}</div></div>
+  {{ foot() }}
+</section>
+
+<!-- A2 REGISTER -->
+{% for page in v.reg_pages %}
+<section class="slide" data-slide="requirement-register">
+  {{ frame('A2', 'Requirement register (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', '', 'Annexure') }}
+  <div class="body" style="top:34mm">
+    <table class="t reg"><tr><th style="width:18mm">Framework</th><th style="width:26mm">Requirement</th><th>Title</th><th style="width:44mm">Domain</th><th style="width:32mm">Outcome</th><th style="width:16mm">Risk</th><th style="width:44mm">Decision</th><th style="width:58mm">Evidence</th></tr>
+    {% for r in page %}<tr><td>{{ 'DPDPA' if r.framework_id == 'dpdpa' else 'ISO 27001' }}</td><td><b>{{ r.requirement_id }}</b></td><td>{{ r.requirement_title }}</td><td>{{ r.domain_title.split(' — ')[-1] }}</td><td><span class="sq" style="background:{{ v.out_col[r.outcome] }}"></span>{{ r.outcome_label }}</td><td>{{ r.risk_level|cap }}</td><td>{{ r.decision_label }} · {{ r.decided_by }}, {{ r.decided_on|d }}</td><td class="mut">{{ r.citation or r.citation_note }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  {{ foot() }}
+</section>
+{% endfor %}
+
+<!-- A3 + A4 -->
+<section class="slide" data-slide="evidence-and-soa">
+  {{ frame('A3', 'Evidence register' ~ (' and Statement of Applicability' if doc.soa else ''), '', 'Annexure') }}
+  <div class="body" style="top:34mm; display:flex; gap:7mm">
+    <div style="flex:1">
+      <div class="h3">A3 · Evidence register</div>
+      <table class="t reg"><tr><th>Document</th><th>Version</th><th>Added</th><th>Fingerprint</th><th>Cited</th></tr>
+      {% for e in doc.appendices.evidence_register %}<tr><td>{{ e.filename }}</td><td>v{{ e.version_number }}</td><td>{{ e.added_on|d }}</td><td style="font-family:monospace">{{ e.sha256_prefix }}</td><td>{{ 'Yes' if e.cited else 'No' }}</td></tr>{% endfor %}</table>
+    </div>
+    {% if doc.soa %}
+    <div style="flex:1.2">
+      <div class="h3">A4 · Statement of Applicability ({{ doc.soa.framework_name }} {{ doc.soa.framework_version }}, {{ doc.soa.totals.controls }} controls)</div>
+      {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined','Not applicable','Not assessed'] %}
+      <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="text-align:right">{{ c }}</th>{% endfor %}</tr>
+      {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
+      <div class="h3" style="margin-top:3mm">Excluded controls</div>
+      <table class="t reg"><tr><th>Control</th><th>Justification</th></tr>{% for r in doc.soa.rows if r.applicability == 'excluded' %}<tr><td><b>{{ r.reference }}</b> {{ r.title }}</td><td>{{ r.justification or 'Not recorded' }}</td></tr>{% endfor %}</table>
+      <div class="mut" style="font-size:8pt; margin-top:2mm">The full {{ doc.soa.totals.controls }}-control statement, with a justification column to complete, is in the workbook.</div>
+    </div>
+    {% endif %}
+  </div>
+  {{ foot() }}
+</section>
+</body>
+</html>
