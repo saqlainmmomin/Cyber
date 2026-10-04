@@ -2087,6 +2087,29 @@ async def upload_document_web(
     return _with_toast(response, "Document uploaded")
 
 
+DETAIL_ACTION_TARGET = "detail-action-status"
+
+
+def _evidence_action_response(request: Request, db: Session, assessment: Assessment, toast: str | None = None):
+    """Archive / new-version success response.
+
+    The inventory swaps the refreshed ``partials/document_list.html`` into
+    ``#document-list``. The evidence detail page targets
+    ``#detail-action-status``; it gets an empty body plus ``HX-Refresh`` so the
+    page reloads with the new status instead of receiving the inventory table.
+    """
+    if request.headers.get("HX-Target") == DETAIL_ACTION_TARGET:
+        return HTMLResponse("", headers={"HX-Refresh": "true"})
+    response = templates.TemplateResponse(
+        "partials/document_list.html",
+        {
+            "request": request,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+        },
+    )
+    return _with_toast(response, toast) if toast else response
+
+
 @router.delete("/assessments/{assessment_id}/documents/{document_id}", response_class=HTMLResponse)
 def delete_document_web(
     request: Request,
@@ -2119,13 +2142,7 @@ def delete_document_web(
         db.commit()
     except evidence_service.EvidenceError as exc:
         raise HTTPException(exc.status_code, exc.message) from exc
-    return templates.TemplateResponse(
-        "partials/document_list.html",
-        {
-            "request": request,
-            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
-        },
-    )
+    return _evidence_action_response(request, db, assessment)
 
 
 @router.post("/assessments/{assessment_id}/evidence/{evidence_id}/versions", response_class=HTMLResponse)
@@ -2159,14 +2176,7 @@ async def upload_document_version_web(
             "partials/upload_status.html",
             {"request": request, "error": exc.message},
         )
-    response = templates.TemplateResponse(
-        "partials/document_list.html",
-        {
-            "request": request,
-            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
-        },
-    )
-    return _with_toast(response, "New version uploaded")
+    return _evidence_action_response(request, db, assessment, toast="New version uploaded")
 
 
 # --- Context questionnaire (HTMX step-by-step) ---

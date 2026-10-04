@@ -292,6 +292,44 @@ def test_evidence_detail_uses_display_labels_and_existing_actions(db, http, monk
     assert f'hx-post="/assessments/{assessment.id}/evidence/{evidence.id}/versions"' in detail.text
 
 
+def test_detail_page_actions_refresh_instead_of_injecting_inventory(db, http, monkeypatch):
+    _client, _engagement, assessment = seed_engagement(db)
+    monkeypatch.setattr(evidence_service, "extract_text", lambda *_args, **_kwargs: "seeded text")
+    uploaded = http.post(
+        f"/assessments/{assessment.id}/upload",
+        data={"category": "privacy_policy"},
+        files={"file": ("Privacy notice.pdf", io.BytesIO(_pdf("detail-action")), "application/pdf")},
+    )
+    assert uploaded.status_code == 200
+    evidence = db.query(Evidence).one()
+    detail = http.get(f"/evidence/{evidence.id}")
+    assert 'hx-target="#detail-action-status"' in detail.text
+    detail_headers = {"HX-Request": "true", "HX-Target": "detail-action-status"}
+
+    versioned = http.post(
+        f"/assessments/{assessment.id}/evidence/{evidence.id}/versions",
+        data={"change_reason": "Signed copy"},
+        files={"file": ("Privacy notice signed.pdf", io.BytesIO(_pdf("detail-v2")), "application/pdf")},
+        headers=detail_headers,
+    )
+    assert versioned.status_code == 200
+    assert versioned.headers.get("HX-Refresh") == "true"
+    assert "<table" not in versioned.text and "data-evidence-id" not in versioned.text
+
+    archived = http.delete(f"/assessments/{assessment.id}/documents/{evidence.id}", headers=detail_headers)
+    assert archived.status_code == 200
+    assert archived.headers.get("HX-Refresh") == "true"
+    assert "<table" not in archived.text and "No evidence yet" not in archived.text
+    db.refresh(evidence)
+    assert evidence.status == "archived"
+    reloaded = http.get(f"/evidence/{evidence.id}")
+    assert reloaded.status_code == 200
+    assert f'hx-delete="/assessments/{assessment.id}/documents/{evidence.id}"' not in reloaded.text
+
+    # The inventory contract (no detail target: refreshed list) is covered by
+    # test_inventory_and_documents_redirect_are_http_surfaces.
+
+
 def test_reuse_markup_is_data_driven_and_unchecked_by_default(db, http, monkeypatch):
     _client, engagement, source = seed_engagement(db, name="Pilot assessment")
     target = Assessment(
