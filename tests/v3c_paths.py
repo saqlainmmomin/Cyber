@@ -9,6 +9,7 @@ V3C_PRIOR_DOMAINS_PATHS = (
     "tests/test_v3c_prior_domains.py",
     "tests/test_p6_9_prior_period.py",
     "tests/v3c_paths.py",
+    "tasks/handoffs/2026-10-04-v3c-prior-domain-scores.md",
     # Guard files that gained this allowance.
     "tests/p6_10_support.py",
     "tests/test_p6_2b_dpdpa_criteria.py",

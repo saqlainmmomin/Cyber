@@ -212,6 +212,8 @@ def test_settings_page_shows_branding_retention_and_unmigrated_assessments(db, h
     assert 'value="midnight" checked' in body
     assert "data-unmigrated-assessments" in body
     assert "Harbour and Finch Logistics" in body and f"/assessments/{legacy.id}" in body
+    assert "Run scripts/migrate_legacy.py to file them under a client." in body
+    assert "<code>scripts/migrate_legacy.py</code>" not in body
     # The list moved off the dashboard; the nav links to Settings.
     dashboard = http.get("/").text
     assert "Unmigrated assessments" not in dashboard
@@ -228,7 +230,7 @@ def test_save_contact_email_and_accent(db, http):
     view = firm_settings.get(db)
     assert view.contact_email == "partner@northgate.example" and view.accent_theme == "teal"
     page = http.get("/settings?saved=1").text
-    assert "Settings saved" in page and 'value="partner@northgate.example"' in page
+    assert "Branding saved" in page and 'value="partner@northgate.example"' in page
     assert 'value="teal" checked' in page
     assert _save(http, contact_email="partner@northgate.example", accent_theme="teal").headers["location"] == (
         "/settings?saved=0"

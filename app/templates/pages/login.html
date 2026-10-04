@@ -1,43 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% from "components/layout.html" import login_shell %}
+{% from "components/ui.html" import alert, button %}
 
+{% block title %}Sign in{% endblock %}
 {% block body %}
-<div class="min-h-screen flex items-center justify-center bg-brand-dark">
-  <div class="w-full max-w-md">
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-navy-700 mb-4">
-        <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-        </svg>
-      </div>
-      <h1 class="text-2xl font-bold text-white">{{ branding.firm_name }}</h1>
-      <p class="text-navy-300 mt-1">Compliance Assessment Platform</p>
-    </div>
-
-    <div class="bg-white dark:bg-gray-900 dark:border dark:border-gray-800 rounded-xl shadow-2xl p-8">
-      {% if error %}
-      <div class="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
-        {{ error }}
-      </div>
-      {% endif %}
-
-      <form method="post" action="/login" class="space-y-5">
-        <div>
-          <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
-          <input type="text" name="username" id="username" required autofocus
-                 class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-2 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">
-        </div>
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-          <input type="password" name="password" id="password" required
-                 class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-navy-500 dark:focus:border-navy-400 focus:ring-2 focus:ring-navy-100 dark:focus:ring-navy-900 outline-none transition">
-        </div>
-        <button type="submit"
-                class="w-full bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white font-medium py-2.5 rounded-lg transition-colors">
-          Sign In
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
+<div class="state-bar">Preview · {{ preview_state }}</div>
+{% call login_shell(branding.firm_name) %}
+  {% if preview_state == "error" %}{{ alert("Sign-in failed", "The username or password is incorrect. Try again.", "noncompliant", "alert", "", "margin-bottom:var(--s-4)") }}{% endif %}
+  <form method="post" action="/login">
+    <div><label class="label" for="username">Username</label><label class="field{% if preview_state == 'error' %} invalid{% endif %}"><input id="username" name="username" autocomplete="username" value="{{ 'priya.sharma' if preview_state in ['error', 'loading'] else '' }}"></label></div>
+    <div><label class="label" for="password">Password</label><label class="field{% if preview_state == 'error' %} invalid{% endif %}"><input id="password" name="password" type="password" autocomplete="current-password" value="{{ 'password' if preview_state in ['error', 'loading'] else '' }}"></label></div>
+    {% if preview_state != "loading" %}{{ button("Sign in", "primary", button_type="submit") }}{% endif %}
+  </form>
+{% endcall %}
 {% endblock %}

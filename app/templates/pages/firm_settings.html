@@ -1,93 +1,26 @@
 {% extends "base.html" %}
+{% from "components/layout.html" import page_header %}
+{% from "components/ui.html" import icon, link_button %}
+
 {% block title %}Settings{% endblock %}
-
 {% block content %}
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firm details, branding and data housekeeping.</p>
-</div>
+{{ page_header("Settings", actions=[{"label": "Save changes", "variant": "primary", "button_type": "submit", "form_id": "settings-form"}]) }}
 
-{% if saved %}
-<div data-settings-saved class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200">{{ saved }}</div>
-{% endif %}
+<form id="settings-form" data-settings-form method="post" action="/settings" hx-boost="false">
+  <section class="sec" style="margin-top:0"><h2>Branding</h2></section>
+  <div class="glass card narrow"><div class="stack">
+    <div><label class="label" for="firm">Firm name</label><label class="field"><input id="firm" value="{{ firm.firm_name }}" readonly></label><p class="help">Shown on the sign-in page and on reports.</p></div>
+    <div><label class="label" for="contact-email">Contact email for clients</label><label class="field{% if errors.contact_email %} invalid{% endif %}"><input id="contact-email" name="contact_email" type="email" value="{{ values.contact_email }}" maxlength="254"></label>{% if errors.contact_email %}<p data-field-error="contact_email" class="err">{{ errors.contact_email }}</p>{% else %}<p class="help">Clients with an expired or revoked link are offered this address.</p>{% endif %}</div>
+    <div><span class="label">Logo</span><div class="drop"><span class="tile">NA</span><div class="txt"><b>{{ logo_filename }}</b><span class="sub">PNG or SVG, up to 2 MB</span></div><button type="button" class="btn secondary sm lead">{{ icon("upload") }}Replace</button><button type="button" class="btn danger sm">Remove</button></div></div>
+    <div><span class="label">Accent theme</span><div class="swatches{% if saved or preview_state in ['saved', 'contrast'] %} selected-strong{% endif %}" role="radiogroup" aria-label="Accent theme">{% for name, hex in accent_presets.items() %}<label data-accent="{{ name }}"><input type="radio" name="accent_theme" value="{{ name }}"{% if values.accent_theme == name %} checked{% endif %}><i style="--accent:{{ hex }}">{{ icon("check") }}</i><span>{{ name|capitalize }}</span></label>{% endfor %}<label hidden data-accent="custom"><input type="radio" name="accent_theme" value="custom"{% if values.accent_theme == custom_accent %} checked{% endif %}><i style="--accent:{{ values.accent_custom_hex or '#1C3A72' }}">{{ icon("check") }}</i><span>Custom colour</span></label></div><div class="form-row" style="margin-top:var(--s-4)"><div class="grow"><label class="label" for="custom">Custom colour</label><label class="field{% if errors.accent_custom_hex %} invalid{% endif %}"><span class="muted">Hex</span><input id="custom" name="accent_custom_hex" value="{{ values.accent_custom_hex|replace('#', '') }}" placeholder="1C3A72"></label>{% if errors.accent_custom_hex %}<p data-field-error="accent_custom_hex" class="err">{{ contrast_error if contrast_error else errors.accent_custom_hex }}</p>{% else %}<p class="help">Checked for contrast when you save.</p>{% endif %}</div></div></div>
+  {% if saved %}<div data-settings-saved class="toast" style="width:fit-content">{{ icon("check") }}{{ saved }}</div>{% endif %}</div></div>
 
-<form data-settings-form method="post" action="/settings" hx-boost="false" class="space-y-6">
-  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Branding</h2>
+  <section class="sec"><h2>Data housekeeping</h2></section>
+  <div class="glass card narrow"><h3>Archived engagements</h3><div data-retention-form class="form-row" style="margin-top:var(--s-4)"><div class="grow"><label class="label" for="retention-years">Keep archived engagements for</label><label class="field{% if errors.archived_retention_years %} invalid{% endif %}"><select id="retention-years" name="archived_retention_years">{% for year in range(retention_range[0], retention_range[1] + 1) %}<option value="{{ year }}"{% if values.archived_retention_years|string == year|string %} selected{% endif %}>{{ year }} years</option>{% endfor %}</select></label>{% if errors.archived_retention_years %}<p class="err">{{ errors.archived_retention_years }}</p>{% else %}<p class="help">Archived engagements become eligible for permanent deletion after this period. Applies to engagements archived from now on.</p>{% endif %}</div></div></div>
+  <div data-unmigrated-assessments class="glass card narrow"><h3>Unmigrated assessments</h3>{% if unmigrated_assessments %}<p class="sub tight">These assessments predate clients and engagements. Run scripts/migrate_legacy.py to file them under a client.</p><ul class="line-list" style="margin-top:var(--s-4)">{% for assessment in unmigrated_assessments %}<li data-unmigrated-assessment><span class="txt"><b>{{ assessment.display_name }}</b><span class="sub">Created {{ assessment.created_at.strftime('%-d %b %Y') }}</span></span><a class="btn secondary sm" href="/assessments/{{ assessment.id }}">Open assessment</a></li>{% endfor %}</ul>{% else %}<p class="muted tight">Every assessment is filed under a client.</p>{% endif %}</div>
 
-    <div class="mt-4">
-      <p class="block text-sm font-medium text-gray-700 dark:text-gray-300">Firm name</p>
-      <p data-firm-name class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ firm.firm_name }}</p>
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Shown on the sign-in page and on reports. Set by the deployment for now.</p>
-    </div>
-
-    <div class="mt-5">
-      <label for="contact-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact email for clients</label>
-      <input id="contact-email" type="email" name="contact_email" value="{{ values.contact_email }}" maxlength="254" placeholder="name@example.com" class="mt-1 w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Clients with an expired or revoked link are offered this address.</p>
-      {% if errors.contact_email %}<p data-field-error="contact_email" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.contact_email }}</p>{% endif %}
-    </div>
-
-    <fieldset class="mt-5">
-      <legend class="block text-sm font-medium text-gray-700 dark:text-gray-300">Accent theme</legend>
-      <div class="mt-2 flex flex-wrap gap-2">
-        {% for name, hex in accent_presets.items() %}
-        <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-          <input type="radio" name="accent_theme" value="{{ name }}" {% if values.accent_theme == name %}checked{% endif %}>
-          <span class="inline-block h-4 w-4 rounded" style="background-color: {{ hex }}"></span>
-          {{ name | capitalize }}
-        </label>
-        {% endfor %}
-        <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-          <input type="radio" name="accent_theme" value="{{ custom_accent }}" {% if values.accent_theme == custom_accent %}checked{% endif %}>
-          Custom colour
-        </label>
-      </div>
-      <label for="accent-custom-hex" class="mt-3 block text-xs text-gray-500 dark:text-gray-400">Hex</label>
-      <input id="accent-custom-hex" name="accent_custom_hex" value="{{ values.accent_custom_hex }}" maxlength="7" placeholder="#1C3A72" class="mt-1 w-32 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 font-mono text-sm text-gray-900 dark:text-gray-100">
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Checked for contrast when you save.</p>
-      {% if errors.accent_theme %}<p data-field-error="accent_theme" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.accent_theme }}</p>{% endif %}
-      {% if errors.accent_custom_hex %}<p data-field-error="accent_custom_hex" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.accent_custom_hex }}</p>{% endif %}
-    </fieldset>
-  </section>
-
-  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Data housekeeping</h2>
-
-    <div class="mt-4" data-retention-form>
-      <label for="retention-years" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Keep archived engagements for</label>
-      <div class="mt-1 flex items-center gap-2">
-        <input id="retention-years" type="number" name="archived_retention_years" min="{{ retention_range[0] }}" max="{{ retention_range[1] }}" value="{{ values.archived_retention_years }}" class="w-24 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-        <span class="text-sm text-gray-600 dark:text-gray-300">years</span>
-      </div>
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Archived engagements become eligible for permanent deletion after this period. Applies to engagements archived from now on.</p>
-      {% if errors.archived_retention_years %}<p data-field-error="archived_retention_years" class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errors.archived_retention_years }}</p>{% endif %}
-    </div>
-  </section>
-
-  <div class="flex flex-wrap items-center gap-3">
-    <input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="w-56 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Save changes</button>
-  </div>
+  <section class="sec"><h2>Users and roles</h2></section>
+  <div class="glass card narrow"><div class="empty" style="padding:var(--s-6) 0">{{ icon("users", "", "width:24px;height:24px;color:var(--muted)") }}<h3>Users and roles arrive with sign-in</h3><p>Until then, everyone who opens this workspace has full access.</p><button type="button" class="btn secondary" disabled>Invite a user</button></div></div>
+  <input id="reviewer-name" name="reviewer_name" value="" class="sr-only" aria-label="Reviewer name">
 </form>
-
-<section data-unmigrated-assessments class="mt-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Unmigrated assessments</h2>
-  {% if unmigrated_assessments %}
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">These assessments predate clients and engagements. Run <code class="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-xs">scripts/migrate_legacy.py</code> to file them under a client.</p>
-  <div class="mt-3 space-y-2">
-    {% for assessment in unmigrated_assessments %}
-    <a data-unmigrated-assessment href="/assessments/{{ assessment.id }}" class="flex items-center justify-between gap-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 hover:border-amber-300 dark:hover:border-amber-700">
-      <div class="min-w-0">
-        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ assessment.company_name }}</span>
-        <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">Created {{ assessment.created_at.strftime('%d %b %Y') }}</span>
-      </div>
-      <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Open assessment &rarr;</span>
-    </a>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Every assessment is filed under a client.</p>
-  {% endif %}
-</section>
 {% endblock %}

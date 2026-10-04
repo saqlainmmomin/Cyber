@@ -32,6 +32,7 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `pages/evidence_reuse.html` | S6 | Table | - | - | - | `data-reuse-candidate`, `data-reuse-confirm`, `data-reuse-error`, `data-reuse-warning`, `data-warnings` | test_longitudinal_demo.py |
 | `pages/evidence_span.html` | S6 | Citation block | `cited-span` | - | - | `data-cited-span`, `data-evidence-span-text`, `data-span-unavailable` | test_p6_3a_grounding.py, test_p6_4_cap_upload_limit.py, test_p6_4_whats_missing.py, test_p6_7_requirement_card.py |
 | `pages/firm_settings.html` | S3 | Firm Settings (b1-firm_settings): Branding (firm name, contact email for clients, accent theme with custom colour), Data housekeeping (archived-engagement retention, unmigrated assessments) | `accent-custom-hex`, `contact-email`, `retention-years`, `reviewer-name` | - | - | `data-field-error`, `data-firm-name`, `data-retention-form`, `data-settings-form`, `data-settings-saved`, `data-unmigrated-assessment`, `data-unmigrated-assessments` | test_retention.py, test_yozora_firm_settings.py |
+| `pages/review.html` | S3 | Firm-wide review list: assessments whose `assessment_stage.stage` is `review`; rows open the assessment Review tab | - | - | - | - | test_yozora_s3.py |
 | `pages/new_assessment.html` | S4 | Form page: add an assessment to an engagement (name, scope, frameworks) | `assessment-description`, `assessment-name` | - | - | `data-add-assessment-error`, `data-add-assessment-form` | test_yozora_add_assessment.py |
 | `pages/findings.html` | S7 | Table | `reviewer-name` | - | `none` | `data-eligible-conclusion` | test_findings.py, test_remediation_tracking.py |
 | `pages/integrated_reports.html` | S4 | Engagement Reports tab | `reviewer-name` | - | - | `data-excluded-assessment`, `data-included-assessment`, `data-integrated-row`, `data-issue-control`, `data-snapshot-id`, `data-snapshot-state` | test_pdf_updates.py |
@@ -106,4 +107,3 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `pages/error.html` | S9 | 404 and 500 with reference code |
 
 Deleted by the redesign: `partials/documents_tab.html` (S6).
-

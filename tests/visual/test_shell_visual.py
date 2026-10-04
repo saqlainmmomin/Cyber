@@ -13,9 +13,11 @@ pytestmark = pytest.mark.skipif(
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8000")
-SIDE_TOP_CLIP = {
+SIDE_NAV_CLIP = {
     "top": ".side-in",
-    "bottom": '.side-in > .nav > a[aria-current="page"]',
+    # S3 makes Home, Clients and Review live. Stop at the last live main-nav row
+    # so future unavailable rows remain outside this approved shell comparison.
+    "bottom": '.side-in > .nav > a[data-nav-key="review"]',
 }
 
 
@@ -23,10 +25,10 @@ CASES = (
     ("b7-mobile-shell-top", None, 390, 780, ".top", False),
     ("b1-home-default-top", "default", 390, 780, ".top", False),
     ("b7-mobile-shell-sheet-navigation-closed", "navigation-closed", 390, 780, ".top", False),
-    ("b7-mobile-shell-sheet-drawer-open", "drawer-open", 390, 780, SIDE_TOP_CLIP, False),
-    ("b7-mobile-shell-sheet-drawer-account-menu", "drawer-account-menu", 390, 780, SIDE_TOP_CLIP, False),
-    ("b1-home-default-side", "default", 1440, 860, SIDE_TOP_CLIP, False),
-    ("b1-home-default-side", "default", 1024, 900, SIDE_TOP_CLIP, False),
+    ("b7-mobile-shell-sheet-drawer-open", "drawer-open", 390, 780, SIDE_NAV_CLIP, False),
+    ("b7-mobile-shell-sheet-drawer-account-menu", "drawer-account-menu", 390, 780, SIDE_NAV_CLIP, False),
+    ("b1-home-default-side", "default", 1440, 860, SIDE_NAV_CLIP, False),
+    ("b1-home-default-side", "default", 1024, 900, SIDE_NAV_CLIP, False),
 )
 
 
