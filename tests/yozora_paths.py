@@ -36,6 +36,38 @@ YOZORA_S1_PATHS = (
     "tests/test_white_label.py",
     "tests/test_yozora_shell.py",
     "tests/visual/test_shell_visual.py",
+    "tests/visual/test_design_gallery_visual.py",
+    "tests/yozora_paths.py",
+)
+
+YOZORA_S2_PATHS = (
+    "app/config.py",
+    "app/main.py",
+    "app/routers/design.py",
+    "app/static/css/yozora-components.css",
+    "app/static/css/yozora-patterns.css",
+    "app/static/css/yozora-tokens.css",
+    "app/templates/components/engagement_status_badge.html",
+    "app/templates/components/evidence_status_badge.html",
+    "app/templates/components/layout.html",
+    "app/templates/components/status_badge.html",
+    "app/templates/components/ui.html",
+    "app/templates/pages/design.html",
+    "tailwind.tokens.cjs",
+    "tasks/handoffs/2026-10-01-yozora-s2-handoff.md",
+    "tasks/todo.md",
+    "tests/design_lint_allowlist.txt",
+    "tests/test_design_lint.py",
+    "tests/test_yozora_s2.py",
+    "tests/p6_10_support.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_3a_grounding.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_7_requirement_card.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_7b_add_to_rfi.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_8_b2_docx_xlsx.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_8_board_report_v2.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_8_v3a_data_capture.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_p6_9_file_set.py",  # Yozora per-PR allowance (guard file)
+    "tests/test_retention.py",  # Yozora per-PR allowance (guard file)
     "tests/yozora_paths.py",
 )
 
@@ -51,5 +83,5 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-s1-handoff.md",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_DESIGN_FILES
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_DESIGN_FILES
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

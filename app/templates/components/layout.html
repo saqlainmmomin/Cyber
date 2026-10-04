@@ -1,0 +1,95 @@
+{# Page-level Yozora layout macros. Routes are passed in as plain values. #}
+{% from "components/ui.html" import icon, button, link_button, pill, chip, request_marker %}
+
+{% macro page_header(title, meta_line="", actions=[]) -%}
+<div class="page-head"><div><h1>{{ title }}</h1>{% if meta_line %}<p class="meta-line">{{ meta_line }}</p>{% endif %}</div>{% if actions %}<div class="acts">{% for action in actions %}{% if action.href is defined %}{{ link_button(action.label, action.href, action.variant if action.variant is defined else "secondary", action.size if action.size is defined else "", action.icon_id if action.icon_id is defined else "", action.lead if action.lead is defined else false) }}{% else %}{{ button(action.label, action.variant if action.variant is defined else "secondary", action.size if action.size is defined else "", action.icon_id if action.icon_id is defined else "", action.lead if action.lead is defined else false) }}{% endif %}{% endfor %}</div>{% endif %}</div>
+{%- endmacro %}
+
+{% macro breadcrumb(items) -%}
+<nav class="crumb" aria-label="Breadcrumb">{% for item in items %}{% if not loop.first %}{{ icon("slash") }}{% endif %}{% if loop.last %}<b>{{ item.label }}</b>{% else %}<a{% if item.hide_sm %} class="hide-sm"{% endif %} href="{{ item.href }}">{{ item.label }}</a>{% endif %}{% endfor %}</nav>
+{%- endmacro %}
+
+{% macro tabs(items, aria_label="") -%}
+<nav class="tabs"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}>{% for item in items %}<a href="{{ item.href }}"{% if item.current %} aria-selected="true"{% endif %}>{{ item.label }}</a>{% endfor %}</nav>
+{%- endmacro %}
+
+{% macro engagement_tabs(engagement, current) -%}
+{% set base = "/engagements/" ~ engagement.id %}
+{{ tabs([
+  {"label": "Overview", "href": base, "current": current == "overview"},
+  {"label": "Evidence", "href": base ~ "/evidence", "current": current == "evidence"},
+  {"label": "Findings and actions", "href": base ~ "/remediation", "current": current == "findings"},
+  {"label": "Reports", "href": base ~ "/integrated-reports", "current": current == "reports"}
+], "Engagement") }}
+{%- endmacro %}
+
+{% macro assessment_tabs(assessment, current) -%}
+{% set base = "/assessments/" ~ assessment.id %}
+{{ tabs([
+  {"label": "Overview", "href": base, "current": current == "overview"},
+  {"label": "Scope", "href": base ~ "/scope", "current": current == "scope"},
+  {"label": "Questionnaire", "href": base ~ "?tab=questionnaire", "current": current == "questionnaire"},
+  {"label": "Review", "href": base ~ "/review", "current": current == "review"},
+  {"label": "Report", "href": base ~ "/report", "current": current == "report"}
+], "Assessment") }}
+{%- endmacro %}
+
+{% macro seg(items, current) -%}
+<div class="seg">{% for item in items %}<button type="button" aria-pressed="{{ 'true' if item.key == current or item.label == current else 'false' }}" data-href="{{ item.href }}" onclick="window.location.href=this.dataset.href">{{ item.label }}</button>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro stepper(stages) -%}
+{% set state_classes = {"current": "cur", "next": "next"} %}<div class="stepper">{% for stage in stages %}<div class="stp{% if stage.state in state_classes %} {{ state_classes[stage.state] }}{% endif %}"><div class="rail">{% if stage.state == "done" %}<i style="width:100%"></i>{% elif stage.state == "current" %}<i style="width:50%"></i>{% endif %}</div><div class="lbl">{% if stage.state == "done" %}{{ icon("check") }}{% else %}<span class="o"></span>{% endif %}{% if stage.href %}<a href="{{ stage.href }}">{{ stage.label }}</a>{% else %}{{ stage.label }}{% endif %}</div>{% if stage.note %}<span class="note">{{ stage.note }}</span>{% endif %}</div>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro table(headers, rows, static=false, numeric_columns=[]) -%}
+<div class="solid"><table{% if static %} class="static"{% endif %}><thead><tr>{% for header in headers %}<th{% if loop.index0 in numeric_columns %} class="n"{% endif %}>{{ header }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr>{% for cell in row %}<td{% if loop.index0 == 0 %} class="t-title"{% elif loop.index0 in numeric_columns %} class="n num"{% endif %}>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+{%- endmacro %}
+
+{% macro rows_list(items) -%}
+<div class="glass rows">{% for item in items %}<div><span class="ico{% if item.accent %} accent{% endif %}">{% if item.icon_id %}{{ icon(item.icon_id) }}{% endif %}</span><span class="txt"><b>{{ item.title }}</b>{% if item.body %}<span class="sub">{{ item.body }}</span>{% endif %}</span>{% if item.action_label %}{{ link_button(item.action_label, item.href, "secondary", "sm") }}{% endif %}</div>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro line_list(items) -%}
+<ul class="line-list">{% for item in items %}<li><span class="txt"><b>{{ item.title }}</b>{% if item.body %}<span class="sub">{{ item.body }}</span>{% endif %}</span>{% if item.action_label %}{{ link_button(item.action_label, item.href, "ghost", "sm") }}{% endif %}</li>{% endfor %}</ul>
+{%- endmacro %}
+
+{% macro nav(items, label="Main") -%}
+<nav class="nav" aria-label="{{ label }}">{% for item in items %}<a href="{{ item.href }}"{% if item.current %} aria-current="page"{% endif %}>{% if item.icon_id %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}{% if item.count %}<span class="count">{{ item.count }}</span>{% endif %}</a>{% endfor %}</nav>
+{%- endmacro %}
+
+{% macro brand(name="Yozora", mark="mark") -%}<div class="brand"><span class="mark">{{ icon(mark) }}</span>{{ name }}</div>{%- endmacro %}
+
+{% macro user_menu(name, initials, settings_href="/settings", open=false) -%}
+<div class="side-foot"><div class="menu{% if open %} open{% endif %}" role="menu"><div class="who"><span class="avatar">{{ initials }}</span><span><b>{{ name }}</b><span>Compliance workspace</span></span></div><a href="{{ settings_href }}" role="menuitem">{{ icon("settings") }}Settings</a></div><button class="user" type="button" aria-expanded="{{ 'true' if open else 'false' }}" aria-haspopup="menu"><span class="avatar">{{ initials }}</span><span class="name">{{ name }}</span>{{ icon("updown") }}</button></div>
+{%- endmacro %}
+
+{% macro review_list_item(title, subtitle="", selected=false, decided=false, tone="neutral") -%}
+<div class="item{% if selected %} sel{% endif %}{% if decided %} decided{% endif %}"><span class="dot c-{{ tone }}"></span><span class="txt"><b>{{ title }}</b>{% if subtitle %}<span>{{ subtitle }}</span>{% endif %}</span></div>
+{%- endmacro %}
+
+{% macro review_detail(title, meta=[], conclusion="", recommendation="", quote="", checks=[], progress_done=0, progress_total=0) -%}
+<div class="rq-detail"><div class="rq-body"><div class="d-title"><h2 class="big">{{ title }}</h2>{{ pill("AI proposal", "accent") }}</div>{% if meta %}<div class="meta">{% for item in meta %}{{ chip(item) }}{% endfor %}</div>{% endif %}{% if conclusion %}<div class="block"><h3>Conclusion</h3><p class="concl">{{ conclusion }}</p></div>{% endif %}{% if recommendation %}<div class="rec">{{ icon("alert") }}<div><b>Recommendation</b>{{ recommendation }}</div></div>{% endif %}{% if quote %}<div class="block"><h3>Evidence</h3>{{ citation("Policy excerpt", quote) }}</div>{% endif %}{% if checks %}<div class="block"><h3>Checks</h3><ul class="checks">{% for check in checks %}<li><span class="ck c-{{ check.tone }}">{{ icon("check") }}</span><span>{{ check.label }}</span><span class="res">{{ check.result }}</span></li>{% endfor %}</ul></div>{% endif %}</div>{% if progress_total %}<div class="actions">{{ progress_ticks(progress_done, progress_total) }}</div>{% endif %}</div>
+{%- endmacro %}
+
+{% macro citation(source, quote, page="") -%}
+<div class="cite"><div class="cite-head">{{ icon("file") }}<span>{{ source }}</span>{% if page %}<span class="pg">{{ page }}</span>{% endif %}</div><blockquote>{{ quote }}</blockquote></div>
+{%- endmacro %}
+
+{% macro recommendation(title, body, icon_id="alert") -%}<div class="rec">{{ icon(icon_id) }}<div><b>{{ title }}</b>{{ body }}</div></div>{%- endmacro %}
+
+{% macro check_list(items) -%}<ul class="checks">{% for item in items %}<li><span class="ck c-{{ item.tone }}">{{ icon("check") }}</span><span>{{ item.label }}</span><span class="res">{{ item.result }}</span></li>{% endfor %}</ul>{%- endmacro %}
+
+{% macro progress_ticks(done, total) -%}<div class="progress"><span class="ticks">{% for index in range(total) %}<i{% if index < done %} class="on"{% endif %}></i>{% endfor %}</span><span>{{ done }} of {{ total }} approved</span></div>{%- endmacro %}
+
+{% macro filter_toolbar(search_placeholder="Search", selects=[], style="") -%}
+<div class="tools keep-row"{% if style %} style="{{ style }}"{% endif %}><label class="field">{{ icon("search") }}<input placeholder="{{ search_placeholder }}" aria-label="{{ search_placeholder }}"></label>{% for select in selects %}<label class="field sel"><select aria-label="{{ select.label }}"><option>{{ select.label }}</option>{% for option in select.options %}<option>{{ option }}</option>{% endfor %}</select></label>{% endfor %}</div>
+{%- endmacro %}
+
+{% macro pager(previous_href="#", next_href="#", count="") -%}<div class="pager"><a class="btn ghost sm" href="{{ previous_href }}">Previous</a><span>{{ count }}</span><a class="btn ghost sm" href="{{ next_href }}">Next</a></div>{%- endmacro %}
+
+{% macro popover(trigger, title, body, open=false) -%}<span class="anchor"><button class="btn secondary" type="button">{{ trigger }}</button><span class="menu{% if open %} open{% endif %}"><span class="pop-body"><h3>{{ title }}</h3><p>{{ body }}</p></span></span></span>{%- endmacro %}
+
+{% macro login_shell(firm_name, body="", error="") -%}
+<div class="login"><div class="firm"><span class="mark">{{ icon("mark") }}</span><h1>{{ firm_name }}</h1><p class="sub">Compliance workspace</p></div><div class="box solid">{% if error %}<div class="alert c-non">{{ icon("alert") }}<div>{{ error }}</div></div>{% endif %}{{ body }}</div></div>
+{%- endmacro %}

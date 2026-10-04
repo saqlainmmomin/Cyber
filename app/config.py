@@ -12,6 +12,7 @@ _DEFAULT_AUDITOR_PASSWORD = "admin"
 
 
 class Settings(BaseSettings):
+    env: str = "development"
     database_url: str = "sqlite:///data/dpdpa.db"
     upload_dir: str = "uploads"
     # Safety bound for pathological files at extraction, not an analysis cap;
