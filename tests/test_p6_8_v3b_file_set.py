@@ -5,6 +5,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_APP_PREFIXES  # noqa: E402
+from tests.v3c_paths import V3C_PRIOR_DOMAINS_PATHS  # noqa: E402
 from tests.yozora_paths import YOZORA_EXCLUDES  # noqa: E402  # Yozora per-PR allowance
 V3B_OTHER = (
     "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/golden/p6_8_v3_deck_document.json",
@@ -39,5 +40,6 @@ def test_v3b_changes_stay_in_the_v3b_file_set():
         f for f in committed
         if f not in V3B_APP_PATHS and f not in V3B_OTHER and not f.startswith(V3B_APP_PREFIXES)
         and f not in own_tests and f not in V3B_EXISTING_TEST_EDITS
+        and f not in V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
     ]
     assert offenders == [], offenders
