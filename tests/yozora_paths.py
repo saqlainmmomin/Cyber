@@ -177,6 +177,13 @@ YOZORA_S5_PATHS = (
     "tests/test_p6_8_v3a_data_capture.py",
     "tests/test_p6_9_file_set.py",
     "tests/test_yozora_s5.py",
+    "app/templates/pages/design_assessment_preview.html",
+    "app/templates/partials/analysis_complete.html",
+    "app/templates/partials/analysis_error.html",
+    "app/templates/partials/desk_review_prefilling.html",
+    "app/templates/partials/framework_hub_panel.html",
+    "tests/test_p5_3_framework_desk_review.py",
+    "tests/test_picker_and_scoring_contract.py",
     "tests/yozora_paths.py",
 )
 
