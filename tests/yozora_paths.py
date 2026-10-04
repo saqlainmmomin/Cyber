@@ -149,6 +149,9 @@ YOZORA_DESIGN_FILES = (
     "docs/product/yozora-design-system.md",
     "docs/product/2026-10-01-app-design-mockups",
     "tasks/handoffs/2026-10-01-yozora-s1-handoff.md",
+    # Yozora per-PR allowance: S7 orchestration handoff (docs only).
+    "tasks/handoffs/2026-10-01-yozora-s7-handoff.md",
+    "tasks/handoffs/2026-10-04-yozora-s7-orchestration.md",
 )
 
 # Per-PR allowance: V3-C board deck design pass (mockup, scope, dumbbell backend handoff).
