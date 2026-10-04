@@ -1,5 +1,8 @@
-{% from "components/ui.html" import skeleton %}
+{% from "components/ui.html" import empty_state, icon, skeleton %}
 
+{% if not sections %}
+{{ empty_state("No questionnaire yet", "Sections are created from your scope. Set the scope to generate them.", "Set scope", "/assessments/" ~ assessment_id ~ "?tab=scope") }}
+{% else %}
 {% set first_incomplete = namespace(id=none) %}
 {% for section in sections %}
   {% set section_state = namespace(active=0, answered=0) %}
@@ -13,23 +16,24 @@
     {% set first_incomplete.id = section.section_id %}
   {% endif %}
 {% endfor %}
-{% set selected_section_id = first_incomplete.id or (sections[0].section_id if sections else none) %}
+{% set selected_section_id = first_incomplete.id or sections[0].section_id %}
 
+<div data-questionnaire-sections>
 {% if stats %}
-<div class="mt questionnaire-stats">
-  <p class="sub"><span data-stat-answered>{{ stats.total_questions }} questions{% if stats.get('answered_questions') is not none %}, {{ stats.answered_questions }} answered.{% endif %}
-  {% if stats.get('awaiting_confirmation', 0) > 0 %} <span data-stat-awaiting-confirmation>{{ stats.awaiting_confirmation }} pre-filled answers wait for confirmation.</span>{% endif %}
-  {% if stats.get('deepened_questions', 0) > 0 %} {{ stats.deepened_questions }} questions need deep review.{% endif %}</span></p>
-  {% if stats.get('skipped_questions', 0) > 0 %}<p class="sub">{{ stats.skipped_questions }} out of scope.</p>{% endif %}
+<div>
+  <p class="sub"><span data-stat-answered>{{ stats.total_questions }} questions{% if stats.get('answered_questions') is not none %}, {{ stats.answered_questions }} answered.{% endif %}</span>
+  {%- if stats.get('awaiting_confirmation', 0) > 0 %} <span data-stat-awaiting-confirmation>{{ stats.awaiting_confirmation }} pre-filled answers wait for your confirmation.</span>{% endif %}
+  {%- if stats.get('deepened_questions', 0) > 0 %} {{ stats.deepened_questions }} questions need deep review.{% endif %}
+  {%- if stats.get('skipped_questions', 0) > 0 %} {{ stats.skipped_questions }} out of scope.{% endif %}</p>
 </div>
 {% endif %}
 
-<div class="split questionnaire-layout">
-  <div class="glass split-list" data-section-nav>
+<div class="split{% if stats %} mt{% endif %}">
+  <div class="glass split-list" id="sections" data-section-nav>
     {% for group_name, complete in (("To answer", false), ("Complete", true)) %}
-    <div class="grp">{{ group_name }}</div>
+    {% set group = namespace(started=false) %}
     {% for section in sections %}
-    {% set ns = namespace(active=0, answered=0, deep=0, industry=section.source == 'industry') %}
+    {% set ns = namespace(active=0, answered=0, deep=0) %}
     {% for question in section.questions %}
       {% if question.get('status') != 'skipped' %}
         {% set ns.active = ns.active + 1 %}
@@ -38,15 +42,17 @@
       {% endif %}
     {% endfor %}
     {% if (ns.active > 0 and ns.answered == ns.active) == complete %}
-    <button{% if not preview_rendered %} hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
+    {% if not group.started %}<div class="grp">{{ group_name }}</div>{% set group.started = true %}{% endif %}
+    <button type="button"{% if not preview_rendered %} hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
             hx-target="#section-content"
             hx-swap="innerHTML"{% endif %}
-            class="item{% if section.section_id == selected_section_id %} sel{% endif %}"
+            class="item{% if section.section_id == selected_section_id %} sel{% endif %}{% if complete %} decided{% endif %}"
             data-section="{{ section.section_id }}"
             data-collapsible-section="{{ section.section_id }}"
             onclick="this.closest('[data-section-nav]').querySelectorAll('[data-section]').forEach((section) => section.classList.remove('sel')); this.classList.add('sel');">
       <span class="txt"><b>{{ section.section_title }}</b><span>{{ ns.answered }} of {{ ns.active }} answered{% if ns.deep > 0 %} · {{ ns.deep }} deep review{% endif %}</span></span>
-      {% if ns.industry %}<span class="chip">Industry</span>{% endif %}
+      {% if section.source == 'industry' %}<span class="chip">Industry</span>{% endif %}
+      {% if complete %}{{ icon("check") }}{% endif %}
     </button>
     {% endif %}
     {% endfor %}
@@ -54,11 +60,13 @@
   </div>
 
   <div class="solid split-pane" id="section-content"
-       {% if sections and not preview_rendered %}hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ selected_section_id }}" hx-trigger="load" hx-swap="innerHTML"{% endif %}>
-    {% if preview_rendered and selected_section_id %}
-      {% include "partials/section_questions.html" %}
+       {% if not preview_rendered %}hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ selected_section_id }}" hx-trigger="load" hx-swap="innerHTML"{% endif %}>
+    {% if preview_rendered %}
+      {% include "partials/section_saved.html" if state == "saved" else "partials/section_questions.html" %}
     {% else %}
-    <div class="center-block" role="status" aria-label="Loading questions">{{ skeleton("50%") }}{{ skeleton("85%", margin_top="10px") }}</div>
+    <div role="status" aria-label="Loading questions"><div class="skel-stack" aria-busy="true">{{ skeleton("35%") }}{{ skeleton("90%") }}{{ skeleton("70%") }}</div><div class="mt-lg"><div class="skel-stack" aria-busy="true">{{ skeleton("85%") }}{{ skeleton("60%") }}</div></div><div class="action-row"><span></span></div></div>
     {% endif %}
   </div>
 </div>
+</div>
+{% endif %}

@@ -344,15 +344,14 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
                 findings=True,
                 document_count=5,
             )
-            _seed_questionnaire_responses(db, assessment, complete=state == "complete")
+            if state != "context":
+                _seed_questionnaire_responses(db, assessment, complete=state == "complete")
         if state == "prefilling":
             assessment.desk_review_status = "analyzing"
             _desk_summary(db, assessment, status="analyzing")
         elif state == "findings":
             assessment.desk_review_status = "completed"
             _desk_summary(db, assessment, status="completed", findings=True, document_count=5)
-        elif state == "error":
-            assessment.status = "error"
         elif state == "running":
             _seed_review_stage(db, assessment, approved=0, pending=0)
             assessment.status = "analyzing"

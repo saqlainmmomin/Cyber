@@ -895,7 +895,7 @@ def test_scenario_11_progress_and_response_count(db, http, monkeypatch):
     sections = http.get(f"/assessments/{assessment.id}/questionnaire/sections")
     assert 'data-stat-answered' in sections.text and "2 answered" in sections.text
     assert 'data-stat-awaiting-confirmation' in sections.text
-    assert "1 pre-filled answers wait for confirmation" in sections.text
+    assert "1 pre-filled answers wait for your confirmation" in sections.text
 
     dpdpa = _seed(db, ("dpdpa",))
     all_ids = [q["id"] for q in _all_questions(build_adaptive_questionnaire(dpdpa.id, db))]

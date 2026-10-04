@@ -167,7 +167,7 @@ def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
     sections = http.get("/design/pages/b3-sections")
     assert sections.status_code == 200
     assert 'id="section-content"' in sections.text
-    assert "Does every notice name each purpose in plain language?" in sections.text
+    assert "Are notices offered in the languages your data principals read?" in sections.text
     assert 'hx-get="/assessments/assessment-s5-preview/questionnaire/section/' not in sections.text
 
     desk_review = http.get("/design/pages/b4-desk_review?state=running")

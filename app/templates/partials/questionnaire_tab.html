@@ -1,54 +1,58 @@
 {% from "components/ui.html" import icon, skeleton %}
 
-{% if context_error %}
-<div class="alert c-non" role="alert">
-  {{ icon("alert") }}
-  <div><b>Context profiling failed</b>{{ context_error }}<span class="sub">The questionnaire will continue without adaptive weighting. You can submit context again from this tab.</span></div>
-</div>
-{% endif %}
-
-<div id="desk-review-area"
-     class="solid card"
-     hx-get="/assessments/{{ assessment.id }}/desk-review-status?surface=questionnaire"
-     hx-trigger="load"
-     hx-swap="innerHTML">
-  {% if preview_state == 'prefilling' %}
-  {% include "partials/desk_review_prefilling.html" %}
-  {% else %}
-  <div class="between">
-    <div>
-      <h2>Pre-fill from documents</h2>
-      <p class="sub">{{ prefill_freshness.available }} document{{ 's' if prefill_freshness.available != 1 else '' }} are ready to analyse. Answers they support will be filled with quoted passages for you to confirm.</p>
-      {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}
-      <p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since the last pre-fill.</p>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-</div>
-
-{% if not context_done %}
-<div class="solid card form-narrow">
-  <div class="between">
-    <div><h2>Context</h2><p class="sub">Tell us about the organisation's data and risk exposure. This shapes the questionnaire.</p></div>
-    {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} questions answered</span>{% endif %}
-  </div>
-  <div id="context-wizard"
-       hx-get="/assessments/{{ assessment.id }}/context/block/0"
+<div class="mt-lg stack">
+  <div id="desk-review-area"
+       class="solid card"
+       hx-get="/assessments/{{ assessment.id }}/desk-review-status?surface=questionnaire"
        hx-trigger="load"
        hx-swap="innerHTML">
-    <div class="stack center-block" role="status" aria-label="Loading context questions">
-      {{ skeleton("50%") }}
-      {{ skeleton("85%", margin_top="10px") }}
+    {% if preview_state == 'prefilling' %}
+    {% include "partials/desk_review_prefilling.html" %}
+    {% else %}
+    <div class="between">
+      <div>
+        <h2>Pre-fill from documents</h2>
+        <p class="sub">{{ prefill_freshness.available }} document{{ 's are' if prefill_freshness.available != 1 else ' is' }} ready. Answers they support are filled in with the quoted passage, for you to confirm.</p>
+        {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}
+        <p class="sub tight">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since the last pre-fill.</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if context_error %}
+  <div class="alert c-medium" role="alert" title="{{ context_error }}">
+    {{ icon("alert") }}
+    <div><b>Context profiling failed</b>The questionnaire will run without adaptive weighting. You can submit context again from this tab.</div>
+  </div>
+  {% endif %}
+
+  {% if not context_done %}
+  <div class="solid card">
+    <h2>Context</h2>
+    <p class="sub">Tell us about the organisation's data and risk exposure. This shapes the questionnaire.</p>
+    {% if response_count > 0 %}<p class="sub tight">{{ response_count }} questions answered</p>{% endif %}
+    <div id="context-wizard">
+      <div class="hrow mt-lg">
+        <button class="btn primary" type="button"
+                hx-get="/assessments/{{ assessment.id }}/context/block/0"
+                hx-target="#context-wizard"
+                hx-swap="innerHTML">Start context questions</button>
+      </div>
     </div>
   </div>
-</div>
-{% else %}
-<div class="stack">
-  {% if screening_available %}
+  {% elif screening_available %}
   <div class="solid card" id="screening-section">
     <div class="between">
-      <div><h2>Domain screening</h2><p class="sub">Optional. AI proposes answers for DPDPA requirements it is confident about, and you confirm them.</p></div>
+      <div>
+        <h2>Domain screening</h2>
+        {% if screening_done %}
+        <p class="sub">Complete. High-confidence answers are pre-filled and marked Inferred. Each counts once you save its section.</p>
+        {% else %}
+        <p class="sub">Optional. AI proposes answers for DPDPA requirements it is confident about, and you confirm them.</p>
+        {% endif %}
+      </div>
       {% if screening_done %}<span class="pill c-ok">Complete</span>{% else %}
       <button class="btn secondary" type="button"
               hx-get="/assessments/{{ assessment.id }}/screening"
@@ -56,54 +60,56 @@
               hx-swap="innerHTML">Start screening</button>
       {% endif %}
     </div>
-    <div id="screening-body">
-      {% if screening_done %}
-      <p class="sub" style="margin-top:var(--s-4)">High-confidence answers are pre-filled and marked Inferred. Each counts once you save its section.</p>
-      {% else %}
-      <p class="sub" style="margin-top:var(--s-4)">Answer domain-level questions and confirm the proposed answers in the questionnaire below.</p>
-      {% endif %}
-    </div>
+    <div id="screening-body"></div>
   </div>
   {% else %}
-  <p data-screening-unavailable class="sub">{{ screening_unavailable_message }}</p>
+  <div class="solid card" data-screening-unavailable>
+    <h2>Domain screening</h2>
+    <p class="sub">{{ screening_unavailable_message }}</p>
+  </div>
   {% endif %}
+</div>
 
-  <div class="solid card" data-shortcut-scope="questionnaire">
-    <div class="between">
-      <div><h2>Questionnaire</h2><p class="sub">Complete each section. Pre-filled answers remain waiting for your confirmation until you save.</p></div>
-      {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} questions answered</span>{% endif %}
-    </div>
-    <div id="questionnaire-content"
-         hx-get="/assessments/{{ assessment.id }}/questionnaire/sections"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-      <div class="stack center-block" role="status" aria-label="Loading questionnaire">
-        {{ skeleton("50%") }}
-        {{ skeleton("85%", margin_top="10px") }}
-      </div>
+{% if context_done %}
+<div class="mt-lg" data-shortcut-scope="questionnaire">
+  <div id="questionnaire-content"
+       hx-get="/assessments/{{ assessment.id }}/questionnaire/sections"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div class="split" role="status" aria-label="Loading questionnaire">
+      <div class="glass split-list"><div class="skel-stack" aria-busy="true">{{ skeleton("60%") }}{{ skeleton("80%") }}{{ skeleton("70%") }}{{ skeleton("75%") }}{{ skeleton("55%") }}</div></div>
+      <div class="solid split-pane"><div class="skel-stack" aria-busy="true">{{ skeleton("35%") }}{{ skeleton("90%") }}{{ skeleton("70%") }}</div><div class="mt-lg"><div class="skel-stack" aria-busy="true">{{ skeleton("85%") }}{{ skeleton("60%") }}</div></div><div class="action-row"><span></span></div></div>
     </div>
   </div>
+</div>
 
-  <div class="solid card">
-    <div id="analysis-area">
-      {% if preview_state == 'running' %}
-        {% include "partials/analysis_running.html" %}
-      {% elif assessment.status == 'completed' and report %}
-        {% include "partials/analysis_complete.html" %}
-      {% elif assessment.status == 'analyzing' %}
-        {% include "partials/analysis_running.html" %}
-      {% elif assessment.status == 'error' %}
-        {% include "partials/analysis_error.html" %}
-      {% else %}
-      <div class="between">
-        <div><h2>Analysis</h2><p class="sub">Run analysis once the questionnaire is complete. Results appear in the Review tab.</p></div>
-        <button class="btn {{ 'primary' if assessment.desk_review_status == 'completed' else 'secondary' }}" type="button"
-                hx-post="/assessments/{{ assessment.id }}/run-analysis"
-                hx-target="#analysis-area"
-                hx-swap="innerHTML">Run analysis</button>
+<div class="solid card mt-lg">
+  <div id="analysis-area">
+    {% if preview_state == 'running' %}
+      {% include "partials/analysis_running.html" %}
+    {% elif assessment.status == 'completed' and report %}
+      {% include "partials/analysis_complete.html" %}
+    {% elif assessment.status == 'analyzing' %}
+      {% include "partials/analysis_running.html" %}
+    {% elif assessment.status == 'error' %}
+      {% include "partials/analysis_error.html" %}
+    {% else %}
+    {% set prefill_first = assessment.desk_review_status != 'completed' and prefill_freshness.available %}
+    <div class="between">
+      <div>
+        <h2>Analysis</h2>
+        {% if prefill_first %}
+        <p class="sub">Pre-fill first, so the analysis can cite your documents. Results appear in the Review tab.</p>
+        {% else %}
+        <p class="sub">{{ response_count }} questions answered. Evidence items received: {{ analysable_document_count }}. Results appear in the Review tab.</p>
+        {% endif %}
       </div>
-      {% endif %}
+      <button class="btn {{ 'secondary' if prefill_first else 'primary' }}" type="button"
+              hx-post="/assessments/{{ assessment.id }}/run-analysis"
+              hx-target="#analysis-area"
+              hx-swap="innerHTML">Run analysis</button>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endif %}

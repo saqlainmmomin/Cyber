@@ -39,10 +39,69 @@ S5_PREVIEW_STATES = {
     "b3-context-complete": ("default",),
     "b3-question-step": ("org", "data", "data-yes", "last"),
     "b3-followups": ("loaded",),
-    "b3-sections": ("default", "saved"),
+    "b3-sections": ("default", "saved", "empty"),
     "b3-section-questions": ("default",),
     "b4-desk_review": ("ready", "running", "findings", "error"),
 }
+
+
+# s5-quest: questionnaire sections fixture (b3-sections, b3-section-questions previews).
+def _s5_questionnaire_fixture(screen: str, state: str) -> dict:
+    def filler(prefix: str, count: int, **extra) -> list[dict]:
+        return [
+            {"id": f"{prefix}.{index}", "question": f"{prefix} question {index}", "status": "active", "tier": "standard", "source": "base", **extra}
+            for index in range(1, count + 1)
+        ]
+
+    notice = [
+        {"id": "CH2.NOTICE.1", "question": "Does every consent request name each purpose in plain language?", "status": "active", "tier": "deep",
+         "criticality": "critical", "source": "base", "guidance": "Check sign-up, checkout and marketing preferences.",
+         "desk_review_evidence": [{"content": "Purposes are listed in the privacy notice.", "source_quote": "We use your personal data to provide the ledger service, prevent fraud and send service notices. Marketing messages are sent only if you opt in.", "source_location": "privacy_notice_v3.2.pdf, page 4"}]},
+        {"id": "CH2.CONSENT.1", "question": "Can a data principal withdraw consent as easily as they gave it?", "status": "pre_filled", "tier": "standard",
+         "criticality": "high", "source": "base", "pre_fill_source": "document", "pre_fill_answer": "partially_implemented", "pre_fill_confidence": "medium",
+         "pre_fill_evidence_summary": "Withdrawal requests are accepted by email to privacy@meridianledger.example and processed by the support team. No in-app control is described.",
+         "desk_review_evidence": [{"content": "Withdrawal is handled by email.", "source_quote": "processed by the support team", "source_location": "consent_policy.docx, page 2"}]},
+        {"id": "CH2.CONSENT.2", "question": "Is each consent stored with a timestamp and the notice version?", "status": "pre_filled", "tier": "standard",
+         "criticality": "medium", "source": "base", "pre_fill_source": "inferred", "pre_fill_answer": "fully_implemented", "pre_fill_confidence": "high"},
+        {"id": "CH2.CHILD.1", "question": "Is verifiable parental consent obtained before processing a child's data?", "status": "skipped", "tier": "skip", "source": "base",
+         "skip_reason": "Out of scope. The scope records no processing of children's data.",
+         "desk_review_evidence": [{"content": "All users are adults.", "source_quote": "Age at sign-up: 18 or over, verified at onboarding.", "source_location": "data_inventory.xlsx, page Sheet 2"}]},
+        {"id": "CH2.NOTICE.2", "question": "Are notices offered in the languages your data principals read?", "status": "active", "tier": "standard",
+         "criticality": "medium", "source": "base", "guidance": "Count the languages used in your apps and customer support."},
+        {"id": "CH2.CONSENT.3", "question": "Which processors receive consent records?", "status": "deepened", "tier": "standard", "criticality": "medium", "source": "base",
+         "desk_review_note": "Your earlier answer conflicts with the vendor list, which names two processors that hold consent records."},
+    ]
+    if screen == "b3-sections":
+        # The sections mockup shows three cards of this section, in this order.
+        notice = [notice[4], notice[1], notice[2]]
+    sections = [
+        {"section_id": "notice", "section_title": "Notice and consent", "chapter_title": "Obligations of the data fiduciary", "source": "base", "questions": notice},
+        {"section_id": "rights", "section_title": "Data principal rights", "chapter_title": "Rights and duties of the data principal", "source": "base", "questions": filler("RIGHTS", 8)},
+        {"section_id": "access", "section_title": "Access control", "chapter_title": "Technical safeguards", "source": "base", "questions": filler("ACCESS", 9) + filler("ACCESS.DEEP", 1, tier="deep")},
+        {"section_id": "industry.payments", "section_title": "Payments and lending", "chapter_title": "Industry-specific", "source": "industry", "questions": filler("PAY", 7, source="industry")},
+        {"section_id": "safeguards", "section_title": "Security safeguards", "chapter_title": "Technical safeguards", "source": "base", "questions": filler("SAFE", 9)},
+        {"section_id": "policy", "section_title": "Information security policy", "chapter_title": "Governance", "source": "base", "questions": filler("POLICY", 5)},
+    ]
+    existing = {
+        "CH2.CONSENT.1": {"answer": "partially_implemented"},
+        "CH2.CONSENT.2": {"answer": "fully_implemented"},
+        "CH2.CONSENT.3": {"answer": "partially_implemented"},
+    }
+    for prefix, count in (("ACCESS", 3), ("SAFE", 9), ("POLICY", 5)):
+        existing.update({f"{prefix}.{index}": {"answer": "fully_implemented"} for index in range(1, count + 1)})
+    if state == "empty":
+        sections = []
+    selected = sections[0] if sections else {"section_id": None, "section_title": "", "chapter_title": "", "questions": []}
+    return {
+        "sections": sections,
+        "existing": existing,
+        "stats": {"total_questions": 42, "answered_questions": 18, "awaiting_confirmation": 6, "deepened_questions": 5},
+        "selected_section_id": selected["section_id"],
+        "section_id": selected["section_id"],
+        "section_title": selected["section_title"],
+        "chapter_title": selected["chapter_title"],
+        "questions": selected["questions"],
+    }
 
 
 def _s5_preview(request: Request, screen: str) -> Response:
@@ -165,6 +224,8 @@ def _s5_preview(request: Request, screen: str) -> Response:
         "total_findings": 3,
         "questionnaire_surface": False,
     })
+    if screen in {"b3-sections", "b3-section-questions"}:
+        common.update(_s5_questionnaire_fixture(screen, state))
     return templates.TemplateResponse("pages/design_assessment_preview.html", common)
 
 
