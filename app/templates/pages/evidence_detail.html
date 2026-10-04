@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/ui.html" import icon, button, chip, status, alert, empty_state %}
+{% from "components/layout.html" import engagement_tabs %}
 {% macro evidence_dot(state) -%}
 {% if state == "quarantined" %}{{ status(EVIDENCE_STATUS_LABELS[state], "in_progress") }}
 {%- elif state in EVIDENCE_STATUS_LABELS %}{{ status(EVIDENCE_STATUS_LABELS[state], tone="ok" if state == "active" else "medium" if state == "invalidated" else "non") }}
@@ -23,7 +24,7 @@
     {% endif %}
   </div>
 </div>
-{% set engagement_base = "/engagements/" ~ engagement.id %}<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ engagement_base }}">Overview</a><a href="{{ engagement_base }}/evidence" aria-selected="true">Evidence</a><a href="{{ engagement_base }}/remediation">Findings and actions</a><a href="{{ engagement_base }}/integrated-reports">Reports</a></nav>
+<div class="page-tabs">{{ engagement_tabs(engagement, "evidence") }}</div>
 <div id="detail-action-status" aria-live="polite"></div>
 
 <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-bottom:var(--s-5)" data-evidence-status><span>{{ evidence_dot(evidence.status) }}</span><span class="sub">Source: {{ source_label }}{% if uploader_name %} by {{ uploader_name }}{% endif %}</span>{% if originating_assessment %}{{ chip(originating_assessment.display_name) }}{% endif %}</div>

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/ui.html" import code_block, icon %}
+{% from "components/layout.html" import engagement_tabs %}
 {% block title %}AWS evidence — {{ engagement.name }}{% endblock %}
 
 {% block crumbs %}
@@ -10,7 +11,7 @@
 {% set period = engagement_period(engagement) %}
 {% set base = "/engagements/" ~ engagement.id %}
 <div class="page-head"><div><h1>Pull from AWS</h1><p class="meta-line">{{ client.name }} · Read-only, runs only when you pull{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div></div>
-<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}">Overview</a><a href="{{ base }}/evidence" aria-selected="true">Evidence</a><a href="{{ base }}/remediation">Findings and actions</a><a href="{{ base }}/integrated-reports">Reports</a></nav>
+<div class="page-tabs">{{ engagement_tabs(engagement, "evidence") }}</div>
 
 {% if not configured %}
 <div class="glass empty" data-aws-not-configured>{{ icon("cloud", "", "width:24px;height:24px;color:var(--muted)") }}<h3>AWS evidence is not set up</h3><p>{{ not_configured_message }}</p><a class="btn secondary" href="{{ base }}/evidence">Back to evidence</a></div>
