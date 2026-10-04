@@ -179,14 +179,18 @@ def _display_stage(db: Session, assessment_rows: list[Assessment], fallback: str
         if current.stage == "review":
             return "In review"
         if current.stage == "report":
-            return "Report draft" if current.next_label == assessment_stage.RELEASE_REPORT else "Report"
+            if current.next_label == assessment_stage.RELEASE_REPORT:
+                return "Report draft"
+            if current.next_label == assessment_stage.GENERATE_BOARD_REPORT:
+                return "Report released"
+            return "Report"
         if current.stage == "evidence":
             return "Desk review"
     return fallback
 
 
 def _portfolio_data(db: Session) -> tuple[list[Client], list[Engagement], dict[str, list[Assessment]]]:
-    clients = db.query(Client).order_by(Client.name).all()
+    clients = db.query(Client).order_by(Client.created_at, Client.id).all()
     engagements = (
         db.query(Engagement)
         .filter(Engagement.status.notin_(("closed", "archived")))
@@ -211,7 +215,11 @@ def _home_engagement_rows(
     clients_by_id: dict[str, Client],
 ) -> list[dict]:
     rows = []
+    seen_clients = set()
     for engagement in engagements:
+        if engagement.client_id in seen_clients:
+            continue
+        seen_clients.add(engagement.client_id)
         assessments = assessments_by_engagement[engagement.id]
         card = build_engagement_card(engagement, assessments)
         assessment_ids = [assessment.id for assessment in assessments]
@@ -235,7 +243,9 @@ def _home_engagement_rows(
             }
         )
         rows.append(card)
-    return sorted(rows, key=lambda row: row["last_activity"], reverse=True)
+    # The home table is a compact recent-work queue; the full client portfolio
+    # remains available from Clients and each client detail page.
+    return rows[:3]
 
 
 def _home_attention_rows(
@@ -254,7 +264,7 @@ def _home_attention_rows(
         )
         for assessment in assessments:
             current = assessment_stage.stage(db, assessment)
-            badges = framework_badges(assessment.frameworks)
+            badges = framework_badges(assessment.frameworks, compact=True)
             frameworks = ", ".join(badge["name"] for badge in badges)
             if current.stage == "review":
                 label = current.next_label or "Review"
@@ -267,6 +277,8 @@ def _home_attention_rows(
                         "href": current.next_href,
                         "icon_id": "check",
                         "accent": True,
+                        "action_variant": "primary",
+                        "priority": 1,
                     }
                 )
             elif current.stage == "report" and current.next_label:
@@ -277,20 +289,29 @@ def _home_attention_rows(
                         "action_label": "Open",
                         "href": current.next_href,
                         "icon_id": "report",
+                        "priority": 2,
                     }
                 )
             summary = request_summary.assessment_summary(db, assessment)
             if summary.items is not None and summary.received < summary.items:
+                expiry = (
+                    f", link expires {summary.expires_at.strftime('%d %b').lstrip('0').replace(' 0', ' ')}"
+                    if summary.expires_at is not None
+                    else ""
+                )
                 rows.append(
                     {
                         "title": "Waiting on client evidence",
-                        "body": f"{client.name} · {summary.received} of {summary.items} files received",
+                        "body": f"{client.name} · {summary.received} of {summary.items} files received{expiry}",
                         "action_label": "View link",
                         "href": f"/engagements/{engagement.id}",
                         "icon_id": "link",
+                        "action_icon_id": "link",
+                        "action_lead": True,
+                        "priority": 3,
                     }
                 )
-    return rows
+    return sorted(rows, key=lambda row: row.get("priority", 99))
 
 
 # --- Dashboard ---
@@ -309,6 +330,17 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     state = requested_state if requested_state in {"clear", "empty", "loading", "error"} else ""
     if not state:
         state = "empty" if not clients else "default"
+    legacy_engagements = []
+    for engagement in engagements:
+        card = build_engagement_card(engagement, assessments_by_engagement[engagement.id])
+        legacy_engagements.append(
+            {
+                "name": engagement.name,
+                "status_label": card["derived_status_label"],
+                "progress_pct": card["progress_pct"],
+                "href": f"/engagements/{engagement.id}",
+            }
+        )
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {
@@ -316,6 +348,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "attention_rows": _home_attention_rows(db, engagements, assessments_by_engagement, clients_by_id),
             "engagement_rows": _home_engagement_rows(db, engagements, assessments_by_engagement, clients_by_id),
             "legacy_client_ids": [client.id for client in clients],
+            "legacy_engagements": legacy_engagements,
             "total_client_count": len(clients),
             "total_engagement_count": len(engagements),
             "unmigrated_count": unmigrated_count,
@@ -365,7 +398,7 @@ def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
         card["stage_label"] = _display_stage(db, assessments_for_engagement, card["derived_status_label"])
         card["href"] = f"/engagements/{engagement.id}"
         cards.append(card)
-    return sorted(cards, key=lambda card: card["last_activity"], reverse=True)
+    return cards
 
 
 @router.get("/clients", response_class=HTMLResponse)
@@ -383,7 +416,39 @@ def clients_page(
         engagements_by_client[engagement.client_id].append(
             build_engagement_card(engagement, assessments_by_engagement[engagement.id])
         )
-    cards = [build_client_card(client, engagements_by_client[client.id]) for client in clients]
+    # The list count includes closed/archived engagements, while the active
+    # cards remain the only rows offered on the client detail page.
+    all_engagements = (
+        db.query(Engagement)
+        .filter(Engagement.status != "archived")
+        .order_by(Engagement.created_at, Engagement.id)
+        .all()
+    )
+    active_cards = {
+        card["id"]: card
+        for rows in engagements_by_client.values()
+        for card in rows
+    }
+    all_cards_by_client = defaultdict(list)
+    for engagement in all_engagements:
+        card = active_cards.get(engagement.id)
+        if card is None:
+            card = {
+                "id": engagement.id,
+                "name": engagement.name,
+                "type": engagement.type,
+                "status": engagement.status,
+                "derived_status": "empty",
+                "derived_status_label": "No assessments",
+                "progress_pct": 0,
+                "assessment_count": 0,
+                "framework_ids": [],
+                "framework_badges": [],
+                "last_activity": engagement.updated_at,
+                "href": f"/engagements/{engagement.id}",
+            }
+        all_cards_by_client[engagement.client_id].append(card)
+    cards = [build_client_card(client, all_cards_by_client[client.id]) for client in clients]
     search = q.strip().casefold()
     filtered = [
         card
@@ -403,6 +468,14 @@ def clients_page(
             "industries": sorted({client.industry for client in clients if client.industry}),
             "search": q,
             "industry": industry,
+            "industry_labels": {
+                "fintech": "Fintech",
+                "it_services": "IT services",
+                "e_commerce": "E-commerce",
+                "healthcare": "Healthcare",
+                "education": "Education",
+            },
+            "size_labels": {"sme": "SME", "startup": "Startup", "large": "Large"},
             "view_state": state,
         },
     )
@@ -432,6 +505,14 @@ def client_detail(
             ),
             "retention_view": retention_view,
             "view_state": request.query_params.get("state", "") or ("empty" if not engagements else "default"),
+            "industry_labels": {
+                "fintech": "Fintech",
+                "it_services": "IT services",
+                "e_commerce": "E-commerce",
+                "healthcare": "Healthcare",
+                "education": "Education",
+            },
+            "size_labels": {"sme": "SME", "startup": "Startup", "large": "Large"},
         },
     )
 

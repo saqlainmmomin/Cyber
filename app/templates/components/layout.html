@@ -47,7 +47,7 @@
 {%- endmacro %}
 
 {% macro rows_list(items) -%}
-<div class="glass rows">{% for item in items %}<div><span class="ico{% if item.accent %} accent{% endif %}">{% if item.icon_id %}{{ icon(item.icon_id) }}{% endif %}</span><span class="txt"><b>{{ item.title }}</b>{% if item.body %}<span class="sub">{{ item.body }}</span>{% endif %}</span>{% if item.action_label %}{{ link_button(item.action_label, item.href, "secondary", "sm") }}{% endif %}</div>{% endfor %}</div>
+<div class="glass rows">{% for item in items %}<div><span class="ico{% if item.accent %} accent{% endif %}">{% if item.icon_id %}{{ icon(item.icon_id) }}{% endif %}</span><span class="txt"><b>{{ item.title }}</b>{% if item.body %}<span class="sub">{{ item.body }}</span>{% endif %}</span>{% if item.action_label %}{{ link_button(item.action_label, item.href, item.action_variant if item.action_variant is defined else "secondary", item.action_size if item.action_size is defined else "sm", item.action_icon_id if item.action_icon_id is defined else "", item.action_lead if item.action_lead is defined else false) }}{% endif %}</div>{% endfor %}</div>
 {%- endmacro %}
 
 {% macro line_list(items) -%}
@@ -91,5 +91,5 @@
 {% macro popover(trigger, title, body, open=false) -%}<span class="anchor"><button class="btn secondary" type="button">{{ trigger }}</button><span class="menu{% if open %} open{% endif %}"><span class="pop-body"><h3>{{ title }}</h3><p>{{ body }}</p></span></span></span>{%- endmacro %}
 
 {% macro login_shell(firm_name, body="", error="") -%}
-<div class="login"><div class="firm"><span class="mark">{{ icon("mark") }}</span><h1>{{ firm_name }}</h1><p class="sub">Compliance workspace</p></div><div class="box solid">{% if error %}<div class="alert c-non">{{ icon("alert") }}<div>{{ error }}</div></div>{% endif %}{% if caller is defined %}{{ caller() }}{% else %}{{ body }}{% endif %}</div></div>
+<div class="login"><div class="glass box"><div class="firm"><span class="mark">NA</span><h1>{{ firm_name }}</h1></div>{% if error %}<div class="alert c-non">{{ icon("alert") }}<div>{{ error }}</div></div>{% endif %}{% if caller is defined %}{{ caller() }}{% else %}{{ body }}{% endif %}</div><p class="foot-note">Powered by Yozora</p></div>
 {%- endmacro %}

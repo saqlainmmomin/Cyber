@@ -1,17 +1,16 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import login_shell %}
-{% from "components/ui.html" import alert, field, icon, button %}
+{% from "components/ui.html" import alert, button %}
 
 {% block title %}Sign in{% endblock %}
 {% block body %}
 <div class="state-bar">Preview · {{ preview_state }}</div>
 {% call login_shell(branding.firm_name) %}
-  {% if preview_state == "error" %}{{ alert("Sign-in failed", "Check your username and password and try again.", "noncompliant") }}{% endif %}
+  {% if preview_state == "error" %}{{ alert("Sign-in failed", "The username or password is incorrect. Try again.", "noncompliant", "alert", "", "margin-bottom:var(--s-4)") }}{% endif %}
   <form method="post" action="/login">
-    {{ field("Username", "username", required=true, input_type="text") }}
-    {{ field("Password", "password", required=true, input_type="password") }}
-    {% if preview_state != "loading" %}{{ button("Sign in", "primary", button_type="submit", style="width:100%") }}{% endif %}
+    <div><label class="label" for="username">Username</label><label class="field{% if preview_state == 'error' %} invalid{% endif %}"><input id="username" name="username" autocomplete="username" value="{{ 'priya.sharma' if preview_state in ['error', 'loading'] else '' }}"></label></div>
+    <div><label class="label" for="password">Password</label><label class="field{% if preview_state == 'error' %} invalid{% endif %}"><input id="password" name="password" type="password" autocomplete="current-password" value="{{ 'password' if preview_state in ['error', 'loading'] else '' }}"></label></div>
+    {% if preview_state != "loading" %}{{ button("Sign in", "primary", button_type="submit") }}{% endif %}
   </form>
 {% endcall %}
-<footer class="login-foot">Powered by Yozora</footer>
 {% endblock %}

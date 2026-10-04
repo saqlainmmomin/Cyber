@@ -2,10 +2,12 @@
 
 from collections.abc import Callable
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
+from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.database import get_db
 from app.routers.web import templates
 
 router = APIRouter(tags=["design"])
@@ -47,7 +49,7 @@ def design_gallery(request: Request) -> Response:
 
 
 @router.get("/design/pages/{name}", response_class=HTMLResponse, include_in_schema=False)
-def design_preview(request: Request, name: str) -> Response:
+def design_preview(request: Request, name: str, db: Session = Depends(get_db)) -> Response:
     _debug_only()
     preview = PREVIEW_PAGES.get(name)
     if preview is None:

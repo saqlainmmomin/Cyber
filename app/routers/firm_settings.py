@@ -81,6 +81,12 @@ def _render(
             "retention_range": firm_settings.RETENTION_YEARS_RANGE,
             "unmigrated_assessments": [] if preview_state == "nodata" else unmigrated_assessments(db),
             "preview_state": preview_state,
+            "logo_filename": "northgate-logo.png" if current.contact_email == "engagements@northgate.example" else "No logo uploaded",
+            "contrast_error": (
+                "White text on this colour has a contrast of 1.5 to 1. It needs at least 4.5 to 1. Pick a darker colour."
+                if preview_state == "contrast" and errors and "accent_custom_hex" in errors
+                else None
+            ),
         },
         status_code=status_code,
     )

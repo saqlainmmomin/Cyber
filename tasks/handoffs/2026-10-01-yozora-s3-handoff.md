@@ -142,7 +142,7 @@ Many tests are scope guards: they diff the branch against `main` and fail when a
 
 ## Screenshot gate
 
-Use the harness from S1 (`design/harness/README.md`). Render each screen listed above in every state, light and dark, at 1440 and 1024, and 390 for sign-in. Baselines are the approved mockups rendered at the same viewport with `?state=<name>` and `?dark`, saved as `design/baselines/<screen>-<state>-<theme>-<width>.png` (S1 defines the exact naming; include the state in the name when the screen has several). Candidates use seeded demo data (the fictional Meridian Ledger Technologies, Loomwire Labs and Kestrel Advisory companies from the mockups) with the clock frozen and fonts vendored.
+Use the harness from S1 (`design/harness/README.md`). Render each screen listed above in every state, light and dark, at 1440 and 1024, and 390 for sign-in. Baselines are the approved mockups rendered at the same viewport with `?state=<name>` and `?dark`, saved as `design/baselines/<screen>-<state>-<theme>-<width>.png` (S1 defines the exact naming; include the state in the name when the screen has several). Candidates use seeded demo data (the fictional Meridian Ledger Technologies, Loomwire Labs Inc., Orchard Lane Retail, Kestrel Health Partners, and Brightfold Learning companies from the mockups) with the clock frozen and fonts vendored.
 
 Thresholds from the fidelity gate: colour tolerance 0.1 (pixelmatch); fail above **0.4%** differing pixels on app screens and **0.2%** on `/design`; fail on any single changed region over 40x40 px regardless of the total. Mask dynamic regions with `data-visual-mask`. Loosening a threshold needs a written reason in the PR.
 
@@ -192,19 +192,19 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ### Deterministic seed and state production
 
-`design/harness/seed_s3.py --db PATH` creates a fresh SQLite database with frozen time `2026-10-03T12:00:00+00:00`, Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory. It refuses to overwrite an existing path; `--empty` creates the empty-client fixture. Meridian has a real assessment in `review` with three pending conclusions, Loomwire has a scoped NIST engagement, and Kestrel is available for the client-detail empty state.
+`design/harness/seed_s3.py --db PATH` creates a fresh SQLite database with frozen time `2026-10-03T12:00:00+00:00`. It refuses to overwrite an existing path; `--empty` creates the empty-client fixture. The full fixture stores the approved mockup data: Meridian Ledger Technologies (Fintech, SME), Loomwire Labs Inc. (IT services, Startup), Orchard Lane Retail (E-commerce, Large), Kestrel Health Partners (Healthcare, Large), and Brightfold Learning (Education, SME), with the mockup activity dates and settings firm Northgate Advisory. It also stores the archived/purge history, client evidence link, and three unmigrated assessments used by Settings.
 
 | Screen | States and how they are produced |
 |---|---|
-| Home | Default: seeded DB at `/`; clear/loading/error: `/?state=clear|loading|error`; empty: `--empty` DB at `/`. |
-| Clients | Default: `/clients`; no-results: `/clients?search=Harbour`; loading/error/picker: `/clients?state=loading|error|picker`; empty: `--empty` DB. |
-| Client detail | Default: Meridian client id returned by the seed script; empty: Kestrel client id; loading: the same client with `?state=loading`. |
-| Settings | Default `/settings`; contrast `/settings?state=contrast` runs the existing service validator against `#F2D14B`; saved `/settings?state=saved`; no-data `/settings?state=nodata`. |
-| Sign-in | `/design/pages/login?state=default|error|loading`; `/login` redirect behavior is unchanged. |
+| Home | Full DB at app port 8792: `/` default and `/?state=clear|loading|error`; empty DB at port 8793: `/`. |
+| Clients | Full DB at port 8792: `/clients`, `/clients?search=Harbour`, and `?state=loading|error|picker`; empty DB at port 8793: `/clients`. |
+| Client detail | Full DB at port 8792: Meridian's seeded client id for default/loading; empty DB at port 8793: Kestrel Health Partners' seeded client id for empty. |
+| Settings | Full DB at port 8792: `/settings`, `?state=contrast`, `?state=saved`, and `?state=nodata`; the state query only selects the mockup state, while the stored Northgate fixture supplies the visible values. |
+| Sign-in | Full DB at port 8792: `/design/pages/login?state=default|error|loading`; `/login` redirect behavior is unchanged. Mockups are served at port 8791. |
 
 ### Screenshot gate
 
-The orchestrator owns the server/browser run and pixel gate. Per the addendum, no server, browser, or pixel candidate was run in this environment; differing-pixel percentages are therefore `N/A` for every screen/state. The shell clip now ends at the live Review row for the new Clients/Review navigation rows.
+Attempted in this environment, but no gate percentages were obtained. The mockup and app server binds on ports 8791/8792/8793 were denied with `operation not permitted`, and the fallback Chromium launch was denied with `MachPort Permission denied (1100)`. Therefore `domcmp.py` and `gate2.py` are `N/A` for every screen/state/theme/width; the orchestrator must rerun the browser gate. The source fixes were derived from the mockup HTML/CSS and the supplied domcmp findings.
 
 ### Tests and compatibility updates
 
@@ -215,9 +215,9 @@ The orchestrator owns the server/browser run and pixel gate. Per the addendum, n
 
 ### Verification
 
-- Focused S3/portfolio/settings suite: `46 passed`.
-- Design, shell, harness, and read-model checks: `29 passed`.
-- Full suite: `1385 passed, 30 skipped, 335 warnings in 190.26s (0:03:10)`.
+- Focused S3/portfolio/settings suite after the visual repair: `43 passed`.
+- Compatibility smoke covering the dashboard, white-label branding, and S3 routes: `26 passed`.
+- Full suite with `OPENROUTER_KEY=""`: `1385 passed, 30 skipped, 335 warnings in 198.84s (0:03:18)`.
 - `design/tokens_tool.py check`: generated design files match `tokens.json`.
 - `python -m compileall` passed for app, tests, and the seed script.
 

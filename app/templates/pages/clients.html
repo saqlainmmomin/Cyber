@@ -1,38 +1,40 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import page_header %}
-{% from "components/ui.html" import alert, empty_state, icon, link_button, skeleton %}
+{% from "components/ui.html" import alert, button, empty_state, icon, link_button, skeleton %}
 
 {% block title %}Clients{% endblock %}
 {% block content %}
-{{ page_header("Clients", actions=[{"label": "New engagement", "href": "/engagements/new", "variant": "secondary" if view_state in ["empty", "noresults", "picker"] else "primary", "icon_id": "plus", "lead": true}]) }}
+{{ page_header("Clients", actions=[{"label": "New engagement", "href": "/engagements/new", "variant": "secondary" if view_state in ["empty", "error", "picker"] else "primary", "icon_id": "plus", "lead": true}]) }}
 {% if view_state == "loading" %}
-  <div class="solid"><table aria-busy="true"><tbody>{% for _ in range(5) %}<tr><td>{{ skeleton("40%") }}</td><td>{{ skeleton("20%") }}</td><td>{{ skeleton("16%") }}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="tools keep-row"><label class="field">{{ icon("search") }}<input placeholder="Search clients" aria-label="Search clients"></label><label class="field sel"><select aria-label="Industry"><option>All industries</option>{% for option in industries %}<option>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label></div>
+  <div class="solid card" aria-busy="true">{{ skeleton("45%") }}{{ skeleton("90%", margin_top="14px") }}{{ skeleton("75%", margin_top="14px") }}{{ skeleton("85%", margin_top="14px") }}</div>
 {% elif view_state == "error" %}
-  {{ alert("Your clients did not load", "Try again.", "noncompliant") }}
+  {{ alert("Clients did not load", "Check your connection, then try again.", "noncompliant") }}
+  <div style="margin-top:var(--s-4)">{{ button("Try again", "primary") }}</div>
 {% elif view_state == "empty" %}
-  {{ empty_state("No clients yet", "Create an engagement to add your first client.", "New engagement", "/engagements/new", "building", true) }}
+  {{ empty_state("No clients yet", "Clients are added when you start an engagement.", "New engagement", "/engagements/new", "building") }}
 {% else %}
   <form class="tools keep-row" method="get" action="/clients">
     <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search clients" aria-label="Search clients"></label>
-    <label class="field sel"><select name="industry" aria-label="Industry"><option value="">All industries</option>{% for option in industries %}<option value="{{ option }}"{% if option == industry %} selected{% endif %}>{{ option|replace("_", " ")|title }}</option>{% endfor %}</select></label>
+    {% if view_state != "noresults" %}<label class="field sel"><select name="industry" aria-label="Industry"><option value="">All industries</option>{% for option in industries %}<option value="{{ option }}"{% if option == industry %} selected{% endif %}>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label>{% endif %}
   </form>
   {% if view_state == "noresults" %}
-    <div class="glass empty">{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No clients match &quot;{{ search }}&quot;</h3><p>Try a different search.</p>{{ link_button("Clear search", "/clients", "primary") }}</div>
+    <div class="glass empty">{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No clients match &quot;{{ search }}&quot;</h3><p>Check the spelling or clear the search.</p>{{ button("Clear search", "secondary") }}</div>
   {% else %}
     <div class="solid"><table>
-      <thead><tr><th>Client</th><th>Industry</th><th>Size</th><th class="n">Engagements</th><th>Last activity</th><th></th></tr></thead>
+      <thead><tr><th>Client</th><th class="hide-sm">Industry</th><th class="hide-sm">Size</th><th class="n">Engagements</th><th class="n hide-sm">Last activity</th><th class="hide-sm"></th></tr></thead>
       <tbody>{% for client in clients %}
-        <tr data-href="/clients/{{ client.id }}"><td class="t-title"><a href="/clients/{{ client.id }}">{{ client.name }}</a></td><td>{{ client.industry|replace("_", " ")|title }}</td><td>{{ client.size|title }}</td><td class="n num">{{ client.engagement_count }}</td><td>{{ client.last_activity.strftime("%d %b %Y") }}</td><td class="end"><a href="/clients/{{ client.id }}" aria-label="Open {{ client.name }}">{{ icon("chev-r") }}</a></td></tr>
+        <tr data-href="/clients/{{ client.id }}"><td><a class="t-title" href="/clients/{{ client.id }}">{{ client.name }}</a></td><td class="hide-sm">{{ industry_labels.get(client.industry, client.industry) }}</td><td class="hide-sm">{{ size_labels.get(client.size, client.size) }}</td><td class="n num">{{ client.engagement_count }}</td><td class="hide-sm n num">{{ client.last_activity.strftime("%-d %b %Y") }}</td><td class="go hide-sm"><a href="/clients/{{ client.id }}" aria-label="Open {{ client.name }}">{{ icon("chev-r") }}</a></td></tr>
       {% endfor %}</tbody>
     </table></div>
   {% endif %}
 {% endif %}
 
 {% if view_state == "picker" %}
-<div class="scrim-modal"><div class="modal solid" role="dialog" aria-modal="true" aria-labelledby="new-engagement-title">
-  <div class="page-head"><div><h2 id="new-engagement-title">New engagement</h2><p class="meta-line">Choose an existing client or create one.</p></div><a class="btn ghost icon" href="/clients" aria-label="Close">×</a></div>
-  <div class="seg"><button type="button" aria-pressed="true">Existing client</button><button type="button" aria-pressed="false">New client</button></div>
-  <label class="label" for="client-picker">Client</label><label class="field"><select id="client-picker" name="client_id">{% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label>
+<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-engagement-title">
+  <h2 id="new-engagement-title">New engagement</h2>
+  <div style="margin-top:var(--s-4)"><div class="seg"><button type="button" aria-pressed="true">Existing client</button><button type="button" aria-pressed="false">New client</button></div></div>
+  <div style="margin-top:var(--s-4)"><label class="label" for="client-picker">Client</label><label class="field"><select id="client-picker" name="client_id"><option>Select a client</option>{% for client in clients %}<option{% if loop.first %} selected{% endif %} value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label></div>
   <div class="foot"><a class="btn ghost" href="/clients">Cancel</a><a class="btn primary" href="/engagements/new">Continue</a></div>
 </div></div>
 {% endif %}

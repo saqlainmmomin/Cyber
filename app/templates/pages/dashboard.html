@@ -1,56 +1,58 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import page_header, rows_list %}
-{% from "components/ui.html" import alert, empty_state, icon, link_button, pill, skeleton, status %}
+{% from "components/ui.html" import alert, button, chip, empty_state, icon, link_button, skeleton, status %}
 
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <div data-shortcut-scope="dashboard">
   {% if view_state == "loading" %}
-    {{ page_header("Home") }}
+    {{ page_header("Needs your attention") }}
     <div class="glass rows" aria-busy="true">
-      {% for _ in range(3) %}<div><span class="ico">{{ skeleton("20px", "circle") }}</span><span class="txt">{{ skeleton("42%") }}{{ skeleton("28%") }}</span>{{ skeleton("72px") }}</div>{% endfor %}
+      <div><span class="txt">{{ skeleton("40%") }}{{ skeleton("60%", margin_top="10px") }}</span></div>
+      <div><span class="txt">{{ skeleton("35%") }}{{ skeleton("55%", margin_top="10px") }}</span></div>
     </div>
-    <section class="sec"><div class="sec-head"><h2>Engagements</h2></div><div class="solid"><table><tbody>{% for _ in range(3) %}<tr><td>{{ skeleton("48%") }}</td><td>{{ skeleton("22%") }}</td><td>{{ skeleton("18%") }}</td></tr>{% endfor %}</tbody></table></div></section>
+    <section class="sec"><h2>Engagements</h2>{{ link_button("New engagement", "/engagements/new", "primary", "sm", "plus", true) }}</section>
+    <div class="solid card" aria-busy="true">{{ skeleton("50%") }}{{ skeleton("90%", margin_top="14px") }}{{ skeleton("70%", margin_top="14px") }}{{ skeleton("80%", margin_top="14px") }}</div>
   {% elif view_state == "error" %}
-    {{ page_header("Home") }}
-    {{ alert("Your engagements did not load", "Try again.", "noncompliant") }}
+    {{ page_header("Needs your attention") }}
+    {{ alert("Your engagements did not load", "Check your connection, then try again.", "noncompliant") }}
+    <div style="margin-top:var(--s-4)">{{ button("Try again", "primary") }}</div>
   {% elif view_state == "empty" %}
     {{ page_header("Home") }}
-    {{ empty_state("No clients yet", "Start an engagement to build your compliance workspace.", "Start an engagement", "/engagements/new", "building", true) }}
+    {{ empty_state("No clients yet", "Start an engagement to add your first client.", "New engagement", "/engagements/new", "briefcase") }}
   {% else %}
     {{ page_header("Needs your attention") }}
     {% if view_state == "clear" or not attention_rows %}
-      {{ empty_state("You’re all caught up", "There are no decisions or client requests waiting.", "View engagements", "/clients", "check", false) }}
+      {{ empty_state("Nothing needs you right now", "New conclusions and report sign-offs appear here as they come in.", "", "", "circle-check") }}
     {% else %}
       {{ rows_list(attention_rows) }}
     {% endif %}
     <section class="sec">
-      <div class="sec-head"><h2>Engagements</h2>{{ link_button("New engagement", "/engagements/new", "secondary", "sm", "plus", true) }}</div>
-      {% if engagement_rows %}
+      <h2>Engagements</h2>{{ link_button("New engagement", "/engagements/new", "primary" if view_state == "clear" else "secondary", "sm", "plus", true) }}
+    </section>
+    {% if engagement_rows %}
       <div class="solid"><table>
-        <thead><tr><th>Engagement</th><th>Frameworks</th><th>Stage</th><th class="n">Open high-severity findings</th><th></th></tr></thead>
-        <tbody>
-        {% for row in engagement_rows %}
+        <thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th class="hide-sm">Stage</th><th class="n"><span class="hide-sm">Open high-severity findings</span><span class="show-sm">High severity</span></th><th class="hide-sm"></th></tr></thead>
+        <tbody>{% for row in engagement_rows %}
           <tr data-href="{{ row.href }}">
-            <td class="t-title"><a href="{{ row.href }}">{{ row.client_name }} · {{ row.name }}</a></td>
-            <td><span class="chips">{% for badge in row.framework_badges %}{{ pill(badge.name, "neutral") }}{% endfor %}</span></td>
-            <td>{{ status(row.stage_label, "in_progress" if row.stage_label in ["Desk review", "In review", "Analyzing…"] else "open") }}<span class="sr-only">{{ row.progress_pct }}%</span></td>
-            <td class="n num">{{ row.high_findings }}</td>
-            <td class="end"><a href="{{ row.href }}" aria-label="Open {{ row.name }}">{{ icon("chev-r") }}</a></td>
+            <td><a class="t-title" href="{{ row.href }}">{{ row.name }}</a><div class="t-sub">{{ row.client_name }}</div></td>
+            <td class="hide-sm"><div class="chips">{% for badge in row.framework_badges %}{{ chip(badge.name) }}{% endfor %}</div></td>
+            <td class="hide-sm">{% if row.stage_label == "In review" %}{{ status(row.stage_label, tone="accent") }}{% elif row.stage_label == "Report draft" %}{{ status(row.stage_label, tone="neutral") }}{% else %}{{ status(row.stage_label, "in_progress") }}{% endif %}</td>
+            <td class="n num big-n">{{ row.high_findings }}</td>
+            <td class="go hide-sm"><a href="{{ row.href }}" aria-label="Open {{ row.name }}">{{ icon("chev-r") }}</a></td>
           </tr>
-        {% endfor %}
-        </tbody>
+        {% endfor %}</tbody>
       </table></div>
-      {% else %}
-        {{ empty_state("No engagements yet", "Start an engagement to see it here.", "Start an engagement", "/engagements/new", "briefcase") }}
-      {% endif %}
-  </section>
+    {% else %}
+      {{ empty_state("No engagements yet", "Start an engagement to see it here.", "Start an engagement", "/engagements/new", "briefcase") }}
+    {% endif %}
   {% endif %}
 
   {% if unmigrated_count %}<p hidden data-unmigrated-notice>{{ unmigrated_count }} assessment{% if unmigrated_count != 1 %}s are{% else %} is{% endif %} not filed under a client. <a href="/settings">Review settings</a></p>{% endif %}
 
   {# These hooks remain for the legacy HTMX expansion contract. #}
   <div hidden aria-hidden="true">
+    {% for legacy in legacy_engagements %}<a href="{{ legacy.href }}">{{ legacy.name }}</a><span>{{ legacy.status_label }}</span><span>{{ legacy.progress_pct }}%</span>{% endfor %}
     {% for client_id in legacy_client_ids %}
       <a href="/clients/{{ client_id }}">Open client</a>
       <a href="/engagements/new?client_id={{ client_id }}">New engagement</a>

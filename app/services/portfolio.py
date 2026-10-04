@@ -21,7 +21,7 @@ _STATUS_LABELS = {
     "completed": "Completed",
     "analyzing": "Analyzing…",
     "created": "New",
-    "scoped": "Scoped",
+    "scoped": "Scoping",
     "documents_uploaded": "Documents Uploaded",
     "context_gathered": "Context Gathered",
     "questionnaire_done": "Questionnaire Done",
@@ -62,17 +62,31 @@ def derive_last_activity(assessments, fallback: datetime) -> datetime:
     return max(assessment.updated_at for assessment in assessments)
 
 
-def framework_badges(framework_ids: Sequence[str]) -> list[dict[str, str]]:
-    """Resolve framework display metadata without requiring a registered id."""
+def framework_badges(
+    framework_ids: Sequence[str], *, compact: bool = False
+) -> list[dict[str, str]]:
+    """Resolve framework display metadata without requiring a registered id.
+
+    The legacy engagement detail uses the registered framework names, while
+    the compact portfolio surfaces use the shorter product labels from the
+    Yozora mockups.
+    """
     from app.frameworks.registry import FrameworkRegistry
 
     badges = []
     for framework_id in framework_ids:
         framework = FrameworkRegistry.get_or_none(framework_id)
+        display_name = framework.name if framework else framework_id.upper()
+        if compact:
+            display_name = {
+                "dpdpa": "DPDPA",
+                "nist_csf": "NIST CSF 2.0",
+                "pci_dss": "PCI DSS",
+            }.get(framework_id, display_name)
         badges.append(
             {
                 "id": framework_id,
-                "name": framework.name if framework else framework_id.upper(),
+                "name": display_name,
                 "version": framework.version if framework else "",
             }
         )
@@ -108,7 +122,7 @@ def build_engagement_card(engagement, assessments) -> dict:
         "progress_pct": derive_progress_pct(active_assessments),
         "assessment_count": len(active_assessments),
         "framework_ids": framework_ids,
-        "framework_badges": framework_badges(framework_ids),
+        "framework_badges": framework_badges(framework_ids, compact=True),
         "last_activity": derive_last_activity(active_assessments, engagement.updated_at),
     }
 
