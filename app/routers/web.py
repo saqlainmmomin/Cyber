@@ -3038,10 +3038,18 @@ def workpaper_page(
     if assessment is None:
         raise HTTPException(404, "Assessment not found")
     wp = workpaper.build_workpaper(db, assessment)
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    client = db.get(Client, engagement.client_id) if engagement else None
     return templates.TemplateResponse(
         request=request,
         name="pages/workpaper.html",
-        context={"request": request, "assessment": assessment, "wp": wp},
+        context={
+            "request": request,
+            "assessment": assessment,
+            "wp": wp,
+            "engagement": engagement,
+            "client": client,
+        },
     )
 
 

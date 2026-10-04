@@ -1,54 +1,58 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import assessment_tabs, seg %}
-{% from "components/ui.html" import status %}
-{% block title %}Workpaper — {{ assessment.company_name }}{% endblock %}
-{% block crumbs %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Workpaper</b>{% endblock %}
-{% block content %}
+{% from "components/workpaper_entry.html" import outcome_pill, decision_status %}
 {% set is_entry_preview = preview_entry is defined and preview_entry %}
-{% set basis = report_basis_for(assessment) if not is_entry_preview else none %}
+{% block title %}Workpaper — {{ assessment.company_name }}{% endblock %}
+{% block crumbs %}{% if client %}<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/review">Review</a><svg class="i sl"><use href="#i-slash"/></svg>{% if is_entry_preview %}<a href="/assessments/{{ assessment.id }}/workpaper">Workpaper</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ preview_entry.card.requirement_title }}</b>{% else %}<b>Workpaper</b>{% endif %}{% endblock %}
+{% block content %}
 {% if is_entry_preview %}
-<header class="page-head"><div><p class="eyebrow">{{ preview_entry.card.conclusion.framework_id|upper }} · Workpaper</p><h1>{{ preview_entry.card.requirement_title }}</h1><p class="meta-line">Read-only record · Assessment period: {{ preview_period_label }} · Evidence cut-off {{ preview_cutoff_label }}</p></div><div class="acts"><a class="btn secondary" href="/assessments/{{ assessment.id }}/workpaper">Back to workpaper</a></div></header>
-{{ assessment_tabs(assessment, "review") }}
-{{ seg([
-  {"label": "Queue", "key": "queue", "href": "/assessments/" ~ assessment.id ~ "/review"},
-  {"label": "Conclusions", "key": "conclusions", "href": "/assessments/" ~ assessment.id ~ "/conclusions"},
-  {"label": "Findings", "key": "findings", "href": "/assessments/" ~ assessment.id ~ "/findings"},
-  {"label": "Workpaper", "key": "workpaper", "href": "/assessments/" ~ assessment.id ~ "/workpaper"}
-], "workpaper") }}
-{% set entry = preview_entry %}{% include "components/workpaper_entry.html" %}
+{% set entry = preview_entry %}{% set entry_page = true %}{% set entry_basis = preview_basis %}{% include "components/workpaper_entry.html" %}
 {% else %}
-<header class="page-head"><div><p class="eyebrow">Assessment · Review · Read-only record</p><h1>Workpaper</h1><p class="meta-line"><span data-report-basis>Assessment period: {{ basis.period_label }} · Evidence cut-off: {{ basis.cutoff_label }}</span></p></div><div class="acts"><a class="btn secondary" href="/assessments/{{ assessment.id }}?tab=report">Report</a><a class="btn primary" href="/assessments/{{ assessment.id }}/conclusions">Review conclusions</a></div></header>
+{% set basis = report_basis_for(assessment) %}
+{% set error_labels = {"LLMRequestTimeout": "Timed out", "Interrupted": "Interrupted by a restart"} %}
+<div class="page-head"><div><h1>Workpaper</h1><p class="meta-line">Read-only record · <span data-report-basis>Assessment period: {{ basis.period_label }} · Evidence cut-off: {{ basis.cutoff_label }}</span></p></div>{% if wp.sections %}<div class="acts"><a class="btn ghost" href="/assessments/{{ assessment.id }}?tab=report">Report</a><a class="btn primary" href="/assessments/{{ assessment.id }}/conclusions">Review conclusions</a></div>{% endif %}</div>
 {{ assessment_tabs(assessment, "review") }}
-{{ seg([
+<div style="overflow-x:auto;margin:var(--s-4) 0">{{ seg([
   {"label": "Queue", "key": "queue", "href": "/assessments/" ~ assessment.id ~ "/review"},
   {"label": "Conclusions", "key": "conclusions", "href": "/assessments/" ~ assessment.id ~ "/conclusions"},
   {"label": "Findings", "key": "findings", "href": "/assessments/" ~ assessment.id ~ "/findings"},
   {"label": "Workpaper", "key": "workpaper", "href": "/assessments/" ~ assessment.id ~ "/workpaper"}
-], "workpaper") }}
+], "workpaper") }}</div>
 
-<section class="stack" data-analysis-runs><div class="section-head"><div><p class="eyebrow">Analysis runs</p><h2>Runs</h2></div></div>{% if wp.runs %}<div class="table-wrap solid"><table class="data-table"><thead><tr><th>Framework</th><th>Status</th><th>Model</th><th>Started</th><th>Completed</th><th>Claims</th><th>Evidence versions</th><th>Desk review</th></tr></thead><tbody>{% for run in wp.runs %}<tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}"><td><span class="chip">{{ framework_label(run.framework_id) }}</span></td><td>{% if run.stale %}{{ status("Running", "in_progress") }}<span class="sub">Probably interrupted</span>{% else %}{{ status(run.status|replace("_", " ")|title, tone="ok" if run.status == "completed" else "non" if run.status == "failed" else "medium") }}{% if run.error_type %}<span class="sub">{{ run.error_type }}</span>{% endif %}{% endif %}</td><td>{{ run.model_id }}</td><td>{{ run.started_at|display_date }}</td><td>{{ run.completed_at|display_date if run.completed_at else "—" }}</td><td>{{ run.claim_count }}</td><td>{{ run.evidence_version_count if run.evidence_version_count is not none else "—" }}</td><td>{{ "Yes" if run.desk_review_used is sameas true else ("No" if run.desk_review_used is sameas false else "—") }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No analysis runs recorded.</p></div>{% endif %}</section>
-
-{% if wp.sections %}<nav class="tabs" aria-label="Framework workpapers">{% for section in wp.sections %}<a href="#wp-section-{{ section.framework_id }}">{{ framework_label(section.framework_id) }}</a>{% endfor %}</nav>{% endif %}
-
-<section class="stat-row" data-workpaper-counts>
-  {% for key, label in [('conclusions', 'Conclusions'), ('in_scope', 'In scope'), ('excluded', 'Excluded'), ('approved', 'Approved'), ('edited', 'Edited'), ('pending', 'Pending'), ('rejected', 'Rejected'), ('unconcluded', 'Unconcluded')] %}
-  <div class="glass stat"><span class="l">{{ label }}</span><span data-count="{{ key }}" class="v">{{ wp.counts[key] }}</span></div>
-  {% endfor %}
-</section>
-<div class="sr-only" aria-hidden="true"><span data-count="legacy_bulk">{{ wp.counts.legacy_bulk }}</span><span data-count="runs">{{ wp.counts.runs }}</span></div>
-
-<section class="glass" data-conclusions-table><div class="section-head"><div><p class="eyebrow">Decisions</p><h2>Conclusions</h2></div></div><div class="table-wrap" style="overflow-x:auto"><table class="data-table"><thead><tr><th>Requirement</th><th>Outcome</th><th>Decision</th><th>Evidence</th></tr></thead><tbody>{% for section in wp.sections %}{% for entry in section.entries %}<tr><td class="t-title"><a href="#{{ entry.anchor }}">{{ entry.card.requirement_title }}</a><span class="sub">{{ entry.card.conclusion.requirement_id }}</span></td><td><span class="pill">{{ entry.card.conclusion.outcome|replace("_", " ")|title }}</span></td><td>{{ status("Approved" if entry.card.state == "approved" else "Edited" if entry.card.state == "edited" else "Rejected" if entry.card.state == "rejected" else "Pending", tone="ok" if entry.card.state in ("approved", "edited") else "non" if entry.card.state == "rejected" else "medium") }}</td><td>{{ entry.mapped_evidence|length }}</td></tr>{% endfor %}{% endfor %}</tbody></table></div></section>
+{% if wp.runs %}
+<section data-analysis-runs><div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Analysis runs</h2></div><div class="solid" style="overflow-x:auto"><table style="cursor:default"><thead><tr><th>Framework</th><th>Status</th><th class="hide-sm">Model</th><th>Started</th><th class="hide-sm">Completed</th><th class="n hide-sm">Claims</th><th class="n hide-sm">Evidence versions</th><th class="hide-sm">Desk review used</th></tr></thead><tbody>
+{% for run in wp.runs %}<tr data-run-status="{{ run.status }}" data-run-stale="{{ 'true' if run.stale else 'false' }}"><td><span class="chip">{{ framework_label(run.framework_id) }}</span></td><td>{% if run.stale %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Running, probably interrupted</span>{% elif run.status == "completed" %}<span class="status"><span class="dot c-ok"></span>Completed</span>{% elif run.status == "failed" %}<span class="status"><span class="dot c-non"></span>Failed</span>{% if run.error_type %}<div class="t-sub">{{ error_labels.get(run.error_type, run.error_type) }}</div>{% endif %}{% elif run.status == "running" %}<span class="status"><span class="st prog"></span>Running</span>{% else %}<span class="status"><span class="st"></span>{{ run.status|replace("_", " ")|capitalize }}</span>{% endif %}</td><td class="hide-sm">{{ run.model_id }}</td><td>{{ run.started_at|display_date }}, {{ run.started_at.strftime("%H:%M") }}</td><td class="hide-sm">{% if run.completed_at %}{{ run.completed_at|display_date }}, {{ run.completed_at.strftime("%H:%M") }}{% else %}—{% endif %}</td><td class="n num hide-sm">{{ run.claim_count if run.status == "completed" else "—" }}</td><td class="n num hide-sm">{{ run.evidence_version_count if run.evidence_version_count is not none else "—" }}</td><td class="hide-sm">{{ "Yes" if run.desk_review_used is sameas true else ("No" if run.desk_review_used is sameas false else "—") }}</td></tr>
+{% endfor %}</tbody></table></div></section>
+{% endif %}
 
 {% if wp.sections %}
-<details class="workpaper-details" data-workpaper-details><summary>Open full workpaper traceability</summary>
-  {% for section in wp.sections %}
-  <section id="wp-section-{{ section.framework_id }}" data-workpaper-section="{{ section.framework_id }}" class="stack"><div class="section-head"><div><p class="eyebrow">{{ framework_label(section.framework_id) }}</p><h2>{{ framework_label(section.framework_id) }}</h2></div></div>
-    {% for entry in section.entries %}{% include "components/workpaper_entry.html" %}{% endfor %}
-    {% if section.excluded_entries %}<h3>Excluded by scope enforcement</h3>{% for entry in section.excluded_entries %}{% include "components/workpaper_entry.html" %}{% endfor %}{% endif %}
-    {% if section.unconcluded %}<h3>Applicable requirements with no conclusion</h3><ul class="glass line-list">{% for row in section.unconcluded %}<li data-workpaper-unconcluded id="{{ row.anchor }}"><span class="code-inline">{{ row.requirement_id }}</span> — {{ row.title }}</li>{% endfor %}</ul>{% endif %}
-  </section>
-  {% endfor %}
-</details>
-{% else %}<div class="glass empty"><p>No conclusions yet. Run the gap analysis first.</p></div>{% endif %}
+{% set requested = request.query_params.get("framework") %}
+{% set framework_ids = wp.sections|map(attribute="framework_id")|list %}
+{% set selected = requested if requested in framework_ids else framework_ids[0] %}
+<nav class="tabs" style="margin:var(--s-6) 0" aria-label="Framework workpapers">{% for section in wp.sections %}<a href="?framework={{ section.framework_id }}"{% if section.framework_id == selected %} aria-selected="true"{% endif %}>{{ framework_label(section.framework_id, true) }}</a>{% endfor %}</nav>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:var(--s-3)" data-workpaper-counts>
+  {% for key, label in [("conclusions", "Conclusions"), ("in_scope", "In scope"), ("excluded", "Excluded"), ("approved", "Approved"), ("edited", "Edited"), ("pending", "Pending"), ("rejected", "Rejected"), ("unconcluded", "No conclusion")] %}<div class="glass" style="padding:var(--s-4) var(--s-5)"><div class="sub">{{ label }}</div><div class="num" style="font-size:var(--t-lg);font-weight:500;margin-top:2px" data-count="{{ key }}">{{ wp.counts[key] }}</div></div>{% endfor %}
+</div>
+<div class="sr-only" aria-hidden="true"><span data-count="legacy_bulk">{{ wp.counts.legacy_bulk }}</span><span data-count="runs">{{ wp.counts.runs }}</span></div>
+
+{% macro conclusion_table(entries) -%}
+<div class="solid" style="overflow-x:auto"><table><thead><tr><th>Requirement</th><th>Outcome</th><th class="hide-sm">Decision</th><th class="n hide-sm">Evidence items</th><th class="hide-sm"></th></tr></thead><tbody>{% for entry in entries %}<tr data-href="#{{ entry.anchor }}"><td><div class="t-title"><a href="#{{ entry.anchor }}" style="color:inherit">{{ entry.card.requirement_title }}</a></div><div class="t-sub">{{ entry.card.conclusion.requirement_id }}</div></td><td>{{ outcome_pill(entry.card.conclusion.outcome) }}</td><td class="hide-sm">{{ decision_status(entry.card) }}</td><td class="n num hide-sm">{{ entry.mapped_evidence|length }}</td><td class="go hide-sm"><a href="#{{ entry.anchor }}" aria-label="Open {{ entry.card.requirement_title }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td></tr>{% endfor %}</tbody></table></div>
+{%- endmacro %}
+
+{% for section in wp.sections %}
+<section id="wp-section-{{ section.framework_id }}" data-workpaper-section="{{ section.framework_id }}" class="workpaper-section">
+  {% for entry in section.entries %}{% include "components/workpaper_entry.html" %}{% endfor %}
+  <div class="workpaper-tables"{% if section.framework_id != selected %} hidden{% endif %}>
+    <div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Conclusions <span class="muted" style="font-weight:400">{{ framework_label(section.framework_id) }}</span></h2></div>
+    {% if section.entries %}{{ conclusion_table(section.entries) }}{% else %}<div class="glass empty"><p>No in-scope conclusions for this framework yet.</p></div>{% endif %}
+    {% if section.excluded_entries %}<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Excluded by scope enforcement</h2></div>{{ conclusion_table(section.excluded_entries) }}{% endif %}
+    {% if section.unconcluded %}<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Applicable requirements with no conclusion</h2></div><div class="glass rows">{% for row in section.unconcluded %}<div data-workpaper-unconcluded id="{{ row.anchor }}"><div class="txt"><b>{{ row.title }}</b></div></div>{% endfor %}</div>{% endif %}
+  </div>
+  {% for entry in section.excluded_entries %}{% include "components/workpaper_entry.html" %}{% endfor %}
+</section>
+{% endfor %}
+{% else %}
+<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-report"/></svg><h3>No conclusions yet</h3><p>Run the gap analysis to create the first conclusions. The workpaper fills in as they are decided.</p><a class="btn primary" href="/assessments/{{ assessment.id }}?tab=questionnaire">Run gap analysis</a></div>
+{% endif %}
 {% endif %}
 {% endblock %}

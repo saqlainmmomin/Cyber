@@ -26,7 +26,9 @@ import app.models  # noqa: F401 - register every model before create_all()
 from app.database import Base
 from app.frameworks.registry import FrameworkRegistry
 from app.models.analysis_run import AnalysisRun
-from app.models.desk_review import DeskReviewSummary
+from app.models.conclusion import Conclusion, ConclusionRevision
+from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
+from app.models.questionnaire import QuestionnaireResponse
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.firm_settings import FirmSettings
 from app.models.magic_link import MagicLink
@@ -141,7 +143,7 @@ def _magic_link(
     )
 
 
-def _seed_inventory(db: Session) -> dict[str, object]:
+def _seed_inventory(db: Session, screen: str = "evidence", state: str | None = None) -> dict[str, object]:
     clients = [
         _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large"),
         _client("client-loomwire", "Loomwire Labs", "IT services", "medium"),
@@ -322,6 +324,8 @@ def _seed_inventory(db: Session) -> dict[str, object]:
         ("dpdpa", "failed", datetime(2026, 3, 21, 10, tzinfo=timezone.utc), datetime(2026, 3, 21, 10, 2, tzinfo=timezone.utc)),
         ("iso27001", "running", datetime(2026, 3, 21, 11, tzinfo=timezone.utc), None),
     )):
+        if screen in ("workpaper", "workpaper_entry"):
+            break  # the workpaper screens seed their own runs in _seed_workpaper
         db.add(AnalysisRun(id=f"analysis-run-meridian-{index + 1}", assessment_id=assessments[0].id, framework_id=framework_id, status=status, claims_json=json.dumps({"claims": [], "inputs": {"evidence_versions": ["version-meridian-evidence-000-2"]}}), model_id="anthropic/claude-sonnet-4.5", started_at=started_at, completed_at=completed_at))
     basis_metadata = {"before": {"period_start": None, "period_end": None, "evidence_cutoff": None}, "after": {"period_start": "2025-04-01", "period_end": "2026-03-31", "evidence_cutoff": "2026-03-15", "prepared_by": "Priya Sharma", "reviewed_by": None}}
     db.add(_audit("audit-report-basis-meridian", action="assessment.report_basis_updated", entity_type="assessment", entity_id=assessments[0].id, created_at=datetime(2026, 3, 21, 12, tzinfo=timezone.utc), metadata=basis_metadata))
@@ -329,10 +333,276 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     db.add(DeskReviewSummary(assessment_id=assessments[0].id, document_catalog=json.dumps({"documents": 2}), coverage_summary=json.dumps({"covered": 1}), raw_ai_response="{}", status="completed", started_at=datetime(2026, 4, 4, 9, tzinfo=timezone.utc), completed_at=datetime(2026, 4, 5, 12, tzinfo=timezone.utc)))
     db.flush()
 
-    _seed_review_stage(db, assessments[0], approved=3, pending=3)
+    if screen in ("workpaper", "workpaper_entry"):
+        _seed_review_stage(db, assessments[0], approved=0, pending=0)
+        _seed_workpaper(db, assessments[0], variant=state if screen == "workpaper_entry" else "list")
+    else:
+        _seed_review_stage(db, assessments[0], approved=3, pending=3)
     db.add(_audit("audit-upload-after-prefill", action="evidence.version.created", entity_type="evidence", entity_id="meridian-evidence-000", created_at=_time(-1), metadata={"version": 3}))
     db.commit()
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
+
+
+# --- s6-workpaper: Head office conclusions, runs and full traceability for the workpaper screens ---
+
+WORKPAPER_PROPOSED_AT = datetime(2026, 3, 14, 10, 49, tzinfo=timezone.utc)
+BREACH_SENTENCE = "We will notify affected customers within 72 hours of confirming a personal data breach."
+# (requirement, outcome, decision, mapped evidence ids, risk) in registry order; decision is
+# approved / edited / pending. Titles come from the framework registry, never from here.
+WORKPAPER_ROWS = (
+    ("CH2.CONSENT.2", "partially_compliant", "approved", ("meridian-evidence-000", "meridian-evidence-001", "meridian-evidence-006"), "medium"),
+    ("CH2.CONSENT.3", "non_compliant", "edited", ("meridian-evidence-000", "meridian-evidence-007"), "high"),
+    ("CH2.CONSENT.5", "partially_compliant", "approved", ("meridian-evidence-000", "meridian-evidence-001"), "medium"),
+    ("CH2.NOTICE.1", "non_compliant", "pending", ("meridian-evidence-000",), "high"),
+    ("CH2.MINIMIZE.3", "partially_compliant", "approved", ("meridian-evidence-001", "meridian-evidence-006"), "medium"),
+    ("CH2.SECURITY.3", "compliant", "approved", ("meridian-evidence-006", "meridian-evidence-007", "meridian-evidence-001", "meridian-evidence-000"), "low"),
+    ("CH3.GRIEVANCE.1", "insufficient_evidence", "pending", (), "medium"),
+    ("BN.NOTIFY.1", None, None, None, None),  # the fully documented entry, built below
+)
+WORKPAPER_EXCLUDED = ("CH4.SDF.1", "CB.TRANSFER.1")
+WORKPAPER_UNCONCLUDED = ("CH3.NOMINATE.1", "CH4.SDF.2", "CH4.SDF.3")
+
+
+def _wp_claim(revision_id: str, requirement_id: str, outcome: str, *, rationale: str, gap: str, risk: str,
+              action: str, citations: int, quote: str | None = None, red_flags: int = 0,
+              scope_enforced: bool = False, disposition: str = "supported") -> dict:
+    claim = {
+        "revision_id": revision_id,
+        "requirement_id": requirement_id,
+        "outcome": outcome,
+        "disposition": disposition,
+        "item": {
+            "current_state": rationale,
+            "gap_description": gap,
+            "risk_level": risk,
+            "remediation_action": action,
+            "evidence_quote": quote,
+        },
+        "quality": {
+            "citation_count": citations,
+            "evidence_quote_grounded": True if quote else None,
+            "unsupported_assertion": False,
+            "needs_review": False,
+            "desk_review_red_flags": red_flags,
+            "desk_review_absence": False,
+            "contradictions": None,
+        },
+    }
+    if scope_enforced:
+        claim["scope_enforced"] = True
+    return claim
+
+
+def _wp_revision(conclusion_id: str, suffix: str, action: str, created_at: datetime, *, actor: str = SEED_ACTOR,
+                 run_id: str | None = None, citations: list | None = None, previous_outcome: str | None = None,
+                 previous_rationale: str | None = None) -> ConclusionRevision:
+    return ConclusionRevision(
+        id=f"revision-{suffix}-{conclusion_id}",
+        conclusion_id=conclusion_id,
+        actor=actor,
+        action=action,
+        previous_outcome=previous_outcome,
+        previous_rationale=previous_rationale,
+        citations_json=json.dumps(citations) if citations is not None else None,
+        analysis_run_id=run_id,
+        created_at=created_at,
+    )
+
+
+def _seed_workpaper(db: Session, assessment, *, variant: str | None = "default") -> None:
+    """Conclusions, analysis runs and evidence for the Head office workpaper.
+
+    variant: "list" (the breach conclusion is edited and locked), "default" (as list, plus a
+    later re-run whose newer proposal the lock withheld), "legacy" (it was bulk-approved from the legacy report) or "excluded"
+    (scope enforcement set it to not applicable at analysis time)."""
+    variant = variant or "default"
+    framework_id = "dpdpa"
+    concluded = [row[0] for row in WORKPAPER_ROWS]
+    excluded = list(WORKPAPER_EXCLUDED) + (["BN.NOTIFY.1"] if variant == "excluded" else [])
+    applicable = [req for req in concluded if req not in excluded] + list(WORKPAPER_UNCONCLUDED)
+    assessment.applicable_requirements = json.dumps(applicable)
+
+    # Breach response procedure: the document the breach conclusion cites.
+    breach_text = (
+        "Incident response procedure, version 4.\n\n"
+        "Section 3. Notifying customers. " + BREACH_SENTENCE + "\n\n"
+        "Legal decides case by case whether any regulator is told."
+    )
+    breach = Evidence(
+        id="meridian-evidence-breach", engagement_id=assessment.engagement_id, assessment_id=assessment.id,
+        original_filename="Breach response procedure.docx", storage_path=f"evidence/{assessment.engagement_id}/meridian-evidence-breach",
+        file_hash_sha256="b" * 64, file_size_bytes=184_000,
+        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        status="active", uploaded_by="client_link:magic-link-meridian", created_at=datetime(2026, 3, 8, 12, tzinfo=timezone.utc),
+    )
+    db.add(breach)
+    db.flush()
+    breach_version = EvidenceVersion(
+        id="version-meridian-evidence-breach-1", evidence_id=breach.id, version_number=1,
+        storage_path=breach.storage_path + "-v1", file_hash_sha256="b" * 64, file_size_bytes=184_000,
+        status="active", original_filename=breach.original_filename, mime_type=breach.mime_type,
+        extracted_text=breach_text, created_at=breach.created_at,
+    )
+    db.add(breach_version)
+    start = breach_text.index(BREACH_SENTENCE)
+    breach_citation = [{
+        "evidence_version_id": breach_version.id,
+        "location_type": "text_span",
+        "location_ref": f"chars:{start}-{start + len(BREACH_SENTENCE)}",
+        "excerpt": BREACH_SENTENCE,
+    }]
+
+    version_ids = [
+        row[0] for row in db.query(EvidenceVersion.id)
+        .join(Evidence, Evidence.id == EvidenceVersion.evidence_id)
+        .filter(Evidence.engagement_id == assessment.engagement_id, EvidenceVersion.status == "active")
+        .order_by(EvidenceVersion.id)
+    ]
+    inputs = {"evidence_versions": version_ids}
+    run_ids = {key: f"analysis-run-wp-{key}" for key in ("dpdpa", "iso", "iso-failed", "dpdpa-rerun", "dpdpa-stalled")}
+    claims: dict[str, list[dict]] = {key: [] for key in run_ids}
+
+    def add_conclusion(requirement_id: str, outcome: str, risk: str, *, rationale: str, gaps: str, action: str,
+                       summary: str, ai_proposed: bool = True, version: int = 1, cluster_id: str | None = None) -> Conclusion:
+        conclusion = Conclusion(
+            id=f"conclusion-wp-{requirement_id}", assessment_id=assessment.id, framework_id=framework_id,
+            requirement_id=requirement_id, cluster_id=cluster_id, outcome=outcome, rationale=rationale,
+            evidence_summary=summary, gaps_identified=gaps, risk_level=risk, recommended_action=action,
+            ai_proposed=ai_proposed, version=version, created_at=WORKPAPER_PROPOSED_AT, updated_at=WORKPAPER_PROPOSED_AT,
+        )
+        db.add(conclusion)
+        db.flush()
+        return conclusion
+
+    edit_at = datetime(2026, 3, 17, 15, tzinfo=timezone.utc)
+    approve_at = datetime(2026, 3, 18, 11, tzinfo=timezone.utc)
+    for requirement_id, outcome, decision, evidence_ids, risk in WORKPAPER_ROWS:
+        if requirement_id == "BN.NOTIFY.1":
+            continue
+        proposed_outcome = "partially_compliant" if decision == "edited" else outcome
+        rationale = "Practice is documented for the main product; some channels are not covered." if outcome != "compliant" else "Practice is documented and was operating during the period."
+        conclusion = add_conclusion(
+            requirement_id, outcome, risk, rationale=rationale,
+            gaps="Coverage gaps remain for secondary channels." if outcome != "compliant" else "None identified.",
+            action="Extend the documented practice to every channel and keep evidence of operation.",
+            summary="Supporting documents are mapped below.", ai_proposed=decision != "edited", version=2 if decision == "edited" else 1,
+        )
+        proposed = _wp_revision(conclusion.id, "proposed", "proposed", WORKPAPER_PROPOSED_AT, actor="system:analysis",
+                                run_id=run_ids["dpdpa"], citations=[])
+        db.add(proposed)
+        claims["dpdpa"].append(_wp_claim(proposed.id, requirement_id, proposed_outcome, rationale=rationale,
+                                         gap="Coverage gaps remain.", risk=risk, action="Extend the practice.", citations=0))
+        if decision == "approved":
+            db.add(_wp_revision(conclusion.id, "approved", "approved", approve_at))
+        elif decision == "edited":
+            db.add(_wp_revision(conclusion.id, "edited", "edited", edit_at, previous_outcome=proposed_outcome,
+                                previous_rationale=rationale))
+        for index, evidence_id in enumerate(evidence_ids):
+            db.add(EvidenceUse(id=f"use-wp-{requirement_id}-{index}", evidence_id=evidence_id, assessment_id=assessment.id,
+                               framework_id=framework_id, requirement_id=requirement_id, relevance="primary" if index == 0 else "supporting",
+                               created_at=datetime(2026, 3, 10, 12, tzinfo=timezone.utc)))
+
+    for requirement_id in WORKPAPER_EXCLUDED:
+        conclusion = add_conclusion(
+            requirement_id, "not_applicable", "low", rationale="Set to not applicable by the scope recorded for this assessment.",
+            gaps="Not assessed.", action="None while out of scope.", summary="",
+        )
+        proposed = _wp_revision(conclusion.id, "proposed", "proposed", WORKPAPER_PROPOSED_AT, actor="system:analysis",
+                                run_id=run_ids["dpdpa"], citations=[])
+        db.add(proposed)
+        claims["dpdpa"].append(_wp_claim(proposed.id, requirement_id, "not_applicable", rationale="Out of scope.",
+                                         gap="", risk="low", action="", citations=0, scope_enforced=True, disposition="scope_enforced"))
+
+    # The breach notification conclusion, shaped by the variant.
+    ai_rationale = "Customers are told within 72 hours, but the procedure does not name the Board."
+    ai_gap = "No step for notifying the Data Protection Board."
+    ai_action = "Add Board notification to the procedure with an owner and a deadline."
+    if variant == "excluded":
+        conclusion = add_conclusion(
+            "BN.NOTIFY.1", "not_applicable", "high", rationale="Set to not applicable by the scope recorded for this assessment.",
+            gaps="Not assessed.", action="None while out of scope.", summary="", cluster_id="CLUSTER_017",
+        )
+        proposed = _wp_revision(conclusion.id, "proposed", "proposed", WORKPAPER_PROPOSED_AT, actor="system:analysis",
+                                run_id=run_ids["dpdpa"], citations=breach_citation)
+        db.add(proposed)
+        claims["dpdpa"].append(_wp_claim(proposed.id, "BN.NOTIFY.1", "not_applicable", rationale=ai_rationale, gap=ai_gap,
+                                         risk="high", action=ai_action, citations=1, quote=BREACH_SENTENCE, red_flags=1,
+                                         scope_enforced=True, disposition="scope_enforced"))
+    elif variant == "legacy":
+        conclusion = add_conclusion(
+            "BN.NOTIFY.1", "partially_compliant", "high", rationale=ai_rationale, gaps=ai_gap, action=ai_action,
+            summary=BREACH_SENTENCE, cluster_id="CLUSTER_017",
+        )
+        legacy_at = datetime(2026, 1, 12, 10, tzinfo=timezone.utc)
+        db.add(_wp_revision(conclusion.id, "proposed", "proposed", legacy_at, actor="system:legacy_migration"))
+        db.add(_wp_revision(conclusion.id, "approved", "approved", legacy_at + timedelta(minutes=5), actor="system:legacy_migration"))
+    else:
+        conclusion = add_conclusion(
+            "BN.NOTIFY.1", "non_compliant", "high",
+            rationale="The procedure never tells the Data Protection Board about a breach. Customer notice alone does not meet the requirement.",
+            gaps="No Board notification step, no owner, no deadline.",
+            action="Add Board notification within the period the Rules set, and name the person responsible.",
+            summary=BREACH_SENTENCE, ai_proposed=False, version=2, cluster_id="CLUSTER_017",
+        )
+        proposed = _wp_revision(conclusion.id, "proposed", "proposed", WORKPAPER_PROPOSED_AT, actor="system:analysis",
+                                run_id=run_ids["dpdpa"], citations=breach_citation)
+        db.add(proposed)
+        claims["dpdpa"].append(_wp_claim(proposed.id, "BN.NOTIFY.1", "partially_compliant", rationale=ai_rationale, gap=ai_gap,
+                                         risk="high", action=ai_action, citations=1, quote=BREACH_SENTENCE, red_flags=1))
+        db.add(_wp_revision(conclusion.id, "edited", "edited", edit_at, previous_outcome="partially_compliant",
+                            previous_rationale=ai_rationale))
+        if variant == "default":  # a re-run after the edit produced a newer proposal the lock withheld
+            withheld = _wp_revision(conclusion.id, "withheld", "proposal_withheld", datetime(2026, 3, 19, 9, 40, tzinfo=timezone.utc),
+                                    actor="system:analysis", run_id=run_ids["dpdpa-rerun"], citations=breach_citation)
+            db.add(withheld)
+            claims["dpdpa-rerun"].append(_wp_claim(withheld.id, "BN.NOTIFY.1", "non_compliant", rationale="The procedure has no Board notification step.",
+                                                   gap=ai_gap, risk="high", action=ai_action, citations=1, quote=BREACH_SENTENCE,
+                                                   red_flags=1, disposition="withheld"))
+    if variant != "excluded":
+        db.add(EvidenceUse(id="use-wp-breach", evidence_id=breach.id, assessment_id=assessment.id, framework_id=framework_id,
+                           requirement_id="BN.NOTIFY.1", relevance="primary", created_at=datetime(2026, 3, 10, 12, tzinfo=timezone.utc)))
+        db.add(DeskReviewFinding(
+            assessment_id=assessment.id, framework_id=framework_id, finding_type="absence", requirement_id="BN.NOTIFY.1",
+            content="Breach notice promises customers 72 hours and never mentions the Board", severity="critical",
+            source_quote=BREACH_SENTENCE, source_location="Section 3", citations_json=json.dumps(breach_citation),
+            created_at=datetime(2026, 3, 12, 9, tzinfo=timezone.utc),
+        ))
+
+    # The shared cluster answer that informs the breach conclusion (and the ISO controls in CLUSTER_017).
+    response = db.query(QuestionnaireResponse).filter_by(assessment_id=assessment.id, question_id="CLUSTER_017").first()
+    if response is None:
+        response = QuestionnaireResponse(assessment_id=assessment.id, question_id="CLUSTER_017")
+        db.add(response)
+    response.answer = "partially_implemented"
+    response.answer_source = "human"
+    response.confidence = "medium"
+    response.cluster_id = "CLUSTER_017"
+    response.notes = "We notify customers within 72 hours. Whether the Board is told is decided by legal, case by case."
+    response.evidence_reference = "Breach response procedure.docx"
+    response.submitted_at = datetime(2026, 3, 10, 12, tzinfo=timezone.utc)
+
+    run_rows = (
+        ("dpdpa", "dpdpa", "completed", datetime(2026, 3, 14, 10, 42), datetime(2026, 3, 14, 10, 49), True, None),
+        ("iso", "iso27001", "completed", datetime(2026, 3, 16, 11, 5), datetime(2026, 3, 16, 11, 16), True, None),
+        ("iso-failed", "iso27001", "failed", datetime(2026, 3, 16, 11, 18), datetime(2026, 3, 16, 11, 23), True, "LLMRequestTimeout"),
+        ("dpdpa-rerun", "dpdpa", "completed", datetime(2026, 3, 19, 9, 30), datetime(2026, 3, 19, 9, 40), True, None),
+        ("dpdpa-stalled", "dpdpa", "running", datetime(2026, 3, 20, 8, 10), None, False, None),
+    )
+    for key, run_framework, status, started_at, completed_at, desk_review_used, error_type in run_rows:
+        if key == "dpdpa-rerun" and not claims[key]:
+            continue  # only the default variant has a newer (withheld) proposal
+        envelope = {"claims": claims[key], "desk_review_used": desk_review_used}
+        if status != "running":
+            envelope["inputs"] = inputs
+        if error_type:
+            envelope["error"] = {"type": error_type}
+        db.add(AnalysisRun(
+            id=run_ids[key], assessment_id=assessment.id, framework_id=run_framework, status=status,
+            claims_json=json.dumps(envelope), model_id="anthropic/claude-sonnet-4.5",
+            started_at=started_at.replace(tzinfo=timezone.utc),
+            completed_at=completed_at.replace(tzinfo=timezone.utc) if completed_at else None,
+        ))
+    db.flush()
 
 
 def _stamp_head(database_url: str) -> None:
@@ -342,7 +612,7 @@ def _stamp_head(database_url: str) -> None:
     command.stamp(config, "head")
 
 
-def seed(database_path: Path) -> dict[str, object]:
+def seed(database_path: Path, screen: str = "evidence", state: str | None = None) -> dict[str, object]:
     if database_path.exists():
         database_path.unlink()
     database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -352,20 +622,20 @@ def seed(database_path: Path) -> dict[str, object]:
     _stamp_head(database_url)
     _register_frameworks()
     with Session(engine, expire_on_commit=False) as db:
-        data = _seed_inventory(db)
+        data = _seed_inventory(db, screen, state)
     engine.dispose()
     return data
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
+    parser.add_argument("--database", "--output", dest="database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
     parser.add_argument("--screen", choices=tuple(SCREEN_STATES), default="evidence")
     parser.add_argument("--state", default=None)
     args = parser.parse_args()
     if args.state and args.state not in SCREEN_STATES[args.screen]:
         parser.error(f"state {args.state!r} is not valid for {args.screen}")
-    data = seed(args.database)
+    data = seed(args.database, args.screen, args.state)
     manifest = {
         "database": str(args.database),
         "frozen_now": FROZEN_NOW.isoformat(),
@@ -377,7 +647,7 @@ def main() -> int:
         },
         "clients": [client.name for client in data["clients"]],
     }
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    print(json.dumps(manifest, sort_keys=True))
     return 0
 
 
