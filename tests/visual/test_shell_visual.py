@@ -15,9 +15,9 @@ ROOT = Path(__file__).resolve().parents[2]
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8000")
 SIDE_NAV_CLIP = {
     "top": ".side-in",
-    # Evidence is live; this clip includes the main-nav rows through Evidence. It does not
-    # cover Reports, Settings, the account menu, or page content.
-    "bottom": '.side-in > .nav > a[data-nav-key="evidence"]',
+    # Stop at the last live main-nav row (Reports). Evidence sits above it and is live
+    # since S6, so the clip covers it too; Settings and the account menu stay outside.
+    "bottom": '.side-in > .nav > a[data-nav-key="reports"]',
 }
 
 
