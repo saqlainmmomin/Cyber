@@ -66,15 +66,7 @@
   {% endif %}
 </div>
 {% elif tab == "scope" %}
-  {% if preview_state == "saving" %}
-  {{ alert("Saving scope", "Your scope answers are being saved.", "accent", "loader") }}
-  {% elif preview_state == "loading" %}
-  <div class="solid card" role="status" aria-busy="true"><h2>Preparing scope</h2><div class="stack-m mt-lg">{{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}</div></div>
-  {% elif preview_state == "error" %}
-  {{ alert("The scope could not be prepared", "Your scope answers are saved. Try again.", "noncompliant") }}
-  {% else %}
   {% include "partials/scope_tab.html" %}
-  {% endif %}
 {% elif tab == "documents" %}
   {% include "partials/documents_tab.html" %}
 {% elif tab == "questionnaire" %}

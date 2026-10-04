@@ -174,3 +174,46 @@ def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
     assert desk_review.status_code == 200
     assert "Documents are being analysed" in desk_review.text
     assert 'hx-get="/assessments/assessment-s5-preview/desk-review-status' not in desk_review.text
+
+
+def test_scope_edit_reopens_saved_answers_and_complete_view_links_to_it(db, http):
+    _client, _engagement, assessment = seed_engagement(
+        db,
+        client_name="Meridian Ledger Technologies",
+        name="FY2026 privacy readiness",
+        frameworks=("dpdpa", "iso27001"),
+    )
+    assessment.scope_answers = json.dumps({"SCP.1": "yes", "SCP.2": "no", "ISO.SCP.4": "yes_office"})
+    db.commit()
+
+    complete = http.get(f"/assessments/{assessment.id}?tab=scope")
+    assert complete.status_code == 200
+    assert "Scope confirmed" in complete.text
+    assert f'href="/assessments/{assessment.id}?tab=scope&amp;edit=1"' in complete.text
+    assert "Significant data fiduciary obligations" in complete.text
+    assert "data-rfi-link" in complete.text
+
+    edit = http.get(f"/assessments/{assessment.id}?tab=scope&edit=1")
+    assert edit.status_code == 200
+    assert "Scope confirmed" not in edit.text
+    assert 'name="SCP.1" value="yes" checked' in edit.text
+    assert 'name="SCP.2" value="no" checked' in edit.text
+    assert 'name="ISO.SCP.4" value="yes_office" checked' in edit.text
+    assert f'<a class="btn ghost" href="/assessments/{assessment.id}?tab=scope">Cancel</a>' in edit.text
+    assert 'data-scope-group="SCP.1"' in edit.text
+
+
+def test_scope_form_missing_answers_preview_marks_each_unanswered_question(db, http):
+    _client, _engagement, assessment = seed_engagement(
+        db,
+        client_name="Meridian Ledger Technologies",
+        name="FY2026 privacy readiness",
+        frameworks=("iso27001",),
+    )
+    db.commit()
+
+    page = http.get(f"/assessments/{assessment.id}?tab=scope&state=error")
+    assert page.status_code == 200
+    assert "Answer 4 more questions" in page.text
+    assert page.text.count("Choose an answer.") == 4
+    assert "Cancel" not in page.text
