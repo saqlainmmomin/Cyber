@@ -26,6 +26,7 @@ import app.models  # noqa: F401 - register every model before create_all()
 from app.database import Base
 from app.frameworks.registry import FrameworkRegistry
 from app.models.analysis_run import AnalysisRun
+from app.models.assessment import Assessment
 from app.models.desk_review import DeskReviewSummary
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.firm_settings import FirmSettings
@@ -419,7 +420,122 @@ def _seed_aws_screen(db: Session, data: dict[str, object]) -> None:
     db.commit()
 
 
-def seed(database_path: Path, screen: str | None = None, state: str | None = None) -> dict[str, object]:
+SPAN_EVIDENCE_ID = "meridian-evidence-000"
+SPAN_BEFORE = (
+    "Your rights. You may ask us to access, correct or erase your personal data, and to withdraw "
+    "consent at any time from Settings in the app.\n\nGrievance redressal. "
+)
+SPAN_PASSAGE = (
+    "Complaints about how we handle your personal data can be sent to our Data Protection Officer, "
+    "Neha Kulkarni, at dpo@meridianledger.example. We acknowledge every complaint within {ack} and "
+    "resolve it within 30 days."
+)
+SPAN_AFTER = (
+    "\n\nChildren. We do not knowingly collect personal data from anyone under 18 without the "
+    "consent of a parent or guardian."
+)
+WHOLE_TEXT = (
+    "Privacy notice\nMeridian Ledger Technologies\nEffective 12 March 2026\n\nWho we are. Meridian "
+    "Ledger Technologies Private Limited provides payment reconciliation software to finance teams."
+)
+
+
+def _span_text(ack: str) -> str:
+    return SPAN_BEFORE + SPAN_PASSAGE.format(ack=ack) + SPAN_AFTER
+
+
+def _seed_span_state(db: Session, state: str) -> dict[str, str]:
+    """Citation fixtures for the span screen: version 3 is current, version 2 superseded."""
+    versions = {
+        version.version_number: version
+        for version in db.query(EvidenceVersion).filter(EvidenceVersion.evidence_id == SPAN_EVIDENCE_ID)
+    }
+    for version in versions.values():
+        version.original_filename = "Privacy notice.pdf"
+    versions[1].created_at = datetime(2026, 2, 2, 12, tzinfo=timezone.utc)
+    versions[2].created_at = datetime(2026, 2, 20, 12, tzinfo=timezone.utc)
+    versions[3].created_at = datetime(2026, 3, 12, 12, tzinfo=timezone.utc)
+    versions[2].extracted_text = _span_text("5 working days")
+    versions[3].extracted_text = _span_text("48 hours")
+    cited = versions[2] if state == "superseded" else versions[3]
+    if state == "whole":
+        versions[3].extracted_text = WHOLE_TEXT
+    if state == "unavailable":
+        versions[3].extracted_text = None
+    start = len(SPAN_BEFORE)
+    end = start + len(SPAN_PASSAGE.format(ack="5 working days" if state == "superseded" else "48 hours"))
+    db.commit()
+    return {"span_version_id": cited.id, "span_ref": f"chars:{start}-{end}"}
+
+
+def _seed_reuse_state(db: Session, state: str) -> None:
+    """Reuse fixtures: three suggestions from earlier pilot assessments of the Meridian engagement."""
+    head = db.get(Assessment, "assessment-meridian-head")
+    payments = db.get(Assessment, "assessment-meridian-payments")
+    # Only the pilot assessments below suggest evidence; the inventory's subsidiary links would
+    # otherwise flood the list (and the subsidiary's own list stays empty for the empty state).
+    db.query(EvidenceUse).filter(EvidenceUse.assessment_id == payments.id).delete()
+    db.query(EvidenceUse).filter(
+        EvidenceUse.assessment_id == head.id, EvidenceUse.framework_id == "iso27001"
+    ).delete()
+    head.created_at = datetime(2026, 3, 16, 12, tzinfo=timezone.utc)
+    if state == "unlinked":
+        db.get(Assessment, "assessment-unlinked").company_name = "Meridian Ledger Technologies"
+    if state not in ("list", "error"):
+        db.commit()
+        return
+    pilot_dpdpa = _assessment(
+        "assessment-meridian-pilot", "eng-meridian", "Meridian Ledger Technologies",
+        "Pilot assessment", ("dpdpa",), status="completed",
+    )
+    pilot_dpdpa.description = "Pilot assessment"
+    pilot_dpdpa.created_at = datetime(2025, 6, 2, 12, tzinfo=timezone.utc)
+    pilot_full = _assessment(
+        "assessment-meridian-pilot-2", "eng-meridian", "Meridian Ledger Technologies",
+        "Pilot assessment", ("dpdpa", "iso27001"), status="completed",
+    )
+    pilot_full.description = "Pilot assessment"
+    pilot_full.created_at = datetime(2026, 2, 16, 12, tzinfo=timezone.utc)
+    breach = Evidence(
+        id="meridian-evidence-breach",
+        engagement_id="eng-meridian",
+        assessment_id=pilot_dpdpa.id,
+        original_filename="Breach response procedure.docx",
+        storage_path="evidence/eng-meridian/meridian-evidence-breach.docx",
+        file_hash_sha256="c" * 64,
+        file_size_bytes=180_000,
+        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        status="active",
+        uploaded_by=SEED_ACTOR,
+        created_at=datetime(2025, 6, 14, 12, tzinfo=timezone.utc),
+    )
+    db.add_all([pilot_dpdpa, pilot_full, breach])
+    db.flush()
+    db.add(_version(breach, 1, created_at=datetime(2025, 6, 14, 12, tzinfo=timezone.utc)))
+    hosting = db.get(Evidence, "meridian-evidence-006")
+    db.get(EvidenceVersion, f"version-{hosting.id}-1").created_at = datetime(2026, 2, 27, 12, tzinfo=timezone.utc)
+    policy = db.get(Evidence, "meridian-evidence-001")
+    db.get(EvidenceVersion, f"version-{policy.id}-1").status = "superseded"
+    db.add(_version(policy, 2, created_at=datetime(2026, 3, 2, 12, tzinfo=timezone.utc), reason="Annual review"))
+    db.add_all(
+        [
+            EvidenceUse(id="use-pilot-breach", evidence_id=breach.id, assessment_id=pilot_dpdpa.id, framework_id="dpdpa", requirement_id="BN.NOTIFY.1", relevance="primary"),
+            EvidenceUse(id="use-pilot-hosting", evidence_id=hosting.id, assessment_id=pilot_full.id, framework_id="iso27001", requirement_id="ISO.A5.14", relevance="primary"),
+            EvidenceUse(id="use-pilot-policy", evidence_id=policy.id, assessment_id=pilot_full.id, framework_id="iso27001", requirement_id="ISO.A5.15", relevance="primary"),
+        ]
+    )
+    db.commit()
+
+
+REUSE_ASSESSMENTS = {
+    "list": "assessment-meridian-head",
+    "error": "assessment-meridian-head",
+    "empty": "assessment-meridian-payments",
+    "unlinked": "assessment-unlinked",
+}
+
+
+def seed(database_path: Path, screen: str = "evidence", state: str | None = None) -> dict[str, object]:
     if database_path.exists():
         database_path.unlink()
     database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -430,10 +546,16 @@ def seed(database_path: Path, screen: str | None = None, state: str | None = Non
     _register_frameworks()
     with Session(engine, expire_on_commit=False) as db:
         data = _seed_inventory(db)
+        data["keys"] = {}
         if screen == "aws_evidence":
             _seed_aws_screen(db, data)
-        if screen == "evidence_detail":
+        elif screen == "evidence_detail":
             _seed_detail_state(db, state or SCREEN_STATES[screen][0])
+        elif screen == "evidence_span":
+            data["keys"] = _seed_span_state(db, state or "span")
+        elif screen == "evidence_reuse":
+            _seed_reuse_state(db, state or "list")
+            data["keys"] = {"reuse_assessment_id": REUSE_ASSESSMENTS[state or "list"]}
     engine.dispose()
     return data
 
@@ -457,6 +579,7 @@ def main() -> int:
             for screen, states in SCREEN_STATES.items()
         },
         "clients": [client.name for client in data["clients"]],
+        **data["keys"],
     }
     print(json.dumps(manifest, sort_keys=True))
     return 0

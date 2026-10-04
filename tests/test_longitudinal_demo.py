@@ -308,7 +308,7 @@ def test_scenario_4_reuse_prompt_requires_confirmation_and_audit(db, http, demo)
     assert metadata["reference_date"] == _day(demo, -7).isoformat()
     after_page = http.get(f"/assessments/{validation_id}/evidence-reuse")
     assert 'data-reuse-candidate ' not in after_page.text
-    assert "No evidence from earlier assessments is waiting for confirmation." in after_page.text
+    assert "Nothing is waiting for confirmation" in after_page.text
     repeated = http.post(f"/assessments/{validation_id}/evidence-reuse/{source_use_id}/confirm", data={"acknowledge_warnings": "yes"})
     assert repeated.status_code == 409
     assert evidence_reuse.REUSE_NOT_AVAILABLE in repeated.text

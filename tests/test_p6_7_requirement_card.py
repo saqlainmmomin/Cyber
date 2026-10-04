@@ -1031,7 +1031,7 @@ def test_scenario_11_span_viewer_highlights_the_cited_span(db, http, monkeypatch
     version = db.get(EvidenceVersion, vid)
     version.status = "superseded"
     db.commit()
-    assert "Superseded version" in http.get(href).text
+    assert "Older version" in http.get(href).text
 
 
 # --------------------------------------------------------------------------- #
