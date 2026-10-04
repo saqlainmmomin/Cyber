@@ -99,12 +99,10 @@ YOZORA_S4_PATHS = (
 )
 
 YOZORA_S6_PATHS = (
-    "app/routers/aws.py",
     "app/routers/design.py",
     "app/routers/evidence_reuse.py",
     "app/routers/requirement_review.py",
     "app/routers/web.py",
-    "app/services/prefill_freshness.py",
     "app/template_config.py",
     "app/templates/components/evidence_status_badge.html",
     "app/templates/components/ui.html",
