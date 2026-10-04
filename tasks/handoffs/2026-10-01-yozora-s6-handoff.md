@@ -313,3 +313,41 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 ### Open questions / orchestrator checks
 
 - Run the full suite with `boto3` and the S5 merge applied, then run the complete light/dark 1440/1024 pixel gate. In particular, verify the three standalone `b4-workpaper_entry` preview states and AWS result/pull states against the approved baselines.
+
+### Pixel gate and review, cloud orchestrator (4 Oct 2026)
+
+Visual fitting was done by subagents, not Codex, per Saqlain's decision on 4 Oct 2026. The round-three fitting on the Mac was lost when its session limit hit, so fitting restarted in a cloud session from `c17c01d`: five fitters (inventory, detail, AWS, span/reuse, workpaper), then an adversarial review and a fix round.
+
+Gate: `design/harness/screenshot.py` logic (pixelmatch 0.1, fail above 0.4% or any changed region wider and taller than 40 px), full page, mockups served with `/static/` mapped to `app/static/`, the mockup state switcher hidden, light/dark at 1440/1024. Result: **61 of 116 shots pass**.
+
+| State | Pass | Range |
+|---|---|---|
+| AWS ready, pulling, result, error | 16/16 | 0.05–0.27% |
+| AWS not configured | 1/4 | 0.39–0.54% |
+| Detail current / quarantined / unused | 2/4, 0/4, 4/4 | 0.04–5.70% |
+| Inventory default, upload, empty, loading, error, all, prefill | 28/28 | 0.04–0.26% |
+| Inventory filtered | 0/4 | 2.8–4.4% |
+| Span span / whole / superseded / unavailable | 0/4, 2/4, 0/4, 2/4 | 0.21–9.6% |
+| Reuse list / error / empty / unlinked | 0/4, 0/4, 4/4, 0/4 | 0.05–7.3% |
+| Workpaper list / empty | 0/4, 2/4 | 0.33–15.3% |
+| Workpaper entry default / legacy / excluded | 0/12 | 4.4–17.3% |
+
+Real-data exceptions (everything else in those states matches):
+- **AWS not configured:** the real operator message ("Set AWS_EXTERNAL_ID_SECRET…") is accurate for this app and wraps one line longer than the mockup's region/role wording.
+- **Detail at 1024, span at 1024, workpaper list at 1024, entry default:** real registry requirement titles and ids are longer than the mockup's ("Notice to data principals / s.5") and wrap, shifting the page. Workpaper entry rows show the full stored rationale as the edit reason (no separate edit-reason field exists).
+- **Detail quarantined:** the app holds only the new version for scanning (item and v2 stay available), so the mockup's item-level Scanning plus three versions is not reachable.
+- **Inventory filtered:** the pre-fill note shows under an assessment filter (required by an earlier review fix and its test); the service returns only the codes mapped into the filtered assessment.
+- **Span:** the route has a version id and a character range only, so no "Cited for <requirement>" and "Characters 160–377" instead of "Page 4"; the real context window shifts the first line.
+- **Reuse:** real gap between cards (the mockup's cards touch only because its state script clears the flex gap); confirm button starts disabled with nothing ticked; requirement titles, relevance values and scope warnings come from real data; unlinked assessments have no engagement tabs or client crumbs.
+- **Workpaper entry legacy / excluded:** real bulk-approval revision gives two history rows; the scope-enforced proposal reads Not applicable, and a never-decided conclusion cannot carry the mockup's withheld-proposal alert.
+- **Shell (every page, inside thresholds):** the account tile shows the firm name (no auth until Track 4) and the review count is live.
+
+Review fixes after the gate: detail-page Archive and Upload new version reload the page instead of swapping the inventory table into the status slot; workpaper history shows the edit reason and per-revision citations again; reuse confirm counts ticked boxes, stays disabled at zero and no longer reloads over an error; live AWS and reuse routes ignore `?state=` (transient states only through `/design/pages/...`); legacy documents listed as inventory rows with the Legacy pill; shell clip bottom kept at Reports; "Out of date" tone made consistent; sub-500-byte files no longer show "0 KB".
+
+Decisions recorded:
+- Inventory rows keep the hidden actions cell (the mockup has no per-row actions); archive and new version are reached from the detail page.
+- Unlinked (unmigrated) assessments: `?tab=documents` redirects to Overview and the inventory fragments return an empty list. Deferred, not changed here.
+- `#desk-review-area` is not added back in S6: S5 moves it to the Questionnaire tab and merges first.
+- `tests/visual/test_shell_visual.py` clip now reaches Reports; its S1 baseline images are shorter than that clip, so the shell visual test needs new baselines when it is next run (it is skipped in the normal suite).
+
+Suite: 1464 passed, 30 skipped, plus `test_p6_8_board_report_v2::test_scenario_3` (byte-for-byte PDF determinism), which is flaky on `main` too (2 of 8 runs failed on a clean main checkout).
