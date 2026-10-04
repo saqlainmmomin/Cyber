@@ -1580,8 +1580,9 @@ def assessment_detail(
 
     # Build scope context for the scope tab
     scope_context: dict = {}
+    scope_editing = scope_done and request.query_params.get("edit") == "1"
     if tab == "scope":
-        if scope_done:
+        if scope_done and not scope_editing:
             from app.services.scope_profiler import compute_scope_multi
             scope_data = json.loads(assessment.scope_answers)
             result = compute_scope_multi(scope_data, raw_fw_ids)
@@ -1610,7 +1611,7 @@ def assessment_detail(
                     })
             scope_context = {
                 "scope_questions_by_fw": scope_questions_by_fw,
-                "existing": {},
+                "existing": json.loads(assessment.scope_answers) if scope_editing else {},
             }
 
     # Resolve selected framework metadata for display
@@ -1665,6 +1666,7 @@ def assessment_detail(
             "response_count": response_count,
             "context_done": context_done,
             "scope_done": scope_done,
+            "scope_editing": scope_editing,
             "screening_done": screening_done,
             "screening_available": screening_applies(assessment),
             "screening_unavailable_message": "Screening is not available for this assessment. Complete the questionnaire directly.",

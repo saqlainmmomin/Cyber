@@ -1,30 +1,27 @@
-{% from "components/ui.html" import icon, link_button %}
-<div class="stack">
+{% from "components/ui.html" import icon, skeleton %}
+<div class="stack mt-lg">
   <div class="solid card">
     <div class="between">
-      <div><h2>Scope confirmed</h2><p class="sub">{{ applicable_count }} of {{ total_count }} requirements apply to this organisation.</p></div>
-      <a href="/assessments/{{ assessment.id }}/scope" class="btn secondary sm lead">{{ icon("chev-r") }}Edit scope</a>
+      <div><h2>Scope confirmed</h2><p class="sub"><span class="num">{{ applicable_count }} of {{ total_count }}</span> requirements apply to this organisation.</p></div>
+      <a class="btn secondary sm lead" href="/assessments/{{ assessment.id }}?tab=scope&amp;edit=1">{{ icon("pen") }}Edit scope</a>
     </div>
-
     {% if has_dpdpa %}
-    <div class="domains">
-      <div><span>Cross-border transfers</span>{% if flags.cross_border %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
-      <div><span>Children's data</span>{% if flags.children %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
-      <div><span>SDF obligations</span>{% if flags.sdf %}<span class="status"><span class="dot c-accent"></span>Likely</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
-      <div><span>Third-party processors</span>{% if flags.processors %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+    <div class="domains" id="flags">
+      <div><span>Cross-border transfers</span>{% if flags.cross_border %}<span class="status"><i class="dot c-accent"></i>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>Children's data</span>{% if flags.children %}<span class="status"><i class="dot c-accent"></i>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>Significant data fiduciary obligations</span>{% if flags.sdf %}<span class="status"><i class="dot c-accent"></i>Likely</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>Third-party processors</span>{% if flags.processors %}<span class="status"><i class="dot c-accent"></i>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
     </div>
     {% endif %}
-
     {% if excluded %}
-    <details class="disclose"><summary>{{ excluded | length }} requirements excluded</summary>
-      <ul class="line-list" style="margin-top:var(--s-3)">{% for item in excluded %}<li><div class="grow"><b>{{ item.id }}</b><span class="sub">{{ item.reason }}</span></div></li>{% endfor %}</ul>
+    <details class="mt"><summary class="disclose">{{ excluded | length }} requirement{{ "s" if excluded | length != 1 else "" }} excluded</summary>
+      <ul class="checks mt">{% for item in excluded %}<li><div><b>{{ item.reason }}</b><span class="sub">{{ item.id }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}
-
     {% if proposed_not_applicable %}
-    <details class="disclose"><summary>{{ proposed_not_applicable | length }} control{{ 's' if proposed_not_applicable | length != 1 else '' }} proposed as likely not applicable</summary>
-  <p class="help">These controls remain in scope. Confirm each during review{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %}; ISO 27001 decisions are recorded in the current Statement of Applicability{% endif %}.</p>
-      <ul class="line-list" style="margin-top:var(--s-3)">{% for item in proposed_not_applicable %}<li><div class="grow"><b>{{ item.control_id }} · {{ item.control_title }}</b><span class="sub">{{ item.framework_name }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
+    <details class="mt"><summary class="disclose">{{ proposed_not_applicable | length }} control{{ "s" if proposed_not_applicable | length != 1 else "" }} proposed as likely not applicable. You confirm each during review.</summary>
+      <p class="help">These controls stay in scope. To exclude one, record a Not applicable conclusion with your reason during review.{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %} For ISO 27001 this is a Statement of Applicability decision.{% endif %}</p>
+      <ul class="checks mt">{% for item in proposed_not_applicable %}<li><div><b>{{ item.control_title }}</b><span class="sub grow">{{ framework_label(item.framework_id) }} · {{ item.control_id }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}
   </div>
@@ -32,29 +29,30 @@
   <div class="solid card">
     <div class="between">
       <div><h2>Evidence request</h2><p class="sub">Evidence to collect before analysis starts.</p></div>
+      {% if preview_state not in ("loading", "error") %}
       <div class="hrow">
         <a class="btn secondary sm lead" href="/assessments/{{ assessment.id }}/evidence-checklist/pdf">{{ icon("download") }}PDF</a>
         <a class="btn secondary sm lead" href="/assessments/{{ assessment.id }}/evidence-checklist/docx">{{ icon("download") }}DOCX</a>
         <a class="btn secondary sm" href="/assessments/{{ assessment.id }}/rfi" data-rfi-link>Prepare RFI</a>
       </div>
+      {% endif %}
     </div>
-
-    <details class="disclose" style="margin-top:var(--s-6)">
-      <summary>View evidence request details</summary>
-      {% set required_items = checklist | selectattr("required") | list %}
-      {% set recommended_items = checklist | rejectattr("required") | list %}
-      {% if required_items %}
-      <h3 class="mt-lg">Required</h3>
-      <div class="stack-s mt">{% for item in required_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
-      {% endif %}
-      {% if recommended_items %}
-      <h3 class="mt-lg">Recommended</h3>
-      <div class="stack-s mt">{% for item in recommended_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
-      {% endif %}
-    </details>
+    {% if preview_state == "loading" %}
+    <div class="mt-lg" role="status" aria-label="Preparing checklist"><div class="skel-stack" aria-busy="true" aria-label="Loading">{{ skeleton("45%") }}{{ skeleton("85%") }}{{ skeleton("60%") }}{{ skeleton("75%") }}</div></div>
+    {% elif preview_state == "error" %}
+    <div class="alert c-non mt-lg">{{ icon("alert") }}<div><b>The checklist could not be prepared</b>Your scope is saved. <a href="/assessments/{{ assessment.id }}?tab=scope"><u>Try again</u></a></div></div>
+    {% else %}
+    {% set required_items = checklist | selectattr("required") | list %}
+    {% set recommended_items = checklist | rejectattr("required") | list %}
+    <div>
+      {% for heading, items in (("Required", required_items), ("Recommended", recommended_items)) if items %}
+      <h3 class="mt-lg">{{ heading }}</h3>
+      <div class="mt">{% for item in items %}<div class="check-row"><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span></div><div class="chips">{% for framework_id in item.frameworks %}<span class="chip">{{ framework_label(framework_id) }}</span>{% endfor %}</div></div>{% endfor %}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
-
-  <div class="hrow" style="justify-content:flex-end">
-    <a class="btn primary lead" href="/assessments/{{ assessment.id }}?tab=documents">Continue to evidence {{ icon("chev-r") }}</a>
-  </div>
+  {% if preview_state != "loading" %}
+  <div class="hrow" style="justify-content:flex-end"><a class="btn primary" href="/assessments/{{ assessment.id }}?tab=documents">Continue to evidence{{ icon("arrow-r") }}</a></div>
+  {% endif %}
 </div>

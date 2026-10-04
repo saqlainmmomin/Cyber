@@ -108,8 +108,25 @@ def _base_data(
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
 
 
-def _scope(assessment: Assessment) -> None:
-    assessment.scope_answers = json.dumps({})
+# Meridian's saved scope answers (b3-scope edit, b3-scope-complete): cross-border yes, no
+# children's data, likely significant data fiduciary, processors in use, on-premises hosting
+# (no cloud services), in-house development, office premises.
+MERIDIAN_SCOPE_ANSWERS = {
+    "SCP.1": "yes",
+    "SCP.2": "no",
+    "SCP.3": "possibly",
+    "SCP.4": "customer",
+    "SCP.5": "yes",
+    "SCP.6": "no",
+    "ISO.SCP.1": "full_org",
+    "ISO.SCP.2": "no",
+    "ISO.SCP.3": "inhouse",
+    "ISO.SCP.4": "yes_office",
+}
+
+
+def _scope(assessment: Assessment, answers: dict | None = None) -> None:
+    assessment.scope_answers = json.dumps(answers or {})
     assessment.updated_at = _time(-2)
 
 
@@ -411,12 +428,11 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
         _scope(assessment)
         _seed_documents(db, engagement, assessment, 5, "evidence-s5")
     elif screen == "b3-scope":
-        if state in {"edit", "saving"}:
-            _scope(assessment)
-        if state == "error":
-            assessment.status = "error"
+        # default/error/saving render the unsaved form; edit reopens the saved answers.
+        if state == "edit":
+            _scope(assessment, MERIDIAN_SCOPE_ANSWERS)
     elif screen == "b3-scope-complete":
-        _scope(assessment)
+        _scope(assessment, MERIDIAN_SCOPE_ANSWERS)
         if state == "iso":
             assessment.selected_frameworks = json.dumps(["iso27001"])
     elif screen == "b3-questionnaire":

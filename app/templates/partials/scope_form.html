@@ -1,31 +1,35 @@
-{% from "components/ui.html" import icon %}
-<div class="form-narrow">
-  <div class="stack">
-    <div><h2>Scope</h2><p class="sub">Your answers decide which requirements apply and which evidence to collect.</p></div>
-    <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="solid card">
-      {% for fw_group in scope_questions_by_fw %}
-      <section>
-        {% if scope_questions_by_fw | length > 1 %}<h3>{{ fw_group.framework_name }}</h3>{% endif %}
-        {% for q in fw_group.questions %}
-        <fieldset class="qgroup">
-          <legend class="label">{{ q.question }}</legend>
-          {% if q.help_text %}<p class="help">{{ q.help_text }}</p>{% endif %}
-          <div class="opts inline" data-scope-group="{{ q.id }}">
-            {% for opt in q.options %}
-            <label class="choice scope-option">
-              <input type="radio" name="{{ q.id }}" value="{{ opt.value }}"{% if existing.get(q.id) == opt.value %} checked{% endif %}>
-              <span>{{ opt.label }}</span>
-            </label>
-            {% endfor %}
-          </div>
-        </fieldset>
-        {% endfor %}
-      </section>
+{% from "components/ui.html" import alert, skeleton %}
+{% set show_errors = preview_state == "error" %}
+{% set ns = namespace(missing=0) %}
+{% for fw_group in scope_questions_by_fw %}{% for q in fw_group.questions %}{% if not existing.get(q.id) %}{% set ns.missing = ns.missing + 1 %}{% endif %}{% endfor %}{% endfor %}
+<div class="mt-lg form-narrow">
+  {% if show_errors and ns.missing %}
+  {{ alert("Answer " ~ ns.missing ~ " more question" ~ ("s" if ns.missing != 1 else ""), "Each answer decides which requirements apply. Unanswered questions are marked below.", "noncompliant", style="margin-bottom:var(--s-4)") }}
+  {% endif %}
+  <h2>Scope</h2>
+  <p class="sub">Your answers decide which requirements apply and which evidence to collect.</p>
+  <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="stack mt">
+    {% for fw_group in scope_questions_by_fw %}
+    <div class="solid card"><h3>{{ framework_label(fw_group.framework_id, full=True) }}</h3>
+      {% for q in fw_group.questions %}
+      <fieldset class="qgroup"><legend class="label">{{ q.question }}</legend>
+        {% if q.help_text %}<p class="help">{{ q.help_text }}</p>{% endif %}
+        <div class="opts inline" data-scope-group="{{ q.id }}">
+          {% for opt in q.options %}<label class="choice"><input type="radio" name="{{ q.id }}" value="{{ opt.value }}"{% if existing.get(q.id) == opt.value %} checked{% endif %}>{{ opt.label }}</label>{% endfor %}
+        </div>
+        {% if show_errors and not existing.get(q.id) %}<p class="err">Choose an answer.</p>{% endif %}
+      </fieldset>
       {% endfor %}
-      <div class="action-row">
-        <span class="help">Answers can be updated later if your situation changes.</span>
-        <button type="submit" class="btn primary lead">Save scope and prepare evidence request {{ icon("chev-r") }}</button>
-      </div>
-    </form>
-  </div>
+    </div>
+    {% endfor %}
+    <div class="action-row" style="border-top:0;margin-top:0;justify-content:flex-end">
+      {% if preview_state != "saving" %}
+      {% if scope_editing %}<a class="btn ghost" href="/assessments/{{ assessment.id }}?tab=scope">Cancel</a>{% endif %}
+      <button class="btn primary" type="submit">Save scope and prepare evidence request</button>
+      {% endif %}
+    </div>
+    {% if preview_state == "saving" %}
+    <div class="glass card" role="status"><div class="skel-stack" aria-busy="true" aria-label="Saving scope">{{ skeleton("50%") }}{{ skeleton("80%") }}{{ skeleton("35%") }}</div></div>
+    {% endif %}
+  </form>
 </div>
