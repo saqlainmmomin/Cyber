@@ -39,6 +39,8 @@ def test_shell_uses_local_assets_and_attribute_theme_state():
     assert '<html lang="en" data-theme="light" data-accent="midnight"' in html
     assert 'data-nav-key="home" aria-current="page"' in html
     assert 'data-nav-key="clients"' in html
+    assert 'data-nav-key="engagements"' in html
+    assert 'data-nav-key="reports"' in html
     assert 'data-nav-key="settings"' in html
     assert 'class="menu" id="userMenu"' in html
     assert 'data-visual-mask' not in html

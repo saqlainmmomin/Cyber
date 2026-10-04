@@ -2,12 +2,20 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## S4 visual gate repair (2026-10-04)
+
+- [ ] Capture baseline `domcmp.py` and `gate2.py` measurements for all S4 cases.
+- [x] Align shared shell usage, S4 templates/styles, and seeded state data to the mockups; keep required ids, `hx-*`, and `data-*` attributes intact. Verified by rebuilding all 30 seeded S4 state databases and the focused compatibility checks.
+- [x] Explain and minimally isolate the `assessment.html` touch required by the S4 shell/state surface. The change is a screen-reader-only description preservation for the legacy single-assessment redirect; no S5 layout was changed.
+- [ ] Rebuild seeded servers after seed changes and rerun all 120 light/dark 1440/1024 gate cases. Seed rebuild completed; `domcmp.py` and `gate2.py` could not launch Chromium in this sandbox (`bootstrap_check_in ... Permission denied`) before capture.
+- [x] Run focused checks and the full suite with `OPENROUTER_KEY=""`; leave changes uncommitted. Full suite: 1386 passed, 30 skipped.
+
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
-- [x] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
+- [x] S3 Home, clients, firm settings, sign-in, `/review`. [x] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S3 visual repair from gate measurements: source/layout/seed corrections implemented and test-verified; rerun `domcmp.py`/`gate2.py` for every case when the orchestrator's server/Chromium environment is available.
   - [x] Align picker DOM, client-detail fixtures/order/stage, and the one-pixel detail height.
   - [x] Align Home attention/engagement seed data, row wrapping, and link copy.
@@ -136,3 +144,10 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - Implementation: `docs/plans/2026-09-21-002-revised-implementation-plan.md`.
 - Product requirements: `docs/product/2026-09-21-cyberassess-product-requirements.md`.
 - Decisions: `tasks/2026-09-21-adversarial-review.md` (D1–D11).
+# Yozora S4 execution (2026-10-04)
+
+- [x] Add the Engagements list, engagement/new, Overview, Findings and actions, Reports, and purge Yozora surfaces.
+- [x] Add the cross-engagement `/reports` issued-versions index and activate only the Engagements and Reports shell entries.
+- [x] Add deterministic S4 seed scenarios, visual clip coverage, migration-map rows, and stale-guard allowances.
+- [x] Run focused local checks available without a server, browser, network, or boto3; record limits in the S4 handoff.
+- [x] Restore orchestrator-detected S4 content regressions and complete the requested full-suite verification. Seven requested regressions, both stale file-set guards, the redirect/protected-surface contracts, and the full suite pass; only the authorized S3 Home longitudinal failure remains.

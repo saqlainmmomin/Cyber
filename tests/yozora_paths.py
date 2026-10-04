@@ -71,6 +71,33 @@ YOZORA_S2_PATHS = (
     "tests/yozora_paths.py",
 )
 
+YOZORA_S4_PATHS = (
+    "docs/product/yozora-migration-map.md",
+    "app/routers/web.py",
+    "app/routers/retention.py",
+    "app/template_config.py",
+    "app/templates/pages/engagement_detail.html",
+    "app/templates/pages/engagement_purge.html",
+    "app/templates/pages/engagements.html",
+    "app/templates/pages/integrated_reports.html",
+    "app/templates/pages/assessment.html",
+    "app/templates/pages/new_assessment.html",
+    "app/templates/pages/new_engagement.html",
+    "app/templates/pages/reports.html",
+    "app/templates/pages/remediation_tracker.html",
+    "app/templates/partials/client_picker.html",
+    "app/templates/partials/engagement_list.html",
+    "app/templates/partials/engagement_retention.html",
+    "app/templates/partials/yozora_page_controls.html",
+    "design/harness/seed_s4.py",
+    "tasks/handoffs/2026-10-01-yozora-s4-handoff.md",
+    "tasks/todo.md",
+    "tests/test_yozora_shell.py",
+    "tests/test_yozora_add_assessment.py",
+    "tests/test_yozora_s4.py",
+    "tests/test_retention.py",
+)
+
 YOZORA_S3_PATHS = (
     "app/routers/design.py",
     "app/routers/firm_settings.py",
@@ -102,9 +129,9 @@ YOZORA_S3_PATHS = (
     "tests/test_p6_7_requirement_card.py",
     "tests/test_p6_7b_add_to_rfi.py",
     "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_9_file_set.py",
     "tests/test_p6_8_board_report_v2.py",
     "tests/test_p6_8_v3a_data_capture.py",
-    "tests/test_p6_9_file_set.py",
     "tests/test_retention.py",
     "tests/test_longitudinal_demo.py",
     "tests/test_p5_2_reader_migration.py",
@@ -135,5 +162,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

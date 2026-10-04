@@ -1,82 +1,44 @@
 {% extends "base.html" %}
-{% block title %}{{ engagement.name }} — Portfolio{% endblock %}
+
+{% block title %}{{ engagement.name }}{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
-    <span>/</span>
-    <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>
-    <span>/</span>
-    <span class="text-gray-700 dark:text-gray-300">{{ engagement.name }}</span>
-  </div>
-</div>
+{% set period = engagement_period(engagement) %}
+{% set latest_version = latest_issued_version(engagement) %}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['archived', 'archiving', 'empty', 'loading', 'error'] %}{% set state = 'default' %}{% endif %}
+{% if retention.archived and state in ['default', 'archiving'] %}{% set state = 'archived' %}{% endif %}
+{% if not retention.archived and state == 'archived' %}{% set state = 'default' %}{% endif %}
+{% if state == 'default' and not assessments %}{% set state = 'empty' %}{% endif %}
+{% set base = '/engagements/' ~ engagement.id %}
+{% set type_labels = {'gap_assessment': 'Gap assessment', 'audit': 'Audit', 'readiness': 'Readiness'} %}
+{% set stage_rank = {'scope': 0, 'evidence': 1, 'questionnaire': 2, 'review': 3, 'report': 4} %}
+{% set stage_status = {'scope': 'Setting up', 'evidence': 'Collecting evidence', 'questionnaire': 'In progress', 'review': 'In review', 'report': 'Reporting'} %}
+{% set furthest = namespace(stage='scope') %}
+{% for row in assessments %}{% if stage_rank[row.stage.stage] > stage_rank[furthest.stage] %}{% set furthest.stage = row.stage.stage %}{% endif %}{% endfor %}
+{% set engagement_status = stage_status[furthest.stage] %}
+{% macro tabs() %}<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}" aria-selected="true">Overview</a><a href="{{ base }}/evidence">Evidence</a><a href="{{ base }}/remediation">Findings and actions</a><a href="{{ base }}/integrated-reports">Reports</a></nav>{% endmacro %}
+{% macro title_head(status, tone='accent', actions='default') %}<div class="page-head"><div><h1>{{ engagement.name }}</h1><p class="meta-line">{{ client.name }} · {{ type_labels.get(engagement.type, engagement.type | replace('_', ' ') | capitalize) }}{% if period %} · Review period {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p><div style="margin-top:var(--s-3)">{% if actions == 'loading' %}<span class="skel" style="width:90px"></span>{% else %}<span class="pill c-{{ tone }}">{{ status }}</span>{% endif %}</div></div><div class="acts">{% if actions == 'loading' %}<button class="btn secondary lead" disabled><svg class="i"><use href="#i-plus"/></svg>Add assessment</button>{% elif actions == 'archived' %}<a class="btn danger" href="{{ base }}/purge" data-purge-preview-link>Review permanent purge</a><button class="btn primary" type="button" data-modal-open="unarchive-modal">Unarchive engagement</button>{% else %}<button class="btn ghost lead" type="button" data-archive-engagement data-modal-open="archive-modal"><svg class="i"><use href="#i-archive"/></svg>Archive engagement</button><a class="btn {% if actions == 'archiving' %}secondary{% else %}primary{% endif %} lead" href="{{ base }}/assessments/new" data-add-assessment-link><svg class="i"><use href="#i-plus"/></svg>Add assessment</a>{% endif %}</div></div>{% endmacro %}
+{% macro stage_icon(stage) %}{% if stage == 'scope' %}st{% elif stage in ['evidence', 'questionnaire'] %}st prog{% elif stage == 'review' %}dot c-accent{% else %}dot c-ok{% endif %}{% endmacro %}
+{% macro assessment_table() %}<div class="solid"><table><caption class="sr-only">Stage and next step for each assessment</caption><thead><tr><th>Assessment</th><th class="hide-sm">Frameworks</th><th>Stage</th><th class="hide-sm">Next step</th><th class="hide-sm"></th></tr></thead><tbody>{% for row in assessments %}<tr data-href="/assessments/{{ row.id }}"><td><div class="t-title"><a href="/assessments/{{ row.id }}" style="color:inherit">{{ row.display_name }}</a></div>{% if row.description %}<div class="t-sub">{{ row.description }}</div>{% endif %}</td><td class="hide-sm"><div class="chips">{% for framework in row.framework_badges %}<span class="chip" title="{{ framework.name }}">{{ framework_label(framework.id, true) }}</span>{% endfor %}</div></td><td><span class="status"><span class="{{ stage_icon(row.stage.stage) }}"></span>{{ row.stage.label }}{% if row.stage.stage != 'scope' %} · {{ row.stage.note }}{% endif %}</span></td><td class="hide-sm">{% if row.stage.next_label and row.stage.next_href %}<a href="{{ row.stage.next_href }}" style="color:inherit">{{ row.stage.next_label }}</a>{% else %}{{ row.stage.next_label or '' }}{% endif %}</td><td class="go hide-sm"><a href="/assessments/{{ row.id }}" aria-label="Open {{ row.display_name }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td></tr>{% endfor %}</tbody></table></div>{% endmacro %}
+{% macro stats() %}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:var(--s-3)"><a class="glass" href="{{ base }}/evidence" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">{{ summary.evidence_count }}</div><div class="sub">Evidence items</div></a><a class="glass" href="{{ base }}/remediation#rollup" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">{{ summary.open_actions }}</div><div class="sub">Open actions</div></a><a class="glass" href="{{ base }}/integrated-reports" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">{{ 'Version ' ~ latest_version if latest_version else 'None' }}</div><div class="sub">Latest issued report</div></a></div>{% endmacro %}
+{# Below the approved Overview: retention (the name recorded on archive and unarchive), the AWS
+   evidence collector and client evidence links. The handoff keeps these here, masked from the
+   visual baseline (data-visual-mask), until the Evidence and Requests views exist (S6, S8). #}
+{% macro engagement_records() %}<div data-visual-mask style="margin-top:var(--s-16)">{% set retention_forms = false %}{% include "partials/engagement_retention.html" %}<div class="solid card" style="margin-top:var(--s-6)"><div class="section-head"><div><h2>AWS evidence</h2><p class="meta-line">Collect configuration evidence from an AWS account for this engagement.</p></div><a class="btn secondary" href="{{ base }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a></div></div>{% include "partials/magic_links.html" %}</div>{% endmacro %}
+{% macro archive_modal(open=false) %}<div class="scrim-modal" id="archive-modal" data-modal{% if not open %} hidden{% endif %}><div class="modal" role="dialog" aria-modal="true" aria-labelledby="am-t"><h2 id="am-t">Archive {{ engagement.name }}?</h2><p>It becomes read-only and leaves the engagement list. You can unarchive it later.</p><form class="foot" data-archive-control hx-post="/api/engagements/{{ engagement.id }}/archive" hx-include="#reviewer-name" hx-swap="none"><button class="btn ghost" type="button" data-modal-close>Cancel</button><button class="btn primary" type="submit">Archive engagement</button></form></div></div>{% endmacro %}
+{% macro unarchive_modal() %}<div class="scrim-modal" id="unarchive-modal" data-modal hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="um-t"><h2 id="um-t">Unarchive {{ engagement.name }}?</h2><p>It becomes editable again and returns to the engagement list. Archiving it again starts a new retention period.</p><form class="foot" data-unarchive-control hx-post="/api/engagements/{{ engagement.id }}/unarchive" hx-include="#reviewer-name" hx-swap="none"><button class="btn ghost" type="button" data-modal-close>Cancel</button><button class="btn primary" type="submit">Unarchive engagement</button></form></div></div>{% endmacro %}
 
-<div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-8">
-  <div>
-    <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ engagement.name }}</h1>
-      {% set derived_status = card.derived_status %}
-      {% set derived_status_label = card.derived_status_label %}
-      {% include "components/engagement_status_badge.html" %}
-    </div>
-    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ client.name }} · {{ engagement.type | replace("_", " ") | title }}</p>
-    <a href="/engagements/{{ engagement.id }}/integrated-reports" class="mt-2 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Integrated reports →</a>
-    <a href="/engagements/{{ engagement.id }}/remediation" class="mt-2 ml-4 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Remediation tracker →</a>
-    <a href="/engagements/{{ engagement.id }}/aws-evidence" class="mt-2 ml-4 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">AWS evidence →</a>
-  </div>
-  <div class="w-full sm:w-64">
-    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-      <span>Progress</span>
-      <span>{{ card.progress_pct }}%</span>
-    </div>
-    <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-      <div class="h-full rounded-full bg-brand dark:bg-navy-400 transition-all" style="width: {{ card.progress_pct }}%"></div>
-    </div>
-    <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Last activity {{ card.last_activity.strftime('%d %b %Y') }}</p>
-  </div>
-</div>
-
-{% include "partials/engagement_retention.html" %}
-
-<section>
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Assessments</h2>
-    <div class="flex items-center gap-3">
-      <span class="text-xs text-gray-500 dark:text-gray-400">{{ card.assessment_count }} total</span>
-      {% if not retention.archived %}
-      <a data-add-assessment-link href="/engagements/{{ engagement.id }}/assessments/new" class="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white">Add assessment</a>
-      {% endif %}
-    </div>
-  </div>
-  {% if assessments %}
-  <div class="space-y-3">
-    {% for a in assessments %}
-    <a href="/assessments/{{ a.id }}" class="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-navy-300 dark:hover:border-navy-600 transition-colors">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-3">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ a.display_name }}</h3>
-            {% include "components/status_badge.html" %}
-          </div>
-          {% if a.description %}<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ a.description }}</p>{% endif %}
-          <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Created {{ a.created_at.strftime('%d %b %Y') }} · Updated {{ a.updated_at.strftime('%d %b %Y') }}</p>
-        </div>
-        <div class="flex flex-wrap gap-1.5 sm:justify-end">
-          {% for framework in a.framework_badges %}
-          <span class="rounded bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs text-gray-600 dark:text-gray-300" title="{{ framework.version }}">{{ framework.name }}</span>
-          {% endfor %}
-        </div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-10 text-center">
-    <p class="text-sm text-gray-500 dark:text-gray-400">No assessments in this engagement yet.</p>
-    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Progress will appear here when an assessment is added.</p>
-  </div>
-  {% endif %}
-</section>
-{% include "partials/magic_links.html" %}
+{% if state == 'archived' %}
+{{ title_head('Archived', 'neutral', 'archived') }}{{ tabs() }}<div class="alert c-medium" role="status"><svg class="i"><use href="#i-archive"/></svg><div><b>This engagement is archived and read-only</b>{% if retention.record %}Archived on {{ retention.record.archived_at | display_date }} by {{ retention.archived_by_display }}.{% if retention.eligible_at %} Eligible for permanent purge on or after {{ retention.eligible_at | display_date }}.{% else %} The retention setting is not valid, so permanent purge is not available.{% endif %}{% else %}No archive record was found.{% endif %}</div></div><div style="margin-top:var(--s-4)"></div>{{ stats() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div>{% if assessments %}{{ assessment_table() }}{% else %}<div class="glass empty"><h3>No assessments</h3></div>{% endif %}{{ unarchive_modal() }}{{ engagement_records() }}
+{% elif state == 'empty' %}
+{{ title_head('Setting up') }}{{ tabs() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div><div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-briefcase"/></svg><h3>No assessments yet</h3><p>Add an assessment to start collecting evidence for this engagement.</p></div>{{ archive_modal() }}{{ engagement_records() }}
+{% elif state == 'loading' %}
+{{ title_head(engagement_status, 'accent', 'loading') }}{{ tabs() }}<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>
+{% elif state == 'error' %}
+{{ title_head(engagement_status) }}{{ tabs() }}<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>Assessments could not be loaded</b>Check your connection and try again.</div><button class="btn secondary sm" type="button" style="margin-left:auto" onclick="window.location.reload()">Try again</button></div>{{ archive_modal() }}
+{% else %}
+{{ title_head(engagement_status, 'accent', 'archiving' if state == 'archiving' else 'default') }}{{ tabs() }}{{ stats() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div>{{ assessment_table() }}{{ archive_modal(state == 'archiving') }}{{ engagement_records() }}
+{% endif %}
+{% include "partials/yozora_page_controls.html" %}
 {% endblock %}

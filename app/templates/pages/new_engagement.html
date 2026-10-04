@@ -1,115 +1,45 @@
 {% extends "base.html" %}
+
 {% block title %}New Engagement{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-  <div class="mb-6">
-    <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-navy-300 transition-colors">&larr; Back to Portfolio</a>
-  </div>
-
-  <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
-    <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">New Engagement</h1>
-
-    {% if error %}
-    <div class="mb-4 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-      {{ error }}
-    </div>
-    {% endif %}
-
-    <form method="post" action="/engagements" class="space-y-5" id="new-engagement-form">
-      <fieldset>
-        <legend class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Client</legend>
-        <div class="flex flex-wrap gap-4">
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input type="radio" name="client_mode" value="existing"{% if mode == 'existing' %} checked{% endif %}
-                   hx-get="/engagements/new/client-fields?mode=existing"
-                   hx-target="#client-fields" hx-swap="innerHTML" hx-trigger="change"
-                   class="border-gray-300 text-brand focus:ring-brand">
-            Use existing client
-          </label>
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input type="radio" name="client_mode" value="new"{% if mode == 'new' %} checked{% endif %}
-                   hx-get="/engagements/new/client-fields?mode=new"
-                   hx-target="#client-fields" hx-swap="innerHTML" hx-trigger="change"
-                   class="border-gray-300 text-brand focus:ring-brand">
-            Create new client
-          </label>
-        </div>
-      </fieldset>
-
-      <div id="client-fields">
-        {% include "partials/client_picker.html" %}
-      </div>
-
-      <div>
-        <label for="engagement_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Engagement Name</label>
-        <input type="text" name="engagement_name" id="engagement_name" required
-               placeholder="e.g., FY2026 privacy readiness"
-               value="{{ form_values.engagement_name if form_values else '' }}"
-               class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label for="engagement_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Engagement Type</label>
-          {% set engagement_type_value = form_values.engagement_type if form_values else 'gap_assessment' %}
-          <select name="engagement_type" id="engagement_type"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
-            <option value="gap_assessment"{% if engagement_type_value == 'gap_assessment' %} selected{% endif %}>Gap assessment</option>
-            <option value="audit"{% if engagement_type_value == 'audit' %} selected{% endif %}>Audit</option>
-            <option value="readiness"{% if engagement_type_value == 'readiness' %} selected{% endif %}>Readiness</option>
-          </select>
-        </div>
-        <div>
-          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
-          <input type="text" name="description" id="description"
-                 placeholder="Brief engagement context"
-                 value="{{ form_values.description if form_values else '' }}"
-                 class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition">
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Compliance Frameworks</label>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Select one or more frameworks to assess against. Overlapping controls will be de-duplicated.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {% set selected_frameworks = form_values.selected_frameworks if form_values else [] %}
-          {% for fw in frameworks %}
-          <label {% if not fw.enabled %}title="Roadmap — control data present, analysis pipeline coming"{% endif %}
-                 class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 transition-colors {% if fw.enabled %}hover:border-brand/40 hover:bg-brand/5 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand/5{% else %}bg-gray-50 dark:bg-gray-800/60 opacity-60 cursor-not-allowed{% endif %}">
-            <input type="checkbox" name="selected_frameworks" value="{{ fw.id }}"{% if not fw.enabled %} disabled{% endif %}{% if fw.id in selected_frameworks %} checked{% endif %}
-                   class="framework-choice mt-0.5 rounded border-gray-300 text-brand focus:ring-brand">
-            <div>
-              <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ fw.name }}</span>
-              {% if not fw.enabled %}<span class="ml-1 rounded bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">roadmap</span>{% endif %}
-              <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">{{ fw.version }}</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ fw.control_count }} controls</p>
-            </div>
-          </label>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="flex gap-3 pt-2">
-        <button type="submit" id="create-engagement" disabled
-                class="bg-brand hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500 disabled:cursor-not-allowed disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
-          Create Engagement
-        </button>
-        <a href="/" class="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</a>
-      </div>
-    </form>
-    <script>
-      (() => {
-        const form = document.getElementById("new-engagement-form");
-        const submit = document.getElementById("create-engagement");
-        const choices = form.querySelectorAll(".framework-choice:not(:disabled)");
-        const updateSubmit = () => {
-          submit.disabled = !Array.from(choices).some((choice) => choice.checked);
-        };
-        choices.forEach((choice) => choice.addEventListener("change", updateSubmit));
-        updateSubmit();
-      })();
-    </script>
-  </div>
+{% set state = request.query_params.get('state', 'default') %}
+{% set new_client = state == 'new-client' or (form_values and form_values.client_mode == 'new') or (not form_values and not clients) %}
+{% set mode = 'new' if new_client else 'existing' %}
+{% set specimen_error = state == 'error' and not error %}
+{% set name_error = specimen_error or error == 'Engagement name is required.' %}
+{% set framework_error = specimen_error or (error and error.startswith('Select at least one framework')) %}
+{% set selected = form_values.selected_frameworks if form_values else [] %}
+{% set display_order = ['dpdpa', 'iso27001', 'gdpr', 'nist_csf', 'hipaa', 'pci_dss'] %}
+<div class="page-head"><h1>New engagement</h1></div>
+<div class="solid" style="padding:var(--s-8);max-width:640px">
+{% if error or specimen_error %}<div class="alert c-non" role="alert" style="margin-bottom:var(--s-5)"><svg class="i"><use href="#i-alert"/></svg><div><b>The engagement was not created</b>{% if error %}{{ error }}{% else %}Fix the highlighted fields and try again.{% endif %}</div></div>{% endif %}
+<form method="post" action="/engagements" id="new-engagement-form" style="display:flex;flex-direction:column;gap:var(--s-6)">
+<fieldset style="border:0"><legend class="label">Client</legend><div style="display:flex;flex-wrap:wrap;gap:var(--s-6)"><label class="choice"><input type="radio" name="client_mode" value="existing"{% if not new_client %} checked{% endif %} hx-get="/engagements/new/client-fields?mode=existing" hx-target="#client-fields" hx-swap="innerHTML" hx-trigger="change">Use existing client</label><label class="choice"><input type="radio" name="client_mode" value="new"{% if new_client %} checked{% endif %} hx-get="/engagements/new/client-fields?mode=new" hx-target="#client-fields" hx-swap="innerHTML" hx-trigger="change">Create new client</label></div></fieldset>
+<div id="client-fields">{% include "partials/client_picker.html" %}</div>
+<div><label class="label" for="engagement_name">Engagement name</label><label class="field{% if name_error %} invalid{% endif %}"><input id="engagement_name" name="engagement_name" value="{{ form_values.engagement_name if form_values else '' }}" placeholder="For example, FY2026 privacy readiness" required></label>{% if name_error %}<p class="err">Enter an engagement name.</p>{% endif %}</div>
+{% set engagement_type = form_values.engagement_type if form_values else 'gap_assessment' %}
+<div><label class="label" for="engagement_type">Engagement type</label><label class="field"><select id="engagement_type" name="engagement_type">{% for value, label in [('gap_assessment', 'Gap assessment'), ('audit', 'Audit'), ('readiness', 'Readiness')] %}<option value="{{ value }}"{% if engagement_type == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+<div><label class="label" for="description">Description (optional)</label><label class="field area"><textarea id="description" name="description" placeholder="Brief context for the team">{{ form_values.description if form_values else '' }}</textarea></label></div>
+<fieldset style="border:0"><legend class="label">Frameworks</legend><p class="help" style="margin:0 0 var(--s-2)">Overlapping controls are assessed once.</p><div>
+{% for framework_id in display_order %}{% for framework in frameworks if framework.id == framework_id %}<label class="choice" style="padding:var(--s-3) 0;border-top:1px solid var(--line);align-items:center{% if not framework.enabled %};opacity:.6{% endif %}"{% if not framework.enabled %} title="Roadmap — control data present, analysis pipeline coming" data-roadmap-framework{% endif %}><input class="framework-choice" type="checkbox" name="selected_frameworks" value="{{ framework.id }}"{% if framework.id in selected %} checked{% endif %}{% if not framework.enabled %} disabled{% endif %}><span><span style="font-weight:500">{{ framework_label(framework.id, true) }}</span></span></label>{% endfor %}{% endfor %}
+</div>{% if framework_error %}<p class="err">Select at least one framework.</p>{% endif %}</fieldset>
+<div style="display:flex;gap:var(--s-2);justify-content:flex-end"><a class="btn ghost" href="/engagements">Cancel</a><button class="btn primary" type="submit" id="create-engagement"{% if not selected %} hidden{% endif %}>Create engagement</button></div>
+</form>
+<script>
+  (() => {
+    // Create engagement appears once at least one available framework is chosen (the server
+    // validates the same rule).
+    const form = document.getElementById("new-engagement-form");
+    const submit = document.getElementById("create-engagement");
+    const update = () => {
+      submit.hidden = !form.querySelector(".framework-choice:not(:disabled):checked");
+    };
+    form.addEventListener("change", (event) => {
+      if (event.target.classList.contains("framework-choice")) update();
+    });
+    update();
+  })();
+</script>
 </div>
 {% endblock %}

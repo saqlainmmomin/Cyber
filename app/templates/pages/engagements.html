@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Engagements{% endblock %}
+
+{% block content %}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['empty', 'loading', 'error'] %}{% set state = 'default' %}{% endif %}
+{% set filtered = search or status_filter == 'archived' %}
+{% if state == 'default' and not engagements and not filtered %}{% set state = 'empty' %}{% endif %}
+{% macro new_button() %}<a class="btn primary lead" href="/engagements/new"><svg class="i"><use href="#i-plus"/></svg>New engagement</a>{% endmacro %}
+{% macro toolbar(live=true) %}<div style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-4)"><form method="get" action="/engagements" role="search" style="display:contents"><label class="field" style="width:min(320px,100%)"><svg class="i"><use href="#i-search"/></svg><input name="q" value="{{ search if live else '' }}" placeholder="Search engagements" aria-label="Search engagements">{% if live and status_filter == 'archived' %}<input type="hidden" name="status" value="archived">{% endif %}</label></form><form method="get" action="/engagements" class="seg" aria-label="Engagement status">{% if live and search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}<button type="submit" name="status" value="active" aria-pressed="{{ 'false' if live and status_filter == 'archived' else 'true' }}">Active</button><button type="submit" name="status" value="archived" aria-pressed="{{ 'true' if live and status_filter == 'archived' else 'false' }}">Archived</button></form></div>{% endmacro %}
+{% macro stage_icon(stage) %}{% if stage is none or stage.stage == 'scope' %}st{% elif stage.stage in ['evidence', 'questionnaire'] %}dot c-accent{% elif stage.stage == 'review' %}st prog{% else %}dot c-ok{% endif %}{% endmacro %}
+{% if state == 'empty' %}
+<div class="page-head"><h1>Engagements</h1></div>
+<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-briefcase"/></svg><h3>No engagements yet</h3><p>Create an engagement to scope a client and choose the frameworks to assess.</p>{{ new_button() }}</div>
+{% elif state == 'loading' %}
+<div class="page-head"><h1>Engagements</h1><div class="acts">{{ new_button() }}</div></div>
+{{ toolbar(false) }}
+<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%', '62%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>
+{% elif state == 'error' %}
+<div class="page-head"><h1>Engagements</h1><div class="acts">{{ new_button() }}</div></div>
+<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>Engagements could not be loaded</b>Check your connection and try again.</div><button class="btn secondary sm" type="button" style="margin-left:auto" onclick="window.location.reload()">Try again</button></div>
+{% else %}
+<div class="page-head"><h1>Engagements</h1><div class="acts">{{ new_button() }}</div></div>
+{{ toolbar() }}
+{% if engagements %}
+<div class="solid"><table><thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th>Stage</th><th class="hide-sm hide-md">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead><tbody>
+{% for row in engagements %}<tr data-engagement-row data-href="/engagements/{{ row.id }}"><td><div class="t-title"><a href="/engagements/{{ row.id }}" style="color:inherit">{{ row.name }}</a></div><div class="t-sub">{{ row.client_name }}</div></td><td class="hide-sm"><div class="chips">{% for framework in row.framework_badges %}<span class="chip" title="{{ framework.name }}">{{ framework_label(framework.id) }}</span>{% endfor %}</div></td><td>{% if row.analysis_failed %}<span class="status"><span class="dot c-non"></span>Analysis failed</span>{% else %}<span class="status"><span class="{{ stage_icon(row.stage) }}"></span>{{ row.stage.label if row.stage else 'No assessments' }}</span>{% endif %}</td><td class="hide-sm hide-md"><div class="progress"><div class="ticks" aria-hidden="true">{% for n in range(10) %}<i{% if n < (row.progress_pct // 10) %} class="on"{% endif %}></i>{% endfor %}</div><span class="num">{{ row.progress_pct }}%</span></div></td><td class="hide-sm n num t-sub">{{ row.last_activity | display_date }}</td><td class="go hide-sm"><a href="/engagements/{{ row.id }}" aria-label="Open {{ row.name }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}
+<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-search"/></svg><h3>{% if search %}No engagements match “{{ search }}”{% else %}No archived engagements{% endif %}</h3><p>{% if search %}Try a different engagement or client name.{% else %}Archived engagements appear here until they are purged.{% endif %}</p></div>
+{% endif %}
+{% endif %}
+{% include "partials/yozora_page_controls.html" %}
+{% endblock %}
