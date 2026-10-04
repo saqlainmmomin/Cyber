@@ -4,14 +4,14 @@
 <svg class="i"{% if label %} aria-label="{{ label }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}><use href="#i-{{ symbol }}"/></svg>
 {%- endmacro %}
 
-{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false) -%}
+{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false, form_id="") -%}
 {% set classes = "btn " ~ variant %}
 {% if size %}{% set classes = classes ~ " " ~ size %}{% endif %}
 {% if lead %}{% set classes = classes ~ " lead" %}{% endif %}
 {% if icon_id and not label %}{% set classes = classes ~ " icon" %}{% endif %}
 {% if loading %}{% set classes = classes ~ " loading" %}{% endif %}
 {% if touch %}{% set classes = classes ~ " touch" %}{% endif %}
-<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
+<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if form_id %} form="{{ form_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
   {% if icon_id %}{{ icon(icon_id) }}{% endif %}{{ label }}{% if hint %}<kbd>{{ hint }}</kbd>{% endif %}
 </button>
 {%- endmacro %}
@@ -31,10 +31,10 @@
 {% macro chip(label) -%}<span class="chip">{{ label }}</span>{%- endmacro %}
 
 {% macro status(label, state="open", tone="") -%}
-{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} %}
-{% if tone %}<span class="status"><span class="dot {{ tones.get(tone, 'c-neutral') }}"></span>{{ label }}</span>
+{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} -%}
+{%- if tone %}<span class="status"><span class="dot {{ tones.get(tone, 'c-neutral') }}"></span>{{ label }}</span>
 {% elif state == "in_progress" %}<span class="status"><span class="st prog"></span>{{ label }}</span>
-{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif %}
+{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif -%}
 {%- endmacro %}
 
 {% macro field(label="", name="", value="", kind="input", placeholder="", options=[], state="", help_text="", error="", icon_id="", touch=false, disabled=false, required=false, input_type="text") -%}
@@ -65,9 +65,9 @@
 <label class="choice"><input type="checkbox" class="switch"{% if name %} name="{{ name }}"{% endif %}{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</label>
 {%- endmacro %}
 
-{% macro empty_state(title, body, action_label="", action_href="", icon_id="folder", tall=false, style="") -%}
+{% macro empty_state(title, body, action_label="", action_href="", icon_id="folder", tall=false, style="", action_icon_id="", action_lead=false) -%}
 {% set classes = "glass empty" %}{% if tall %}{% set classes = classes ~ " tall" %}{% endif %}
-<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id, "", "width:24px;height:24px;color:var(--muted)") }}<h3>{{ title }}</h3><p>{{ body }}</p>{% if action_label %}{{ link_button(action_label, action_href, "primary") }}{% endif %}</div>
+<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id, "", "width:24px;height:24px;color:var(--muted)") }}<h3>{{ title }}</h3><p>{{ body }}</p>{% if action_label %}{{ link_button(action_label, action_href, "primary", "", action_icon_id, action_lead) }}{% endif %}</div>
 {%- endmacro %}
 
 {% macro skeleton(width="100%", shape="line", margin_top="") -%}

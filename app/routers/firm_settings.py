@@ -15,7 +15,7 @@ from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(tags=["settings"])
 
-SAVED_MESSAGE = "Settings saved"
+SAVED_MESSAGE = "Branding saved"
 UNCHANGED_MESSAGE = "Nothing changed"
 
 
@@ -42,6 +42,25 @@ def _render(
     saved: str | None = None,
 ):
     current = firm_settings.get(db)
+    preview_state = request.query_params.get("state", "")
+    if preview_state == "contrast" and not errors:
+        form_values = {
+            "contact_email": current.contact_email or "",
+            "archived_retention_years": str(current.archived_retention_years),
+            "accent_theme": firm_settings.CUSTOM_ACCENT,
+            "accent_custom_hex": "#F2D14B",
+        }
+        try:
+            firm_settings.validate(
+                contact_email=form_values["contact_email"],
+                archived_retention_years=form_values["archived_retention_years"],
+                accent_theme=form_values["accent_theme"],
+                accent_custom_hex=form_values["accent_custom_hex"],
+            )
+        except firm_settings.FirmSettingsValidationError as exc:
+            errors = exc.errors
+    if preview_state == "saved" and not saved:
+        saved = "Branding saved"
     values = form_values or {
         "contact_email": current.contact_email or "",
         "archived_retention_years": str(current.archived_retention_years),
@@ -60,7 +79,14 @@ def _render(
             "accent_presets": firm_settings.ACCENT_PRESETS,
             "custom_accent": firm_settings.CUSTOM_ACCENT,
             "retention_range": firm_settings.RETENTION_YEARS_RANGE,
-            "unmigrated_assessments": unmigrated_assessments(db),
+            "unmigrated_assessments": [] if preview_state == "nodata" else unmigrated_assessments(db),
+            "preview_state": preview_state,
+            "logo_filename": "northgate-logo.png" if current.contact_email == "engagements@northgate.example" else "No logo uploaded",
+            "contrast_error": (
+                "White text on this colour has a contrast of 1.5 to 1. It needs at least 4.5 to 1. Pick a darker colour."
+                if preview_state == "contrast" and errors and "accent_custom_hex" in errors
+                else None
+            ),
         },
         status_code=status_code,
     )

@@ -15,8 +15,42 @@
 .shell-content {
   width: 100%;
   max-width: 1040px;
+  min-width: 0;
   margin: 0 auto;
   padding: var(--s-6) var(--s-8) var(--s-16);
+}
+
+/* tailwind.css is kept for legacy routes, but its preflight resets semantic
+   heading styles after the Yozora component sheet. Restore the design-system
+   type scale at the shell boundary. */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+h1 {
+  font-size: var(--t-xl);
+  font-weight: 500;
+  letter-spacing: -.022em;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: var(--t-md);
+  font-weight: 600;
+  letter-spacing: -.008em;
+  line-height: 1.4;
+}
+
+h3 {
+  font-size: var(--t-base);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.solid {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .shell-content > .page-head:empty {
@@ -28,6 +62,10 @@
 }
 
 @media (max-width: 860px) {
+  h1 {
+    font-size: 24px;
+  }
+
   .shell-content {
     padding: var(--s-2) var(--s-4) var(--s-10);
   }

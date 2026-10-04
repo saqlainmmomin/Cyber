@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.evidence import Evidence
+from app.models.magic_link import MagicLink
 from app.services import report_snapshots, rfi_requests
 
 UPLOAD_RECEIVED_EVENT = "magic_link.upload_received"
@@ -34,6 +35,7 @@ class RequestSummary:
     received: int
     active_links: int
     latest_version: int | None
+    expires_at: object | None = None
 
 
 def _received_item_ids(db: Session, assessment: Assessment, snapshot_id: str) -> tuple[set[str], int]:
@@ -69,6 +71,37 @@ def assessment_summary(db: Session, assessment: Assessment) -> RequestSummary:
     latest = max((row.sequence for row in rows), default=None)
     issue = report_snapshots.current_rfi_issue(db, assessment)
     if issue is None:
+        # Older links predate versioned RFIs. They still represent outstanding
+        # client requests on the portfolio home page until migrated.
+        legacy = (
+            db.query(MagicLink)
+            .filter(MagicLink.engagement_id == assessment.engagement_id)
+            .order_by(MagicLink.created_at.desc(), MagicLink.id.desc())
+            .first()
+            if assessment.engagement_id
+            else None
+        )
+        if legacy is not None:
+            try:
+                scope = json.loads(legacy.scope_json)
+            except (json.JSONDecodeError, TypeError):
+                scope = {}
+            if (
+                scope.get("version") == 1
+                and isinstance(scope.get("items"), list)
+                and scope.get("assessment_id", assessment.id) == assessment.id
+            ):
+                active = 1 if legacy.revoked_at is None else 0
+                return RequestSummary(
+                    assessment.id,
+                    assessment.display_name,
+                    None,
+                    len(scope["items"]),
+                    0,
+                    active,
+                    latest,
+                    legacy.expires_at,
+                )
         return RequestSummary(assessment.id, assessment.display_name, None, None, 0, 0, latest)
     sequence = next((row.sequence for row in rows if row.snapshot.id == issue.id), None)
     try:

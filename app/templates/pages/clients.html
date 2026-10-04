@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import page_header %}
+{% from "components/ui.html" import alert, button, empty_state, icon, link_button, skeleton %}
+
+{% block title %}Clients{% endblock %}
+{% block content %}
+{{ page_header("Clients", actions=[{"label": "New engagement", "href": "/engagements/new", "variant": "secondary" if view_state in ["empty", "error", "picker"] else "primary", "icon_id": "plus", "lead": true}]) }}
+{% if view_state == "loading" %}
+  <div class="tools keep-row"><label class="field">{{ icon("search") }}<input placeholder="Search clients" aria-label="Search clients"></label><label class="field sel"><select aria-label="Industry"><option>All industries</option>{% for option in industries %}<option>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label></div>
+  <div class="solid card" aria-busy="true">{{ skeleton("45%") }}{{ skeleton("90%", margin_top="14px") }}{{ skeleton("75%", margin_top="14px") }}{{ skeleton("85%", margin_top="14px") }}</div>
+{% elif view_state == "error" %}
+  {{ alert("Clients did not load", "Check your connection, then try again.", "noncompliant") }}
+  <div style="margin-top:var(--s-4)">{{ button("Try again", "primary") }}</div>
+{% elif view_state == "empty" %}
+  {{ empty_state("No clients yet", "Clients are added when you start an engagement.", "New engagement", "/engagements/new", "building", action_icon_id="plus", action_lead=true) }}
+{% else %}
+  {% if view_state != "picker" %}
+    <form class="tools keep-row" method="get" action="/clients">
+      <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search clients" aria-label="Search clients"></label>
+      {% if view_state != "noresults" %}<label class="field sel"><select name="industry" aria-label="Industry"><option value="">All industries</option>{% for option in industries %}<option value="{{ option }}"{% if option == industry %} selected{% endif %}>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label>{% endif %}
+    </form>
+  {% endif %}
+  {% if view_state == "noresults" %}
+    <div class="glass empty">{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No clients match &quot;{{ search }}&quot;</h3><p>Check the spelling or clear the search.</p>{{ button("Clear search", "secondary") }}</div>
+  {% else %}
+    <div class="solid"><table>
+      <thead><tr><th>Client</th><th class="hide-sm">Industry</th><th class="hide-sm">Size</th><th class="n">Engagements</th><th class="n hide-sm">Last activity</th><th class="hide-sm"></th></tr></thead>
+      <tbody>{% for client in clients %}
+        <tr data-href="/clients/{{ client.id }}"><td><a class="t-title" href="/clients/{{ client.id }}">{{ client.name }}</a></td><td class="hide-sm">{{ industry_labels.get(client.industry, client.industry) }}</td><td class="hide-sm">{{ size_labels.get(client.size, client.size) }}</td><td class="n num">{{ client.engagement_count }}</td><td class="hide-sm n num">{{ client.last_activity.strftime("%-d %b %Y") }}</td><td class="go hide-sm"><a href="/clients/{{ client.id }}" aria-label="Open {{ client.name }}">{{ icon("chev-r") }}</a></td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  {% endif %}
+{% endif %}
+
+{% if view_state == "picker" %}
+<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pt">
+  <h2 id="pt">New engagement</h2>
+  <div style="margin-top:var(--s-4)"><div class="seg" id="pickmode"><button type="button" aria-pressed="true" data-m="existing">Existing client</button><button type="button" aria-pressed="false" data-m="new">New client</button></div></div>
+  <div id="pk-existing" style="margin-top:var(--s-4)"><label class="label" for="client_id">Client</label><label class="field"><select id="client_id" name="client_id"><option>Select a client</option>{% for client in clients %}<option{% if loop.first %} selected{% endif %} value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label></div>
+  <div id="pk-new" hidden style="margin-top:var(--s-4)"><label class="label" for="company_name">Company name</label><label class="field"><input id="company_name" placeholder="Harbour and Finch Logistics"></label><div class="form-grid" style="margin-top:var(--s-4)"><div><label class="label" for="industry">Industry</label><label class="field"><select id="industry"><option>Select industry</option><option>IT services</option><option>Fintech</option><option>Healthcare</option><option>E-commerce</option><option>Manufacturing</option><option>Education</option><option>Real estate</option><option>Legal</option><option>Accounting</option><option>Other</option></select></label></div><div><label class="label" for="company_size">Company size</label><label class="field"><select id="company_size"><option>Select size</option><option>Startup (under 50 employees)</option><option>SME (50 to 500)</option><option>Large (500 to 5,000)</option><option>Enterprise (5,000 and over)</option></select></label></div></div></div>
+  <div class="foot"><a class="btn ghost" href="/clients">Cancel</a><a class="btn primary" href="/engagements/new">Continue</a></div>
+</div></div>
+{% endif %}
+{% endblock %}
