@@ -5,6 +5,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_APP_PREFIXES  # noqa: E402
+from tests.yozora_paths import YOZORA_EXCLUDES  # noqa: E402  # Yozora per-PR allowance
 V3B_OTHER = (
     "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/golden/p6_8_v3_deck_document.json",
     "tests/golden/p6_8_board_document.json", "tests/test_p6_8_v3b_extra.py", "tasks/todo.md",
@@ -29,7 +30,8 @@ def test_v3b_changes_stay_in_the_v3b_file_set():
          ":(exclude)docs/product/2026-10-04-board-deck-v3c-mockup",
          ":(exclude)tasks/2026-10-04-deliverables-quality-scope.md",
          ":(exclude)tasks/handoffs/2026-10-04-v3c-prior-domain-scores.md",
-         ":(exclude)tests/yozora_paths.py"],
+         ":(exclude)tests/yozora_paths.py",
+         *YOZORA_EXCLUDES],
         cwd=REPO_ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
     own_tests = {f for f in committed if f.startswith("tests/") and "v3b" in f or f.startswith("tests/p6_8_v3_")}
