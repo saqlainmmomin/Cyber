@@ -1,100 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Integrated reports — {{ engagement.name }}{% endblock %}
+
+{% block title %}Integrated report · {{ engagement.name }}{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Portfolio</a>
-  <span class="mx-1.5">/</span>
-  <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ client.name }}</a>
-  <span class="mx-1.5">/</span>
-  <a href="/engagements/{{ engagement.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ engagement.name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Integrated reports</span>
-</nav>
+{% set period = engagement_period(engagement) %}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['issue', 'empty', 'none-approved', 'loading', 'error'] %}{% set state = 'default' %}{% endif %}
+{% if state == 'default' and not rows %}{% set state = 'empty' %}{% endif %}
+{% set base = '/engagements/' ~ engagement.id %}
+{% set api = '/api/engagements/' ~ engagement.id ~ '/integrated-reports' %}
+{% set issuable = rows | selectattr('issuable') | first %}
+{% set current_issue = rows | selectattr('is_current_issue') | first %}
+{% macro tabs() %}<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}">Overview</a><a href="{{ base }}/evidence">Evidence</a><a href="{{ base }}/remediation">Findings and actions</a><a href="{{ base }}/integrated-reports" aria-selected="true">Reports</a></nav>{% endmacro %}
+{% macro head(button_state='primary', disabled=false) %}<div class="page-head"><div><h1>Integrated report</h1><p class="meta-line">{{ engagement.name }} · {{ client.name }}{% if period %} · Review period {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div><div class="acts">{% if button_state %}<form data-generate-control hx-post="{{ api }}" hx-include="#reviewer-name" hx-swap="none" style="display:contents"><button class="btn {{ button_state }}" type="submit"{% if disabled %} disabled{% endif %}>Generate new version</button></form>{% endif %}</div></div>{% endmacro %}
+{% macro intro() %}<p class="sub" style="margin-bottom:var(--s-6);max-width:64ch">One section for each assessment approved for release. Scores stay separate for every framework and are never combined.</p>{% endmacro %}
+{% macro framework_cards() %}<div class="fw-grid"><div class="glass fw"><h2>Included</h2><div class="domains">{% for section in data.sections %}<div data-included-assessment><span>{{ section.label }}</span><div class="chips">{% for framework_id in section.framework_ids %}<span class="chip">{{ framework_label(framework_id) }}</span>{% endfor %}</div></div>{% else %}<div><span class="sub">No assessment is approved for release yet.</span></div>{% endfor %}</div></div><div class="glass fw"><h2>Not included</h2><div class="domains">{% for excluded in data.excluded %}<div data-excluded-assessment><span>{{ excluded.label }}</span><span class="status calm"><span class="dot c-neutral"></span>{{ excluded.reason }}</span></div>{% else %}<div><span class="sub">Every assessment is included.</span></div>{% endfor %}</div></div></div>{% endmacro %}
+{% macro loading() %}<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>{% endmacro %}
+{% macro size_label(size_bytes) %}{% if size_bytes is none %}{% elif size_bytes >= 1048576 %}{{ '%.1f'|format(size_bytes / 1048576) }} MB{% else %}{{ '%.0f'|format(size_bytes / 1024) }} KB{% endif %}{% endmacro %}
+{% macro sign_off() %}<section class="solid" style="margin-top:var(--s-16);padding:var(--s-5) var(--s-6);max-width:560px" aria-labelledby="sign-off-t"><h2 id="sign-off-t" style="font-size:var(--t-md);font-weight:600">Sign-off</h2><p class="sub" style="margin:var(--s-1) 0 var(--s-4)">Your name is recorded on each version you generate or issue.</p><label class="label" for="reviewer-name">Your name</label><label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}" autocomplete="name"></label></section>{% endmacro %}
 
-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Integrated engagement report</h1>
-    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">One report with a separate section for each assessment approved for release. Scores are shown per assessment and framework and are never combined. Generating creates a new draft version; issuing makes it permanent.</p>
-  </div>
-</div>
-
-<div class="mb-6 max-w-sm">
-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-</div>
-
-<section class="mb-8">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Included assessments</h2>
-  {% if data.sections %}
-  <ul class="list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
-    {% for section in data.sections %}
-    <li data-included-assessment>{{ section.label }}</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="text-sm text-gray-500 dark:text-gray-400">No assessment is approved for release yet.</p>
-  {% endif %}
-</section>
-
-{% if data.excluded %}
-<section class="mb-8">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Not included</h2>
-  <ul class="list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
-    {% for row in data.excluded %}
-    <li data-excluded-assessment>{{ row.label }}: {{ row.reason }}</li>
-    {% endfor %}
-  </ul>
-</section>
-{% endif %}
-
-<section class="mb-10">
-  <form hx-post="/api/engagements/{{ engagement.id }}/integrated-reports" hx-include="#reviewer-name">
-    <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Generate new version</button>
-  </form>
-</section>
-
-{% if not rows %}
-<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No versions generated yet.</div>
+{% if state == 'none-approved' %}
+{{ head('') }}{{ tabs() }}{{ intro() }}<div class="alert c-medium" role="status"><svg class="i"><use href="#i-alert"/></svg><div><b>No assessment is approved for release</b>Approve at least one assessment before generating a version.</div></div>
+{% elif state == 'loading' %}
+{{ head('secondary') }}{{ tabs() }}{{ intro() }}{{ loading() }}
+{% elif state == 'error' %}
+{{ head('secondary') }}{{ tabs() }}{{ intro() }}<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>The report could not be generated</b>Check your connection and try again. Existing versions are unchanged.</div><button class="btn secondary sm" type="button" style="margin-left:auto" onclick="window.location.reload()">Try again</button></div>
+{% elif state == 'empty' %}
+{{ head('secondary', true) }}{{ tabs() }}{{ intro() }}{{ framework_cards() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Versions</h2></div><div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-report"/></svg><h3>No versions yet</h3><p>Generate the first version to review a draft before it is issued.</p><form data-generate-control hx-post="{{ api }}" hx-include="#reviewer-name" hx-swap="none" style="display:contents"><button class="btn primary" type="submit">Generate first version</button></form><span class="sr-only">No versions generated yet.</span></div>{{ sign_off() }}
 {% else %}
-<div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-  <table class="min-w-full text-left text-xs">
-    <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
-      <tr>
-        <th class="px-3 py-2">Version</th>
-        <th class="px-3 py-2">State</th>
-        <th class="px-3 py-2">Generated</th>
-        <th class="px-3 py-2">Issued</th>
-        <th class="px-3 py-2">SHA-256</th>
-        <th class="px-3 py-2">Size</th>
-        <th class="px-3 py-2">Source</th>
-        <th class="px-3 py-2">File</th>
-        <th class="px-3 py-2">Release</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
-      {% for row in rows %}
-      <tr data-integrated-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}">
-        <td class="px-3 py-3 font-mono">v{{ row.sequence }}</td>
-        <td class="px-3 py-3 font-medium">{% if row.state == 'issued' %}{{ 'Issued (current)' if row.is_current_issue else 'Issued' }}{% elif row.state == 'superseded_draft' %}Draft (superseded){% else %}Draft{% endif %}</td>
-        <td class="px-3 py-3"><div>{{ row.snapshot.generated_at }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.generated_by or '' }}</div></td>
-        <td class="px-3 py-3"><div>{{ row.issued_at or '' }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.issued_by or '' }}</div></td>
-        <td class="px-3 py-3 font-mono"{% if row.sha256 %} title="{{ row.sha256 }}"{% endif %}>{{ row.sha256[:12] if row.sha256 else '' }}</td>
-        <td class="px-3 py-3">{{ '%.1f'|format(row.size_bytes / 1024) if row.size_bytes is not none else '' }} KB</td>
-        <td class="px-3 py-3">{% if row.source_changed %}<span class="text-amber-700 dark:text-amber-300">Source data changed since generation</span>{% endif %}</td>
-        <td class="px-3 py-3"><a href="/api/engagements/{{ engagement.id }}/integrated-reports/{{ row.snapshot.id }}/file" class="font-medium text-brand dark:text-navy-300 hover:underline">Download</a></td>
-        <td class="px-3 py-3">
-          {% if row.issuable %}
-          <form data-issue-control hx-post="/api/engagements/{{ engagement.id }}/integrated-reports/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-confirm="Issue this version? Issued versions are permanent and cannot be changed or withdrawn.">
-            <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Issue</button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{{ head('secondary' if state == 'issue' else 'primary') }}{{ tabs() }}{{ intro() }}{{ framework_cards() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Versions</h2></div><div class="solid static" style="overflow-x:auto"><table><thead><tr><th>Version</th><th>State</th><th class="hide-sm">Generated</th><th class="hide-sm">Issued</th><th class="n hide-sm">Size</th><th class="n"><span class="hide-sm">File</span></th></tr></thead><tbody>
+{% for row in rows %}
+{% if row.state == 'issued' and row.is_current_issue %}{% set pill_label, pill_tone, pill_title = 'Issued, current', 'c-ok', 'Issued (current)' %}{% elif row.state == 'issued' %}{% set pill_label, pill_tone, pill_title = 'Issued', 'c-accent', 'Issued' %}{% elif row.state == 'superseded_draft' %}{% set pill_label, pill_tone, pill_title = 'Draft, superseded', 'c-neutral', 'Draft (superseded)' %}{% else %}{% set pill_label, pill_tone, pill_title = 'Draft', 'c-neutral', 'Draft' %}{% endif %}
+<tr data-integrated-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}"><td class="t-title num">Version {{ row.sequence }}</td><td><span class="pill {{ pill_tone }}" title="{{ pill_title }}">{{ pill_label }}</span>{% if row.source_changed %}<div style="margin-top:var(--s-2)"><span class="warn" title="Source data changed since this version was generated"><svg class="i"><use href="#i-alert"/></svg>Source data changed</span></div>{% endif %}</td><td class="hide-sm"><div>{{ row.snapshot.generated_at | display_date }}</div><div class="t-sub">{{ row.generated_by or '' }}</div></td><td class="hide-sm"><div>{{ row.issued_at | display_date if row.issued_at else 'Not issued' }}</div><div class="t-sub">{{ row.issued_by or '' }}</div></td><td class="hide-sm n num t-sub">{{ size_label(row.size_bytes) }}</td><td class="n"><div style="display:inline-flex;gap:var(--s-2);align-items:center"><button class="btn ghost sm icon hide-sm" type="button" aria-label="Copy checksum"{% if row.sha256 %} title="SHA-256 {{ row.sha256 }}" data-copy-checksum="{{ row.sha256 }}"{% else %} disabled{% endif %}><svg class="i"><use href="#i-copy"/></svg></button><a class="btn secondary sm lead" href="{{ api }}/{{ row.snapshot.id }}/file" hx-boost="false" download data-download-version><svg class="i"><use href="#i-download"/></svg>Download</a>{% if row.issuable %}<button class="btn secondary sm" type="button" data-modal-open="issue-modal">Issue</button>{% endif %}</div></td></tr>
+{% endfor %}
+</tbody></table></div>{% if issuable %}<div class="scrim-modal" id="issue-modal" data-modal{% if state != 'issue' %} hidden{% endif %}><div class="modal" role="dialog" aria-modal="true" aria-labelledby="im-t"><h2 id="im-t">Issue version {{ issuable.sequence }} of the integrated report?</h2><p>Issued versions are permanent. They cannot be changed or withdrawn.{% if current_issue %} Version {{ current_issue.sequence }} stays issued but is no longer the current version.{% endif %}</p><form class="foot" data-issue-control hx-post="{{ api }}/{{ issuable.snapshot.id }}/issue" hx-include="#reviewer-name" hx-swap="none"><button class="btn ghost" type="button" data-modal-close>Cancel</button><button class="btn primary" type="submit">Issue version {{ issuable.sequence }}</button></form></div></div>{% endif %}{{ sign_off() }}
 {% endif %}
+{% include "partials/yozora_page_controls.html" %}
 {% endblock %}

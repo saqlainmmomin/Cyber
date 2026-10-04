@@ -72,5 +72,8 @@ reports/board_report.html
 reports/workpaper_standalone.html
 pages/firm_settings.html
 pages/new_assessment.html
+pages/engagements.html
+pages/reports.html
+partials/yozora_page_controls.html
 pages/clients.html
 pages/review.html

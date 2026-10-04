@@ -1176,7 +1176,7 @@ P6_10_APP_FILES = (
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS  # Yozora S1/S2/S3 per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS  # Yozora per-PR allowance
 
 
 def _changed(*args: str) -> set[str]:
@@ -1200,6 +1200,7 @@ def test_scenario_14_p6_7_touches_only_its_files():
     changed -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend (tasks/handoffs/2026-10-03-yozora-backend-features.md)
     changed -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
     changed -= set(YOZORA_S2_PATHS)  # Yozora S2 (tasks/handoffs/2026-10-01-yozora-s2-handoff.md)
+    changed -= set(YOZORA_S4_PATHS)  # Yozora S4 (tasks/handoffs/2026-10-01-yozora-s4-handoff.md)
     changed -= set(YOZORA_S3_PATHS)  # Yozora S3 (tasks/handoffs/2026-10-01-yozora-s3-handoff.md)
     assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
     # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.

@@ -14,6 +14,7 @@ from alembic import command
 from app.models.assessment import Assessment
 from app.models.assessment_pack import AssessmentPack
 from app.routers import web
+from app.services.engagement_factory import add_assessment_to_engagement
 from app.services import retention
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     _register_frameworks,
@@ -44,10 +45,25 @@ def test_form_lists_only_enabled_frameworks(db, http):
 
 
 def test_engagement_page_has_the_add_assessment_button(db, http):
-    _client, engagement, _assessment = seed_engagement(db)
+    client, engagement, _assessment = seed_engagement(db)
+    add_assessment_to_engagement(
+        db,
+        engagement=engagement,
+        client=client,
+        name="Operations",
+        description="Operations scope",
+        framework_ids=["dpdpa"],
+    )
     page = http.get(f"/engagements/{engagement.id}").text
     assert "data-add-assessment-link" in page
     assert f'href="/engagements/{engagement.id}/assessments/new"' in page
+
+
+def test_single_assessment_engagement_redirects_to_assessment_overview(db, http):
+    _client, engagement, assessment = seed_engagement(db)
+    response = http.get(f"/engagements/{engagement.id}", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == f"/assessments/{assessment.id}"
 
 
 def test_create_inherits_the_client_and_redirects_to_the_assessment(db, http):

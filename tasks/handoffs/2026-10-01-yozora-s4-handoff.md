@@ -212,4 +212,63 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+Implemented S4 and the 4 Oct addenda.
+
+### Built
+
+- Added `GET /engagements` with active/archived filters, search, framework badges, stage and last-activity columns. Added the single-assessment `303` redirect from `/engagements/{id}` while preserving the archived overview.
+- Rebuilt the engagement overview, add-assessment, new-engagement, findings and actions, integrated Reports, purge, retention, client picker and client-scoped engagement list surfaces with Yozora macros/tokens. Required ids, HTMX verbs/targets and data attributes remain in place.
+- Added `GET /reports`, showing issued assessment and integrated report versions. Report and engagement cells link to the assessment Report tab or engagement Reports tab; file cells link to the existing download endpoints. The page uses the S2 table macro (with optional linked cells) and empty-state macro.
+- Activated only the `Engagements` and `Reports` `NAV_ITEMS`; Clients, Review and Evidence remain unavailable because no routes were added here.
+- Added `design/harness/seed_s4.py` with fixed clock `2026-09-30T12:00:00Z`, deterministic Meridian Ledger Technologies, Loomwire Labs and Kestrel Advisory fixtures, and throwaway SQLite output. No schema, scoring, analyzer, prompt or PDF changes were made.
+- Widened the shell visual clip through the live Reports nav row. The magic-links include remains inside `data-visual-mask` as the handoff’s temporary S4 exception until S8.
+- Added the `/reports` migration-map row and `YOZORA_S4_PATHS` allowances. The pre-existing `node_modules` untracked entry was not touched.
+- Restored the single-assessment overview's engagement context without removing its 303 redirect: the AWS evidence action, firm retention copy, and DOM-rendered magic-link/contact/upload content are available on the Yozora assessment overview, with the magic-link region still under `data-visual-mask`.
+- Restored the three disabled-framework roadmap tooltips and the `New Engagement` document title on the legacy `/assessments/new` entry point. Wired the existing S4 path tuple into the two stale P6-8 file-set guards and added the assessment overview template to that tuple.
+
+### Seed state production
+
+The harness generated all 30 states in the Screens table successfully. State production is deterministic as follows:
+
+| Screen | State production |
+|---|---|
+| Engagement list | `default`, `loading`, `error`: the three named clients with active engagements; `empty`: no engagements. |
+| New engagement | `default`, `new-client`, `error`: named client records; `empty`: no client records. The state is selected by the harness caller while the database supplies the stable form data. |
+| Engagement detail | `default`, `archiving`, `loading`, `error`, `blocked`: active Meridian/Loomwire/Kestrel portfolio; `empty`: Meridian client with an engagement and no assessments; `archived`: archived Meridian engagement with a fixed archive audit event. |
+| Remediation tracker | `default`, `embedded`: deterministic Loomwire actions/findings; `empty`: portfolio without action rows; `loading`, `error`: same stable portfolio fixture for the orchestrator’s state overlay. |
+| Integrated Reports | `default`: two issued integrated versions; `issue`: one issued version plus a current draft; `empty`: no report snapshots; `none-approved`: assessments without report snapshots; `loading`, `error`: stable portfolio fixture. |
+| Engagement purge | `default`, `confirm`: archived Meridian engagement past retention; `blocked`: recent archive plus cross-engagement evidence dependency; `error`: archive event with invalid retention metadata. |
+
+### Screenshot gate
+
+Orchestrator run, 4 Oct 2026, content region against the approved mockups, light and dark, 1440 and 1024, final code: **85 of 120 captures pass** (0.4%, no changed region over 40x40). Pages render real data and real working controls; the first pass had hardcoded mockup content and hidden stub controls and was rejected. Browser proof of the controls: 55 of 55 checks (Generate, Issue modal, Download, Archive and Unarchive, typed-name purge then 404, existing and new client engagement creation, list search and tabs, actions export).
+
+Not at threshold, with reason (decision for Saqlain: accept, change the mockup, or change backend copy):
+- `engagement_detail` default, blocked, archived, archiving, empty: the Retention section, AWS evidence link and client links sit below the assessments table inside the area the mockup leaves blank (handoff allows this masked region); stage next step reads `Review 3 conclusions` from the stage service where the mockup says `Approve 3 conclusions`. Light 1440 worst at about 6%, dark under 1% for most.
+- `new_engagement` default: the mockup shows a pre-filled sample form with Create visible; a real fresh form is empty (0.6 to 1%). `new-client`: Industry and Size are required by the backend and not drawn in the mockup (4 to 6%).
+- `engagement_purge` confirm: the confirm field is empty and Delete disabled until the name matches; the name field sits in the modal (1.4 to 4.7%).
+- `integrated_reports` empty: row label format and `Not approved for release` wording come from `report_content.py` (protected) and a test (1.3% light, dark 1024 0.45%).
+
+`?state=embedded` on the tracker is a static demo of other pages and passes trivially; the Evidence tab and tile link to `/engagements/{id}/evidence`, which exists only after S6. The shell is compared by `tests/visual/test_shell_visual.py`. Gate tooling lives outside the repo (`/private/tmp/claude-501/gate2.py`).
+
+### Tests and guards
+
+- Added `tests/test_yozora_s4.py` for the engagements list, empty states, issued-report linking and stage/next-step rendering. Updated the add-assessment test fixture for the new single-assessment redirect and added the redirect assertion.
+- Existing asserted retention copy remains `Retention: N years after archive (firm setting...)`; visible old “Remediation tracker” copy is now “Findings and actions”, and integrated Reports is now “Reports” per IA-SPEC. The existing PDF/remediation/retention contracts passed without weakening their guards.
+- Updated the S4 allowances consumed by `tests/test_retention.py`, `tests/p6_10_support.py`, `tests/test_p6_7_requirement_card.py`, `tests/test_p6_7b_add_to_rfi.py`, `tests/test_p6_8_b2_docx_xlsx.py` and `tests/test_p6_9_file_set.py`; no guard was deleted or weakened. Added new templates to the design-lint allowlist.
+
+Focused verification passed:
+
+```text
+22 passed — test_yozora_shell.py, test_yozora_add_assessment.py, test_yozora_s4.py
+11 passed — test_yozora_s4.py, test_design_lint.py
+10 passed — design lint, remediation rollup, retention scenarios 5, 6 and 13
+21 passed — full test_retention.py plus test_yozora_actions_export.py
+13 passed — test_pdf_updates.py
+30/30 seed states generated; git diff --check and Python compileall passed
+```
+
+Visual/pixel gate: not run here; the orchestrator owns that check.
+
+- Regression reruns: all seven requested tests, both authorized stale file-set guards, the single-assessment redirect contract, and the protected-surface guard passed individually.
+- Full suite (`OPENROUTER_KEY="" .venv/bin/python -m pytest`): 1,385 passed, 30 skipped, and one known ignored failure remains: `tests/test_longitudinal_demo.py::test_scenario_2_dashboard_has_both_clients_and_hierarchy` depends on S3 Home. The visual/pixel gate remains for the orchestrator environment.
