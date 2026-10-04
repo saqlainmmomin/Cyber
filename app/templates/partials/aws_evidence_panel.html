@@ -1,5 +1,5 @@
 {% from "components/ui.html" import icon, status %}
-{% set state = request.query_params.get("state", "ready") %}
+{% set state = preview_state if preview_state is defined and preview_state else "ready" %}
 {% set source_labels = {"aws_config": "AWS Config", "aws_securityhub": "Security Hub"} %}
 {% set status_tones = {"active": "ok", "invalidated": "medium", "rejected": "non"} %}
 {% set ordered_rows = (rows | selectattr("last_collected_at") | sort(attribute="last_collected_at", reverse=true) | list) + (rows | rejectattr("last_collected_at") | list) %}
@@ -18,7 +18,7 @@
   </form>
   {% endif %}
 
-  {% if error or state == "error" %}<div data-aws-error style="margin-top:var(--s-4)"><div class="alert c-non">{{ icon("alert") }}<div>{% if error %}{{ error }}{% else %}<b>AWS refused the role</b>Check the role ARN and the external ID, then pull again. No evidence was collected.{% endif %}</div></div></div>{% endif %}
+  {% if error %}<div data-aws-error style="margin-top:var(--s-4)"><div class="alert c-non">{{ icon("alert") }}<div>{% if error_title %}<b>{{ error_title }}</b>{% endif %}{{ error }}</div></div></div>{% endif %}
 
   {% if result %}
   <div data-aws-result style="margin-top:var(--s-10)"><div class="sec" style="margin-top:0"><h2>Pull complete</h2></div>

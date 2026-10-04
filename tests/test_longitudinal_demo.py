@@ -272,7 +272,10 @@ def test_scenario_4_reuse_prompt_requires_confirmation_and_audit(db, http, demo)
     assert "189 days" in page.text
     assert 'name="acknowledge_warnings"' in page.text
     assert "Confirm reuse" in page.text
-    assert re.search(r"Confirm reuse of\s*<span[^>]*>1</span>", page.text)
+    # Nothing is ticked on load, so the confirm button starts disabled; the page script
+    # counts ticked boxes only ("Confirm reuse of N").
+    assert re.search(r'<button class="btn primary" type="button" id="confirm-reuse" disabled>Confirm reuse</button>', page.text)
+    assert "Confirm reuse of" not in page.text.split("<script", 1)[0]
     assert len(re.findall(r"<form[^>]*data-reuse-confirm(?:\s|>)", page.text)) == 1
     assert 'data-reuse-error role="alert"' in page.text and 'hidden></div>' in page.text
     assert 'data-reuse-select checked' not in page.text
@@ -549,8 +552,9 @@ def test_scenario_12_structural_guards(db, http, demo):
     assert "delete" not in service_source.lower()
     assert ".commit(" not in inspect.getsource(web.assessment_detail)
     assert re.search(r"confirm all|select all|approve all|\bmultiple\b|\|\s*safe\b|bulk", service_source + router_source + template_source, re.I) is None
-    # Each candidate has its own selection tick; warning acknowledgement is a separate required tick.
-    assert template_source.count('type="checkbox"') >= 2
+    # Each candidate has exactly one selection tick. For a warning-bearing candidate that tick
+    # is the acknowledgement itself (name="acknowledge_warnings"); the template holds the two variants.
+    assert template_source.count('type="checkbox"') == 2
     assert 'name="selected_candidates"' not in template_source
     assert 'data-reuse-select' in template_source
     assert 'name="acknowledge_warnings"' in template_source

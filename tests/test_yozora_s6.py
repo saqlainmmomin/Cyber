@@ -383,10 +383,22 @@ def test_reuse_markup_is_data_driven_and_unchecked_by_default(db, http, monkeypa
     db.commit()
     page = http.get(f"/assessments/{target.id}/evidence-reuse")
     assert page.status_code == 200
-    assert re.search(r"Confirm reuse of\s*<span[^>]*>1</span>", page.text)
+    # Nothing is ticked on load, so the confirm button starts disabled; the page script
+    # counts ticked boxes only ("Confirm reuse of N").
+    assert re.search(r'<button class="btn primary" type="button" id="confirm-reuse" disabled>Confirm reuse</button>', page.text)
+    assert "Confirm reuse of" not in page.text.split("<script", 1)[0]
     assert len(re.findall(r"<form[^>]*data-reuse-confirm(?:\s|>)", page.text)) == 1
     assert 'data-reuse-error role="alert"' in page.text and 'hidden></div>' in page.text
     assert 'data-reuse-select checked' not in page.text
+
+    # Transient states are preview-only: the live page ignores ?state=error.
+    from app.routers.evidence_reuse import ACK_REQUIRED_TITLE
+
+    live_error = http.get(f"/assessments/{target.id}/evidence-reuse?state=error")
+    assert ACK_REQUIRED_TITLE not in live_error.text
+    preview_error = http.get(f"/design/pages/evidence_reuse?assessment={target.id}&state=error")
+    assert preview_error.status_code == 200
+    assert ACK_REQUIRED_TITLE in preview_error.text
 
 
 def test_design_preview_renders_all_workpaper_entry_states(db, http):
@@ -406,3 +418,16 @@ def test_design_aws_preview_uses_real_page_and_panel_with_fixture_result(db, htt
     assert 'data-aws-result' in page.text
     assert 'data-aws-pull-form' in page.text
     assert page.text.count('data-copy-trigger="aws-') == 4
+
+
+def test_aws_transient_states_are_preview_only(db, http):
+    _client, engagement, _assessment = seed_engagement(db)
+    for state in ("error", "pulling"):
+        live = http.get(f"/engagements/{engagement.id}/aws-evidence?state={state}")
+        assert live.status_code == 200
+        assert "AWS refused the role" not in live.text
+        assert "Reading AWS Config and Security Hub" not in live.text
+    preview = http.get("/design/pages/aws_evidence?state=error")
+    assert "AWS refused the role" in preview.text and "data-aws-error" in preview.text
+    pulling = http.get("/design/pages/aws_evidence?state=pulling")
+    assert "Reading AWS Config and Security Hub" in pulling.text

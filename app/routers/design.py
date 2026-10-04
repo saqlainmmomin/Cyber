@@ -66,6 +66,12 @@ def aws_evidence_preview(request: Request, db: Session) -> Response:
             "consultant_policy_json": json.dumps(aws_evidence.consultant_policy(), indent=2).replace("ComplianceEvidenceReadOnly", "YozoraReadOnlyAudit"),
         }
     )
+    context["preview_state"] = state
+    if state == "error":
+        # Fixture copy for the refused-role alert (the mockup's wording); live pulls show
+        # the service's own message from AwsPullFailed.
+        context["error_title"] = "AWS refused the role"
+        context["error"] = "Check the role ARN and the external ID, then pull again. No evidence was collected."
     if state == "result":
         started_at = datetime(2026, 3, 21, 10, tzinfo=timezone.utc)
         context["result"] = aws_evidence.PullResult(
@@ -88,6 +94,32 @@ def aws_evidence_preview(request: Request, db: Session) -> Response:
 
 
 PREVIEW_PAGES["aws_evidence"] = aws_evidence_preview
+
+
+def evidence_reuse_preview(request: Request, db: Session) -> Response:
+    """The real evidence-reuse page for ``?assessment=<id>``. ``?state=error`` renders the
+    acknowledgement error exactly as the confirm route returns it when a warning-bearing
+    candidate is confirmed without the tick; the live page never shows it from a query."""
+    from app.routers.evidence_reuse import ACK_REQUIRED_TITLE, _page_context
+    from app.services import evidence_reuse
+
+    assessment = db.get(Assessment, request.query_params.get("assessment") or "")
+    if assessment is None:
+        raise HTTPException(status_code=404, detail="Pass ?assessment=<id>")
+    error = request.query_params.get("state") == "error"
+    return templates.TemplateResponse(
+        "pages/evidence_reuse.html",
+        _page_context(
+            request,
+            db,
+            assessment,
+            error=evidence_reuse.REUSE_ACK_REQUIRED if error else None,
+            error_title=ACK_REQUIRED_TITLE if error else None,
+        ),
+    )
+
+
+PREVIEW_PAGES["evidence_reuse"] = evidence_reuse_preview
 
 
 def _workpaper_entry_matches(entry, state: str) -> bool:

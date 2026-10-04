@@ -5,14 +5,13 @@
 {% block crumbs %}{% if client %}<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}{% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/evidence">Evidence</a>{% else %}<a href="/evidence">Evidence</a>{% endif %}<svg class="i sl"><use href="#i-slash"/></svg><b>Reuse from another assessment</b>{% endblock %}
 {% block content %}
 {% macro framework_list(ids) %}{% for framework_id in ids %}{{ framework_label(framework_id) }}{% if not loop.last %} + {% endif %}{% endfor %}{% endmacro %}
-{% set state = request.query_params.get("state", "list") %}
 {% set period = engagement_period(engagement) if engagement else none %}
 {% set evidence_href = "/engagements/" ~ engagement.id ~ "/evidence" if engagement else "/evidence" %}
 {% set target_frameworks = target_framework_ids|map("string")|list %}
-<header class="page-head"><div><h1>Reuse from another assessment</h1><p class="meta-line">{{ client.name if client else assessment.company_name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>{% if candidates %}<div class="acts"><button class="btn primary" type="button" id="confirm-reuse"><span>Confirm reuse of <span data-reuse-count>{{ candidates|length }}</span></span></button></div>{% endif %}</header>
+<header class="page-head"><div><h1>Reuse from another assessment</h1><p class="meta-line">{{ client.name if client else assessment.company_name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>{% if candidates %}<div class="acts"><button class="btn primary" type="button" id="confirm-reuse" disabled>Confirm reuse</button></div>{% endif %}</header>
 {% if engagement %}<div class="page-tabs">{{ engagement_tabs(engagement, "evidence") }}</div>{% endif %}
 {% if candidates %}<p class="reuse-intro">Evidence collected for another assessment in this engagement can be reused only after you confirm it still applies. Conclusions are never copied: this engagement reaches its own.</p>{% endif %}
-{% if error or state == "error" %}<div class="reuse-error" data-reuse-error role="alert">{{ alert(error_title or (ack_required_title if not error else "Evidence reuse could not be completed"), error or ack_required_message, "noncompliant") }}</div>{% else %}<div class="reuse-error" data-reuse-error role="alert" aria-live="polite" hidden></div>{% endif %}
+{% if error %}<div class="reuse-error" data-reuse-error role="alert">{{ alert(error_title or "Evidence reuse could not be completed", error, "noncompliant") }}</div>{% else %}<div class="reuse-error" data-reuse-error role="alert" aria-live="polite" hidden></div>{% endif %}
 
 {% if not assessment.engagement_id %}
 <div class="glass empty">{{ icon("link", "", "width:24px;height:24px;color:var(--muted)") }}<h3>This assessment is not linked to an engagement</h3><p>Evidence can only be reused between assessments in the same engagement.</p>{{ link_button("Back to evidence", evidence_href, "secondary") }}</div>
@@ -33,7 +32,6 @@
   </article>
   {% endfor %}
 </div>
-<template data-reuse-none>{{ alert("Select at least one evidence item", "Tick the evidence you want to reuse, then confirm.", "noncompliant") }}</template>
 <p class="help reuse-help">To decline a suggestion, leave it unselected. Declining records nothing.</p>
 {% else %}
 <div class="glass empty">{{ icon("history", "", "width:24px;height:24px;color:var(--muted)") }}<h3>Nothing is waiting for confirmation</h3><p>Evidence from other assessments in this engagement appears here when it matches this assessment’s requirements.</p>{{ link_button("Back to evidence", evidence_href, "secondary") }}</div>
@@ -45,23 +43,39 @@
     const button = document.getElementById('confirm-reuse');
     const forms = [...document.querySelectorAll('form[data-reuse-confirm]')];
     const error = document.querySelector('[data-reuse-error]');
-    const count = document.querySelector('[data-reuse-count]');
-    const selectedForms = () => forms.filter((form) => form.querySelector('[data-reuse-select]')?.checked);
-    const updateCount = () => { if (count) count.textContent = String(selectedForms().length); };
+    const selectedForms = () => forms.filter((form) => form.isConnected && form.querySelector('[data-reuse-select]')?.checked);
+    const updateCount = () => {
+      if (!button) return;
+      const n = selectedForms().length;
+      button.textContent = n ? `Confirm reuse of ${n}` : 'Confirm reuse';
+      button.disabled = !n;
+    };
     document.querySelectorAll('[data-reuse-select]').forEach((input) => input.addEventListener('change', updateCount));
+    updateCount();
+    // After a failure nothing reloads on its own: confirmed cards leave the list and the
+    // alert says how many went through before the error.
+    const stopAfterError = (reused) => {
+      reused.forEach((form) => form.closest('[data-reuse-candidate]')?.remove());
+      if (error && reused.length) {
+        const note = document.createElement('p');
+        note.className = 'help';
+        note.dataset.reusePartial = '';
+        note.append(`${reused.length} reused before this error. `);
+        const reload = document.createElement('a');
+        reload.href = window.location.pathname;
+        reload.textContent = 'Reload the page';
+        note.append(reload);
+        error.append(note);
+      }
+      updateCount();
+    };
     button?.addEventListener('click', async () => {
       const selected = selectedForms();
-      if (!selected.length) {
-        const none = document.querySelector('template[data-reuse-none]');
-        if (error) { error.hidden = false; error.innerHTML = none ? none.innerHTML : 'Select at least one evidence item.'; }
-        return;
-      }
-      let succeeded = false;
+      if (!selected.length) return;
+      button.disabled = true;
+      const reused = [];
       for (const form of selected) {
-        if (!form.reportValidity()) {
-          if (succeeded) window.setTimeout(() => window.location.reload(), 1200);
-          return;
-        }
+        if (!form.reportValidity()) { stopAfterError(reused); return; }
         const response = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin', redirect: 'follow'});
         if (!response.ok) {
           const html = await response.text();
@@ -70,12 +84,12 @@
             error.hidden = false;
             if (parsed) error.innerHTML = parsed.innerHTML; else error.textContent = 'Evidence reuse failed.';
           }
-          if (succeeded) window.setTimeout(() => window.location.reload(), 1200);
+          stopAfterError(reused);
           return;
         }
-        succeeded = true;
+        reused.push(form);
       }
-      if (succeeded) window.location.reload();
+      window.location.reload();
     });
   })();
 </script>
