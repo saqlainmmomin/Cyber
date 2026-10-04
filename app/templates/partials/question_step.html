@@ -7,37 +7,30 @@
       {% endif %}
       hx-target="#context-wizard"
       hx-swap="innerHTML">
-  <div class="between">
-    <div><h2>{{ "Your organisation" if block_index == 0 else block.title }}</h2><p class="sub">{{ block.description }}</p></div>
-    <div class="progress"><span class="num">{{ block_index + 1 }} of {{ total_blocks }}</span><span class="ticks" aria-hidden="true">{% for i in range(total_blocks) %}<i{% if i <= block_index %} class="on"{% endif %}></i>{% endfor %}</span></div>
-  </div>
+  <div class="between"><h2 class="big">{{ block.title | capitalize }}</h2><div class="progress"><span class="num">{{ block_index + 1 }} of {{ total_blocks }}</span><span class="ticks" aria-hidden="true">{% for i in range(total_blocks) %}<i{% if i <= block_index %} class="on"{% endif %}></i>{% endfor %}</span></div></div>
+  <p class="sub mt">{{ block.description }}</p>
 
-  <div class="stack mt-lg">
+  <div class="mt">
     {% for q in block.questions %}
-    <div class="qgroup"
-         {% if q.get('depends_on') %}
-         {% set dep_key = q.depends_on.keys() | list | first %}
-         {% set dep_val = q.depends_on[dep_key] %}
-         data-depends-on="{{ dep_key }}"
-         data-depends-value="{{ dep_val }}"
-         hidden
-         {% endif %}>
-      <label class="label">{{ q.question }}</label>
-      {% if q.type == 'single_select' %}
-      <div class="opts inline">{% for opt in q.options %}<label class="choice"><input type="radio" name="{{ q.id }}" value="{{ opt }}" onchange="handleDependency(this)"><span>{{ opt | replace("_", " ") | title }}</span></label>{% endfor %}</div>
-      {% elif q.type == 'multi_select' %}
-      <div class="opts inline">{% for opt in q.options %}<label class="choice"><input type="checkbox" name="{{ q.id }}" value="{{ opt }}"><span>{{ opt | replace("_", " ") | title }}</span></label>{% endfor %}</div>
-      {% elif q.type == 'text' %}
-      <label class="field area mt"><textarea name="{{ q.id }}" rows="3" placeholder="Enter your answer"></textarea></label>
-      {% endif %}
+    {% set dep_key = (q.depends_on.keys() | list | first) if q.get('depends_on') else none %}
+    {% if q.type in ('single_select', 'multi_select') %}
+    <fieldset class="qgroup"{% if dep_key %} data-depends-on="{{ dep_key }}" data-depends-value="{{ q.depends_on[dep_key] }}" hidden{% endif %}>
+      <legend class="label">{{ q.question }}</legend>
+      <div class="opts">{% for opt in q.options %}<label class="choice"><input type="{{ 'radio' if q.type == 'single_select' else 'checkbox' }}" name="{{ q.id }}" value="{{ opt }}"{% if q.type == 'single_select' %} onchange="handleDependency(this)"{% endif %}>{{ opt | replace("_", " ") | capitalize }}</label>{% endfor %}</div>
+    </fieldset>
+    {% else %}
+    <div class="qgroup"{% if dep_key %} data-depends-on="{{ dep_key }}" data-depends-value="{{ q.depends_on[dep_key] }}" hidden{% endif %}>
+      <label class="label" for="ctx-{{ q.id }}">{{ q.question }}</label>
+      <label class="field area"><textarea id="ctx-{{ q.id }}" name="{{ q.id }}" placeholder="Your answer"></textarea></label>
     </div>
+    {% endif %}
     {% endfor %}
   </div>
 
   <div id="previous-answers"></div>
   <div class="action-row">
-    {% if block_index > 0 %}<button type="button" class="btn ghost lead" hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index - 1 }}" hx-target="#context-wizard" hx-swap="innerHTML">{{ icon("chev-r") }}Previous</button>{% else %}<span></span>{% endif %}
-    <button type="submit" class="btn primary lead">{% if block_index < total_blocks - 1 %}Next {{ icon("chev-r") }}{% else %}Submit context and continue {{ icon("chev-r") }}{% endif %}</button>
+    {% if block_index > 0 %}<button type="button" class="btn ghost lead" hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index - 1 }}" hx-target="#context-wizard" hx-swap="innerHTML">{{ icon("arrow-l") }}Previous</button>{% else %}<span></span>{% endif %}
+    <button type="submit" class="btn primary">{% if block_index < total_blocks - 1 %}Next{% else %}Submit context and continue{% endif %}</button>
   </div>
 </form>
 

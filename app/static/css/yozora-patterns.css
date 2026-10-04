@@ -285,3 +285,9 @@ td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
 .dr-evidence-list{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-4)}
 .dr-rerun{margin-top:var(--s-8);display:flex;justify-content:flex-end}
 .desk-review-tabs .tabs{margin-bottom:var(--s-6)}
+/* s5-previews */
+.narrow-center{margin-left:auto;margin-right:auto}
+.dist.dist-center{max-width:none;margin-left:auto;margin-right:auto}
+.followup-host{max-width:820px}
+.screening-run .htmx-indicator:not(.htmx-request){display:none}
+.screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}

@@ -156,12 +156,12 @@ def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
     assert question_step.status_code == 200
     assert 'data-assessment-identity' in question_step.text
     assert "1 of 4" in question_step.text
-    assert "organisation" in question_step.text
+    assert "Data landscape" in question_step.text
 
     screening = http.get("/design/pages/b3-screening-form")
     assert screening.status_code == 200
     assert screening.text.count("Covers") == 9
-    assert screening.text.count("<fieldset class=\"qgroup\">") == 9
+    assert screening.text.count("<div class=\"qgroup\">") == 9
     assert "Run screening" in screening.text
 
     sections = http.get("/design/pages/b3-sections")
