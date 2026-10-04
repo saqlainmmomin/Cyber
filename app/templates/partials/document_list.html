@@ -1,5 +1,6 @@
 {% from "components/ui.html" import icon, status %}
-{% if inventory_rows %}
+{% set legacy_rows = legacy_inventory_rows|default([]) %}
+{% if inventory_rows or legacy_rows %}
 <div class="solid" style="overflow-x:auto">
   <table>
     <thead>
@@ -52,6 +53,21 @@
           </details>
           {% endif %}
         </td>
+      </tr>
+      {% endfor %}
+      {% for doc in legacy_rows %}
+      <tr data-legacy-document-id="{{ doc.id }}">
+        <td>
+          <span class="t-title">{{ doc.filename }}</span>
+          <div class="t-sub">{{ (doc.file_type or "File")|upper }}</div>
+          <div class="t-sub show-sm">Upload</div>
+        </td>
+        {% if cross_engagement %}<td class="hide-sm"></td>{% endif %}
+        <td class="hide-sm"><span class="status">Upload</span></td>
+        <td class="hide-sm"><div class="chips"><span class="chip">{{ doc.assessment_name }}</span></div></td>
+        <td class="hide-sm"><span class="t-sub">—</span></td>
+        <td>{{ status("Legacy (not migrated)", tone="neutral") }}{% if doc.uploaded_at %}<div class="t-sub">{{ doc.uploaded_at|display_date }}</div>{% endif %}</td>
+        <td class="actions" hidden></td>
       </tr>
       {% endfor %}
     </tbody>

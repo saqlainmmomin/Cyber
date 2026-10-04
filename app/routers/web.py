@@ -1535,7 +1535,9 @@ def _inventory_fragment_context(
             elif row.get("source") == "legacy" and (
                 scope_assessment_id is None or scope_assessment_id == owner.id
             ):
-                legacy_documents.append({**row, "assessment_id": owner.id})
+                legacy_documents.append(
+                    {**row, "assessment_id": owner.id, "assessment_name": owner.display_name}
+                )
 
     fragment_params = {}
     if scope_assessment_id:
@@ -1551,6 +1553,8 @@ def _inventory_fragment_context(
         "document_actions": actions,
         "assessment_id": scope_assessment_id,
         "legacy_documents": legacy_documents,
+        # Legacy rows have no source/status/search fields, so a filtered view leaves them out.
+        "legacy_inventory_rows": [] if (source or status or search) else legacy_documents,
         "inventory_display_dates": display_dates,
         "fragment_query": urlencode(fragment_params),
         "inventory_filtered": bool(fragment_params),

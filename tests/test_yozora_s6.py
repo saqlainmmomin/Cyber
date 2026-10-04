@@ -245,6 +245,11 @@ def test_legacy_migration_notice_is_rendered_from_real_legacy_row(db, http):
     page = http.get(f"/engagements/{engagement.id}/evidence?assessment={assessment.id}")
     assert page.status_code == 200
     assert "Legacy documents need migration" in page.text
+    row = page.text.split("data-legacy-document-id=", 1)[1].split("</tr>", 1)[0]
+    assert "Legacy policy.pdf" in row and "Legacy (not migrated)" in row
+    assert "No evidence yet" not in page.text
+    filtered = http.get(f"/engagements/{engagement.id}/evidence?assessment={assessment.id}&source=upload")
+    assert "data-legacy-document-id=" not in filtered.text
 
 
 def test_inventory_count_strip_includes_non_available_statuses(db, http, monkeypatch):
