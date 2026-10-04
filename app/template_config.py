@@ -49,8 +49,6 @@ def _nav_section(path: str) -> str:
         return "clients"
     if path.startswith("/engagements") or path.startswith("/assessments"):
         return "engagements"
-    if path.startswith("/evidence-versions"):  # cited text sits inside an engagement's evidence
-        return "engagements"
     if path.startswith("/review"):
         return "review"
     if path.startswith(("/evidence/", "/evidence-versions/")):
