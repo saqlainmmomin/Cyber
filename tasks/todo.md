@@ -7,7 +7,7 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
-- [ ] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
+- [x] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
 - Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 

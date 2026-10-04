@@ -42,6 +42,7 @@ from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
 from app.services import (
     actions_export,
+    assessment_stage,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -49,6 +50,7 @@ from app.services import (
     report_snapshots,
     rfi_requests,
     retention,
+    request_summary,
     workpaper,
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
@@ -166,11 +168,24 @@ def _framework_catalog() -> list[dict]:
     return frameworks
 
 
-# --- Dashboard ---
+# --- Yozora portfolio helpers ---
 
 
-@router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, db: Session = Depends(get_db)):
+def _display_stage(db: Session, assessment_rows: list[Assessment], fallback: str) -> str:
+    """Map the canonical assessment stage to the compact portfolio copy."""
+    if assessment_rows:
+        latest = max(assessment_rows, key=lambda row: row.updated_at)
+        current = assessment_stage.stage(db, latest)
+        if current.stage == "review":
+            return "In review"
+        if current.stage == "report":
+            return "Report draft" if current.next_label == assessment_stage.RELEASE_REPORT else "Report"
+        if current.stage == "evidence":
+            return "Desk review"
+    return fallback
+
+
+def _portfolio_data(db: Session) -> tuple[list[Client], list[Engagement], dict[str, list[Assessment]]]:
     clients = db.query(Client).order_by(Client.name).all()
     engagements = (
         db.query(Engagement)
@@ -180,42 +195,131 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     )
     linked = (
         db.query(Assessment)
-        .filter(
-            Assessment.status != "archived",
-            Assessment.engagement_id.isnot(None),
-        )
+        .filter(Assessment.status != "archived", Assessment.engagement_id.isnot(None))
         .all()
     )
+    by_engagement: dict[str, list[Assessment]] = defaultdict(list)
+    for assessment in linked:
+        by_engagement[assessment.engagement_id].append(assessment)
+    return clients, engagements, by_engagement
+
+
+def _home_engagement_rows(
+    db: Session,
+    engagements: list[Engagement],
+    assessments_by_engagement: dict[str, list[Assessment]],
+    clients_by_id: dict[str, Client],
+) -> list[dict]:
+    rows = []
+    for engagement in engagements:
+        assessments = assessments_by_engagement[engagement.id]
+        card = build_engagement_card(engagement, assessments)
+        assessment_ids = [assessment.id for assessment in assessments]
+        high_findings = (
+            db.query(Conclusion)
+            .filter(
+                Conclusion.assessment_id.in_(assessment_ids),
+                Conclusion.risk_level.in_(("critical", "high")),
+            )
+            .count()
+            if assessment_ids
+            else 0
+        )
+        card.update(
+            {
+                "client_name": clients_by_id[engagement.client_id].name,
+                "client_id": engagement.client_id,
+                "stage_label": _display_stage(db, assessments, card["derived_status_label"]),
+                "high_findings": high_findings,
+                "href": f"/engagements/{engagement.id}",
+            }
+        )
+        rows.append(card)
+    return sorted(rows, key=lambda row: row["last_activity"], reverse=True)
+
+
+def _home_attention_rows(
+    db: Session,
+    engagements: list[Engagement],
+    assessments_by_engagement: dict[str, list[Assessment]],
+    clients_by_id: dict[str, Client],
+) -> list[dict]:
+    rows = []
+    for engagement in engagements:
+        client = clients_by_id[engagement.client_id]
+        assessments = sorted(
+            assessments_by_engagement[engagement.id],
+            key=lambda row: row.updated_at,
+            reverse=True,
+        )
+        for assessment in assessments:
+            current = assessment_stage.stage(db, assessment)
+            badges = framework_badges(assessment.frameworks)
+            frameworks = ", ".join(badge["name"] for badge in badges)
+            if current.stage == "review":
+                label = current.next_label or "Review"
+                title = label.replace("Review", "Approve", 1)
+                rows.append(
+                    {
+                        "title": title,
+                        "body": f"{client.name} · {frameworks}",
+                        "action_label": "Review",
+                        "href": current.next_href,
+                        "icon_id": "check",
+                        "accent": True,
+                    }
+                )
+            elif current.stage == "report" and current.next_label:
+                rows.append(
+                    {
+                        "title": "Sign off board report" if current.next_label == assessment_stage.RELEASE_REPORT else current.next_label,
+                        "body": f"{client.name} · {frameworks}",
+                        "action_label": "Open",
+                        "href": current.next_href,
+                        "icon_id": "report",
+                    }
+                )
+            summary = request_summary.assessment_summary(db, assessment)
+            if summary.items is not None and summary.received < summary.items:
+                rows.append(
+                    {
+                        "title": "Waiting on client evidence",
+                        "body": f"{client.name} · {summary.received} of {summary.items} files received",
+                        "action_label": "View link",
+                        "href": f"/engagements/{engagement.id}",
+                        "icon_id": "link",
+                    }
+                )
+    return rows
+
+
+# --- Dashboard ---
+
+
+@router.get("/", response_class=HTMLResponse)
+def dashboard(request: Request, db: Session = Depends(get_db)):
+    clients, engagements, assessments_by_engagement = _portfolio_data(db)
+    clients_by_id = {client.id: client for client in clients}
     unmigrated_count = (
         db.query(func.count(Assessment.id))
         .filter(Assessment.engagement_id.is_(None), Assessment.status != "archived")
         .scalar()
     )
-    assessments_by_engagement = defaultdict(list)
-    for assessment in linked:
-        assessments_by_engagement[assessment.engagement_id].append(assessment)
-
-    engagements_by_client = defaultdict(list)
-    for engagement in engagements:
-        engagements_by_client[engagement.client_id].append(
-            build_engagement_card(
-                engagement,
-                assessments_by_engagement[engagement.id],
-            )
-        )
-
-    client_cards = [
-        build_client_card(client, engagements_by_client[client.id])
-        for client in clients
-    ]
+    requested_state = request.query_params.get("state", "")
+    state = requested_state if requested_state in {"clear", "empty", "loading", "error"} else ""
+    if not state:
+        state = "empty" if not clients else "default"
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {
             "request": request,
-            "clients": client_cards,
+            "attention_rows": _home_attention_rows(db, engagements, assessments_by_engagement, clients_by_id),
+            "engagement_rows": _home_engagement_rows(db, engagements, assessments_by_engagement, clients_by_id),
+            "legacy_client_ids": [client.id for client in clients],
             "total_client_count": len(clients),
             "total_engagement_count": len(engagements),
             "unmigrated_count": unmigrated_count,
+            "view_state": state,
         },
     )
 
@@ -254,14 +358,54 @@ def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
     assessments_by_engagement = defaultdict(list)
     for assessment in assessments:
         assessments_by_engagement[assessment.engagement_id].append(assessment)
-    cards = [
-        build_engagement_card(
-            engagement,
-            assessments_by_engagement[engagement.id],
-        )
-        for engagement in engagements
-    ]
+    cards = []
+    for engagement in engagements:
+        assessments_for_engagement = assessments_by_engagement[engagement.id]
+        card = build_engagement_card(engagement, assessments_for_engagement)
+        card["stage_label"] = _display_stage(db, assessments_for_engagement, card["derived_status_label"])
+        card["href"] = f"/engagements/{engagement.id}"
+        cards.append(card)
     return sorted(cards, key=lambda card: card["last_activity"], reverse=True)
+
+
+@router.get("/clients", response_class=HTMLResponse)
+def clients_page(
+    request: Request,
+    q: str = "",
+    industry: str = "",
+    search: str | None = None,
+    db: Session = Depends(get_db),
+):
+    q = q or search or ""
+    clients, engagements, assessments_by_engagement = _portfolio_data(db)
+    engagements_by_client = defaultdict(list)
+    for engagement in engagements:
+        engagements_by_client[engagement.client_id].append(
+            build_engagement_card(engagement, assessments_by_engagement[engagement.id])
+        )
+    cards = [build_client_card(client, engagements_by_client[client.id]) for client in clients]
+    search = q.strip().casefold()
+    filtered = [
+        card
+        for card in cards
+        if (not search or search in card["name"].casefold())
+        and (not industry or card["industry"] == industry)
+    ]
+    requested_state = request.query_params.get("state", "")
+    state = requested_state if requested_state in {"empty", "noresults", "loading", "error", "picker"} else ""
+    if not state:
+        state = "empty" if not cards else ("noresults" if not filtered else "default")
+    return templates.TemplateResponse(
+        "pages/clients.html",
+        {
+            "request": request,
+            "clients": filtered,
+            "industries": sorted({client.industry for client in clients if client.industry}),
+            "search": q,
+            "industry": industry,
+            "view_state": state,
+        },
+    )
 
 
 @router.get("/clients/{client_id}", response_class=HTMLResponse)
@@ -287,7 +431,37 @@ def client_detail(
                 default=client.updated_at,
             ),
             "retention_view": retention_view,
+            "view_state": request.query_params.get("state", "") or ("empty" if not engagements else "default"),
         },
+    )
+
+
+@router.get("/review", response_class=HTMLResponse)
+def review_page(request: Request, db: Session = Depends(get_db)):
+    clients, engagements, assessments_by_engagement = _portfolio_data(db)
+    clients_by_id = {client.id: client for client in clients}
+    rows = []
+    for engagement in engagements:
+        for assessment in assessments_by_engagement[engagement.id]:
+            current = assessment_stage.stage(db, assessment)
+            if current.stage != "review":
+                continue
+            rows.append(
+                {
+                    "assessment": assessment,
+                    "client_name": clients_by_id[engagement.client_id].name,
+                    "engagement_name": engagement.name,
+                    "frameworks": framework_badges(assessment.frameworks),
+                    "stage": current,
+                    "href": current.next_href or f"/assessments/{assessment.id}/conclusions",
+                }
+            )
+    rows.sort(key=lambda row: row["assessment"].updated_at, reverse=True)
+    requested_state = request.query_params.get("state", "")
+    state = requested_state if requested_state in {"empty", "loading", "error"} else ("default" if rows else "empty")
+    return templates.TemplateResponse(
+        "pages/review.html",
+        {"request": request, "review_rows": rows, "view_state": state},
     )
 
 

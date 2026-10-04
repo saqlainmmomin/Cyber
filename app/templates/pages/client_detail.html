@@ -1,82 +1,33 @@
 {% extends "base.html" %}
+{% from "components/layout.html" import line_list, page_header %}
+{% from "components/ui.html" import empty_state, icon, link_button, pill, status %}
+
 {% block title %}{{ client.name }} — Portfolio{% endblock %}
-
+{% block crumbs %}<a href="/clients">Clients</a><span>/</span><b>{{ client.name }}</b>{% endblock %}
 {% block content %}
-<div class="mb-6">
-  <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
-    <span>/</span>
-    <span class="text-gray-700 dark:text-gray-300">{{ client.name }}</span>
-  </div>
-</div>
+{% set meta = client.industry|replace("_", " ")|title ~ " · " ~ client.size|replace("_", " ")|upper ~ " · " ~ engagements|length ~ " engagements · Last activity " ~ last_activity.strftime("%d %b %Y") %}
+{{ page_header(client.name, meta, [{"label": "New engagement", "href": "/engagements/new?client_id=" ~ client.id, "variant": "secondary" if view_state == "empty" else "primary", "icon_id": "plus", "lead": true}]) }}
 
-<input id="reviewer-name" name="reviewer_name" placeholder="Your name" class="mb-6 w-full max-w-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+{% if view_state == "loading" %}
+  <div class="solid"><table aria-busy="true"><tbody>{% for _ in range(3) %}<tr><td><span class="skel" style="width:42%"></span></td><td><span class="skel" style="width:24%"></span></td><td><span class="skel" style="width:18%"></span></td></tr>{% endfor %}</tbody></table></div>
+{% elif engagements %}
+  <section class="sec"><div class="sec-head"><h2>Engagements</h2></div><div class="solid"><table>
+    <thead><tr><th>Engagement</th><th>Frameworks</th><th>Stage</th><th class="n">Assessments</th><th></th></tr></thead>
+    <tbody>{% for engagement in engagements %}<tr data-href="{{ engagement.href }}"><td class="t-title"><a href="{{ engagement.href }}">{{ engagement.name }}</a><span class="sub">{{ engagement.type|replace("_", " ")|title }}</span></td><td><span class="chips">{% for framework in engagement.framework_badges %}{{ pill(framework.name, "neutral") }}{% endfor %}</span></td><td>{{ status(engagement.stage_label, "in_progress" if engagement.stage_label in ["Desk review", "In review", "Analyzing…"] else "open") }}</td><td class="n num">{{ engagement.assessment_count }}</td><td class="end"><a href="{{ engagement.href }}" aria-label="Open {{ engagement.name }}">{{ icon("chev-r") }}</a></td></tr>{% endfor %}</tbody>
+  </table></div></section>
+{% else %}
+  {{ empty_state("No engagements yet", "Start an engagement for this client to begin.", "New engagement", "/engagements/new?client_id=" ~ client.id, "briefcase", true) }}
+{% endif %}
 
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ client.name }}</h1>
-    <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
-      <span>{{ client.industry | replace("_", " ") | title }}</span>
-      <span>{{ client.size | replace("_", " ") | title }}</span>
-      <span>{{ assessment_count }} assessment{% if assessment_count != 1 %}s{% endif %}</span>
-    </div>
-  </div>
-  <a href="/engagements/new?client_id={{ client.id }}" class="inline-flex items-center justify-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    New engagement for this client
-  </a>
-</div>
-
-<section>
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Engagements</h2>
-    <span class="text-xs text-gray-500 dark:text-gray-400">Last activity {{ last_activity.strftime('%d %b %Y') }}</span>
-  </div>
-  {% set client_id = client.id %}
-  {% include "partials/engagement_list.html" %}
-</section>
-
-<section class="mt-8">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Archived engagements</h2>
+<section class="sec"><div class="sec-head"><h2>Archived engagements</h2></div>
   {% if retention_view.archived %}
-  <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-    {% for row in retention_view.archived %}
-    <li data-archived-engagement id="archived-{{ row.engagement_id }}" class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
-      <a href="/engagements/{{ row.engagement_id }}" class="font-medium text-brand hover:underline">{{ row.name }}</a>
-      {% if row.archived_at %}<span class="ml-2">Archived {{ row.archived_at.strftime('%d %b %Y') }}</span>{% endif %}
-      {% if row.elapsed %}<span class="ml-2">Eligible for purge now</span>
-      {% elif row.eligible_at %}<span class="ml-2">Eligible for purge from {{ row.eligible_at.strftime('%d %b %Y') }}</span>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">No archived engagements.</p>
-  {% endif %}
+    <ul class="line-list">{% for row in retention_view.archived %}<li data-archived-engagement id="archived-{{ row.engagement_id }}"><span class="txt"><b>{{ row.name }}</b>{% if row.archived_at %}<span class="sub">Archived {{ row.archived_at.strftime('%d %b %Y') }}</span>{% endif %}{% if row.elapsed %}<span class="sub">Eligible for purge now</span>{% elif row.eligible_at %}<span class="sub">Eligible for purge from {{ row.eligible_at.strftime('%d %b %Y') }}</span>{% endif %}</span><a class="btn ghost sm" href="/engagements/{{ row.engagement_id }}">Open</a></li>{% endfor %}</ul>
+  {% else %}<p class="help">No archived engagements.</p>{% endif %}
 </section>
 
-<section class="mt-8">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Purge history</h2>
+<section class="sec"><div class="sec-head"><h2>Purge history</h2></div>
   {% if retention_view.purges %}
-  <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-    {% for row in retention_view.purges %}
-    <li data-purge-record class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
-      <span class="font-medium">{{ row.engagement_name }}</span>
-      <span class="ml-2">Purged {{ row.purged_at.strftime('%d %b %Y') }} by {{ row.purged_by_display }}</span>
-      {% if row.blobs_removed %}
-      <span class="ml-2">Files removed</span>
-      {% else %}
-      <span class="ml-2">Files pending removal</span>
-      <form class="mt-3" data-purge-complete-control hx-post="/api/engagements/{{ row.engagement_id }}/purge/complete" hx-include="#reviewer-name">
-        <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">Finish removing files</button>
-      </form>
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">No engagements have been purged.</p>
-  {% endif %}
+    <ul class="line-list">{% for row in retention_view.purges %}<li data-purge-record><span class="txt"><b>{{ row.engagement_name }}</b><span class="sub">Purged {{ row.purged_at.strftime('%d %b %Y') }} by {{ row.purged_by_display }}</span>{% if row.blobs_removed %}<span class="sub">Files removed</span>{% else %}<span class="sub">Files pending removal</span>{% endif %}</span>{% if not row.blobs_removed %}<form data-purge-complete-control hx-post="/api/engagements/{{ row.engagement_id }}/purge/complete" hx-include="#reviewer-name"><input id="reviewer-name" name="reviewer_name" class="field" placeholder="Your name" aria-label="Reviewer name"><button type="submit" class="btn secondary sm">Finish removing files</button></form>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="help">No engagements have been purged.</p>{% endif %}
 </section>
 {% endblock %}

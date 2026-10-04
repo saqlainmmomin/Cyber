@@ -71,6 +71,42 @@ YOZORA_S2_PATHS = (
     "tests/yozora_paths.py",
 )
 
+YOZORA_S3_PATHS = (
+    "app/routers/design.py",
+    "app/routers/firm_settings.py",
+    "app/routers/web.py",
+    "app/static/css/yozora-patterns.css",
+    "app/template_config.py",
+    "app/templates/base.html",
+    "app/templates/components/layout.html",
+    "app/templates/components/ui.html",
+    "app/templates/pages/client_detail.html",
+    "app/templates/pages/clients.html",
+    "app/templates/pages/dashboard.html",
+    "app/templates/pages/firm_settings.html",
+    "app/templates/pages/login.html",
+    "app/templates/pages/review.html",
+    "design/harness/seed_s3.py",
+    "docs/product/yozora-migration-map.md",
+    "tasks/handoffs/2026-10-01-yozora-s3-handoff.md",
+    "tasks/todo.md",
+    "tests/test_yozora_s3.py",
+    "tests/test_yozora_shell.py",
+    "tests/design_lint_allowlist.txt",
+    "tests/p6_10_support.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_retention.py",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_p5_2_reader_migration.py",
+    "tests/visual/test_shell_visual.py",
+    "tests/yozora_paths.py",
+)
+
 YOZORA_DESIGN_FILES = (
     "design/tokens.json",
     "design/tokens_tool.py",
@@ -83,5 +119,5 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-s1-handoff.md",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_DESIGN_FILES
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_DESIGN_FILES
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

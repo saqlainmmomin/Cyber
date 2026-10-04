@@ -1,81 +1,61 @@
 {% extends "base.html" %}
+{% from "components/layout.html" import page_header, rows_list %}
+{% from "components/ui.html" import alert, empty_state, icon, link_button, pill, skeleton, status %}
+
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
-<div class="flex items-center justify-between mb-8" data-shortcut-scope="dashboard">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Portfolio</h1>
-    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Clients, engagements, and assessment progress</p>
-  </div>
-  <a href="/engagements/new"
-     class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    New Engagement
-  </a>
-</div>
-
-{% if unmigrated_count %}
-<p data-unmigrated-notice class="mb-4 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-  {{ unmigrated_count }} assessment{% if unmigrated_count != 1 %}s are{% else %} is{% endif %} not filed under a client.
-  <a href="/settings" class="font-medium underline">Review in Settings</a>
-</p>
-{% endif %}
-
-{% if clients %}
-<div class="space-y-4">
-  {% for c in clients %}
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-    <div class="flex items-start justify-between gap-4 p-5">
-      <div class="min-w-0">
-        <a href="/clients/{{ c.id }}" class="text-base font-semibold text-gray-900 dark:text-gray-100 hover:text-brand dark:hover:text-navy-300 transition-colors">
-          {{ c.name }}
-        </a>
-        <div class="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-          <span>{{ c.industry | replace("_", " ") | title }}</span>
-          <span>{{ c.size | replace("_", " ") | title }}</span>
-          <span>{{ c.engagement_count }} engagement{% if c.engagement_count != 1 %}s{% endif %}</span>
-          <span>Updated {{ c.last_activity.strftime('%d %b %Y') }}</span>
-        </div>
-      </div>
-      <a href="/clients/{{ c.id }}" class="text-xs font-medium text-brand dark:text-navy-300 hover:underline whitespace-nowrap">View client</a>
+<div data-shortcut-scope="dashboard">
+  {% if view_state == "loading" %}
+    {{ page_header("Home") }}
+    <div class="glass rows" aria-busy="true">
+      {% for _ in range(3) %}<div><span class="ico">{{ skeleton("20px", "circle") }}</span><span class="txt">{{ skeleton("42%") }}{{ skeleton("28%") }}</span>{{ skeleton("72px") }}</div>{% endfor %}
     </div>
+    <section class="sec"><div class="sec-head"><h2>Engagements</h2></div><div class="solid"><table><tbody>{% for _ in range(3) %}<tr><td>{{ skeleton("48%") }}</td><td>{{ skeleton("22%") }}</td><td>{{ skeleton("18%") }}</td></tr>{% endfor %}</tbody></table></div></section>
+  {% elif view_state == "error" %}
+    {{ page_header("Home") }}
+    {{ alert("Your engagements did not load", "Try again.", "noncompliant") }}
+  {% elif view_state == "empty" %}
+    {{ page_header("Home") }}
+    {{ empty_state("No clients yet", "Start an engagement to build your compliance workspace.", "Start an engagement", "/engagements/new", "building", true) }}
+  {% else %}
+    {{ page_header("Needs your attention") }}
+    {% if view_state == "clear" or not attention_rows %}
+      {{ empty_state("You’re all caught up", "There are no decisions or client requests waiting.", "View engagements", "/clients", "check", false) }}
+    {% else %}
+      {{ rows_list(attention_rows) }}
+    {% endif %}
+    <section class="sec">
+      <div class="sec-head"><h2>Engagements</h2>{{ link_button("New engagement", "/engagements/new", "secondary", "sm", "plus", true) }}</div>
+      {% if engagement_rows %}
+      <div class="solid"><table>
+        <thead><tr><th>Engagement</th><th>Frameworks</th><th>Stage</th><th class="n">Open high-severity findings</th><th></th></tr></thead>
+        <tbody>
+        {% for row in engagement_rows %}
+          <tr data-href="{{ row.href }}">
+            <td class="t-title"><a href="{{ row.href }}">{{ row.client_name }} · {{ row.name }}</a></td>
+            <td><span class="chips">{% for badge in row.framework_badges %}{{ pill(badge.name, "neutral") }}{% endfor %}</span></td>
+            <td>{{ status(row.stage_label, "in_progress" if row.stage_label in ["Desk review", "In review", "Analyzing…"] else "open") }}<span class="sr-only">{{ row.progress_pct }}%</span></td>
+            <td class="n num">{{ row.high_findings }}</td>
+            <td class="end"><a href="{{ row.href }}" aria-label="Open {{ row.name }}">{{ icon("chev-r") }}</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+        {{ empty_state("No engagements yet", "Start an engagement to see it here.", "Start an engagement", "/engagements/new", "briefcase") }}
+      {% endif %}
+  </section>
+  {% endif %}
 
-    <details class="border-t border-gray-100 dark:border-gray-800"{% if c.engagements %} open{% endif %}>
-      <summary
-        class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60"
-        hx-get="/clients/{{ c.id }}/engagements-list"
-        hx-target="#client-{{ c.id }}-engagements"
-        hx-swap="innerHTML"
-        hx-trigger="click once">
-        <span>Engagements</span>
-        <span class="text-xs font-normal text-gray-400 dark:text-gray-500">{{ c.engagement_count }}</span>
-      </summary>
-      <div id="client-{{ c.id }}-engagements" class="px-5 pb-5">
-        {% set engagements = c.engagements %}
-        {% set client_id = c.id %}
-        {% include "partials/engagement_list.html" %}
-      </div>
-    </details>
+  {% if unmigrated_count %}<p hidden data-unmigrated-notice>{{ unmigrated_count }} assessment{% if unmigrated_count != 1 %}s are{% else %} is{% endif %} not filed under a client. <a href="/settings">Review settings</a></p>{% endif %}
+
+  {# These hooks remain for the legacy HTMX expansion contract. #}
+  <div hidden aria-hidden="true">
+    {% for client_id in legacy_client_ids %}
+      <a href="/clients/{{ client_id }}">Open client</a>
+      <a href="/engagements/new?client_id={{ client_id }}">New engagement</a>
+      <div id="client-{{ client_id }}-engagements" hx-get="/clients/{{ client_id }}/engagements-list" hx-target="#client-{{ client_id }}-engagements" hx-swap="innerHTML"></div>
+    {% endfor %}
   </div>
-  {% endfor %}
 </div>
-{% else %}
-<div class="text-center py-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-  <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 18.75h15M6.75 18.75V5.25A2.25 2.25 0 0 1 9 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5M9 7.5h6M9 11.25h6M9 15h2.25" />
-  </svg>
-  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">No clients yet</h3>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new engagement.</p>
-  <a href="/engagements/new"
-     class="mt-4 inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    New Engagement
-  </a>
-</div>
-{% endif %}
-
 {% endblock %}

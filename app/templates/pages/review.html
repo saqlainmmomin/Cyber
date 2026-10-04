@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import page_header %}
+{% from "components/ui.html" import alert, empty_state, icon, pill, skeleton, status %}
+
+{% block title %}Review{% endblock %}
+{% block content %}
+{{ page_header("Review", "Assessments with decisions waiting") }}
+{% if view_state == "loading" %}
+  <div class="solid"><table aria-busy="true"><tbody>{% for _ in range(4) %}<tr><td>{{ skeleton("42%") }}</td><td>{{ skeleton("28%") }}</td><td>{{ skeleton("18%") }}</td></tr>{% endfor %}</tbody></table></div>
+{% elif view_state == "error" %}
+  {{ alert("Review did not load", "Try again.", "noncompliant") }}
+{% elif view_state == "empty" %}
+  {{ empty_state("Nothing to review", "When an assessment has decisions waiting, it will appear here.", "View clients", "/clients", "inbox", true) }}
+{% else %}
+  <div class="solid"><table>
+    <thead><tr><th>Assessment</th><th>Client</th><th>Frameworks</th><th>Progress</th><th></th></tr></thead>
+    <tbody>{% for row in review_rows %}
+      <tr><td class="t-title"><a href="{{ row.href }}">{{ row.assessment.display_name }}</a><span class="sub">{{ row.engagement_name }}</span></td><td>{{ row.client_name }}</td><td><span class="chips">{% for framework in row.frameworks %}{{ pill(framework.name, "neutral") }}{% endfor %}</span></td><td>{{ status(row.stage.note, "in_progress") }}</td><td class="end"><a href="{{ row.href }}" aria-label="Review {{ row.assessment.display_name }}">{{ icon("chev-r") }}</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+{% endif %}
+{% endblock %}

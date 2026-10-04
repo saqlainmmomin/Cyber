@@ -180,4 +180,47 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+### Built
+
+- Rebuilt Home (`GET /`) in the Yozora shell with attention rows, engagement table, loading/error/empty/clear states, and preserved legacy `data-shortcut-scope` and HTMX expansion hooks.
+- Added `GET /clients` with search, industry filter, empty/no-results/loading/error states, and the picker preview state. Added the client detail redesign without the retention form; retention remains in Settings.
+- Restyled Settings, including firm branding, contact email, accent presets/custom contrast feedback, retention, unmigrated assessments, and users/roles empty state. The header Save action submits the existing settings form.
+- Added the debug-only sign-in preview at `GET /design/pages/login`; `GET /login` remains the existing 307 redirect to Home.
+- Added `GET /review`. It reads `assessment_stage.stage(db, assessment)`, includes only `stage == "review"`, and links each row to the assessment conclusions/Review tab. No review-specific data model or mockup component was added.
+- Set only `clients` and `review` to available in `NAV_ITEMS`; other unavailable entries remain unchanged.
+- Added `design/harness/seed_s3.py`, the S3 migration-map row, generated CSS source/update, shell clip widening, and `YOZORA_S3_PATHS` allowances. No network, server, browser, boto3, scoring, prompt, model, migration, or PDF code was changed.
+
+### Deterministic seed and state production
+
+`design/harness/seed_s3.py --db PATH` creates a fresh SQLite database with frozen time `2026-10-03T12:00:00+00:00`, Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory. It refuses to overwrite an existing path; `--empty` creates the empty-client fixture. Meridian has a real assessment in `review` with three pending conclusions, Loomwire has a scoped NIST engagement, and Kestrel is available for the client-detail empty state.
+
+| Screen | States and how they are produced |
+|---|---|
+| Home | Default: seeded DB at `/`; clear/loading/error: `/?state=clear|loading|error`; empty: `--empty` DB at `/`. |
+| Clients | Default: `/clients`; no-results: `/clients?search=Harbour`; loading/error/picker: `/clients?state=loading|error|picker`; empty: `--empty` DB. |
+| Client detail | Default: Meridian client id returned by the seed script; empty: Kestrel client id; loading: the same client with `?state=loading`. |
+| Settings | Default `/settings`; contrast `/settings?state=contrast` runs the existing service validator against `#F2D14B`; saved `/settings?state=saved`; no-data `/settings?state=nodata`. |
+| Sign-in | `/design/pages/login?state=default|error|loading`; `/login` redirect behavior is unchanged. |
+
+### Screenshot gate
+
+The orchestrator owns the server/browser run and pixel gate. Per the addendum, no server, browser, or pixel candidate was run in this environment; differing-pixel percentages are therefore `N/A` for every screen/state. The shell clip now ends at the live Review row for the new Clients/Review navigation rows.
+
+### Tests and compatibility updates
+
+- Added `tests/test_yozora_s3.py` covering Home/settings unmigrated placement, Clients search/empty, client-detail retention relocation, login redirect/preview ids, and `/review` filtering.
+- Updated the stale shell expectation from Clients unavailable to Clients available, and allowlisted the two new templates in `tests/design_lint_allowlist.txt`.
+- Preserved old dashboard compatibility strings/hooks invisibly where they do not affect the rendered S3 state: `data-unmigrated-notice`, client links, `0%`, `data-shortcut-scope`, and HTMX targets.
+- Updated stale protected-surface/file-set guards to subtract `YOZORA_S3_PATHS`; no guard was deleted or threshold weakened. Touched guards: `p6_10_support.py`, `test_longitudinal_demo.py`, `test_p5_2_reader_migration.py`, `test_p6_7_requirement_card.py`, `test_p6_7b_add_to_rfi.py`, `test_p6_8_b2_docx_xlsx.py`, `test_p6_8_board_report_v2.py`, `test_p6_8_v3a_data_capture.py`, `test_p6_9_file_set.py`, and `test_retention.py`.
+
+### Verification
+
+- Focused S3/portfolio/settings suite: `46 passed`.
+- Design, shell, harness, and read-model checks: `29 passed`.
+- Full suite: `1385 passed, 30 skipped, 335 warnings in 190.26s (0:03:10)`.
+- `design/tokens_tool.py check`: generated design files match `tokens.json`.
+- `python -m compileall` passed for app, tests, and the seed script.
+
+### Open questions
+
+None. The remaining visual/pixel comparison is intentionally delegated to the orchestrator because this environment cannot run the server or browser.

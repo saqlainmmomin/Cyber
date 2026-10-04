@@ -4,14 +4,14 @@
 <svg class="i"{% if label %} aria-label="{{ label }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}><use href="#i-{{ symbol }}"/></svg>
 {%- endmacro %}
 
-{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false) -%}
+{% macro button(label, variant="primary", size="", icon_id="", lead=false, disabled=false, loading=false, hint="", button_type="button", aria_label="", tip="", element_id="", style="", touch=false, form_id="") -%}
 {% set classes = "btn " ~ variant %}
 {% if size %}{% set classes = classes ~ " " ~ size %}{% endif %}
 {% if lead %}{% set classes = classes ~ " lead" %}{% endif %}
 {% if icon_id and not label %}{% set classes = classes ~ " icon" %}{% endif %}
 {% if loading %}{% set classes = classes ~ " loading" %}{% endif %}
 {% if touch %}{% set classes = classes ~ " touch" %}{% endif %}
-<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
+<button type="{{ button_type }}" class="{{ classes }}"{% if element_id %} id="{{ element_id }}"{% endif %}{% if form_id %} form="{{ form_id }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if tip %} data-tip="{{ tip }}"{% endif %}>
   {% if icon_id %}{{ icon(icon_id) }}{% endif %}{{ label }}{% if hint %}<kbd>{{ hint }}</kbd>{% endif %}
 </button>
 {%- endmacro %}

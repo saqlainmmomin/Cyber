@@ -15,6 +15,19 @@ router = APIRouter(tags=["design"])
 PREVIEW_PAGES: dict[str, Callable[[Request], Response]] = {}
 
 
+def login_preview(request: Request) -> Response:
+    state = request.query_params.get("state", "default")
+    if state not in {"default", "error", "loading"}:
+        state = "default"
+    return templates.TemplateResponse(
+        "pages/login.html",
+        {"request": request, "preview_state": state},
+    )
+
+
+PREVIEW_PAGES["login"] = login_preview
+
+
 def _debug_only() -> None:
     if settings.env.casefold() == "production":
         raise HTTPException(status_code=404, detail="Not found")
