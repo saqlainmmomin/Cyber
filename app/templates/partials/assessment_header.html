@@ -1,5 +1,5 @@
 {% from "components/layout.html" import assessment_tabs %}
-{% from "components/ui.html" import link_button %}
+{% from "components/ui.html" import icon, link_button %}
 
 <div class="page-head">
   <div>
@@ -10,8 +10,8 @@
     </p>
   </div>
   <div class="acts">
-    {% if tab == "overview" and workflow.action_href and not engagement_archived %}
-    {{ link_button(workflow.stage.next_label, workflow.action_href, "primary", "", "chev-r", true) }}
+    {% if tab == "overview" and workflow.action_href and not engagement_archived and preview_state != "loading" %}
+    <a class="btn primary" href="{{ workflow.action_href }}">{{ workflow.stage.next_label }}{{ icon("arrow-r") }}</a>
     {% endif %}
     {% if assessment.status == 'completed' %}
     {{ link_button("Live PDF", "/api/assessments/" ~ assessment.id ~ "/report/pdf", "secondary", "sm", "download", true) }}

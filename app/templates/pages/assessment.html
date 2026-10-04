@@ -8,7 +8,7 @@
 {% set crumb_context = assessment_engagement_context(request) %}
 {% set crumb_engagement = crumb_context.get("engagement") %}
 {% if crumb_engagement %}
-<a href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ crumb_engagement.id }}">{{ crumb_engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ crumb_engagement.id }}">{{ crumb_engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
 {% else %}
 <a href="/">Assessments</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
 {% endif %}
@@ -24,8 +24,8 @@
 {% set period = engagement_period(engagement) if engagement else none %}
 
 {% if engagement_archived %}
-<div data-archived-banner class="alert c-medium" role="status">
-  {{ icon("archive") }}
+<div data-archived-banner class="alert c-medium" role="status" style="margin-bottom:var(--s-4)">
+  {{ icon("lock") }}
   <div><b>This assessment is read-only</b>Its engagement is archived. Unarchive the engagement to make changes.</div>
 </div>
 {% endif %}
@@ -34,37 +34,27 @@
 
 <div data-assessment-id="{{ assessment.id }}">
 {% if tab == "overview" %}
-<div class="stack mt-lg">
-  {{ stepper(stepper_stages) }}
-  {% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'running') else workflow.hub_state) %}
-
-  {% if assessment.is_multi_framework %}
-  <div data-visual-mask>
-    <div class="sec"><h2>Frameworks</h2></div>
-    {% include "partials/framework_tabs.html" %}
-    {% if engagement %}
-    <div class="stack" style="margin-top:var(--s-8)">
-      <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
-      {% include "partials/engagement_retention.html" %}
-      {% include "partials/magic_links.html" %}
-    </div>
-    {% endif %}
-  </div>
-  {% else %}
-  <div data-visual-mask id="framework-panel" role="tabpanel" class="solid">
-    {% set framework = active_framework_definition %}
-    {% set finding_count = active_framework_finding_count %}
-    {% include "partials/framework_hub_panel.html" %}
-    {% if engagement %}
-    <div class="stack" style="margin-top:var(--s-8)">
-      <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
-      {% include "partials/engagement_retention.html" %}
-      {% include "partials/magic_links.html" %}
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
+<div class="mt-lg"></div>
+{{ stepper(stepper_stages) }}
+{% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'running', 'error') else workflow.hub_state) %}
+{% if assessment.is_multi_framework %}
+<div class="sec"><h2>Frameworks</h2></div>
+{% include "partials/framework_tabs.html" %}
+{% else %}
+<div class="mt" id="framework-panel" role="tabpanel">
+  {% set framework = active_framework_definition %}
+  {% set finding_count = active_framework_finding_count %}
+  {% include "partials/framework_hub_panel.html" %}
 </div>
+{% endif %}
+{% if engagement %}
+{# S4 engagement context (AWS link, retention, magic links): no Overview mockup counterpart; S8 owns the magic links. #}
+<div data-visual-mask class="stack" style="margin-top:var(--s-8)">
+  <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
+  {% include "partials/engagement_retention.html" %}
+  {% include "partials/magic_links.html" %}
+</div>
+{% endif %}
 {% elif tab == "scope" %}
   {% if preview_state == "saving" %}
   {{ alert("Saving scope", "Your scope answers are being saved.", "accent", "loader") }}

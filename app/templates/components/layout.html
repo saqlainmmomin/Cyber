@@ -43,7 +43,7 @@
 {%- endmacro %}
 
 {% macro stepper(stages) -%}
-{% set state_classes = {"current": "cur", "next": "next"} %}<div class="stepper">{% for stage in stages %}<div class="stp{% if stage.state in state_classes %} {{ state_classes[stage.state] }}{% endif %}"><div class="rail">{% if stage.state == "done" %}<i style="width:100%"></i>{% elif stage.state == "current" %}<i style="width:50%"></i>{% endif %}</div><div class="lbl">{% if stage.state == "done" %}{{ icon("check") }}{% else %}<span class="o"></span>{% endif %}{% if stage.href %}<a href="{{ stage.href }}">{{ stage.label }}</a>{% else %}{{ stage.label }}{% endif %}</div>{% if stage.note %}<span class="note">{{ stage.note }}</span>{% endif %}</div>{% endfor %}</div>
+{% set state_classes = {"current": "cur", "next": "next"} %}<div class="glass stepper" aria-label="Progress">{% for stage in stages %}<div class="stp{% if stage.state in state_classes %} {{ state_classes[stage.state] }}{% endif %}"><div class="rail">{% if stage.state == "done" %}<i style="width:100%"></i>{% elif stage.state == "current" %}<i style="width:50%"></i>{% endif %}</div><div class="lbl">{% if stage.state == "done" %}{{ icon("check") }}{% else %}<span class="o"></span>{% endif %}{% if stage.href %}<a href="{{ stage.href }}">{{ stage.label }}</a>{% else %}{{ stage.label }}{% endif %}</div>{% if stage.note %}<span class="note">{{ stage.note }}</span>{% endif %}</div>{% endfor %}</div>
 {%- endmacro %}
 
 {% macro table(headers, rows, static=false, numeric_columns=[]) -%}

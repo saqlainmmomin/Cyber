@@ -34,7 +34,6 @@ from design.harness.seed_s4 import (
     _engagement,
     _report_basis_event,
     _seed_evidence,
-    _seed_released,
     _seed_review_stage,
     _time,
 )
@@ -295,16 +294,18 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
         data_state = "preview-state"
         return {"assessment_id": assessment.id, "data_state": data_state}
 
-    if screen == "b3-hub" and state == "default":
+    if screen == "b3-hub" and state in {"default", "archived", "loading", "error"}:
+        # The mockup draws archived and the transient loading/error panel states over the
+        # review stage (three of six approved); loading/error are applied with ?state=.
         _seed_review_stage(db, assessment, approved=3, pending=3)
 
     if screen == "b3-hub" and state == "archived":
-        assessment.status = "archived"
+        # Read-only because its engagement is archived (the banner copy); the assessment
+        # itself stays live so its review period still shows in the meta line.
         engagement.status = "archived"
     if screen == "b3-hub" and state in {"report"}:
-        _scope(assessment)
-        _seed_questionnaire_responses(db, assessment, complete=True)
-        _seed_released(db, assessment, per_framework=2)
+        # Every conclusion approved and the report not yet released: "Release report".
+        _seed_review_stage(db, assessment, approved=6, pending=0)
     elif screen == "b3-hub" and state == "questionnaire":
         _scope(assessment)
         _context(assessment)
@@ -314,13 +315,6 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
     elif screen == "b3-hub" and state == "prefill":
         _scope(assessment)
         _seed_documents(db, engagement, assessment, 5, "evidence-s5")
-    elif screen == "b3-hub" and state == "error":
-        _scope(assessment)
-        assessment.status = "error"
-    elif screen == "b3-hub" and state == "loading":
-        _scope(assessment)
-        _seed_documents(db, engagement, assessment, 5, "evidence-s5")
-        assessment.status = "analyzing"
     elif screen == "b3-scope":
         if state in {"edit", "saving"}:
             _scope(assessment)
