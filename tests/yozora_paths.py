@@ -141,6 +141,7 @@ YOZORA_S3_PATHS = (
 
 # Yozora per-PR allowance.
 YOZORA_S5_PATHS = (
+    "app/static/js/app.js",  # s5-quest: save indicator fires on saves only
     "app/routers/web.py",
     "app/static/css/yozora-patterns.css",
     "app/templates/components/layout.html",

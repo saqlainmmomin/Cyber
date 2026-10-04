@@ -1,4 +1,4 @@
-{% from "components/ui.html" import alert, icon %}
+{% from "components/ui.html" import icon %}
 {% set progress = namespace(active=0, answered=0) %}
 {% for q in questions %}
   {% if q.get('status', 'active') != 'skipped' %}
@@ -6,150 +6,121 @@
     {% if existing.get(q.id, {}).get('answer') %}{% set progress.answered = progress.answered + 1 %}{% endif %}
   {% endif %}
 {% endfor %}
-<div class="stack-l" data-section-questionnaire>
-  <header class="section-header" data-section-header>
-    <div>
-      <p class="meta">{{ chapter_title }}</p>
-      <h3>{{ section_title }}</h3>
-    </div>
-    <span class="chip" data-progress-counter>{{ progress.answered }} of {{ progress.active }} answered</span>
-  </header>
+{% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
+{% set option_labels = {
+  'fully_implemented': 'Fully implemented',
+  'partially_implemented': 'Partially implemented',
+  'planned': 'Planned',
+  'not_implemented': 'Not implemented',
+  'not_applicable': 'Not applicable'
+} %}
+{% macro cite(ev, prefix="") -%}
+{% set loc = ev.get('source_location') or '' %}
+{% set parts = loc.rsplit(', ', 1) %}
+<div class="cite"><div class="cite-head">{{ icon("file") }}<span>{{ prefix }}{% if parts|length == 2 %}{{ parts[0] }}, <span class="pg">{{ parts[1] }}</span>{% else %}{{ loc or 'your documents' }}{% endif %}</span></div><blockquote>{{ caller() }}</blockquote></div>
+{%- endmacro %}
+<div data-section-questionnaire>
+  <div class="between" data-section-header>
+    <div><h2 class="big">{{ section_title }}</h2><p class="sub">{{ chapter_title }}</p></div>
+    <div class="progress"><span class="num" data-progress-counter>{{ progress.answered }} of {{ progress.active }} answered</span></div>
+  </div>
 
-  <div data-validation-summary aria-live="polite" hidden>{{ alert("Required questions are unanswered", "", "noncompliant") }}</div>
+  <div data-validation-summary aria-live="polite" hidden>
+    <div class="alert c-non mt-lg">{{ icon("alert") }}<div><b data-validation-title>Answer every question to save this section</b>Required questions are marked below.</div></div>
+  </div>
 
-  <form class="stack-l" hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
+  <form hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
         hx-target="#section-content" hx-swap="innerHTML" data-questionnaire-form>
     <input type="hidden" name="section_id" value="{{ section_id }}">
 
-    <div class="stack-m">
+    <div class="mt-lg">
       {% for q in questions %}
         {% set question_status = q.get('status', 'active') %}
-        {% set answer = existing.get(q.id, {}).get('answer') %}
+        {% set saved = existing.get(q.id, {}) %}
+        {% set answer = saved.get('answer') %}
         {% set prefill_answer = q.get('pre_fill_answer') %}
-        {% set options = ['fully_implemented', 'partially_implemented', 'planned', 'not_implemented', 'not_applicable'] %}
-        {% set option_labels = {
-          'fully_implemented': 'Fully implemented',
-          'partially_implemented': 'Partially implemented',
-          'planned': 'Planned',
-          'not_implemented': 'Not implemented',
-          'not_applicable': 'Not applicable'
-        } %}
+        {% set evidence = q.get('desk_review_evidence') or [] %}
 
         {% if question_status == 'skipped' %}
-          <article class="card card-muted" id="question-{{ q.id }}" data-question-card data-question-index="{{ loop.index }}">
-            <div class="split-row">
-              <div>
-                <p class="question-copy question-copy-muted">{{ q.question }}</p>
-                <p class="meta">{{ q.get('skip_reason', 'Not applicable to this assessment') }}</p>
-              </div>
-              {% if icon is defined %}{{ icon('check') }}{% endif %}
-            </div>
-            {% if q.get('desk_review_evidence') %}
-              <details class="evidence-details">
-                <summary>View document evidence</summary>
-                <div class="stack-s">
-                  {% for ev in q.desk_review_evidence %}
-                    <div class="evidence-note">
-                      <p>{{ ev.content }}{% if ev.source_location %} <span class="meta">({{ ev.source_location }})</span>{% endif %}</p>
-                      {% if ev.source_quote %}<p class="quote">“{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}…”{% endif %}</p>{% endif %}
-                    </div>
-                  {% endfor %}
-                </div>
-              </details>
+          <div class="qcard muted-card" id="question-{{ q.id }}" data-question-card data-question-index="{{ loop.index }}">
+            <h3>{{ q.question }}</h3>
+            <p class="help">{{ q.get('skip_reason') or 'Out of scope for this assessment.' }}</p>
+            {% if evidence %}
+            <details><summary class="disclose">View document evidence</summary>
+              {% for ev in evidence %}{% call cite(ev) %}{{ ev.get('source_quote') or ev.get('content') }}{% endcall %}{% endfor %}
+            </details>
             {% endif %}
-          </article>
+          </div>
         {% else %}
-          <article class="card question-card" id="question-{{ q.id }}" data-question-card
-                   data-required-question data-question-name="answer_{{ q.id }}"
-                   data-question-index="{{ loop.index }}"{% if question_status == 'pre_filled' %} data-pre-filled="true"{% endif %}>
-            <div class="split-row question-heading">
-              <div>
-                <span class="meta question-code">{{ q.id }}</span>
-                <p class="question-copy">{{ q.question }}</p>
-                {% if q.guidance %}<p class="meta">{{ q.guidance }}</p>{% endif %}
-              </div>
-              <div class="cluster-s">
-            {% if question_status == 'pre_filled' %}
-                  <span class="chip chip-accent" data-prefill-badge>{{ 'Inferred from screening' if q.get('pre_fill_source') == 'inferred' else 'From documents' }}</span>
-                  <span class="pill c-high">High</span>
-                {% elif q.get('tier') == 'deep' %}
-                  <span class="chip chip-warning">Deep review</span>
-                {% elif q.get('source') == 'industry' %}
-                  <span class="chip">Industry</span>
-                {% endif %}
-              </div>
+          {% set inferred = question_status == 'pre_filled' and q.get('pre_fill_source') == 'inferred' %}
+          {% set from_documents = question_status == 'pre_filled' and q.get('pre_fill_source') == 'document' %}
+          {% set criticality = q.get('criticality') if q.get('criticality') in ('critical', 'high') else none %}
+          {% set needs_attention = question_status == 'deepened' %}
+          {% set has_notes = saved.get('notes') or saved.get('evidence_reference') %}
+          <div class="solid qcard{% if inferred %} quick{% endif %}" id="question-{{ q.id }}" data-question-card
+               data-required-question data-question-name="answer_{{ q.id }}"
+               data-question-index="{{ loop.index }}"{% if question_status == 'pre_filled' %} data-pre-filled="true"{% endif %}>
+            {% if inferred or from_documents or criticality or needs_attention or q.get('source') == 'industry' %}
+            <div class="between"><h3>{{ q.question }}</h3>
+              {%- if inferred %}<span class="ai" data-prefill-badge>Inferred from screening</span>
+              {%- else %}<div class="hrow">
+                {%- if from_documents %}<span class="chip" data-prefill-badge>From documents</span>{% endif %}
+                {%- if needs_attention %}<span class="warn">{{ icon("alert") }}Needs attention</span>{% endif %}
+                {%- if q.get('source') == 'industry' %}<span class="chip">Industry</span>{% endif %}
+                {%- if criticality %}<span class="pill c-{{ criticality }}">{{ criticality | capitalize }}</span>{% endif %}
+              </div>{% endif %}
             </div>
+            {% else %}
+            <h3>{{ q.question }}</h3>
+            {% endif %}
+            {% if q.guidance and not inferred %}<p class="help">{{ q.guidance }}</p>{% endif %}
+            {% if needs_attention and q.get('desk_review_note') %}<p class="help">{{ q.desk_review_note }}</p>{% endif %}
+            {% if q.get('tier') == 'deep' %}<span class="warn">{{ icon("alert") }}Deep review</span>{% endif %}
 
-            {% if question_status == 'pre_filled' and q.get('pre_fill_source') == 'document' and q.get('pre_fill_evidence_summary') %}
-              <div class="cite">
-                <div class="cite-head">{{ icon("file") }}<span>Suggested from documents{% if q.get('desk_review_evidence') and q.desk_review_evidence[0].get('source_location') %}, <span class="pg">{{ q.desk_review_evidence[0].source_location }}</span>{% endif %}</span></div>
-                <blockquote>{{ q.pre_fill_evidence_summary }}</blockquote>
-              </div>
+            {% if from_documents and q.get('pre_fill_evidence_summary') %}
+              {% call cite(evidence[0] if evidence else {}, "Suggested from ") %}{{ q.pre_fill_evidence_summary }}{% endcall %}
+            {% elif evidence and not inferred %}
+              {% if q.get('tier') == 'deep' or needs_attention %}
+                {% for ev in evidence %}{% call cite(ev) %}{{ ev.get('source_quote') or ev.get('content') }}{% endcall %}{% endfor %}
+              {% else %}
+              <details><summary class="disclose">View document evidence</summary>
+                {% for ev in evidence %}{% call cite(ev) %}{{ ev.get('source_quote') or ev.get('content') }}{% endcall %}{% endfor %}
+              </details>
+              {% endif %}
             {% endif %}
 
-            {% if q.get('desk_review_note') or q.get('desk_review_evidence') %}
-              <div class="evidence-panel">
-                {% if q.get('desk_review_note') %}<p class="meta">{{ q.desk_review_note }}</p>{% endif %}
-                {% if q.get('pre_fill_evidence_summary') %}<p class="quote">“{{ q.pre_fill_evidence_summary[:300] }}{% if q.pre_fill_evidence_summary|length > 300 %}…”{% endif %}</p>{% endif %}
-                {% if q.get('desk_review_evidence') %}
-                  <details class="evidence-details"{% if q.get('tier') == 'deep' %} open{% endif %}>
-                    <summary>View document evidence</summary>
-                    <div class="stack-s">
-                      {% for ev in q.desk_review_evidence %}
-                        <div class="evidence-note">
-                          <p>{{ ev.content }}{% if ev.source_location %} <span class="meta">({{ ev.source_location }})</span>{% endif %}</p>
-                          {% if ev.source_quote %}<p class="quote">“{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}…”{% endif %}</p>{% endif %}
-                        </div>
-                      {% endfor %}
-                    </div>
-                  </details>
-                {% endif %}
-              </div>
+            {% if question_status == 'pre_filled' and q.get('pre_fill_confidence') and not inferred %}
+              <p class="help">{{ q.pre_fill_confidence | capitalize }} confidence. The answer counts once you save the section.</p>
             {% endif %}
+            {% if q.get('skip_if') %}<p class="help">Note: {{ q.skip_if }}</p>{% endif %}
 
-            {% if question_status == 'pre_filled' and q.get('pre_fill_confidence') %}
-              <p class="help">{{ q.pre_fill_confidence | title }} confidence. The answer counts once you save the section.</p>
-            {% endif %}
-
-            {% if q.get('skip_if') %}<p class="meta question-note">Note: {{ q.skip_if }}</p>{% endif %}
-
-            <div class="choice-grid">
-              {% for opt in options %}
-                <label class="choice">
-                  <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"{% if answer == opt or (not answer and prefill_answer == opt) %} checked{% endif %}
-                         {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
-                         hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
-                         hx-target="#followup-{{ q.id }}" hx-swap="innerHTML"
-                         hx-vals='{"question_id": "{{ q.id }}", "answer": "{{ opt }}"}'
-                         hx-trigger="change" hx-indicator="#followup-indicator-{{ q.id }}"
-                         {% endif %}>
-                  <span>{{ option_labels[opt] }}</span>
-                </label>
-              {% endfor %}
+            <div class="opts inline" role="radiogroup" aria-label="Answer">
+              {%- for opt in options %}<label class="choice"><input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"{% if answer == opt or (not answer and prefill_answer == opt) %} checked{% endif %}
+                {%- if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
+                hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
+                hx-target="#followup-{{ q.id }}" hx-swap="innerHTML"
+                hx-vals='{"question_id": "{{ q.id }}", "answer": "{{ opt }}"}'
+                hx-trigger="change" hx-indicator="#followup-indicator-{{ q.id }}"
+                {%- endif %}>{{ option_labels[opt] }}</label>{% endfor -%}
             </div>
+            <p class="err" data-question-error hidden>Choose an answer to continue.</p>
 
-            <div id="followup-indicator-{{ q.id }}" class="htmx-indicator meta" aria-live="polite">Reading your answer…</div>
+            <div id="followup-indicator-{{ q.id }}" class="htmx-indicator help" aria-live="polite">Reading your answer…</div>
             <div id="followup-{{ q.id }}"></div>
 
-            <details class="evidence-details">
-              <summary>Add notes or evidence</summary>
-              <div class="stack-s">
-                <textarea name="notes_{{ q.id }}" rows="2" placeholder="Additional notes">{{ existing.get(q.id, {}).get('notes', '') }}</textarea>
-                <input type="text" name="evidence_{{ q.id }}" placeholder="Evidence reference (document, URL, etc.)"
-                       value="{{ existing.get(q.id, {}).get('evidence_reference', '') }}">
-              </div>
-            </details>
-          </article>
+            {% if not inferred or has_notes %}
+            <details><summary class="disclose">Add notes or evidence reference</summary>
+<div class="extra"><label class="field area"><textarea name="notes_{{ q.id }}" placeholder="Notes" aria-label="Notes">{{ saved.get('notes') or '' }}</textarea></label>
+<label class="field"><input name="evidence_{{ q.id }}" placeholder="Document name or link" aria-label="Evidence reference" value="{{ saved.get('evidence_reference') or '' }}"></label></div></details>
+            {% endif %}
+          </div>
         {% endif %}
       {% endfor %}
     </div>
 
-    <div class="split-row section-actions">
-      <span class="meta" data-save-indicator aria-live="polite"></span>
-      <button class="btn {{ 'secondary' if prefill_available else 'primary' }} lead" type="submit">
-        Save section
-        <span class="htmx-indicator" aria-hidden="true">{% if icon is defined %}{{ icon('loader') }}{% else %}…{% endif %}</span>
-      </button>
+    <div class="action-row">
+      <span class="sub"><span data-action-counter>{{ progress.answered }} of {{ progress.active }} answered</span> <span data-save-indicator aria-live="polite"></span></span>
+      <button class="btn secondary" type="submit">Save section</button>
     </div>
   </form>
 
@@ -159,25 +130,28 @@
       if (!root) return;
       const form = root.querySelector('[data-questionnaire-form]');
       const cards = Array.from(root.querySelectorAll('[data-required-question]'));
-      const counter = root.querySelector('[data-progress-counter]');
+      const counters = [root.querySelector('[data-progress-counter]'), root.querySelector('[data-action-counter]')];
       const summary = root.querySelector('[data-validation-summary]');
+      const title = root.querySelector('[data-validation-title]');
       const checkedInputFor = (name) => form.querySelector(`input[name="${name}"]:checked`);
       const updateProgress = () => {
         const answered = cards.filter((card) => checkedInputFor(card.dataset.questionName)).length;
-        counter.textContent = `${answered} of ${cards.length} answered`;
+        counters.forEach((counter) => { if (counter) counter.textContent = `${answered} of ${cards.length} answered`; });
       };
       const validateSection = () => {
         const unanswered = cards.filter((card) => !checkedInputFor(card.dataset.questionName));
-        cards.forEach((card) => card.classList.toggle('is-invalid', unanswered.includes(card)));
-        const summaryTitle = summary.querySelector('.alert b');
-        if (summaryTitle) summaryTitle.textContent = unanswered.length
-          ? `${unanswered.length} unanswered question${unanswered.length === 1 ? '' : 's'}. Answer every question before saving.`
-          : '';
+        cards.forEach((card) => {
+          const invalid = unanswered.includes(card);
+          card.classList.toggle('is-invalid', invalid);
+          const error = card.querySelector('[data-question-error]');
+          if (error) error.hidden = !invalid;
+        });
+        if (title) title.textContent = `Answer ${unanswered.length} question${unanswered.length === 1 ? '' : 's'} to save this section`;
         summary.hidden = unanswered.length === 0;
         return unanswered.length === 0;
       };
       root.addEventListener('change', (event) => {
-        if (event.target.matches('input[type="radio"]')) { validateSection(); updateProgress(); }
+        if (event.target.matches('input[type="radio"]')) { if (!summary.hidden) validateSection(); updateProgress(); }
       });
       form.addEventListener('submit', (event) => { updateProgress(); if (!validateSection()) event.preventDefault(); });
       updateProgress();

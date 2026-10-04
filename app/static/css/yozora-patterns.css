@@ -252,6 +252,13 @@ td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
   .choice-grid .choice{align-items:flex-start}
 }
 
+/* s5-quest */
+button.item{width:100%;text-align:left}
+button.item .txt{color:inherit}
+[data-section-questionnaire]{max-width:820px}
+.qcard .htmx-indicator:not(.htmx-request){display:none}
+.qcard summary.disclose::before{box-sizing:content-box}
+
 /* Filter row that keeps its selects on one line on phones (search takes the first line) */
 @media (max-width:860px){
 .tools.keep-row .field.sel{width:auto;flex:1 1 0;min-width:0}
