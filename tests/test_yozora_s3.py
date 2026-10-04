@@ -164,7 +164,7 @@ def test_s3_seed_variants_and_portfolio_contract(tmp_path):
                 "Waiting on client evidence",
             ]
             assert all(row["title"] != "Generate board report" for row in attention)
-            assert attention[-1]["action_label"] == "View"
+            assert attention[-1]["action_label"] == "View link"
             home_rows = web_router._home_engagement_rows(seeded, engagements, assessments, by_id)
             assert [(row["client_name"], row["high_findings"]) for row in home_rows] == [
                 ("Meridian Ledger Technologies", 3),

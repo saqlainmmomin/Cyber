@@ -305,10 +305,11 @@ def _home_attention_rows(
                     {
                         "title": "Waiting on client evidence",
                         "body": f"{client.name} · {summary.received} of {summary.items} files received{expiry}",
-                        "action_label": "View",
+                        "action_label": "View link",
                         "href": f"/engagements/{engagement.id}",
-                        "icon_id": "link",
+                        "icon_id": "clock",
                         "action_icon_id": "link",
+                        "action_size": "",
                         "action_lead": True,
                         "priority": 3,
                     }

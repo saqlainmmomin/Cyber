@@ -297,6 +297,7 @@ def seed_database(path: Path, *, empty: bool = False, client_empty: bool = False
         db.flush()
         db.add(approved_report.record_release(db, surveillance, actor="consultant:Priya Sharma"))
         surveillance.updated_at = _at(3, 14)
+        vendor_scoped.updated_at = _at(9, 2)
         db.commit()
     engine.dispose()
     return {

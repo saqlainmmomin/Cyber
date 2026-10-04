@@ -31,10 +31,10 @@
 {% macro chip(label) -%}<span class="chip">{{ label }}</span>{%- endmacro %}
 
 {% macro status(label, state="open", tone="") -%}
-{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} %}
-{% if tone %}<span class="status"><span class="dot {{ tones.get(tone, 'c-neutral') }}"></span>{{ label }}</span>
+{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low", "ok": "c-ok", "part": "c-part", "non": "c-non", "insuf": "c-insuf", "accent": "c-accent", "neutral": "c-neutral"} -%}
+{%- if tone %}<span class="status"><span class="dot {{ tones.get(tone, 'c-neutral') }}"></span>{{ label }}</span>
 {% elif state == "in_progress" %}<span class="status"><span class="st prog"></span>{{ label }}</span>
-{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif %}
+{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif -%}
 {%- endmacro %}
 
 {% macro field(label="", name="", value="", kind="input", placeholder="", options=[], state="", help_text="", error="", icon_id="", touch=false, disabled=false, required=false, input_type="text") -%}
