@@ -327,6 +327,7 @@ def _engagement_list_rows(
                 "client_name": client_name,
                 "framework_badges": framework_badges(framework_ids),
                 "stage": current_stage,
+                "analysis_failed": current_assessment is not None and current_assessment.status == "error",
                 "progress_pct": build_engagement_card(engagement, assessments)["progress_pct"],
                 "last_activity": (
                     assessments[0].updated_at

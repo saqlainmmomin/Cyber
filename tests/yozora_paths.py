@@ -87,6 +87,7 @@ YOZORA_S4_PATHS = (
     "app/templates/partials/client_picker.html",
     "app/templates/partials/engagement_list.html",
     "app/templates/partials/engagement_retention.html",
+    "app/templates/partials/yozora_page_controls.html",
     "design/harness/seed_s4.py",
     "tasks/handoffs/2026-10-01-yozora-s4-handoff.md",
     "tasks/todo.md",

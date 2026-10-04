@@ -137,6 +137,90 @@ def _assessment_engagement_context(request):
             override_generator.close()
 
 
+# Yozora display labels: short ("DPDPA") for chips in lists, full ("DPDPA 2023") where
+# the framework edition matters. Unknown ids fall back to the upper-cased id.
+FRAMEWORK_LABELS = {
+    "dpdpa": ("DPDPA", "DPDPA 2023"),
+    "iso27001": ("ISO 27001", "ISO 27001:2022"),
+    "gdpr": ("GDPR", "GDPR"),
+    "nist_csf": ("NIST CSF", "NIST CSF 2.0"),
+    "hipaa": ("HIPAA", "HIPAA"),
+    "pci_dss": ("PCI DSS", "PCI DSS 4.0"),
+}
+
+
+def framework_label(framework_id: str, full: bool = False) -> str:
+    short, long = FRAMEWORK_LABELS.get(framework_id, (framework_id.upper(), framework_id.upper()))
+    return long if full else short
+
+
+def display_date(moment) -> str:
+    """'3 Feb 2026' (no leading zero), the Yozora date format."""
+    if moment is None:
+        return ""
+    return f"{moment.day} {moment:%b %Y}"
+
+
+def _session(instance):
+    from sqlalchemy.orm import object_session
+    from sqlalchemy.orm.exc import UnmappedInstanceError
+
+    try:
+        return object_session(instance) if instance is not None else None
+    except UnmappedInstanceError:
+        return None
+
+
+def _engagement_assessments(engagement) -> list:
+    db = _session(engagement)
+    if db is None:
+        return []
+    from app.models.assessment import Assessment
+
+    return (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement.id, Assessment.status != "archived")
+        .order_by(Assessment.created_at, Assessment.id)
+        .all()
+    )
+
+
+def engagement_period(engagement) -> dict | None:
+    """The review period and evidence cut-off recorded on the engagement's assessments, or None
+    when none is recorded or the assessments disagree. Read-only."""
+    from app.services import report_basis
+
+    db = _session(engagement)
+    periods = set()
+    for assessment in _engagement_assessments(engagement):
+        basis = report_basis.current_basis(db, assessment)
+        if basis.period_recorded:
+            periods.add((basis.period_start, basis.period_end, basis.evidence_cutoff))
+    if len(periods) != 1:
+        return None
+    start, end, cutoff = periods.pop()
+    return {"period": f"{display_date(start)} to {display_date(end)}", "cutoff": display_date(cutoff)}
+
+
+def latest_issued_version(engagement) -> int | None:
+    """Version number (generation sequence) of the current issued integrated report."""
+    db = _session(engagement)
+    if db is None:
+        return None
+    from app.services import report_snapshots
+
+    rows = report_snapshots.engagement_snapshot_rows(db, engagement, current_source=None)
+    return next((row.sequence for row in rows if row.is_current_issue), None)
+
+
+def engagement_assessment_meta(engagement) -> dict:
+    """Display name and framework ids for each assessment of the engagement, by id."""
+    return {
+        assessment.id: {"name": assessment.display_name, "frameworks": assessment.frameworks}
+        for assessment in _engagement_assessments(engagement)
+    }
+
+
 def configure_templates(templates):
     """Set template globals. Safe to call multiple times (idempotent)."""
     from app.services.report_basis import basis_for
@@ -156,3 +240,8 @@ def configure_templates(templates):
     if _navigation_context not in templates.context_processors:
         templates.context_processors.append(_navigation_context)
     templates.env.globals["assessment_engagement_context"] = _assessment_engagement_context
+    templates.env.globals["framework_label"] = framework_label
+    templates.env.globals["engagement_period"] = engagement_period
+    templates.env.globals["latest_issued_version"] = latest_issued_version
+    templates.env.globals["engagement_assessment_meta"] = engagement_assessment_meta
+    templates.env.filters["display_date"] = display_date
