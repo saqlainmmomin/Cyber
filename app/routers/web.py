@@ -52,6 +52,7 @@ from app.services import (
     rfi_requests,
     retention,
     request_summary,
+    prefill_freshness,
     workpaper,
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
@@ -167,6 +168,55 @@ def _framework_catalog() -> list[dict]:
             "enabled": fw_id in ENABLED_ASSESSMENT_FRAMEWORKS,
         })
     return frameworks
+
+
+def _assessment_stepper(assessment: Assessment, current: assessment_stage.Stage) -> list[dict]:
+    """Build the five-stage Overview stepper from the canonical stage service."""
+    hrefs = {
+        "scope": f"/assessments/{assessment.id}?tab=scope",
+        # The legacy documents page remains the evidence entry point until S6.
+        "evidence": f"/assessments/{assessment.id}?tab=documents",
+        "questionnaire": f"/assessments/{assessment.id}?tab=questionnaire",
+        "review": f"/assessments/{assessment.id}/review-queue",
+        "report": f"/assessments/{assessment.id}?tab=report",
+    }
+    current_index = assessment_stage.STAGES.index(current.stage)
+    return [
+        {
+            "label": assessment_stage.STAGE_LABELS[stage_name],
+            "state": (
+                "done"
+                if index < current_index
+                else "current"
+                if index == current_index
+                else "next"
+            ),
+            "note": current.note if index == current_index else "",
+            "href": hrefs[stage_name],
+        }
+        for index, stage_name in enumerate(assessment_stage.STAGES)
+    ]
+
+
+def _assessment_hub_state(current: assessment_stage.Stage, assessment: Assessment) -> str:
+    """Map every stage-service outcome to an approved b3-hub state."""
+    if assessment.status == "error":
+        return "error"
+    if current.stage == "scope":
+        return "empty"
+    if current.stage == "evidence":
+        if current.next_label == assessment_stage.PREFILL:
+            return "questionnaire"
+        if current.next_label == assessment_stage.UPLOAD_EVIDENCE:
+            return "evidence"
+        return "loading"
+    if current.stage == "questionnaire":
+        return "questionnaire"
+    if current.stage == "review":
+        return "default"
+    if current.stage == "report":
+        return "report"
+    return "default"
 
 
 # --- Yozora portfolio helpers ---
@@ -1512,9 +1562,9 @@ def assessment_detail(
     if report_view_mode not in ("combined", "per_framework"):
         report_view_mode = "combined" if assessment.is_multi_framework else "per_framework"
 
-    # Default workflow tab: scope if not yet scoped, else documents
+    # Default workflow tab: scope if not yet scoped, else the assessment Overview.
     if tab is None:
-        tab = "scope" if not scope_done else "documents"
+        tab = "scope" if not scope_done else "overview"
 
     # Build scope context for the scope tab
     scope_context: dict = {}
@@ -1562,23 +1612,26 @@ def assessment_detail(
                 "version": fw.version,
             })
     framework_display = {}
-    if report and tab in ("report", "questionnaire"):
+    if report and tab in ("overview", "report", "questionnaire"):
         approved = approved_report.build_approved_report(db, assessment)
         framework_display = _framework_display(
             assessment,
             approved.framework_scores,
         )
 
-    timeline_steps = [
-        ("Scope", scope_done),
-        ("Documents", bool(analysable_document_count)),
-        ("Desk Review", assessment.desk_review_status == "completed"),
-        (
-            "Questionnaire",
-            assessment.status in ("questionnaire_done", "analyzing", "completed"),
-        ),
-        ("Analysis", assessment.status == "completed"),
-    ]
+    workflow_stage = assessment_stage.stage(db, assessment)
+    workflow_action = workflow_stage.next_href
+    if workflow_stage.next_label == assessment_stage.PREFILL:
+        # Pre-fill now starts from Questionnaire; the legacy documents URL stays
+        # available only as the Evidence stepper destination until S6 redirects it.
+        workflow_action = f"/assessments/{assessment.id}?tab=questionnaire"
+    workflow = {
+        "stage": workflow_stage,
+        "hub_state": _assessment_hub_state(workflow_stage, assessment),
+        "action_href": workflow_action,
+    }
+    prefill = prefill_freshness.freshness(db, assessment)
+    stepper_stages = _assessment_stepper(assessment, workflow_stage)
 
     return templates.TemplateResponse(
         "pages/assessment.html",
@@ -1595,7 +1648,11 @@ def assessment_detail(
             "scope_done": scope_done,
             "screening_done": screening_done,
             "screening_available": screening_applies(assessment),
-            "screening_unavailable_message": SCREENING_NOT_APPLICABLE_MESSAGE,
+            "screening_unavailable_message": (
+                SCREENING_NOT_APPLICABLE_MESSAGE
+                if screening_applies(assessment)
+                else "Screening is not available for this assessment. Complete the questionnaire directly."
+            ),
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
             "selected_frameworks": selected_frameworks_info,
@@ -1617,7 +1674,9 @@ def assessment_detail(
                 if row.framework_id == active_framework
                 and row.compliance_status in conclusion_review.GAP_OUTCOMES
             ),
-            "timeline_steps": timeline_steps,
+            "workflow": workflow,
+            "stepper_stages": stepper_stages,
+            "prefill_freshness": prefill,
             **scope_context,
         },
     )
@@ -3019,7 +3078,12 @@ def desk_review_status_web(
     if not summary or summary.status == "not_started":
         return templates.TemplateResponse(
             "partials/desk_review_ready.html",
-            {"request": request, "assessment_id": assessment_id},
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "prefill_freshness": prefill_freshness.freshness(db, assessment),
+                "framework_names": _selected_framework_names(assessment),
+            },
         )
 
     if summary.status == "analyzing":

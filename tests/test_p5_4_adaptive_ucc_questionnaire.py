@@ -921,7 +921,8 @@ def test_scenario_12_screening_visibility_and_copy(db, http, monkeypatch):
         assert 'id="screening-section"' not in page.text
         assert "Start screening" not in page.text
         assert 'data-screening-unavailable' in page.text
-        assert screening.SCREENING_NOT_APPLICABLE_MESSAGE in page.text
+        assert "Screening is not available for this assessment." in page.text
+        assert "DPDPA" not in page.text
         form = http.get(f"/assessments/{assessment.id}/screening")
         assert screening.SCREENING_NOT_APPLICABLE_MESSAGE in form.text and "<form" not in form.text
         called = []

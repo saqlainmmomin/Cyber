@@ -246,4 +246,52 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ## Results
 
-(Codex fills in: what was built, the screenshots table with percentages, tests changed with old and new strings, guards touched, decisions made, open questions, full-suite summary line.)
+Implemented the S5 assessment shell, Scope, Questionnaire, context/screening/follow-up flows, and desk-review pre-fill surface.
+
+### Built
+
+- Replaced the assessment tab row with Overview, Scope, Questionnaire, Review, and Report. The Review tab uses `/assessments/{id}/review-queue`; `NAV_ITEMS` was not changed.
+- Wired the Overview stepper and Overview CTA to `assessment_stage.stage()`. Every stage-service outcome maps to an approved `b3-hub` state: scope → `empty`; evidence/upload → `evidence`; evidence/pre-fill → `questionnaire`; evidence/running → `loading`; questionnaire (continue, run analysis, or running) → `questionnaire`; review → `default`; report (release, board-report generation, or complete) → `report`; assessment error → `error`.
+- Kept the Evidence stepper link at `/assessments/{id}?tab=documents`, and kept the `?tab=documents` rendering branch unchanged. The post-scope default is now Overview.
+- Moved the live `desk-review-area` HTMX target to `questionnaire_tab.html` while leaving `documents_tab.html` untouched. Its route, controls, indicators, retry, rerun, findings, and target wiring remain live.
+- Used `prefill_freshness.freshness()` for document/pre-fill copy and real desk-review findings, coverage, evidence, and framework names. The Scope RFI link remains `/assessments/{id}/rfi`; the engagement Evidence Requests destination is deferred to S8 because that view does not exist yet.
+- Restyled the assessment Overview engagement context under `data-visual-mask`, retaining the AWS evidence link, retention include, masked magic links, and `data-assessment-identity`. Framework tab HTMX contracts remain intact; the framework panel body remains S7-owned.
+- Added `design/harness/seed_s5.py`, importing S4 builders and `FROZEN_NOW` without editing either prior seed. It creates Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory fixtures, real legacy documents for the app's `analysis_documents()` reader, real questionnaire responses, and stamps Alembic `head` after `create_all`.
+
+### Seed state production
+
+The harness validated all **59** S5 states. **32** use deterministic database data. **27** are marked `preview-state` for the orchestrator's mockup/state overlay because they represent transient or interaction-only states: `b3-hub` empty/loading/error; `b3-scope` error/saving; `b3-scope-complete` loading/error; `b3-questionnaire` prefilling/error/running; `b3-screening-form` loading/error; `b3-context-complete` generating/error; `b3-question-step` saving/error; `b3-followups` loading/error; `b3-sections` loading/empty/error; `b3-section-questions` errors/saved/loading; and `b4-desk-review` running/rerun/error. This follows the existing S4 harness state-overlay convention; no shared `PREVIEW_PAGES` registry entry was needed.
+
+The seed smoke check reported `validated 59 S5 states`, `alembic: head`, and the frozen clock `2026-09-30T12:00:00+00:00`. Stage smoke reached real branches for no-document evidence, pre-fill-ready evidence, partial questionnaire, review, released report, and analysis loading.
+
+### Screenshot gate
+
+| Coverage | Result |
+|---|---|
+| 59 S5 states × light/dark × 1440/1024 | Not run in this environment; server and browser/Chromium are unavailable. The orchestrator owns the pixel gate and percentage report. |
+
+### Tests and guard changes
+
+- Added `tests/test_yozora_s5.py` for the five-tab row, five-stage stepper, legacy documents URL, live Questionnaire desk-review target, Overview engagement context, and non-DPDPA screening copy.
+- Updated the intentional copy assertion from `Evidence Request` to `Evidence request` for sentence case.
+- Updated the non-DPDPA page assertion from the DPDPA-specific screening message to `Screening is not available for this assessment.` and asserted that `DPDPA` and `Start screening` are absent. The screening endpoint's existing real message remains covered separately.
+- Added `YOZORA_S5_PATHS` to `tests/yozora_paths.py` and `YOZORA_EXCLUDES`, with the required `# Yozora per-PR allowance` comment. Updated only the stale guard allowances in `tests/p6_10_support.py`, `tests/test_longitudinal_demo.py`, `tests/test_p6_7_requirement_card.py`, `tests/test_p6_7b_add_to_rfi.py`, `tests/test_p6_8_b2_docx_xlsx.py`, `tests/test_p6_8_board_report_v2.py`, `tests/test_p6_8_v3a_data_capture.py`, and `tests/test_p6_9_file_set.py`. No guard was removed or weakened.
+
+Available verification:
+
+```text
+11 passed — tests/test_design_lint.py tests/test_design_harness.py tests/test_p6_9_file_set.py
+validated 59 S5 states; database=32; preview-state=27
+Python compile checks passed; git diff --check passed
+```
+
+The focused S5 pytest collection is blocked before test execution by the environment's missing `boto3` dependency (`app/routers/aws.py` → `app/services/aws_evidence.py`). The full suite and browser pixel gate were not run here; the orchestrator should run both in its provisioned environment.
+
+The requested commit could not be created: this worktree's Git metadata is at `/Users/saqlainmomin/dpdpa-gap-tool/.git/worktrees/cyberassess-yozora-s5`, outside the writable workspace. A named-path `git add` failed with `Unable to create .../index.lock: Operation not permitted`; no files were staged, pushed, or merged.
+
+### Decisions and open questions
+
+- `documents_tab.html` has no diff, as required for the parallel S6 slice. No `PREVIEW_PAGES` or `NAV_ITEMS` entry was changed.
+- The S4 engagement-context block stays on the assessment Overview until the later S8 destination exists; magic links remain masked.
+- No stage-service variant lacked an approved `b3-hub` state, so no implementation question is outstanding.
+- No visual percentages are claimed because the required server/browser gate could not run in this environment.

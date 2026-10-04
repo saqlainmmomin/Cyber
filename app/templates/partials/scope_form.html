@@ -1,83 +1,31 @@
-<!-- Scope Form — per-framework questions to determine applicable requirements -->
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-  <div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Assessment Scope</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-      Answer these questions to filter the requirements applicable to your organisation.
-      This determines what evidence to collect and which compliance obligations to assess.
-    </p>
+{% from "components/ui.html" import icon %}
+<div class="form-narrow">
+  <div class="stack">
+    <div><h2>Scope</h2><p class="sub">Your answers decide which requirements apply and which evidence to collect.</p></div>
+    <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="solid card">
+      {% for fw_group in scope_questions_by_fw %}
+      <section>
+        {% if scope_questions_by_fw | length > 1 %}<h3>{{ fw_group.framework_name }}</h3>{% endif %}
+        {% for q in fw_group.questions %}
+        <fieldset class="qgroup">
+          <legend class="label">{{ q.question }}</legend>
+          {% if q.help_text %}<p class="help">{{ q.help_text }}</p>{% endif %}
+          <div class="opts inline" data-scope-group="{{ q.id }}">
+            {% for opt in q.options %}
+            <label class="choice scope-option">
+              <input type="radio" name="{{ q.id }}" value="{{ opt.value }}"{% if existing.get(q.id) == opt.value %} checked{% endif %}>
+              <span>{{ opt.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        {% endfor %}
+      </section>
+      {% endfor %}
+      <div class="action-row">
+        <span class="help">Answers can be updated later if your situation changes.</span>
+        <button type="submit" class="btn primary lead">Save scope and prepare evidence request {{ icon("chev-r") }}</button>
+      </div>
+    </form>
   </div>
-
-  <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="space-y-6">
-
-    {% set ns = namespace(counter=0) %}
-    {% for fw_group in scope_questions_by_fw %}
-    {% if scope_questions_by_fw | length > 1 %}
-    <div class="border-l-4 border-navy-300 dark:border-navy-600 pl-4 mb-2">
-      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ fw_group.framework_name }}</h3>
-    </div>
-    {% endif %}
-
-    {% for q in fw_group.questions %}
-    {% set ns.counter = ns.counter + 1 %}
-    <div class="border border-gray-100 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
-      <fieldset>
-        <legend class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
-          <span class="text-gray-400 dark:text-gray-500 mr-1">{{ ns.counter }}.</span>{{ q.question }}
-        </legend>
-        {% if q.help_text %}
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ q.help_text }}</p>
-        {% endif %}
-
-        <div class="flex flex-wrap gap-3" data-scope-group="{{ q.id }}">
-          {% for opt in q.options %}
-          <label class="scope-option flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-navy-400 dark:hover:border-navy-500 transition-colors text-sm
-                        {% if existing.get(q.id) == opt.value %}border-brand bg-navy-50 dark:border-navy-500 dark:bg-navy-900/40{% endif %}">
-            <input type="radio"
-                   name="{{ q.id }}"
-                   value="{{ opt.value }}"
-                   class="sr-only"
-                   {% if existing.get(q.id) == opt.value %}checked{% endif %}>
-            <span class="font-medium text-gray-700 dark:text-gray-300">{{ opt.label }}</span>
-          </label>
-          {% endfor %}
-        </div>
-      </fieldset>
-    </div>
-    {% endfor %}
-    {% endfor %}
-
-    <div class="flex items-center justify-between pt-2">
-      <p class="text-xs text-gray-400 dark:text-gray-500">Answers can be updated later if your situation changes.</p>
-      <button type="submit"
-              class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
-        Save Scope &amp; Generate Evidence Request
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
-      </button>
-    </div>
-
-  </form>
 </div>
-
-<script>
-  document.querySelectorAll('[data-scope-group]').forEach(group => {
-    function applyStyles() {
-      group.querySelectorAll('label.scope-option').forEach(label => {
-        const radio = label.querySelector('input[type="radio"]');
-        if (radio.checked) {
-          label.classList.remove('border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800');
-          label.classList.add('border-brand', 'bg-navy-50', 'dark:border-navy-500', 'dark:bg-navy-900/40');
-        } else {
-          label.classList.remove('border-brand', 'bg-navy-50', 'dark:border-navy-500', 'dark:bg-navy-900/40');
-          label.classList.add('border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800');
-        }
-      });
-    }
-
-    group.querySelectorAll('input[type="radio"]').forEach(radio => {
-      radio.addEventListener('change', applyStyles);
-    });
-  });
-</script>

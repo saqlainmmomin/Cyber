@@ -22,6 +22,12 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
   - [x] Align Settings unmigrated copy, accent label colour, and saved banner geometry.
   - [x] Run focused regressions and the full suite; record evidence in the S3 Results.
 - [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
+- [ ] **Yozora S5 execution (2026-10-04):** assessment overview/stepper, scope, questionnaire, context/screening/follow-ups, and desk-review pre-fill on Questionnaire; add S5 seed, route/markup contracts, guard allowances, and handoff Results.
+  - [x] Wire the assessment route to the five-tab shell, real stage service, freshness data, and Overview engagement context.
+  - [x] Restyle the S5 templates while preserving all required controls, ids, `hx-*`, and `data-*` contracts.
+  - [x] Add deterministic S5 seed states and focused route/markup tests.
+  - [x] Run available checks and record environment limitations.
+  - [ ] Commit the complete local change (blocked by the external worktree Git metadata permissions).
 - Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 
 ## Done
