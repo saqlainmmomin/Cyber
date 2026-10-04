@@ -23,6 +23,13 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
+### Review fixes, round 3
+
+- [x] Guard questionnaire desk-review stats, correct questionnaire selection/counters, and update the redirect/test contract.
+- [x] Align the assessment chrome, production state handling, scope/questionnaire/desk-review partials, and shared S2 macros.
+- [x] Rework S5 previews to use real app partials with fixture context and update deterministic seed data for real pre-fill/count states.
+- [x] Run focused regressions, the full available suite, and record results in the S5 handoff without committing.
+
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
 - [x] S3 Home, clients, firm settings, sign-in, `/review`. [x] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S3 visual repair from gate measurements: source/layout/seed corrections implemented and test-verified; rerun `domcmp.py`/`gate2.py` for every case when the orchestrator's server/Chromium environment is available.

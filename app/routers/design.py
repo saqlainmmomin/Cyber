@@ -9,8 +9,10 @@ from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.database import get_db
 from app.routers.web import templates
+from app.services.screening import get_domain_coverage
 
 router = APIRouter(tags=["design"])
 
@@ -33,13 +35,13 @@ PREVIEW_PAGES["login"] = login_preview
 
 
 S5_PREVIEW_STATES = {
-    "b3-screening-form": ("default", "loading", "error", "complete", "screened"),
-    "b3-context-complete": ("default", "generating", "error"),
-    "b3-question-step": ("org", "data", "data-yes", "last", "saving", "error"),
-    "b3-followups": ("loaded", "loading", "error", "none"),
-    "b3-sections": ("default", "saved", "loading", "empty", "error"),
-    "b3-section-questions": ("default", "errors", "saved", "loading"),
-    "b4-desk_review": ("ready", "running", "findings", "rerun", "error"),
+    "b3-screening-form": ("default", "error", "complete", "screened"),
+    "b3-context-complete": ("default",),
+    "b3-question-step": ("org", "data", "data-yes", "last"),
+    "b3-followups": ("loaded",),
+    "b3-sections": ("default", "saved"),
+    "b3-section-questions": ("default",),
+    "b4-desk_review": ("ready", "running", "findings", "error"),
 }
 
 
@@ -50,11 +52,80 @@ def _s5_preview(request: Request, screen: str) -> Response:
         state = states[0]
 
     assessment_id = "assessment-s5-preview"
+    assessment = SimpleNamespace(
+        id=assessment_id,
+        display_name="Head office",
+        company_name="Meridian Ledger Technologies",
+        status="created",
+    )
+    engagement = SimpleNamespace(id="engagement-s5-preview", name="FY2026 privacy readiness")
+    period = SimpleNamespace(period="1 Apr 2025 to 31 Mar 2026", cutoff="15 Mar 2026")
+    block_index = {"org": 0, "data": 1, "data-yes": 1, "last": len(CONTEXT_BLOCKS) - 1}.get(state, 0)
+    sections = [
+        {
+            "section_id": "notice",
+            "section_title": "Notice and consent",
+            "chapter_title": "Obligations of the data fiduciary",
+            "source": "base",
+            "questions": [
+                {
+                    "id": "CH2.NOTICE.1",
+                    "question": "Does every notice name each purpose in plain language?",
+                    "status": "active",
+                    "tier": "deep",
+                    "guidance": "Check sign-up, checkout and marketing preferences.",
+                    "source": "base",
+                },
+                {
+                    "id": "CH2.CONSENT.1",
+                    "question": "Can a data principal withdraw consent as easily as they gave it?",
+                    "status": "pre_filled",
+                    "tier": "standard",
+                    "guidance": "The answer counts once you save the section.",
+                    "source": "base",
+                    "pre_fill_source": "document",
+                    "pre_fill_answer": "partially_implemented",
+                    "pre_fill_confidence": "medium",
+                    "pre_fill_evidence_summary": "Withdrawal requests are accepted by email and processed by the support team.",
+                    "desk_review_evidence": [{
+                        "content": "Withdrawal requests are accepted by email.",
+                        "source_quote": "processed by the support team",
+                        "source_location": "Consent policy, page 2",
+                    }],
+                },
+            ],
+        },
+        {
+            "section_id": "industry.payments",
+            "section_title": "Payments and lending",
+            "chapter_title": "Industry-specific",
+            "source": "industry",
+            "questions": [{
+                "id": "IND.PAY.1",
+                "question": "Are payment records protected throughout their lifecycle?",
+                "status": "active",
+                "tier": "standard",
+                "guidance": "Include payment processors and support tooling.",
+                "source": "industry",
+            }],
+        },
+    ]
+    selected_section = sections[0]
     common = {
         "request": request,
         "screen": screen,
         "state": state,
         "assessment_id": assessment_id,
+        "assessment": assessment,
+        "engagement": engagement,
+        "period": period,
+        "tab": "questionnaire",
+        "active_framework": "dpdpa",
+        "engagement_archived": False,
+        "workflow": {"action_href": None},
+        "preview_rendered": True,
+        "preview_static": True,
+        "standalone_preview": True,
         "page_title": {
             "b3-screening-form": "Domain screening",
             "b3-context-complete": "Context",
@@ -68,25 +139,21 @@ def _s5_preview(request: Request, screen: str) -> Response:
     common.update({
         "screening_available": True,
         "screening_done": state in {"complete", "screened"},
-        "error": "The screening service did not respond. Your answers are kept.",
-        "domains": [
-            {"id": "notice", "title": "Notice and consent", "question": "Describe how people are told what data is collected and why.", "covers": ["CH2.NOTICE.1", "CH2.CONSENT.1"]},
-            {"id": "security", "title": "Security safeguards", "question": "Describe the controls that protect personal data.", "covers": ["CH4.SDF.1", "CH4.SDF.2"]},
-        ],
-        "block": {
-            "title": "Your organisation",
-            "description": "Tell us about the organisation's data and risk exposure.",
-            "questions": [{"id": "CTX.ORG_TYPE", "question": "What best describes your organisation?", "type": "single_select", "options": ["technology", "financial_services", "other"]}],
-        },
-        "block_index": {"org": 0, "data": 1, "data-yes": 1, "last": 4}.get(state, 0),
-        "total_blocks": 5,
+        "error": "The screening service did not respond. Your answers are kept." if state == "error" else None,
+        "domains": get_domain_coverage(),
+        "block": CONTEXT_BLOCKS[block_index],
+        "block_index": block_index,
+        "total_blocks": len(CONTEXT_BLOCKS),
         "followups": [{"id": "FU.CH2.CONSENT.1", "text": "Which channels can withdraw consent today?", "reason": "Your answer is partial, so this shows how far coverage goes."}],
-        "sections": [
-            {"section_id": "notice", "section_title": "Notice and consent", "chapter_title": "Obligations of the data fiduciary", "source": "base", "questions": [{"id": "CH2.NOTICE.1", "question": "Does every notice name each purpose in plain language?", "status": "active", "tier": "deep", "criticality": "high", "guidance": "Check sign-up, checkout and marketing preferences.", "source": "base"}, {"id": "CH2.CONSENT.1", "question": "Can a data principal withdraw consent as easily as they gave it?", "status": "pre_filled", "tier": "standard", "criticality": "high", "guidance": "The answer counts once you save the section.", "source": "base", "pre_fill_source": "document", "pre_fill_answer": "partially_implemented", "desk_review_evidence": [{"content": "Withdrawal requests are accepted by email.", "source_quote": "processed by the support team", "source_location": "Consent policy, page 2"}]}]},
-            {"section_id": "industry.payments", "section_title": "Payments and lending", "chapter_title": "Industry-specific", "source": "industry", "questions": [{"id": "IND.PAY.1", "question": "Are payment records protected throughout their lifecycle?", "status": "active", "tier": "standard", "criticality": "medium", "guidance": "Include payment processors and support tooling.", "source": "industry"}]},
-        ],
+        "sections": sections,
         "existing": {"CH2.CONSENT.1": {"answer": "partially_implemented"}},
         "stats": {"total_questions": 3, "answered_questions": 1, "awaiting_confirmation": 1, "pre_filled_questions": 1, "inferred_questions": 0, "deepened_questions": 1, "industry_questions": 1, "tier_counts": {"deep": 1, "standard": 2, "light": 0, "skip": 0}},
+        "selected_section_id": selected_section["section_id"],
+        "section_id": selected_section["section_id"],
+        "section_title": selected_section["section_title"],
+        "chapter_title": selected_section["chapter_title"],
+        "questions": selected_section["questions"],
+        "prefill_available": 6,
         "prefill_freshness": SimpleNamespace(available=6, new_since_last_prefill=3, last_prefill_at=datetime.now(timezone.utc)),
         "framework_names": ["DPDPA 2023", "ISO 27001:2022"],
         "catalog": [{"filename": f"policy-{index}.pdf"} for index in range(1, 7)],
@@ -96,6 +163,7 @@ def _s5_preview(request: Request, screen: str) -> Response:
         "coverage": {"CH2.CONSENT.1": "partial", "CH4.SDF.1": "absent"},
         "failed_framework_names": [],
         "total_findings": 3,
+        "questionnaire_surface": False,
     })
     return templates.TemplateResponse("pages/design_assessment_preview.html", common)
 

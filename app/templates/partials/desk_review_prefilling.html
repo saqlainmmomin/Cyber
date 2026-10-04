@@ -1,5 +1,6 @@
-<div class="solid card" role="status" aria-live="polite">
+{% from "components/ui.html" import skeleton %}
+<div role="status" aria-live="polite">
   <h2>Reading {{ prefill_freshness.available }} documents</h2>
   <p class="sub">This takes a few minutes. You can keep answering; pre-filled answers appear as they are found.</p>
-  <div class="stack-m mt-lg" aria-busy="true" aria-label="Loading"><span class="skel" style="width:60%"></span><span class="skel" style="width:35%"></span></div>
+  <div class="stack-m mt-lg" aria-busy="true" aria-label="Loading">{{ skeleton("60%") }}{{ skeleton("35%", margin_top="10px") }}</div>
 </div>

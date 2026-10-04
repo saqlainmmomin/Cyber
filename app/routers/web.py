@@ -217,7 +217,7 @@ def _assessment_hub_state(current: assessment_stage.Stage, assessment: Assessmen
     if assessment.status == "archived":
         return "archived"
     if assessment.status == "error":
-        return "error"
+        return "analysis_error"
     if current.next_href is None and current.note in {"Pre-fill running", "Analysis running"}:
         return "loading"
     if current.stage == "scope":
@@ -1676,11 +1676,7 @@ def assessment_detail(
             "scope_done": scope_done,
             "screening_done": screening_done,
             "screening_available": screening_applies(assessment),
-            "screening_unavailable_message": (
-                SCREENING_NOT_APPLICABLE_MESSAGE
-                if screening_applies(assessment)
-                else "Screening is not available for this assessment. Complete the questionnaire directly."
-            ),
+            "screening_unavailable_message": "Screening is not available for this assessment. Complete the questionnaire directly.",
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
             "selected_frameworks": selected_frameworks_info,
@@ -3136,7 +3132,12 @@ def desk_review_status_web(
     if summary.status == "error":
         return templates.TemplateResponse(
             "partials/desk_review_error.html",
-            {"request": request, "assessment_id": assessment_id, "error": summary.error_message},
+            {
+                "request": request,
+                "assessment_id": assessment_id,
+                "error": summary.error_message,
+                "questionnaire_surface": surface == "questionnaire",
+            },
         )
 
     # Completed — load findings
@@ -3163,11 +3164,18 @@ def desk_review_status_web(
     ]
     questionnaire_stats = None
     if surface == "questionnaire":
-        questionnaire = question_engine.build_adaptive_questionnaire(assessment_id, db)
-        questionnaire_stats = dict(questionnaire.get("stats", {}))
-        questionnaire_stats.update(
-            question_engine.questionnaire_progress(questionnaire, assessment_id, db)
-        )
+        try:
+            questionnaire = question_engine.build_adaptive_questionnaire(assessment_id, db)
+            questionnaire_stats = dict(questionnaire.get("stats", {}))
+            questionnaire_stats.update(
+                question_engine.questionnaire_progress(questionnaire, assessment_id, db)
+            )
+        except Exception:
+            logger.warning(
+                "Questionnaire progress unavailable while rendering desk-review findings",
+                extra={"assessment_id": assessment_id},
+                exc_info=True,
+            )
 
     return templates.TemplateResponse(
         "partials/desk_review_findings.html",

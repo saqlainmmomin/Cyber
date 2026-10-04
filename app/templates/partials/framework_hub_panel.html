@@ -1,14 +1,16 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import empty_state, skeleton, alert %}
 {% if hub_state == 'loading' %}
 <div class="glass card" role="status" aria-label="Loading framework">
-  <div class="stack-m"><span class="skel" style="width:30%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:55%"></span><span class="skel" style="width:80%"></span></div>
+  <div class="stack-m">{{ skeleton("30%") }}{{ skeleton("70%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}{{ skeleton("80%", margin_top="10px") }}</div>
 </div>
+{% elif hub_state == 'analysis_error' %}
+{{ alert("Analysis failed", "Something went wrong during the analysis. The scores are unchanged. Try analysis again from the Questionnaire tab.", "noncompliant") }}
 {% elif hub_state == 'error' %}
-<div class="alert c-non" role="alert">{{ icon('alert') }}<div><b>This framework did not load</b>The scores are unchanged. <a href="?tab=overview"><u>Try again</u></a></div></div>
+{{ alert("This framework did not load", "The scores are unchanged. Try again.", "noncompliant") }}
 {% elif hub_state == 'empty' %}
-<div class="glass empty-state"><span class="empty-state-icon">{{ icon('folder') }}</span><h3>No scores yet</h3><p>Set the scope to choose which requirements apply.</p></div>
+{{ empty_state("No scores yet", "Set the scope to choose which requirements apply.") }}
 {% elif hub_state in ('evidence', 'questionnaire') %}
-<div class="glass empty-state"><span class="empty-state-icon">{{ icon('folder') }}</span><h3>No scores yet</h3><p>Scores appear once the analysis has run and its conclusions are reviewed.</p></div>
+{{ empty_state("No scores yet", "Scores appear once the analysis has run and its conclusions are reviewed.") }}
 {% else %}
 {% include "partials/framework_panel.html" %}
 {% endif %}

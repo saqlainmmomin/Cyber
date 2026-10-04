@@ -1,13 +1,21 @@
+{% from "components/ui.html" import alert, icon %}
+{% set progress = namespace(active=0, answered=0) %}
+{% for q in questions %}
+  {% if q.get('status', 'active') != 'skipped' %}
+    {% set progress.active = progress.active + 1 %}
+    {% if existing.get(q.id, {}).get('answer') %}{% set progress.answered = progress.answered + 1 %}{% endif %}
+  {% endif %}
+{% endfor %}
 <div class="stack-l" data-section-questionnaire>
   <header class="section-header" data-section-header>
     <div>
       <p class="meta">{{ chapter_title }}</p>
       <h3>{{ section_title }}</h3>
     </div>
-    <span class="chip" data-progress-counter>0 of 0 answered</span>
+    <span class="chip" data-progress-counter>{{ progress.answered }} of {{ progress.active }} answered</span>
   </header>
 
-  <div class="alert alert-error" data-validation-summary aria-live="polite"></div>
+  <div data-validation-summary aria-live="polite" hidden>{{ alert("Required questions are unanswered", "", "noncompliant") }}</div>
 
   <form class="stack-l" hx-post="/assessments/{{ assessment_id }}/questionnaire/save"
         hx-target="#section-content" hx-swap="innerHTML" data-questionnaire-form>
@@ -61,18 +69,25 @@
                 {% if q.guidance %}<p class="meta">{{ q.guidance }}</p>{% endif %}
               </div>
               <div class="cluster-s">
-                {% if question_status == 'pre_filled' %}
-                  <span class="chip chip-accent" data-prefill-badge>{{ 'Inferred' if q.get('pre_fill_source') == 'inferred' else 'Document' }}</span>
+            {% if question_status == 'pre_filled' %}
+                  <span class="chip chip-accent" data-prefill-badge>{{ 'Inferred from screening' if q.get('pre_fill_source') == 'inferred' else 'From documents' }}</span>
+                  <span class="pill c-high">High</span>
                 {% elif q.get('tier') == 'deep' %}
                   <span class="chip chip-warning">Deep review</span>
                 {% elif q.get('source') == 'industry' %}
                   <span class="chip">Industry</span>
                 {% endif %}
-                {% if q.criticality %}<span class="chip">{{ q.criticality | title }}</span>{% endif %}
               </div>
             </div>
 
-            {% if q.get('desk_review_note') or q.get('desk_review_evidence') or q.get('pre_fill_evidence_summary') %}
+            {% if question_status == 'pre_filled' and q.get('pre_fill_source') == 'document' and q.get('pre_fill_evidence_summary') %}
+              <div class="cite">
+                <div class="cite-head">{{ icon("file") }}<span>Suggested from documents{% if q.get('desk_review_evidence') and q.desk_review_evidence[0].get('source_location') %}, <span class="pg">{{ q.desk_review_evidence[0].source_location }}</span>{% endif %}</span></div>
+                <blockquote>{{ q.pre_fill_evidence_summary }}</blockquote>
+              </div>
+            {% endif %}
+
+            {% if q.get('desk_review_note') or q.get('desk_review_evidence') %}
               <div class="evidence-panel">
                 {% if q.get('desk_review_note') %}<p class="meta">{{ q.desk_review_note }}</p>{% endif %}
                 {% if q.get('pre_fill_evidence_summary') %}<p class="quote">“{{ q.pre_fill_evidence_summary[:300] }}{% if q.pre_fill_evidence_summary|length > 300 %}…”{% endif %}</p>{% endif %}
@@ -90,6 +105,10 @@
                   </details>
                 {% endif %}
               </div>
+            {% endif %}
+
+            {% if question_status == 'pre_filled' and q.get('pre_fill_confidence') %}
+              <p class="help">{{ q.pre_fill_confidence | title }} confidence. The answer counts once you save the section.</p>
             {% endif %}
 
             {% if q.get('skip_if') %}<p class="meta question-note">Note: {{ q.skip_if }}</p>{% endif %}
@@ -150,10 +169,11 @@
       const validateSection = () => {
         const unanswered = cards.filter((card) => !checkedInputFor(card.dataset.questionName));
         cards.forEach((card) => card.classList.toggle('is-invalid', unanswered.includes(card)));
-        summary.textContent = unanswered.length
+        const summaryTitle = summary.querySelector('.alert b');
+        if (summaryTitle) summaryTitle.textContent = unanswered.length
           ? `${unanswered.length} unanswered question${unanswered.length === 1 ? '' : 's'}. Answer every question before saving.`
           : '';
-        summary.classList.toggle('is-visible', unanswered.length > 0);
+        summary.hidden = unanswered.length === 0;
         return unanswered.length === 0;
       };
       root.addEventListener('change', (event) => {

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
 
+from app.models.desk_review import DeskReviewSummary
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     _register_frameworks,
     db,
@@ -51,6 +53,7 @@ def test_assessment_overview_has_five_tabs_and_real_stepper(db, http):
     assert "Documents" not in nav
     assert page.text.count('class="stp') == 5
     assert all(label in page.text for label in ("Scope", "Evidence", "Questionnaire", "Review", "Report"))
+    assert f'href="/assessments/{assessment.id}?tab=overview&amp;framework=dpdpa"' in page.text
     assert f'href="/assessments/{assessment.id}?tab=documents"' in page.text
     assert "data-visual-mask" in page.text
     assert 'data-assessment-identity' in page.text
@@ -111,3 +114,63 @@ def test_non_dpdpa_questionnaire_does_not_show_dpdpa_screening_copy(db, http):
     assert 'data-screening-unavailable' in page.text
     assert "Start screening" not in page.text
     assert "DPDPA" not in page.text
+
+
+def test_real_assessment_error_uses_analysis_failure_copy(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    assessment.scope_answers = "{}"
+    assessment.status = "error"
+    db.commit()
+
+    page = http.get(f"/assessments/{assessment.id}?tab=overview")
+
+    assert page.status_code == 200
+    assert "Analysis failed" in page.text
+    assert "This framework did not load" not in page.text
+
+
+def test_questionnaire_desk_review_stats_failure_keeps_http_200(db, http, monkeypatch):
+    _client, _engagement, assessment = seed_engagement(db)
+    db.add(
+        DeskReviewSummary(
+            assessment_id=assessment.id,
+            status="completed",
+            document_catalog=json.dumps([]),
+            coverage_summary=json.dumps({}),
+        )
+    )
+    db.commit()
+
+    def fail_builder(*_args, **_kwargs):
+        raise RuntimeError("questionnaire builder unavailable")
+
+    monkeypatch.setattr("app.services.question_engine.build_adaptive_questionnaire", fail_builder)
+
+    response = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
+
+    assert response.status_code == 200
+
+
+def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
+    question_step = http.get("/design/pages/b3-question-step?state=org")
+    assert question_step.status_code == 200
+    assert 'data-assessment-identity' in question_step.text
+    assert "1 of 4" in question_step.text
+    assert "organisation" in question_step.text
+
+    screening = http.get("/design/pages/b3-screening-form")
+    assert screening.status_code == 200
+    assert screening.text.count("Covers") == 9
+    assert screening.text.count("<fieldset class=\"qgroup\">") == 9
+    assert "Run screening" in screening.text
+
+    sections = http.get("/design/pages/b3-sections")
+    assert sections.status_code == 200
+    assert 'id="section-content"' in sections.text
+    assert "Does every notice name each purpose in plain language?" in sections.text
+    assert 'hx-get="/assessments/assessment-s5-preview/questionnaire/section/' not in sections.text
+
+    desk_review = http.get("/design/pages/b4-desk_review?state=running")
+    assert desk_review.status_code == 200
+    assert "Documents are being analysed" in desk_review.text
+    assert 'hx-get="/assessments/assessment-s5-preview/desk-review-status' not in desk_review.text

@@ -1,8 +1,18 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import assessment_tabs, breadcrumb, stepper %}
-{% from "components/ui.html" import icon, link_button %}
+{% from "components/layout.html" import stepper %}
+{% from "components/ui.html" import alert, icon, skeleton %}
 
 {% block title %}{{ assessment.display_name }}{% endblock %}
+
+{% block crumbs %}
+{% set crumb_context = assessment_engagement_context(request) %}
+{% set crumb_engagement = crumb_context.get("engagement") %}
+{% if crumb_engagement %}
+<a href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ crumb_engagement.id }}">{{ crumb_engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
+{% else %}
+<a href="/">Assessments</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 {% set engagement_context = assessment_engagement_context(request) %}
@@ -13,11 +23,6 @@
 {% set retention = engagement_context.get("retention") %}
 {% set period = engagement_period(engagement) if engagement else none %}
 
-{{ breadcrumb([
-  {"label": engagement.name if engagement else assessment.company_name, "href": "/engagements/" ~ engagement.id if engagement else "/"},
-  {"label": assessment.display_name, "href": "/assessments/" ~ assessment.id}
-]) }}
-
 {% if engagement_archived %}
 <div data-archived-banner class="alert c-medium" role="status">
   {{ icon("archive") }}
@@ -25,62 +30,58 @@
 </div>
 {% endif %}
 
-<div class="page-head">
-  <div>
-    <h1 data-assessment-identity>{{ assessment.display_name }}</h1>
-    <p class="meta-line">
-      {{ assessment.company_name }}{% if engagement %} · {{ engagement.name }}{% endif %}
-      {% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}
-    </p>
-  </div>
-  <div class="acts">
-    {% if tab == "overview" and workflow.action_href and not engagement_archived %}
-    {{ link_button(workflow.stage.next_label, workflow.action_href, "primary", "", "chev-r", true) }}
-    {% endif %}
-    {% if assessment.status == 'completed' %}
-    {{ link_button("Live PDF", "/api/assessments/" ~ assessment.id ~ "/report/pdf", "secondary", "sm", "download", true) }}
-    {{ link_button("Report versions", "/assessments/" ~ assessment.id ~ "/snapshots", "secondary", "sm") }}
-    {% endif %}
-  </div>
-</div>
-
-{{ assessment_tabs(assessment, "overview" if tab == "overview" else tab, active_framework) }}
+{% include "partials/assessment_header.html" %}
 
 <div data-assessment-id="{{ assessment.id }}">
 {% if tab == "overview" %}
 <div class="stack mt-lg">
   {{ stepper(stepper_stages) }}
-  {% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'error', 'running') else workflow.hub_state) %}
+  {% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'running') else workflow.hub_state) %}
 
   {% if assessment.is_multi_framework %}
-  <div class="sec"><h2>Frameworks</h2></div>
-  {% include "partials/framework_tabs.html" %}
+  <div data-visual-mask>
+    <div class="sec"><h2>Frameworks</h2></div>
+    {% include "partials/framework_tabs.html" %}
+    {% if engagement %}
+    <div class="stack" style="margin-top:var(--s-8)">
+      <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
+      {% include "partials/engagement_retention.html" %}
+      {% include "partials/magic_links.html" %}
+    </div>
+    {% endif %}
+  </div>
   {% else %}
   <div data-visual-mask id="framework-panel" role="tabpanel" class="solid">
     {% set framework = active_framework_definition %}
     {% set finding_count = active_framework_finding_count %}
     {% include "partials/framework_hub_panel.html" %}
-  </div>
-  {% endif %}
-
-  {% if engagement %}
-  <div class="stack" style="margin-top:var(--s-8)">
-    <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
-    {% include "partials/engagement_retention.html" %}
-    {% include "partials/magic_links.html" %}
+    {% if engagement %}
+    <div class="stack" style="margin-top:var(--s-8)">
+      <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
+      {% include "partials/engagement_retention.html" %}
+      {% include "partials/magic_links.html" %}
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 </div>
 {% elif tab == "scope" %}
-  {% if preview_state == "saving" %}<div class="alert c-accent" role="status">Saving scope…</div>{% endif %}
+  {% if preview_state == "saving" %}
+  {{ alert("Saving scope", "Your scope answers are being saved.", "accent", "loader") }}
+  {% elif preview_state == "loading" %}
+  <div class="solid card" role="status" aria-busy="true"><h2>Preparing scope</h2><div class="stack-m mt-lg">{{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}</div></div>
+  {% elif preview_state == "error" %}
+  {{ alert("The scope could not be prepared", "Your scope answers are saved. Try again.", "noncompliant") }}
+  {% else %}
   {% include "partials/scope_tab.html" %}
+  {% endif %}
 {% elif tab == "documents" %}
   {% include "partials/documents_tab.html" %}
 {% elif tab == "questionnaire" %}
   {% include "partials/questionnaire_tab.html" %}
 {% elif tab == "report" %}
   {% if preview_state == "generating" %}
-  <div class="solid card" role="status" aria-busy="true"><h2>Generating board report</h2><p class="sub">This takes a few minutes. You can leave this page.</p><div class="stack-m mt-lg"><span class="skel" style="width:70%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:55%"></span></div></div>
+  <div class="solid card" role="status" aria-busy="true"><h2>Generating board report</h2><p class="sub">This takes a few minutes. You can leave this page.</p><div class="stack-m mt-lg">{{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}</div></div>
   {% else %}
   {% include "partials/report_tab.html" %}
   {% endif %}

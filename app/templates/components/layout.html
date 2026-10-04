@@ -25,11 +25,12 @@
 
 {% macro assessment_tabs(assessment, current, framework="") -%}
 {% set base = "/assessments/" ~ assessment.id %}
+{% set overview_query = "?tab=overview" ~ ("&framework=" ~ framework if framework else "") %}
 {% set framework_query = "?framework=" ~ framework if framework else "" %}
 {% set questionnaire_query = "?tab=questionnaire" ~ ("&framework=" ~ framework if framework else "") %}
 {% set report_query = "?tab=report" ~ ("&framework=" ~ framework if framework else "") %}
 {{ tabs([
-  {"label": "Overview", "href": base ~ framework_query, "current": current == "overview"},
+  {"label": "Overview", "href": base ~ overview_query, "current": current == "overview"},
   {"label": "Scope", "href": base ~ "/scope" ~ framework_query, "current": current == "scope"},
   {"label": "Questionnaire", "href": base ~ questionnaire_query, "current": current == "questionnaire"},
   {"label": "Review", "href": base ~ "/review-queue" ~ framework_query, "current": current == "review"},

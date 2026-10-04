@@ -1,13 +1,26 @@
+{% from "components/ui.html" import skeleton %}
+
+{% set first_incomplete = namespace(id=none) %}
+{% for section in sections %}
+  {% set section_state = namespace(active=0, answered=0) %}
+  {% for question in section.questions %}
+    {% if question.get('status') != 'skipped' %}
+      {% set section_state.active = section_state.active + 1 %}
+      {% if existing.get(question.id, {}).get('answer') %}{% set section_state.answered = section_state.answered + 1 %}{% endif %}
+    {% endif %}
+  {% endfor %}
+  {% if first_incomplete.id is none and not (section_state.active > 0 and section_state.answered == section_state.active) %}
+    {% set first_incomplete.id = section.section_id %}
+  {% endif %}
+{% endfor %}
+{% set selected_section_id = first_incomplete.id or (sections[0].section_id if sections else none) %}
+
 {% if stats %}
-<div class="hrow questionnaire-stats">
-  <span>{{ stats.total_questions }} questions</span>
-  {% if stats.get('answered_questions') is not none %}<span data-stat-answered>{{ stats.answered_questions }} answered</span>{% endif %}
-  {% if stats.get('awaiting_confirmation', 0) > 0 %}<span data-stat-awaiting-confirmation>{{ stats.awaiting_confirmation }} pre-filled answers awaiting confirmation</span>{% endif %}
-  {% if stats.get('pre_filled_questions', 0) > 0 %}<span>{{ stats.pre_filled_questions }} pre-filled from documents</span>{% endif %}
-  {% if stats.get('inferred_questions', 0) > 0 %}<span>{{ stats.inferred_questions }} inferred from screening</span>{% endif %}
-  {% if stats.get('deepened_questions', 0) > 0 %}<span>{{ stats.deepened_questions }} deep review</span>{% endif %}
-  {% if stats.get('industry_questions', 0) > 0 %}<span>{{ stats.industry_questions }} Industry</span>{% endif %}
-  {% if stats.get('skipped_questions', 0) > 0 %}<span>{{ stats.skipped_questions }} out of scope</span>{% endif %}
+<div class="mt questionnaire-stats">
+  <p class="sub"><span data-stat-answered>{{ stats.total_questions }} questions{% if stats.get('answered_questions') is not none %}, {{ stats.answered_questions }} answered.{% endif %}
+  {% if stats.get('awaiting_confirmation', 0) > 0 %} <span data-stat-awaiting-confirmation>{{ stats.awaiting_confirmation }} pre-filled answers wait for confirmation.</span>{% endif %}
+  {% if stats.get('deepened_questions', 0) > 0 %} {{ stats.deepened_questions }} questions need deep review.{% endif %}</span></p>
+  {% if stats.get('skipped_questions', 0) > 0 %}<p class="sub">{{ stats.skipped_questions }} out of scope.</p>{% endif %}
 </div>
 {% endif %}
 
@@ -15,7 +28,6 @@
   <div class="glass split-list" data-section-nav>
     {% for group_name, complete in (("To answer", false), ("Complete", true)) %}
     <div class="grp">{{ group_name }}</div>
-    {% set nav_state = namespace(selected=false) %}
     {% for section in sections %}
     {% set ns = namespace(active=0, answered=0, deep=0, industry=section.source == 'industry') %}
     {% for question in section.questions %}
@@ -26,24 +38,27 @@
       {% endif %}
     {% endfor %}
     {% if (ns.active > 0 and ns.answered == ns.active) == complete %}
-    <button hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
+    <button{% if not preview_rendered %} hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
             hx-target="#section-content"
-            hx-swap="innerHTML"
-            class="item{% if not complete and not nav_state.selected %} sel{% endif %}"
+            hx-swap="innerHTML"{% endif %}
+            class="item{% if section.section_id == selected_section_id %} sel{% endif %}"
             data-section="{{ section.section_id }}"
             data-collapsible-section="{{ section.section_id }}"
             onclick="this.closest('[data-section-nav]').querySelectorAll('[data-section]').forEach((section) => section.classList.remove('sel')); this.classList.add('sel');">
       <span class="txt"><b>{{ section.section_title }}</b><span>{{ ns.answered }} of {{ ns.active }} answered{% if ns.deep > 0 %} · {{ ns.deep }} deep review{% endif %}</span></span>
       {% if ns.industry %}<span class="chip">Industry</span>{% endif %}
     </button>
-    {% if not complete and not nav_state.selected %}{% set nav_state.selected = true %}{% endif %}
     {% endif %}
     {% endfor %}
     {% endfor %}
   </div>
 
   <div class="solid split-pane" id="section-content"
-       {% if sections %}hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ sections[0].section_id }}" hx-trigger="load" hx-swap="innerHTML"{% endif %}>
-    <div class="center-block" role="status" aria-label="Loading questions"><span class="skel" style="width:50%"></span><span class="skel" style="width:85%"></span></div>
+       {% if sections and not preview_rendered %}hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ selected_section_id }}" hx-trigger="load" hx-swap="innerHTML"{% endif %}>
+    {% if preview_rendered and selected_section_id %}
+      {% include "partials/section_questions.html" %}
+    {% else %}
+    <div class="center-block" role="status" aria-label="Loading questions">{{ skeleton("50%") }}{{ skeleton("85%", margin_top="10px") }}</div>
+    {% endif %}
   </div>
 </div>

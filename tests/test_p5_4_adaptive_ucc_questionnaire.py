@@ -895,7 +895,7 @@ def test_scenario_11_progress_and_response_count(db, http, monkeypatch):
     sections = http.get(f"/assessments/{assessment.id}/questionnaire/sections")
     assert 'data-stat-answered' in sections.text and "2 answered" in sections.text
     assert 'data-stat-awaiting-confirmation' in sections.text
-    assert "1 pre-filled answers awaiting confirmation" in sections.text
+    assert "1 pre-filled answers wait for confirmation" in sections.text
 
     dpdpa = _seed(db, ("dpdpa",))
     all_ids = [q["id"] for q in _all_questions(build_adaptive_questionnaire(dpdpa.id, db))]
@@ -923,13 +923,9 @@ def test_scenario_12_screening_visibility_and_copy(db, http, monkeypatch):
         assert 'data-screening-unavailable' in page.text
         assert "Screening is not available for this assessment." in page.text
         form = http.get(f"/assessments/{assessment.id}/screening")
-        if frameworks == ("iso27001",):
-            assert "DPDPA" not in page.text
-        else:
-            # The mixed assessment legitimately lists DPDPA in the assessment header;
-            # keep the copy assertion scoped to the screening response itself.
-            assert screening.SCREENING_NOT_APPLICABLE_MESSAGE in form.text
-        assert screening.SCREENING_NOT_APPLICABLE_MESSAGE in form.text and "<form" not in form.text
+        assert "DPDPA" not in page.text
+        assert screening.SCREENING_NOT_APPLICABLE_MESSAGE in form.text
+        assert "<form" not in form.text
         called = []
         monkeypatch.setattr(screening, "_call_llm", lambda **_kwargs: called.append(True))
         submitted = http.post(f"/assessments/{assessment.id}/screening/submit", data={})

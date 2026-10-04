@@ -1,9 +1,10 @@
+{% from "components/ui.html" import skeleton %}
 <div class="glass card" role="status" aria-live="polite"
-     hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
+     {% if not preview_static %}hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
      hx-trigger="every 3s"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"{% endif %}>
   <div class="between"><div><h2>Desk review is running</h2><p class="sub">Documents are being analysed against the selected frameworks. You can keep answering while the pre-fill is prepared.</p></div><span class="status"><span class="st prog"></span>Analysing</span></div>
   <div class="stack" style="margin-top:var(--s-5)" aria-busy="true" aria-label="Loading">
-    <span class="skel" style="width:70%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:55%"></span>
+    {{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}
   </div>
 </div>

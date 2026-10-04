@@ -1,8 +1,9 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import alert, icon, skeleton %}
 {% if not screening_available %}
-<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>Screening is unavailable</b>{{ error }}</div></div>
+{{ alert("Screening is unavailable", error, "noncompliant") }}
 {% else %}
 <div class="stack">
+  {% if error %}{{ alert("Screening failed", error, "noncompliant") }}{% endif %}
   {% if screening_done %}<div class="alert c-accent" role="status">{{ icon("check") }}<div><b>Domain screening complete</b>Review the proposed answers in the questionnaire below.</div></div>{% endif %}
   <div class="solid card">
     <div><h2>Domain screening</h2><p class="sub">Answer these high-level questions and AI will propose answers for the requirements it can infer with high confidence.</p></div>
@@ -12,15 +13,16 @@
           hx-indicator="#screening-indicator"
           class="stack mt-lg">
       {% for domain in domains %}
-      <fieldset class="qgroup">
+        <fieldset class="qgroup">
         <legend class="label">{{ domain.title }}</legend>
         <p class="help">{{ domain.question }}</p>
+        <p class="meta">Covers {{ domain.covers | length }} requirements</p>
         <div class="chips" style="margin-top:var(--s-3)">{% for req_id in domain.covers[:4] %}<span class="chip">{{ req_id }}</span>{% endfor %}{% if domain.covers|length > 4 %}<span class="chip">+{{ domain.covers|length - 4 }} more</span>{% endif %}</div>
         <label class="field area" style="margin-top:var(--s-3)"><textarea name="{{ domain.id }}" rows="3" placeholder="Describe the current state"></textarea></label>
       </fieldset>
       {% endfor %}
       <div class="action-row"><span class="help">The proposed answers still need your confirmation.</span><button type="submit" class="btn primary lead">{{ icon("search") }}Run screening</button></div>
-      <div id="screening-indicator" class="htmx-indicator" role="status" aria-live="polite"><div class="hrow"><span class="skel" style="width:24px;height:24px;border-radius:var(--r-full)"></span><span class="sub">Inferring status across applicable requirements</span></div></div>
+      <div id="screening-indicator" class="htmx-indicator" role="status" aria-live="polite"><div class="hrow">{{ skeleton("24px", "circle") }}<span class="sub">Inferring status across applicable requirements</span></div></div>
     </form>
   </div>
 </div>

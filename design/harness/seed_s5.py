@@ -153,18 +153,30 @@ def _seed_questionnaire_responses(db: Session, assessment: Assessment, *, comple
     from app.services.question_engine import build_adaptive_questionnaire
 
     questionnaire = build_adaptive_questionnaire(assessment.id, db)
-    question_ids = [
-        question["id"]
-        for section in questionnaire.get("sections", [])
-        for question in section.get("questions", [])
-        if question.get("status") != "skipped"
-    ]
-    selected_ids = question_ids if complete else question_ids[:1]
-    for question_id in selected_ids:
+    selected_questions = []
+    if complete:
+        selected_questions = [
+            question
+            for section in questionnaire.get("sections", [])
+            for question in section.get("questions", [])
+            if question.get("status") != "skipped"
+        ]
+    else:
+        # Keep the list visibly in progress while leaving document pre-fills
+        # awaiting confirmation. Each section gets its own deterministic count.
+        targets = (4, 0, 3, 1, 0, 2)
+        for index, section in enumerate(questionnaire.get("sections", [])):
+            candidates = [
+                question
+                for question in section.get("questions", [])
+                if question.get("status") not in {"skipped", "pre_filled"}
+            ]
+            selected_questions.extend(candidates[: targets[index] if index < len(targets) else 0])
+    for question in selected_questions:
         db.add(
             QuestionnaireResponse(
                 assessment_id=assessment.id,
-                question_id=question_id,
+                question_id=question["id"],
                 answer="fully_implemented",
                 submitted_at=_time(-4),
             )
@@ -204,10 +216,12 @@ def _desk_summary(
         for framework_id in assessment.frameworks
         for control in FrameworkRegistry.get_all_controls(framework_id)[:2]
     ]
+    dpdpa_controls = [control.id for control in FrameworkRegistry.get_all_controls("dpdpa")[:9]]
+    coverage_ids = list(dict.fromkeys([*dpdpa_controls[:6], *controls]))
     summary = DeskReviewSummary(
         assessment_id=assessment.id,
         document_catalog=json.dumps([{"id": f"evidence-s5-{i:03d}", "filename": f"policy-{i + 1}.pdf"} for i in range(document_count)]),
-        coverage_summary=json.dumps({control_id: "partial" for control_id in controls}),
+        coverage_summary=json.dumps({control_id: "partial" for control_id in coverage_ids}),
         raw_ai_response="{}",
         status=status,
         error_message="The document analysis service timed out." if status == "error" else None,
@@ -218,32 +232,40 @@ def _desk_summary(
     if not findings:
         return
     db.flush()
-    db.add_all(
-        [
+    findings = [
             DeskReviewFinding(
                 assessment_id=assessment.id,
                 finding_type="evidence",
-                requirement_id=controls[0] if controls else None,
+                requirement_id=control_id,
                 document_id=None,
-                content="The access control policy describes quarterly review ownership.",
+                content="The policy describes the control and its operating owner.",
                 severity="medium",
                 source_quote="Access rights are reviewed quarterly by the system owner.",
-                source_location="Policy 2026, page 4",
-                framework_id=assessment.frameworks[0],
+                source_location=f"Policy {index + 1}, page 4",
+                framework_id="dpdpa",
                 created_at=_time(-1),
-            ),
+            )
+            for index, control_id in enumerate(dpdpa_controls[:6])
+        ]
+    findings.extend(
+        [
             DeskReviewFinding(
                 assessment_id=assessment.id,
                 finding_type="absence",
-                requirement_id=controls[1] if len(controls) > 1 else None,
+                requirement_id=control_id,
                 document_id=None,
                 content="No retained evidence of the latest access review was found.",
                 severity="high",
                 source_quote=None,
                 source_location=None,
-                framework_id=assessment.frameworks[0],
+                framework_id="dpdpa",
                 created_at=_time(-1),
-            ),
+            )
+            for control_id in dpdpa_controls[6:]
+        ]
+    )
+    findings.extend(
+        [
             DeskReviewFinding(
                 assessment_id=assessment.id,
                 finding_type="signal",
@@ -253,13 +275,14 @@ def _desk_summary(
                 severity="medium",
                 source_quote="Evidence is retained by the control owner.",
                 source_location="Policy 2026, page 5",
-                framework_id=assessment.frameworks[0],
+                framework_id="dpdpa",
                 flag_type="evidence_gap",
                 signal_group_id="s5-signal-1",
                 created_at=_time(-1),
             ),
         ]
     )
+    db.add_all(findings)
 
 
 def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, engagement: Engagement) -> dict:
@@ -310,8 +333,18 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
     elif screen == "b3-questionnaire":
         _scope(assessment)
         _context(assessment)
-        if state in {"prefill", "prefilling", "findings"}:
+        if state in {"prefill", "prefilling", "findings", "default", "context", "screened", "complete", "running", "error", "noscreen"}:
             _seed_documents(db, engagement, assessment, 5, "evidence-s5")
+        if state in {"default", "context", "screened", "complete", "running", "error", "noscreen"}:
+            assessment.desk_review_status = "completed"
+            _desk_summary(
+                db,
+                assessment,
+                status="completed",
+                findings=True,
+                document_count=5,
+            )
+            _seed_questionnaire_responses(db, assessment, complete=state == "complete")
         if state == "prefilling":
             assessment.desk_review_status = "analyzing"
             _desk_summary(db, assessment, status="analyzing")

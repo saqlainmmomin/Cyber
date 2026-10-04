@@ -1,11 +1,8 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import alert %}
 <div class="stack">
-  <div class="alert c-non" role="alert">
-    {{ icon("alert") }}
-    <div><b>Desk review failed</b>{% if error %}{{ error }}{% else %}The analysis service did not respond. Your documents are unchanged.{% endif %}</div>
-  </div>
+  {{ alert("Desk review failed", error if error else "The analysis service did not respond. Your documents are unchanged.", "noncompliant") }}
   <button class="btn primary lead" type="button"
-          hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+          hx-post="/assessments/{{ assessment_id }}/run-desk-review{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
           hx-target="#desk-review-area"
           hx-swap="innerHTML">Retry desk review</button>
 </div>

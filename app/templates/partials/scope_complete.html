@@ -1,4 +1,4 @@
-{% from "components/ui.html" import icon, link_button, pill %}
+{% from "components/ui.html" import icon, link_button %}
 <div class="stack">
   <div class="solid card">
     <div class="between">
@@ -8,10 +8,10 @@
 
     {% if has_dpdpa %}
     <div class="domains">
-      <div><span>Cross-border transfers</span>{% if flags.cross_border %}{{ pill("Yes", "accent") }}{% else %}<span class="status">No</span>{% endif %}</div>
-      <div><span>Children's data</span>{% if flags.children %}{{ pill("Yes", "accent") }}{% else %}<span class="status">No</span>{% endif %}</div>
-      <div><span>SDF obligations</span>{% if flags.sdf %}{{ pill("Likely", "accent") }}{% else %}<span class="status">No</span>{% endif %}</div>
-      <div><span>Third-party processors</span>{% if flags.processors %}{{ pill("Yes", "accent") }}{% else %}<span class="status">No</span>{% endif %}</div>
+      <div><span>Cross-border transfers</span>{% if flags.cross_border %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>Children's data</span>{% if flags.children %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>SDF obligations</span>{% if flags.sdf %}<span class="status"><span class="dot c-accent"></span>Likely</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
+      <div><span>Third-party processors</span>{% if flags.processors %}<span class="status"><span class="dot c-accent"></span>Yes</span>{% else %}<span class="status calm">No</span>{% endif %}</div>
     </div>
     {% endif %}
 
@@ -39,16 +39,19 @@
       </div>
     </div>
 
-    {% set required_items = checklist | selectattr("required") | list %}
-    {% set recommended_items = checklist | rejectattr("required") | list %}
-    {% if required_items %}
-    <h3 class="mt-lg">Required</h3>
-    <div class="stack-s mt">{% for item in required_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
-    {% endif %}
-    {% if recommended_items %}
-    <h3 class="mt-lg">Recommended</h3>
-    <div class="stack-s mt">{% for item in recommended_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
-    {% endif %}
+    <details class="disclose" style="margin-top:var(--s-6)">
+      <summary>View evidence request details</summary>
+      {% set required_items = checklist | selectattr("required") | list %}
+      {% set recommended_items = checklist | rejectattr("required") | list %}
+      {% if required_items %}
+      <h3 class="mt-lg">Required</h3>
+      <div class="stack-s mt">{% for item in required_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
+      {% endif %}
+      {% if recommended_items %}
+      <h3 class="mt-lg">Recommended</h3>
+      <div class="stack-s mt">{% for item in recommended_items %}<div class="check-row"><span class="st"></span><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span><span class="chips">{% for rid in item.maps_to %}<span class="chip">{{ rid }}</span>{% endfor %}</span></div></div>{% endfor %}</div>
+      {% endif %}
+    </details>
   </div>
 
   <div class="hrow" style="justify-content:flex-end">

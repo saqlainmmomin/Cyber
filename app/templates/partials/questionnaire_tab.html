@@ -1,4 +1,4 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import icon, skeleton %}
 
 {% if context_error %}
 <div class="alert c-non" role="alert">
@@ -38,8 +38,8 @@
        hx-trigger="load"
        hx-swap="innerHTML">
     <div class="stack center-block" role="status" aria-label="Loading context questions">
-      <span class="skel" style="width:50%"></span>
-      <span class="skel" style="width:85%"></span>
+      {{ skeleton("50%") }}
+      {{ skeleton("85%", margin_top="10px") }}
     </div>
   </div>
 </div>
@@ -78,8 +78,8 @@
          hx-trigger="load"
          hx-swap="innerHTML">
       <div class="stack center-block" role="status" aria-label="Loading questionnaire">
-        <span class="skel" style="width:50%"></span>
-        <span class="skel" style="width:85%"></span>
+        {{ skeleton("50%") }}
+        {{ skeleton("85%", margin_top="10px") }}
       </div>
     </div>
   </div>

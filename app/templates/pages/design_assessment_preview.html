@@ -1,49 +1,33 @@
 {% extends "base.html" %}
-{% from "components/ui.html" import icon %}
 
-{% block title %}{{ screen }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block crumbs %}
-<a href="/">Meridian Ledger Technologies</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/design/pages/{{ screen }}">FY2026 privacy readiness</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+<a href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
 {% endblock %}
 
 {% block content %}
-<div class="page-head">
-  <div><h1>{{ page_title }}</h1><p class="meta-line">Meridian Ledger Technologies · FY2026 privacy readiness · 1 Apr 2025 to 31 Mar 2026 · Evidence cut-off 15 Mar 2026</p></div>
-</div>
-<nav class="tabs" aria-label="Assessment"><a href="/design/pages/b3-hub">Overview</a><a href="/design/pages/b3-scope">Scope</a><a href="/design/pages/b3-questionnaire" aria-selected="true">Questionnaire</a><a href="/design/pages/b5-review-queue">Review</a><a href="/design/pages/b5-report">Report</a></nav>
+{% include "partials/assessment_header.html" %}
 
 <div class="stack mt-lg">
 {% if screen == "b3-screening-form" %}
-  {% if state == "loading" %}<div class="solid card" role="status"><h2>Domain screening</h2><p class="sub">Inferring status across applicable requirements</p><div class="stack-m mt"><span class="skel" style="width:70%"></span><span class="skel" style="width:45%"></span></div></div>
-  {% elif state == "error" %}<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>Screening failed</b>The model did not respond in time. Your answers are kept. Run screening again.</div></div>
-  {% else %}{% include "partials/screening_form.html" %}{% endif %}
+  {% include "partials/screening_form.html" %}
 {% elif screen == "b3-context-complete" %}
-  {% if state == "generating" %}<div class="solid card" role="status"><div class="center-block"><h2>Building your risk profile</h2><p>This takes under a minute.</p></div><div class="stack-m mt-lg"><span class="skel" style="width:60%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:40%"></span></div></div>
-  {% elif state == "error" %}<div class="solid card"><div class="alert c-medium">{{ icon("alert") }}<div><b>The risk profile could not be built</b>You can continue without adaptive weighting, or try again.</div></div><div class="hrow mt-lg"><button class="btn secondary" type="button">Try again</button><a class="btn primary" href="/design/pages/b3-questionnaire">Continue without weighting</a></div></div>
-  {% else %}<div class="solid card form-narrow">{% include "partials/context_complete.html" %}</div>{% endif %}
+  {% include "partials/context_complete.html" %}
 {% elif screen == "b3-question-step" %}
-  {% if state == "saving" %}<div class="solid card" role="status"><h2>Saving your answer</h2><div class="stack-m mt"><span class="skel" style="width:65%"></span><span class="skel" style="width:40%"></span></div></div>
-  {% elif state == "error" %}<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>Your answer could not be saved</b>Try again. Your previous answers are unchanged.</div></div>
-  {% else %}{% include "partials/question_step.html" %}{% endif %}
+  {% include "partials/question_step.html" %}
 {% elif screen == "b3-followups" %}
-  {% if state == "loading" %}<div class="solid card" role="status"><h2>Reading your answer</h2><div class="stack-m mt"><span class="skel" style="width:60%"></span><span class="skel" style="width:85%"></span></div></div>
-  {% elif state == "error" %}<div class="alert c-medium" role="alert">{{ icon("alert") }}<div><b>Follow-up questions did not load</b>Your answer is saved. Continue, or try again.</div></div>
-  {% elif state == "none" %}<div class="glass empty-state"><span class="empty-state-icon">{{ icon("check") }}</span><h3>No follow-up questions</h3><p>This answer needs no additional detail.</p></div>
-  {% else %}{% include "partials/followup_questions.html" %}{% endif %}
+  {% include "partials/followup_questions.html" %}
 {% elif screen == "b3-sections" %}
-  {% if state == "loading" %}<div class="split"><div class="glass split-list"><div class="stack-m"><span class="skel" style="width:60%"></span><span class="skel" style="width:80%"></span><span class="skel" style="width:70%"></span></div></div><div class="solid split-pane"><div class="stack-m"><span class="skel" style="width:35%"></span><span class="skel" style="width:90%"></span></div></div></div>
-  {% elif state == "empty" %}<div class="glass empty-state"><span class="empty-state-icon">{{ icon("folder") }}</span><h3>No questionnaire yet</h3><p>Sections are created from your scope.</p></div>
-  {% elif state == "error" %}<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>The sections did not load</b>Your answers are saved.</div><button class="btn primary sm" type="button">Try again</button></div>
-  {% else %}{% include "partials/questionnaire_sections.html" %}{% if state == "saved" %}<div class="alert c-accent" role="status">{{ icon("check") }}<div>Section saved. Your answers count towards the analysis.</div></div>{% endif %}{% endif %}
+  {% include "partials/questionnaire_sections.html" %}
+  {% if state == "saved" %}{% include "partials/section_saved.html" %}{% endif %}
 {% elif screen == "b3-section-questions" %}
-  {% if state == "loading" %}<div class="solid split-pane" role="status"><div class="stack-m"><span class="skel" style="width:35%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:70%"></span></div></div>
-  {% else %}{% if state == "errors" %}<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>Answer 3 questions to save this section</b>Required questions are marked below.</div></div>{% endif %}{% include "partials/section_questions.html" %}{% if state == "saved" %}<div class="alert c-accent" role="status">{{ icon("check") }}<div>Section saved. Your answers count towards the analysis.</div></div>{% endif %}{% endif %}
+  {% include "partials/section_questions.html" %}
 {% elif screen == "b4-desk_review" %}
   {% if state == "ready" %}{% include "partials/desk_review_ready.html" %}
   {% elif state == "running" %}{% include "partials/desk_review_running.html" %}
   {% elif state == "error" %}{% include "partials/desk_review_error.html" %}
-  {% else %}{% include "partials/desk_review_findings.html" %}{% if state == "rerun" %}<div class="solid card"><h3>Re-run desk review?</h3><p class="sub">This will replace the current findings. Your documents are unchanged.</p><button class="btn primary" type="button">Re-run desk review</button></div>{% endif %}{% endif %}
+  {% else %}{% include "partials/desk_review_findings.html" %}{% endif %}
 {% endif %}
 </div>
 {% endblock %}

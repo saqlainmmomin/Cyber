@@ -1,4 +1,5 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import icon, skeleton %}
+{% if standalone_preview %}<h2>Desk review</h2>{% endif %}
 <div class="between">
   <div>
     <h2>Pre-fill from documents</h2>
@@ -10,7 +11,7 @@
               hx-post="/assessments/{{ assessment_id }}/run-desk-review"
               hx-target="#desk-review-area"
               hx-swap="innerHTML"
-              hx-indicator="#dr-spinner">{{ icon("search") }}Run desk review</button>
+              hx-indicator="#dr-spinner">{{ icon("search") }}Pre-fill answers</button>
       <span class="help">Takes 15 to 30 seconds.</span>
     </div>
     {% else %}
@@ -20,7 +21,6 @@
 </div>
 <div id="dr-spinner" class="htmx-indicator" role="status" aria-live="polite">
   <div class="hrow" style="margin-top:var(--s-4)">
-    <span class="skel" style="width:32px;height:32px;border-radius:var(--r-full)"></span>
-    <span class="sub">Analysing documents…</span>
+    {{ skeleton("32px", "circle") }}
   </div>
 </div>

@@ -13,7 +13,11 @@
         {% endif %}
       </div>
     </div>
-    {% if questionnaire_surface %}<div class="hrow"><a class="btn ghost" href="/assessments/{{ assessment_id }}/desk-review-status">What the documents show</a><a class="btn secondary" href="/assessments/{{ assessment_id }}?tab=questionnaire&state=prefilling">Pre-fill again</a></div>{% else %}<a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>{% endif %}
+    {% if questionnaire_surface %}<button class="btn secondary" type="button"
+            hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
+            hx-target="#desk-review-area"
+            hx-swap="innerHTML"
+            hx-confirm="Pre-fill again? This will replace the current findings.">Pre-fill again</button>{% else %}<a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>{% endif %}
   </div>
 
   {% if failed_framework_names %}
@@ -67,9 +71,10 @@
   </details>
   {% endif %}
 
-  <div class="action-row"><button class="btn ghost sm lead" type="button"
+  {% if not questionnaire_surface %}<div class="action-row"><button class="btn ghost sm lead" type="button"
       hx-post="/assessments/{{ assessment_id }}/run-desk-review{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
       hx-target="#desk-review-area"
       hx-swap="innerHTML"
       hx-confirm="Re-run desk review? This will replace the current findings.">{{ icon("chev-r") }}Re-run desk review</button></div>
+  {% endif %}
 </div>

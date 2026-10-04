@@ -63,7 +63,7 @@ def test_single_assessment_engagement_redirects_to_assessment_overview(db, http)
     _client, engagement, assessment = seed_engagement(db)
     response = http.get(f"/engagements/{engagement.id}", follow_redirects=False)
     assert response.status_code == 303
-    assert response.headers["location"] == f"/assessments/{assessment.id}"
+    assert response.headers["location"] == f"/assessments/{assessment.id}?tab=overview"
 
 
 def test_create_inherits_the_client_and_redirects_to_the_assessment(db, http):
