@@ -66,9 +66,61 @@ def _b4_desk_review_live(request: Request, db: Session, state: str) -> Response 
 
 # s5-quest: questionnaire sections fixture (b3-sections, b3-section-questions previews).
 def _s5_questionnaire_fixture(screen: str, state: str) -> dict:
+    filler_questions = {
+        "RIGHTS": (
+            "Can a data principal ask for a summary of the personal data you process about them?",
+            "Is there a documented process to correct or complete inaccurate personal data?",
+            "Can a data principal ask for their personal data to be erased?",
+            "Is each rights request answered within a defined time?",
+            "Can a data principal nominate someone to exercise their rights?",
+            "Is there a grievance channel that is published in the privacy notice?",
+            "Are rights requests logged with their outcome?",
+            "Is the identity of a requester verified before data is shared?",
+        ),
+        "ACCESS": (
+            "Is access to personal data granted on a need-to-know basis?",
+            "Are user accounts reviewed at least every quarter?",
+            "Is access removed on the day an employee leaves?",
+            "Do administrators use separate privileged accounts?",
+            "Is multi-factor authentication required for remote access?",
+            "Are shared accounts prohibited or individually tracked?",
+            "Are access requests approved by the data owner?",
+            "Is access to production data logged?",
+            "Are service accounts inventoried with an owner?",
+        ),
+        "ACCESS.DEEP": ("Are access logs reviewed for unusual activity?",),
+        "PAY": (
+            "Are card numbers stored only in tokenised form?",
+            "Is lending data shared only with registered partners?",
+            "Are payment processors bound by a data processing agreement?",
+            "Is repayment history kept only for the period the law requires?",
+            "Are credit decisions explained to the borrower?",
+            "Is access to payment records limited to the payments team?",
+            "Are collection agents bound by the same privacy terms?",
+        ),
+        "SAFE": (
+            "Is personal data encrypted at rest?",
+            "Is personal data encrypted in transit?",
+            "Are backups tested at least once a year?",
+            "Are systems patched within a defined window?",
+            "Is there a written incident response plan?",
+            "Are security events monitored around the clock?",
+            "Are laptops protected with full-disk encryption?",
+            "Is malware protection installed on every endpoint?",
+            "Are penetration tests run at least once a year?",
+        ),
+        "POLICY": (
+            "Is there an approved information security policy?",
+            "Is the policy reviewed at least once a year?",
+            "Have all employees acknowledged the policy?",
+            "Is a named owner accountable for the policy?",
+            "Are policy exceptions recorded and approved?",
+        ),
+    }
+
     def filler(prefix: str, count: int, **extra) -> list[dict]:
         return [
-            {"id": f"{prefix}.{index}", "question": f"{prefix} question {index}", "status": "active", "tier": "standard", "source": "base", **extra}
+            {"id": f"{prefix}.{index}", "question": filler_questions[prefix][index - 1], "status": "active", "tier": "standard", "source": "base", **extra}
             for index in range(1, count + 1)
         ]
 
@@ -256,7 +308,7 @@ def _s5_preview(request: Request, screen: str, db: Session | None = None) -> Res
         "failed_framework_names": [],
         "total_findings": 3,
         "document_count": 6,
-        "framework_text": "India DPDPA and ISO 27001",
+        "framework_text": "DPDPA and ISO 27001",
         "desk_review_partial": {
             "ready": "partials/desk_review_ready.html",
             "running": "partials/desk_review_running.html",
@@ -273,6 +325,38 @@ def _s5_preview(request: Request, screen: str, db: Session | None = None) -> Res
 
 for _screen in S5_PREVIEW_STATES:
     PREVIEW_PAGES[_screen] = lambda request, screen=_screen, db=None: _s5_preview(request, screen, db)
+
+
+# Transient states of live assessment pages. Live routes ignore ``?state=``;
+# these previews render the real page for a real assessment
+# (``?assessment_id=``) with the state set here, so only the design preview can
+# show a loading skeleton, a load error or a saving placeholder.
+S5_LIVE_PREVIEWS = {
+    "b3-hub": ("overview", ("loading", "error")),
+    "b3-scope": ("scope", ("error", "saving")),
+    "b3-scope-complete": ("scope", ("loading", "error")),
+}
+
+
+def _s5_live_preview(request: Request, screen: str, db: Session) -> Response:
+    from app.routers.web import render_assessment_detail
+
+    tab, states = S5_LIVE_PREVIEWS[screen]
+    state = request.query_params.get("state")
+    assessment_id = request.query_params.get("assessment_id")
+    if state not in states or not assessment_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    # Render as if at the live URL, so the shell, breadcrumb and engagement
+    # context come from the same context processors as the real page.
+    path = f"/assessments/{assessment_id}"
+    live_request = Request(dict(request.scope, path=path, raw_path=path.encode()), request.receive)
+    return render_assessment_detail(live_request, db, assessment_id, tab=tab, preview_state=state)
+
+
+for _screen in S5_LIVE_PREVIEWS:
+    PREVIEW_PAGES[_screen] = lambda request, screen=_screen, db=None: _s5_live_preview(request, screen, db)
+
+DB_PREVIEWS = {"b4-desk_review", *S5_LIVE_PREVIEWS}
 
 
 def _debug_only() -> None:
@@ -299,6 +383,6 @@ def design_preview(request: Request, name: str, db: Session = Depends(get_db)) -
     preview = PREVIEW_PAGES.get(name)
     if preview is None:
         raise HTTPException(status_code=404, detail="Not found")
-    if name == "b4-desk_review":
+    if name in DB_PREVIEWS:
         return preview(request, db=db)
     return preview(request)

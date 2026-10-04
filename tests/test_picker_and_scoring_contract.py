@@ -256,8 +256,15 @@ def test_framework_tab_rejects_framework_outside_assessment(client, db_session):
     valid = client.get(f"/assessments/{assessment.id}/tab/iso27001")
     invalid = client.get(f"/assessments/{assessment.id}/tab/nist_csf")
     assert valid.status_code == 200
-    assert "ISO 27001" in valid.text
+    # The tab swap renders the Overview hub panel: an unscoped assessment has no scores yet.
+    assert "No scores yet" in valid.text
     assert invalid.status_code == 404
+    # Where the hub shows the framework panel itself, it is the requested framework's.
+    assessment.status = "archived"
+    db_session.commit()
+    archived = client.get(f"/assessments/{assessment.id}/tab/iso27001")
+    assert archived.status_code == 200
+    assert "ISO 27001" in archived.text
 
 
 def test_report_view_mode_defaults_and_validation(client, db_session):

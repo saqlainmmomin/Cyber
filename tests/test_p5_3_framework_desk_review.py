@@ -511,6 +511,13 @@ def test_scenario_5_multi_requirement_signal_reaches_all_consumers(db, texts, ht
     partial = http.get(f"/assessments/{assessment.id}/desk-review-status").text
     assert 'Red flags <span class="muted">1</span>' in partial
     assert 'data-requirement-ids="CH2.NOTICE.1, CH2.CONSENT.1"' in partial
+    from app.frameworks.registry import FrameworkRegistry
+
+    dpdpa_def = FrameworkRegistry.get("dpdpa")
+    affected = "; ".join(
+        f"{dpdpa_def.get_control(req).title} · {req}" for req in ("CH2.NOTICE.1", "CH2.CONSENT.1")
+    )
+    assert f'<div class="t-sub" data-requirement-line>{affected}</div>' in partial.replace("&#39;", "'")
 
     from app.frameworks.prompts import build_framework_user_prompt
 

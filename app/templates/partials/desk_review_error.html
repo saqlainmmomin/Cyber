@@ -3,7 +3,7 @@
 <div class="{{ 'stack' if questionnaire_surface else 'glass dr-card' }}">
   {% if not questionnaire_surface %}<h2>Desk review</h2>{% endif %}
   <div class="dr-alert">{{ alert("Desk review failed", message, "noncompliant") }}</div>
-  <div class="dr-retry"><button class="btn primary lead" type="button"
+  <div class="dr-retry"><button class="btn {{ 'secondary' if questionnaire_surface and not context_done else 'primary' }} lead" type="button"
           hx-post="/assessments/{{ assessment_id }}/run-desk-review{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
           hx-target="#desk-review-area"
           hx-swap="innerHTML">{{ icon("rotate") }}Retry desk review</button></div>

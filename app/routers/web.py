@@ -34,6 +34,7 @@ from app.services.auto_answer import confirmed_response_clause
 from app.services.question_engine import build_adaptive_questionnaire, questionnaire_progress
 from app.services.screening import (
     SCREENING_NOT_APPLICABLE_MESSAGE,
+    SCREENING_UNAVAILABLE_COPY,
     ScreeningNotApplicable,
     screening_applies,
 )
@@ -196,7 +197,9 @@ def _assessment_stepper(assessment: Assessment, current: assessment_stage.Stage)
                 if index == current_index
                 else "next"
             ),
-            "note": current.note if index == current_index else "",
+            # The current Scope step carries no note: the stepper already says
+            # Scope is next, and the stage note ("Scope not set") only repeats it.
+            "note": current.note if index == current_index and stage_name != "scope" else "",
             "href": hrefs[stage_name],
         }
         for index, stage_name in enumerate(assessment_stage.STAGES)
@@ -204,28 +207,39 @@ def _assessment_stepper(assessment: Assessment, current: assessment_stage.Stage)
 
 
 def _assessment_hub_state(current: assessment_stage.Stage, assessment: Assessment) -> str:
-    """Map every stage-service outcome to an approved b3-hub state."""
+    """Map every stage-service outcome to an approved b3-hub state.
+
+    Keys on the stage and its next-step constant, never on the note text.
+    A running pre-fill or analysis has no scores yet, so it shows the
+    questionnaire state ("No scores yet"); the hub's loading skeleton is a
+    design-preview state only.
+    """
     if assessment.status == "archived":
         return "archived"
     if assessment.status == "error":
         return "analysis_error"
-    if current.next_href is None and current.note in {"Pre-fill running", "Analysis running"}:
-        return "loading"
     if current.stage == "scope":
         return "empty"
     if current.stage == "evidence":
-        if current.next_label == assessment_stage.PREFILL:
-            return "questionnaire"
         if current.next_label == assessment_stage.UPLOAD_EVIDENCE:
             return "evidence"
-        return "loading"
+        # PREFILL, or a pre-fill running (no next step).
+        return "questionnaire"
     if current.stage == "questionnaire":
+        # CONTINUE_QUESTIONNAIRE, RUN_ANALYSIS, or an analysis running.
         return "questionnaire"
     if current.stage == "review":
         return "default"
     if current.stage == "report":
         return "report"
     return "default"
+
+
+def _overview_hub_state(db: Session, assessment: Assessment) -> str:
+    """The Overview hub state, including the archived-engagement banner state."""
+    if assessment.engagement_id and retention.archived_engagement_ids(db, {assessment.engagement_id}):
+        return "archived"
+    return _assessment_hub_state(assessment_stage.stage(db, assessment), assessment)
 
 
 # --- Yozora portfolio helpers ---
@@ -1462,13 +1476,16 @@ def framework_tab(
             and row.compliance_status in conclusion_review.GAP_OUTCOMES
             for row in approved.rows
         )
+    # The framework tabs live on the Overview only, so the swapped-in panel is
+    # the Overview's hub panel in the same state the full page computed.
     return templates.TemplateResponse(
-        "partials/framework_panel.html",
+        "partials/framework_hub_panel.html",
         {
             "request": request,
             "assessment": assessment,
             "framework": framework,
             "finding_count": finding_count,
+            "hub_state": _overview_hub_state(db, assessment),
         },
     )
 
@@ -1511,10 +1528,36 @@ def assessment_detail(
     request: Request,
     assessment_id: str,
     tab: str | None = None,
-    state: str | None = None,
     context_error: str | None = None,
     db: Session = Depends(get_db),
 ):
+    return render_assessment_detail(request, db, assessment_id, tab=tab, context_error=context_error)
+
+
+ASSESSMENT_PREVIEW_STATES = frozenset({"loading", "error", "saving"})
+
+
+def render_assessment_detail(
+    request: Request,
+    db: Session,
+    assessment_id: str,
+    *,
+    tab: str | None = None,
+    context_error: str | None = None,
+    preview_state: str | None = None,
+    scope_submitted: dict | None = None,
+    status_code: int = 200,
+):
+    """Render the assessment page.
+
+    ``preview_state`` is set only by the debug-only design previews
+    (``app/routers/design.py``); live routes never pass it, so a ``?state=``
+    query string has no effect on a real assessment page. ``scope_submitted``
+    re-renders the scope form with the submitted answers and the
+    per-question errors after an incomplete save.
+    """
+    if preview_state not in ASSESSMENT_PREVIEW_STATES:
+        preview_state = None
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
@@ -1581,8 +1624,11 @@ def assessment_detail(
     # Build scope context for the scope tab
     scope_context: dict = {}
     scope_editing = scope_done and request.query_params.get("edit") == "1"
+    if scope_submitted is not None:
+        tab = "scope"
+        scope_editing = scope_done
     if tab == "scope":
-        if scope_done and not scope_editing:
+        if scope_done and not scope_editing and scope_submitted is None:
             from app.services.scope_profiler import compute_scope_multi
             scope_data = json.loads(assessment.scope_answers)
             result = compute_scope_multi(scope_data, raw_fw_ids)
@@ -1611,7 +1657,12 @@ def assessment_detail(
                     })
             scope_context = {
                 "scope_questions_by_fw": scope_questions_by_fw,
-                "existing": json.loads(assessment.scope_answers) if scope_editing else {},
+                "existing": (
+                    scope_submitted
+                    if scope_submitted is not None
+                    else json.loads(assessment.scope_answers) if scope_editing else {}
+                ),
+                "scope_errors": scope_submitted is not None or preview_state == "error",
             }
 
     # Resolve selected framework metadata for display
@@ -1635,7 +1686,6 @@ def assessment_detail(
     prefill = prefill_freshness.freshness(db, assessment)
     workflow = {"stage": None, "hub_state": None, "action_href": None}
     stepper_stages = []
-    preview_state = state if state in {"loading", "error", "saving", "generating", "running", "prefilling"} else None
     if tab == "overview":
         workflow_stage = assessment_stage.stage(db, assessment)
         workflow_action = workflow_stage.next_href
@@ -1643,7 +1693,7 @@ def assessment_detail(
             # Pre-fill now starts from Questionnaire; the legacy documents URL stays
             # available only as the Evidence stepper destination until S6 redirects it.
             workflow_action = f"/assessments/{assessment.id}?tab=questionnaire"
-        elif workflow_stage.next_label and workflow_stage.next_label.startswith("Review "):
+        elif workflow_stage.stage == "review" and workflow_stage.next_href:
             # The Review tab is the canonical destination for this action.
             workflow_action = f"/assessments/{assessment.id}/review-queue"
         workflow = {
@@ -1669,7 +1719,7 @@ def assessment_detail(
             "scope_editing": scope_editing,
             "screening_done": screening_done,
             "screening_available": screening_applies(assessment),
-            "screening_unavailable_message": "Screening is not available for this assessment. Complete the questionnaire directly.",
+            "screening_unavailable_message": SCREENING_UNAVAILABLE_COPY,
             "context_error": context_error,
             "doc_categories": [c.value for c in DocumentCategory],
             "selected_frameworks": selected_frameworks_info,
@@ -1697,6 +1747,7 @@ def assessment_detail(
             "preview_state": preview_state,
             **scope_context,
         },
+        status_code=status_code,
     )
 
 
@@ -1741,15 +1792,12 @@ def scope_page(
     request: Request,
     assessment_id: str,
     framework: str | None = None,
-    state: str | None = None,
     db: Session = Depends(get_db),
 ):
     """Redirect to assessment scope tab."""
     query = "?tab=scope"
     if framework:
         query += f"&framework={framework}"
-    if state == "saving":
-        query += "&state=saving"
     return RedirectResponse(f"/assessments/{assessment_id}{query}", status_code=303)
 
 
@@ -1784,6 +1832,15 @@ async def save_scope(
         value = form.get(qid)
         if value:
             scope_answers[qid] = value
+
+    # The scope form asks every question; an incomplete form submission is
+    # re-rendered with each unanswered question marked and nothing is saved.
+    # Other callers (validation scripts, tests) may still save a partial scope,
+    # which the profiler fills with its documented defaults.
+    if form.get("scope_form") and len(scope_answers) < len(all_scope_q_ids):
+        return render_assessment_detail(
+            request, db, assessment_id, scope_submitted=scope_answers, status_code=400
+        )
 
     assessment.scope_answers = json.dumps(scope_answers)
 
@@ -2008,7 +2065,17 @@ def get_context_block(
         raise HTTPException(404)
 
     if block_index >= len(CONTEXT_BLOCKS):
-        tier_counts = build_adaptive_questionnaire(assessment_id, db)["stats"].get("tier_counts")
+        # The tier distribution is optional; a tier-engine failure must not
+        # break the end of the context wizard.
+        try:
+            tier_counts = build_adaptive_questionnaire(assessment_id, db)["stats"].get("tier_counts")
+        except Exception:
+            logger.warning(
+                "Tier counts unavailable at the end of the context wizard",
+                extra={"assessment_id": assessment_id},
+                exc_info=True,
+            )
+            tier_counts = None
         return templates.TemplateResponse(
             "partials/context_complete.html",
             {"request": request, "assessment_id": assessment_id, "tier_counts": tier_counts},
@@ -2671,7 +2738,6 @@ def assessment_report_page(
     request: Request,
     assessment_id: str,
     view: str | None = None,
-    state: str | None = None,
     db: Session = Depends(get_db),
 ):
     assessment = db.get(Assessment, assessment_id)
@@ -2684,7 +2750,7 @@ def assessment_report_page(
     is_boosted = request.headers.get("HX-Boosted", "").lower() == "true"
     if is_htmx and not is_boosted:
         return report_summary(request, assessment_id, view_mode, db)
-    return assessment_detail(request, assessment_id, tab="report", state=state, db=db)
+    return render_assessment_detail(request, db, assessment_id, tab="report")
 
 
 @router.get("/assessments/{assessment_id}/report-summary", response_class=HTMLResponse)
@@ -3089,7 +3155,9 @@ def _desk_review_running_context(db: Session, assessment: Assessment) -> dict:
     """Document count and framework names for the running desk-review card."""
     return {
         "document_count": prefill_freshness.freshness(db, assessment).available,
-        "framework_text": _framework_list_text(_selected_framework_names(assessment)),
+        "framework_text": _framework_list_text(
+            [framework_label(fw_id) for fw_id in _selected_framework_ids(assessment)]
+        ),
     }
 
 
@@ -3118,6 +3186,11 @@ def desk_review_status_view(
         "request": request,
         "assessment_id": assessment_id,
         "questionnaire_surface": surface == "questionnaire",
+        # Until context is done, the Context card holds the tab's one primary
+        # action, so the pre-fill and retry buttons step down to secondary.
+        "context_done": (
+            assessment.context_answers is not None or assessment.context_profile is not None
+        ),
     }
 
     summary = (

@@ -1,5 +1,5 @@
 {% from "components/ui.html" import alert, skeleton %}
-{% set show_errors = preview_state == "error" %}
+{% set show_errors = scope_errors %}
 {% set ns = namespace(missing=0) %}
 {% for fw_group in scope_questions_by_fw %}{% for q in fw_group.questions %}{% if not existing.get(q.id) %}{% set ns.missing = ns.missing + 1 %}{% endif %}{% endfor %}{% endfor %}
 <div class="mt-lg form-narrow">
@@ -9,6 +9,7 @@
   <h2>Scope</h2>
   <p class="sub">Your answers decide which requirements apply and which evidence to collect.</p>
   <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="stack mt">
+    <input type="hidden" name="scope_form" value="1">
     {% for fw_group in scope_questions_by_fw %}
     <div class="solid card"><h3>{{ framework_label(fw_group.framework_id, full=True) }}</h3>
       {% for q in fw_group.questions %}

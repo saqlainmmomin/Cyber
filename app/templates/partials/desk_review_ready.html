@@ -11,7 +11,7 @@
     {% endif %}
   </div>
   {% if count %}
-  <button class="btn primary" type="button"
+  <button class="btn {{ 'primary' if context_done else 'secondary' }}" type="button"
           hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
           hx-target="#desk-review-area"
           hx-swap="innerHTML"

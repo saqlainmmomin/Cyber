@@ -792,16 +792,17 @@ def test_live_routes_remain_unversioned_and_links_distinguish_them(
     assert _state(db, upload_root) == before
     assert http.get(f"/assessments/{assessment.id}/workpaper").status_code == 200
 
-    sources = "\n".join(
-        (REPO_ROOT / relative).read_text()
-        for relative in (
-            "app/templates/pages/assessment.html",
-            "app/templates/partials/assessment_header.html",
-            "app/templates/partials/analysis_complete.html",
-            "app/templates/partials/report_summary.html",
-        )
-    )
-    assert '/snapshots"' in sources
-    assert "Live PDF" in sources
-    assert "Download PDF" not in sources
-    assert "PDF Report" not in sources
+    # The assessment page's Live PDF and versions links moved into its header partial.
+    for relative in (
+        "app/templates/partials/assessment_header.html",
+        "app/templates/partials/analysis_complete.html",
+        "app/templates/partials/report_summary.html",
+    ):
+        source = (REPO_ROOT / relative).read_text()
+        assert '/snapshots"' in source
+        assert "Live PDF" in source
+        assert "Download PDF" not in source
+        assert "PDF Report" not in source
+    page_source = (REPO_ROOT / "app/templates/pages/assessment.html").read_text()
+    assert "Download PDF" not in page_source
+    assert "PDF Report" not in page_source

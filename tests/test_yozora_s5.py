@@ -172,7 +172,7 @@ def test_s5_previews_use_real_chrome_and_loaded_partials(db, http):
 
     desk_review = http.get("/design/pages/b4-desk_review?state=running")
     assert desk_review.status_code == 200
-    assert "Analysing 6 documents against India DPDPA and ISO 27001" in desk_review.text
+    assert "Analysing 6 documents against DPDPA and ISO 27001" in desk_review.text
     assert 'hx-get="/assessments/assessment-s5-preview/desk-review-status' not in desk_review.text
 
 
@@ -318,7 +318,7 @@ def test_scope_edit_reopens_saved_answers_and_complete_view_links_to_it(db, http
     assert 'data-scope-group="SCP.1"' in edit.text
 
 
-def test_scope_form_missing_answers_preview_marks_each_unanswered_question(db, http):
+def test_incomplete_scope_form_is_rerendered_with_each_unanswered_question(db, http):
     _client, _engagement, assessment = seed_engagement(
         db,
         client_name="Meridian Ledger Technologies",
@@ -327,8 +327,154 @@ def test_scope_form_missing_answers_preview_marks_each_unanswered_question(db, h
     )
     db.commit()
 
-    page = http.get(f"/assessments/{assessment.id}?tab=scope&state=error")
-    assert page.status_code == 200
-    assert "Answer 4 more questions" in page.text
-    assert page.text.count("Choose an answer.") == 4
+    page = http.post(
+        f"/assessments/{assessment.id}/scope/save",
+        data={"scope_form": "1", "ISO.SCP.4": "fully_remote"},
+        follow_redirects=False,
+    )
+    assert page.status_code == 400
+    assert "Answer 3 more questions" in page.text
+    assert page.text.count("Choose an answer.") == 3
+    assert 'name="ISO.SCP.4" value="fully_remote" checked' in page.text
     assert "Cancel" not in page.text
+    db.refresh(assessment)
+    assert assessment.scope_answers is None
+
+    complete = {"scope_form": "1", "ISO.SCP.1": "specific_services", "ISO.SCP.2": "no", "ISO.SCP.3": "no", "ISO.SCP.4": "fully_remote"}
+    saved = http.post(f"/assessments/{assessment.id}/scope/save", data=complete, follow_redirects=False)
+    assert saved.status_code == 303
+    db.refresh(assessment)
+    assert json.loads(assessment.scope_answers) == {key: value for key, value in complete.items() if key != "scope_form"}
+
+
+def test_live_assessment_routes_ignore_mockup_state_query(db, http):
+    _client, _engagement, assessment = seed_engagement(db, frameworks=("iso27001",))
+    db.commit()
+
+    scope = http.get(f"/assessments/{assessment.id}?tab=scope&state=error")
+    assert "Choose an answer." not in scope.text
+    saving = http.get(f"/assessments/{assessment.id}?tab=scope&state=saving")
+    assert 'aria-label="Saving scope"' not in saving.text
+    assert "Save scope and prepare evidence request" in saving.text
+    redirect = http.get(f"/assessments/{assessment.id}/scope?state=saving", follow_redirects=False)
+    assert "state=" not in redirect.headers["location"]
+
+    assessment.scope_answers = "{}"
+    db.commit()
+    overview = http.get(f"/assessments/{assessment.id}?tab=overview&state=loading")
+    assert 'aria-label="Loading framework"' not in overview.text
+    error = http.get(f"/assessments/{assessment.id}?tab=overview&state=error")
+    assert "This framework did not load" not in error.text
+
+
+def test_transient_states_render_through_design_previews_only(db, http):
+    _client, _engagement, assessment = seed_engagement(db, frameworks=("iso27001",))
+    db.commit()
+
+    scope_error = http.get(f"/design/pages/b3-scope?state=error&assessment_id={assessment.id}")
+    assert scope_error.status_code == 200
+    assert "Answer 4 more questions" in scope_error.text
+    assert scope_error.text.count("Choose an answer.") == 4
+    assert 'data-assessment-identity' in scope_error.text
+    saving = http.get(f"/design/pages/b3-scope?state=saving&assessment_id={assessment.id}")
+    assert 'aria-label="Saving scope"' in saving.text
+
+    assessment.scope_answers = "{}"
+    db.commit()
+    loading = http.get(f"/design/pages/b3-hub?state=loading&assessment_id={assessment.id}")
+    assert 'aria-label="Loading framework"' in loading.text
+    hub_error = http.get(f"/design/pages/b3-hub?state=error&assessment_id={assessment.id}")
+    assert "This framework did not load" in hub_error.text
+    checklist = http.get(f"/design/pages/b3-scope-complete?state=error&assessment_id={assessment.id}")
+    assert "Scope confirmed" in checklist.text
+
+    assert http.get(f"/design/pages/b3-hub?state=archived&assessment_id={assessment.id}").status_code == 404
+    assert http.get("/design/pages/b3-hub?state=loading").status_code == 404
+
+
+def test_framework_tab_swap_keeps_the_overview_hub_state(db, http):
+    _client, _engagement, assessment = seed_engagement(db, frameworks=("dpdpa", "iso27001"))
+    db.commit()
+
+    empty = http.get(f"/assessments/{assessment.id}/tab/iso27001", headers={"HX-Request": "true"})
+    assert empty.status_code == 200
+    assert "No scores yet" in empty.text
+    assert "Set the scope to choose which requirements apply." in empty.text
+
+    assessment.scope_answers = "{}"
+    db.commit()
+    evidence = http.get(f"/assessments/{assessment.id}/tab/iso27001", headers={"HX-Request": "true"})
+    assert "No scores yet" in evidence.text
+    assert "Scores appear once the analysis has run" in evidence.text
+
+    assessment.status = "error"
+    db.commit()
+    failed = http.get(f"/assessments/{assessment.id}/tab/dpdpa", headers={"HX-Request": "true"})
+    assert "Analysis failed" in failed.text
+
+    assert http.get(f"/assessments/{assessment.id}/tab/gdpr").status_code == 404
+
+
+def test_hub_state_keys_on_stage_constants_and_never_shows_the_skeleton():
+    from types import SimpleNamespace
+
+    from app.routers.web import _assessment_hub_state
+    from app.services import assessment_stage as st
+
+    def hub(stage, note, next_label=None, status="created"):
+        return _assessment_hub_state(
+            st.Stage(stage, st.STAGE_LABELS[stage], note, next_label, "/x" if next_label else None),
+            SimpleNamespace(status=status),
+        )
+
+    assert hub("scope", "anything", st.SET_SCOPE) == "empty"
+    assert hub("evidence", "No documents yet", st.UPLOAD_EVIDENCE) == "evidence"
+    assert hub("evidence", "5 documents ready to pre-fill", st.PREFILL) == "questionnaire"
+    assert hub("evidence", "Pre-fill running") == "questionnaire"
+    assert hub("evidence", "renamed note") == "questionnaire"
+    assert hub("questionnaire", "10 of 45 answered", st.CONTINUE_QUESTIONNAIRE) == "questionnaire"
+    assert hub("questionnaire", "45 of 45 answered", st.RUN_ANALYSIS) == "questionnaire"
+    assert hub("questionnaire", "Analysis running") == "questionnaire"
+    assert hub("review", "3 of 6 approved", st.review_label(3)) == "default"
+    assert hub("report", "6 of 6 approved", st.RELEASE_REPORT) == "report"
+    assert hub("report", "Released", st.GENERATE_BOARD_REPORT) == "report"
+    assert hub("review", "x", status="error") == "analysis_error"
+    assert hub("review", "x", status="archived") == "archived"
+
+
+def test_scope_stepper_step_has_no_note(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    page = http.get(f"/assessments/{assessment.id}?tab=overview")
+    assert page.status_code == 200
+    assert "Scope not set" not in page.text
+
+
+def test_questionnaire_prefill_buttons_step_down_until_context_is_done(db, http):
+    _client, _engagement, assessment = seed_engagement(db)
+    db.add(DeskReviewSummary(assessment_id=assessment.id, status="error", error_message="Timed out."))
+    db.commit()
+
+    before = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
+    assert re.search(r'class="btn secondary lead"[^>]*\n?[^>]*hx-post="[^"]*run-desk-review', before.text)
+    assert "btn primary" not in before.text
+
+    assessment.context_answers = "[]"
+    db.commit()
+    after = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
+    assert "btn primary lead" in after.text
+
+
+def test_questionnaire_summary_keeps_the_partial_failure_alert(db, http):
+    _client, _engagement, assessment = seed_engagement(db, frameworks=("dpdpa", "iso27001"))
+    _seed_completed_desk_review(db, assessment)
+    summary = db.query(DeskReviewSummary).filter_by(assessment_id=assessment.id).one()
+    summary.raw_ai_response = json.dumps({
+        "schema_version": 2,
+        "frameworks": {"dpdpa": {"status": "completed"}, "iso27001": {"status": "error"}},
+    })
+    db.commit()
+
+    card = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
+    assert "data-desk-review-failed-frameworks" in card.text
+    assert "Desk review failed for ISO 27001" in card.text
+    assert "Findings for DPDPA were saved" in card.text

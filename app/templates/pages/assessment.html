@@ -36,7 +36,7 @@
 {% if tab == "overview" %}
 <div class="mt-lg"></div>
 {{ stepper(stepper_stages) }}
-{% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'running', 'error') else workflow.hub_state) %}
+{% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'error') else workflow.hub_state) %}
 {% if assessment.is_multi_framework %}
 <div class="sec"><h2>Frameworks</h2></div>
 {% include "partials/framework_tabs.html" %}
@@ -62,11 +62,7 @@
 {% elif tab == "questionnaire" %}
   {% include "partials/questionnaire_tab.html" %}
 {% elif tab == "report" %}
-  {% if preview_state == "generating" %}
-  <div class="solid card" role="status" aria-busy="true"><h2>Generating board report</h2><p class="sub">This takes a few minutes. You can leave this page.</p><div class="stack-m mt-lg">{{ skeleton("70%") }}{{ skeleton("90%", margin_top="10px") }}{{ skeleton("55%", margin_top="10px") }}</div></div>
-  {% else %}
   {% include "partials/report_tab.html" %}
-  {% endif %}
 {% endif %}
 </div>
 {% endblock %}

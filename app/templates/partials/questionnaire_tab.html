@@ -6,9 +6,6 @@
        hx-get="/assessments/{{ assessment.id }}/desk-review-status?surface=questionnaire"
        hx-trigger="load"
        hx-swap="innerHTML">
-    {% if preview_state == 'prefilling' %}
-    {% include "partials/desk_review_prefilling.html" %}
-    {% else %}
     <div class="between">
       <div>
         <h2>Pre-fill from documents</h2>
@@ -18,7 +15,6 @@
         {% endif %}
       </div>
     </div>
-    {% endif %}
   </div>
 
   {% if context_error %}
@@ -85,9 +81,7 @@
 
 <div class="solid card mt-lg">
   <div id="analysis-area">
-    {% if preview_state == 'running' %}
-      {% include "partials/analysis_running.html" %}
-    {% elif assessment.status == 'completed' and report %}
+    {% if assessment.status == 'completed' and report %}
       {% include "partials/analysis_complete.html" %}
     {% elif assessment.status == 'analyzing' %}
       {% include "partials/analysis_running.html" %}
