@@ -1,29 +1,33 @@
-{% from "components/ui.html" import evidence_status, icon, skeleton %}
+{% from "components/ui.html" import icon, status %}
 {% set state = request.query_params.get("state", "ready") %}
-<section id="aws-evidence-panel" class="stack">
-  {% if state == "pulling" %}
-  <div class="glass stack" aria-label="Pulling AWS evidence">{{ skeleton("42%") }}{{ skeleton("76%") }}{{ skeleton("64%") }}</div>
-  {% else %}
+{% set source_labels = {"aws_config": "AWS Config", "aws_securityhub": "Security Hub"} %}
+{% set status_tones = {"active": "ok", "invalidated": "medium", "rejected": "non"} %}
+{% set ordered_rows = (rows | selectattr("last_collected_at") | sort(attribute="last_collected_at", reverse=true) | list) + (rows | rejectattr("last_collected_at") | list) %}
+{% set regions = form_values.regions.split(",") | map("trim") | reject("equalto", "") | list %}
+<section id="aws-evidence-panel">
   {% if configured %}
-  <form data-aws-pull-form hx-post="/engagements/{{ engagement_id }}/aws-evidence/pull" hx-target="#aws-evidence-panel" hx-swap="outerHTML" class="glass stack">
-    <div><p class="eyebrow">Collection</p><h2>Pull AWS evidence</h2><p class="sub">The pull runs only when you submit this form.</p></div>
-    <div class="form-grid three">
-      <label class="field"><span class="label">Account ID</span><input name="account_id" value="{{ form_values.account_id }}" autocomplete="off"></label>
-      <label class="field"><span class="label">Role ARN</span><input name="role_arn" value="{{ form_values.role_arn }}" autocomplete="off"></label>
-      <label class="field"><span class="label">Regions</span><input name="regions" value="{{ form_values.regions }}" placeholder="eu-west-1, us-east-1" autocomplete="off"></label>
+  <form data-aws-pull-form hx-post="/engagements/{{ engagement_id }}/aws-evidence/pull" hx-target="#aws-evidence-panel" hx-swap="outerHTML" class="glass" style="padding:var(--s-6);margin-top:var(--s-4)">
+    <h2>Pull AWS evidence</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--s-4);margin-top:var(--s-4)">
+      <div><label class="label" for="aws-account-id">Account ID</label><label class="field"><input id="aws-account-id" name="account_id" value="{{ form_values.account_id }}" autocomplete="off"></label></div>
+      <div><label class="label" for="aws-role-arn">Role ARN</label><label class="field"><input id="aws-role-arn" name="role_arn" value="{{ form_values.role_arn }}" autocomplete="off"></label></div>
+      <div><label class="label" for="aws-regions">Regions</label><label class="field"><input id="aws-regions" name="regions" value="{{ form_values.regions }}" placeholder="ap-south-1, us-east-1" autocomplete="off"></label></div>
     </div>
-    <div class="acts"><button class="btn primary" type="submit">Pull AWS evidence</button></div>
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-top:var(--s-5)">{% if state != "pulling" %}<button class="btn primary lead" type="submit">{{ icon("cloud") }}Pull AWS evidence</button>{% endif %}</div>
+    {% if state == "pulling" %}<div style="margin-top:var(--s-5)" aria-live="polite"><span class="status" style="white-space:normal"><span class="st prog"></span>Reading AWS Config and Security Hub{% if regions %} in {{ regions[:-1] | join(", ") }}{% if regions | length > 1 %} and {% endif %}{{ regions[-1] }}{% endif %}</span><div style="display:flex;flex-direction:column;gap:var(--s-3);margin-top:var(--s-4)"><span class="skel" style="width:80%"></span><span class="skel" style="width:60%"></span></div></div>{% endif %}
   </form>
   {% endif %}
 
-  {% if error or state == "error" %}<div data-aws-error class="alert c-non">{{ icon("alert") }}<div>{% if error %}{{ error }}{% else %}<b>AWS refused the role</b><span>Check the role ARN and the external ID, then pull again. No evidence was collected.</span>{% endif %}</div></div>{% endif %}
+  {% if error or state == "error" %}<div data-aws-error style="margin-top:var(--s-4)"><div class="alert c-non">{{ icon("alert") }}<div>{% if error %}{{ error }}{% else %}<b>AWS refused the role</b>Check the role ARN and the external ID, then pull again. No evidence was collected.{% endif %}</div></div></div>{% endif %}
+
   {% if result %}
-  <div data-aws-result class="alert c-ok"><div><b>Pull complete</b><span>Pull {{ result.pull_id }}</span></div></div>
-  <div class="table-wrap solid"><table class="data-table"><thead><tr><th>Source</th><th>Region</th><th>Status</th><th>Items</th><th>Created</th><th>Versioned</th><th>Unchanged</th><th>Notes</th></tr></thead><tbody>{% for source in result.sources %}<tr data-aws-source-row><td>{{ "AWS Config" if source.source == "aws_config" else "Security Hub" }}</td><td>{{ source.region }}</td><td>{{ "Not enabled" if source.status == "not_enabled" else "Collected" }}</td><td>{{ source.items }}</td><td>{{ source.created }}</td><td>{{ source.versioned }}</td><td>{{ source.unchanged }}</td><td>{% if source.truncated %}Truncated{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <div data-aws-result style="margin-top:var(--s-10)"><div class="sec" style="margin-top:0"><h2>Pull complete</h2></div>
+  <div class="solid" style="overflow-x:auto"><table style="cursor:default"><thead><tr><th>Source</th><th>Region</th><th>Status</th><th class="n">Items</th><th class="n hide-sm">Created</th><th class="n hide-sm">New versions</th><th class="n hide-sm">Unchanged</th><th class="hide-sm">Notes</th></tr></thead><tbody>
+  {% for source in result.sources %}<tr data-aws-source-row><td class="t-title">{{ source_labels.get(source.source, source.source) }}</td><td>{{ source.region }}</td><td>{% if source.status == "not_enabled" %}{{ status("Not enabled", tone="neutral") }}{% else %}{{ status("Collected", tone="accent") }}{% endif %}</td><td class="n num">{{ source.items }}</td><td class="n num hide-sm">{{ source.created }}</td><td class="n num hide-sm">{{ source.versioned }}</td><td class="n num hide-sm">{{ source.unchanged }}</td><td class="hide-sm">{% if source.status == "not_enabled" %}{{ "The Config recorder is off in this region" if source.source == "aws_config" else "Security Hub is not enabled in this region" }}{% elif source.truncated %}Truncated{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div></div>
   {% endif %}
 
-  <section class="glass"><div class="section-head"><div><p class="eyebrow">Inventory</p><h2>Collected AWS evidence</h2></div></div>
-  {% if rows %}<div class="table-wrap"><table class="data-table"><thead><tr><th>Evidence</th><th>Source</th><th>Status</th><th>Current version</th><th>Versions</th><th>Last collected</th></tr></thead><tbody>{% for row in rows %}<tr data-aws-evidence-row><td><a class="file-name" href="/evidence/{{ row.id }}">{{ row.filename }}</a></td><td>{{ "AWS Config" if row.source == "aws_config" else "Security Hub" }}</td><td>{{ evidence_status(row.status) }}</td><td>{% if row.current_version_number is not none %}v{{ row.current_version_number }}{% else %}—{% endif %}</td><td>{{ row.version_count }}</td><td>{% if row.last_collected_at %}{{ row.last_collected_at|display_date }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><p>No AWS evidence collected yet.</p></div>{% endif %}
-  </section>
-  {% endif %}
+  <div style="margin-top:var(--s-10)"><div class="sec" style="margin-top:0"><h2>Collected AWS evidence</h2></div>
+  {% if rows %}<div class="solid" style="overflow-x:auto"><table><thead><tr><th>Evidence</th><th class="hide-sm">Source</th><th>Status</th><th class="hide-sm">Current version</th><th class="hide-sm">Last collected</th><th class="hide-sm"></th></tr></thead><tbody>{% for row in ordered_rows %}<tr data-aws-evidence-row><td><a class="t-title" href="/evidence/{{ row.id }}">{{ row.filename }}</a></td><td class="hide-sm">{{ source_labels.get(row.source, row.source) }}</td><td>{% if row.status in EVIDENCE_STATUS_LABELS %}{% if row.status == "quarantined" %}{{ status(EVIDENCE_STATUS_LABELS[row.status], "in_progress") }}{% else %}{{ status(EVIDENCE_STATUS_LABELS[row.status], tone=status_tones[row.status]) }}{% endif %}{% endif %}</td><td class="hide-sm num">{% if row.current_version_number is not none %}v{{ row.current_version_number }}{% else %}—{% endif %}</td><td class="hide-sm">{% if row.last_collected_at %}{{ row.last_collected_at|display_date }}{% else %}—{% endif %}</td><td class="go hide-sm">{{ icon("chev-r") }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="glass empty"><p>No AWS evidence collected yet.</p></div>{% endif %}
+  </div>
 </section>

@@ -62,11 +62,6 @@ def aws_evidence_preview(request: Request, db: Session) -> Response:
             "configured": True,
             "external_id": external_id,
             "suggested_role_name": "YozoraReadOnlyAudit",
-            "form_values": {
-                "account_id": aws_evidence.EXAMPLE_ACCOUNT_ID,
-                "role_arn": f"arn:aws:iam::{aws_evidence.EXAMPLE_ACCOUNT_ID}:role/YozoraReadOnlyAudit",
-                "regions": "ap-south-1, us-east-1",
-            },
             "trust_policy_json": json.dumps(aws_evidence.trust_policy(external_id), indent=2),
             "permissions_policy_json": json.dumps(aws_evidence.permissions_policy(aws_evidence.EXAMPLE_ACCOUNT_ID), indent=2),
             "consultant_policy_json": json.dumps(aws_evidence.consultant_policy(), indent=2).replace("ComplianceEvidenceReadOnly", "YozoraReadOnlyAudit"),
@@ -77,10 +72,11 @@ def aws_evidence_preview(request: Request, db: Session) -> Response:
         context["result"] = aws_evidence.PullResult(
             pull_id="preview-pull-001",
             account_id=aws_evidence.EXAMPLE_ACCOUNT_ID,
-            regions=("eu-west-1",),
+            regions=("ap-south-1", "us-east-1"),
             sources=(
-                aws_evidence.SourceSummary("aws_config", "eu-west-1", "collected", 12, 8, 2, 2, 0, False, 0),
-                aws_evidence.SourceSummary("aws_securityhub", "eu-west-1", "collected", 6, 4, 1, 1, 0, False, 0),
+                aws_evidence.SourceSummary("aws_config", "ap-south-1", "collected", 142, 12, 3, 127, 0, False, 0),
+                aws_evidence.SourceSummary("aws_securityhub", "ap-south-1", "collected", 31, 4, 2, 25, 0, False, 0),
+                aws_evidence.SourceSummary("aws_securityhub", "us-east-1", "not_enabled", 0, 0, 0, 0, 0, False, 0),
             ),
             evidence_ids=(),
             started_at=started_at,

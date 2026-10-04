@@ -342,7 +342,40 @@ def _stamp_head(database_url: str) -> None:
     command.stamp(config, "head")
 
 
-def seed(database_path: Path) -> dict[str, object]:
+def _seed_aws_screen(db: Session, data: dict[str, object]) -> None:
+    """AWS page rows and last-pull inputs as the b4-aws_evidence mockup shows them."""
+    engagement = data["engagements"][0]
+    rows = {row.id: row for row in db.query(Evidence).filter(Evidence.engagement_id == engagement.id).all()}
+    collected = datetime(2026, 3, 12, 12, tzinfo=timezone.utc)
+    config, hub = rows["meridian-evidence-002"], rows["meridian-evidence-008"]
+    config.original_filename = "Config rule evaluations, ap-south-1"
+    hub.original_filename = "Security Hub findings, ap-south-1"
+    hub.uploaded_by = "aws_securityhub:123456789012"
+    stale = Evidence(
+        id="meridian-evidence-aws-us-east-1",
+        engagement_id=engagement.id,
+        assessment_id=config.assessment_id,
+        original_filename="Config rule evaluations, us-east-1",
+        storage_path=f"evidence/{engagement.id}/meridian-evidence-aws-us-east-1.json",
+        file_hash_sha256="e" * 64,
+        file_size_bytes=48_000,
+        mime_type="application/json",
+        status="invalidated",
+        uploaded_by="aws_config:123456789012",
+        created_at=datetime(2025, 11, 3, 12, tzinfo=timezone.utc),
+    )
+    db.add(stale)
+    db.query(EvidenceVersion).filter(EvidenceVersion.evidence_id.in_((config.id, hub.id))).delete()
+    db.flush()
+    for evidence, count in ((config, 5), (hub, 3)):
+        for number in range(1, count + 1):
+            db.add(_version(evidence, number, status="active" if number == count else "superseded", created_at=collected - timedelta(days=7 * (count - number))))
+    db.add(_version(stale, 1, created_at=datetime(2025, 11, 3, 12, tzinfo=timezone.utc)))
+    db.add(_audit("audit-aws-pull-meridian", action="aws_evidence.pull_completed", entity_type="engagement", entity_id=engagement.id, created_at=collected, metadata={"account_id": "123456789012", "role_arn": "arn:aws:iam::123456789012:role/YozoraReadOnlyAudit", "regions": ["ap-south-1", "us-east-1"]}))
+    db.commit()
+
+
+def seed(database_path: Path, screen: str | None = None) -> dict[str, object]:
     if database_path.exists():
         database_path.unlink()
     database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -353,19 +386,21 @@ def seed(database_path: Path) -> dict[str, object]:
     _register_frameworks()
     with Session(engine, expire_on_commit=False) as db:
         data = _seed_inventory(db)
+        if screen == "aws_evidence":
+            _seed_aws_screen(db, data)
     engine.dispose()
     return data
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
+    parser.add_argument("--database", "--output", dest="database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
     parser.add_argument("--screen", choices=tuple(SCREEN_STATES), default="evidence")
     parser.add_argument("--state", default=None)
     args = parser.parse_args()
     if args.state and args.state not in SCREEN_STATES[args.screen]:
         parser.error(f"state {args.state!r} is not valid for {args.screen}")
-    data = seed(args.database)
+    data = seed(args.database, args.screen)
     manifest = {
         "database": str(args.database),
         "frozen_now": FROZEN_NOW.isoformat(),
@@ -377,7 +412,7 @@ def main() -> int:
         },
         "clients": [client.name for client in data["clients"]],
     }
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    print(json.dumps(manifest, sort_keys=True))
     return 0
 
 

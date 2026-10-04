@@ -1,28 +1,30 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs %}
-{% from "components/ui.html" import alert, code_block, icon %}
+{% from "components/ui.html" import code_block, icon %}
 {% block title %}AWS evidence — {{ engagement.name }}{% endblock %}
 
 {% block crumbs %}
-<a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>AWS evidence</b>
+<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/evidence">Evidence</a><svg class="i sl"><use href="#i-slash"/></svg><b>Pull from AWS</b>
 {% endblock %}
 
 {% block content %}
-{% set state = request.query_params.get("state", "ready") %}
 {% set period = engagement_period(engagement) %}
-<header class="page-head"><div><p class="eyebrow">{{ client.name }} · {{ engagement.name }}</p><h1>Pull from AWS</h1><p class="meta-line">{{ client.name }} · Read-only, runs only when you submit this form{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div></header>
-{{ engagement_tabs(engagement, "evidence") }}
+{% set base = "/engagements/" ~ engagement.id %}
+<div class="page-head"><div><h1>Pull from AWS</h1><p class="meta-line">{{ client.name }} · Read-only, runs only when you pull{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div></div>
+<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}">Overview</a><a href="{{ base }}/evidence" aria-selected="true">Evidence</a><a href="{{ base }}/remediation">Findings and actions</a><a href="{{ base }}/integrated-reports">Reports</a></nav>
 
 {% if not configured %}
-<div data-aws-not-configured>{{ alert("AWS connection not configured", not_configured_message, "medium", "cloud") }}</div>
+<div class="glass empty" data-aws-not-configured>{{ icon("cloud", "", "width:24px;height:24px;color:var(--muted)") }}<h3>AWS evidence is not set up</h3><p>{{ not_configured_message }}</p><a class="btn secondary" href="{{ base }}/evidence">Back to evidence</a></div>
 {% else %}
-<section class="glass stack" data-aws-setup>
-  <div><h2>Client setup</h2><p class="sub">Ask the client to create the role <b>{{ suggested_role_name }}</b> in their AWS account, using the external ID below.</p></div>
-  <label class="label" for="aws-external-id">External ID for this engagement</label>
-  <div class="keep-row"><label class="field grow"><input id="aws-external-id" data-external-id readonly value="{{ external_id }}"></label><button class="btn secondary" type="button" data-copy-trigger="aws-external-id-copy">Copy</button><span class="sr-only" data-copy-target="aws-external-id-copy">{{ external_id }}</span></div>
-  <details class="disclose"><summary>Trust policy</summary><p class="help">Replace the principal with your consultant role ARN. Never use an account root principal.</p><div data-trust-policy>{{ code_block("JSON", trust_policy_json, copy_target="aws-trust-policy") }}</div></details>
-  <details class="disclose"><summary>Read-only permissions policy</summary><p class="help">Attach only this inline policy to the role.</p>{% if policy_account_note %}<p class="help">{{ policy_account_note }}</p>{% endif %}<div data-permissions-policy>{{ code_block("JSON", permissions_policy_json, copy_target="aws-permissions-policy") }}</div></details>
-  <details class="disclose"><summary>Consultant identity policy</summary><p class="help">Your own identity needs this to assume client roles.</p><div data-consultant-policy>{{ code_block("JSON", consultant_policy_json, copy_target="aws-consultant-policy") }}</div></details>
+<section class="glass" style="padding:var(--s-6)" data-aws-setup>
+  <h2>Client setup</h2>
+  <p style="color:var(--text-2);margin-top:var(--s-2)">Ask the client to create the role <b>{{ suggested_role_name }}</b> in their AWS account, using the external ID below.</p>
+  <div style="margin-top:var(--s-5);max-width:420px"><label class="label" for="aws-external-id">External ID for this engagement</label><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:nowrap"><label class="field" style="flex:1"><input id="aws-external-id" data-external-id readonly value="{{ external_id }}"></label><button class="btn secondary icon" type="button" aria-label="Copy external ID" data-copy-trigger="aws-external-id-copy">{{ icon("copy") }}</button><span class="sr-only" data-copy-target="aws-external-id-copy">{{ external_id }}</span></div></div>
+  <div style="margin-top:var(--s-5)">
+    <details style="border-top:1px solid var(--line);padding:var(--s-3) 0"><summary class="t-title" style="cursor:pointer;padding:var(--s-1) 0">Trust policy</summary><p class="help">Replace the principal with your own consultant role ARN. Never use an account root principal.</p><div data-trust-policy>{{ code_block("JSON", trust_policy_json, style="margin-top:var(--s-3)", copy_target="aws-trust-policy") }}</div></details>
+    <details style="border-top:1px solid var(--line);padding:var(--s-3) 0"><summary class="t-title" style="cursor:pointer;padding:var(--s-1) 0">Read-only permissions policy</summary><p class="help">Attach only this inline policy to the role.</p>{% if policy_account_note %}<p class="help">{{ policy_account_note }}</p>{% endif %}<div data-permissions-policy>{{ code_block("JSON", permissions_policy_json, style="margin-top:var(--s-3)", copy_target="aws-permissions-policy") }}</div></details>
+    <details style="border-top:1px solid var(--line);padding:var(--s-3) 0"><summary class="t-title" style="cursor:pointer;padding:var(--s-1) 0">Consultant identity policy</summary><p class="help">Your own identity needs this to assume client roles.</p><div data-consultant-policy>{{ code_block("JSON", consultant_policy_json, style="margin-top:var(--s-3)", copy_target="aws-consultant-policy") }}</div></details>
+    <div style="border-top:1px solid var(--line)"></div>
+  </div>
 </section>
 {% include "partials/aws_evidence_panel.html" %}
 {% endif %}
