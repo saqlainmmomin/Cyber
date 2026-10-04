@@ -121,6 +121,8 @@ def test_scenario_2_findings_sharing_a_cluster_form_one_cross_framework_group():
         "title": "Access policy missing action 1", "owner": "Vikram", "target_date": "2026-11-01",
         "status_label": "Open", "framework_name": ISO, "requirement_id": "ISO.A5.15",
         "finding_title": "Access policy missing",
+        # P6-8 V3-B (D-P6-8-V3-Q): group actions carry the finding id and the derived responsibility
+        "finding_id": "F-ISO.A5.15", "responsibility": None,
     }
     assert [(c["framework_id"], c["requirement_id"]) for c in access["closes"]] == [
         ("dpdpa", "CH2.SECURITY.1"), ("iso27001", "ISO.A5.15"), ("nist_csf", "NIST.PR.AA.05"),
@@ -180,7 +182,8 @@ def test_scenario_4_document_roadmap_keeps_b1_actions_and_adds_groups(db, http, 
 
     document = build(db, assessment)
     roadmap = document["roadmap"]
-    assert set(roadmap) == {"actions", "unplanned_gap_count", "groups"}
+    # P6-8 V3-B (D-P6-8-V3-Q): + status_counts and overdue_count
+    assert set(roadmap) == {"actions", "unplanned_gap_count", "groups", "status_counts", "overdue_count"}
     assert [a["title"] for a in roadmap["actions"]] == [
         "Board approves policy", "Write access policy", "Role-based access", "Enforce least privilege",
     ]
@@ -192,14 +195,23 @@ def test_scenario_4_document_roadmap_keeps_b1_actions_and_adds_groups(db, http, 
     grouped = sorted(a["title"] for g in roadmap["groups"] for a in g["actions"])
     assert grouped == sorted(a["title"] for a in roadmap["actions"])  # every action in exactly one group
 
+    # P6-8 V3-B (D-P6-8-V3-G/I): the deck shows one initiative per group (roadmap and initiatives slides), not
+    # the per-action list; the group's actions are carried by `initiatives[].actions` in the document.
+    initiatives = document["initiatives"]
+    assert [i["group_id"] for i in initiatives] == [g["group_id"] for g in roadmap["groups"]]
+    assert [i["title"] for i in initiatives] == [i["topic"] for i in initiatives] == [g["topic"] for g in roadmap["groups"]]
+    assert [[a["title"] for a in i["actions"]] for i in initiatives] == [[a["title"] for a in g["actions"]] for g in roadmap["groups"]]
+    assert initiatives[1]["target_date"] == access["target_date"] == "2026-11-01"
+    assert initiatives[1]["cross_framework"] is True and initiatives[1]["frameworks"] == [DPDPA, ISO, NIST]
+
     html = board.render_html(document, embed_fonts=False)
-    section = html[html.index('data-section="roadmap"'):html.index('data-section="not-assessed"')]
-    assert "grouped by shared control" in section
-    assert section.count("data-roadmap-group=") == 2
-    assert "Access Control Baseline" in section and access["headline"] in section
-    for title in grouped:
-        assert section.count(title) == 1, title
-    assert "Target date" in section and "30 Nov 2026" not in section and "15 Dec 2026" in section
+    section = html[html.index('data-slide="roadmap"'):html.index('data-slide="limits"')]
+    assert section.count("data-initiative=") == section.count("data-initiative-row=") == 2
+    for initiative in initiatives:
+        assert section.count(f'data-initiative="{initiative["ref"]}"') == 1
+        assert section.count(f'data-initiative-row="{initiative["ref"]}"') == 1
+        assert initiative["title"] in section
+    assert "Access Control Baseline" in section and "1 Nov 2026" in section
 
 
 def test_scenario_5_no_actions_keeps_the_empty_state(db, http, gate, monkeypatch):
@@ -213,4 +225,11 @@ def test_scenario_5_no_actions_keeps_the_empty_state(db, http, gate, monkeypatch
     document = build(db, assessment)
     assert document["roadmap"]["groups"] == []
     html = board.render_html(document, embed_fonts=False)
-    assert "No remediation actions are recorded for the approved findings yet." in html
+    # P6-8 V3-B: the deck has no per-action empty sentence; an empty roadmap is an empty initiative list and
+    # the derived takeaway states the zero counts (the frozen v2 DOCX keeps the old sentence).
+    assert document["initiatives"] == []
+    assert document["takeaways"]["roadmap"] == (
+        "0 initiative(s) cover 0 of 0 key observations; 0 close a weakness once across more than one framework."
+    )
+    assert document["takeaways"]["roadmap"] in html
+    assert "data-initiative=" not in html and "data-initiative-row=" not in html

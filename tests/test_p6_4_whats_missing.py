@@ -832,6 +832,7 @@ def test_scenario_12_metric_keys_are_pinned(monkeypatch):
 
 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
+from tests.p6_8_v3b_paths import V3B_EXCLUDES  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
 
@@ -869,6 +870,8 @@ def test_scenario_13_v1_readers_and_protected_modules_unchanged():
         ":(exclude)app/services/llm_client.py",
         # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme, display font.
         *V3A_EXCLUDES,
+        # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
+        *V3B_EXCLUDES,
         # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
         *YOZORA_BACKEND_EXCLUDES,
         *YOZORA_EXCLUDES,  # Yozora S1
@@ -956,8 +959,8 @@ def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
         "app/services/rfi_requests.py",
         "app/templates/pages/rfi.html",
     )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES).split()
+    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES, *V3B_EXCLUDES).split()
+    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES, *V3B_EXCLUDES).split()
     changed = set(committed) | set(untracked)
     changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     assert changed <= {

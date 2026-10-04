@@ -49,7 +49,7 @@ NON_LEGAL_TERMS = (
 )
 NARRATIVE_NOTE = (
     "Narrative paragraphs are drafted from the approved findings, then edited and accepted by the "
-    "consultant. Bracketed references are requirement IDs listed in Appendix B."
+    "consultant. References such as R-01 identify the supporting observation in this report."
 )
 NOT_READY_MESSAGE = "Review the narrative before generating a board report version:"
 NO_FINDINGS_MESSAGE = (
@@ -659,7 +659,11 @@ def require_report_ready(db: Session, assessment: Assessment) -> None:
         )
 
 
-def _document_sentence(sentence: dict, refs_by_id: dict[str, FindingRef]) -> dict | None:
+def _document_sentence(
+    sentence: dict,
+    refs_by_id: dict[str, FindingRef],
+    labels_by_id: dict[str, str],
+) -> dict | None:
     finding_ids = list(sentence.get("finding_ids") or ())
     if not finding_ids or any(finding_id not in refs_by_id for finding_id in finding_ids):
         return None
@@ -671,7 +675,7 @@ def _document_sentence(sentence: dict, refs_by_id: dict[str, FindingRef]) -> dic
     return {
         "text": str(sentence.get("text", "")),
         "finding_ids": unique_ids,
-        "finding_refs": [ref.alias for ref in cited_refs],
+        "finding_refs": [labels_by_id.get(ref.finding_id, ref.alias) for ref in cited_refs],
         "citations": [
             {
                 "finding_id": ref.finding_id,
@@ -686,13 +690,20 @@ def _document_sentence(sentence: dict, refs_by_id: dict[str, FindingRef]) -> dic
 def apply_to_document(db: Session, assessment: Assessment, document: dict) -> None:
     current_state = state(db, assessment)
     refs_by_id = {ref.finding_id: ref for ref in current_state.findings}
+    labels_by_id = {
+        ref.finding_id: f"R-{index:02d}"
+        for index, ref in enumerate(current_state.findings, start=1)
+    }
     sections = {section.section_id: section for section in current_state.sections}
 
     def accepted_sentences(section_id: str) -> list[dict] | None:
         section = sections.get(section_id)
         if section is None or section.status != "accepted" or section.stale:
             return None
-        converted = [_document_sentence(sentence, refs_by_id) for sentence in section.sentences]
+        converted = [
+            _document_sentence(sentence, refs_by_id, labels_by_id)
+            for sentence in section.sentences
+        ]
         if any(sentence is None for sentence in converted):
             return None
         return converted or None

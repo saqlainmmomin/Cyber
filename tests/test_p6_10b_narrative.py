@@ -316,7 +316,7 @@ def test_scenario_4_consultant_edits_are_validated_and_accepted_text_reaches_the
     assert summary["dpdpa"]["narrative"] == [{
         "text": edited,
         "finding_ids": [finding_id],
-        "finding_refs": [a["dpdpa"]],
+            "finding_refs": ["R-02"],
         "citations": [{"finding_id": finding_id, "framework_id": "dpdpa", "requirement_id": dp[0]}],
     }]
     assert summary["iso27001"]["narrative"] is None  # still an unaccepted draft
@@ -325,7 +325,7 @@ def test_scenario_4_consultant_edits_are_validated_and_accepted_text_reaches_the
 
     html = board_report.render_html(document, embed_fonts=False)
     assert 'data-narrative="framework-dpdpa"' in html
-    assert edited in html and f"[{dp[0]}]" in html
+    assert edited in html and "R-02" in html and f"[{dp[0]}]" not in html
     assert service.NARRATIVE_NOTE in html
     assert EXEC_TEXT not in html and ISO_TEXT not in html
 
@@ -397,7 +397,7 @@ def test_scenario_6_issued_snapshot_freezes_the_accepted_text(db, http, gate, mo
     refs = {ref.framework_id: ref for ref in _service().finding_refs(db, assessment)}
     executive = frozen["summary"]["narrative"]["executive"][0]
     assert executive["finding_ids"] == [refs["iso27001"].finding_id, refs["dpdpa"].finding_id]
-    assert executive["finding_refs"] == [refs["iso27001"].alias, refs["dpdpa"].alias]
+    assert executive["finding_refs"] == ["R-01", "R-02"]
 
     a = _aliases(db, assessment)
     revised = "Access governance is the priority for the board."
@@ -535,14 +535,14 @@ def test_scenario_11_sidecar_refs_join_to_top_risk_ranks_without_the_database(db
     for sentence in _narrative_sentences(document):
         assert len(sentence["finding_ids"]) == len(set(sentence["finding_ids"])) == len(sentence["finding_refs"])
         assert sentence["finding_ids"] == [c["finding_id"] for c in sentence["citations"]]
-        assert sentence["finding_refs"] == [f"F{rank[finding_id]}" for finding_id in sentence["finding_ids"]]
+        assert sentence["finding_refs"] == [f"R-{rank[finding_id]:02d}" for finding_id in sentence["finding_ids"]]
     # Re-derived at build time from the live approved set; the accept events keep only ids (D-P6-10-I).
     (accepted, *_rest) = events(db, "assessment.narrative_accepted", assessment.id)
     assert set(metadata(accepted)["sentences"][0]) == {"text", "finding_ids"}
 
 
-def test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout(db, http, gate, monkeypatch):
-    """Revision 2026-10-01 (D-P6-10-K): a v3 sidecar still exports until the v3 deck work replaces the layout."""
+def test_scenario_12_board_exports_accept_schema_v3_with_the_v3_layout(db, http, gate, monkeypatch):
+    """Revision 2026-10-01 (D-P6-10-K) and P6-8 V3-B: a v3 sidecar exports through the v3 XLSX; DOCX is retired for v3."""
     import io
 
     import openpyxl
@@ -561,9 +561,13 @@ def test_scenario_12_board_exports_accept_schema_v3_with_the_v2_layout(db, http,
     assert frozen["schema_version"] == 3
     sha = "ab" * 32
 
+    # P6-8 V3-B: a v3 sidecar exports the v3 workbook (not the v2 About layout) and DOCX is retired for v3.
     book = openpyxl.load_workbook(io.BytesIO(exports.render_xlsx(frozen, document_sha256=sha)))
-    about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
-    assert about["Document schema version"] == 3
-    assert exports.render_docx(frozen, document_sha256=sha)[:2] == b"PK"
+    assert tuple(book.sheetnames) == tuple(
+        name for name in exports.XLSX_SHEETS_V3 if name != "Statement of Applicability" or frozen["soa"]
+    )
+    assert "About" not in book.sheetnames
+    with pytest.raises(exports.DocumentSuperseded):
+        exports.render_docx(frozen, document_sha256=sha)
     with pytest.raises(exports.UnsupportedDocument):
         exports.render_docx(dict(frozen, schema_version=4), document_sha256=sha)

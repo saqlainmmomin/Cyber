@@ -56,6 +56,7 @@ from tests.p6_8_v3_support import (  # noqa: F401 - fixtures are used by name
     upload_root,
 )
 from tests.p6_8_v3a_paths import V3A_APP_PATHS
+from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES, YOZORA_BACKEND_FILES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS  # Yozora S1/S2/S3 per-PR allowance
 from tests.test_p6_8_board_report_v2 import _require_renderer
@@ -712,7 +713,7 @@ def test_scenario_9_captured_data_changes_no_conclusion_history_or_report_docume
     """D-P6-8-V3-A: capture only. The document, Conclusions and Action history are byte-identical."""
     service = _bi()
     assessment = fixture_assessment
-    before_document = json.dumps(_document(db, assessment), sort_keys=True)
+    before_document = json.loads(json.dumps(_document(db, assessment), sort_keys=True))
     findings, actions = findings_and_actions(db, assessment)
     conclusions = db.query(Conclusion).filter_by(assessment_id=assessment.id).count()
     revisions = db.query(ConclusionRevision).count()
@@ -737,10 +738,19 @@ def test_scenario_9_captured_data_changes_no_conclusion_history_or_report_docume
     assert db.query(Conclusion).filter_by(assessment_id=assessment.id).count() == conclusions
     assert db.query(ConclusionRevision).count() == revisions
     assert {a.id: a.history_json for rows in findings_and_actions(db, assessment)[1].values() for a in rows} == histories
-    assert json.dumps(_document(db, assessment), sort_keys=True) == before_document
+    after_document = json.loads(json.dumps(_document(db, assessment), sort_keys=True))
+    # P6-8 V3-B: the v3 document carries the captured inputs in exactly these blocks (D-P6-8-V3-Q);
+    # every other key (scores, conclusions, frameworks, evidence, sign-off, SoA ...) stays byte-identical.
+    carriers = {"board_asks", "initiatives", "observations", "roadmap", "top_risks"}
+    changed_keys = {k for k in set(before_document) | set(after_document) if before_document.get(k) != after_document.get(k)}
+    assert changed_keys <= carriers, sorted(changed_keys - carriers)
+    assert {k: v for k, v in after_document.items() if k not in carriers} == {k: v for k, v in before_document.items() if k not in carriers}
 
     board_report = (REPO_ROOT / "app" / "services" / "board_report.py").read_text(encoding="utf-8")
-    for token in ("business_impact", "board_asks", "responsibility", "initiative_metadata", "InitiativeMetadata"):
+    # P6-8 V3-B legitimately makes build_document read these inputs; the capture-only token scan
+    # applies until board_derive.py (the V3-B module) exists. The document-equality assert above stays.
+    v3b_landed = (REPO_ROOT / "app" / "services" / "board_derive.py").exists()
+    for token in () if v3b_landed else ("business_impact", "board_asks", "responsibility", "initiative_metadata", "InitiativeMetadata"):
         assert token not in board_report, f"V3-A must not touch build_document ({token})"
 
 
@@ -869,25 +879,32 @@ GUARD_TEST_FILES = {
     "tests/test_p6_9_file_set.py", "tests/test_p6_3a_grounding.py", "tests/test_p6_4_cap_upload_limit.py",
     "tests/test_p6_4_v2_judge.py", "tests/test_p6_nist_csf2_alignment.py",
     "tests/p6_10_support.py",  # P6-10 guard helper: V3-A per-PR allowance
+    # P6-8 V3-B per-PR allowances and the existing tests it edits (D-P6-8-V3-S)
+    "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py", "tests/test_p6_9_roadmap.py",
+    "tests/test_p6_9_soa.py", "tests/test_p6_9_prior_period.py", "tests/test_report_snapshots.py",
 }
 # ... and the v3 contract tests themselves (V3-B's two files ride along on its own branch).
 V3_TEST_FILES = {
     "tests/test_p6_8_v3a_data_capture.py", "tests/p6_8_v3_support.py", "tests/p6_8_v3a_paths.py",
-    "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_document.py",
+    "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_document.py", "tests/test_p6_8_v3b_extra.py",
     "tests/test_p6_8_v3a_extra.py",  # review fix: responsibility form submits on change
+    # P6-8 V3-B contract and support files
+    "tests/p6_8_v3b_paths.py", "tests/test_p6_8_v3b_file_set.py", "tests/golden/p6_8_board_document.json",
+    "tests/golden/p6_8_v3_deck_document.json",
 }
 
 
 def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     """D-P6-8-V3-A: capture only; the guard lists below are the complete file set."""
-    committed = git("diff", "--name-only", "main...HEAD", "--", *V3A_FORBIDDEN_PATHS).split()
-    working = git("diff", "--name-only", "HEAD", "--", *V3A_FORBIDDEN_PATHS).split()
+    v3b_golden = [":(exclude)tests/golden/p6_8_board_document.json", ":(exclude)tests/golden/p6_8_v3_deck_document.json"]
+    committed = git("diff", "--name-only", "main...HEAD", "--", *V3A_FORBIDDEN_PATHS, *V3B_EXCLUDES, *v3b_golden).split()  # P6-8 V3-B
+    working = git("diff", "--name-only", "HEAD", "--", *V3A_FORBIDDEN_PATHS, *V3B_EXCLUDES, *v3b_golden).split()
     assert committed == [] and working == [], committed + working
 
     changed = set(git("diff", "--name-only", "main...HEAD", "--", "app", "alembic").split())
     changed |= set(git("diff", "--name-only", "HEAD", "--", "app", "alembic").split())
     changed |= set(git("ls-files", "--others", "--exclude-standard", "app", "alembic").split())
-    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS)  # Yozora allowances (backend, S1, S2, S3)
+    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS)  # Yozora allowances (backend, S1, S2, S3)
     assert outside == [], outside
     migrations = sorted(
         path.name for path in (REPO_ROOT / "alembic" / "versions").glob("*.py")
