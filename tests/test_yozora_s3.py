@@ -5,11 +5,16 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from design.harness.seed_s3 import seed_database
 from app.models.assessment import Assessment
 from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.firm_settings import FirmSettings
 from app.services import assessment_stage
+from app.services import retention
 from app.routers import web as web_router
 from tests.yozora_support import (  # noqa: F401
     _register_frameworks,
@@ -87,6 +92,18 @@ def test_clients_lists_empty_and_search_states(db, http):
     assert "No clients yet" in empty.text
 
 
+def test_clients_picker_matches_table_only_state(db, http):
+    _client(db, "Meridian Ledger Technologies")
+    db.commit()
+
+    page = http.get("/clients?state=picker")
+
+    assert page.status_code == 200
+    assert "<th>Client</th>" in page.text
+    assert 'class="tools' not in page.text
+    assert 'role="dialog"' in page.text
+
+
 def test_client_detail_has_no_retention_form_and_settings_does(db, http):
     client, _engagement, _assessment = seed_engagement(
         db, client_name="Kestrel Advisory", name="FY2026 advisory"
@@ -100,6 +117,72 @@ def test_client_detail_has_no_retention_form_and_settings_does(db, http):
     assert 'id="retention-years"' not in detail.text
     assert 'data-retention-form' in settings.text
     assert 'id="retention-years"' in settings.text
+
+
+def test_client_detail_empty_state_uses_meridian_copy_and_lead_action(db, http):
+    client = _client(db, "Meridian Ledger Technologies")
+    db.commit()
+
+    page = http.get(f"/clients/{client.id}?state=empty")
+
+    assert "Meridian Ledger Technologies" in page.text
+    assert "Fintech · SME · No engagements" in page.text
+    assert 'class="btn primary lead"' in page.text
+    assert 'href="/engagements/new?client_id=' + client.id + '"' in page.text
+
+
+def test_s3_seed_variants_and_portfolio_contract(tmp_path):
+    full_path = tmp_path / "full.sqlite3"
+    ids = seed_database(full_path)
+    engine = create_engine(f"sqlite:///{full_path}")
+    try:
+        with Session(engine) as seeded:
+            client = seeded.get(Client, ids["meridian_client"])
+            cards = web_router._engagement_cards_for_client(seeded, client.id)
+            assert [(card["name"], card["stage_label"]) for card in cards] == [
+                ("FY2026 DPDPA and ISO 27001 programme", "In review"),
+                ("FY2025 ISO 27001 surveillance audit", "Report released"),
+                ("Vendor risk review", "Scoping"),
+            ]
+
+            retention_view = retention.client_retention_view(seeded, client)
+            assert [row.name for row in retention_view.archived] == [
+                "FY2023 DPDPA readiness review",
+                "FY2022 ISO 27001 gap assessment",
+            ]
+            assert [row.engagement_name for row in retention_view.purges] == [
+                "FY2021 DPDPA programme",
+                "FY2020 ISO 27001 audit",
+            ]
+
+            clients, engagements, assessments = web_router._portfolio_data(seeded)
+            by_id = {row.id: row for row in clients}
+            attention = web_router._home_attention_rows(seeded, engagements, assessments, by_id)
+            assert [row["title"] for row in attention] == [
+                "Approve 3 conclusions",
+                "Sign off board report",
+                "Waiting on client evidence",
+            ]
+            assert all(row["title"] != "Generate board report" for row in attention)
+            assert attention[-1]["action_label"] == "View"
+            home_rows = web_router._home_engagement_rows(seeded, engagements, assessments, by_id)
+            assert [(row["client_name"], row["high_findings"]) for row in home_rows] == [
+                ("Meridian Ledger Technologies", 3),
+                ("Loomwire Labs Inc.", 1),
+                ("Orchard Lane Retail", 0),
+            ]
+    finally:
+        engine.dispose()
+
+    empty_path = tmp_path / "client-empty.sqlite3"
+    empty_ids = seed_database(empty_path, client_empty=True)
+    empty_engine = create_engine(f"sqlite:///{empty_path}")
+    try:
+        with Session(empty_engine) as seeded:
+            assert seeded.get(Client, empty_ids["meridian_client"]).name == "Meridian Ledger Technologies"
+            assert seeded.query(Engagement).count() == 0
+    finally:
+        empty_engine.dispose()
 
 
 def test_login_redirect_is_preserved_and_preview_keeps_ids(http):

@@ -28,6 +28,7 @@ from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.engagement import Engagement
 from app.models.firm_settings import FirmSettings
 from app.models.report import GapReport
+from app.models.report_snapshot import ReportSnapshot
 from app.models.magic_link import MagicLink
 from app.services import approved_report, magic_links
 from app.services.question_engine import build_adaptive_questionnaire
@@ -189,7 +190,7 @@ def _seed_purge_event(
         )
 
 
-def seed_database(path: Path, *, empty: bool = False) -> dict[str, str]:
+def seed_database(path: Path, *, empty: bool = False, client_empty: bool = False) -> dict[str, str]:
     """Create a fresh S3 database and return stable route ids for the harness."""
     if path.exists():
         raise SystemExit(f"Refusing to overwrite {path}; choose a new throwaway path.")
@@ -211,6 +212,19 @@ def seed_database(path: Path, *, empty: bool = False) -> dict[str, str]:
         if empty:
             db.commit()
             return {}
+
+        if client_empty:
+            meridian = Client(
+                id="client-meridian",
+                name="Meridian Ledger Technologies",
+                industry="fintech",
+                size="sme",
+                created_at=_at(9, 1),
+                updated_at=_at(9, 24),
+            )
+            db.add(meridian)
+            db.commit()
+            return {"meridian_client": meridian.id}
 
         meridian = Client(id="client-meridian", name="Meridian Ledger Technologies", industry="fintech", size="sme", created_at=_at(9, 1), updated_at=_at(9, 24))
         loomwire = Client(id="client-loomwire", name="Loomwire Labs Inc.", industry="it_services", size="startup", created_at=_at(9, 2), updated_at=_at(9, 29))
@@ -238,10 +252,22 @@ def seed_database(path: Path, *, empty: bool = False) -> dict[str, str]:
 
         surveillance = _seed_assessment(db, assessment_id="assessment-meridian-surveillance", client=meridian, engagement=meridian_surveillance, framework_ids=("iso27001",), status="completed", created_at=_at(3, 10), updated_at=_at(3, 14), conclusion_count=1, conclusion_prefix="conclusion-surveillance", decision="approved", releaseable=True)
         db.add(GapReport(id="report-surveillance", assessment_id=surveillance.id, overall_score=0.0, chapter_scores="{}", framework_scores="{}", executive_summary="Seeded released report", raw_ai_response="{}", generated_at=_at(3, 14)))
+        db.add(
+            ReportSnapshot(
+                id="snapshot-surveillance-board",
+                assessment_id=surveillance.id,
+                type="board_report",
+                format="pdf",
+                storage_path="seeded/surveillance-board-report.pdf",
+                generated_at=_at(3, 14),
+                is_issued=True,
+            )
+        )
 
-        _seed_assessment(db, assessment_id="assessment-meridian-vendor-1", client=meridian, engagement=meridian_vendor, framework_ids=("dpdpa",), status="created", created_at=_at(9, 1), updated_at=_at(9, 2))
-        _seed_assessment(db, assessment_id="assessment-meridian-vendor-2", client=meridian, engagement=meridian_vendor, framework_ids=("dpdpa",), status="scoped", created_at=_at(9, 1), updated_at=_at(9, 2))
-        loom_assessment = _seed_assessment(db, assessment_id="assessment-loomwire-nist", client=loomwire, engagement=loomwire_engagement, framework_ids=("nist_csf",), status="completed", created_at=_at(9, 25), updated_at=_at(9, 29), conclusion_count=1, conclusion_prefix="conclusion-loomwire", decision="approved")
+        _seed_assessment(db, assessment_id="assessment-meridian-vendor-1", client=meridian, engagement=meridian_vendor, framework_ids=("dpdpa",), status="created", created_at=_at(9, 1), updated_at=_at(9, 1))
+        vendor_scoped = _seed_assessment(db, assessment_id="assessment-meridian-vendor-2", client=meridian, engagement=meridian_vendor, framework_ids=("dpdpa",), status="scoped", created_at=_at(9, 1), updated_at=_at(9, 2))
+        vendor_scoped.scope_answers = None
+        loom_assessment = _seed_assessment(db, assessment_id="assessment-loomwire-nist", client=loomwire, engagement=loomwire_engagement, framework_ids=("nist_csf",), status="completed", created_at=_at(9, 25), updated_at=_at(9, 29), conclusion_count=1, conclusion_prefix="conclusion-loomwire", decision="approved", risk_level="high")
         _seed_assessment(db, assessment_id="assessment-orchard-pci", client=orchard, engagement=orchard_engagement, framework_ids=("pci_dss",), status="created", created_at=_at(9, 18), updated_at=_at(9, 18))
         _seed_assessment(db, assessment_id="assessment-kestrel-closed", client=kestrel, engagement=kestrel_closed, framework_ids=("hipaa",), status="completed", created_at=_at(9, 2), updated_at=_at(9, 2))
         _seed_assessment(db, assessment_id="assessment-brightfold-closed", client=brightfold, engagement=brightfold_closed, framework_ids=("dpdpa",), status="completed", created_at=_at(8, 11), updated_at=_at(8, 11))
@@ -285,9 +311,15 @@ def seed_database(path: Path, *, empty: bool = False) -> dict[str, str]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", type=Path, default=DEFAULT_DB, help="new SQLite path")
-    parser.add_argument("--empty", action="store_true", help="seed only firm settings")
+    fixture = parser.add_mutually_exclusive_group()
+    fixture.add_argument("--empty", action="store_true", help="seed only firm settings")
+    fixture.add_argument(
+        "--client-empty",
+        action="store_true",
+        help="seed a Meridian-like client with no engagements",
+    )
     args = parser.parse_args()
-    ids = seed_database(args.db, empty=args.empty)
+    ids = seed_database(args.db, empty=args.empty, client_empty=args.client_empty)
     print(json.dumps({"db": str(args.db), "frozen_now": FROZEN_NOW.isoformat(), "ids": ids}, indent=2))
 
 

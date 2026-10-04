@@ -15,7 +15,7 @@ from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(tags=["settings"])
 
-SAVED_MESSAGE = "Settings saved"
+SAVED_MESSAGE = "Branding saved"
 UNCHANGED_MESSAGE = "Nothing changed"
 
 

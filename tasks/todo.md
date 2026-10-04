@@ -9,6 +9,10 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
 - [x] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S3 visual repair from gate measurements: source/layout/seed corrections implemented and test-verified; rerun `domcmp.py`/`gate2.py` for every case when the orchestrator's server/Chromium environment is available.
+  - [x] Align picker DOM, client-detail fixtures/order/stage, and the one-pixel detail height.
+  - [x] Align Home attention/engagement seed data, row wrapping, and link copy.
+  - [x] Align Settings unmigrated copy, accent label colour, and saved banner geometry.
+  - [x] Run focused regressions and the full suite; record evidence in the S3 Results.
 - [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
 - Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 

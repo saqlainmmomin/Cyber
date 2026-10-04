@@ -23,20 +23,20 @@
     {% endfor %}</tbody>
   </table></div>
 {% else %}
-  {{ empty_state("No engagements yet", "Start one to scope frameworks and collect evidence.", "New engagement", "/engagements/new?client_id=" ~ client.id, "briefcase") }}
+  {{ empty_state("No engagements yet", "Start one to scope frameworks and collect evidence.", "New engagement", "/engagements/new?client_id=" ~ client.id, "briefcase", action_icon_id="plus", action_lead=true) }}
 {% endif %}
 
 {% if view_state != "loading" %}
 <section class="sec"><h2>Archived engagements</h2></section>
 {% if retention_view.archived %}
-  <div class="solid card"><ul class="line-list">{% for row in retention_view.archived %}<li data-archived-engagement id="archived-{{ row.engagement_id }}"><span class="ico">{{ icon("archive") }}</span><span class="txt"><b>{{ row.name }}</b><span class="sub">Archived {{ row.archived_at.strftime('%-d %b %Y') }} · {% if row.elapsed %}Eligible for purge now{% else %}Eligible for purge from {{ row.eligible_at.strftime('%-d %b %Y') }}{% endif %}</span></span><a class="btn ghost sm" href="/engagements/{{ row.engagement_id }}">Open</a></li>{% endfor %}</ul></div>
+  <div class="solid card"><ul class="line-list">{% for row in retention_view.archived %}<li data-archived-engagement id="archived-{{ row.engagement_id }}"><span class="ico">{{ icon("archive") }}</span><div class="txt"><b>{{ row.name }}</b><span class="sub">Archived {{ row.archived_at.strftime('%-d %b %Y') }} · {% if row.elapsed %}Eligible for purge now{% else %}Eligible for purge from {{ row.eligible_at.strftime('%-d %b %Y') }}{% endif %}</span></div><a class="btn ghost sm" href="/engagements/{{ row.engagement_id }}">Open</a></li>{% endfor %}</ul></div>
 {% else %}
   <div class="glass card"><p class="muted">No archived engagements.</p></div>
 {% endif %}
 
 <section class="sec"><h2>Purge history</h2></section>
 {% if retention_view.purges %}
-  <div class="solid card"><ul class="line-list">{% for row in retention_view.purges %}<li data-purge-record><span class="txt"><b>{{ row.engagement_name }}</b><span class="sub">Purged {{ row.purged_at.strftime('%-d %b %Y') }} by {{ row.purged_by_display }} · {% if row.blobs_removed %}Files removed{% else %}Files pending removal{% endif %}</span></span>{% if not row.blobs_removed %}<form data-purge-complete-control hx-post="/api/engagements/{{ row.engagement_id }}/purge/complete" hx-include="#reviewer-name"><input id="reviewer-name" name="reviewer_name" value="" class="sr-only" aria-label="Reviewer name"><button type="submit" class="btn secondary sm">Finish removing files</button></form>{% endif %}</li>{% endfor %}</ul></div>
+  <div class="solid card"><ul class="line-list">{% for row in retention_view.purges %}<li data-purge-record><div class="txt"><b>{{ row.engagement_name }}</b><span class="sub">Purged {{ row.purged_at.strftime('%-d %b %Y') }} by {{ row.purged_by_display }} · {% if row.blobs_removed %}Files removed{% else %}Files pending removal{% endif %}</span></div>{% if not row.blobs_removed %}<form data-purge-complete-control hx-post="/api/engagements/{{ row.engagement_id }}/purge/complete" hx-include="#reviewer-name"><input id="reviewer-name" name="reviewer_name" value="" class="sr-only" aria-label="Reviewer name"><button type="submit" class="btn secondary sm">Finish removing files</button></form>{% endif %}</li>{% endfor %}</ul></div>
 {% else %}
   <div class="glass card"><p class="muted">No engagements have been purged.</p></div>
 {% endif %}

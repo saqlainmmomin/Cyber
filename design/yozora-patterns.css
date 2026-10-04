@@ -36,7 +36,7 @@
 .swatches input:checked + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-text)}
 .swatches input:checked + i svg{opacity:1}
 .swatches input:focus-visible + i{box-shadow:0 0 0 2px var(--focus-gap),0 0 0 4px var(--accent-ring)}
-.swatches input:checked ~ span{color:var(--text)}
+.swatches.selected-strong input:checked ~ span{color:var(--text)}
 .drop{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-4);border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line-control)}
 .drop .tile{width:48px;height:48px;border-radius:var(--r-md);display:grid;place-items:center;flex:none;font-weight:600;color:var(--on-accent);background:var(--accent)}
 .drop .txt{flex:1;min-width:0}

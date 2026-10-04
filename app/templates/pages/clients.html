@@ -12,12 +12,14 @@
   {{ alert("Clients did not load", "Check your connection, then try again.", "noncompliant") }}
   <div style="margin-top:var(--s-4)">{{ button("Try again", "primary") }}</div>
 {% elif view_state == "empty" %}
-  {{ empty_state("No clients yet", "Clients are added when you start an engagement.", "New engagement", "/engagements/new", "building") }}
+  {{ empty_state("No clients yet", "Clients are added when you start an engagement.", "New engagement", "/engagements/new", "building", action_icon_id="plus", action_lead=true) }}
 {% else %}
-  <form class="tools keep-row" method="get" action="/clients">
-    <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search clients" aria-label="Search clients"></label>
-    {% if view_state != "noresults" %}<label class="field sel"><select name="industry" aria-label="Industry"><option value="">All industries</option>{% for option in industries %}<option value="{{ option }}"{% if option == industry %} selected{% endif %}>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label>{% endif %}
-  </form>
+  {% if view_state != "picker" %}
+    <form class="tools keep-row" method="get" action="/clients">
+      <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search clients" aria-label="Search clients"></label>
+      {% if view_state != "noresults" %}<label class="field sel"><select name="industry" aria-label="Industry"><option value="">All industries</option>{% for option in industries %}<option value="{{ option }}"{% if option == industry %} selected{% endif %}>{{ industry_labels.get(option, option) }}</option>{% endfor %}</select></label>{% endif %}
+    </form>
+  {% endif %}
   {% if view_state == "noresults" %}
     <div class="glass empty">{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No clients match &quot;{{ search }}&quot;</h3><p>Check the spelling or clear the search.</p>{{ button("Clear search", "secondary") }}</div>
   {% else %}
@@ -31,10 +33,11 @@
 {% endif %}
 
 {% if view_state == "picker" %}
-<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-engagement-title">
-  <h2 id="new-engagement-title">New engagement</h2>
-  <div style="margin-top:var(--s-4)"><div class="seg"><button type="button" aria-pressed="true">Existing client</button><button type="button" aria-pressed="false">New client</button></div></div>
-  <div style="margin-top:var(--s-4)"><label class="label" for="client-picker">Client</label><label class="field"><select id="client-picker" name="client_id"><option>Select a client</option>{% for client in clients %}<option{% if loop.first %} selected{% endif %} value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label></div>
+<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pt">
+  <h2 id="pt">New engagement</h2>
+  <div style="margin-top:var(--s-4)"><div class="seg" id="pickmode"><button type="button" aria-pressed="true" data-m="existing">Existing client</button><button type="button" aria-pressed="false" data-m="new">New client</button></div></div>
+  <div id="pk-existing" style="margin-top:var(--s-4)"><label class="label" for="client_id">Client</label><label class="field"><select id="client_id" name="client_id"><option>Select a client</option>{% for client in clients %}<option{% if loop.first %} selected{% endif %} value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select></label></div>
+  <div id="pk-new" hidden style="margin-top:var(--s-4)"><label class="label" for="company_name">Company name</label><label class="field"><input id="company_name" placeholder="Harbour and Finch Logistics"></label><div class="form-grid" style="margin-top:var(--s-4)"><div><label class="label" for="industry">Industry</label><label class="field"><select id="industry"><option>Select industry</option><option>IT services</option><option>Fintech</option><option>Healthcare</option><option>E-commerce</option><option>Manufacturing</option><option>Education</option><option>Real estate</option><option>Legal</option><option>Accounting</option><option>Other</option></select></label></div><div><label class="label" for="company_size">Company size</label><label class="field"><select id="company_size"><option>Select size</option><option>Startup (under 50 employees)</option><option>SME (50 to 500)</option><option>Large (500 to 5,000)</option><option>Enterprise (5,000 and over)</option></select></label></div></div></div>
   <div class="foot"><a class="btn ghost" href="/clients">Cancel</a><a class="btn primary" href="/engagements/new">Continue</a></div>
 </div></div>
 {% endif %}

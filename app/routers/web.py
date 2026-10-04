@@ -176,12 +176,14 @@ def _display_stage(db: Session, assessment_rows: list[Assessment], fallback: str
     if assessment_rows:
         latest = max(assessment_rows, key=lambda row: row.updated_at)
         current = assessment_stage.stage(db, latest)
+        if current.stage == "scope":
+            return "Scoping"
         if current.stage == "review":
             return "In review"
         if current.stage == "report":
             if current.next_label == assessment_stage.RELEASE_REPORT:
                 return "Report draft"
-            if current.next_label == assessment_stage.GENERATE_BOARD_REPORT:
+            if current.next_label in {assessment_stage.GENERATE_BOARD_REPORT, None}:
                 return "Report released"
             return "Report"
         if current.stage == "evidence":
@@ -303,7 +305,7 @@ def _home_attention_rows(
                     {
                         "title": "Waiting on client evidence",
                         "body": f"{client.name} · {summary.received} of {summary.items} files received{expiry}",
-                        "action_label": "View link",
+                        "action_label": "View",
                         "href": f"/engagements/{engagement.id}",
                         "icon_id": "link",
                         "action_icon_id": "link",

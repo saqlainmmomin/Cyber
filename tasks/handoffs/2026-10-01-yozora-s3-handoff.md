@@ -192,13 +192,13 @@ Do not invent. Do not touch `validation/companies/*/answer_key.json`. No attribu
 
 ### Deterministic seed and state production
 
-`design/harness/seed_s3.py --db PATH` creates a fresh SQLite database with frozen time `2026-10-03T12:00:00+00:00`. It refuses to overwrite an existing path; `--empty` creates the empty-client fixture. The full fixture stores the approved mockup data: Meridian Ledger Technologies (Fintech, SME), Loomwire Labs Inc. (IT services, Startup), Orchard Lane Retail (E-commerce, Large), Kestrel Health Partners (Healthcare, Large), and Brightfold Learning (Education, SME), with the mockup activity dates and settings firm Northgate Advisory. It also stores the archived/purge history, client evidence link, and three unmigrated assessments used by Settings.
+`design/harness/seed_s3.py --db PATH` creates a fresh SQLite database with frozen time `2026-10-03T12:00:00+00:00`. It refuses to overwrite an existing path; `--empty` creates the empty-client fixture and `--client-empty` creates the Meridian-only, zero-engagement client-detail fixture. The full fixture stores the approved mockup data: Meridian Ledger Technologies (Fintech, SME), Loomwire Labs Inc. (IT services, Startup), Orchard Lane Retail (E-commerce, Large), Kestrel Health Partners (Healthcare, Large), and Brightfold Learning (Education, SME), with the mockup activity dates and settings firm Northgate Advisory. It also stores the archived/purge history, client evidence link, and three unmigrated assessments used by Settings.
 
 | Screen | States and how they are produced |
 |---|---|
 | Home | Full DB at app port 8792: `/` default and `/?state=clear|loading|error`; empty DB at port 8793: `/`. |
 | Clients | Full DB at port 8792: `/clients`, `/clients?search=Harbour`, and `?state=loading|error|picker`; empty DB at port 8793: `/clients`. |
-| Client detail | Full DB at port 8792: Meridian's seeded client id for default/loading; empty DB at port 8793: Kestrel Health Partners' seeded client id for empty. |
+| Client detail | Full DB at port 8792: Meridian's seeded client id for default/loading; `--client-empty` DB at port 8793: Meridian's seeded client id for empty. |
 | Settings | Full DB at port 8792: `/settings`, `?state=contrast`, `?state=saved`, and `?state=nodata`; the state query only selects the mockup state, while the stored Northgate fixture supplies the visible values. |
 | Sign-in | Full DB at port 8792: `/design/pages/login?state=default|error|loading`; `/login` redirect behavior is unchanged. Mockups are served at port 8791. |
 
@@ -220,6 +220,17 @@ Attempted in this environment, but no gate percentages were obtained. The mockup
 - Full suite with `OPENROUTER_KEY=""`: `1385 passed, 30 skipped, 335 warnings in 198.84s (0:03:18)`.
 - `design/tokens_tool.py check`: generated design files match `tokens.json`.
 - `python -m compileall` passed for app, tests, and the seed script.
+
+### Visual-gate repair follow-up (2026-10-04)
+
+- Clients picker now matches the picker mockup's table-only DOM, without the default search/industry toolbar. The picker dialog markup was aligned while preserving the required S3 ids and HTMX/data attributes elsewhere.
+- Added `--client-empty` to `design/harness/seed_s3.py` for Meridian Ledger Technologies with zero engagements. Client-detail retention lists now sort archived and purged records newest first; the seeded Vendor risk review derives `Scoping`; the empty action uses the mockup's leading plus icon. Archived/purge text wrappers now match the mockup's block layout, covering the measured 1px detail-height difference.
+- Home seed/service output now produces the mockup attention rows and engagement counts (Meridian 3, Loomwire 1, Orchard 0), removes the extra board-report action through a seeded issued snapshot, uses `View` for the evidence action, and retains the expected stage/report copy.
+- Settings now renders the migration script as one plain-text run, keeps the default Midnight label muted while strengthening the saved/contrast state, and matches the saved branding toast's icon/fit-content treatment. The saved message is `Branding saved`.
+- Focused regression suite: `OPENROUTER_KEY="" .venv/bin/python -m pytest -q tests/test_yozora_s3.py tests/test_yozora_firm_settings.py` → `32 passed, 14 warnings`.
+- Seed smoke: `design/harness/seed_s3.py --db PATH --client-empty` completed and emitted `client-meridian` with no engagements. The retention file-set guard and `git diff --check` passed.
+- Full suite: `OPENROUTER_KEY="" .venv/bin/python -m pytest -q` → `1388 passed, 30 skipped, 337 warnings in 188.67s (0:03:08)`.
+- The orchestrator must still rerun `domcmp.py`/`gate2.py`; this sandbox cannot run Chromium, so the supplied measurements remain the visual ground truth. Changes are intentionally uncommitted.
 
 ### Open questions
 

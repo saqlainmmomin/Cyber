@@ -65,9 +65,9 @@
 <label class="choice"><input type="checkbox" class="switch"{% if name %} name="{{ name }}"{% endif %}{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</label>
 {%- endmacro %}
 
-{% macro empty_state(title, body, action_label="", action_href="", icon_id="folder", tall=false, style="") -%}
+{% macro empty_state(title, body, action_label="", action_href="", icon_id="folder", tall=false, style="", action_icon_id="", action_lead=false) -%}
 {% set classes = "glass empty" %}{% if tall %}{% set classes = classes ~ " tall" %}{% endif %}
-<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id, "", "width:24px;height:24px;color:var(--muted)") }}<h3>{{ title }}</h3><p>{{ body }}</p>{% if action_label %}{{ link_button(action_label, action_href, "primary") }}{% endif %}</div>
+<div class="{{ classes }}"{% if style %} style="{{ style }}"{% endif %}>{{ icon(icon_id, "", "width:24px;height:24px;color:var(--muted)") }}<h3>{{ title }}</h3><p>{{ body }}</p>{% if action_label %}{{ link_button(action_label, action_href, "primary", "", action_icon_id, action_lead) }}{% endif %}</div>
 {%- endmacro %}
 
 {% macro skeleton(width="100%", shape="line", margin_top="") -%}
