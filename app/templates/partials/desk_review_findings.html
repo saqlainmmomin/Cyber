@@ -3,9 +3,17 @@
   <div class="glass card between">
     <div class="hrow">
       <span class="ico accent">{{ icon("circle-check") }}</span>
-      <div><h2>Desk review complete</h2><p class="sub">{{ total_findings }} findings across {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}: {{ evidence | length }} evidence items, {{ absences | length }} gaps, {{ signals | length }} red flags.</p></div>
+      <div>
+        {% if questionnaire_surface %}
+        <h2>Pre-filled from {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}</h2>
+        <p class="sub">{% if prefill_freshness.last_prefill_at %}{{ prefill_freshness.last_prefill_at.strftime("%-d %b %Y") }} · {% endif %}{{ questionnaire_stats.awaiting_confirmation if questionnaire_stats else 0 }} answers wait for confirmation · {{ absences | length }} missing provisions · {{ signals | length }} red flag{{ 's' if signals | length != 1 else '' }}</p>
+        {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
+        {% else %}
+        <h2>Desk review complete</h2><p class="sub">{{ total_findings }} findings across {{ catalog | length }} document{{ 's' if catalog | length != 1 else '' }}: {{ evidence | length }} evidence items, {{ absences | length }} gaps, {{ signals | length }} red flags.</p>{% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}<p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since then.</p>{% endif %}
+        {% endif %}
+      </div>
     </div>
-    <a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>
+    {% if questionnaire_surface %}<div class="hrow"><a class="btn ghost" href="/assessments/{{ assessment_id }}/desk-review-status">What the documents show</a><a class="btn secondary" href="/assessments/{{ assessment_id }}?tab=questionnaire&state=prefilling">Pre-fill again</a></div>{% else %}<a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>{% endif %}
   </div>
 
   {% if failed_framework_names %}
@@ -16,12 +24,13 @@
 
   {% if signals %}
   <div>
-    <div class="sec"><h2>Red flags <span class="muted">{{ signals | length }}</span></h2></div>
+    <div class="sec"><h2>Red flags ({{ signals | length }})</h2></div>
     <div class="solid">
       {% for flag in signals %}
       <div class="review-row">
         <div class="between"><span class="t-title">{{ flag.content }}</span>{{ pill(flag.severity | title, flag.severity if flag.severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}</div>
         {% if flag.source_quote %}<blockquote>{{ flag.source_quote[:240] }}{% if flag.source_quote | length > 240 %}…{% endif %}</blockquote>{% endif %}
+        {% if flag.source_location %}<span class="t-sub">{{ flag.source_location }}</span>{% endif %}
         {% if flag.requirement_ids %}<span class="t-sub">Related: {{ flag.requirement_ids | join(", ") }}</span>{% endif %}
       </div>
       {% endfor %}
@@ -33,7 +42,7 @@
   <div>
     <div class="sec"><h2>Missing provisions <span class="muted">{{ absences | length }}</span></h2></div>
     <div class="solid table-scroll"><table><thead><tr><th>Requirement</th><th>What is missing</th><th>Severity</th></tr></thead><tbody>
-      {% for absence in absences %}<tr><td><div class="t-title">{{ absence.requirement_id }}</div></td><td>{{ absence.content }}</td><td>{{ pill(absence.severity | title, absence.severity if absence.severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}</td></tr>{% endfor %}
+      {% for absence in absences %}<tr><td><div class="t-title">{{ absence.requirement_id }}</div></td><td>{{ absence.content }}{% if absence.source_location %}<span class="t-sub">{{ absence.source_location }}</span>{% endif %}</td><td>{{ pill(absence.severity | title, absence.severity if absence.severity in ('critical', 'high', 'medium', 'low') else 'neutral') }}</td></tr>{% endfor %}
     </tbody></table></div>
   </div>
   {% endif %}
@@ -48,17 +57,18 @@
       <div><span class="dot c-{{ coverage_labels[level][1] }}"></span><span>{{ coverage_labels[level][0] }}</span><b>{{ count }}</b></div>
       {% endfor %}
     </div></div>
+    <div class="solid table-scroll" style="margin-top:var(--s-3)"><table><thead><tr><th>Requirement</th><th>Coverage</th></tr></thead><tbody>{% for requirement_id, level in coverage.items() %}<tr><td class="t-title">{{ requirement_id }}</td><td>{{ level | replace("_", " ") | title }}</td></tr>{% endfor %}</tbody></table></div>
   </div>
   {% endif %}
 
   {% if evidence %}
   <details class="glass card disclose"><summary>Evidence found <span class="muted">{{ evidence | length }} items</span></summary>
-    <div class="stack" style="margin-top:var(--s-4)">{% for item in evidence %}<div class="cite"><div class="cite-head">{{ icon("folder") }}<span>{{ item.requirement_id }}</span></div><blockquote>{{ item.source_quote or item.content }}</blockquote></div>{% endfor %}</div>
+    <div class="stack" style="margin-top:var(--s-4)">{% for item in evidence %}<div class="cite"><div class="cite-head">{{ icon("folder") }}<span>{{ item.requirement_id }}</span>{% if item.source_location %}<span class="pg">{{ item.source_location }}</span>{% endif %}</div><blockquote>{{ item.source_quote or item.content }}</blockquote></div>{% endfor %}</div>
   </details>
   {% endif %}
 
   <div class="action-row"><button class="btn ghost sm lead" type="button"
-      hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+      hx-post="/assessments/{{ assessment_id }}/run-desk-review{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
       hx-target="#desk-review-area"
       hx-swap="innerHTML"
       hx-confirm="Re-run desk review? This will replace the current findings.">{{ icon("chev-r") }}Re-run desk review</button></div>

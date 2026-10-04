@@ -5,9 +5,13 @@ from __future__ import annotations
 import re
 
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
+    _register_frameworks,
     db,
+    db_path,
+    engine,
     http,
     seed_engagement,
+    upload_root,
 )
 
 
@@ -53,6 +57,23 @@ def test_assessment_overview_has_five_tabs_and_real_stepper(db, http):
     assert 'id="desk-review-area"' not in page.text
 
 
+def test_engagement_linked_overview_renders_context_block(db, http):
+    _client, engagement, assessment = seed_engagement(
+        db,
+        client_name="Meridian Ledger Technologies",
+        name="FY2026 privacy readiness",
+    )
+    assessment.scope_answers = "{}"
+    db.commit()
+
+    page = http.get(f"/assessments/{assessment.id}?tab=overview")
+
+    assert page.status_code == 200
+    assert "Retention" in page.text
+    assert "Client evidence links" in page.text
+    assert f"/engagements/{engagement.id}/aws-evidence" in page.text
+
+
 def test_documents_url_keeps_legacy_content_without_documents_tab(db, http):
     _client, _engagement, assessment = seed_engagement(db)
 
@@ -72,7 +93,7 @@ def test_questionnaire_owns_desk_review_target_and_live_htmx_request(db, http):
 
     assert page.status_code == 200
     assert re.search(
-        rf'<[^>]+id="desk-review-area"[^>]+hx-get="/assessments/{assessment.id}/desk-review-status"',
+        rf'<[^>]+id="desk-review-area"[^>]+hx-get="/assessments/{assessment.id}/desk-review-status\?surface=questionnaire"',
         page.text,
     )
     assert 'class="stp' not in page.text

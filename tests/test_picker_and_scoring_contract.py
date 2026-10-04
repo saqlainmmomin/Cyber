@@ -172,14 +172,14 @@ def test_picker_disables_roadmap_frameworks_and_submit(client):
 def test_assessment_page_renders_framework_tabs_only_when_multi(client, db_session):
     multi = _assessment(db_session, ["dpdpa", "iso27001"])
     solo = _assessment(db_session, ["dpdpa"])
-    assert 'class="framework-tabs' in client.get(f"/assessments/{multi.id}").text
-    assert "hx-get=" in client.get(f"/assessments/{multi.id}").text
-    reloaded = client.get(f"/assessments/{multi.id}?tab=questionnaire&framework=iso27001")
-    assert f'hx-push-url="/assessments/{multi.id}?tab=questionnaire&amp;framework=iso27001"' in reloaded.text
+    assert 'class="framework-tabs' in client.get(f"/assessments/{multi.id}?tab=overview").text
+    assert "hx-get=" in client.get(f"/assessments/{multi.id}?tab=overview").text
+    reloaded = client.get(f"/assessments/{multi.id}?tab=overview&framework=iso27001")
+    assert f'hx-push-url="/assessments/{multi.id}?tab=overview&amp;framework=iso27001"' in reloaded.text
     assert 'aria-selected="true"' in reloaded.text
     assert "ISO 27001" in reloaded.text
-    assert f'href="/assessments/{multi.id}?tab=report&amp;framework=iso27001"' in reloaded.text
-    assert 'class="framework-tabs' not in client.get(f"/assessments/{solo.id}").text
+    assert f'href="/assessments/{multi.id}/report?framework=iso27001"' in reloaded.text
+    assert 'class="framework-tabs' not in client.get(f"/assessments/{solo.id}?tab=overview").text
 
 
 def test_assessment_model_rejects_explicit_empty_framework_list():

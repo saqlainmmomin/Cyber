@@ -1,10 +1,10 @@
 <div class="stack-l" data-section-questionnaire>
   <header class="section-header" data-section-header>
     <div>
-      <p class="eyebrow">{{ chapter_title }}</p>
+      <p class="meta">{{ chapter_title }}</p>
       <h3>{{ section_title }}</h3>
     </div>
-    <span class="chip chip-muted" data-progress-counter>0 of 0 answered</span>
+    <span class="chip" data-progress-counter>0 of 0 answered</span>
   </header>
 
   <div class="alert alert-error" data-validation-summary aria-live="polite"></div>
@@ -42,7 +42,7 @@
                 <div class="stack-s">
                   {% for ev in q.desk_review_evidence %}
                     <div class="evidence-note">
-                      <p>{{ ev.content }}</p>
+                      <p>{{ ev.content }}{% if ev.source_location %} <span class="meta">({{ ev.source_location }})</span>{% endif %}</p>
                       {% if ev.source_quote %}<p class="quote">“{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}…”{% endif %}</p>{% endif %}
                     </div>
                   {% endfor %}
@@ -56,6 +56,7 @@
                    data-question-index="{{ loop.index }}"{% if question_status == 'pre_filled' %} data-pre-filled="true"{% endif %}>
             <div class="split-row question-heading">
               <div>
+                <span class="meta question-code">{{ q.id }}</span>
                 <p class="question-copy">{{ q.question }}</p>
                 {% if q.guidance %}<p class="meta">{{ q.guidance }}</p>{% endif %}
               </div>
@@ -65,9 +66,9 @@
                 {% elif q.get('tier') == 'deep' %}
                   <span class="chip chip-warning">Deep review</span>
                 {% elif q.get('source') == 'industry' %}
-                  <span class="chip chip-muted">Industry</span>
+                  <span class="chip">Industry</span>
                 {% endif %}
-                {% if q.criticality %}<span class="chip chip-muted">{{ q.criticality | title }}</span>{% endif %}
+                {% if q.criticality %}<span class="chip">{{ q.criticality | title }}</span>{% endif %}
               </div>
             </div>
 
@@ -81,7 +82,7 @@
                     <div class="stack-s">
                       {% for ev in q.desk_review_evidence %}
                         <div class="evidence-note">
-                          <p>{{ ev.content }}</p>
+                          <p>{{ ev.content }}{% if ev.source_location %} <span class="meta">({{ ev.source_location }})</span>{% endif %}</p>
                           {% if ev.source_quote %}<p class="quote">“{{ ev.source_quote[:200] }}{% if ev.source_quote|length > 200 %}…”{% endif %}</p>{% endif %}
                         </div>
                       {% endfor %}
@@ -96,8 +97,7 @@
             <div class="choice-grid">
               {% for opt in options %}
                 <label class="choice">
-                  <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"
-                         {% if answer == opt %}checked{% elif not answer and prefill_answer == opt %}checked{% endif %}
+                  <input type="radio" name="answer_{{ q.id }}" value="{{ opt }}"{% if answer == opt or (not answer and prefill_answer == opt) %} checked{% endif %}
                          {% if opt in ('not_implemented', 'planned', 'partially_implemented') or q.get('follow_up_enabled') %}
                          hx-post="/assessments/{{ assessment_id }}/questionnaire/followup"
                          hx-target="#followup-{{ q.id }}" hx-swap="innerHTML"
@@ -109,7 +109,7 @@
               {% endfor %}
             </div>
 
-            <div id="followup-indicator-{{ q.id }}" class="htmx-indicator meta" aria-live="polite">Analyzing response…</div>
+            <div id="followup-indicator-{{ q.id }}" class="htmx-indicator meta" aria-live="polite">Reading your answer…</div>
             <div id="followup-{{ q.id }}"></div>
 
             <details class="evidence-details">
@@ -127,7 +127,7 @@
 
     <div class="split-row section-actions">
       <span class="meta" data-save-indicator aria-live="polite"></span>
-      <button class="btn primary lead" type="submit">
+      <button class="btn {{ 'secondary' if prefill_available else 'primary' }} lead" type="submit">
         Save section
         <span class="htmx-indicator" aria-hidden="true">{% if icon is defined %}{{ icon('loader') }}{% else %}…{% endif %}</span>
       </button>

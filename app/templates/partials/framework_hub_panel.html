@@ -1,0 +1,14 @@
+{% from "components/ui.html" import icon %}
+{% if hub_state == 'loading' %}
+<div class="glass card" role="status" aria-label="Loading framework">
+  <div class="stack-m"><span class="skel" style="width:30%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:55%"></span><span class="skel" style="width:80%"></span></div>
+</div>
+{% elif hub_state == 'error' %}
+<div class="alert c-non" role="alert">{{ icon('alert') }}<div><b>This framework did not load</b>The scores are unchanged. <a href="?tab=overview"><u>Try again</u></a></div></div>
+{% elif hub_state == 'empty' %}
+<div class="glass empty-state"><span class="empty-state-icon">{{ icon('folder') }}</span><h3>No scores yet</h3><p>Set the scope to choose which requirements apply.</p></div>
+{% elif hub_state in ('evidence', 'questionnaire') %}
+<div class="glass empty-state"><span class="empty-state-icon">{{ icon('folder') }}</span><h3>No scores yet</h3><p>Scores appear once the analysis has run and its conclusions are reviewed.</p></div>
+{% else %}
+{% include "partials/framework_panel.html" %}
+{% endif %}

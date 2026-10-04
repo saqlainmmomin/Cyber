@@ -221,8 +221,11 @@ def test_scenario_2_dashboard_has_both_clients_and_hierarchy(db, http, demo):
     assert page_a.text.index(f'href="/assessments/{demo.assessment_ids["validation"]}"') < page_a.text.index(f'href="/assessments/{demo.assessment_ids["baseline"]}"')
     assert "Baseline gap assessment (DPDPA + ISO 27001)" in page_a.text
     assert "Remediation validation (ISO 27001)" in page_a.text
-    page_b = http.get(f"/engagements/{engagement_b.id}")
-    assert "NIST CSF 2.0 baseline gap assessment" in page_b.text
+    page_b_redirect = http.get(f"/engagements/{engagement_b.id}", follow_redirects=False)
+    assert page_b_redirect.status_code == 303
+    assert page_b_redirect.headers["location"] == f"/assessments/{demo.assessment_ids['nist']}?tab=overview"
+    page_b = http.get(page_b_redirect.headers["location"])
+    assert engagement_b.name in page_b.text
     assert "Information security policy" in page_b.text
     assert "Incident response plan" in page_b.text
     assert engagement_a.name in http.get(f"/clients/{client_a.id}").text

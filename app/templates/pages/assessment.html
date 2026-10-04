@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import assessment_tabs, breadcrumb, stepper %}
-{% from "components/ui.html" import chip, icon, link_button, pill %}
+{% from "components/ui.html" import icon, link_button %}
 
 {% block title %}{{ assessment.display_name }}{% endblock %}
 
 {% block content %}
 {% set engagement_context = assessment_engagement_context(request) %}
 {% set engagement = engagement_context.get("engagement") %}
+{% set engagement_id = engagement_context.get("engagement_id") %}
+{% set magic_links = engagement_context.get("magic_links", []) %}
+{% set client_uploads = engagement_context.get("client_uploads", []) %}
+{% set retention = engagement_context.get("retention") %}
 {% set period = engagement_period(engagement) if engagement else none %}
 
 {{ breadcrumb([
@@ -23,16 +27,11 @@
 
 <div class="page-head">
   <div>
-    <h1>{{ assessment.display_name }}</h1>
-    <p class="sub" data-assessment-identity>{{ assessment.name or assessment.display_name }}{% if assessment.name and assessment.description %} · {% endif %}{{ assessment.description or '' }}</p>
+    <h1 data-assessment-identity>{{ assessment.display_name }}</h1>
     <p class="meta-line">
       {{ assessment.company_name }}{% if engagement %} · {{ engagement.name }}{% endif %}
       {% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}
     </p>
-    <div class="hrow" style="margin-top:var(--s-3)">
-      {{ pill(assessment.status | replace("_", " ") | title, "accent" if assessment.status != "archived" else "neutral") }}
-      {% for framework in selected_frameworks %}{{ chip(framework.name ~ (" " ~ framework.version if framework.version else "")) }}{% endfor %}
-    </div>
   </div>
   <div class="acts">
     {% if tab == "overview" and workflow.action_href and not engagement_archived %}
@@ -45,18 +44,27 @@
   </div>
 </div>
 
-{{ assessment_tabs(assessment, "overview" if tab == "overview" else tab) }}
+{{ assessment_tabs(assessment, "overview" if tab == "overview" else tab, active_framework) }}
 
 <div data-assessment-id="{{ assessment.id }}">
 {% if tab == "overview" %}
 <div class="stack mt-lg">
   {{ stepper(stepper_stages) }}
+  {% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'error', 'running') else workflow.hub_state) %}
 
+  {% if assessment.is_multi_framework %}
   <div class="sec"><h2>Frameworks</h2></div>
-  {% if assessment.is_multi_framework %}{% include "partials/framework_tabs.html" %}{% endif %}
+  {% include "partials/framework_tabs.html" %}
+  {% else %}
+  <div data-visual-mask id="framework-panel" role="tabpanel" class="solid">
+    {% set framework = active_framework_definition %}
+    {% set finding_count = active_framework_finding_count %}
+    {% include "partials/framework_hub_panel.html" %}
+  </div>
+  {% endif %}
 
   {% if engagement %}
-  <div data-visual-mask class="stack" style="margin-top:var(--s-8)">
+  <div class="stack" style="margin-top:var(--s-8)">
     <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
     {% include "partials/engagement_retention.html" %}
     {% include "partials/magic_links.html" %}
@@ -64,13 +72,18 @@
   {% endif %}
 </div>
 {% elif tab == "scope" %}
+  {% if preview_state == "saving" %}<div class="alert c-accent" role="status">Saving scope…</div>{% endif %}
   {% include "partials/scope_tab.html" %}
 {% elif tab == "documents" %}
   {% include "partials/documents_tab.html" %}
 {% elif tab == "questionnaire" %}
   {% include "partials/questionnaire_tab.html" %}
 {% elif tab == "report" %}
+  {% if preview_state == "generating" %}
+  <div class="solid card" role="status" aria-busy="true"><h2>Generating board report</h2><p class="sub">This takes a few minutes. You can leave this page.</p><div class="stack-m mt-lg"><span class="skel" style="width:70%"></span><span class="skel" style="width:90%"></span><span class="skel" style="width:55%"></span></div></div>
+  {% else %}
   {% include "partials/report_tab.html" %}
+  {% endif %}
 {% endif %}
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% from "components/ui.html" import icon, link_button %}
+{% from "components/ui.html" import icon %}
 
 {% if context_error %}
 <div class="alert c-non" role="alert">
@@ -7,11 +7,31 @@
 </div>
 {% endif %}
 
+<div id="desk-review-area"
+     class="solid card"
+     hx-get="/assessments/{{ assessment.id }}/desk-review-status?surface=questionnaire"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+  {% if preview_state == 'prefilling' %}
+  {% include "partials/desk_review_prefilling.html" %}
+  {% else %}
+  <div class="between">
+    <div>
+      <h2>Pre-fill from documents</h2>
+      <p class="sub">{{ prefill_freshness.available }} document{{ 's' if prefill_freshness.available != 1 else '' }} are ready to analyse. Answers they support will be filled with quoted passages for you to confirm.</p>
+      {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}
+      <p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since the last pre-fill.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 {% if not context_done %}
 <div class="solid card form-narrow">
   <div class="between">
     <div><h2>Context</h2><p class="sub">Tell us about the organisation's data and risk exposure. This shapes the questionnaire.</p></div>
-    {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} answered</span>{% endif %}
+    {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} questions answered</span>{% endif %}
   </div>
   <div id="context-wizard"
        hx-get="/assessments/{{ assessment.id }}/context/block/0"
@@ -25,23 +45,6 @@
 </div>
 {% else %}
 <div class="stack">
-  <div id="desk-review-area"
-       class="solid card"
-       hx-get="/assessments/{{ assessment.id }}/desk-review-status"
-       hx-trigger="load"
-       hx-swap="innerHTML">
-    <div class="between">
-      <div>
-        <h2>Pre-fill from documents</h2>
-        <p class="sub">{{ prefill_freshness.available }} document{{ 's' if prefill_freshness.available != 1 else '' }} ready to analyse. Answers they support will be filled with quoted passages for you to confirm.</p>
-        {% if prefill_freshness.new_since_last_prefill and prefill_freshness.last_prefill_at %}
-        <p class="sub">{{ prefill_freshness.new_since_last_prefill }} new document{{ 's' if prefill_freshness.new_since_last_prefill != 1 else '' }} since the last pre-fill.</p>
-        {% endif %}
-      </div>
-      {{ link_button("Open status", "/assessments/" ~ assessment.id ~ "/desk-review-status", "secondary", "sm") }}
-    </div>
-  </div>
-
   {% if screening_available %}
   <div class="solid card" id="screening-section">
     <div class="between">
@@ -68,7 +71,7 @@
   <div class="solid card" data-shortcut-scope="questionnaire">
     <div class="between">
       <div><h2>Questionnaire</h2><p class="sub">Complete each section. Pre-filled answers remain waiting for your confirmation until you save.</p></div>
-      {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} answered</span>{% endif %}
+      {% if response_count > 0 %}<span class="status"><span class="st prog"></span>{{ response_count }} questions answered</span>{% endif %}
     </div>
     <div id="questionnaire-content"
          hx-get="/assessments/{{ assessment.id }}/questionnaire/sections"
@@ -83,7 +86,9 @@
 
   <div class="solid card">
     <div id="analysis-area">
-      {% if assessment.status == 'completed' and report %}
+      {% if preview_state == 'running' %}
+        {% include "partials/analysis_running.html" %}
+      {% elif assessment.status == 'completed' and report %}
         {% include "partials/analysis_complete.html" %}
       {% elif assessment.status == 'analyzing' %}
         {% include "partials/analysis_running.html" %}
@@ -92,7 +97,7 @@
       {% else %}
       <div class="between">
         <div><h2>Analysis</h2><p class="sub">Run analysis once the questionnaire is complete. Results appear in the Review tab.</p></div>
-        <button class="btn {{ 'secondary' if prefill_freshness.available else 'primary' }}" type="button"
+        <button class="btn {{ 'primary' if assessment.desk_review_status == 'completed' else 'secondary' }}" type="button"
                 hx-post="/assessments/{{ assessment.id }}/run-analysis"
                 hx-target="#analysis-area"
                 hx-swap="innerHTML">Run analysis</button>

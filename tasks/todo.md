@@ -2,6 +2,15 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## S5 review fixes (2026-10-04)
+
+- [x] Restore S5 fixture imports and add the engagement-linked Overview HTTP smoke test.
+- [x] Move the S5 pattern CSS into `design/yozora-patterns.css`, regenerate static CSS, and verify token sync.
+- [x] Restore engagement context variables, compact Overview routing/header, framework-tab selection, and SoA conditional copy.
+- [x] Restore questionnaire pre-fill access, section counts/control codes/evidence locations, desk-review coverage details, freshness notes, and one-primary state handling.
+- [x] Add hub state rendering, transient/partial preview fixtures, deterministic S5 seed content, and the `b4-desk_review` state name.
+- [x] Update only intentionally retired test markup/copy assertions and record every old/new string in the handoff Results.
+
 ## S4 visual gate repair (2026-10-04)
 
 - [ ] Capture baseline `domcmp.py` and `gate2.py` measurements for all S4 cases.

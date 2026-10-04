@@ -5,25 +5,40 @@
   {% if stats.get('awaiting_confirmation', 0) > 0 %}<span data-stat-awaiting-confirmation>{{ stats.awaiting_confirmation }} pre-filled answers awaiting confirmation</span>{% endif %}
   {% if stats.get('pre_filled_questions', 0) > 0 %}<span>{{ stats.pre_filled_questions }} pre-filled from documents</span>{% endif %}
   {% if stats.get('inferred_questions', 0) > 0 %}<span>{{ stats.inferred_questions }} inferred from screening</span>{% endif %}
+  {% if stats.get('deepened_questions', 0) > 0 %}<span>{{ stats.deepened_questions }} deep review</span>{% endif %}
+  {% if stats.get('industry_questions', 0) > 0 %}<span>{{ stats.industry_questions }} Industry</span>{% endif %}
   {% if stats.get('skipped_questions', 0) > 0 %}<span>{{ stats.skipped_questions }} out of scope</span>{% endif %}
 </div>
 {% endif %}
 
 <div class="split questionnaire-layout">
-  <div class="glass split-list">
-    <div class="grp">Sections</div>
+  <div class="glass split-list" data-section-nav>
+    {% for group_name, complete in (("To answer", false), ("Complete", true)) %}
+    <div class="grp">{{ group_name }}</div>
+    {% set nav_state = namespace(selected=false) %}
     {% for section in sections %}
-    {% set active_count = section.questions | selectattr('status', 'ne', 'skipped') | list | length if section.questions else 0 %}
-    {% set skipped_count = section.questions | length - active_count %}
-    {% set deep_count = section.questions | selectattr('tier', 'equalto', 'deep') | list | length if section.questions else 0 %}
+    {% set ns = namespace(active=0, answered=0, deep=0, industry=section.source == 'industry') %}
+    {% for question in section.questions %}
+      {% if question.get('status') != 'skipped' %}
+        {% set ns.active = ns.active + 1 %}
+        {% if existing.get(question.id, {}).get('answer') %}{% set ns.answered = ns.answered + 1 %}{% endif %}
+        {% if question.get('tier') == 'deep' %}{% set ns.deep = ns.deep + 1 %}{% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if (ns.active > 0 and ns.answered == ns.active) == complete %}
     <button hx-get="/assessments/{{ assessment_id }}/questionnaire/section/{{ section.section_id }}"
             hx-target="#section-content"
             hx-swap="innerHTML"
-            class="item{% if loop.first %} sel{% endif %}"
+            class="item{% if not complete and not nav_state.selected %} sel{% endif %}"
             data-section="{{ section.section_id }}"
-            data-collapsible-section="{{ section.section_id }}">
-      <span class="txt"><b>{{ section.section_title }}</b><span>{{ active_count }} questions{% if skipped_count > 0 %} · {{ skipped_count }} out of scope{% endif %}{% if deep_count > 0 %} · {{ deep_count }} deep review{% endif %}</span></span>
+            data-collapsible-section="{{ section.section_id }}"
+            onclick="this.closest('[data-section-nav]').querySelectorAll('[data-section]').forEach((section) => section.classList.remove('sel')); this.classList.add('sel');">
+      <span class="txt"><b>{{ section.section_title }}</b><span>{{ ns.answered }} of {{ ns.active }} answered{% if ns.deep > 0 %} · {{ ns.deep }} deep review{% endif %}</span></span>
+      {% if ns.industry %}<span class="chip">Industry</span>{% endif %}
     </button>
+    {% if not complete and not nav_state.selected %}{% set nav_state.selected = true %}{% endif %}
+    {% endif %}
+    {% endfor %}
     {% endfor %}
   </div>
 

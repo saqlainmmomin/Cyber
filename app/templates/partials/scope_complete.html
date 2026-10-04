@@ -23,7 +23,7 @@
 
     {% if proposed_not_applicable %}
     <details class="disclose"><summary>{{ proposed_not_applicable | length }} control{{ 's' if proposed_not_applicable | length != 1 else '' }} proposed as likely not applicable</summary>
-      <p class="help">These controls remain in scope. Confirm each during review; ISO 27001 decisions are recorded in the current Statement of Applicability.</p>
+  <p class="help">These controls remain in scope. Confirm each during review{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %}; ISO 27001 decisions are recorded in the current Statement of Applicability{% endif %}.</p>
       <ul class="line-list" style="margin-top:var(--s-3)">{% for item in proposed_not_applicable %}<li><div class="grow"><b>{{ item.control_id }} · {{ item.control_title }}</b><span class="sub">{{ item.framework_name }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}

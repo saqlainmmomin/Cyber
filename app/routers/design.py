@@ -1,6 +1,8 @@
 """Debug-only Yozora component gallery and template preview routes."""
 
 from collections.abc import Callable
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
@@ -28,6 +30,78 @@ def login_preview(request: Request) -> Response:
 
 
 PREVIEW_PAGES["login"] = login_preview
+
+
+S5_PREVIEW_STATES = {
+    "b3-screening-form": ("default", "loading", "error", "complete", "screened"),
+    "b3-context-complete": ("default", "generating", "error"),
+    "b3-question-step": ("org", "data", "data-yes", "last", "saving", "error"),
+    "b3-followups": ("loaded", "loading", "error", "none"),
+    "b3-sections": ("default", "saved", "loading", "empty", "error"),
+    "b3-section-questions": ("default", "errors", "saved", "loading"),
+    "b4-desk_review": ("ready", "running", "findings", "rerun", "error"),
+}
+
+
+def _s5_preview(request: Request, screen: str) -> Response:
+    states = S5_PREVIEW_STATES[screen]
+    state = request.query_params.get("state", states[0])
+    if state not in states:
+        state = states[0]
+
+    assessment_id = "assessment-s5-preview"
+    common = {
+        "request": request,
+        "screen": screen,
+        "state": state,
+        "assessment_id": assessment_id,
+        "page_title": {
+            "b3-screening-form": "Domain screening",
+            "b3-context-complete": "Context",
+            "b3-question-step": "Your organisation",
+            "b3-followups": "Notice and consent",
+            "b3-sections": "Questionnaire",
+            "b3-section-questions": "Notice and consent",
+            "b4-desk_review": "Pre-fill from documents",
+        }[screen],
+    }
+    common.update({
+        "screening_available": True,
+        "screening_done": state in {"complete", "screened"},
+        "error": "The screening service did not respond. Your answers are kept.",
+        "domains": [
+            {"id": "notice", "title": "Notice and consent", "question": "Describe how people are told what data is collected and why.", "covers": ["CH2.NOTICE.1", "CH2.CONSENT.1"]},
+            {"id": "security", "title": "Security safeguards", "question": "Describe the controls that protect personal data.", "covers": ["CH4.SDF.1", "CH4.SDF.2"]},
+        ],
+        "block": {
+            "title": "Your organisation",
+            "description": "Tell us about the organisation's data and risk exposure.",
+            "questions": [{"id": "CTX.ORG_TYPE", "question": "What best describes your organisation?", "type": "single_select", "options": ["technology", "financial_services", "other"]}],
+        },
+        "block_index": {"org": 0, "data": 1, "data-yes": 1, "last": 4}.get(state, 0),
+        "total_blocks": 5,
+        "followups": [{"id": "FU.CH2.CONSENT.1", "text": "Which channels can withdraw consent today?", "reason": "Your answer is partial, so this shows how far coverage goes."}],
+        "sections": [
+            {"section_id": "notice", "section_title": "Notice and consent", "chapter_title": "Obligations of the data fiduciary", "source": "base", "questions": [{"id": "CH2.NOTICE.1", "question": "Does every notice name each purpose in plain language?", "status": "active", "tier": "deep", "criticality": "high", "guidance": "Check sign-up, checkout and marketing preferences.", "source": "base"}, {"id": "CH2.CONSENT.1", "question": "Can a data principal withdraw consent as easily as they gave it?", "status": "pre_filled", "tier": "standard", "criticality": "high", "guidance": "The answer counts once you save the section.", "source": "base", "pre_fill_source": "document", "pre_fill_answer": "partially_implemented", "desk_review_evidence": [{"content": "Withdrawal requests are accepted by email.", "source_quote": "processed by the support team", "source_location": "Consent policy, page 2"}]}]},
+            {"section_id": "industry.payments", "section_title": "Payments and lending", "chapter_title": "Industry-specific", "source": "industry", "questions": [{"id": "IND.PAY.1", "question": "Are payment records protected throughout their lifecycle?", "status": "active", "tier": "standard", "criticality": "medium", "guidance": "Include payment processors and support tooling.", "source": "industry"}]},
+        ],
+        "existing": {"CH2.CONSENT.1": {"answer": "partially_implemented"}},
+        "stats": {"total_questions": 3, "answered_questions": 1, "awaiting_confirmation": 1, "pre_filled_questions": 1, "inferred_questions": 0, "deepened_questions": 1, "industry_questions": 1, "tier_counts": {"deep": 1, "standard": 2, "light": 0, "skip": 0}},
+        "prefill_freshness": SimpleNamespace(available=6, new_since_last_prefill=3, last_prefill_at=datetime.now(timezone.utc)),
+        "framework_names": ["DPDPA 2023", "ISO 27001:2022"],
+        "catalog": [{"filename": f"policy-{index}.pdf"} for index in range(1, 7)],
+        "evidence": [{"requirement_id": "CH2.CONSENT.1", "content": "Withdrawal is handled by email.", "source_quote": "processed by the support team", "source_location": "Consent policy, page 2"}],
+        "absences": [{"requirement_id": "CH4.SDF.1", "content": "No retained evidence of the latest access review was found.", "severity": "high", "source_location": "Policy 2026, page 4"}],
+        "signals": [{"content": "Operating evidence is incomplete.", "severity": "medium", "source_quote": "Evidence is retained by the control owner.", "source_location": "Policy 2026, page 5", "requirement_ids": ["CH4.SDF.1"]}],
+        "coverage": {"CH2.CONSENT.1": "partial", "CH4.SDF.1": "absent"},
+        "failed_framework_names": [],
+        "total_findings": 3,
+    })
+    return templates.TemplateResponse("pages/design_assessment_preview.html", common)
+
+
+for _screen in S5_PREVIEW_STATES:
+    PREVIEW_PAGES[_screen] = lambda request, screen=_screen: _s5_preview(request, screen)
 
 
 def _debug_only() -> None:

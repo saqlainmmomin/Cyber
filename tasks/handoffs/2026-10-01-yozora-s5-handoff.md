@@ -255,14 +255,14 @@ Implemented the S5 assessment shell, Scope, Questionnaire, context/screening/fol
 - Kept the Evidence stepper link at `/assessments/{id}?tab=documents`, and kept the `?tab=documents` rendering branch unchanged. The post-scope default is now Overview.
 - Moved the live `desk-review-area` HTMX target to `questionnaire_tab.html` while leaving `documents_tab.html` untouched. Its route, controls, indicators, retry, rerun, findings, and target wiring remain live.
 - Used `prefill_freshness.freshness()` for document/pre-fill copy and real desk-review findings, coverage, evidence, and framework names. The Scope RFI link remains `/assessments/{id}/rfi`; the engagement Evidence Requests destination is deferred to S8 because that view does not exist yet.
-- Restyled the assessment Overview engagement context under `data-visual-mask`, retaining the AWS evidence link, retention include, masked magic links, and `data-assessment-identity`. Framework tab HTMX contracts remain intact; the framework panel body remains S7-owned.
+- Restyled the assessment Overview engagement context, retaining the AWS evidence link, retention include, magic links, and `data-assessment-identity`. Only the S7-owned framework panel body is behind `data-visual-mask`; framework tab HTMX contracts remain intact.
 - Added `design/harness/seed_s5.py`, importing S4 builders and `FROZEN_NOW` without editing either prior seed. It creates Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory fixtures, real legacy documents for the app's `analysis_documents()` reader, real questionnaire responses, and stamps Alembic `head` after `create_all`.
 
 ### Seed state production
 
-The harness validated all **59** S5 states. **32** use deterministic database data. **27** are marked `preview-state` for the orchestrator's mockup/state overlay because they represent transient or interaction-only states: `b3-hub` empty/loading/error; `b3-scope` error/saving; `b3-scope-complete` loading/error; `b3-questionnaire` prefilling/error/running; `b3-screening-form` loading/error; `b3-context-complete` generating/error; `b3-question-step` saving/error; `b3-followups` loading/error; `b3-sections` loading/empty/error; `b3-section-questions` errors/saved/loading; and `b4-desk-review` running/rerun/error. This follows the existing S4 harness state-overlay convention; no shared `PREVIEW_PAGES` registry entry was needed.
+The harness validated all **59** S5 states. **32** use deterministic database data. **27** are marked `preview-state` for the orchestrator's mockup/state overlay because they represent transient or interaction-only states: `b3-hub` empty/loading/error; `b3-scope` error/saving; `b3-scope-complete` loading/error; `b3-questionnaire` prefilling/error/running; `b3-screening-form` loading/error; `b3-context-complete` generating/error; `b3-question-step` saving/error; `b3-followups` loading/error; `b3-sections` loading/empty/error; `b3-section-questions` errors/saved/loading; and `b4-desk-review` running/rerun/error. This follows the existing S4 harness state-overlay convention; the partial-only screens use the separate `PREVIEW_PAGES` fixtures listed below.
 
-The seed smoke check reported `validated 59 S5 states`, `alembic: head`, and the frozen clock `2026-09-30T12:00:00+00:00`. Stage smoke reached real branches for no-document evidence, pre-fill-ready evidence, partial questionnaire, review, released report, and analysis loading.
+The seed smoke check reported `validated 59 S5 states`, `alembic: head`, and the frozen clock `2026-09-30T12:00:00+00:00`. Stage smoke reached real branches for no-document evidence, pre-fill-ready evidence, partial questionnaire, review, released report, and analysis loading. Partial-only S5 screens also have registered `PREVIEW_PAGES` fixtures for their state URLs below.
 
 ### Screenshot gate
 
@@ -280,18 +280,50 @@ The seed smoke check reported `validated 59 S5 states`, `alembic: head`, and the
 Available verification:
 
 ```text
-11 passed — tests/test_design_lint.py tests/test_design_harness.py tests/test_p6_9_file_set.py
+122 passed — focused S5, adjacent Yozora, longitudinal, and regression tests
 validated 59 S5 states; database=32; preview-state=27
 Python compile checks passed; git diff --check passed
 ```
 
-The focused S5 pytest collection is blocked before test execution by the environment's missing `boto3` dependency (`app/routers/aws.py` → `app/services/aws_evidence.py`). The full suite and browser pixel gate were not run here; the orchestrator should run both in its provisioned environment.
+The full pytest collection is blocked in this environment by missing optional dependencies `botocore.stub` and `pptx`; the focused S5 and adjacent regression tests run successfully. The browser pixel gate was not run here; the orchestrator should run it in its provisioned environment.
 
 The requested commit could not be created: this worktree's Git metadata is at `/Users/saqlainmomin/dpdpa-gap-tool/.git/worktrees/cyberassess-yozora-s5`, outside the writable workspace. A named-path `git add` failed with `Unable to create .../index.lock: Operation not permitted`; no files were staged, pushed, or merged.
 
 ### Decisions and open questions
 
-- `documents_tab.html` has no diff, as required for the parallel S6 slice. No `PREVIEW_PAGES` or `NAV_ITEMS` entry was changed.
+- `documents_tab.html` has no diff, as required for the parallel S6 slice. `NAV_ITEMS` was not changed; partial-only S5 states are registered in `PREVIEW_PAGES`.
 - The S4 engagement-context block stays on the assessment Overview until the later S8 destination exists; magic links remain masked.
 - No stage-service variant lacked an approved `b3-hub` state, so no implementation question is outstanding.
 - No visual percentages are claimed because the required server/browser gate could not run in this environment.
+
+### Review fixes
+
+- Restored all S5 fixture imports (`engine`, `db_path`, `upload_root`, and `_register_frameworks`), added the engagement-linked Overview HTTP smoke test, and kept the Overview engagement context variables required by retention, magic links, client uploads, and the AWS evidence link. The single-assessment engagement redirect now lands on `?tab=overview`; non-Overview tabs do not call `assessment_stage.stage()`.
+- Moved the 46 S5 pattern rules into `design/yozora-patterns.css` and regenerated `app/static/css/yozora-patterns.css`; `tokens_tool.py check` is clean. The remaining source classes are justified by the approved mockups: `stack-l`, `stack-m`, `cluster-s`, `split-row`, `section-header`, `section-actions`, and `questionnaire-layout` implement the questionnaire two-pane/card spacing; `questionnaire-stats`, `question-*`, `choice-grid`, and `chip-accent`/`chip-warning` implement answer progress, control cards, answer scales, and pre-fill/deep-review markers; `evidence-*` and `quote` implement citations; `alert-error`, `card-muted`, `empty-state*`, and `card-success` implement skipped/error/empty/saved states; `review-row`, `coverage-dist`, and `table-scroll` implement the desk-review findings and coverage views.
+- Restored the S4 context block on Overview, kept the S7 framework body behind `data-visual-mask`, rendered hub empty/evidence/questionnaire/loading/error/report/archived states, hid the single-framework empty heading, restored framework and section selection updates, preserved `framework=` across assessment tabs, and aligned sentence-case analysis copy.
+- Rendered the no-CTA stage states in the Overview panel (`Pre-fill running`, `Analysis running`, and board-report-generated), carried the approved transient `state=` preview through Scope and Report routes, and kept default routes data-driven.
+- Framework chips use the framework registry's real name/version fields; the current definitions therefore render `India DPDPA 2023` and `ISO 27001 2022` in the desk-review ready state, preserving the real names instead of inventing shortened labels from the mockup.
+- Moved the pre-fill card before the context branch so it is reachable before and after context; removed the raw “Open status” link; passed freshness into findings; restored coverage rows, evidence `source_location`, section stats, chapter title, and control codes; linked “Upload evidence” to the Documents view; and kept one primary action per live questionnaire state.
+- Updated the deterministic seed to “Head office” under Meridian, real five/six-document states, three-of-six review progress, a hub empty assessment, DPDPA-only screening fixtures except `noscreen`, and the mockup filename `b4-desk_review`. Added transient `state=` handling and partial-only preview URLs without replacing default real data.
+
+Intentional test-string changes (old → new — reason):
+
+- `Red Flags (1)` → `Red flags (1)` — sentence case while retaining the visible count.
+- `name="answer_CLUSTER_002" value="fully_implemented" class="sr-only" checked` → `name="answer_CLUSTER_002" value="fully_implemented" checked` — the new visible choice markup removed the obsolete `sr-only` class; the saved answer remains checked.
+- `name="answer_CH2.CONSENT.1" value="fully_implemented" class="sr-only" checked` → `name="answer_CH2.CONSENT.1" value="fully_implemented" checked` — same intentional markup change for the DPDPA control.
+- `assert "DPDPA" not in page.text` for every scenario → an ISO-only branch retaining that assertion plus a mixed-assessment branch asserting `SCREENING_NOT_APPLICABLE_MESSAGE` on the screening fragment — the mixed assessment legitimately includes DPDPA in its framework list.
+- Framework-tab request `/assessments/{id}` → `/assessments/{id}?tab=overview` and solo equivalent → `?tab=overview` — framework tabs are an Overview-only mockup element.
+- `hx-push-url="/assessments/{id}?tab=questionnaire&amp;framework=iso27001"` → `hx-push-url="/assessments/{id}?tab=overview&amp;framework=iso27001"` — selection is asserted on the Overview where the tabs render.
+- `/assessments/{id}?tab=report&amp;framework=iso27001` → `/assessments/{id}/report?framework=iso27001` — the assessment tab row now owns the canonical report route and preserves the framework query.
+- `desk-review-status"` → `desk-review-status?surface=questionnaire` — the Questionnaire surface needs its findings action state without changing the b4 desk-review surface.
+- `NIST CSF 2.0 baseline gap assessment` → `engagement_b.name` after asserting a `303` Location of `/assessments/{nist_id}?tab=overview` — the single-assessment engagement page intentionally redirects to the assessment Overview, while the test still checks the hierarchy and linked evidence content.
+
+Partial-only preview URLs (each accepts the listed `state` exactly):
+
+- `/design/pages/b3-screening-form?state=default`, `loading`, `error`, `complete`, `screened`.
+- `/design/pages/b3-context-complete?state=default`, `generating`, `error`.
+- `/design/pages/b3-question-step?state=org`, `data`, `data-yes`, `last`, `saving`, `error`.
+- `/design/pages/b3-followups?state=loaded`, `loading`, `error`, `none`.
+- `/design/pages/b3-sections?state=default`, `saved`, `loading`, `empty`, `error`.
+- `/design/pages/b3-section-questions?state=default`, `errors`, `saved`, `loading`.
+- `/design/pages/b4-desk_review?state=ready`, `running`, `findings`, `rerun`, `error`.

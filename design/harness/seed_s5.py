@@ -51,7 +51,7 @@ SCREEN_STATES = {
     "b3-followups": ("loaded", "loading", "error", "none"),
     "b3-sections": ("default", "saved", "loading", "empty", "error"),
     "b3-section-questions": ("default", "errors", "saved", "loading"),
-    "b4-desk-review": ("ready", "running", "findings", "rerun", "error"),
+    "b4-desk_review": ("ready", "running", "findings", "rerun", "error"),
 }
 
 
@@ -75,7 +75,13 @@ def _register_frameworks() -> None:
         FrameworkRegistry.register(framework)
 
 
-def _base_data(db: Session, *, iso_only: bool = False, include_assessment: bool = True) -> dict:
+def _base_data(
+    db: Session,
+    *,
+    iso_only: bool = False,
+    dpdpa_only: bool = False,
+    include_assessment: bool = True,
+) -> dict:
     clients = [
         _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large"),
         _client("client-loomwire", "Loomwire Labs", "IT services", "medium"),
@@ -86,7 +92,7 @@ def _base_data(db: Session, *, iso_only: bool = False, include_assessment: bool 
         _engagement("eng-loomwire-s5", clients[1].id, "NIST baseline"),
         _engagement("eng-kestrel-s5", clients[2].id, "Advisory controls review"),
     ]
-    frameworks = ("iso27001",) if iso_only else ("dpdpa", "iso27001")
+    frameworks = ("iso27001",) if iso_only else ("dpdpa",) if dpdpa_only else ("dpdpa", "iso27001")
     assessments = []
     if include_assessment:
         assessments.append(
@@ -94,7 +100,7 @@ def _base_data(db: Session, *, iso_only: bool = False, include_assessment: bool 
                 "assessment-s5",
                 engagements[0].id,
                 clients[0].name,
-                "FY2026 privacy readiness",
+                "Head office",
                 frameworks,
             )
         )
@@ -119,6 +125,7 @@ def _seed_documents(
     assessment: Assessment,
     count: int,
     prefix: str,
+    uploaded_start: int = -30,
 ) -> None:
     """Seed both S4 evidence rows and the legacy documents consumed by analysis_documents()."""
     _seed_evidence(db, engagement, assessment, count, prefix)
@@ -136,7 +143,7 @@ def _seed_documents(
                     "Access rights are reviewed quarterly by the system owner. "
                     "Evidence is retained by the control owner."
                 ),
-                uploaded_at=_time(-30 + index),
+                uploaded_at=_time(uploaded_start + index),
             )
         )
 
@@ -188,6 +195,7 @@ def _desk_summary(
     status: str,
     findings: bool = False,
     completed_at=None,
+    document_count: int = 6,
 ) -> None:
     from app.frameworks.registry import FrameworkRegistry
 
@@ -198,7 +206,7 @@ def _desk_summary(
     ]
     summary = DeskReviewSummary(
         assessment_id=assessment.id,
-        document_catalog=json.dumps([{"id": f"evidence-s5-{i:03d}", "filename": f"policy-{i + 1}.pdf"} for i in range(3)]),
+        document_catalog=json.dumps([{"id": f"evidence-s5-{i:03d}", "filename": f"policy-{i + 1}.pdf"} for i in range(document_count)]),
         coverage_summary=json.dumps({control_id: "partial" for control_id in controls}),
         raw_ai_response="{}",
         status=status,
@@ -262,10 +270,10 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
     )
     if screen == "b3-hub" and state == "empty":
         data_state = "preview-state"
-        return {"assessment_id": None, "data_state": data_state}
+        return {"assessment_id": assessment.id, "data_state": data_state}
 
     if screen == "b3-hub" and state == "default":
-        _seed_review_stage(db, assessment, approved=2, pending=2)
+        _seed_review_stage(db, assessment, approved=3, pending=3)
 
     if screen == "b3-hub" and state == "archived":
         assessment.status = "archived"
@@ -282,13 +290,13 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
         _scope(assessment)
     elif screen == "b3-hub" and state == "prefill":
         _scope(assessment)
-        _seed_documents(db, engagement, assessment, 3, "evidence-s5")
+        _seed_documents(db, engagement, assessment, 5, "evidence-s5")
     elif screen == "b3-hub" and state == "error":
         _scope(assessment)
         assessment.status = "error"
     elif screen == "b3-hub" and state == "loading":
         _scope(assessment)
-        _seed_documents(db, engagement, assessment, 3, "evidence-s5")
+        _seed_documents(db, engagement, assessment, 5, "evidence-s5")
         assessment.status = "analyzing"
     elif screen == "b3-scope":
         if state in {"edit", "saving"}:
@@ -303,13 +311,13 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
         _scope(assessment)
         _context(assessment)
         if state in {"prefill", "prefilling", "findings"}:
-            _seed_documents(db, engagement, assessment, 3, "evidence-s5")
+            _seed_documents(db, engagement, assessment, 5, "evidence-s5")
         if state == "prefilling":
             assessment.desk_review_status = "analyzing"
             _desk_summary(db, assessment, status="analyzing")
         elif state == "findings":
             assessment.desk_review_status = "completed"
-            _desk_summary(db, assessment, status="completed", findings=True)
+            _desk_summary(db, assessment, status="completed", findings=True, document_count=5)
         elif state == "error":
             assessment.status = "error"
         elif state == "running":
@@ -361,10 +369,10 @@ def _apply_state(db: Session, screen: str, state: str, assessment: Assessment, e
         _context(assessment)
         if state in {"errors", "saved", "loading"}:
             data_state = "preview-state"
-    elif screen == "b4-desk-review":
+    elif screen == "b4-desk_review":
         _scope(assessment)
         _context(assessment)
-        _seed_documents(db, engagement, assessment, 3, "evidence-s5")
+        _seed_documents(db, engagement, assessment, 6, "evidence-s5")
         if state in {"ready", "running", "findings", "rerun", "error"}:
             assessment.desk_review_status = {"ready": None, "running": "analyzing", "findings": "completed", "rerun": "completed", "error": "error"}[state]
         if state == "running":
@@ -396,7 +404,8 @@ def seed_s5(output: str | Path, *, screen: str = "b3-hub", state: str = "default
             db,
             iso_only=(screen == "b3-scope-complete" and state == "iso")
             or (screen == "b3-questionnaire" and state == "noscreen"),
-            include_assessment=not (screen == "b3-hub" and state == "empty"),
+            dpdpa_only=(screen in {"b3-questionnaire", "b3-screening-form"} and state != "noscreen"),
+            include_assessment=True,
         )
         assessment = data["assessments"][0] if data["assessments"] else None
         result = (

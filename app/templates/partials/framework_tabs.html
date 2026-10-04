@@ -1,20 +1,22 @@
-<section class="stack" aria-label="Assessment frameworks">
+<section class="framework-tabs stack" aria-label="Assessment frameworks">
   <nav class="tabs" role="tablist" aria-label="Frameworks">
     {% for framework in selected_frameworks %}
-    <a hx-get="/assessments/{{ assessment.id }}/tab/{{ framework.id }}"
+    <a class="{% if framework.id == active_framework %}sel{% endif %}"
+       hx-get="/assessments/{{ assessment.id }}/tab/{{ framework.id }}"
        hx-target="#framework-panel"
        hx-swap="innerHTML"
        hx-push-url="/assessments/{{ assessment.id }}?tab={{ tab }}&amp;framework={{ framework.id }}"
        role="tab"
        aria-selected="{{ 'true' if framework.id == active_framework else 'false' }}"
+       onclick="this.closest('[role=tablist]').querySelectorAll('[role=tab]').forEach((tab) => { tab.classList.remove('sel'); tab.setAttribute('aria-selected', 'false'); }); this.classList.add('sel'); this.setAttribute('aria-selected', 'true');"
        href="/assessments/{{ assessment.id }}?tab={{ tab }}&amp;framework={{ framework.id }}">
       {{ framework.name }}{% if framework.version %} <span class="sub">{{ framework.version }}</span>{% endif %}
     </a>
     {% endfor %}
   </nav>
-  <div id="framework-panel" role="tabpanel" class="solid">
+  <div data-visual-mask id="framework-panel" role="tabpanel" class="solid">
     {% set framework = active_framework_definition %}
     {% set finding_count = active_framework_finding_count %}
-    {% include "partials/framework_panel.html" %}
+    {% include "partials/framework_hub_panel.html" %}
   </div>
 </section>

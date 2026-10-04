@@ -1,5 +1,5 @@
 <div class="glass card" role="status" aria-live="polite"
-     hx-get="/assessments/{{ assessment_id }}/desk-review-status"
+     hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
      hx-trigger="every 3s"
      hx-swap="outerHTML">
   <div class="between"><div><h2>Desk review is running</h2><p class="sub">Documents are being analysed against the selected frameworks. You can keep answering while the pre-fill is prepared.</p></div><span class="status"><span class="st prog"></span>Analysing</span></div>

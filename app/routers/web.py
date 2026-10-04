@@ -102,6 +102,20 @@ def _selected_framework_names(assessment: Assessment) -> list[str]:
     return names
 
 
+def _selected_framework_labels(assessment: Assessment) -> list[str]:
+    """Return the registry's real framework names with their versions for UI chips."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    labels = []
+    for fw_id in _selected_framework_ids(assessment):
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        if fw:
+            labels.append(f"{fw.name} {fw.version}" if fw.version else fw.name)
+        else:
+            labels.append(fw_id.upper())
+    return labels
+
+
 def _live_document_prefill_ids(sections: list[dict]) -> set[str]:
     return {
         question["id"]
@@ -200,8 +214,12 @@ def _assessment_stepper(assessment: Assessment, current: assessment_stage.Stage)
 
 def _assessment_hub_state(current: assessment_stage.Stage, assessment: Assessment) -> str:
     """Map every stage-service outcome to an approved b3-hub state."""
+    if assessment.status == "archived":
+        return "archived"
     if assessment.status == "error":
         return "error"
+    if current.next_href is None and current.note in {"Pre-fill running", "Analysis running"}:
+        return "loading"
     if current.stage == "scope":
         return "empty"
     if current.stage == "evidence":
@@ -775,7 +793,9 @@ def engagement_detail(
         .all()
     )
     if engagement.status != "archived" and len(assessments) == 1:
-        return RedirectResponse(f"/assessments/{assessments[0].id}", status_code=303)
+        return RedirectResponse(
+            f"/assessments/{assessments[0].id}?tab=overview", status_code=303
+        )
     card = build_engagement_card(engagement, assessments)
     retention_state = retention.retention_state(db, engagement)
     assessment_cards = [_assessment_stage_row(db, assessment) for assessment in assessments]
@@ -1500,6 +1520,7 @@ def assessment_detail(
     request: Request,
     assessment_id: str,
     tab: str | None = None,
+    state: str | None = None,
     context_error: str | None = None,
     db: Session = Depends(get_db),
 ):
@@ -1619,19 +1640,26 @@ def assessment_detail(
             approved.framework_scores,
         )
 
-    workflow_stage = assessment_stage.stage(db, assessment)
-    workflow_action = workflow_stage.next_href
-    if workflow_stage.next_label == assessment_stage.PREFILL:
-        # Pre-fill now starts from Questionnaire; the legacy documents URL stays
-        # available only as the Evidence stepper destination until S6 redirects it.
-        workflow_action = f"/assessments/{assessment.id}?tab=questionnaire"
-    workflow = {
-        "stage": workflow_stage,
-        "hub_state": _assessment_hub_state(workflow_stage, assessment),
-        "action_href": workflow_action,
-    }
     prefill = prefill_freshness.freshness(db, assessment)
-    stepper_stages = _assessment_stepper(assessment, workflow_stage)
+    workflow = {"stage": None, "hub_state": None, "action_href": None}
+    stepper_stages = []
+    preview_state = state if state in {"loading", "error", "saving", "generating", "running", "prefilling"} else None
+    if tab == "overview":
+        workflow_stage = assessment_stage.stage(db, assessment)
+        workflow_action = workflow_stage.next_href
+        if workflow_stage.next_label == assessment_stage.PREFILL:
+            # Pre-fill now starts from Questionnaire; the legacy documents URL stays
+            # available only as the Evidence stepper destination until S6 redirects it.
+            workflow_action = f"/assessments/{assessment.id}?tab=questionnaire"
+        elif workflow_stage.next_label and workflow_stage.next_label.startswith("Review "):
+            # The Review tab is the canonical destination for this action.
+            workflow_action = f"/assessments/{assessment.id}/review-queue"
+        workflow = {
+            "stage": workflow_stage,
+            "hub_state": _assessment_hub_state(workflow_stage, assessment),
+            "action_href": workflow_action,
+        }
+        stepper_stages = _assessment_stepper(assessment, workflow_stage)
 
     return templates.TemplateResponse(
         "pages/assessment.html",
@@ -1668,7 +1696,7 @@ def assessment_detail(
                 1
                 for row in (
                     approved.rows
-                    if report and tab in ("report", "questionnaire")
+                    if report and tab in ("overview", "report", "questionnaire")
                     else ()
                 )
                 if row.framework_id == active_framework
@@ -1677,6 +1705,7 @@ def assessment_detail(
             "workflow": workflow,
             "stepper_stages": stepper_stages,
             "prefill_freshness": prefill,
+            "preview_state": preview_state,
             **scope_context,
         },
     )
@@ -1722,10 +1751,17 @@ def _with_control_titles(proposals: list[dict]) -> list[dict]:
 def scope_page(
     request: Request,
     assessment_id: str,
+    framework: str | None = None,
+    state: str | None = None,
     db: Session = Depends(get_db),
 ):
     """Redirect to assessment scope tab."""
-    return RedirectResponse(f"/assessments/{assessment_id}?tab=scope", status_code=303)
+    query = "?tab=scope"
+    if framework:
+        query += f"&framework={framework}"
+    if state == "saving":
+        query += "&state=saving"
+    return RedirectResponse(f"/assessments/{assessment_id}{query}", status_code=303)
 
 
 @router.post("/assessments/{assessment_id}/scope/save")
@@ -2157,6 +2193,7 @@ def get_section_questions(
             "chapter_title": target_section["chapter_title"],
             "questions": target_section["questions"],
             "existing": existing,
+            "prefill_available": len(analysis_documents(db, assessment_id)),
         },
     )
 
@@ -2644,6 +2681,7 @@ def assessment_report_page(
     request: Request,
     assessment_id: str,
     view: str | None = None,
+    state: str | None = None,
     db: Session = Depends(get_db),
 ):
     assessment = db.get(Assessment, assessment_id)
@@ -2656,7 +2694,7 @@ def assessment_report_page(
     is_boosted = request.headers.get("HX-Boosted", "").lower() == "true"
     if is_htmx and not is_boosted:
         return report_summary(request, assessment_id, view_mode, db)
-    return assessment_detail(request, assessment_id, tab="report", db=db)
+    return assessment_detail(request, assessment_id, tab="report", state=state, db=db)
 
 
 @router.get("/assessments/{assessment_id}/report-summary", response_class=HTMLResponse)
@@ -3054,6 +3092,7 @@ def rfi_page(
 def desk_review_status_web(
     request: Request,
     assessment_id: str,
+    surface: str | None = None,
     db: Session = Depends(get_db),
 ):
     """Return desk review status/findings as HTML partial."""
@@ -3064,6 +3103,7 @@ def desk_review_status_web(
         group_signal_findings,
         scoped_findings,
     )
+    from app.services import question_engine
 
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
@@ -3082,14 +3122,15 @@ def desk_review_status_web(
                 "request": request,
                 "assessment_id": assessment_id,
                 "prefill_freshness": prefill_freshness.freshness(db, assessment),
-                "framework_names": _selected_framework_names(assessment),
+                "framework_names": _selected_framework_labels(assessment),
+                "questionnaire_surface": surface == "questionnaire",
             },
         )
 
     if summary.status == "analyzing":
         return templates.TemplateResponse(
             "partials/desk_review_running.html",
-            {"request": request, "assessment_id": assessment_id},
+            {"request": request, "assessment_id": assessment_id, "questionnaire_surface": surface == "questionnaire"},
         )
 
     if summary.status == "error":
@@ -3120,6 +3161,13 @@ def desk_review_status_web(
         FrameworkRegistry.get(framework_id).name
         for framework_id in failed_desk_review_frameworks(summary)
     ]
+    questionnaire_stats = None
+    if surface == "questionnaire":
+        questionnaire = question_engine.build_adaptive_questionnaire(assessment_id, db)
+        questionnaire_stats = dict(questionnaire.get("stats", {}))
+        questionnaire_stats.update(
+            question_engine.questionnaire_progress(questionnaire, assessment_id, db)
+        )
 
     return templates.TemplateResponse(
         "partials/desk_review_findings.html",
@@ -3133,6 +3181,9 @@ def desk_review_status_web(
             "catalog": catalog,
             "failed_framework_names": failed_framework_names,
             "total_findings": len(evidence) + len(absences) + len(signals),
+            "prefill_freshness": prefill_freshness.freshness(db, assessment),
+            "questionnaire_surface": surface == "questionnaire",
+            "questionnaire_stats": questionnaire_stats,
         },
     )
 
@@ -3142,6 +3193,7 @@ def run_desk_review_web(
     request: Request,
     assessment_id: str,
     background_tasks: BackgroundTasks,
+    surface: str | None = None,
     db: Session = Depends(get_db),
 ):
     """Trigger desk review — set analyzing state immediately, run Claude in background."""
@@ -3211,5 +3263,5 @@ def run_desk_review_web(
 
     return templates.TemplateResponse(
         "partials/desk_review_running.html",
-        {"request": request, "assessment_id": assessment_id},
+        {"request": request, "assessment_id": assessment_id, "questionnaire_surface": surface == "questionnaire"},
     )

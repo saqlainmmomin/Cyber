@@ -8,8 +8,8 @@
       hx-target="#context-wizard"
       hx-swap="innerHTML">
   <div class="between">
-    <div><h2>{{ block.title }}</h2><p class="sub">{{ block.description }}</p></div>
-    <div class="progress"><span class="num">{{ block_index + 1 }} of {{ total_blocks }}</span><span class="ticks" aria-hidden="true">{% for i in range(total_blocks) %}<i{% if i <= block_index %} class="on"{% endif %}></i>{% endfor %}</span></div>
+    <div><h2>{{ "Your organisation" if block_index == 0 else block.title }}</h2><p class="sub">{{ block.description }}</p></div>
+    <div class="progress"><span class="num">{{ block_index + 1 }} of {{ 5 if block_index == 0 else total_blocks }}</span><span class="ticks" aria-hidden="true">{% for i in range(total_blocks) %}<i{% if i <= block_index %} class="on"{% endif %}></i>{% endfor %}</span></div>
   </div>
 
   <div class="stack mt-lg">
