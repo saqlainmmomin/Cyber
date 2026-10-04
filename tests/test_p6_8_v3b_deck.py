@@ -415,7 +415,8 @@ def test_scenario_13_pdf_is_a_16_9_landscape_deck_with_one_page_per_slide():
         first = parsed.pages[0].extract_text()
         last = parsed.pages[-1].extract_text()
         fonts = {char["fontname"] for page in parsed.pages for char in page.chars}
-    assert document["company_name"] in first
+    # Devanagari glyph spacing differs between renderers (Linux CI inserts gaps), so compare without whitespace.
+    assert "".join(document["company_name"].split()) in "".join(first.split())
     assert document["basis"]["period_label"] in last and document["basis"]["cutoff_label"] in last
     assert any(name.endswith("Display-Bold-Condensed") for name in fonts), fonts
 
