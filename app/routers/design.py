@@ -35,7 +35,7 @@ PREVIEW_PAGES["login"] = login_preview
 
 
 S5_PREVIEW_STATES = {
-    "b3-screening-form": ("default", "error", "complete", "screened"),
+    "b3-screening-form": ("default", "loading", "error", "complete", "screened"),
     "b3-context-complete": ("default",),
     "b3-question-step": ("org", "data", "data-yes", "last"),
     "b3-followups": ("loaded",),
@@ -60,7 +60,7 @@ def _s5_preview(request: Request, screen: str) -> Response:
     )
     engagement = SimpleNamespace(id="engagement-s5-preview", name="FY2026 privacy readiness")
     period = SimpleNamespace(period="1 Apr 2025 to 31 Mar 2026", cutoff="15 Mar 2026")
-    block_index = {"org": 0, "data": 1, "data-yes": 1, "last": len(CONTEXT_BLOCKS) - 1}.get(state, 0)
+    block_index = {"org": 0, "data": 1, "data-yes": 0, "last": len(CONTEXT_BLOCKS) - 1}.get(state, 0)
     sections = [
         {
             "section_id": "notice",
@@ -123,13 +123,15 @@ def _s5_preview(request: Request, screen: str) -> Response:
         "active_framework": "dpdpa",
         "engagement_archived": False,
         "workflow": {"action_href": None},
+        "preview_state": state,
+        "questionnaire_child": screen in {"b3-screening-form", "b3-context-complete", "b3-question-step", "b3-followups"},
         "preview_rendered": True,
         "preview_static": True,
         "standalone_preview": True,
         "page_title": {
             "b3-screening-form": "Domain screening",
             "b3-context-complete": "Context",
-            "b3-question-step": "Your organisation",
+            "b3-question-step": "Context",
             "b3-followups": "Notice and consent",
             "b3-sections": "Questionnaire",
             "b3-section-questions": "Notice and consent",
@@ -138,13 +140,21 @@ def _s5_preview(request: Request, screen: str) -> Response:
     }
     common.update({
         "screening_available": True,
-        "screening_done": state in {"complete", "screened"},
-        "error": "The screening service did not respond. Your answers are kept." if state == "error" else None,
+        "screening_done": screen == "b3-screening-form" and state == "complete",
+        "error": (
+            "The model did not respond in time. Your answers are kept. Run screening again."
+            if screen == "b3-screening-form"
+            else "The screening service did not respond. Your answers are kept."
+        ) if state == "error" else None,
+        "tier_counts": {"deep": 12, "standard": 21, "light": 9, "skip": 0},
         "domains": get_domain_coverage(),
         "block": CONTEXT_BLOCKS[block_index],
         "block_index": block_index,
         "total_blocks": len(CONTEXT_BLOCKS),
-        "followups": [{"id": "FU.CH2.CONSENT.1", "text": "Which channels can withdraw consent today?", "reason": "Your answer is partial, so this shows how far coverage goes."}],
+        "followups": [
+            {"id": "FU.CH2.CONSENT.1.1", "text": "Which channels can withdraw consent today?", "reason": "Your answer is partial, so this shows how far coverage goes."},
+            {"id": "FU.CH2.CONSENT.1.2", "text": "Is withdrawal processed within a defined time?", "reason": ""},
+        ],
         "sections": sections,
         "existing": {"CH2.CONSENT.1": {"answer": "partially_implemented"}},
         "stats": {"total_questions": 3, "answered_questions": 1, "awaiting_confirmation": 1, "pre_filled_questions": 1, "inferred_questions": 0, "deepened_questions": 1, "industry_questions": 1, "tier_counts": {"deep": 1, "standard": 2, "light": 0, "skip": 0}},

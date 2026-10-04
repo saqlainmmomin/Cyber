@@ -3,5 +3,12 @@
   {{ icon("circle-check") }}
   <h2>Context complete</h2>
   <p>Your risk profile is ready. The questionnaire now matches the organisation.</p>
-  <a class="btn primary lead" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire {{ icon("chev-r") }}</a>
 </div>
+{% if tier_counts %}
+<div class="dist dist-center mt-lg">
+  {% for key, label in [("deep", "Deep review"), ("standard", "Standard"), ("light", "Quick confirm")] %}
+  <div><span>{{ label }}</span><b>{{ tier_counts.get(key, 0) }} question{{ "" if tier_counts.get(key, 0) == 1 else "s" }}</b></div>
+  {% endfor %}
+</div>
+{% endif %}
+<div class="center-block mt-lg"><a class="btn primary" href="/assessments/{{ assessment_id }}?tab=questionnaire">Continue to questionnaire{{ icon("arrow-r") }}</a></div>

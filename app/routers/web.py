@@ -2015,9 +2015,10 @@ def get_context_block(
         raise HTTPException(404)
 
     if block_index >= len(CONTEXT_BLOCKS):
+        tier_counts = build_adaptive_questionnaire(assessment_id, db)["stats"].get("tier_counts")
         return templates.TemplateResponse(
             "partials/context_complete.html",
-            {"request": request, "assessment_id": assessment_id},
+            {"request": request, "assessment_id": assessment_id, "tier_counts": tier_counts},
         )
 
     block = CONTEXT_BLOCKS[block_index]

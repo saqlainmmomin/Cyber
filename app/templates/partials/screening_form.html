@@ -2,28 +2,31 @@
 {% if not screening_available %}
 {{ alert("Screening is unavailable", error, "noncompliant") }}
 {% else %}
-<div class="stack">
-  {% if error %}{{ alert("Screening failed", error, "noncompliant") }}{% endif %}
-  {% if screening_done %}<div class="alert c-accent" role="status">{{ icon("check") }}<div><b>Domain screening complete</b>Review the proposed answers in the questionnaire below.</div></div>{% endif %}
-  <div class="solid card">
-    <div><h2>Domain screening</h2><p class="sub">Answer these high-level questions and AI will propose answers for the requirements it can infer with high confidence.</p></div>
-    <form hx-post="/assessments/{{ assessment_id }}/screening/submit"
-          hx-target="#screening-section"
-          hx-swap="innerHTML"
-          hx-indicator="#screening-indicator"
-          class="stack mt-lg">
-      {% for domain in domains %}
-        <fieldset class="qgroup">
-        <legend class="label">{{ domain.title }}</legend>
-        <p class="help">{{ domain.question }}</p>
-        <p class="meta">Covers {{ domain.covers | length }} requirements</p>
-        <div class="chips" style="margin-top:var(--s-3)">{% for req_id in domain.covers[:4] %}<span class="chip">{{ req_id }}</span>{% endfor %}{% if domain.covers|length > 4 %}<span class="chip">+{{ domain.covers|length - 4 }} more</span>{% endif %}</div>
-        <label class="field area" style="margin-top:var(--s-3)"><textarea name="{{ domain.id }}" rows="3" placeholder="Describe the current state"></textarea></label>
-      </fieldset>
-      {% endfor %}
-      <div class="action-row"><span class="help">The proposed answers still need your confirmation.</span><button type="submit" class="btn primary lead">{{ icon("search") }}Run screening</button></div>
-      <div id="screening-indicator" class="htmx-indicator" role="status" aria-live="polite"><div class="hrow">{{ skeleton("24px", "circle") }}<span class="sub">Inferring status across applicable requirements</span></div></div>
-    </form>
-  </div>
+{% set count_words = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"] %}
+{% set domain_count = domains | length %}
+<div class="form-narrow">
+  {% if screening_done %}<div class="alert c-ok" role="status" style="margin-bottom:var(--s-4)">{{ icon("circle-check") }}<div><b>Domain screening complete</b>Proposed answers are pre-filled. Confirm or change them in the questionnaire.</div></div>{% endif %}
+  {% if error %}{{ alert("Screening failed", error, "noncompliant", "alert", "", "margin-bottom:var(--s-4)") }}{% endif %}
+  <h2>Domain screening</h2>
+  <p class="sub">{{ count_words[domain_count] if domain_count < count_words | length else domain_count }} question{{ "" if domain_count == 1 else "s" }}, about five minutes. AI proposes answers it is confident about, and you confirm each in the questionnaire.</p>
+  {% if screening_done %}
+  <div class="glass card"><div class="between"><div><h3>Next</h3><p class="sub">Open the questionnaire to review proposed answers.</p></div><a class="btn primary" href="/assessments/{{ assessment_id }}?tab=questionnaire">Go to questionnaire</a></div></div>
+  {% else %}
+  <form class="solid card mt screening-run"
+        hx-post="/assessments/{{ assessment_id }}/screening/submit"
+        hx-target="#screening-section"
+        hx-swap="innerHTML"
+        hx-indicator="#screening-indicator">
+    {% for domain in domains %}
+    <div class="qgroup"><h3>{{ domain.title }}</h3><p class="mt" style="color:var(--text-2)">{{ domain.question }}</p>
+      <label class="field area mt"><textarea name="{{ domain.id }}" aria-label="{{ domain.title }}" placeholder="Current state, in a few sentences"></textarea></label>
+      <p class="help">Covers {{ domain.covers | length }} requirement{{ "" if domain.covers | length == 1 else "s" }}</p></div>
+    {% endfor %}
+    <div id="screening-indicator" class="skel-stack mt htmx-indicator{% if preview_state == 'loading' %} htmx-request{% endif %}" role="status" aria-label="Screening in progress"><span class="sub">Inferring status across applicable requirements</span>{{ skeleton("70%") }}{{ skeleton("45%") }}</div>
+    <div class="action-row"><a class="btn ghost" href="/assessments/{{ assessment_id }}?tab=questionnaire">Skip screening</a>
+      <button class="btn primary" type="submit">Run screening</button>
+    </div>
+  </form>
+  {% endif %}
 </div>
 {% endif %}

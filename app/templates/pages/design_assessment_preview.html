@@ -3,22 +3,35 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block crumbs %}
+{% if questionnaire_child %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}?tab=questionnaire">Questionnaire</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% else %}
 <a href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% endif %}
 {% endblock %}
 
 {% block content %}
 {% include "partials/assessment_header.html" %}
 
-<div class="stack mt-lg">
 {% if screen == "b3-screening-form" %}
+<div class="mt-lg" id="screening-section">
   {% include "partials/screening_form.html" %}
+</div>
 {% elif screen == "b3-context-complete" %}
-  {% include "partials/context_complete.html" %}
+<div class="mt-lg narrow-sm narrow-center">
+  <div class="solid card" id="context-wizard">{% include "partials/context_complete.html" %}</div>
+</div>
 {% elif screen == "b3-question-step" %}
-  {% include "partials/question_step.html" %}
+<div class="mt-lg form-narrow">
+  <div class="solid card" id="context-wizard">{% include "partials/question_step.html" %}</div>
+</div>
 {% elif screen == "b3-followups" %}
+<div class="mt-lg followup-host">
   {% include "partials/followup_questions.html" %}
-{% elif screen == "b3-sections" %}
+</div>
+{% else %}
+<div class="stack mt-lg">
+{% if screen == "b3-sections" %}
   {% include "partials/questionnaire_sections.html" %}
   {% if state == "saved" %}{% include "partials/section_saved.html" %}{% endif %}
 {% elif screen == "b3-section-questions" %}
@@ -30,4 +43,5 @@
   {% else %}{% include "partials/desk_review_findings.html" %}{% endif %}
 {% endif %}
 </div>
+{% endif %}
 {% endblock %}

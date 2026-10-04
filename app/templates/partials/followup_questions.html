@@ -1,10 +1,10 @@
-<div class="stack followup-panel">
-  <div><h3>Follow-up questions</h3><p class="sub">Add the detail needed to assess this answer.</p></div>
+<div class="followup-panel">
+  <div class="between mt-lg"><h3>Follow-up questions</h3><span class="ai">AI proposed</span></div>
   {% for fu in followups %}
-  <div class="solid card">
-    <p>{{ fu.text }}</p>
+  <div class="qgroup">
+    <label class="label" for="followup-input-{{ fu.id }}">{{ fu.text }}</label>
+    <label class="field area"><textarea id="followup-input-{{ fu.id }}" name="followup_{{ fu.id }}" placeholder="Your answer"></textarea></label>
     {% if fu.reason %}<p class="help">{{ fu.reason }}</p>{% endif %}
-    <label class="field area" style="margin-top:var(--s-3)"><textarea name="followup_{{ fu.id }}" rows="2" placeholder="Your response"></textarea></label>
   </div>
   {% endfor %}
 </div>
