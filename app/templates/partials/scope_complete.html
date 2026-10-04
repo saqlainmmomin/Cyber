@@ -21,7 +21,7 @@
     {% if proposed_not_applicable %}
     <details class="mt"><summary class="disclose">{{ proposed_not_applicable | length }} control{{ "s" if proposed_not_applicable | length != 1 else "" }} proposed as likely not applicable. You confirm each during review.</summary>
       <p class="help">These controls stay in scope. To exclude one, record a Not applicable conclusion with your reason during review.{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %} For ISO 27001 this is a Statement of Applicability decision.{% endif %}</p>
-      <ul class="checks mt">{% for item in proposed_not_applicable %}<li><div><b>{{ item.control_title }}</b><span class="sub grow">{{ item.framework_name }} · {{ item.control_id }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
+      <ul class="checks mt">{% for item in proposed_not_applicable %}<li><div><b>{{ item.control_title }}</b><span class="sub grow">{{ framework_label(item.framework_id) }} · {{ item.control_id }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}
   </div>
@@ -47,7 +47,7 @@
     <div>
       {% for heading, items in (("Required", required_items), ("Recommended", recommended_items)) if items %}
       <h3 class="mt-lg">{{ heading }}</h3>
-      <div class="mt">{% for item in items %}<div class="check-row"><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span></div><div class="chips">{% for framework_id in item.frameworks %}{% for fw in selected_frameworks if fw.id == framework_id %}<span class="chip">{{ fw.name }}</span>{% endfor %}{% endfor %}</div></div>{% endfor %}</div>
+      <div class="mt">{% for item in items %}<div class="check-row"><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span></div><div class="chips">{% for framework_id in item.frameworks %}<span class="chip">{{ framework_label(framework_id) }}</span>{% endfor %}</div></div>{% endfor %}</div>
       {% endfor %}
     </div>
     {% endif %}

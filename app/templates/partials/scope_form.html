@@ -10,7 +10,7 @@
   <p class="sub">Your answers decide which requirements apply and which evidence to collect.</p>
   <form method="post" action="/assessments/{{ assessment.id }}/scope/save" class="stack mt">
     {% for fw_group in scope_questions_by_fw %}
-    <div class="solid card"><h3>{% for fw in selected_frameworks if fw.id == fw_group.framework_id %}{{ fw.name }} {{ fw.version }}{% else %}{{ fw_group.framework_name }}{% endfor %}</h3>
+    <div class="solid card"><h3>{{ framework_label(fw_group.framework_id, full=True) }}</h3>
       {% for q in fw_group.questions %}
       <fieldset class="qgroup"><legend class="label">{{ q.question }}</legend>
         {% if q.help_text %}<p class="help">{{ q.help_text }}</p>{% endif %}
