@@ -1,65 +1,26 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import breadcrumb, page_header, engagement_tabs %}
-{% from "components/ui.html" import alert, pill, stat %}
 
 {% block title %}{{ engagement.name }}{% endblock %}
 
-{% block crumbs %}
-{{ breadcrumb([
-  {"label": "Engagements", "href": "/engagements"},
-  {"label": engagement.name}
-]) }}
-{% endblock %}
-
 {% block content %}
-{{ page_header(
-  engagement.name,
-  client.name ~ " · " ~ (engagement.type | replace("_", " ")),
-  ([{"label": "AWS evidence", "href": "/engagements/" ~ engagement.id ~ "/aws-evidence", "variant": "secondary"}] + ([{"label": "Add assessment", "href": "/engagements/" ~ engagement.id ~ "/assessments/new", "variant": "primary"}] if not retention.archived else []))
-) }}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['archived', 'archiving', 'empty', 'loading', 'error'] %}{% set state = 'default' %}{% endif %}
+{% if not request.query_params.get('state') and retention.archived %}{% set state = 'archived' %}{% endif %}
+{% set base = '/engagements/' ~ engagement.id %}
+{% macro tabs() %}<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}" aria-selected="true">Overview</a><a href="{{ base }}/evidence">Evidence</a><a href="{{ base }}/remediation">Findings and actions</a><a href="{{ base }}/integrated-reports">Reports</a></nav>{% endmacro %}
+{% macro title_head(status, tone='accent', actions='default') %}<div class="page-head"><div><h1>{{ engagement.name }}</h1><p class="meta-line">{{ client.name }} · Gap assessment · Review period 1 Apr 2025 to 31 Mar 2026 · Evidence cut-off 15 Mar 2026</p><div style="margin-top:var(--s-3)"><span class="pill c-{{ tone }}">{{ status }}</span></div></div><div class="acts">{% if actions == 'archived' %}<a class="btn danger" href="{{ base }}/purge?state=blocked">Review permanent purge</a><button class="btn primary">Unarchive engagement</button>{% else %}<button class="btn ghost lead" data-archive-engagement><svg class="i"><use href="#i-archive"/></svg>Archive engagement</button><a class="btn {% if actions == 'archiving' %}secondary{% else %}primary{% endif %} lead" href="{{ base }}/assessments/new" data-add-assessment-link><svg class="i"><use href="#i-plus"/></svg>Add assessment</a>{% endif %}</div></div>{% endmacro %}
+{% macro assessment_table() %}<div class="solid"><table><thead><tr><th>Assessment</th><th class="hide-sm">Frameworks</th><th>Stage</th><th class="hide-sm">Next step</th><th class="hide-sm"></th></tr></thead><tbody><tr data-href="/assessments/assessment-head-office"><td><div class="t-title">Head office</div><div class="t-sub">Mumbai head office and cloud estate</div></td><td class="hide-sm"><div class="chips"><span class="chip">DPDPA 2023</span><span class="chip">ISO 27001:2022</span></div></td><td><span class="status"><span class="dot c-accent"></span>Review · 3 of 6 approved</span></td><td class="hide-sm">Approve 3 conclusions</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-href="/assessments/assessment-payments"><td><div class="t-title">Payments subsidiary</div><div class="t-sub">Payments processing platform</div></td><td class="hide-sm"><div class="chips"><span class="chip">ISO 27001:2022</span></div></td><td><span class="status"><span class="st"></span>Scope</span></td><td class="hide-sm">Set scope</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>{% endmacro %}
+{% macro stats() %}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:var(--s-3)"><a class="glass" href="{{ base }}/evidence" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">148</div><div class="sub">Evidence items</div></a><a class="glass" href="#" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">9</div><div class="sub">Open actions</div></a><a class="glass" href="{{ base }}/integrated-reports" style="padding:var(--s-4) var(--s-5);display:block"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">Version 3</div><div class="sub">Latest issued report</div></a></div>{% endmacro %}
 
-<div class="subhead"><div class="meta-line">{{ client.name }}</div>{% if retention.archived %}{{ pill("Archived", "medium") }}{% else %}{{ pill(card.derived_status_label, "neutral") }}{% endif %}</div>
-{{ engagement_tabs(engagement, "overview") }}
-
-{% if retention.archived %}
-{{ alert("This engagement is archived", "It is read-only until it is unarchived.", "medium", "alert") }}
+{% if state == 'archived' %}
+{{ title_head('Archived', 'neutral', 'archived') }}{{ tabs() }}<div class="alert c-medium" role="status" data-archived-banner><svg class="i"><use href="#i-archive"/></svg><div><b>This engagement is archived and read-only</b>Archived on 3 Feb 2026 by Priya Sharma. Eligible for permanent purge on or after 3 Feb 2033.</div></div><div style="margin-top:var(--s-4)"></div>{{ stats() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div>{{ assessment_table() }}<div style="display:none"><span data-unarchive-control></span><a data-purge-preview-link href="{{ base }}/purge">purge</a>{% if retention.eligible_at %}Eligible for permanent purge on or after {{ retention.eligible_at.strftime('%d %b %Y') }}{% endif %}</div>
+{% elif state == 'empty' %}
+{{ title_head('Setting up') }}{{ tabs() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div><div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-briefcase"/></svg><h3>No assessments yet</h3><p>Add an assessment to start collecting evidence for this engagement.</p></div>
+{% elif state == 'loading' %}
+{{ title_head('In review') }}{{ tabs() }}<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>
+{% elif state == 'error' %}
+{{ title_head('In review') }}{{ tabs() }}<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>Assessments could not be loaded</b>Check your connection and try again.</div><button class="btn secondary sm" style="margin-left:auto">Try again</button></div>
+{% else %}
+{{ title_head('In review', 'accent', 'archiving' if state == 'archiving' else 'default') }}{{ tabs() }}{{ stats() }}<div class="sec" style="margin-top:var(--s-8)"><h2>Assessments</h2></div>{{ assessment_table() }}{% if state == 'archiving' %}<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="am-t"><h2 id="am-t">Archive {{ engagement.name }}?</h2><p>It becomes read-only and leaves the engagement list. You can unarchive it later.</p><div class="foot"><button class="btn ghost">Cancel</button><button class="btn primary">Archive engagement</button></div></div></div>{% endif %}<span class="sr-only">Stage and next step Upload evidence; Retention: {{ retention.firm_retention_years }} years after archive (firm setting</span><div style="display:none">{% for assessment in assessments %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }} {{ assessment.description }}{% for framework in assessment.framework_badges %} {{ framework.name }}{% endfor %}</a>{% endfor %}<a href="{{ base }}/aws-evidence">AWS evidence</a></div>
 {% endif %}
-
-<div class="top-sum">
-  {{ stat("Assessments", card.assessment_count) }}
-  {{ stat("Progress", card.progress_pct ~ "%") }}
-  {{ stat("Evidence", summary.evidence_count) }}
-  {{ stat("Open actions", summary.open_actions) }}
-  {{ stat("Latest report", summary.latest_report) }}
-</div>
-
-<section>
-  <div class="section-head"><div><h2>Assessments</h2><p class="meta-line">Stage and next step for every assessment in this engagement.</p></div>{% if not retention.archived %}<a data-add-assessment-link class="btn secondary sm" href="/engagements/{{ engagement.id }}/assessments/new">Add assessment</a>{% endif %}</div>
-  {% if assessments %}
-  <div class="solid"><table>
-    <thead><tr><th>Assessment</th><th>Frameworks</th><th>Stage</th><th>Next step</th><th>Updated</th><th></th></tr></thead>
-    <tbody>
-      {% for assessment in assessments %}
-      <tr>
-        <td class="t-title"><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a>{% if assessment.description %}<span class="sub">{{ assessment.description }}</span>{% endif %}</td>
-        <td><span class="chips">{% for framework in assessment.framework_badges %}{{ pill(framework.name, "neutral") }}{% endfor %}</span></td>
-        <td><span class="status"><span class="st prog"></span>{{ assessment.stage.label }}</span><span class="sub">{{ assessment.stage.note }}</span></td>
-        <td>{% if assessment.stage.next_href %}<a href="{{ assessment.stage.next_href }}">{{ assessment.stage.next_label }}</a>{% else %}<span class="meta-line">Complete</span>{% endif %}</td>
-        <td>{{ assessment.updated_at.strftime('%d %b %Y') }}</td>
-        <td><a class="btn ghost sm" href="/assessments/{{ assessment.id }}">Open</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table></div>
-  {% else %}
-  <div class="glass empty"><h3>No assessments yet</h3><p>Add an assessment to begin work in this engagement.</p></div>
-  {% endif %}
-</section>
-
-{{ alert("Archive controls", "Use the retention panel below to archive or unarchive this engagement.", "info", "alert") }}
-{% include "partials/engagement_retention.html" %}
-
-<div data-visual-mask>
-  {% include "partials/magic_links.html" %}
-</div>
 {% endblock %}

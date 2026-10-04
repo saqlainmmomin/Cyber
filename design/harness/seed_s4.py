@@ -37,7 +37,7 @@ from app.models.report_snapshot import ReportSnapshot
 
 
 FROZEN_NOW = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
-SEED_ACTOR = "consultant:S4 harness"
+SEED_ACTOR = "consultant:Priya Sharma"
 SCREEN_STATES = {
     "engagement_list": ("default", "empty", "loading", "error"),
     "new_engagement": ("default", "new-client", "empty", "error"),
@@ -263,41 +263,53 @@ def _seed_portfolio(db: Session, *, state: str, screen: str) -> dict:
     if state == "empty" and screen in {"engagement_list", "new_engagement"}:
         return {"clients": [], "engagements": []}
 
-    meridian = _engagement("eng-meridian", clients[0].id, "FY2026 privacy readiness")
-    loomwire = _engagement("eng-loomwire", clients[1].id, "Security controls baseline")
-    kestrel = _engagement("eng-kestrel", clients[2].id, "Advisory operations review")
-    engagements = [meridian, loomwire, kestrel]
+    # The detail/remediation/report specimens all use the same canonical
+    # engagement. Keep it on the Meridian client so every linked surface has
+    # identical copy and never falls through to the single-assessment redirect.
+    kestrel = _engagement("eng-kestrel", clients[0].id, "FY2026 privacy readiness")
+    meridian = _engagement("eng-meridian", clients[0].id, "Payments security gap assessment")
+    loomwire = _engagement("eng-loomwire", clients[1].id, "NIST CSF baseline")
+    gdpr = _engagement("eng-loomwire-gdpr", clients[1].id, "GDPR readiness")
+    vendor = _engagement("eng-loomwire-vendor", clients[1].id, "Vendor risk review")
+    prior = _engagement("eng-meridian-fy2025", clients[0].id, "FY2025 DPDPA assessment")
+    engagements = [kestrel, meridian, loomwire, gdpr, vendor, prior]
     db.add_all(engagements)
     assessments = [
-        _assessment("assessment-meridian-core", meridian.id, clients[0].name, "Core privacy assessment"),
-        _assessment("assessment-meridian-ops", meridian.id, clients[0].name, "Operations assessment", ("iso27001",)),
-        _assessment("assessment-loomwire", loomwire.id, clients[1].name, "Platform controls", ("iso27001",)),
-        _assessment("assessment-kestrel", kestrel.id, clients[2].name, "Client advisory workflow", ("dpdpa",)),
+        _assessment("assessment-head-office", kestrel.id, clients[0].name, "Head office", ("dpdpa", "iso27001")),
+        _assessment("assessment-payments", kestrel.id, clients[0].name, "Payments subsidiary", ("iso27001",)),
+        _assessment("assessment-meridian-payments", meridian.id, clients[0].name, "Payments security", ("iso27001", "nist_csf")),
+        _assessment("assessment-loomwire-nist", loomwire.id, clients[1].name, "NIST baseline", ("nist_csf",)),
+        _assessment("assessment-loomwire-gdpr", gdpr.id, clients[1].name, "GDPR readiness", ("gdpr",)),
+        _assessment("assessment-loomwire-vendor", vendor.id, clients[1].name, "Vendor risk", ("iso27001",)),
+        _assessment("assessment-meridian-fy2025", prior.id, clients[0].name, "FY2025 DPDPA", ("dpdpa",), status="completed", days=-220),
     ]
     db.add_all(assessments)
     if screen == "remediation_tracker":
-        _add_actions(db, assessments[2])
+        _add_actions(db, assessments[0])
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
 
 
-def _seed_archived(db: Session, *, eligible: bool, dependency: bool, invalid: bool = False) -> dict:
+def _seed_archived(
+    db: Session,
+    *,
+    eligible: bool,
+    dependency: bool,
+    invalid: bool = False,
+    detail_date: bool = False,
+) -> dict:
     client = _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large")
     engagement = _engagement(
         "eng-meridian-archive",
         client.id,
-        "FY2025 privacy readiness",
+        "FY2026 privacy readiness",
         status="archived",
         days=-400,
     )
-    assessment = _assessment(
-        "assessment-meridian-archive",
-        engagement.id,
-        client.name,
-        "Archived privacy assessment",
-        ("dpdpa",),
-        days=-390,
-    )
-    db.add_all([client, engagement, assessment])
+    assessments = [
+        _assessment("assessment-archive-head-office", engagement.id, client.name, "Head office", ("dpdpa", "iso27001")),
+        _assessment("assessment-archive-payments", engagement.id, client.name, "Payments subsidiary", ("iso27001",)),
+    ]
+    db.add_all([client, engagement, *assessments])
     metadata = (
         {"schema_version": 1, "client_id": client.id, "previous_status": "active"}
         if invalid
@@ -309,7 +321,11 @@ def _seed_archived(db: Session, *, eligible: bool, dependency: bool, invalid: bo
             "retention_source": "firm",
         }
     )
-    archive_at = _time(-365 * 8 if eligible else -30)
+    archive_at = (
+        datetime(2026, 2, 3, 12, tzinfo=timezone.utc)
+        if detail_date or not eligible
+        else datetime(2019, 1, 14, 12, tzinfo=timezone.utc)
+    )
     db.add(
         _audit(
             "audit-archive-meridian",
@@ -327,7 +343,7 @@ def _seed_archived(db: Session, *, eligible: bool, dependency: bool, invalid: bo
             Evidence(
                 id="evidence-external-dependency",
                 engagement_id=other.id,
-                assessment_id=assessment.id,
+                assessment_id=assessments[0].id,
                 original_filename="shared-review.pdf",
                 storage_path=f"evidence/{engagement.id}/shared-review.pdf",
                 file_hash_sha256="0" * 64,
@@ -338,7 +354,107 @@ def _seed_archived(db: Session, *, eligible: bool, dependency: bool, invalid: bo
                 created_at=_time(-10),
             )
         )
-    return {"clients": [client], "engagements": [engagement], "assessments": [assessment]}
+    return {"clients": [client], "engagements": [engagement], "assessments": assessments}
+
+
+def _seed_purge_inventory(db: Session, data: dict) -> None:
+    """Give purge states the same record volumes shown in the specimen."""
+    engagement = data["engagements"][0]
+    assessments = data["assessments"]
+    if len(assessments) < 3:
+        extra = _assessment(
+            "assessment-archive-legacy",
+            engagement.id,
+            "Meridian Ledger Technologies",
+            "Legacy records",
+            ("dpdpa",),
+            days=-410,
+        )
+        db.add(extra)
+        assessments.append(extra)
+
+    for index in range(148):
+        evidence_id = f"purge-evidence-{index:03d}"
+        assessment = assessments[index % len(assessments)]
+        db.add(
+            Evidence(
+                id=evidence_id,
+                engagement_id=engagement.id,
+                assessment_id=assessment.id,
+                original_filename=f"evidence-{index:03d}.pdf",
+                storage_path=f"evidence/{engagement.id}/evidence-{index:03d}.pdf",
+                file_hash_sha256=(f"{index:064x}")[-64:],
+                file_size_bytes=1024,
+                mime_type="application/pdf",
+                status="available",
+                uploaded_by=SEED_ACTOR,
+                created_at=_time(-30),
+            )
+        )
+    for index in range(64):
+        assessment = assessments[index % len(assessments)]
+        conclusion_id = f"purge-conclusion-{index:03d}"
+        finding_id = f"purge-finding-{index:03d}"
+        db.add(
+            Conclusion(
+                id=conclusion_id,
+                assessment_id=assessment.id,
+                framework_id="dpdpa",
+                requirement_id=f"S4.PURGE.{index:03d}",
+                outcome="partially_compliant",
+                rationale="Seeded purge record.",
+                evidence_summary="Seeded evidence.",
+                gaps_identified="Seeded gap.",
+                risk_level="medium",
+                recommended_action="Resolve the seeded finding.",
+                ai_proposed=False,
+                created_at=_time(-30),
+                updated_at=_time(-4),
+            )
+        )
+        db.add(
+            Finding(
+                id=finding_id,
+                assessment_id=assessment.id,
+                conclusion_id=conclusion_id,
+                title=f"Seeded purge finding {index + 1}",
+                description="Seeded finding for the permanent purge specimen.",
+                business_impact="Seeded impact.",
+                recommendation="Resolve the finding.",
+                severity="medium",
+                priority=index + 1,
+                status="open",
+                created_at=_time(-30),
+                updated_at=_time(-4),
+            )
+        )
+    for index in range(31):
+        db.add(
+            Action(
+                id=f"purge-action-{index:03d}",
+                finding_id=f"purge-finding-{index:03d}",
+                title=f"Seeded remediation action {index + 1}",
+                owner="Meridian IT security",
+                responsibility="owner",
+                target_date=_time(-3),
+                status="open",
+                history_json="[]",
+                created_at=_time(-30),
+                updated_at=_time(-3),
+            )
+        )
+    for index in range(6):
+        db.add(
+            ReportSnapshot(
+                id=f"purge-report-{index:03d}",
+                engagement_id=engagement.id,
+                type="integrated_report",
+                format="pdf",
+                storage_path=f"reports/engagements/{engagement.id}/purge-report-{index:03d}.pdf",
+                generated_at=_time(-index - 1),
+                is_issued=index < 3,
+            )
+        )
 
 
 def seed_s4(output: str | Path, *, screen: str = "engagement_list", state: str = "default") -> dict:
@@ -379,16 +495,22 @@ def seed_s4(output: str | Path, *, screen: str = "engagement_list", state: str =
                 dependency=state == "blocked",
                 invalid=state == "error",
             )
+            _seed_purge_inventory(db, data)
         elif screen == "engagement_detail" and state == "archived":
-            data = _seed_archived(db, eligible=True, dependency=False)
+            data = _seed_archived(db, eligible=False, dependency=False, detail_date=True)
         elif screen == "engagement_detail" and state == "empty":
             empty_client = _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large")
-            empty_engagement = _engagement("eng-empty", empty_client.id, "New privacy readiness")
+            empty_engagement = _engagement("eng-empty", empty_client.id, "FY2026 privacy readiness")
             db.add(empty_client)
             db.add(empty_engagement)
             data = {"clients": [empty_client], "engagements": [empty_engagement], "assessments": []}
-        elif screen == "integrated_reports" and state in {"empty", "none-approved"}:
-            data = _seed_portfolio(db, state="empty" if state == "empty" else "default", screen="engagement_list")
+        elif screen == "integrated_reports" and state == "empty":
+            empty_client = _client("client-meridian", "Meridian Ledger Technologies", "Fintech", "large")
+            empty_engagement = _engagement("none", empty_client.id, "FY2026 privacy readiness")
+            db.add_all([empty_client, empty_engagement])
+            data = {"clients": [empty_client], "engagements": [empty_engagement], "assessments": []}
+        elif screen == "integrated_reports" and state == "none-approved":
+            data = _seed_portfolio(db, state="default", screen="engagement_list")
         elif screen == "new_engagement" and state == "empty":
             data = _seed_portfolio(db, state="empty", screen="new_engagement")
         else:
@@ -396,34 +518,21 @@ def seed_s4(output: str | Path, *, screen: str = "engagement_list", state: str =
 
         if screen == "integrated_reports" and state not in {"empty", "none-approved"}:
             engagement = data["engagements"][0]
-            snapshots = [
-                _report_snapshot("snapshot-meridian-v1", engagement_id=engagement.id, generated_at=_time(-10))[0],
-                _report_snapshot("snapshot-meridian-v2", engagement_id=engagement.id, generated_at=_time(-2), issued=state != "issue")[0],
+            snapshot_specs = [
+                ("snapshot-meridian-v1", datetime(2026, 9, 2, 12, tzinfo=timezone.utc), False),
+                ("snapshot-meridian-v2", datetime(2026, 9, 11, 12, tzinfo=timezone.utc), True),
+                ("snapshot-meridian-v3", datetime(2026, 9, 24, 12, tzinfo=timezone.utc), True),
+                ("snapshot-meridian-v4", datetime(2026, 9, 30, 12, tzinfo=timezone.utc), False),
             ]
-            db.add_all(snapshots)
-            for snapshot in snapshots:
-                _, events = _report_snapshot(
-                    f"event-source-{snapshot.id}",
+            for snapshot_id, generated_at, issued in snapshot_specs:
+                snapshot, events = _report_snapshot(
+                    snapshot_id,
                     engagement_id=engagement.id,
-                    generated_at=snapshot.generated_at,
-                    issued=False,
+                    generated_at=generated_at,
+                    issued=issued,
                 )
-                # Keep the event rows deterministic without adding the helper snapshot.
-                for event in events:
-                    event.entity_id = snapshot.id
-                    event.id = f"audit-generated-{snapshot.id}"
-                    db.add(event)
-                    break
-                if snapshot.is_issued:
-                    db.add(
-                        _audit(
-                            f"audit-issued-{snapshot.id}",
-                            action="report_snapshot.issued",
-                            entity_type="report_snapshot",
-                            entity_id=snapshot.id,
-                            created_at=snapshot.generated_at + timedelta(hours=2),
-                        )
-                    )
+                db.add(snapshot)
+                db.add_all(events)
         db.commit()
     engine.dispose()
     return {

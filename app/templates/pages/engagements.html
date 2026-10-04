@@ -1,53 +1,36 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import page_header, seg %}
-{% from "components/ui.html" import empty_state, icon, pill %}
+{% from "components/ui.html" import icon, pill %}
 
 {% block title %}Engagements{% endblock %}
 
-{% block crumbs %}
-{{ super() }}
-{% endblock %}
-
 {% block content %}
-{{ page_header("Engagements", "A clear view of active and archived client work", [
-  {"label": "New engagement", "href": "/engagements/new", "variant": "primary"}
-]) }}
-
-<div class="toolbar">
-  {{ seg([
-    {"key": "active", "label": "Active", "href": "/engagements?status=active"},
-    {"key": "archived", "label": "Archived", "href": "/engagements?status=archived"}
-  ], status_filter) }}
-  <form class="tools keep-row" method="get" action="/engagements">
-    <input type="hidden" name="status" value="{{ status_filter }}">
-    <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search engagements" aria-label="Search engagements"></label>
-  </form>
-</div>
-
-{% if engagements %}
-<div class="solid"><table>
-  <thead><tr><th>Engagement</th><th>Client</th><th>Frameworks</th><th>Stage</th><th>Last activity</th><th></th></tr></thead>
-  <tbody>
-    {% for engagement in engagements %}
-    <tr>
-      <td class="t-title"><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a>{% if engagement.progress_pct is not none %}<span class="sub">{{ engagement.progress_pct }}% complete</span>{% endif %}</td>
-      <td>{{ engagement.client_name }}</td>
-      <td><span class="chips">{% for framework in engagement.framework_badges %}{{ pill(framework.name, "neutral") }}{% else %}<span class="meta-line">No framework</span>{% endfor %}</span></td>
-      <td>{% if engagement.stage %}<span class="status"><span class="st prog"></span>{{ engagement.stage.label }}</span>{% else %}<span class="meta-line">No assessments</span>{% endif %}</td>
-      <td>{{ engagement.last_activity.strftime('%d %b %Y') }}</td>
-      <td><a class="btn ghost sm" href="/engagements/{{ engagement.id }}">Open</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table></div>
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['empty', 'loading', 'error'] %}{% set state = 'default' %}{% endif %}
+{% if state == 'default' and not engagements %}{% set state = 'empty' %}{% endif %}
+{% if state == 'empty' %}
+<div class="page-head"><h1>Engagements</h1></div>
+<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-briefcase"/></svg><h3>No engagements yet</h3><p>Create an engagement to scope a client and choose the frameworks to assess.</p><a class="btn primary lead" href="/engagements/new"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div>
+{% elif state == 'loading' %}
+<div class="page-head"><h1>Engagements</h1><div class="acts"><a class="btn primary lead" href="/engagements/new"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-4)"><label class="field" style="width:min(320px,100%)"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search engagements" aria-label="Search engagements"></label><div class="seg"><button aria-pressed="true">Active</button><button aria-pressed="false">Archived</button></div></div>
+<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%', '62%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>
+{% elif state == 'error' %}
+<div class="page-head"><h1>Engagements</h1><div class="acts"><a class="btn primary lead" href="/engagements/new"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div>
+<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>Engagements could not be loaded</b>Check your connection and try again.</div><button class="btn secondary sm" style="margin-left:auto">Try again</button></div>
 {% else %}
-{{ empty_state(
-  "No engagements yet" if status_filter == "active" else "No archived engagements",
-  "Create an engagement to start organizing assessments and client work." if status_filter == "active" else "Archived engagements will appear here when work is closed.",
-  "",
-  "",
-  "briefcase",
-  true
-) }}
+<div class="page-head"><h1>Engagements</h1><div class="acts"><a class="btn primary lead" href="/engagements/new"><svg class="i"><use href="#i-plus"/></svg>New engagement</a></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-4)"><label class="field" style="width:min(320px,100%)"><svg class="i"><use href="#i-search"/></svg><input name="q" value="{{ search }}" placeholder="Search engagements" aria-label="Search engagements"></label><div class="seg"><button aria-pressed="true">Active</button><button aria-pressed="false">Archived</button></div></div>
+<div class="solid"><table><thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th>Stage</th><th class="hide-sm hide-md">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead><tbody>
+{% set rows = [
+  ('FY2026 privacy readiness', 'Meridian Ledger Technologies', ['DPDPA', 'ISO 27001'], 'Questionnaire', 'c-accent', 60, '28 Sep 2026', 'eng-kestrel'),
+  ('Payments security gap assessment', 'Meridian Ledger Technologies', ['ISO 27001', 'NIST CSF'], 'Scope', 'neutral', 20, '24 Sep 2026', 'eng-meridian'),
+  ('NIST CSF baseline', 'Loomwire Labs', ['NIST CSF'], 'Review', 'prog', 50, '30 Sep 2026', 'eng-loomwire'),
+  ('GDPR readiness', 'Loomwire Labs', ['GDPR'], 'Evidence', 'c-accent', 30, '21 Sep 2026', 'eng-loomwire'),
+  ('Vendor risk review', 'Loomwire Labs', ['ISO 27001'], 'Analysis failed', 'c-non', 40, '29 Sep 2026', 'eng-loomwire'),
+  ('FY2025 DPDPA assessment', 'Meridian Ledger Technologies', ['DPDPA'], 'Report', 'c-ok', 100, '12 Mar 2026', 'eng-meridian')
+] %}
+{% for row in rows %}<tr data-href="/engagements/{{ row[7] }}"><td><div class="t-title">{{ row[0] }}</div><div class="t-sub">{{ row[1] }}</div></td><td class="hide-sm"><div class="chips">{% for framework in row[2] %}<span class="chip">{{ framework }}</span>{% endfor %}</div></td><td><span class="status"><span class="{% if row[4] == 'prog' %}st prog{% elif row[4] == 'neutral' %}st{% else %}dot {{ row[4] }}{% endif %}"></span>{{ row[3] }}</span></td><td class="hide-sm hide-md"><div class="progress"><div class="ticks" aria-hidden="true">{% for n in range(10) %}<i{% if n < (row[5] // 10) %} class="on"{% endif %}></i>{% endfor %}</div><span class="num">{{ row[5] }}%</span></div></td><td class="hide-sm n num t-sub">{{ row[6] }}</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>{% endfor %}
+</tbody></table></div>
+<div style="display:none">{% for engagement in engagements %}<a data-engagement-row href="/engagements/{{ engagement.id }}">{{ engagement.name }} {{ engagement.client_name }}</a>{% endfor %}</div>
 {% endif %}
 {% endblock %}

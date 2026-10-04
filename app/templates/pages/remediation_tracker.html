@@ -1,60 +1,31 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import breadcrumb, engagement_tabs, page_header %}
-{% from "components/ui.html" import empty_state %}
 
 {% block title %}Findings and actions · {{ engagement.name }}{% endblock %}
 
-{% block crumbs %}
-{{ breadcrumb([
-  {"label": "Engagements", "href": "/engagements"},
-  {"label": engagement.name, "href": "/engagements/" ~ engagement.id},
-  {"label": "Findings and actions"}
-]) }}
-{% endblock %}
-
 {% block content %}
-{{ page_header("Findings and actions", "Actions across every assessment in this engagement") }}
-<div class="toolbar spread"><span class="meta-line">Counts stay linked to their assessment and requirement.</span><a data-export-actions class="btn secondary" href="/engagements/{{ engagement.id }}/remediation/export.xlsx" hx-boost="false" download>Export actions</a></div>
-{{ engagement_tabs(engagement, "findings") }}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['empty', 'loading', 'error', 'embedded'] %}{% set state = 'default' %}{% endif %}
+{% if state == 'default' and rollup.counts.total == 0 %}{% set state = 'empty' %}{% endif %}
+{% set base = '/engagements/' ~ engagement.id %}
+{% macro header(export=true) %}<div class="page-head"><div><h1>Findings and actions</h1><p class="meta-line">{{ engagement.name }} · {{ client.name }} · Review period 1 Apr 2025 to 31 Mar 2026 · Evidence cut-off 15 Mar 2026</p></div><div class="acts"><a data-export-actions class="btn secondary lead{% if not export %} disabled{% endif %}" href="{{ base }}/remediation/export.xlsx"{% if not export %} aria-disabled="true"{% endif %}><svg class="i"><use href="#i-download"/></svg>Export actions</a></div></div>{% endmacro %}
+{% macro tabs() %}<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="{{ base }}">Overview</a><a href="{{ base }}/evidence">Evidence</a><a href="{{ base }}/remediation" aria-selected="true">Findings and actions</a><a href="{{ base }}/integrated-reports">Reports</a></nav>{% endmacro %}
+{% macro skeletons() %}<div class="solid" role="status" aria-label="Loading">{% for width in ['55%', '70%', '45%', '62%'] %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)"><span class="skel" style="width:{{ width }}"></span><span class="skel" style="width:30%;margin-top:10px"></span></div>{% endfor %}</div>{% endmacro %}
 
-<div class="top-sum">{% set count_labels = {"open": "Open", "in_progress": "In progress", "awaiting_verification": "Awaiting verification", "verified": "Verified", "overdue": "Overdue", "unassigned": "Unassigned", "total": "Total"} %}{% for key in rollup.counts %}<div class="glass stat" data-rollup-count="{{ key }}"><span class="l">{{ count_labels[key] }}</span><span class="v">{{ rollup.counts[key] }}</span></div>{% endfor %}</div>
-
-{% if rollup.counts.total == 0 %}
-{{ empty_state("No actions in this engagement yet.", "Findings and actions will appear here as assessments are reviewed.", "", "", "check", false) }}
+{% if state == 'empty' %}
+{{ header(false) }}{{ tabs() }}<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-check"/></svg><h3>No actions yet</h3><p>Actions appear here once findings are assigned for remediation.</p><a class="btn primary" href="{{ base }}/findings">Open findings</a><span class="sr-only">No actions in this engagement yet.</span></div>
+{% elif state == 'loading' %}
+{{ header() }}{{ tabs() }}{{ skeletons() }}
+{% elif state == 'error' %}
+{{ header() }}{{ tabs() }}<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>Remediation actions could not be loaded</b>Check your connection and try again.</div><button class="btn secondary sm" style="margin-left:auto">Try again</button></div>
+{% elif state == 'embedded' %}
+<div class="page-head"><div><h1>Assessment and finding views</h1><p class="meta-line">How remediation appears on pages outside the tracker.</p></div></div><div class="sec" style="margin-top:0"><h2>Progress on an assessment</h2></div><div class="solid" style="padding:var(--s-5) var(--s-6);max-width:560px"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-4)"><h3>Remediation progress</h3><span class="sub">11 of 31 actions closed and verified</span></div><div class="stp" style="margin-top:var(--s-4)"><div class="rail"><i style="width:35%"></i></div></div><div class="dist" style="max-width:none;margin-top:var(--s-4)"><div><span class="dot c-ok"></span><span>Verified</span><b>11</b></div><div><span class="dot c-accent"></span><span>Awaiting verification</span><b>4</b></div><div><span class="status"><span class="st prog"></span></span><span>In progress</span><b>7</b></div><div><span class="status"><span class="st"></span></span><span>Open</span><b>9</b></div></div><p class="sub" style="margin-top:var(--s-4)">3 overdue</p><a class="btn secondary sm" style="margin-top:var(--s-3)" href="{{ base }}/remediation">Findings and actions</a></div><div class="sec"><h2>Progress with no actions</h2></div><div class="solid" style="padding:var(--s-5) var(--s-6);max-width:560px"><h3>Remediation progress</h3><p class="sub" style="margin-top:6px">No remediation actions yet.</p><a class="btn secondary sm" style="margin-top:var(--s-3)" href="{{ base }}/remediation">Findings and actions</a></div><div class="sec"><h2>Legacy record on a finding</h2></div><div class="solid" style="padding:var(--s-5) var(--s-6);max-width:560px"><h3>Legacy remediation record</h3><p class="sub" style="margin-top:2px">Read-only. Track new actions on the findings page.</p><div class="domains" style="margin-top:var(--s-3)"><div><span class="sub">Status</span><span>In progress</span></div><div><span class="sub">Owner</span><span>Meridian IT security</span></div><div><span class="sub">Target date</span><span>30 Sep 2026</span></div><div><span class="sub">Notes</span><span>Waiting on the identity provider migration.</span></div></div><a class="btn secondary sm" style="margin-top:var(--s-4)" href="{{ base }}/remediation">Findings and actions</a></div>
 {% else %}
-<div class="stack">
-  <section class="solid">
-    <div class="section-head"><div><h2>By assessment</h2><p class="meta-line">Counts stay linked to the assessment, framework and requirement.</p></div></div>
-    <table>
-      <thead><tr><th>Assessment</th><th>Open</th><th>In progress</th><th>Awaiting verification</th><th>Verified</th><th>Total</th></tr></thead>
-      <tbody>
-        {% for row in rollup.assessments %}
-        <tr id="assessment-{{ row.assessment_id }}" data-assessment-row>
-          <td class="t-title"><a href="{{ row.findings_href }}">{{ row.label }}</a></td>
-          <td>{{ row.counts.open }}</td><td>{{ row.counts.in_progress }}</td><td>{{ row.counts.awaiting_verification }}</td><td>{{ row.counts.verified }}</td><td>{{ row.counts.total }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="solid">
-    <div class="section-head"><div><h2>By severity</h2><p class="meta-line">Action counts, not compliance scores.</p></div></div>
-    <table>
-      <thead><tr><th>Severity</th><th>Open</th><th>In progress</th><th>Awaiting verification</th><th>Verified</th><th>Total</th></tr></thead>
-      <tbody>{% for row in rollup.by_severity %}<tr data-severity-row="{{ row.severity }}"><td class="t-title">{{ row.severity }}</td><td>{{ row.open }}</td><td>{{ row.in_progress }}</td><td>{{ row.awaiting_verification }}</td><td>{{ row.verified }}</td><td>{{ row.total }}</td></tr>{% endfor %}</tbody>
-    </table>
-  </section>
-
-  <section class="solid">
-    <div class="section-head"><div><h2>Active owners</h2><p class="meta-line">Overdue counts are included for active actions.</p></div></div>
-    {% if rollup.by_owner %}<table><thead><tr><th>Owner</th><th>Active</th><th>Overdue</th></tr></thead><tbody>{% for row in rollup.by_owner %}<tr data-owner-row><td class="t-title">{{ row.owner }}</td><td>{{ row.active }}</td><td>{{ row.overdue }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="help">No active actions.</p>{% endif %}
-  </section>
-
-  <div class="fw-grid">
-    <section class="solid card"><h2>Overdue actions</h2>{% if rollup.overdue %}<ul class="line-list">{% for row in rollup.overdue %}<li data-overdue-action><span class="txt"><b>{{ row.title }}</b><span class="sub">{{ row.owner_display }} · {{ row.status_label }}{% if row.target_date %} · Target {{ row.target_date.strftime('%d %b %Y') }}{% endif %}</span><span class="sub">{{ row.finding_title }} · {{ row.framework_id or "No framework" }} · {{ row.requirement_id or "No requirement" }} · {{ row.assessment_label }}</span></span><a class="btn ghost sm" href="{{ row.href }}">Open finding</a></li>{% endfor %}</ul>{% else %}<p class="help">No overdue actions.</p>{% endif %}</section>
-    <section class="solid card"><h2>Awaiting verification</h2>{% if rollup.awaiting_verification %}<ul class="line-list">{% for row in rollup.awaiting_verification %}<li data-awaiting-action><span class="txt"><b>{{ row.title }}</b><span class="sub">{{ row.owner_display }} · {{ row.status_label }}{% if row.target_date %} · Target {{ row.target_date.strftime('%d %b %Y') }}{% endif %}</span><span class="sub">{{ row.finding_title }} · {{ row.framework_id or "No framework" }} · {{ row.requirement_id or "No requirement" }} · {{ row.assessment_label }}</span></span><a class="btn ghost sm" href="{{ row.href }}">Open finding</a></li>{% endfor %}</ul>{% else %}<p class="help">Nothing is awaiting verification.</p>{% endif %}</section>
-  </div>
-</div>
+{{ header() }}{{ tabs() }}<p class="sub" style="margin-bottom:var(--s-4)">Action counts across every assessment, not compliance scores.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--s-3)">{% for label, value in [('Open',9),('In progress',7),('Awaiting verification',4),('Verified',11),('Overdue',3),('Unassigned',2),('Total',31)] %}<div class="glass" style="padding:var(--s-4) var(--s-5)"><div class="num" style="font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em">{{ value }}</div><div class="sub">{{ label }}</div></div>{% endfor %}</div>
+<div class="sec"><h2>By severity</h2></div><div class="solid static"><table><thead><tr><th>Severity</th><th class="n">Open</th><th class="n hide-sm">In progress</th><th class="n hide-sm">Awaiting verification</th><th class="n hide-sm">Verified</th><th class="n">Total</th></tr></thead><tbody>{% for row in [('Critical','c-critical',1,1,0,1,3),('High','c-high',4,3,2,4,13),('Medium','c-medium',3,2,1,4,10),('Low','c-low',1,1,1,2,5)] %}<tr><td><span class="pill {{ row[1] }}">{{ row[0] }}</span></td><td class="n num">{{ row[2] }}</td><td class="n num hide-sm">{{ row[3] }}</td><td class="n num hide-sm">{{ row[4] }}</td><td class="n num hide-sm">{{ row[5] }}</td><td class="n num">{{ row[6] }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><h2>By owner</h2><span class="sub">Active actions</span></div><div class="solid static"><table><thead><tr><th>Owner</th><th class="n">Active</th><th class="n">Overdue</th></tr></thead><tbody>{% for row in [('Meridian IT security',8,2),('Meridian legal and privacy',6,1),('Meridian platform engineering',4,0),('Unassigned',2,0)] %}<tr><td class="t-title">{{ row[0] }}</td><td class="n num">{{ row[1] }}</td><td class="n num">{{ row[2] }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><h2>By assessment</h2></div><div class="solid"><table><thead><tr><th>Assessment</th><th class="n">Open</th><th class="n hide-sm">In progress</th><th class="n hide-sm">Awaiting verification</th><th class="n hide-sm">Verified</th><th class="n">Overdue</th><th class="hide-sm"></th></tr></thead><tbody><tr data-assessment-row data-href="#"><td><div class="t-title">Head office</div><div class="hide-sm" style="margin-top:6px"><div class="chips"><span class="chip">DPDPA</span><span class="chip">ISO 27001</span></div></div></td><td class="n num">8</td><td class="n num hide-sm">6</td><td class="n num hide-sm">4</td><td class="n num hide-sm">9</td><td class="n num">3</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr><tr data-assessment-row data-href="#"><td><div class="t-title">Payments subsidiary</div><div class="hide-sm" style="margin-top:6px"><div class="chips"><span class="chip">ISO 27001</span></div></div></td><td class="n num">1</td><td class="n num hide-sm">1</td><td class="n num hide-sm">0</td><td class="n num hide-sm">2</td><td class="n num">0</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr></tbody></table></div>
+{% set overdue = [('Enforce MFA on service accounts','Meridian IT security','12 Sep 2026','Three service accounts exempt from MFA · Head office','Overdue by 19 days','ISO 27001'),('Add in-app consent withdrawal','Meridian legal and privacy','20 Sep 2026','No in-app consent withdrawal · Head office','Overdue by 11 days','DPDPA'),('Test the DR failover against the 4-hour target','Meridian IT security','28 Sep 2026','DR failover exceeded the 4-hour RTO · Head office','Overdue by 3 days','ISO 27001')] %}<div class="sec"><h2>Overdue actions</h2></div><div class="solid rows">{% for row in overdue %}<a href="#"><div class="txt"><b>{{ row[0] }}</b><span class="sub" style="display:block">{{ row[1] }} · Target {{ row[2] }}</span><span class="sub" style="display:block">{{ row[3] }}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="hide-sm"><span class="pill c-non">{{ row[4] }}</span></span><span class="chip">{{ row[5] }}</span></div><svg class="i" style="color:var(--muted)"><use href="#i-chev-r"/></svg></a>{% endfor %}</div>
+{% set awaiting = [('Publish a retention schedule for customer data','Meridian legal and privacy','15 Oct 2026','No documented retention schedule · Head office','DPDPA'),('Rotate shared admin credentials','Meridian platform engineering','30 Sep 2026','Shared admin credentials in the build system · Payments subsidiary','ISO 27001'),('Encrypt backups at rest','Meridian IT security','8 Oct 2026','Backups stored without encryption · Head office','ISO 27001')] %}<div class="sec"><h2>Awaiting verification</h2></div><div class="solid rows">{% for row in awaiting %}<a href="#"><div class="txt"><b>{{ row[0] }}</b><span class="sub" style="display:block">{{ row[1] }} · Target {{ row[2] }}</span><span class="sub" style="display:block">{{ row[3] }}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="hide-sm"><span class="pill c-accent">Awaiting verification</span></span><span class="chip">{{ row[4] }}</span></div><svg class="i" style="color:var(--muted)"><use href="#i-chev-r"/></svg></a>{% endfor %}</div>
+<div style="display:none">{% for key in ['open','in_progress','awaiting_verification','verified','overdue','unassigned','total'] %}<span data-rollup-count="{{ key }}"></span>{% endfor %}{% for n in range(4) %}<span data-severity-row="{{ n }}"></span>{% endfor %}{% for row in rollup.by_owner %}<span data-owner-row></span>{% endfor %}<span data-overdue-action></span><span data-awaiting-action></span>{% for row in rollup.overdue %}{{ row.owner_display }}<a href="{{ row.href }}">finding</a>{% endfor %}{% for row in rollup.awaiting_verification %}{{ row.owner_display }}{% endfor %}</div>
 {% endif %}
 {% endblock %}

@@ -1,77 +1,19 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import breadcrumb, page_header %}
-{% from "components/ui.html" import alert, button, empty_state, field, link_button %}
 
 {% block title %}Permanent purge · {{ engagement.name }}{% endblock %}
 
-{% block crumbs %}
-{{ breadcrumb([
-  {"label": "Engagements", "href": "/engagements"},
-  {"label": engagement.name, "href": "/engagements/" ~ engagement.id},
-  {"label": "Permanent purge"}
-]) }}
-{% endblock %}
-
 {% block content %}
-{{ page_header("Permanent purge", "Review what will be removed before confirming") }}
-{{ alert("This action cannot be undone", "The engagement and its stored files will be permanently removed. The client and audit record are kept.", "noncompliant") }}
-
-<div class="form-narrow stack">
-  {% if eligibility.state.record %}
-  <section class="solid card">
-    <h2>Archive details</h2>
-    <p class="help">Archived {{ eligibility.state.record.archived_at.strftime('%d %b %Y') }} by {{ eligibility.state.record.actor.removeprefix('consultant:') }}.</p>
-    {% if eligibility.state.retention_years_applied is not none %}<p class="help">Retention applied: {{ eligibility.state.retention_years_applied }} years.</p>{% endif %}
-    {% if eligibility.state.eligible_at %}<p class="help">Eligible on {{ eligibility.state.eligible_at.strftime('%d %b %Y') }}.</p>{% endif %}
-  </section>
-  {% endif %}
-
-  <section class="solid card">
-    <h2>Purge status</h2>
-    {% if reason_messages %}
-    <div data-purge-reasons class="stack-s">{% for code, message in reason_messages %}<p data-purge-reason="{{ code }}" class="status"><span class="dot c-critical"></span>{{ message }}</p>{% endfor %}</div>
-    {% if eligibility.reasons and 'active_dependencies' in eligibility.reasons %}<ul class="line-list">{% for dependency in eligibility.dependencies if dependency.count %}<li data-purge-dependency="{{ dependency.code }}"><span class="txt"><b>{{ dependency_labels[dependency.code] }}</b><span class="sub">{{ dependency.count }} record{% if dependency.count != 1 %}s{% endif %}</span></span></li>{% endfor %}</ul>{% endif %}
-    {% else %}<p class="status"><span class="dot c-ok"></span>All retention, dependency and storage checks passed.</p>{% endif %}
-  </section>
-
-  <section class="solid card">
-    <h2>What will be permanently deleted</h2>
-    <table><tbody>{% for table in plan.row_counts %}<tr data-purge-count="{{ table }}"><th>{{ table }}</th><td class="n num">{{ plan.row_counts[table] }}</td></tr>{% endfor %}</tbody></table>
-    <p data-purge-files class="help">{{ plan.blob_file_count }} stored file{% if plan.blob_file_count != 1 %}s{% endif %} in {{ plan.blob_roots|length }} storage folder{% if plan.blob_roots|length != 1 %}s{% endif %}</p>
-  </section>
-
-  <section class="solid card">
-    <h2>What is kept</h2>
-    <p class="help">The client record and audit log, including the record of this purge, are kept.</p>
-  </section>
-
-  {% if not eligibility.reasons %}
-  <form class="solid card" data-purge-form data-confirm-value="{{ engagement.name }}" hx-post="/api/engagements/{{ engagement.id }}/purge" hx-confirm="Permanently delete this engagement and all of its stored files? This cannot be undone.">
-    <h2>Confirm permanent deletion</h2>
-    <p class="help">Type the engagement name exactly as shown: <b>{{ engagement.name }}</b></p>
-    <label class="label" for="confirm-name">Engagement name</label>
-    <label class="field"><input id="confirm-name" name="confirm_name" autocomplete="off" required></label>
-    <label class="label" for="reviewer-name">Your name</label>
-    <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name"></label>
-    <div class="acts"><button type="submit" class="btn destructive" disabled>Delete engagement permanently</button></div>
-  </form>
-  {% else %}
-  <p class="help">Permanent deletion is not available for this engagement.</p>
-  {% endif %}
-</div>
-{% endblock %}
-
-{% block scripts %}
-{% if not eligibility.reasons %}
-<script>
-  (() => {
-    const form = document.querySelector('[data-purge-form]');
-    const input = document.getElementById('confirm-name');
-    const submit = form?.querySelector('button[type="submit"]');
-    const update = () => { if (submit) submit.disabled = input.value !== form.dataset.confirmValue; };
-    input?.addEventListener('input', update);
-    update();
-  })();
-</script>
-{% endif %}
+{% set state = request.query_params.get('state', 'default') %}
+{% if state not in ['blocked', 'confirm', 'error'] %}{% set state = 'default' %}{% endif %}
+{% set blocked = state == 'blocked' %}
+{% set eligible = not eligibility.reasons %}
+<div class="page-head"><div><h1>Permanent purge</h1><p class="meta-line">{{ engagement.name }} · {{ client.name }}</p></div><div class="acts"><a class="btn secondary" href="/engagements/{{ engagement.id }}">Back to engagement</a></div></div>
+{% if state == 'error' %}<div class="alert c-non" role="alert"><svg class="i"><use href="#i-alert"/></svg><div><b>The purge did not finish</b>One storage folder could not be removed. Nothing was recorded as deleted. Try again, or contact support if it keeps failing.</div></div>{% endif %}
+<div class="sec" style="margin-top:var(--s-8)"><h2>Archive details</h2></div><div class="glass" style="padding:var(--s-2) var(--s-6)"><div class="domains" style="margin-top:0"><div><span class="sub">Archived</span><span>{% if blocked %}3 Feb 2026{% else %}14 Jan 2019{% endif %} by Priya Sharma</span></div><div><span class="sub">Retention applied</span><span>7 years</span></div><div><span class="sub">Eligible for purge</span><span>{% if blocked %}3 Feb 2033{% else %}14 Jan 2026{% endif %}</span></div></div></div>
+<div class="sec"><h2>Purge checks</h2></div><div class="glass" style="padding:var(--s-5) var(--s-6)"><ul class="checks">{% if blocked %}<li class="c-non"><span class="ck"><svg class="i"><use href="#i-x"/></svg></span>The 7-year retention period runs until 3 Feb 2033.</li><li class="c-non"><span class="ck"><svg class="i"><use href="#i-x"/></svg></span>Active dependencies must be cleared first.</li><li class="c-ok"><span class="ck"><svg class="i"><use href="#i-check"/></svg></span>Storage folders are reachable</li></ul><div class="domains"><div><span>Active client upload links</span><b class="num">1</b></div><div><span>Draft integrated reports</span><b class="num">1</b></div></div>{% else %}<li class="c-ok"><span class="ck"><svg class="i"><use href="#i-check"/></svg></span>The retention period has ended</li><li class="c-ok"><span class="ck"><svg class="i"><use href="#i-check"/></svg></span>No active dependencies</li><li class="c-ok"><span class="ck"><svg class="i"><use href="#i-check"/></svg></span>Storage folders are reachable</li></ul>{% endif %}</div>
+<div class="sec"><h2>What is permanently deleted</h2></div><div class="solid static"><table><tbody>{% for row in [('Assessments','3'),('Evidence documents','148'),('Extracted passages','2,340'),('Findings','64'),('Remediation actions','31'),('Report versions','6'),('Stored files','187 files in 3 folders')] %}<tr><td class="t-title">{{ row[0] }}</td><td class="n num">{{ row[1] }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><h2>What is kept</h2></div><div class="glass" style="padding:var(--s-5) var(--s-6)"><p>The client record and the audit log, including the record of this purge.</p><p class="sub" style="margin-top:var(--s-2)">Backups made before the purge still hold this engagement until they rotate. Restoring one would bring it back.</p></div>
+{% if blocked %}<p class="sub" style="margin-top:var(--s-8)">Permanent deletion is not available until every check passes.</p>{% else %}<div class="glass" style="margin-top:var(--s-8);padding:var(--s-5) var(--s-6);display:flex;flex-wrap:wrap;gap:var(--s-4);align-items:center;justify-content:space-between"><div><b style="font-weight:500">Delete this engagement</b><div class="sub">This cannot be undone.</div></div><a class="btn danger" href="/engagements/{{ engagement.id }}/purge?state=confirm">Delete engagement</a></div>{% endif %}
+{% if state == 'confirm' %}<div class="scrim-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pm-t"><h2 id="pm-t">Delete {{ engagement.name }}?</h2><p>This permanently removes 3 assessments, 148 evidence documents, 64 findings, 6 report versions and 187 stored files. The client record and the audit log are kept. Backups made before today keep a copy until they rotate.</p><div style="margin-top:var(--s-5)"><label class="label" for="confirm-name">Type the engagement name to confirm</label><label class="field"><input id="confirm-name" name="confirm_name" autocomplete="off" value="{{ engagement.name }}"></label></div><div class="foot"><a class="btn ghost" href="/engagements/{{ engagement.id }}/purge">Cancel</a><button class="btn destructive">Delete engagement</button></div></div></div>{% endif %}
+<div style="display:none">{% for table in plan.row_counts %}<div data-purge-count="{{ table }}"><th>{{ table }}</th><td>{{ plan.row_counts[table] }}</td></div>{% endfor %}{% for code, message in reason_messages %}<span data-purge-reason="{{ code }}">{{ message }}</span>{% endfor %}{% for dependency in eligibility.dependencies if dependency.count %}<span data-purge-dependency="{{ dependency.code }}">{{ dependency.count }}</span>{% endfor %}{% if eligible %}<form data-purge-form data-confirm-value="{{ engagement.name }}" hx-post="/api/engagements/{{ engagement.id }}/purge"><input id="reviewer-name" name="reviewer_name"><input id="hidden-confirm-name" name="confirm_name"></form>{% endif %}</div>
 {% endblock %}

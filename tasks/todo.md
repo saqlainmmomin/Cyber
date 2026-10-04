@@ -2,6 +2,14 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## S4 visual gate repair (2026-10-04)
+
+- [ ] Capture baseline `domcmp.py` and `gate2.py` measurements for all S4 cases.
+- [x] Align shared shell usage, S4 templates/styles, and seeded state data to the mockups; keep required ids, `hx-*`, and `data-*` attributes intact. Verified by rebuilding all 30 seeded S4 state databases and the focused compatibility checks.
+- [x] Explain and minimally isolate the `assessment.html` touch required by the S4 shell/state surface. The change is a screen-reader-only description preservation for the legacy single-assessment redirect; no S5 layout was changed.
+- [ ] Rebuild seeded servers after seed changes and rerun all 120 light/dark 1440/1024 gate cases. Seed rebuild completed; `domcmp.py` and `gate2.py` could not launch Chromium in this sandbox (`bootstrap_check_in ... Permission denied`) before capture.
+- [x] Run focused checks and the full suite with `OPENROUTER_KEY=""`; leave changes uncommitted. Full suite: 1386 passed, 30 skipped.
+
 Mark a task complete only with its plan test/smoke evidence. `[AR]` is an adversarial-review merge gate.
 
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
