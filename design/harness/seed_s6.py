@@ -30,7 +30,9 @@ from app.models.desk_review import DeskReviewSummary
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
 from app.models.firm_settings import FirmSettings
 from app.models.magic_link import MagicLink
+from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
+from app.models.engagement import Engagement
 from design.harness.seed_s4 import (
     FROZEN_NOW,
     SEED_ACTOR,
@@ -45,7 +47,7 @@ from design.harness.seed_s4 import (
 
 
 SCREEN_STATES = {
-    "evidence": ("default", "upload", "empty", "loading", "error", "prefill", "all"),
+    "evidence": ("default", "upload", "filtered", "empty", "loading", "error", "prefill", "all"),
     "aws_evidence": ("ready", "pulling", "result", "error", "notconfigured"),
     "evidence_reuse": ("list", "error", "empty", "unlinked"),
     "evidence_detail": ("current", "quarantined", "unused"),
@@ -149,20 +151,21 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     ]
     engagements = [
         _engagement("eng-meridian", clients[0].id, "FY2026 privacy readiness"),
-        _engagement("eng-loomwire", clients[1].id, "ISO 27001 surveillance review"),
+        _engagement("eng-loomwire", clients[1].id, "ISO 27001 surveillance audit"),
         _engagement("eng-kestrel", clients[2].id, "Advisory controls review"),
     ]
     assessments = [
         _assessment("assessment-meridian-head", engagements[0].id, clients[0].name, "Head office", ("dpdpa", "iso27001"), status="questionnaire_done"),
         _assessment("assessment-meridian-payments", engagements[0].id, clients[0].name, "Payments subsidiary", ("iso27001",)),
-        _assessment("assessment-loomwire", engagements[1].id, clients[1].name, "Platform review", ("iso27001",)),
+        _assessment("assessment-loomwire", engagements[1].id, clients[1].name, "Platform", ("iso27001",)),
         _assessment("assessment-kestrel", engagements[2].id, clients[2].name, "Advisory review", ("dpdpa",)),
     ]
+    pilot = _assessment("assessment-meridian-pilot", engagements[0].id, clients[0].name, "Pilot assessment", ("dpdpa", "iso27001"), status="archived", days=-200)
     assessments.append(_assessment("assessment-unlinked", None, "Unlinked client", "Standalone review", ("dpdpa",)))
-    db.add_all(clients + engagements + assessments)
+    db.add_all(clients + engagements + assessments + [pilot])
     db.add(FirmSettings(id=1, contact_email="engagements@northgate.example", archived_retention_years=7, accent_theme="midnight", updated_at=FROZEN_NOW))
     db.add(_magic_link(engagements[0].id, link_id="magic-link-meridian", assessment_ids=(assessments[0].id, assessments[1].id), contact_name="Ananya Rao", contact_email="ananya@meridian.example"))
-    db.add(_magic_link(engagements[0].id, link_id="magic-link-meridian-kiran", assessment_ids=(assessments[0].id, assessments[1].id), contact_name="Kiran Shah", contact_email="kiran@meridian.example"))
+    db.add(_magic_link(engagements[0].id, link_id="magic-link-meridian-karan", assessment_ids=(assessments[0].id, assessments[1].id), contact_name="Karan Shah", contact_email="karan@meridian.example"))
     db.add(_magic_link(engagements[1].id))
     db.flush()
 
@@ -236,7 +239,7 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     rows["meridian-evidence-002"].uploaded_by = "aws_config:123456789012"
     rows["meridian-evidence-003"].uploaded_by = "client_link:magic-link-meridian"
     rows["meridian-evidence-004"].uploaded_by = "client_link:magic-link-meridian"
-    rows["meridian-evidence-007"].uploaded_by = "client_link:magic-link-meridian-kiran"
+    rows["meridian-evidence-007"].uploaded_by = "client_link:magic-link-meridian-karan"
     rows["meridian-evidence-008"].uploaded_by = "aws_config:123456789012"
     rows["meridian-evidence-003"].mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     rows["meridian-evidence-004"].mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -296,17 +299,17 @@ def _seed_inventory(db: Session) -> dict[str, object]:
             EvidenceUse(id="use-meridian-vendor", evidence_id="meridian-evidence-007", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.20", relevance="supports"),
             EvidenceUse(id="use-meridian-vendor-iso", evidence_id="meridian-evidence-007", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
             EvidenceUse(id="use-meridian-s3-15", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.15", relevance="supports"),
-            EvidenceUse(id="use-meridian-s3-20", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.20", relevance="supports"),
+            EvidenceUse(id="use-meridian-s3-20", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.25", relevance="supports"),
             EvidenceUse(id="use-meridian-s3-24", evidence_id="meridian-evidence-008", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.24", relevance="supports"),
             EvidenceUse(id="use-meridian-breach", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="s.8", relevance="supports"),
             EvidenceUse(id="use-meridian-breach-24", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.24", relevance="supports"),
-            EvidenceUse(id="use-meridian-breach-25", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="iso27001", requirement_id="A.5.25", relevance="supports"),
+            EvidenceUse(id="use-meridian-breach-25", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.8(6)", relevance="supports"),
             EvidenceUse(id="use-meridian-flow-14", evidence_id="meridian-evidence-010", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.5.14", relevance="supports"),
             EvidenceUse(id="use-meridian-flow-20", evidence_id="meridian-evidence-010", assessment_id=assessments[1].id, framework_id="iso27001", requirement_id="A.8.20", relevance="supports"),
             EvidenceUse(id="use-loomwire-aws", evidence_id="loomwire-evidence-000", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.8.16", relevance="supports"),
             EvidenceUse(id="use-loomwire-client", evidence_id="loomwire-evidence-001", assessment_id=assessments[2].id, framework_id="iso27001", requirement_id="A.5.19", relevance="supports"),
             EvidenceUse(id="use-retention-target", evidence_id="meridian-evidence-005", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.8", relevance="supports"),
-            EvidenceUse(id="use-breach-target", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="DPDPA.9", relevance="supports"),
+            EvidenceUse(id="use-breach-target", evidence_id="meridian-evidence-009", assessment_id=assessments[0].id, framework_id="dpdpa", requirement_id="s.8", relevance="supports"),
         ]
     )
     db.flush()
@@ -314,8 +317,8 @@ def _seed_inventory(db: Session) -> dict[str, object]:
         EvidenceUse.assessment_id.in_((assessments[0].id, assessments[1].id))
     ).all():
         use.created_at = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
-    db.add(_audit("audit-reuse-meridian-retention", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-retention-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-005", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
-    db.add(_audit("audit-reuse-meridian-breach", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-breach-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-009", "source_assessment_id": assessments[1].id, "target_assessment_id": assessments[0].id}))
+    db.add(_audit("audit-reuse-meridian-retention", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-retention-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-005", "source_assessment_id": pilot.id, "target_assessment_id": assessments[0].id}))
+    db.add(_audit("audit-reuse-meridian-breach", action="evidence_reuse.confirmed", entity_type="evidence_use", entity_id="use-breach-target", created_at=_time(-3), metadata={"evidence_id": "meridian-evidence-009", "source_assessment_id": pilot.id, "target_assessment_id": assessments[0].id}))
     for index, (framework_id, status, started_at, completed_at) in enumerate((
         ("dpdpa", "completed", datetime(2026, 3, 20, 9, tzinfo=timezone.utc), datetime(2026, 3, 20, 9, 15, tzinfo=timezone.utc)),
         ("iso27001", "completed", datetime(2026, 3, 20, 9, tzinfo=timezone.utc), datetime(2026, 3, 20, 9, 20, tzinfo=timezone.utc)),
@@ -335,6 +338,40 @@ def _seed_inventory(db: Session) -> dict[str, object]:
     return {"clients": clients, "engagements": engagements, "assessments": assessments}
 
 
+def _apply_screen_state(db: Session, screen: str, state: str | None) -> None:
+    """Data variants for inventory states that a different dataset produces (no template branches)."""
+    if screen != "evidence":
+        return
+    if state == "empty":
+        # Every Meridian item archived: the engagement has no listed evidence.
+        for row in db.query(Evidence).filter(Evidence.engagement_id == "eng-meridian").all():
+            row.status = "archived"
+    elif state == "all":
+        # The cross-engagement snapshot in the mockup: eight Meridian items and four Loomwire items.
+        for evidence_id in ("meridian-evidence-008", "meridian-evidence-009", "meridian-evidence-010", "kestrel-evidence-000"):
+            db.get(Evidence, evidence_id).status = "archived"
+        db.add(_magic_link("eng-loomwire", link_id="magic-link-loomwire-dev", contact_name="Dev Patel", contact_email="dev@loomwire.example"))
+        _seed_evidence(db, db.get(Engagement, "eng-loomwire"), db.get(Assessment, "assessment-loomwire"), 4, "loomwire-snapshot")
+        db.flush()
+        items = (
+            ("Supplier register.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 410_000, "quarantined", SEED_ACTOR, 14, 20, ("A.5.19", "A.5.20")),
+            ("Production access review.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 1_200_000, "active", "client_link:magic-link-loomwire-dev", 8, 19, ("A.5.18", "A.8.2", "A.8.3")),
+            ("Backup restore test log", "application/json", 98_000, "active", "aws_config:123456789012", 14, 18, ("A.8.13", "A.5.30")),
+            ("Statement of applicability.pdf", "application/pdf", 640_000, "invalidated", SEED_ACTOR, 2, 17, ("A.5.1", "A.5.36")),
+        )
+        for index, (filename, mime, size, status, uploaded_by, received_day, order_hour, codes) in enumerate(items):
+            row = db.get(Evidence, f"loomwire-snapshot-{index:03d}")
+            row.original_filename, row.mime_type, row.file_size_bytes = filename, mime, size - 128
+            row.status, row.uploaded_by = status, uploaded_by
+            row.created_at = datetime(2026, 3, received_day, 12, tzinfo=timezone.utc)
+            db.add(_version(row, 1, status=status, created_at=datetime(2026, 4, 5, order_hour, tzinfo=timezone.utc), filename=filename))
+            for code in codes:
+                db.add(EvidenceUse(id=f"use-{row.id}-{code}", evidence_id=row.id, assessment_id="assessment-loomwire", framework_id="iso27001", requirement_id=code, relevance="supports"))
+        for evidence_id in ("loomwire-evidence-000", "loomwire-evidence-001"):
+            db.get(Evidence, evidence_id).status = "archived"
+    db.commit()
+
+
 def _stamp_head(database_url: str) -> None:
     config = Config(str(REPO_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(REPO_ROOT / "alembic"))
@@ -342,7 +379,7 @@ def _stamp_head(database_url: str) -> None:
     command.stamp(config, "head")
 
 
-def seed(database_path: Path) -> dict[str, object]:
+def seed(database_path: Path, screen: str = "evidence", state: str | None = None) -> dict[str, object]:
     if database_path.exists():
         database_path.unlink()
     database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -353,19 +390,20 @@ def seed(database_path: Path) -> dict[str, object]:
     _register_frameworks()
     with Session(engine, expire_on_commit=False) as db:
         data = _seed_inventory(db)
+        _apply_screen_state(db, screen, state)
     engine.dispose()
     return data
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
+    parser.add_argument("--database", "--output", type=Path, default=Path("/tmp/yozora-s6.sqlite3"))
     parser.add_argument("--screen", choices=tuple(SCREEN_STATES), default="evidence")
     parser.add_argument("--state", default=None)
     args = parser.parse_args()
     if args.state and args.state not in SCREEN_STATES[args.screen]:
         parser.error(f"state {args.state!r} is not valid for {args.screen}")
-    data = seed(args.database)
+    data = seed(args.database, args.screen, args.state)
     manifest = {
         "database": str(args.database),
         "frozen_now": FROZEN_NOW.isoformat(),
@@ -377,7 +415,7 @@ def main() -> int:
         },
         "clients": [client.name for client in data["clients"]],
     }
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    print(json.dumps(manifest, sort_keys=True))
     return 0
 
 
