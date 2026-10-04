@@ -356,7 +356,7 @@ def test_design_preview_renders_all_workpaper_entry_states(db, http):
         page = http.get(f"/design/pages/workpaper_entry?state={state}")
         assert page.status_code == 200
         assert 'data-workpaper-entry' in page.text
-        assert "Queue" in page.text and "Workpaper" in page.text
+        assert 'aria-label="Assessment"' in page.text and "Open in conclusions" in page.text
     assert "1. Client response" not in page.text
     assert "4. Consultant decision" not in page.text
 

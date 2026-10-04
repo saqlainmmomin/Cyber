@@ -1,7 +1,6 @@
 """Debug-only Yozora component gallery and template preview routes."""
 
 from collections.abc import Callable
-from dataclasses import replace
 from datetime import datetime, timezone
 import json
 from types import SimpleNamespace
@@ -91,27 +90,46 @@ def aws_evidence_preview(request: Request, db: Session) -> Response:
 PREVIEW_PAGES["aws_evidence"] = aws_evidence_preview
 
 
+def _workpaper_entry_matches(entry, state: str) -> bool:
+    if state == "legacy":
+        return entry.in_scope and entry.card.legacy_bulk_approval
+    if state == "excluded":
+        return not entry.in_scope
+    return entry.in_scope and entry.card.state == "edited"
+
+
 def workpaper_entry_preview(request: Request, db: Session) -> Response:
+    """Render one real workpaper entry as the entry page (no production route exists).
+
+    ``?entry=<anchor>`` picks an entry; otherwise the state picks the first entry that
+    has that shape in the seeded data: an edited conclusion (default), a legacy bulk
+    approval (legacy) or a scope-excluded conclusion (excluded). The fixture below is
+    used only when the database holds no conclusions at all."""
     state = request.query_params.get("state", "default")
     if state not in {"default", "legacy", "excluded"}:
         state = "default"
+    anchor = request.query_params.get("entry")
     assessments = db.query(Assessment).order_by(Assessment.created_at, Assessment.id).all()
-    assessment = assessments[0] if assessments else None
-    entry = None
+    found = []
     for candidate in assessments:
-        read_model = workpaper.build_workpaper(db, candidate)
-        sections = read_model.sections
-        candidate_entry = next((item for section in sections for item in section.entries), None)
-        candidate_entry = candidate_entry or next(
-            (item for section in sections for item in section.excluded_entries),
-            None,
+        sections = workpaper.build_workpaper(db, candidate).sections
+        found.extend(
+            (candidate, item)
+            for section in sections
+            for item in (*section.entries, *section.excluded_entries)
         )
-        if candidate_entry is not None:
-            assessment = candidate
-            entry = candidate_entry
-            break
-    if entry is None:
-        assessment = assessment or SimpleNamespace(
+    match = next(((a, e) for a, e in found if anchor and e.anchor == anchor), None)
+    match = match or next(((a, e) for a, e in found if _workpaper_entry_matches(e, state)), None)
+    match = match or (found[0] if found else None)
+    if match is not None:
+        assessment, entry = match
+        from app.services.report_basis import basis_for
+
+        basis = basis_for(assessment)
+        engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+        client = db.get(Client, engagement.client_id) if engagement else None
+    else:
+        assessment = SimpleNamespace(
             id="preview-assessment",
             display_name="Preview assessment",
             company_name="Meridian Ledger Technologies",
@@ -125,33 +143,24 @@ def workpaper_entry_preview(request: Request, db: Session) -> Response:
         )
         card = SimpleNamespace(
             conclusion=conclusion, requirement_title="Privacy notice and transparency", state="approved",
-            locked=False, legacy_bulk_approval=False, legacy_report_status=None, last_decision=None,
+            locked=True, legacy_bulk_approval=state == "legacy", legacy_report_status=None, last_decision=None,
             previous_outcome=None, unsupported_assertion=False, withheld_proposal=None,
         )
         entry = SimpleNamespace(
-            card=card, anchor="wp-dpdpa-DPDPA-1", in_scope=True, client_response=None,
+            card=card, anchor="wp-dpdpa-DPDPA-1", in_scope=state != "excluded", client_response=None,
             mapped_evidence=[], desk_review_findings=[], ai_proposal=None, revisions=[], findings=[],
         )
-    if state == "legacy":
-        if hasattr(entry.card, "__dataclass_fields__"):
-            entry = replace(entry, card=replace(entry.card, legacy_bulk_approval=True))
-        else:
-            card_values = vars(entry.card).copy()
-            card_values["legacy_bulk_approval"] = True
-            entry.card = SimpleNamespace(**card_values)
-    elif state == "excluded":
-        if hasattr(entry, "__dataclass_fields__"):
-            entry = replace(entry, in_scope=False)
-        else:
-            entry.in_scope = False
+        basis = None
+        engagement = client = None
     return templates.TemplateResponse(
         "pages/workpaper.html",
         {
             "request": request,
             "assessment": assessment,
             "preview_entry": entry,
-            "preview_period_label": "01 Apr 2026 to 30 Jun 2026",
-            "preview_cutoff_label": "15 Jul 2026",
+            "preview_basis": basis,
+            "engagement": engagement,
+            "client": client,
         },
     )
 

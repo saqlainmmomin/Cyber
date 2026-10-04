@@ -417,7 +417,7 @@ def test_scenario_1_approved_conclusions_render_complete_workpaper(
         "Client note text",
         "Partially Implemented",
         "Grounded quote",
-        "no quote offered",
+        "No quote offered",
         f'href="/evidence/{evidence.id}"',
     ):
         assert expected in first_html
@@ -496,9 +496,9 @@ def test_scenario_2_full_history_reconstructs_content_and_actors(
     assert page.status_code == 200
     for expected in (
         "Edited and approved",
-        "A newer AI proposal was withheld because this conclusion is locked",
-        "AI proposed before edit",
-        "Consultant edits carry no citations",
+        "A newer AI proposal was withheld",
+        "before this edit",
+        "Edits carry no citations",
     ):
         assert expected in page.text
     assert "consultant:Priya" not in page.text
@@ -549,7 +549,7 @@ def test_scenario_4_scope_split_unconcluded_and_unrestricted_values(
     second = page.text.index(f'id="wp-dpdpa-{REQS[1]}"')
     assert first < heading < second
     assert 'data-in-scope="false"' in _entry_html(page.text, f"wp-dpdpa-{REQS[1]}")
-    assert "Scope-enforced to not applicable at analysis time" in page.text
+    assert "set to not applicable at analysis time" in page.text
     assert page.text.count("data-workpaper-entry") == 2
 
     assessment_b = _seed(db, applicable=REQS[:3], client_name="Scope B")
@@ -753,8 +753,9 @@ def test_scenario_7_empty_failed_stale_malformed_legacy_and_ungrounded_states(
     empty = _seed(db, applicable=[REQS[0]], client_name="Empty")
     page = http.get(f"/assessments/{empty.id}/workpaper")
     assert page.status_code == 200
-    assert "No conclusions yet. Run the gap analysis first." in page.text
-    assert "No analysis runs recorded." in page.text
+    assert "No conclusions yet" in page.text
+    assert "Run the gap analysis to create the first conclusions." in page.text
+    assert "data-analysis-runs" not in page.text
     assert "data-workpaper-entry" not in page.text
 
     from app.routers import analysis
@@ -844,7 +845,8 @@ def test_scenario_7_empty_failed_stale_malformed_legacy_and_ungrounded_states(
     assert legacy_wp.counts["approved"] == 0
     legacy_page = http.get(f"/assessments/{legacy.id}/workpaper")
     for expected in (
-        "No run record for this proposal (migrated from the legacy report).",
+        "No run record for this proposal.",
+        "Migrated from the legacy report",
         "Evidence support not captured (legacy)",
         workpaper.LEGACY_BULK_LABEL,
     ):

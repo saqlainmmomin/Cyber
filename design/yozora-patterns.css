@@ -227,3 +227,7 @@ td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
 .reuse-warnings{display:flex;flex-direction:column;gap:var(--s-2)}
 .reuse-help{margin-top:var(--s-4)}
 .reuse-error{margin-bottom:var(--s-4)}
+/* s6-workpaper: full workpaper entries stay in the page for traceability and open when their anchor is targeted */
+.workpaper-section{display:flex;flex-direction:column}
+.workpaper-section>.workpaper-entry{order:1;display:none}
+.workpaper-section>.workpaper-entry:target{display:block}
