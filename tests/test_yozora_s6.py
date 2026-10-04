@@ -40,7 +40,9 @@ def test_inventory_and_documents_redirect_are_http_surfaces(db, http, monkeypatc
     page = http.get(f"/engagements/{engagement.id}/evidence")
     assert page.status_code == 200
     assert engagement.name in page.text
-    assert 'name="source"' in page.text
+    # An engagement with no evidence shows the empty state; the filters appear once it has items.
+    assert "No evidence yet" in page.text
+    assert 'name="source"' not in page.text
     assert "Upload" in page.text
     assert 'data-nav-key="evidence"' in page.text
     assert 'id="document-list"' in page.text
@@ -62,6 +64,7 @@ def test_inventory_and_documents_redirect_are_http_surfaces(db, http, monkeypatc
 
     inventory = http.get(f"/engagements/{engagement.id}/evidence")
     assert inventory.status_code == 200
+    assert 'name="source"' in inventory.text
     assert "/assessments//" not in inventory.text
     delete_url = re.search(r'hx-delete="([^"]+/documents/' + re.escape(evidence.id) + r'[^"]*)"', inventory.text)
     version_url = re.search(r'hx-post="([^"]+/evidence/' + re.escape(evidence.id) + r'/versions[^"]*)"', inventory.text)
@@ -79,6 +82,7 @@ def test_inventory_and_documents_redirect_are_http_surfaces(db, http, monkeypatc
     archived = http.delete(delete_url.group(1))
     assert archived.status_code == 200
     assert "Privacy Policy" not in archived.text
+    assert "No evidence yet" in archived.text
 
 
 def test_cross_engagement_inventory_and_filter_round_trip(db, http, monkeypatch):
@@ -157,7 +161,8 @@ def test_inventory_counts_use_display_labels_and_upload_contract(db, http, monke
     )
     assert uploaded.status_code == 200
     page = http.get(f"/engagements/{engagement.id}/evidence?state=upload")
-    assert "1 item · 1 available" in page.text
+    assert '<span class="sub">1 item</span>' in page.text
+    assert "1 available" in page.text
     assert 'accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"' in page.text
     assert 'value="privacy_policy"' in page.text
     filtered_upload = http.get(

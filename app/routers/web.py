@@ -1553,6 +1553,13 @@ def _inventory_fragment_context(
         "legacy_documents": legacy_documents,
         "inventory_display_dates": display_dates,
         "fragment_query": urlencode(fragment_params),
+        "inventory_filtered": bool(fragment_params),
+        "inventory_path": f"/engagements/{engagement_id}/evidence" if engagement_id else "/evidence",
+        "request_assessment_id": (
+            scope_assessment_id
+            or (assessment.id if assessment else None)
+            or (owner_assessments[0].id if owner_assessments else None)
+        ),
     }
 
 
@@ -1604,6 +1611,9 @@ def evidence_inventory_page(
             "inventory_display_dates": display_dates,
             "legacy_documents": [],
             "fragment_query": "",
+            "inventory_filtered": bool(engagement_id or source or status or query.get("search")),
+            "inventory_path": "/evidence",
+            "request_assessment_id": None,
             "doc_categories": [item.value for item in DocumentCategory],
             "cross_engagement": True,
         },
@@ -1649,6 +1659,18 @@ def engagement_evidence_inventory_page(
         if selected_assessment
         else None
     )
+    # One pre-fill note per assessment that has a completed pre-fill and newer documents.
+    prefill_notes = []
+    for item in [selected_assessment] if selected_assessment else assessments:
+        item_freshness = freshness if item is selected_assessment else prefill_freshness.freshness(db, item)
+        if item_freshness.last_prefill_at and item_freshness.new_since_last_prefill:
+            prefill_notes.append({"assessment": item, "freshness": item_freshness})
+    filtered = bool(selected_assessment or source or status or query.get("search"))
+    engagement_total = (
+        len(evidence_inventory.inventory_rows(db, engagement_id))
+        if filtered
+        else len(fragment["inventory_rows"])
+    )
     return templates.TemplateResponse(
         "pages/evidence_inventory.html",
         {
@@ -1667,6 +1689,9 @@ def engagement_evidence_inventory_page(
             "view_state": preview_state,
             "upload_assessment_id": upload_assessment.id if upload_assessment else None,
             "freshness": freshness,
+            "prefill_notes": prefill_notes,
+            "inventory_filtered": filtered,
+            "engagement_total": engagement_total,
             "doc_categories": [item.value for item in DocumentCategory],
             "cross_engagement": False,
         },

@@ -1,14 +1,14 @@
-{% from "components/ui.html" import status %}
+{% from "components/ui.html" import icon, status %}
 {% if inventory_rows %}
-<div class="table-wrap solid">
-  <table class="data-table">
+<div class="solid" style="overflow-x:auto">
+  <table>
     <thead>
       <tr>
         <th>Item</th>
-        {% if cross_engagement %}<th>Engagement</th>{% endif %}
-        <th>Source</th>
-        <th>Assessment</th>
-        <th>Supports</th>
+        {% if cross_engagement %}<th class="hide-sm">Engagement</th>{% endif %}
+        <th class="hide-sm">Source</th>
+        <th class="hide-sm">Assessment</th>
+        <th class="hide-sm">Supports</th>
         <th>Status</th>
         <th hidden><span class="sr-only">Actions</span></th>
       </tr>
@@ -17,24 +17,21 @@
       {% for row in inventory_rows %}
       {% set action = document_actions.get(row.evidence_id) if document_actions is defined else none %}
       {% set action_assessment_id = action.action_assessment_id if action else none %}
+      {% set source_detail = row.contact_name or ("From " ~ row.reused_from if row.reused_from else "") %}
       <tr data-evidence-id="{{ row.evidence_id }}">
         <td>
-          <a class="file-name t-title" href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a>
-          <span class="sub t-sub">{{ row.type_label }} · {% if row.size_bytes >= 1000000 %}{{ "%.1f"|format(row.size_bytes / 1000000) }} MB{% else %}{{ "%.0f"|format(row.size_bytes / 1000) }} KB{% endif %}</span>
+          <a class="t-title" href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a>
+          <div class="t-sub">{{ row.type_label }} · {% if row.size_bytes >= 1000000 %}{{ "%.1f"|format(row.size_bytes / 1000000) }} MB{% else %}{{ "%.0f"|format(row.size_bytes / 1000) }} KB{% endif %}</div>
+          <div class="t-sub show-sm">{{ row.source_label }}{% if source_detail %} · {{ source_detail }}{% endif %}</div>
         </td>
-        {% if cross_engagement %}<td><a class="sub t-sub link" href="/engagements/{{ row.engagement_id }}/evidence">{{ row.engagement_name }}</a></td>{% endif %}
-        <td>
-          <span class="source-label t-sub">{{ row.source_label }}</span>
-          {% if row.contact_name %}<span class="sub t-sub">{{ row.contact_name }}</span>{% endif %}
-          {% if row.reused_from %}<span class="sub t-sub">From {{ row.reused_from }}</span>{% endif %}
+        {% if cross_engagement %}<td class="hide-sm" style="white-space:nowrap"><a class="t-title" href="/engagements/{{ row.engagement_id }}/evidence">{{ row.engagement_name }}</a><div class="t-sub">{{ row.client_name }}</div></td>{% endif %}
+        <td class="hide-sm"><span class="status">{{ row.source_label }}</span>{% if source_detail %}<div class="t-sub">{{ source_detail }}</div>{% endif %}</td>
+        <td class="hide-sm">
+          {% if row.used_by %}<div class="chips"><span class="chip">{% if row.used_by|length == 2 %}Both assessments{% elif row.used_by|length > 2 %}{{ row.used_by|length }} assessments{% else %}{{ row.used_by[0].name }}{% endif %}</span></div>
+          {% else %}<span class="t-sub">Not mapped</span>{% endif %}
         </td>
-        <td>
-          {% if row.used_by %}
-            {% if row.used_by|length > 1 %}<span class="chip">Both assessments</span>{% else %}<span class="chip">{{ row.used_by[0].name }}</span>{% endif %}
-          {% else %}<span class="sub">Not mapped</span>{% endif %}
-        </td>
-        <td>{% if row.supports %}<span class="sub t-sub">{{ row.supports[:2]|join(" · ") }}{% if row.supports|length > 2 %} · +{{ row.supports|length - 2 }}{% endif %}</span>{% else %}<span class="sub">—</span>{% endif %}</td>
-        <td>{% if row.status == "quarantined" %}{{ status(row.status_label, "in_progress") }}{% elif row.status == "active" %}{{ status(row.status_label, tone="ok") }}{% elif row.status == "rejected" %}{{ status(row.status_label, tone="non") }}{% else %}{{ status(row.status_label, tone="medium") }}{% endif %}<span class="sub t-sub">{{ inventory_display_dates.get(row.evidence_id, row.updated_at)|display_date }}</span></td>
+        <td class="hide-sm" style="white-space:nowrap">{% if row.supports %}<span class="t-sub">{{ row.supports[:2]|join(" · ") }}{% if row.supports|length > 2 %} · +{{ row.supports|length - 2 }}{% endif %}</span>{% else %}<span class="t-sub">—</span>{% endif %}</td>
+        <td>{% if row.status == "quarantined" %}{{ status(row.status_label, "in_progress") }}{% elif row.status == "active" %}{{ status(row.status_label, tone="ok") }}{% elif row.status == "rejected" %}{{ status(row.status_label, tone="non") }}{% else %}{{ status(row.status_label, tone="medium") }}{% endif %}<div class="t-sub">{{ inventory_display_dates.get(row.evidence_id, row.updated_at)|display_date }}</div></td>
         <td class="actions" hidden>
           {% if action and action.can_archive %}
           <button class="btn ghost sm" type="button"
@@ -60,6 +57,10 @@
     </tbody>
   </table>
 </div>
+{% elif inventory_filtered %}
+<div class="glass empty" data-empty-evidence>{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence matches the filters</h3><p>Try clearing one or more filters to see the evidence inventory.</p><a class="btn secondary" href="{{ inventory_path or request.url.path }}">Clear filters</a></div>
+{% elif cross_engagement %}
+<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Evidence appears here once it is added to an engagement.</p></div>
 {% else %}
-<div class="glass empty" data-empty-evidence><h3>No evidence matches the filters</h3><p>Try clearing one or more filters to see the evidence inventory.</p><a class="btn secondary" href="{{ request.url.path }}">Clear filters</a></div>
+<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Upload documents or send the client a request.</p><div class="acts2"><button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% if request_assessment_id %}<a class="btn ghost lead" href="/assessments/{{ request_assessment_id }}/rfi">{{ icon("link") }}Ask the client</a>{% endif %}</div></div>
 {% endif %}
