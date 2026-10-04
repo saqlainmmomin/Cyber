@@ -1,64 +1,60 @@
 {% extends "base.html" %}
-{% block title %}Remediation tracker — {{ engagement.name }}{% endblock %}
+{% from "components/layout.html" import breadcrumb, engagement_tabs, page_header %}
+{% from "components/ui.html" import empty_state %}
+
+{% block title %}Findings and actions · {{ engagement.name }}{% endblock %}
+
+{% block crumbs %}
+{{ breadcrumb([
+  {"label": "Engagements", "href": "/engagements"},
+  {"label": engagement.name, "href": "/engagements/" ~ engagement.id},
+  {"label": "Findings and actions"}
+]) }}
+{% endblock %}
 
 {% block content %}
-<nav class="mb-2 text-xs text-gray-400 dark:text-gray-500">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
-  <span class="mx-1.5">/</span>
-  <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>
-  <span class="mx-1.5">/</span>
-  <a href="/engagements/{{ engagement.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ engagement.name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Remediation tracker</span>
-</nav>
+{{ page_header("Findings and actions", "Actions across every assessment in this engagement") }}
+<div class="toolbar spread"><span class="meta-line">Counts stay linked to their assessment and requirement.</span><a data-export-actions class="btn secondary" href="/engagements/{{ engagement.id }}/remediation/export.xlsx" hx-boost="false" download>Export actions</a></div>
+{{ engagement_tabs(engagement, "findings") }}
 
-<div class="mb-8">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Remediation tracker</h1>
-  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">Actions across every assessment in this engagement. These are action counts, not compliance scores. Each action keeps its assessment, framework and requirement.</p>
-  <a data-export-actions href="/engagements/{{ engagement.id }}/remediation/export.xlsx" hx-boost="false" download class="mt-3 inline-block rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">Export actions</a>
-</div>
+<div class="top-sum">{% set count_labels = {"open": "Open", "in_progress": "In progress", "awaiting_verification": "Awaiting verification", "verified": "Verified", "overdue": "Overdue", "unassigned": "Unassigned", "total": "Total"} %}{% for key in rollup.counts %}<div class="glass stat" data-rollup-count="{{ key }}"><span class="l">{{ count_labels[key] }}</span><span class="v">{{ rollup.counts[key] }}</span></div>{% endfor %}</div>
 
-{% if rollup.counts.total == 0 %}<p class="mb-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-4 text-sm text-gray-500 dark:text-gray-400">No actions in this engagement yet.</p>{% endif %}
-
-<section class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-  {% for key, value in rollup.counts.items() %}
-  <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-    <p data-rollup-count="{{ key }}" class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ value }}</p>
-    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% if key == 'open' %}Open{% elif key == 'in_progress' %}In progress{% elif key == 'awaiting_verification' %}Awaiting verification{% elif key == 'verified' %}Verified{% elif key == 'overdue' %}Overdue{% elif key == 'unassigned' %}Unassigned{% else %}Total{% endif %}</p>
-  </div>
-  {% endfor %}
-</section>
-
-<section class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">By severity</h2>
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-left text-sm">
-      <thead class="text-xs text-gray-400 dark:text-gray-500"><tr><th class="pb-2 pr-4">Severity</th><th class="pb-2 pr-4">Open</th><th class="pb-2 pr-4">In progress</th><th class="pb-2 pr-4">Awaiting verification</th><th class="pb-2 pr-4">Verified</th><th class="pb-2">Total</th></tr></thead>
+{% if rollup.counts.total == 0 %}
+{{ empty_state("No actions in this engagement yet.", "Findings and actions will appear here as assessments are reviewed.", "", "", "check", false) }}
+{% else %}
+<div class="stack">
+  <section class="solid">
+    <div class="section-head"><div><h2>By assessment</h2><p class="meta-line">Counts stay linked to the assessment, framework and requirement.</p></div></div>
+    <table>
+      <thead><tr><th>Assessment</th><th>Open</th><th>In progress</th><th>Awaiting verification</th><th>Verified</th><th>Total</th></tr></thead>
       <tbody>
-        {% for row in rollup.by_severity %}<tr data-severity-row="{{ row.severity }}" class="border-t border-gray-100 dark:border-gray-800"><td class="py-2 pr-4 font-medium">{{ row.severity|title }}</td><td class="py-2 pr-4">{{ row.open }}</td><td class="py-2 pr-4">{{ row.in_progress }}</td><td class="py-2 pr-4">{{ row.awaiting_verification }}</td><td class="py-2 pr-4">{{ row.verified }}</td><td class="py-2">{{ row.total }}</td></tr>{% endfor %}
+        {% for row in rollup.assessments %}
+        <tr id="assessment-{{ row.assessment_id }}" data-assessment-row>
+          <td class="t-title"><a href="{{ row.findings_href }}">{{ row.label }}</a></td>
+          <td>{{ row.counts.open }}</td><td>{{ row.counts.in_progress }}</td><td>{{ row.counts.awaiting_verification }}</td><td>{{ row.counts.verified }}</td><td>{{ row.counts.total }}</td>
+        </tr>
+        {% endfor %}
       </tbody>
     </table>
+  </section>
+
+  <section class="solid">
+    <div class="section-head"><div><h2>By severity</h2><p class="meta-line">Action counts, not compliance scores.</p></div></div>
+    <table>
+      <thead><tr><th>Severity</th><th>Open</th><th>In progress</th><th>Awaiting verification</th><th>Verified</th><th>Total</th></tr></thead>
+      <tbody>{% for row in rollup.by_severity %}<tr data-severity-row="{{ row.severity }}"><td class="t-title">{{ row.severity }}</td><td>{{ row.open }}</td><td>{{ row.in_progress }}</td><td>{{ row.awaiting_verification }}</td><td>{{ row.verified }}</td><td>{{ row.total }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+
+  <section class="solid">
+    <div class="section-head"><div><h2>Active owners</h2><p class="meta-line">Overdue counts are included for active actions.</p></div></div>
+    {% if rollup.by_owner %}<table><thead><tr><th>Owner</th><th>Active</th><th>Overdue</th></tr></thead><tbody>{% for row in rollup.by_owner %}<tr data-owner-row><td class="t-title">{{ row.owner }}</td><td>{{ row.active }}</td><td>{{ row.overdue }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="help">No active actions.</p>{% endif %}
+  </section>
+
+  <div class="fw-grid">
+    <section class="solid card"><h2>Overdue actions</h2>{% if rollup.overdue %}<ul class="line-list">{% for row in rollup.overdue %}<li data-overdue-action><span class="txt"><b>{{ row.title }}</b><span class="sub">{{ row.owner_display }} · {{ row.status_label }}{% if row.target_date %} · Target {{ row.target_date.strftime('%d %b %Y') }}{% endif %}</span><span class="sub">{{ row.finding_title }} · {{ row.framework_id or "No framework" }} · {{ row.requirement_id or "No requirement" }} · {{ row.assessment_label }}</span></span><a class="btn ghost sm" href="{{ row.href }}">Open finding</a></li>{% endfor %}</ul>{% else %}<p class="help">No overdue actions.</p>{% endif %}</section>
+    <section class="solid card"><h2>Awaiting verification</h2>{% if rollup.awaiting_verification %}<ul class="line-list">{% for row in rollup.awaiting_verification %}<li data-awaiting-action><span class="txt"><b>{{ row.title }}</b><span class="sub">{{ row.owner_display }} · {{ row.status_label }}{% if row.target_date %} · Target {{ row.target_date.strftime('%d %b %Y') }}{% endif %}</span><span class="sub">{{ row.finding_title }} · {{ row.framework_id or "No framework" }} · {{ row.requirement_id or "No requirement" }} · {{ row.assessment_label }}</span></span><a class="btn ghost sm" href="{{ row.href }}">Open finding</a></li>{% endfor %}</ul>{% else %}<p class="help">Nothing is awaiting verification.</p>{% endif %}</section>
   </div>
-</section>
-
-<section class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">By owner (active actions)</h2>
-  {% if rollup.by_owner %}<div class="overflow-x-auto"><table class="min-w-full text-left text-sm"><thead class="text-xs text-gray-400 dark:text-gray-500"><tr><th class="pb-2 pr-4">Owner</th><th class="pb-2 pr-4">Active</th><th class="pb-2">Overdue</th></tr></thead><tbody>{% for row in rollup.by_owner %}<tr data-owner-row class="border-t border-gray-100 dark:border-gray-800"><td class="py-2 pr-4 font-medium">{{ row.owner }}</td><td class="py-2 pr-4">{{ row.active }}</td><td class="py-2">{{ row.overdue }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="text-sm text-gray-500 dark:text-gray-400">No active actions.</p>{% endif %}
-</section>
-
-<section class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">By assessment</h2>
-  <div class="overflow-x-auto"><table class="min-w-full text-left text-sm"><thead class="text-xs text-gray-400 dark:text-gray-500"><tr><th class="pb-2 pr-4">Assessment</th>{% for key in rollup.counts.keys() %}<th class="pb-2 pr-4">{{ key|replace('_', ' ')|title }}</th>{% endfor %}</tr></thead><tbody>{% for row in rollup.assessments %}<tr data-assessment-row id="assessment-{{ row.assessment_id }}" class="border-t border-gray-100 dark:border-gray-800"><td class="py-2 pr-4"><span class="font-medium">{{ row.label }}</span><a href="{{ row.findings_href }}" class="ml-2 text-xs text-brand dark:text-navy-300 hover:underline">Findings and actions →</a></td>{% for key in rollup.counts.keys() %}<td class="py-2 pr-4">{{ row.counts[key] }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
-</section>
-
-<div class="grid gap-8 lg:grid-cols-2">
-  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Overdue actions</h2>
-    {% if rollup.overdue %}<ul class="space-y-3">{% for row in rollup.overdue %}<li data-overdue-action class="border-t border-gray-100 dark:border-gray-800 pt-3 first:border-0 first:pt-0"><p class="font-medium text-gray-900 dark:text-gray-100">{{ row.title }}</p><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ row.owner_display }} · Target {{ row.target_date.strftime('%Y-%m-%d') }} · {{ row.status_label }}</p><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ row.finding_title }} · {{ row.framework_id|upper if row.framework_id else '—' }} · {{ row.requirement_id or '—' }} · {{ row.assessment_label }}</p><a href="{{ row.href }}" class="mt-1 inline-block text-xs font-medium text-brand dark:text-navy-300 hover:underline">Open finding →</a></li>{% endfor %}</ul>{% else %}<p class="text-sm text-gray-500 dark:text-gray-400">No overdue actions.</p>{% endif %}
-  </section>
-  <section class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Awaiting verification</h2>
-    {% if rollup.awaiting_verification %}<ul class="space-y-3">{% for row in rollup.awaiting_verification %}<li data-awaiting-action class="border-t border-gray-100 dark:border-gray-800 pt-3 first:border-0 first:pt-0"><p class="font-medium text-gray-900 dark:text-gray-100">{{ row.title }}</p><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ row.owner_display }}{% if row.target_date %} · Target {{ row.target_date.strftime('%Y-%m-%d') }}{% endif %} · {{ row.status_label }}</p><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ row.finding_title }} · {{ row.framework_id|upper if row.framework_id else '—' }} · {{ row.requirement_id or '—' }} · {{ row.assessment_label }}</p><a href="{{ row.href }}" class="mt-1 inline-block text-xs font-medium text-brand dark:text-navy-300 hover:underline">Open finding →</a></li>{% endfor %}</ul>{% else %}<p class="text-sm text-gray-500 dark:text-gray-400">Nothing is awaiting verification.</p>{% endif %}
-  </section>
 </div>
+{% endif %}
 {% endblock %}

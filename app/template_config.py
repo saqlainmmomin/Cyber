@@ -8,10 +8,10 @@ from app.config import settings
 NAV_ITEMS = (
     {"key": "home", "label": "Home", "href": "/", "icon": "home", "available": True},
     {"key": "clients", "label": "Clients", "href": "/clients", "icon": "building", "available": False},
-    {"key": "engagements", "label": "Engagements", "href": "/engagements", "icon": "briefcase", "available": False},
+    {"key": "engagements", "label": "Engagements", "href": "/engagements", "icon": "briefcase", "available": True},
     {"key": "review", "label": "Review", "href": "/review", "icon": "inbox", "available": False},
     {"key": "evidence", "label": "Evidence", "href": "/evidence", "icon": "folder", "available": False},
-    {"key": "reports", "label": "Reports", "href": "/reports", "icon": "report", "available": False},
+    {"key": "reports", "label": "Reports", "href": "/reports", "icon": "report", "available": True},
     {"key": "settings", "label": "Settings", "href": "/settings", "icon": "settings", "available": True},
 )
 

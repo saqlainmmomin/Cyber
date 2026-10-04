@@ -43,7 +43,7 @@
 {%- endmacro %}
 
 {% macro table(headers, rows, static=false, numeric_columns=[]) -%}
-<div class="solid"><table{% if static %} class="static"{% endif %}><thead><tr>{% for header in headers %}<th{% if loop.index0 in numeric_columns %} class="n"{% endif %}>{{ header }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr>{% for cell in row %}<td{% if loop.index0 == 0 %} class="t-title"{% elif loop.index0 in numeric_columns %} class="n num"{% endif %}>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+<div class="solid"><table{% if static %} class="static"{% endif %}><thead><tr>{% for header in headers %}<th{% if loop.index0 in numeric_columns %} class="n"{% endif %}>{{ header }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr>{% for cell in row %}<td{% if loop.index0 == 0 %} class="t-title"{% elif loop.index0 in numeric_columns %} class="n num"{% endif %}>{% if cell.label is defined %}<a href="{{ cell.href }}">{{ cell.label }}</a>{% if cell.sub %}<span class="sub">{{ cell.sub }}</span>{% endif %}{% else %}{{ cell }}{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
 {%- endmacro %}
 
 {% macro rows_list(items) -%}

@@ -21,6 +21,7 @@ from app.models.assessment import Assessment, AssessmentDocument
 from app.models.audit_event import AuditEvent
 from app.models.client import Client
 from app.models.engagement import Engagement
+from app.models.evidence import Evidence
 from app.models.questionnaire import QuestionnaireResponse
 from app.services.followup_engine import generate_followups
 from app.services.engagement_factory import add_assessment_to_engagement, create_engagement_with_assessment
@@ -42,6 +43,7 @@ from app.models.conclusion import Conclusion, ConclusionRevision
 from app.schemas.assessment import DocumentCategory
 from app.services import (
     actions_export,
+    assessment_stage,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -264,6 +266,101 @@ def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
     return sorted(cards, key=lambda card: card["last_activity"], reverse=True)
 
 
+def _assessment_stage_row(db: Session, assessment: Assessment) -> dict:
+    current_stage = assessment_stage.stage(db, assessment)
+    return {
+        "id": assessment.id,
+        "company_name": assessment.company_name,
+        "display_name": assessment.display_name,
+        "description": assessment.description,
+        "status": assessment.status,
+        "created_at": assessment.created_at,
+        "updated_at": assessment.updated_at,
+        "framework_badges": framework_badges(assessment.frameworks),
+        "stage": current_stage,
+    }
+
+
+def _engagement_list_rows(
+    db: Session,
+    *,
+    status_filter: str,
+    search: str,
+) -> list[dict]:
+    query = db.query(Engagement).order_by(Engagement.updated_at.desc(), Engagement.id)
+    if status_filter == "archived":
+        query = query.filter(Engagement.status == "archived")
+    else:
+        query = query.filter(Engagement.status != "archived")
+
+    rows = []
+    search_folded = search.casefold()
+    for engagement in query.all():
+        client = db.get(Client, engagement.client_id)
+        assessments = (
+            db.query(Assessment)
+            .filter(
+                Assessment.engagement_id == engagement.id,
+                Assessment.status != "archived",
+            )
+            .order_by(Assessment.updated_at.desc(), Assessment.id)
+            .all()
+        )
+        client_name = client.name if client else ""
+        if search_folded and search_folded not in f"{engagement.name} {client_name}".casefold():
+            continue
+        framework_ids = []
+        for assessment in assessments:
+            for framework_id in assessment.frameworks:
+                if framework_id not in framework_ids:
+                    framework_ids.append(framework_id)
+        current_assessment = assessments[0] if assessments else None
+        current_stage = (
+            assessment_stage.stage(db, current_assessment)
+            if current_assessment is not None
+            else None
+        )
+        rows.append(
+            {
+                "id": engagement.id,
+                "name": engagement.name,
+                "client_name": client_name,
+                "framework_badges": framework_badges(framework_ids),
+                "stage": current_stage,
+                "progress_pct": build_engagement_card(engagement, assessments)["progress_pct"],
+                "last_activity": (
+                    assessments[0].updated_at
+                    if assessments
+                    else engagement.updated_at
+                ),
+            }
+        )
+    return rows
+
+
+@router.get("/engagements", response_class=HTMLResponse)
+def engagements_page(
+    request: Request,
+    status: str = "active",
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    status_filter = status if status in {"active", "archived"} else "active"
+    return templates.TemplateResponse(
+        "pages/engagements.html",
+        {
+            "request": request,
+            "engagements": _engagement_list_rows(
+                db,
+                status_filter=status_filter,
+                search=q.strip(),
+            ),
+            "status_filter": status_filter,
+            "search": q,
+        },
+    )
+
+
 @router.get("/clients/{client_id}", response_class=HTMLResponse)
 def client_detail(
     request: Request,
@@ -369,21 +466,25 @@ def engagement_detail(
         .order_by(Assessment.created_at.desc())
         .all()
     )
+    if engagement.status != "archived" and len(assessments) == 1:
+        return RedirectResponse(f"/assessments/{assessments[0].id}", status_code=303)
     card = build_engagement_card(engagement, assessments)
     retention_state = retention.retention_state(db, engagement)
-    assessment_cards = [
-        {
-            "id": assessment.id,
-            "company_name": assessment.company_name,
-            "display_name": assessment.display_name,
-            "description": assessment.description,
-            "status": assessment.status,
-            "created_at": assessment.created_at,
-            "updated_at": assessment.updated_at,
-            "framework_badges": framework_badges(assessment.frameworks),
-        }
-        for assessment in assessments
-    ]
+    assessment_cards = [_assessment_stage_row(db, assessment) for assessment in assessments]
+    action_rollup = remediation_rollup.engagement_rollup(db, engagement)
+    evidence_count = db.query(func.count(Evidence.id)).filter(
+        Evidence.engagement_id == engagement.id,
+    ).scalar() or 0
+    issued_integrated = (
+        db.query(ReportSnapshot)
+        .filter(
+            ReportSnapshot.engagement_id == engagement.id,
+            ReportSnapshot.assessment_id.is_(None),
+            ReportSnapshot.type == "integrated_report",
+            ReportSnapshot.is_issued.is_(True),
+        )
+        .count()
+    )
     return templates.TemplateResponse(
         "pages/engagement_detail.html",
         {
@@ -396,6 +497,11 @@ def engagement_detail(
             "magic_links": magic_link_rows(db, engagement_id),
             "client_uploads": client_upload_rows(db, engagement_id),
             "retention": retention_state,
+            "summary": {
+                "evidence_count": evidence_count,
+                "open_actions": action_rollup.counts["open"] + action_rollup.counts["in_progress"],
+                "latest_report": f"Version {issued_integrated}" if issued_integrated else "None",
+            },
         },
     )
 
@@ -515,6 +621,138 @@ async def create_engagement_assessment(
             request, engagement, client, error=ADD_ASSESSMENT_FAILED, form_values=form_values, status_code=500
         )
     return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
+
+
+def _issued_report_rows(db: Session) -> list[dict]:
+    snapshots = (
+        db.query(ReportSnapshot)
+        .filter(ReportSnapshot.is_issued.is_(True))
+        .order_by(ReportSnapshot.generated_at, ReportSnapshot.id)
+        .all()
+    )
+    if not snapshots:
+        return []
+
+    snapshot_ids = [snapshot.id for snapshot in snapshots]
+    events = (
+        db.query(AuditEvent)
+        .filter(
+            AuditEvent.entity_type == report_snapshots.AUDIT_ENTITY_TYPE,
+            AuditEvent.entity_id.in_(snapshot_ids),
+            AuditEvent.action.in_((report_snapshots.GENERATED_ACTION, report_snapshots.ISSUED_ACTION)),
+        )
+        .order_by(AuditEvent.created_at, AuditEvent.id)
+        .all()
+    )
+    generated_by_id = {
+        event.entity_id: event
+        for event in events
+        if event.action == report_snapshots.GENERATED_ACTION
+    }
+    issued_by_id = {
+        event.entity_id: event
+        for event in events
+        if event.action == report_snapshots.ISSUED_ACTION
+    }
+    assessment_ids = {snapshot.assessment_id for snapshot in snapshots if snapshot.assessment_id}
+    engagement_ids = {snapshot.engagement_id for snapshot in snapshots if snapshot.engagement_id}
+    assessments = {
+        assessment.id: assessment
+        for assessment in (
+            db.query(Assessment).filter(Assessment.id.in_(assessment_ids)).all()
+            if assessment_ids
+            else []
+        )
+    }
+    engagements = {
+        engagement.id: engagement
+        for engagement in (
+            db.query(Engagement).filter(Engagement.id.in_(engagement_ids)).all()
+            if engagement_ids
+            else []
+        )
+    }
+    client_ids = {engagement.client_id for engagement in engagements.values()}
+    clients = {
+        client.id: client
+        for client in (
+            db.query(Client).filter(Client.id.in_(client_ids)).all()
+            if client_ids
+            else []
+        )
+    }
+    sequence_by_scope: dict[tuple[str, str, str], int] = defaultdict(int)
+    latest_by_scope: dict[tuple[str, str, str], str] = {}
+    for snapshot in snapshots:
+        scope_kind = "assessment" if snapshot.assessment_id else "engagement"
+        scope_id = snapshot.assessment_id or snapshot.engagement_id
+        key = (scope_kind, scope_id, snapshot.type)
+        sequence_by_scope[key] += 1
+        latest_by_scope[key] = snapshot.id
+
+    rows = []
+    seen_by_scope: dict[tuple[str, str, str], int] = defaultdict(int)
+    for snapshot in reversed(snapshots):
+        scope_kind = "assessment" if snapshot.assessment_id else "engagement"
+        scope_id = snapshot.assessment_id or snapshot.engagement_id
+        key = (scope_kind, scope_id, snapshot.type)
+        seen_by_scope[key] += 1
+        generated = generated_by_id.get(snapshot.id)
+        issued = issued_by_id.get(snapshot.id)
+        try:
+            metadata = json.loads(generated.metadata_json) if generated and generated.metadata_json else {}
+        except (TypeError, json.JSONDecodeError):
+            metadata = {}
+        if snapshot.assessment_id:
+            assessment = assessments.get(snapshot.assessment_id)
+            if assessment is None:
+                continue
+            engagement = engagements.get(assessment.engagement_id)
+            client = clients.get(engagement.client_id) if engagement else None
+            target_href = f"/assessments/{assessment.id}/report"
+            file_href = f"/api/assessments/{assessment.id}/snapshots/{snapshot.id}/file"
+            assessment_label = assessment.display_name
+            engagement_label = engagement.name if engagement else ""
+            client_label = client.name if client else ""
+        else:
+            engagement = engagements.get(snapshot.engagement_id)
+            if engagement is None:
+                continue
+            client = clients.get(engagement.client_id)
+            target_href = f"/engagements/{engagement.id}/integrated-reports"
+            file_href = f"/api/engagements/{engagement.id}/integrated-reports/{snapshot.id}/file"
+            assessment_label = "Integrated report"
+            engagement_label = engagement.name
+            client_label = client.name if client else ""
+        issued_actor = issued.actor.removeprefix("consultant:") if issued else ""
+        generated_actor = generated.actor.removeprefix("consultant:") if generated else ""
+        rows.append(
+            {
+                "snapshot": snapshot,
+                "version": sequence_by_scope[key] - seen_by_scope[key] + 1,
+                "type_label": report_snapshots.TYPE_LABELS.get(snapshot.type, snapshot.type),
+                "client": client_label,
+                "engagement": engagement_label,
+                "assessment": assessment_label,
+                "target_href": target_href,
+                "file_href": file_href,
+                "generated_at": snapshot.generated_at,
+                "generated_by": generated_actor,
+                "issued_at": issued.created_at if issued else snapshot.generated_at,
+                "issued_by": issued_actor,
+                "size_bytes": metadata.get("size_bytes"),
+                "is_current": latest_by_scope[key] == snapshot.id,
+            }
+        )
+    return rows
+
+
+@router.get("/reports", response_class=HTMLResponse)
+def reports_page(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        "pages/reports.html",
+        {"request": request, "reports": _issued_report_rows(db)},
+    )
 
 
 @router.get("/engagements/{engagement_id}/integrated-reports", response_class=HTMLResponse)

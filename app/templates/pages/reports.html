@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import page_header, table %}
+{% from "components/ui.html" import empty_state %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+{{ page_header("Reports", "Issued report versions across your engagements") }}
+
+{% if reports %}
+{% set report_rows = namespace(items=[]) %}
+{% for row in reports %}
+  {% set issued = (row.issued_at.strftime('%d %b %Y') if row.issued_at else '—') ~ (' · ' ~ row.issued_by if row.issued_by else '') %}
+  {% set report_rows.items = report_rows.items + [[
+    {"label": row.type_label, "href": row.target_href, "sub": "Current issued version" if row.is_current else ""},
+    {"label": row.engagement, "href": row.target_href, "sub": row.assessment},
+    row.client,
+    issued,
+    "Version " ~ row.version,
+    {"label": "Download", "href": row.file_href}
+  ]] %}
+{% endfor %}
+{{ table(["Report", "Engagement", "Client", "Issued", "Version", "File"], report_rows.items) }}
+{% else %}
+{{ empty_state(
+  "No issued reports",
+  "Issued report versions will appear here once an assessment or engagement report is released.",
+  "",
+  "",
+  "report",
+  true
+) }}
+{% endif %}
+{% endblock %}

@@ -7,7 +7,7 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
-- [ ] S3 Home, clients, firm settings, sign-in, `/review`. [ ] S4 engagements, `/reports`. (parallel; S3 merges first)
+- [ ] S3 Home, clients, firm settings, sign-in, `/review`. [x] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
 - Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 
@@ -125,3 +125,9 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - Implementation: `docs/plans/2026-09-21-002-revised-implementation-plan.md`.
 - Product requirements: `docs/product/2026-09-21-cyberassess-product-requirements.md`.
 - Decisions: `tasks/2026-09-21-adversarial-review.md` (D1–D11).
+# Yozora S4 execution (2026-10-04)
+
+- [x] Add the Engagements list, engagement/new, Overview, Findings and actions, Reports, and purge Yozora surfaces.
+- [x] Add the cross-engagement `/reports` issued-versions index and activate only the Engagements and Reports shell entries.
+- [x] Add deterministic S4 seed scenarios, visual clip coverage, migration-map rows, and stale-guard allowances.
+- [x] Run focused local checks available without a server, browser, network, or boto3; record limits in the S4 handoff.

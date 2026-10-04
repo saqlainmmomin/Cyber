@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8000")
 SIDE_TOP_CLIP = {
     "top": ".side-in",
-    "bottom": '.side-in > .nav > a[aria-current="page"]',
+    "bottom": '.side-in > .nav > a[data-nav-key="reports"]',
 }
 
 

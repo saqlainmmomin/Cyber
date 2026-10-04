@@ -1,82 +1,65 @@
 {% extends "base.html" %}
-{% block title %}{{ engagement.name }} — Portfolio{% endblock %}
+{% from "components/layout.html" import breadcrumb, page_header, engagement_tabs %}
+{% from "components/ui.html" import alert, pill, stat %}
+
+{% block title %}{{ engagement.name }}{% endblock %}
+
+{% block crumbs %}
+{{ breadcrumb([
+  {"label": "Engagements", "href": "/engagements"},
+  {"label": engagement.name}
+]) }}
+{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-    <a href="/" class="hover:text-brand dark:hover:text-navy-300">Portfolio</a>
-    <span>/</span>
-    <a href="/clients/{{ client.id }}" class="hover:text-brand dark:hover:text-navy-300">{{ client.name }}</a>
-    <span>/</span>
-    <span class="text-gray-700 dark:text-gray-300">{{ engagement.name }}</span>
-  </div>
-</div>
+{{ page_header(
+  engagement.name,
+  client.name ~ " · " ~ (engagement.type | replace("_", " ")),
+  ([{"label": "Add assessment", "href": "/engagements/" ~ engagement.id ~ "/assessments/new", "variant": "primary"}] if not retention.archived else [])
+) }}
 
-<div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-8">
-  <div>
-    <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ engagement.name }}</h1>
-      {% set derived_status = card.derived_status %}
-      {% set derived_status_label = card.derived_status_label %}
-      {% include "components/engagement_status_badge.html" %}
-    </div>
-    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ client.name }} · {{ engagement.type | replace("_", " ") | title }}</p>
-    <a href="/engagements/{{ engagement.id }}/integrated-reports" class="mt-2 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Integrated reports →</a>
-    <a href="/engagements/{{ engagement.id }}/remediation" class="mt-2 ml-4 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Remediation tracker →</a>
-    <a href="/engagements/{{ engagement.id }}/aws-evidence" class="mt-2 ml-4 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">AWS evidence →</a>
-  </div>
-  <div class="w-full sm:w-64">
-    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-      <span>Progress</span>
-      <span>{{ card.progress_pct }}%</span>
-    </div>
-    <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-      <div class="h-full rounded-full bg-brand dark:bg-navy-400 transition-all" style="width: {{ card.progress_pct }}%"></div>
-    </div>
-    <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Last activity {{ card.last_activity.strftime('%d %b %Y') }}</p>
-  </div>
-</div>
+<div class="subhead"><div class="meta-line">{{ client.name }}</div>{% if retention.archived %}{{ pill("Archived", "medium") }}{% else %}{{ pill(card.derived_status_label, "neutral") }}{% endif %}</div>
+{{ engagement_tabs(engagement, "overview") }}
 
-{% include "partials/engagement_retention.html" %}
+{% if retention.archived %}
+{{ alert("This engagement is archived", "It is read-only until it is unarchived.", "medium", "alert") }}
+{% endif %}
+
+<div class="top-sum">
+  {{ stat("Assessments", card.assessment_count) }}
+  {{ stat("Progress", card.progress_pct ~ "%") }}
+  {{ stat("Evidence", summary.evidence_count) }}
+  {{ stat("Open actions", summary.open_actions) }}
+  {{ stat("Latest report", summary.latest_report) }}
+</div>
 
 <section>
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Assessments</h2>
-    <div class="flex items-center gap-3">
-      <span class="text-xs text-gray-500 dark:text-gray-400">{{ card.assessment_count }} total</span>
-      {% if not retention.archived %}
-      <a data-add-assessment-link href="/engagements/{{ engagement.id }}/assessments/new" class="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white">Add assessment</a>
-      {% endif %}
-    </div>
-  </div>
+  <div class="section-head"><div><h2>Assessments</h2><p class="meta-line">Stage and next step for every assessment in this engagement.</p></div>{% if not retention.archived %}<a data-add-assessment-link class="btn secondary sm" href="/engagements/{{ engagement.id }}/assessments/new">Add assessment</a>{% endif %}</div>
   {% if assessments %}
-  <div class="space-y-3">
-    {% for a in assessments %}
-    <a href="/assessments/{{ a.id }}" class="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-navy-300 dark:hover:border-navy-600 transition-colors">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-3">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ a.display_name }}</h3>
-            {% include "components/status_badge.html" %}
-          </div>
-          {% if a.description %}<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ a.description }}</p>{% endif %}
-          <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Created {{ a.created_at.strftime('%d %b %Y') }} · Updated {{ a.updated_at.strftime('%d %b %Y') }}</p>
-        </div>
-        <div class="flex flex-wrap gap-1.5 sm:justify-end">
-          {% for framework in a.framework_badges %}
-          <span class="rounded bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs text-gray-600 dark:text-gray-300" title="{{ framework.version }}">{{ framework.name }}</span>
-          {% endfor %}
-        </div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
+  <div class="solid"><table>
+    <thead><tr><th>Assessment</th><th>Frameworks</th><th>Stage</th><th>Next step</th><th>Updated</th><th></th></tr></thead>
+    <tbody>
+      {% for assessment in assessments %}
+      <tr>
+        <td class="t-title"><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a>{% if assessment.description %}<span class="sub">{{ assessment.description }}</span>{% endif %}</td>
+        <td><span class="chips">{% for framework in assessment.framework_badges %}{{ pill(framework.name, "neutral") }}{% endfor %}</span></td>
+        <td><span class="status"><span class="st prog"></span>{{ assessment.stage.label }}</span><span class="sub">{{ assessment.stage.note }}</span></td>
+        <td>{% if assessment.stage.next_href %}<a href="{{ assessment.stage.next_href }}">{{ assessment.stage.next_label }}</a>{% else %}<span class="meta-line">Complete</span>{% endif %}</td>
+        <td>{{ assessment.updated_at.strftime('%d %b %Y') }}</td>
+        <td><a class="btn ghost sm" href="/assessments/{{ assessment.id }}">Open</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
   {% else %}
-  <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 px-5 py-10 text-center">
-    <p class="text-sm text-gray-500 dark:text-gray-400">No assessments in this engagement yet.</p>
-    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Progress will appear here when an assessment is added.</p>
-  </div>
+  <div class="glass empty"><h3>No assessments yet</h3><p>Add an assessment to begin work in this engagement.</p></div>
   {% endif %}
 </section>
-{% include "partials/magic_links.html" %}
+
+{{ alert("Archive controls", "Use the retention panel below to archive or unarchive this engagement.", "info", "alert") }}
+{% include "partials/engagement_retention.html" %}
+
+<div data-visual-mask>
+  {% include "partials/magic_links.html" %}
+</div>
 {% endblock %}

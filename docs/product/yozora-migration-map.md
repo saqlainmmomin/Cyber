@@ -101,9 +101,9 @@ Slice key: S1 shell, S2 component layer and `/design`, S3 Home, clients, setting
 | `pages/firm_settings.html` | S3 | Created by PR #99, restyled in S3 |
 | `pages/engagements.html` | S4 | Firm-wide engagements list (`GET /engagements`, new route) |
 | Add assessment form page | S4 | Created by PR #99, restyled in S4 |
+| `pages/reports.html` | S4 | Cross-engagement issued report versions (`GET /reports`; rows link to the assessment or engagement Reports tab) |
 | `pages/evidence_inventory.html` | S6 | Engagement and cross-engagement inventory (new routes) |
 | `pages/requests.html` | S8 | Engagement Requests view (`GET /engagements/{id}/requests`, new route) |
 | `pages/error.html` | S9 | 404 and 500 with reference code |
 
 Deleted by the redesign: `partials/documents_tab.html` (S6).
-

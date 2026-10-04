@@ -913,7 +913,7 @@ def test_scenario_9b_a_dpdpa_only_export_has_no_statement_of_applicability(db, h
 
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS  # Yozora S1/S2 per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S4_PATHS  # Yozora per-PR allowance
 
 P6_8_B2_APP_ALLOWLIST = (
     "app/services/board_exports.py",
@@ -998,6 +998,7 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     changed_app -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend
     changed_app -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
     changed_app -= set(YOZORA_S2_PATHS)  # Yozora S2 (tasks/handoffs/2026-10-01-yozora-s2-handoff.md)
+    changed_app -= set(YOZORA_S4_PATHS)  # Yozora S4 (tasks/handoffs/2026-10-01-yozora-s4-handoff.md)
     outside = sorted(path for path in changed_app if not path.startswith(P6_8_B2_APP_ALLOWLIST))
     assert outside == [], outside
 

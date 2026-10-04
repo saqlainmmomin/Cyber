@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import page_header, seg %}
+{% from "components/ui.html" import empty_state, icon, pill %}
+
+{% block title %}Engagements{% endblock %}
+
+{% block crumbs %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ page_header("Engagements", "A clear view of active and archived client work", [
+  {"label": "New engagement", "href": "/engagements/new", "variant": "primary"}
+]) }}
+
+<div class="toolbar">
+  {{ seg([
+    {"key": "active", "label": "Active", "href": "/engagements?status=active"},
+    {"key": "archived", "label": "Archived", "href": "/engagements?status=archived"}
+  ], status_filter) }}
+  <form class="tools keep-row" method="get" action="/engagements">
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    <label class="field">{{ icon("search") }}<input name="q" value="{{ search }}" placeholder="Search engagements" aria-label="Search engagements"></label>
+  </form>
+</div>
+
+{% if engagements %}
+<div class="solid"><table>
+  <thead><tr><th>Engagement</th><th>Client</th><th>Frameworks</th><th>Stage</th><th>Last activity</th><th></th></tr></thead>
+  <tbody>
+    {% for engagement in engagements %}
+    <tr>
+      <td class="t-title"><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a>{% if engagement.progress_pct is not none %}<span class="sub">{{ engagement.progress_pct }}% complete</span>{% endif %}</td>
+      <td>{{ engagement.client_name }}</td>
+      <td><span class="chips">{% for framework in engagement.framework_badges %}{{ pill(framework.name, "neutral") }}{% else %}<span class="meta-line">No framework</span>{% endfor %}</span></td>
+      <td>{% if engagement.stage %}<span class="status"><span class="st prog"></span>{{ engagement.stage.label }}</span>{% else %}<span class="meta-line">No assessments</span>{% endif %}</td>
+      <td>{{ engagement.last_activity.strftime('%d %b %Y') }}</td>
+      <td><a class="btn ghost sm" href="/engagements/{{ engagement.id }}">Open</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+{{ empty_state(
+  "No engagements yet" if status_filter == "active" else "No archived engagements",
+  "Create an engagement to start organizing assessments and client work." if status_filter == "active" else "Archived engagements will appear here when work is closed.",
+  "",
+  "",
+  "briefcase",
+  true
+) }}
+{% endif %}
+{% endblock %}
