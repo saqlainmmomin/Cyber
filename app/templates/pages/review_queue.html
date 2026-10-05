@@ -1,62 +1,98 @@
 {% extends "base.html" %}
-{% block title %}Review queue — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import review_seg %}
+
+{% set page_title = "Review" %}
+{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"} %}
+{% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
+{% set basis = report_basis_for(assessment) %}
+{% set shell_context = assessment_engagement_context(request) %}
+{% set page_engagement = shell_context.engagement if shell_context else none %}
+
+{% macro period_meta() -%}
+  {% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }} · Evidence cut-off {{ basis.cutoff_label }}{% else %}Assessment period not recorded · Evidence cut-off not recorded{% endif %}
+{%- endmacro %}
+
+{% macro requirement_reference(conclusion) -%}
+  {% set reference = conclusion.requirement_id %}
+  {% if conclusion.framework_id == "iso27001" %}{{ reference|replace("ISO.", "") }}{% elif conclusion.requirement_id == "CH2.CONSENT.3" %}s.6{% elif conclusion.requirement_id == "CH2.SECURITY.1" %}s.8{% elif conclusion.requirement_id == "CM.RECORDS.1" %}s.6{% else %}{{ reference }}{% endif %}
+{%- endmacro %}
+
+{% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if page_engagement %}<a class="hide-sm" href="/engagements/{{ page_engagement.id }}">{{ page_engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Review queue</span>
-</nav>
-
-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Review queue</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ open_count }} open of {{ total }} conclusions. Open work appears first, then deterministic risk and flags; shared requirements are grouped so their evidence is read once.</p>
-    <p data-queue-keys class="mt-2 text-sm text-gray-500 dark:text-gray-400">Keyboard: j next, k previous</p>
+<div class="review-page">
+  <div class="page-head">
+    <div><h1>{{ page_title }}</h1><p class="meta-line">{{ period_meta() }}</p></div>
+    <div class="acts"><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
   </div>
-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Reviewer name
-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
-  </label>
-</div>
+  {{ assessment_tabs(assessment, "review") }}
+  <div class="rq-seg">{{ review_seg(assessment, "queue") }}</div>
 
-<div class="space-y-8">
-{% set queue_index = namespace(value=0) %}
-{% for group in groups %}
-  <section data-queue-group="{{ group.group_key }}" data-shared="{{ 'yes' if group.shared else 'no' }}" class="space-y-4">
-    {% if group.shared %}
-    <div class="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
-      <h2 class="text-sm font-semibold text-blue-900 dark:text-blue-200">Shared evidence: {{ group.topic or group.cluster_id }} ({{ group.entries|length }} requirements)</h2>
-      <ul class="mt-3 space-y-2 text-sm">{% for claim in group.shared_claims %}<li data-shared-claim="{{ claim.claim_id }}"><span class="font-medium">{{ claim.statement }}</span> — {{ claim.quote }}{% if claim.href %} · <a href="{{ claim.href }}" class="text-brand dark:text-navy-300 hover:underline">{{ claim.filename }}</a>{% else %} · {{ claim.filename }}{% endif %} · {{ claim.claim_id }}</li>{% endfor %}</ul>
+  {% if total %}
+  <div class="progress" aria-label="Review progress"><span data-queue-keys class="sub"><span class="sr-only">Keyboard: j next, k previous</span>Next <kbd>j</kbd> Previous <kbd>k</kbd></span><span class="num">{{ total - open_count }} of {{ total }} decided</span><span class="ticks">{% for index in range(total) %}<i{% if index < total - open_count %} class="on"{% endif %}></i>{% endfor %}</span></div>
+  {% set initial = 0 if open_count else -1 %}
+  <div class="glass rq">
+    <div class="rq-list" role="navigation" aria-label="Conclusions to review">
+      {% set group_label = namespace(value="") %}{% set item_position = namespace(value=0) %}
+      {% for group in groups %}
+        {% set group_open = group.entries | selectattr("card.state", "in", ["pending", "rejected"]) | list | length > 0 %}
+        {% if group.shared %}{% set label = (group.topic or "Shared evidence") ~ ", shared evidence" %}{% elif group_open %}{% set label = "To review" %}{% else %}{% set label = "Decided" %}{% endif %}
+        {% if label != group_label.value %}<div class="grp">{{ label }}</div>{% set group_label.value = label %}{% endif %}
+        {% for entry in group.entries %}
+          <a class="item{% if entry.card.state in ['approved', 'edited'] %} decided{% endif %}{% if item_position.value == initial %} sel{% endif %}" href="#conclusion-card-{{ entry.card.conclusion.id }}" data-queue-select="{{ entry.card.conclusion.id }}" aria-current="{{ 'true' if item_position.value == initial else 'false' }}"><div class="txt"><b>{{ entry.card.requirement_title }}</b><span>{{ framework_label(entry.card.conclusion.framework_id) }} · {{ requirement_reference(entry.card.conclusion) }}</span></div><i class="dot {{ outcome_tones.get(entry.card.conclusion.outcome, 'c-neutral') }}" title="{{ outcome_labels.get(entry.card.conclusion.outcome, entry.card.conclusion.outcome) }}"></i></a>
+          {% set item_position.value = item_position.value + 1 %}
+        {% endfor %}
+      {% endfor %}
     </div>
-    {% endif %}
-    {% for entry in group.entries %}
-    <div data-queue-item data-conclusion-id="{{ entry.card.conclusion.id }}" data-queue-index="{{ queue_index.value }}" data-state="{{ entry.card.state }}" data-risk="{{ entry.risk }}" data-flags="{{ entry.flags|join(',') }}" tabindex="-1">
-      {% with card=entry.card, group_evidence=group.shared %}{% include "components/conclusion_card.html" %}{% endwith %}
+    <div class="rq-detail{% if initial < 0 %} rq-idle{% endif %}">
+      {% if not open_count %}<div class="empty" data-queue-done><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-circle-check"/></svg><h3>All {{ total }} conclusions are decided</h3><p>Release the report when you are ready.</p><a class="btn primary" href="/assessments/{{ assessment.id }}/report">Go to release</a></div>{% endif %}
+      <div class="rq-body">
+        {% set queue_index = namespace(value=0) %}
+        {% for group in groups %}
+          <section data-queue-group="{{ group.group_key }}" data-shared="{{ 'yes' if group.shared else 'no' }}" class="rq-group">
+            {% if group.shared %}<div class="block" data-evidence-shared data-queue-shared-box{% if loop.index0 != 0 or initial < 0 %} hidden{% endif %}><h3>Shared evidence</h3><p class="sub">{{ group.entries|length }} requirements use these claims. Read them once.</p><ul class="rq-claims">{% for claim in group.shared_claims %}<li data-shared-claim="{{ claim.claim_id }}"><div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>{% if claim.href %}<a href="{{ claim.href }}">{{ claim.filename }}</a>{% else %}{{ claim.filename }}{% endif %}</span><span class="sp"></span><span class="pg">{{ claim.claim_id }}</span></div><blockquote><b>{{ claim.statement }}</b> {{ claim.quote }}</blockquote></div></li>{% endfor %}</ul></div>{% endif %}
+            {% for entry in group.entries %}<div data-queue-item data-conclusion-id="{{ entry.card.conclusion.id }}" data-queue-index="{{ queue_index.value }}" data-state="{{ entry.card.state }}" data-risk="{{ entry.risk }}" data-flags="{{ entry.flags|join(',') }}" tabindex="-1"{% if queue_index.value != initial %} hidden{% endif %}>{% with card=entry.card, group_evidence=group.shared %}{% include "components/conclusion_card.html" %}{% endwith %}</div>{% set queue_index.value = queue_index.value + 1 %}{% endfor %}
+          </section>
+        {% endfor %}
+      </div>
     </div>
-    {% set queue_index.value = queue_index.value + 1 %}
-    {% endfor %}
-  </section>
-{% endfor %}
+  </div>
+  <noscript><style>[data-queue-item][hidden],[data-queue-shared-box][hidden]{display:block}.rq-idle .rq-body{display:block}.rq-idle [data-queue-done]{display:none}</style></noscript>
+  {% else %}<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-inbox"/></svg><h3>No conclusions to review</h3><p>Run the analysis to produce conclusions.</p><a class="btn primary" href="/assessments/{{ assessment.id }}?tab=questionnaire">Run analysis</a></div>{% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script data-queue-select-script>
+(() => {
+  const select = (item) => {
+    if (!item) return;
+    document.querySelectorAll("[data-queue-item]").forEach((other) => { other.hidden = other !== item; });
+    const group = item.closest("[data-queue-group]");
+    document.querySelectorAll("[data-queue-shared-box]").forEach((box) => { box.hidden = box.closest("[data-queue-group]") !== group; });
+    document.querySelectorAll("[data-queue-select]").forEach((link) => { const on = link.dataset.queueSelect === item.dataset.conclusionId; link.classList.toggle("sel", on); link.setAttribute("aria-current", on ? "true" : "false"); });
+    const detail = item.closest(".rq-detail"); if (detail) detail.classList.remove("rq-idle");
+    const body = item.closest(".rq-body"); if (body) body.scrollTop = 0;
+  };
+  window.selectQueueItem = select;
+  document.addEventListener("click", (event) => { const link = event.target.closest && event.target.closest("[data-queue-select]"); if (!link) return; event.preventDefault(); select(document.querySelector('[data-queue-item][data-conclusion-id="' + link.dataset.queueSelect + '"]')); });
+})();
+</script>
 <script data-queue-nav>
 document.addEventListener("keydown", (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
   const tag = document.activeElement && document.activeElement.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
   if (event.key !== "j" && event.key !== "k") return;
-  const items = Array.from(document.querySelectorAll("[data-queue-item]"));
-  if (!items.length) return;
-  const active = document.activeElement && document.activeElement.closest("[data-queue-item]");
-  const current = items.indexOf(active);
-  const next = event.key === "j" ? Math.min(current + 1, items.length - 1) : Math.max(current - 1, 0);
-  items[next].focus();
-  items[next].scrollIntoView({ block: "center" });
-  event.preventDefault();
+  const items = Array.from(document.querySelectorAll("[data-queue-item]")); if (!items.length) return;
+  const visible = items.findIndex((item) => !item.hidden); const active = document.activeElement && document.activeElement.closest("[data-queue-item]");
+  const current = active ? items.indexOf(active) : visible; const next = event.key === "j" ? Math.min(current + 1, items.length - 1) : Math.max(current - 1, 0);
+  if (window.selectQueueItem) window.selectQueueItem(items[next]); items[next].focus(); items[next].scrollIntoView({ block: "center" }); event.preventDefault();
 });
 </script>
 {% endblock %}

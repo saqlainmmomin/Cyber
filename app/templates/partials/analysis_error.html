@@ -1,20 +1,15 @@
-<div class="p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-  <div class="flex items-center gap-3 mb-2">
-    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-    </svg>
-    <p class="text-sm font-medium text-red-900 dark:text-red-300">Analysis failed</p>
+{% from "components/ui.html" import alert, icon %}
+{% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list if framework_display is defined else [] %}
+{% set saved_names = framework_display.values() | rejectattr("failed") | map(attribute="name") | list if framework_display is defined else [] %}
+<div class="stack">
+  {% if failed_names %}
+  <div data-analysis-failed-frameworks>
+    {{ alert("Analysis failed for " ~ failed_names | join(", "), ("The results for " ~ saved_names | join(", ") ~ " were saved. " if saved_names else "") ~ "Run the analysis again to complete the assessment.", "noncompliant") }}
   </div>
-  {% if framework_display is defined and framework_display.values() | selectattr("failed") | list %}
-  {% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list %}
-  <p data-analysis-failed-frameworks class="text-sm text-red-700 dark:text-red-400 mb-3">Analysis failed for {{ failed_names | join(", ") }}. Results for the other frameworks were saved. Run analysis again to complete the assessment.</p>
   {% else %}
-  <p class="text-sm text-red-700 dark:text-red-400 mb-3">Something went wrong during the analysis. Please try again.</p>
+  {{ alert("The analysis did not finish", "Something went wrong before any framework was analysed. Nothing was saved. Run the analysis again.", "noncompliant") }}
   {% endif %}
-  <button hx-post="/assessments/{{ assessment_id }}/run-analysis"
-          hx-target="#analysis-area"
-          hx-swap="innerHTML"
-          class="bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-    Retry analysis
-  </button>
+  <div class="hrow">
+    <button type="button" class="btn primary lead" hx-post="/assessments/{{ assessment_id }}/run-analysis" hx-target="#analysis-area" hx-swap="innerHTML">{{ icon("rotate") }}Run analysis again</button>
+  </div>
 </div>

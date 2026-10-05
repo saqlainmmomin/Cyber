@@ -258,3 +258,20 @@ button.item .txt{color:inherit}
 .followup-host{max-width:820px}
 .screening-run .htmx-indicator:not(.htmx-request){display:none}
 .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
+/* s7-cards */
+.cc-card{margin:0}
+.cc-requirement{display:flex;flex-direction:column;gap:var(--s-5)}
+.cc-remediation{display:flex;flex-direction:column;gap:var(--s-3)}
+.cc-pre{white-space:pre-line}
+.cc-evidence{margin-top:var(--s-3);padding:var(--s-4);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md)}
+.cc-claims,.cc-rfi-list{list-style:none;display:flex;flex-direction:column;gap:var(--s-3)}
+.cc-rfi-list{margin-top:var(--s-3)}
+.cc-rfi-list>li{display:flex;flex-direction:column;gap:var(--s-2)}
+.cc-drafting{display:none;flex-direction:column;gap:10px}
+.cc-drafting .skel:nth-child(1){width:94%}.cc-drafting .skel:nth-child(2){width:88%}.cc-drafting .skel:nth-child(3){width:52%}
+[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .field.area{display:none}
+[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .cc-drafting{display:flex}
+[data-remediation-draft-button].htmx-request{pointer-events:none;color:transparent;position:relative}
+[data-remediation-draft-button].htmx-request:after{content:"";position:absolute;width:14px;height:14px;border-radius:var(--r-full);border:2px solid var(--text-2);border-top-color:transparent;animation:spin .7s linear infinite}
+.cc-card:has([data-remediation-draft-button].htmx-request) .btn.primary{display:none}
+/* /s7-cards */

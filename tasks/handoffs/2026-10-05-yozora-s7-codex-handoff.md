@@ -37,3 +37,12 @@ Keep every must-keep id, `hx-*`, `data-*`; one visible `.btn.primary` per state;
 3. Update the three `docs/product/yozora-migration-map.md` rows (board inputs, narrative, remediation draft) to name their mockups.
 4. Full suite, then the full gate over all states; record misses as real-data exceptions with reasons (do not loosen thresholds or hard-code mockup copy). Adversarial pass: unconditional framework copy, numeric priorities, more than one primary, combined cross-framework view.
 5. Append `## Results` here (PR link, gate table, exceptions, tests changed old -> new, guards touched). One PR titled "Yozora S7: analysis, review, report, narrative and board inputs".
+
+## Codex results
+
+- Groups done: analysis (`53ba84d`), cards (`b7c244f`), pages (`5423da3`), findings (`3d0205c`), report (`fb04461`), narrative (`2985233`). Every state in the work-split table is registered by `seed_s7.py --list`.
+- Tests: handoff baseline 574 passed with the known remediation-draft failure → final `OPENROUTER_KEY="" .venv/bin/pytest -q`: **1501 passed, 30 skipped, 0 failed**. The documented board-report scenario-3 flake did not reproduce.
+- Tests changed: added five S7 group contract suites; changed `test_needs_review_ui.py` for the Yozora warning class, `test_picker_and_scoring_contract.py` for the per-framework report contract, and `test_remediation_tracking.py` for sentence-case copy. Guard files were changed only to add scoped S7 allowances.
+- Guards touched: `p6_10_support.py`, `test_p6_2b_dpdpa_criteria.py`, `test_p6_4_cap_upload_limit.py`, `test_p6_7_requirement_card.py`, `test_p6_7b_add_to_rfi.py`, `test_p6_8_b2_docx_xlsx.py`, `test_p6_8_board_report_v2.py`, `test_p6_8_v3a_data_capture.py`, `test_p6_9_file_set.py`, and `test_retention.py`. Guard-only paths remain separate from `YOZORA_S7_PATHS`.
+- PR link: pending (Saqlain opens). PR title: `Yozora S7: analysis, review, report, narrative and board inputs`. PR body: integrate the six S7 UI groups, register all deterministic seed states, update migration coverage, and pass the full suite with scoped guard allowances.
+- Left undone: Pixel gate: pending (cloud Claude agents). No push, PR, merge, or gate run was performed. The parent branch commit is blocked by the shared worktree metadata refusing `HEAD.lock` creation; the requested plain commit was attempted without changing that metadata.

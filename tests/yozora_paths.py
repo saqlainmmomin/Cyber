@@ -209,6 +209,67 @@ YOZORA_DESIGN_FILES = (
     "tasks/handoffs/2026-10-01-yozora-s1-handoff.md",
 )
 
+# Yozora per-PR allowance: S7 analysis, review, report, narrative and board inputs.
+YOZORA_S7_PATHS = (
+    "app/routers/design.py",
+    "app/routers/design_s7_analysis.py",
+    "app/routers/design_s7_cards.py",
+    "app/routers/design_s7_findings.py",
+    "app/routers/design_s7_narrative.py",
+    "app/routers/design_s7_pages.py",
+    "app/routers/design_s7_report.py",
+    "app/routers/drafting.py",
+    "app/static/css/yozora-patterns.css",
+    "app/templates/components/conclusion_card.html",
+    "app/templates/components/finding_card.html",
+    "app/templates/components/requirement_card_body.html",
+    "app/templates/components/seg_rows.html",
+    "app/templates/pages/board_inputs.html",
+    "app/templates/pages/conclusions.html",
+    "app/templates/pages/findings.html",
+    "app/templates/pages/narrative.html",
+    "app/templates/pages/review_queue.html",
+    "app/templates/partials/analysis_complete.html",
+    "app/templates/partials/analysis_error.html",
+    "app/templates/partials/analysis_gate_blocked.html",
+    "app/templates/partials/analysis_running.html",
+    "app/templates/partials/framework_panel.html",
+    "app/templates/partials/no_report.html",
+    "app/templates/partials/release_panel.html",
+    "app/templates/partials/remediation_draft.html",
+    "app/templates/partials/remediation_panel.html",
+    "app/templates/partials/remediation_summary.html",
+    "app/templates/partials/report_basis_panel.html",
+    "app/templates/partials/report_summary.html",
+    "app/templates/partials/report_tab.html",
+    "app/templates/partials/review_finding_card.html",
+    "tasks/handoffs/2026-10-04-yozora-s7-orchestration.md",
+    "tasks/handoffs/2026-10-05-yozora-s7-codex-handoff.md",
+    "tasks/handoffs/s7-wip/analysis.patch",
+    "tasks/handoffs/s7-wip/cards.patch",
+    "tasks/handoffs/s7-wip/findings.patch",
+    "tasks/handoffs/s7-wip/narrative.patch",
+    "tasks/handoffs/s7-wip/pages.patch",
+    "tasks/handoffs/s7-wip/report.patch",
+    "tasks/todo.md",
+    "tests/test_needs_review_ui.py",
+    "tests/test_picker_and_scoring_contract.py",
+    "tests/test_remediation_tracking.py",
+    "tests/test_yozora_s7_analysis.py",
+    "tests/test_yozora_s7_cards.py",
+    "tests/test_yozora_s7_findings.py",
+    "tests/test_yozora_s7_narrative.py",
+    "tests/test_yozora_s7_report.py",
+    "tests/yozora_paths.py",
+)
+
+# Guard-only allowance: this existing path guard was updated to recognize S7.
+# It is intentionally separate from the S7 product-test paths.
+YOZORA_S7_GUARD_PATHS = (
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_p6_4_cap_upload_limit.py",
+)
+
 # Per-PR allowance: V3-C board deck design pass (mockup, scope, dumbbell backend handoff).
 V3C_MOCKUP_PATHS = (
     "docs/product/2026-10-04-board-deck-v3c-mockup/deck_template.html",
@@ -220,5 +281,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S7_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

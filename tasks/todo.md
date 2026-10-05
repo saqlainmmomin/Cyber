@@ -1,5 +1,22 @@
 # CyberAssess implementation tracker
 
+## Yozora S7 orchestration (2026-10-05)
+
+- [x] Integrate and contract-test the analysis, cards, pages, findings, report, and narrative groups.
+- [x] Add S7 path allowances without classifying guard-only test edits as product-test paths.
+- [x] Update the board-inputs, narrative, and remediation-draft migration rows.
+- [x] Register and verify every handoff seed state.
+- [x] Run the full suite with `OPENROUTER_KEY=""`: 1501 passed, 30 skipped.
+- [ ] Pixel gate: pending cloud Claude agents.
+
+## Yozora S7 report group (2026-10-05)
+
+- [x] Inspect report contracts, approved b5 report/no-report mockups, and existing tests.
+- [x] Implement report tab, report summary, framework, remediation, and no-report partials without changing the assessment shell or report services.
+- [x] Add deterministic b5-report/b5-no-report seed states and the loading preview route.
+- [x] Add focused report contract tests and run template lint plus focused regressions.
+- [x] Review scoped diff, commit only the report group files, and report misses/exceptions.
+
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
 ## S5 review fixes (2026-10-04)

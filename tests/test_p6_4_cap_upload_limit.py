@@ -324,7 +324,7 @@ def test_scenario_7b_image_extraction_is_not_truncated_or_reformatted(tmp_path, 
 from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S7_PATHS  # Yozora per-PR allowance
 from tests.p6_10_support import P6_10_APP_FILES  # noqa: E402
 
 P6_4_CAP_APP_FILES = {"app/config.py", "app/services/document_processor.py"}
@@ -410,5 +410,6 @@ def test_scenario_9_only_config_and_document_processor_change_under_app():
     changed = _changed("main...HEAD") | _changed("HEAD")
     changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
     changed = {path for path in changed if not is_v3b_path(path)}  # P6-8 V3-B
+    changed -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
     changed -= set(P6_10_APP_FILES)  # P6-10 lands after the cap work (its own contract tests guard that set).
     assert changed <= P6_4_CAP_APP_FILES, sorted(changed - P6_4_CAP_APP_FILES)

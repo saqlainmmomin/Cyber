@@ -846,7 +846,7 @@ def test_scenario_9_gap_item_path_retired_and_report_uses_actions(db, http, gate
     )
     assert second.status_code == 200
     summary = http.get(f"/assessments/{assessment.id}/report-summary")
-    assert "Remediation Progress" in summary.text
+    assert "Remediation progress" in summary.text
     assert "1 of 2 actions closed and verified" in summary.text
     assert f'href="/assessments/{assessment.id}/findings"' in summary.text
     empty, _ec, = _run_one(db, gate, monkeypatch, client_name="No action report")

@@ -1,35 +1,23 @@
-<div class="p-4 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
-  <div class="flex items-center gap-3 mb-3">
-    <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <p class="text-sm font-medium text-green-900 dark:text-green-300">Analysis complete</p>
-  </div>
-  {% if report %}
-  <p class="text-sm text-green-700 dark:text-green-400 mb-3">
-    Framework scores:
+{% from "components/ui.html" import icon, link_button %}
+<div class="stack">
+  <h2>Analysis complete</h2>
+  {% if report and framework_display %}
+  <div class="solid rows">
     {% for fw_id, fw_data in framework_display.items() %}
-      {% if not loop.first %}, {% endif %}
-      <span><strong>{{ fw_data.name }}</strong> {% if fw_data.failed %}analysis failed{% elif fw_data.status == 'pending_review' %}awaiting consultant review{% elif fw_data.score is not none %}{{ fw_data.score | round(0) | int }}%{% else %}scores unavailable{% endif %}</span>
+    <div data-analysis-framework="{{ fw_id }}">
+      <div class="txt"><b>{{ fw_data.name }}</b>{% if fw_data.coverage %}<span class="sub">{{ fw_data.coverage.eligible }} of {{ fw_data.coverage.in_scope }} conclusions approved</span>{% endif %}</div>
+      {% if fw_data.failed %}<span class="status"><span class="dot c-non"></span>Analysis failed</span>
+      {% elif fw_data.status == "pending_review" %}<span class="status" aria-label="awaiting consultant review"><span class="dot c-accent"></span>Awaiting consultant review</span>
+      {% elif fw_data.score is not none %}<span class="status"><span class="dot c-ok"></span>{{ fw_data.score | round(0) | int }}%</span>
+      {% else %}<span class="status"><span class="dot c-neutral"></span>Scores unavailable</span>{% endif %}
+    </div>
     {% endfor %}
-  </p>
+  </div>
   {% endif %}
-  <div class="flex gap-3">
-    <a href="/assessments/{{ assessment_id }}?tab=report"
-       class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-      View Report
-    </a>
-    <a href="/assessments/{{ assessment_id }}/conclusions" data-review-conclusions-link
-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-      Review conclusions
-    </a>
-    <a href="/api/assessments/{{ assessment_id }}/report/pdf"
-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-      Live PDF
-    </a>
-    <a href="/assessments/{{ assessment_id }}/snapshots"
-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-      Report versions
-    </a>
+  <div class="hrow">
+    <a class="btn primary" href="/assessments/{{ assessment_id }}/review-queue" data-review-conclusions-link>Open review queue {{ icon("arrow-r") }}</a>
+    {{ link_button("View report", "/assessments/" ~ assessment_id ~ "?tab=report", "secondary") }}
+    <a class="btn ghost sm" href="/api/assessments/{{ assessment_id }}/report/pdf">Live PDF</a>
+    <a class="btn ghost sm" href="/assessments/{{ assessment_id }}/snapshots">Report versions</a>
   </div>
 </div>

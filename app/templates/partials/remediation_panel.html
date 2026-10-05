@@ -1,11 +1,14 @@
+{% from "components/ui.html" import link_button %}
 {% if item is defined and (item.remediation_owner or item.remediation_target_date or item.remediation_notes or item.remediation_closed_at or (item.remediation_status and item.remediation_status != 'open')) %}
-<div data-legacy-remediation class="mt-3 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-600 dark:text-gray-400">
-  <p class="font-semibold text-gray-700 dark:text-gray-300">Legacy remediation record (read-only)</p>
-  {% if item.remediation_status and item.remediation_status != 'open' %}<p class="mt-1">Status: {{ item.remediation_status | replace('_', ' ') | title }}</p>{% endif %}
-  {% if item.remediation_owner %}<p class="mt-1">Owner: {{ item.remediation_owner }}</p>{% endif %}
-  {% if item.remediation_target_date %}<p class="mt-1">Target date: {{ item.remediation_target_date.strftime('%Y-%m-%d') }}</p>{% endif %}
-  {% if item.remediation_closed_at %}<p class="mt-1">Closed at: {{ item.remediation_closed_at.strftime('%Y-%m-%d') }}</p>{% endif %}
-  {% if item.remediation_notes %}<p class="mt-1 whitespace-pre-wrap">Notes: {{ item.remediation_notes }}</p>{% endif %}
-  <a href="/assessments/{{ assessment_id }}/findings" class="mt-2 inline-block text-brand dark:text-navy-300 hover:underline">Track remediation on the Findings and actions page →</a>
+<div data-legacy-remediation class="sub" style="margin-top:var(--s-3)">
+  <b>Legacy remediation record (read-only)</b>
+  <dl class="kv" style="margin-top:var(--s-2)">
+    {% if item.remediation_status and item.remediation_status != 'open' %}<div><dt>Status</dt><dd>{{ item.remediation_status | replace('_', ' ') | title }}</dd></div>{% endif %}
+    {% if item.remediation_owner %}<div><dt>Owner</dt><dd>{{ item.remediation_owner }}</dd></div>{% endif %}
+    {% if item.remediation_target_date %}<div><dt>Target date</dt><dd>{{ item.remediation_target_date.strftime('%Y-%m-%d') }}</dd></div>{% endif %}
+    {% if item.remediation_closed_at %}<div><dt>Closed</dt><dd>{{ item.remediation_closed_at.strftime('%Y-%m-%d') }}</dd></div>{% endif %}
+  </dl>
+  {% if item.remediation_notes %}<p style="white-space:pre-wrap;margin-top:var(--s-2)">{{ item.remediation_notes }}</p>{% endif %}
+  {{ link_button("Track on findings and actions", "/assessments/" ~ assessment_id ~ "/findings", "ghost", "sm") }}
 </div>
 {% endif %}

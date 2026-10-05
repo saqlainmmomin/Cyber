@@ -1,80 +1,103 @@
 {% extends "base.html" %}
-{% block title %}Report narrative — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import alert, empty_state, icon, status %}
+{% set basis = report_basis_for(assessment) %}
+{% set ns = namespace(has_content=false, primary_section="") %}
+{% for item in sections %}
+  {% if item.section.status != "none" %}{% set ns.has_content = true %}{% endif %}
+  {% if not ns.primary_section and (item.section.status == "draft" or (item.section.status == "accepted" and item.section.stale)) %}
+    {% set ns.primary_section = item.section.section_id %}
+  {% endif %}
+{% endfor %}
+{% set is_generating = generating|default(false) %}
+{% set page_primary = not ns.has_content and not is_generating and released and sections %}
+
+{% block title %}Narrative — {{ assessment.company_name }}{% endblock %}
+
+{% block crumbs %}
+{{ super() }}<svg class="i sl hide-sm"><use href="#i-slash"/></svg><b>Narrative</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Report narrative</span>
-</nav>
-
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Report narrative</h1>
-  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">Draft the board-report narrative from approved findings, then edit and accept each section.</p>
+<div class="page-head">
+  <div>
+    <h1>Narrative</h1>
+    <p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p>
+  </div>
+  <div class="acts">
+    {% if released and sections %}
+    <form data-narrative-generate hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none" style="display:contents">
+      <button type="submit" class="btn {{ 'secondary loading' if is_generating else 'primary' if page_primary else 'secondary' }}"{% if is_generating %} aria-busy="true"{% endif %}>{% if is_generating %}Drafting…{% else %}Draft missing sections{% endif %}</button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 
-<div class="mb-6 max-w-sm">
-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+<div class="tabs-wrap">{{ assessment_tabs(assessment, "report") }}</div>
+<div class="seg-wrap">{{ report_seg(assessment, "narrative") }}</div>
+
+<p class="lede">Draft the board-report narrative from approved findings, then edit and accept each section. The narrative is written for the board; the underlying finding and score remain unchanged.</p>
+
+<div class="form-row" style="max-width:420px">
+  <label class="label" for="reviewer-name">Consultant name</label>
+  <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}" autocomplete="name"></label>
 </div>
 
 {% if not released %}
-<p data-narrative-unreleased class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">The report must be released before the narrative can be drafted or accepted.</p>
-{% endif %}
-
-{% if blockers %}
-<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-  {% for blocker in blockers %}<p data-narrative-blocker>{{ blocker }}</p>{% endfor %}
+{{ alert("The report is not released", "Release the approved report before drafting or accepting the narrative.", "medium", "lock", extra_class="w", style="margin-top:var(--s-5)") }}
+{% elif blockers %}
+<div class="alert c-medium" role="status" data-narrative-blockers>
+  {{ icon("alert") }}
+  <div><b>Review the narrative before generating a board report version</b>
+    <ul>{% for blocker in blockers %}<li data-narrative-blocker>{{ blocker|replace(" (executive)", "")|replace(" (cross-framework)", "")|replace(" (framework-dpdpa)", "")|replace(" (framework-iso27001)", "") }}</li>{% endfor %}</ul>
+  </div>
 </div>
 {% endif %}
 
-<div class="mb-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Approved findings</h2>
+<section class="solid narrative-findings" aria-labelledby="approved-findings-title">
+  <div class="sec" style="margin-top:0"><div><h2 id="approved-findings-title">Approved findings</h2><span class="sub">The evidence used to draft this narrative</span></div>{% if state.findings %}<span class="num">{{ state.findings|length }} findings</span>{% endif %}</div>
   {% if state.findings %}
-  <ul class="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-    {% for ref in state.findings %}<li data-finding-ref="{{ ref.alias }}"><span class="font-mono">{{ ref.alias }}</span>: {{ ref.title }} ({{ ref.framework_name }} {{ ref.requirement_id }})</li>{% endfor %}
-  </ul>
-  {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No approved findings are available.</p>{% endif %}
-</div>
+  <div class="finding-links">
+    {% for ref in state.findings %}<a class="finding-link" id="ref-{{ ref.alias }}" data-finding-ref="{{ ref.alias }}" href="/assessments/{{ assessment.id }}/findings#finding-{{ ref.finding_id }}"><span class="chip">{{ ref.alias }}</span><span><b>{{ ref.title }}</b><span class="sub">{{ framework_label(ref.framework_id, true) }} · {{ ref.requirement_id }}</span></span></a>{% endfor %}
+  </div>
+  {% else %}{{ empty_state("No approved findings yet", "Approve findings before drafting the board narrative.", icon_id="file") }}{% endif %}
+</section>
 
-<form class="mb-6" hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
-  <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Draft missing or stale sections</button>
-</form>
+{% if is_generating %}<div class="alert c-accent" role="status" aria-busy="true" style="margin-top:var(--s-5)">{{ icon("clock") }}<div><b>Drafting narrative…</b>Each section is being prepared from the approved findings.</div></div>{% endif %}
 
-<div class="space-y-6">
+<div class="narrative-sections">
 {% for item in sections %}
 {% set section = item.section %}
-<section data-narrative-section="{{ section.section_id }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ section.label }}</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Status: {{ section.status }}{% if section.stale %} (stale){% endif %}</p>
-    </div>
-    <form hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
-      <input type="hidden" name="section_id" value="{{ section.section_id }}">
-      <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 text-xs font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Regenerate</button>
-    </form>
-  </div>
-  {% if section.dropped %}
-  <div class="mb-3 text-xs text-amber-700 dark:text-amber-300">
-    {% for dropped in section.dropped %}<p data-narrative-dropped>Draft sentence dropped ({{ dropped.reason }}): {{ dropped.text }}</p>{% endfor %}
-  </div>
-  {% endif %}
+{% set section_title = "Executive overview" if section.section_id == "executive" else "Across frameworks" if section.section_id == "cross-framework" else framework_label(section.framework_id, true) ~ " posture" %}
+{% set section_status = "Not drafted" if section.status == "none" else "Draft, not accepted" if section.status == "draft" else "Accepted" %}
+<section data-narrative-section="{{ section.section_id }}" class="solid narrative-card">
+  <div class="narrative-card-head"><div><h2>{{ section_title }}</h2><p class="sub">{% if section.status == "accepted" and section.stale %}Findings changed since this was written{% else %}{{ section_status }}{% endif %}</p></div>{% if section.status == "accepted" and not section.stale %}{{ status("Accepted", tone="ok") }}{% elif section.status == "accepted" and section.stale %}{{ status("Needs review", tone="medium") }}{% elif section.status == "draft" %}{{ status("Draft", tone="accent") }}{% else %}{{ status("Not drafted", tone="neutral") }}{% endif %}</div>
+
+  {% if section.dropped %}<div class="alert c-medium" role="status" data-narrative-dropped>{{ icon("alert") }}<div>{% for dropped in section.dropped %}<span>Draft sentence dropped: {{ dropped.text }}</span>{% endfor %}</div></div>{% endif %}
+
   <form data-narrative-accept-form hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/accept" hx-include="#reviewer-name" hx-swap="none">
     <input type="hidden" name="findings_sha256" value="{{ state.findings_sha256 }}">
-    <textarea name="text" rows="6" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ item.text }}</textarea>
-    <div class="mt-2 flex flex-wrap gap-2">
-      <button type="submit" class="rounded-md bg-brand px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Save and accept</button>
-    </div>
+    <label class="label" for="narrative-{{ section.section_id }}">Narrative text</label>
+    <label class="field area{% if not released %} locked{% endif %}"><textarea id="narrative-{{ section.section_id }}" name="text" rows="7" placeholder="Draft this section from the approved findings."{% if not released or is_generating %} disabled{% endif %}>{{ item.text }}</textarea></label>
+    <div class="narrative-form-foot"><div class="chips">{% for ref in state.findings if ref.alias in item.text %}<a class="chip" href="#ref-{{ ref.alias }}">{{ ref.alias }}</a>{% endfor %}</div><div class="acts">{% if section.status != "none" %}<button type="button" class="btn ghost sm" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none"{% if not released or is_generating %} disabled{% endif %}>Discard</button>{% endif %}<button type="submit" class="btn {{ 'primary' if section.section_id == ns.primary_section and released and not is_generating else 'secondary' }} sm"{% if not released or is_generating %} disabled{% endif %}>Save and accept</button></div></div>
   </form>
-  <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Regenerating replaces this section's text with a new draft; earlier text stays in the history.</p>
-  <form class="mt-2" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none">
-    <button type="submit" class="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Discard</button>
-  </form>
+
+  <form class="narrative-regenerate" hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none"><input type="hidden" name="section_id" value="{{ section.section_id }}"><button type="submit" class="btn ghost sm"{% if not released or is_generating %} disabled{% endif %}>Regenerate section</button></form>
 </section>
-{% endfor %}
+{% else %}{{ empty_state("No narrative sections", "Approved findings will appear here when the report is ready.", icon_id="file") }}{% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('htmx:beforeRequest', (event) => {
+    const form = event.detail.elt?.closest?.('form');
+    const button = form?.querySelector('button[type="submit"]');
+    if (!button || !form?.matches('[data-narrative-generate], .narrative-regenerate')) return;
+    button.classList.remove('primary');
+    button.classList.add('secondary', 'loading');
+    button.setAttribute('aria-busy', 'true');
+  });
+</script>
 {% endblock %}

@@ -1,15 +1,20 @@
-{% if report %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import icon %}
+
+{{ report_seg(assessment, "report") }}
+
+{% if preview_state == "loading" %}
+<div id="report-content" data-report-state="loading" class="stack" aria-busy="true">
+  <div class="glass sec"><span class="skel" style="width:38%"></span><span class="skel" style="width:64%;margin-top:var(--s-2)"></span><div class="fw-top"><span class="skel circle" style="width:104px;height:104px"></span><span class="skel-stack" style="flex:1"><span class="skel" style="width:76%"></span><span class="skel" style="width:54%"></span><span class="skel" style="width:66%"></span></span></div></div>
+  <div class="glass sec"><span class="skel" style="width:30%"></span><span class="skel" style="width:92%;margin-top:var(--s-4)"></span><span class="skel" style="width:82%;margin-top:var(--s-2)"></span><span class="skel" style="width:88%;margin-top:var(--s-2)"></span></div>
+</div>
+{% elif report %}
 <div id="report-content"
      hx-get="/assessments/{{ assessment.id }}/report-summary?view={{ report_view_mode }}&amp;framework={{ active_framework }}"
      hx-trigger="load"
      hx-swap="innerHTML">
-  <div class="flex items-center justify-center py-8">
-    <svg class="animate-spin h-5 w-5 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-    </svg>
-  </div>
+  <div class="glass sec" aria-busy="true">{{ icon("loader") }} Loading report</div>
 </div>
 {% else %}
-  {% include "partials/no_report.html" %}
+<div id="report-content">{% include "partials/no_report.html" %}</div>
 {% endif %}
