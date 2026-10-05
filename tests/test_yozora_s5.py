@@ -77,13 +77,15 @@ def test_engagement_linked_overview_renders_context_block(db, http):
     assert f"/engagements/{engagement.id}/aws-evidence" in page.text
 
 
-def test_documents_url_keeps_legacy_content_without_documents_tab(db, http):
-    _client, _engagement, assessment = seed_engagement(db)
+def test_documents_url_redirects_to_evidence_without_documents_tab(db, http):
+    # S5 kept the old documents view rendering; S6 turns ?tab=documents into a 303 to the inventory.
+    _client, engagement, assessment = seed_engagement(db)
 
-    page = http.get(f"/assessments/{assessment.id}?tab=documents")
+    redirect = http.get(f"/assessments/{assessment.id}?tab=documents", follow_redirects=False)
 
-    assert page.status_code == 200
-    assert 'id="document-list"' in page.text
+    assert redirect.status_code == 303
+    assert redirect.headers["location"] == f"/engagements/{engagement.id}/evidence?assessment={assessment.id}"
+    page = http.get(f"/assessments/{assessment.id}?tab=overview")
     assert "Documents" not in _assessment_nav(page.text)
 
 

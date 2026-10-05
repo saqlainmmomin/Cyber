@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -45,6 +46,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services import (
     actions_export,
     assessment_stage,
+    evidence_inventory,
     evidence as evidence_service,
     findings as finding_service,
     remediation_rollup,
@@ -57,6 +59,7 @@ from app.services import (
     workpaper,
 )
 from app.services.evidence import analysis_documents, evidence_panel_rows
+from app.services import prefill_freshness
 from app.services.magic_links import client_upload_rows, magic_link_rows
 from app.services import approved_report, conclusion_review, report_basis
 from app.services.conclusion_review import conclusion_cards
@@ -1511,6 +1514,32 @@ def evidence_detail_page(
         if evidence["assessment_id"]
         else None
     )
+    use_assessments = {
+        item["assessment_id"]: db.get(Assessment, item["assessment_id"])
+        for item in evidence.get("uses", [])
+        if item.get("assessment_id")
+    }
+    action_assessment = originating_assessment or next(
+        (use_assessments.get(item["assessment_id"]) for item in evidence.get("uses", []) if item.get("assessment_id")),
+        None,
+    )
+    from app.frameworks.registry import FrameworkRegistry
+    from app.models.magic_link import MagicLink
+
+    requirement_titles = {}
+    for item in evidence.get("uses", []):
+        framework = FrameworkRegistry.get_or_none(item["framework_id"])
+        control = framework.get_control(item["requirement_id"]) if framework else None
+        if control is not None:
+            requirement_titles[(item["framework_id"], item["requirement_id"])] = control.title
+    origin = evidence_inventory.origin_of(evidence["uploaded_by"])
+    uploader_name = None
+    if origin == "client_link":
+        link = db.get(MagicLink, evidence["uploaded_by"].removeprefix(evidence_inventory.CLIENT_LINK_PREFIX))
+        uploader_name = link.contact_name if link else None
+    elif evidence["uploaded_by"].startswith("consultant:"):
+        uploader_name = evidence["uploaded_by"].removeprefix("consultant:") or None
+    span_version = evidence["current_version"] or (evidence["versions"][-1] if evidence["versions"] else None)
     return templates.TemplateResponse(
         "pages/evidence_detail.html",
         {
@@ -1519,6 +1548,234 @@ def evidence_detail_page(
             "engagement": engagement,
             "client": client,
             "originating_assessment": originating_assessment,
+            "use_assessments": use_assessments,
+            "action_assessment": action_assessment,
+            "requirement_titles": requirement_titles,
+            "source_label": evidence_inventory.SOURCE_LABELS[origin],
+            "uploader_name": uploader_name,
+            "type_label": evidence_inventory.type_label(evidence["mime_type"], evidence["original_filename"], origin),
+            "span_version": span_version,
+        },
+    )
+
+
+def _inventory_query_context(request: Request) -> dict:
+    query = request.query_params
+    return {
+        "scope_assessment_id": query.get("assessment") or None,
+        "source": query.get("source") if query.get("source") in evidence_inventory.SOURCES else None,
+        "status": query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None,
+        "search": query.get("search") or None,
+    }
+
+
+def _inventory_fragment_context(
+    db: Session,
+    assessment: Assessment | None = None,
+    *,
+    engagement_id: str | None = None,
+    scope_assessment_id: str | None = None,
+    source: str | None = None,
+    status: str | None = None,
+    search: str | None = None,
+) -> dict:
+    engagement_id = engagement_id or (assessment.engagement_id if assessment else None)
+    owner_assessments = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement_id, Assessment.status != "archived")
+        .order_by(Assessment.created_at, Assessment.id)
+        .all()
+        if engagement_id
+        else []
+    )
+    rows = evidence_inventory.inventory_rows(
+        db,
+        engagement_id,
+        assessment_id=scope_assessment_id,
+        source=source,
+        status=status,
+        search=search,
+    ) if engagement_id else []
+    display_dates = {
+        row.id: row.created_at
+        for row in db.query(Evidence).filter(Evidence.id.in_([item.evidence_id for item in rows])).all()
+    } if rows else {}
+    actions = {}
+    legacy_documents = []
+    for owner in owner_assessments:
+        for row in evidence_panel_rows(db, owner.id):
+            if row.get("source") == "evidence":
+                action = dict(row)
+                action["action_assessment_id"] = owner.id
+                existing = actions.get(row["id"])
+                if existing is None or (existing.get("mapped_in") and not action.get("mapped_in")):
+                    actions[row["id"]] = action
+            elif row.get("source") == "legacy" and (
+                scope_assessment_id is None or scope_assessment_id == owner.id
+            ):
+                legacy_documents.append(
+                    {**row, "assessment_id": owner.id, "assessment_name": owner.display_name}
+                )
+
+    fragment_params = {}
+    if scope_assessment_id:
+        fragment_params["assessment"] = scope_assessment_id
+    if source:
+        fragment_params["source"] = source
+    if status:
+        fragment_params["status"] = status
+    if search:
+        fragment_params["search"] = search
+    return {
+        "inventory_rows": rows,
+        "document_actions": actions,
+        "assessment_id": scope_assessment_id,
+        "legacy_documents": legacy_documents,
+        # Legacy rows have no source/status/search fields, so a filtered view leaves them out.
+        "legacy_inventory_rows": [] if (source or status or search) else legacy_documents,
+        "inventory_display_dates": display_dates,
+        "fragment_query": urlencode(fragment_params),
+        "inventory_filtered": bool(fragment_params),
+        "inventory_path": f"/engagements/{engagement_id}/evidence" if engagement_id else "/evidence",
+        "request_assessment_id": (
+            scope_assessment_id
+            or (assessment.id if assessment else None)
+            or (owner_assessments[0].id if owner_assessments else None)
+        ),
+    }
+
+
+@router.get("/evidence", response_class=HTMLResponse)
+def evidence_inventory_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Cross-engagement evidence inventory."""
+    query = request.query_params
+    source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
+    status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
+    engagement_id = query.get("engagement") or None
+    rows = evidence_inventory.cross_engagement_rows(
+        db,
+        engagement_id=engagement_id,
+        source=source,
+        status=status,
+        search=query.get("search") or None,
+    )
+    display_dates = {
+        row.id: row.created_at
+        for row in db.query(Evidence).filter(Evidence.id.in_([item.evidence_id for item in rows])).all()
+    } if rows else {}
+    engagements = (
+        db.query(Engagement)
+        .filter(Engagement.status != "archived")
+        .order_by(Engagement.name, Engagement.id)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "pages/evidence_inventory.html",
+        {
+            "request": request,
+            "engagement": None,
+            "client": None,
+            "assessment": None,
+            "inventory_rows": rows,
+            "inventory_counts": evidence_inventory.status_counts(rows),
+            "engagements": engagements,
+            "assessment_options": [],
+            "selected_engagement_id": engagement_id,
+            "selected_source": source,
+            "selected_status": status,
+            "search": query.get("search", ""),
+            "view_state": query.get("state", "all"),
+            "upload_assessment_id": None,
+            "document_actions": {},
+            "inventory_display_dates": display_dates,
+            "legacy_documents": [],
+            "fragment_query": "",
+            "inventory_filtered": bool(engagement_id or source or status or query.get("search")),
+            "inventory_path": "/evidence",
+            "request_assessment_id": None,
+            "doc_categories": [item.value for item in DocumentCategory],
+            "cross_engagement": True,
+        },
+    )
+
+
+@router.get("/engagements/{engagement_id}/evidence", response_class=HTMLResponse)
+def engagement_evidence_inventory_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    assessments = (
+        db.query(Assessment)
+        .filter(Assessment.engagement_id == engagement_id, Assessment.status != "archived")
+        .order_by(Assessment.created_at, Assessment.id)
+        .all()
+    )
+    query = request.query_params
+    preview_state = query.get("state", "default")
+    selected_assessment = next(
+        (item for item in assessments if item.id == query.get("assessment")),
+        None,
+    )
+    upload_assessment = selected_assessment or (assessments[0] if assessments else None)
+    source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
+    status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
+    fragment = _inventory_fragment_context(
+        db,
+        upload_assessment,
+        engagement_id=engagement_id,
+        scope_assessment_id=selected_assessment.id if selected_assessment else None,
+        source=source,
+        status=status,
+        search=query.get("search") or None,
+    )
+    freshness = (
+        prefill_freshness.freshness(db, selected_assessment)
+        if selected_assessment
+        else None
+    )
+    # One pre-fill note per assessment that has a completed pre-fill and newer documents.
+    prefill_notes = []
+    for item in [selected_assessment] if selected_assessment else assessments:
+        item_freshness = freshness if item is selected_assessment else prefill_freshness.freshness(db, item)
+        if item_freshness.last_prefill_at and item_freshness.new_since_last_prefill:
+            prefill_notes.append({"assessment": item, "freshness": item_freshness})
+    filtered = bool(selected_assessment or source or status or query.get("search"))
+    engagement_total = (
+        len(evidence_inventory.inventory_rows(db, engagement_id))
+        if filtered
+        else len(fragment["inventory_rows"])
+    )
+    return templates.TemplateResponse(
+        "pages/evidence_inventory.html",
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": client,
+            "assessment": selected_assessment,
+            **fragment,
+            "inventory_counts": evidence_inventory.status_counts(fragment["inventory_rows"]),
+            "engagements": [engagement],
+            "assessment_options": assessments,
+            "selected_engagement_id": engagement_id,
+            "selected_source": source,
+            "selected_status": status,
+            "search": query.get("search", ""),
+            "view_state": preview_state,
+            "upload_assessment_id": upload_assessment.id if upload_assessment else None,
+            "freshness": freshness,
+            "prefill_notes": prefill_notes,
+            "inventory_filtered": filtered,
+            "engagement_total": engagement_total,
+            "doc_categories": [item.value for item in DocumentCategory],
+            "cross_engagement": False,
         },
     )
 
@@ -1561,6 +1818,13 @@ def render_assessment_detail(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
+    if request.query_params.get("tab") == "documents":
+        if assessment.engagement_id:
+            return RedirectResponse(
+                f"/engagements/{assessment.engagement_id}/evidence?assessment={assessment.id}",
+                status_code=303,
+            )
+        return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
     engagement_archived = bool(
         assessment.engagement_id
         and retention.archived_engagement_ids(db, {assessment.engagement_id})
@@ -1962,11 +2226,33 @@ async def upload_document_web(
         "partials/document_list.html",
         {
             "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
         },
     )
     return _with_toast(response, "Document uploaded")
+
+
+DETAIL_ACTION_TARGET = "detail-action-status"
+
+
+def _evidence_action_response(request: Request, db: Session, assessment: Assessment, toast: str | None = None):
+    """Archive / new-version success response.
+
+    The inventory swaps the refreshed ``partials/document_list.html`` into
+    ``#document-list``. The evidence detail page targets
+    ``#detail-action-status``; it gets an empty body plus ``HX-Refresh`` so the
+    page reloads with the new status instead of receiving the inventory table.
+    """
+    if request.headers.get("HX-Target") == DETAIL_ACTION_TARGET:
+        return HTMLResponse("", headers={"HX-Refresh": "true"})
+    response = templates.TemplateResponse(
+        "partials/document_list.html",
+        {
+            "request": request,
+            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+        },
+    )
+    return _with_toast(response, toast) if toast else response
 
 
 @router.delete("/assessments/{assessment_id}/documents/{document_id}", response_class=HTMLResponse)
@@ -1988,6 +2274,9 @@ def delete_document_web(
         raise HTTPException(404)
     if evidence.assessment_id != assessment_id:
         raise HTTPException(404)
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404)
     try:
         evidence_service.transition_evidence(
             db,
@@ -1998,14 +2287,7 @@ def delete_document_web(
         db.commit()
     except evidence_service.EvidenceError as exc:
         raise HTTPException(exc.status_code, exc.message) from exc
-    return templates.TemplateResponse(
-        "partials/document_list.html",
-        {
-            "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
-        },
-    )
+    return _evidence_action_response(request, db, assessment)
 
 
 @router.post("/assessments/{assessment_id}/evidence/{evidence_id}/versions", response_class=HTMLResponse)
@@ -2018,7 +2300,8 @@ async def upload_document_version_web(
     db: Session = Depends(get_db),
 ):
     evidence = db.get(evidence_service.Evidence, evidence_id)
-    if evidence is None or evidence.assessment_id != assessment_id:
+    assessment = db.get(Assessment, assessment_id)
+    if evidence is None or assessment is None or evidence.assessment_id != assessment_id:
         raise HTTPException(404)
     try:
         result = evidence_service.ingest_new_version(
@@ -2038,15 +2321,7 @@ async def upload_document_version_web(
             "partials/upload_status.html",
             {"request": request, "error": exc.message},
         )
-    response = templates.TemplateResponse(
-        "partials/document_list.html",
-        {
-            "request": request,
-            "documents": evidence_panel_rows(db, assessment_id),
-            "assessment_id": assessment_id,
-        },
-    )
-    return _with_toast(response, "New version uploaded")
+    return _evidence_action_response(request, db, assessment, toast="New version uploaded")
 
 
 # --- Context questionnaire (HTMX step-by-step) ---
@@ -2994,10 +3269,18 @@ def workpaper_page(
     if assessment is None:
         raise HTTPException(404, "Assessment not found")
     wp = workpaper.build_workpaper(db, assessment)
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    client = db.get(Client, engagement.client_id) if engagement else None
     return templates.TemplateResponse(
         request=request,
         name="pages/workpaper.html",
-        context={"request": request, "assessment": assessment, "wp": wp},
+        context={
+            "request": request,
+            "assessment": assessment,
+            "wp": wp,
+            "engagement": engagement,
+            "client": client,
+        },
     )
 
 

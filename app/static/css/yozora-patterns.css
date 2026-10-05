@@ -223,6 +223,28 @@ button.item .txt{color:inherit}
 .tools.keep-row .field.sel{width:auto;flex:1 1 0;min-width:0}
 }
 
+/* s6-spanreuse: cited-span and evidence-reuse pages */
+.page-tabs{margin-bottom:var(--s-6)}
+.page-tabs .tabs{overflow-x:auto}
+.page-note{margin-bottom:var(--s-5)}
+.cite.solid{background:var(--solid)}
+.cite-text{white-space:pre-wrap;word-break:break-word;font-size:var(--t-base);line-height:1.75;padding:var(--s-5) var(--s-6);margin:0;color:var(--text)}
+.cite-note{padding:var(--s-4) var(--s-6) 0}
+.reuse-intro{color:var(--text-2);margin-bottom:var(--s-5);max-width:70ch}
+.reuse-list{display:flex;flex-direction:column;gap:var(--s-4)}
+.reuse-card{padding:var(--s-5) var(--s-6);display:flex;flex-direction:column;gap:var(--s-4)}
+.reuse-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-3)}
+.reuse-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)}
+.reuse-grid .t-title{margin-top:2px;font-weight:400}
+.reuse-warnings{display:flex;flex-direction:column;gap:var(--s-2)}
+.reuse-help{margin-top:var(--s-4)}
+.reuse-error{margin-bottom:var(--s-4)}
+/* s6-workpaper: full workpaper entries stay in the page for traceability and open when their anchor is targeted */
+.workpaper-section{display:flex;flex-direction:column}
+.workpaper-section>.workpaper-entry{order:1;display:none}
+.workpaper-section>.workpaper-entry:target{display:block}
+/* s6-fix: citations of earlier and withheld proposals, listed under their revision-history row */
+.rev-cites-list{display:flex;flex-direction:column;gap:var(--s-3);margin-top:var(--s-2)}
 /* s5-prefill: pre-fill from documents (desk review), b4-desk_review */
 .dr-card{padding:var(--s-6)}
 .dr-lede{margin-top:var(--s-2);color:var(--text-2)}

@@ -98,6 +98,44 @@ YOZORA_S4_PATHS = (
     "tests/test_retention.py",
 )
 
+YOZORA_S6_PATHS = (
+    "app/routers/design.py",
+    "app/routers/evidence_reuse.py",
+    "app/routers/requirement_review.py",
+    "app/routers/web.py",
+    "app/template_config.py",
+    "app/templates/components/evidence_status_badge.html",
+    "app/templates/components/ui.html",
+    "app/templates/components/workpaper_entry.html",
+    "app/templates/pages/aws_evidence.html",
+    "app/templates/pages/evidence_detail.html",
+    "app/templates/pages/evidence_inventory.html",
+    "app/templates/pages/evidence_reuse.html",
+    "app/templates/pages/evidence_span.html",
+    "app/templates/pages/workpaper.html",
+    "app/templates/partials/aws_evidence_panel.html",
+    "app/templates/partials/document_list.html",
+    "app/templates/partials/documents_tab.html",
+    "app/templates/partials/upload_status.html",
+    "design/harness/seed_s6.py",
+    "docs/product/yozora-migration-map.md",
+    "tasks/handoffs/2026-10-01-yozora-s6-handoff.md",
+    "tasks/todo.md",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_design_lint.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_evidence_service.py",
+    "tests/test_workpaper.py",
+    "tests/p6_10_support.py",
+    "tests/test_yozora_s6.py",
+    "tests/visual/test_shell_visual.py",
+    "tests/yozora_paths.py",
+)
+
 YOZORA_S3_PATHS = (
     "app/routers/design.py",
     "app/routers/firm_settings.py",
@@ -283,5 +321,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S7_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

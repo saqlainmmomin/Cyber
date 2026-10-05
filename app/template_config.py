@@ -32,7 +32,7 @@ NAV_ITEMS = (
     {"key": "clients", "label": "Clients", "href": "/clients", "icon": "building", "available": True},
     {"key": "engagements", "label": "Engagements", "href": "/engagements", "icon": "briefcase", "available": True},
     {"key": "review", "label": "Review", "href": "/review", "icon": "inbox", "available": True},
-    {"key": "evidence", "label": "Evidence", "href": "/evidence", "icon": "folder", "available": False},
+    {"key": "evidence", "label": "Evidence", "href": "/evidence", "icon": "folder", "available": True},
     {"key": "reports", "label": "Reports", "href": "/reports", "icon": "report", "available": True},
     {"key": "settings", "label": "Settings", "href": "/settings", "icon": "settings", "available": True},
 )
@@ -52,6 +52,8 @@ def _nav_section(path: str) -> str:
         return "engagements"
     if path.startswith("/review"):
         return "review"
+    if path.startswith(("/evidence/", "/evidence-versions/")):
+        return "engagements"  # an item's detail and cited text sit inside its engagement
     if path.startswith("/evidence"):
         return "evidence"
     if path.startswith("/reports"):
@@ -289,6 +291,9 @@ def configure_templates(templates):
         "has_custom_nav_color": settings.firm_primary_hex != "#2563eb",
     }
     templates.env.globals["NAV_ITEMS"] = NAV_ITEMS
+    from app.services import evidence_inventory
+
+    templates.env.globals["EVIDENCE_STATUS_LABELS"] = evidence_inventory.STATUS_LABELS
     # PR #99 may provide this from FirmSettings; S1 keeps the approved default.
     templates.env.globals["firm_accent"] = "midnight"
     templates.env.globals["accent_custom_hex"] = None

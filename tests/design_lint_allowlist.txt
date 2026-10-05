@@ -41,7 +41,6 @@ partials/desk_review_findings.html
 partials/desk_review_ready.html
 partials/desk_review_running.html
 partials/document_list.html
-partials/documents_tab.html
 partials/engagement_list.html
 partials/engagement_retention.html
 partials/followup_questions.html

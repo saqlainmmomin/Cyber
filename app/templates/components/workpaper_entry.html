@@ -1,186 +1,119 @@
-{% macro citation_list(citations, captured) %}
-  {% if not captured %}
-  <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">Evidence support not captured (legacy)</p>
-  {% elif not citations %}
-  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No supporting citation (explicit evidence absence)</p>
-  {% else %}
-  <ul class="mt-2 space-y-3">
-    {% for citation in citations %}
-    <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm">
-      <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ citation.excerpt }}</p>
-      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {% if citation.resolved %}<a class="font-medium text-brand dark:text-navy-300 hover:underline" href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or 'Unresolved evidence' }}{% endif %}
-        {% if citation.version_number %} v{{ citation.version_number }}{% endif %}
-        · {{ citation.location_ref }}
-        {% if not citation.is_current %}<span class="text-amber-700 dark:text-amber-300">(superseded version)</span>{% endif %}
-      </p>
-    </li>
-    {% endfor %}
-  </ul>
+{% from "components/layout.html" import assessment_tabs %}
+{% macro outcome_label(outcome) -%}
+{{ {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"}.get(outcome, (outcome or "")|replace("_", " ")|capitalize) }}
+{%- endmacro %}
+{% macro outcome_pill(outcome) -%}
+{% set tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf"} %}
+<span class="pill {{ tones.get(outcome, 'c-neutral') }}">{{ outcome_label(outcome) }}</span>
+{%- endmacro %}
+{% macro risk_pill(risk) -%}
+{% if risk %}{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}<span class="pill {{ tones.get(risk|lower, 'c-neutral') }}">{{ risk|capitalize }}</span>{% endif %}
+{%- endmacro %}
+{% macro decision_status(card) -%}
+{% if card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy approval</span>
+{%- elif card.state == "approved" %}<span class="status"><span class="dot c-ok"></span>Approved</span>
+{%- elif card.state == "edited" %}<span class="status"><span class="dot c-accent"></span>Edited and approved</span>
+{%- elif card.state == "rejected" %}<span class="status"><span class="dot c-non"></span>Rejected</span>
+{%- else %}<span class="status"><span class="st"></span>Pending</span>{% endif %}
+{%- endmacro %}
+{% macro field(label, value, wide=false) -%}
+<div{% if wide %} style="grid-column:1/-1"{% endif %}><span class="sub">{{ label }}</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ value }}</div></div>
+{%- endmacro %}
+{% macro cite(citation) -%}
+<div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>{% if citation.resolved %}<a href="/evidence/{{ citation.evidence_id }}" style="color:inherit">{{ citation.filename }}</a>{% else %}{{ citation.filename or "Unresolved evidence" }}{% endif %}</span><span class="pg">{% if citation.location_type == "whole_item" %}Whole document cited{% elif citation.version_number %}Version {{ citation.version_number }}{% endif %}</span>{% if citation.resolved and not citation.is_current %}<span class="warn">Superseded version</span>{% endif %}</div>{% if citation.excerpt %}<blockquote>{{ citation.excerpt }}</blockquote>{% endif %}</div>
+{%- endmacro %}
+{% macro citation_list(citations, captured) -%}
+{% if not captured %}<p class="muted">Evidence support not captured (legacy)</p>
+{%- elif not citations %}<p class="muted">No supporting citation (explicit evidence absence)</p>
+{%- else %}<div style="display:flex;flex-direction:column;gap:var(--s-3)">{% for citation in citations %}{{ cite(citation) }}{% endfor %}</div>{% endif %}
+{%- endmacro %}
+{% macro card_open(title) -%}
+<div class="solid" style="padding:var(--s-6);margin-top:var(--s-4)"><h2>{{ title }}</h2><div style="margin-top:var(--s-4);display:flex;flex-direction:column;gap:var(--s-5)">
+{%- endmacro %}
+{% macro entry_meta(entry) -%}
+{% set card = entry.card %}
+<div class="meta"><span class="chip">{{ framework_label(card.conclusion.framework_id) }}</span><span class="ref" style="margin-left:0">{{ card.conclusion.requirement_id }} · Conclusion version {{ card.conclusion.version }}</span>
+<span>{%- if not entry.in_scope %}<span class="pill c-insuf">Excluded by scope enforcement</span>
+{%- else %}{{ outcome_pill(card.conclusion.outcome) }}{{ decision_status(card) }}{% if card.locked and not card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-lock"/></svg>Locked, re-analysis will not overwrite</span>{% endif %}{% endif %}</span></div>
+{%- endmacro %}
+{% if entry is defined %}
+{% set card = entry.card %}
+{% set conclusion_href = "/assessments/" ~ assessment.id ~ "/conclusions#conclusion-card-" ~ card.conclusion.id %}
+{% set source_labels = {"human": "Questionnaire", "document": "Document pre-fill", "inferred": "Screening inference"} %}
+{% set relevance_labels = {"primary": "Direct", "supporting": "Supporting", "contextual": "Context only"} %}
+<article data-workpaper-entry id="{{ entry.anchor }}" data-conclusion-id="{{ card.conclusion.id }}" data-in-scope="{{ 'true' if entry.in_scope else 'false' }}" data-decision-state="{{ card.state }}" class="workpaper-entry">
+{% if entry_page %}
+  <div class="page-head"><div><h1>{{ card.requirement_title }}</h1>{% if entry_basis %}<p class="meta-line">{% if entry_basis.period_recorded %}{{ entry_basis.period_start|display_date }} – {{ entry_basis.period_end|display_date }}{% else %}Period {{ entry_basis.period_label }}{% endif %} · Evidence cut-off {{ entry_basis.evidence_cutoff|display_date if entry_basis.evidence_cutoff else entry_basis.cutoff_label }}</p>{% endif %}
+  {{ entry_meta(entry) }}</div>
+  <div class="acts"><a class="btn primary" href="{{ conclusion_href }}">Open in conclusions</a></div></div>
+  {{ assessment_tabs(assessment, "review") }}
+{% else %}
+  <div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><div><h2>{{ card.requirement_title }}</h2>{{ entry_meta(entry) }}</div><a class="btn secondary" href="{{ conclusion_href }}">Open in conclusions</a></div>
+{% endif %}
+  {% if entry.findings or card.legacy_report_status %}<div class="meta">{% for finding in entry.findings %}<a class="chip" data-workpaper-finding href="{{ finding.href }}">Finding: {{ finding.title }}</a>{% endfor %}{% if card.legacy_report_status %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Report view differs: {{ outcome_label(card.legacy_report_status) }}</span>{% endif %}</div>{% endif %}
+
+  {{ card_open("Client response") }}
+    {% if entry.client_response %}{% set response = entry.client_response %}
+    <div data-question-id="{{ response.question_id }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{{ field("Answer", response.answer|replace("_", " ")|title) }}{{ field("Answer source", source_labels.get(response.answer_source, response.answer_source or "Not recorded")) }}{{ field("Confidence", (response.confidence or "Not recorded")|capitalize) }}{{ field("Submitted", response.submitted_at|display_date) }}{% if response.na_reason %}{{ field("Not applicable reason", response.na_reason) }}{% endif %}{% if response.notes %}{{ field("Notes", response.notes, true) }}{% endif %}{% if response.evidence_reference %}{{ field("Evidence reference", response.evidence_reference) }}{% endif %}</div>
+    {% if response.matched_on == "cluster" %}<div class="alert c-accent"><svg class="i"><use href="#i-link"/></svg><div><b>Shared cluster question</b>One answer informs every framework requirement in this cluster.</div></div>{% endif %}
+    {% else %}<p class="muted">No questionnaire response recorded for this requirement.</p>{% endif %}
+  </div></div>
+
+  {% if entry.in_scope %}
+  {{ card_open("Evidence") }}
+    <div><h3 style="margin-bottom:var(--s-3)">Mapped evidence</h3>{% if entry.mapped_evidence %}<div class="rows glass">{% for row in entry.mapped_evidence %}<div data-relevance="{{ row.relevance }}"><span class="ico"><svg class="i"><use href="#i-file"/></svg></span><div class="txt"><b><a href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a></b><span class="sub">{{ relevance_labels.get(row.relevance, row.relevance|capitalize) }}</span></div><span class="status"><span class="dot {{ 'c-accent' if row.evidence_status == 'active' else 'c-neutral' }}"></span>{{ EVIDENCE_STATUS_LABELS.get(row.evidence_status, row.evidence_status|capitalize) }}</span></div>{% endfor %}</div>{% else %}<p class="muted">No evidence mapped to this requirement.</p>{% endif %}</div>
+    <div><h3 style="margin-bottom:var(--s-3)">Current desk review</h3><p class="help" style="margin:-8px 0 var(--s-3)">Replaced when the desk review is re-run.</p>{% if entry.desk_review_findings %}<div style="display:flex;flex-direction:column;gap:var(--s-3)">{% for finding in entry.desk_review_findings %}<div data-finding-type="{{ finding.finding_type }}" style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap">{{ risk_pill(finding.severity) }}<span class="t-title">{{ finding.content }}</span></div>{% if finding.citations_captured and finding.citations %}{% for citation in finding.citations %}{{ cite(citation) }}{% endfor %}{% elif finding.source_quote %}<div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>{{ finding.source_location or "Desk review" }}</span></div><blockquote>{{ finding.source_quote }}</blockquote></div>{% else %}{{ citation_list(finding.citations, finding.citations_captured) }}{% endif %}{% endfor %}</div>{% else %}<p class="muted">No desk-review findings for this requirement.</p>{% endif %}</div>
+  </div></div>
   {% endif %}
-{% endmacro %}
 
-<article data-workpaper-entry id="{{ entry.anchor }}" data-in-scope="{{ 'true' if entry.in_scope else 'false' }}" data-decision-state="{{ entry.card.state }}" class="scroll-mt-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
-  <header class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span class="font-semibold text-brand dark:text-navy-300">{{ entry.card.conclusion.framework_id|upper }}</span>
-          <span class="font-mono">{{ entry.card.conclusion.requirement_id }}</span>
-          <span>v{{ entry.card.conclusion.version }}</span>
-          <span class="font-mono">{{ entry.card.conclusion.id }}</span>
-        </div>
-        <h3 class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ entry.card.requirement_title }}</h3>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        {% if entry.card.legacy_bulk_approval %}
-        <span class="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">Legacy bulk approval, not individually reviewed</span>
-        {% elif entry.card.state == 'approved' %}
-        <span class="rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300">Approved</span>
-        {% elif entry.card.state == 'edited' %}
-        <span class="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">Edited and approved</span>
-        {% elif entry.card.state == 'rejected' %}
-        <span class="rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-300">Rejected</span>
-        {% else %}
-        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Pending</span>
-        {% endif %}
-        {% if not entry.in_scope %}<span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Excluded by scope enforcement</span>{% endif %}
-      </div>
+  {{ card_open("AI proposal") }}
+    {% if not entry.ai_proposal %}<p class="muted">No AI proposal recorded.</p>
+    {% elif entry.ai_proposal.claim is none %}{{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
+    {% else %}{% set claim = entry.ai_proposal.claim %}{% set item = claim.get("item") or {} %}{% set quality = claim.get("quality") or {} %}
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap">{{ outcome_pill(claim.get("outcome")) }}{% if claim.get("disposition") %}<span class="chip">{{ claim.get("disposition")|replace("_", " ")|capitalize }}</span>{% endif %}{{ risk_pill(item.get("risk_level")) }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{% if item.get("current_state") %}{{ field("Rationale", item.get("current_state"), true) }}{% endif %}{% if item.get("gap_description") %}{{ field("Gap", item.get("gap_description"), true) }}{% endif %}{% if item.get("remediation_action") %}{{ field("Remediation action", item.get("remediation_action"), true) }}{% endif %}{{ field("Model", entry.ai_proposal.run.model_id) }}{{ field("Started", entry.ai_proposal.run.started_at|display_date ~ ", " ~ entry.ai_proposal.run.started_at.strftime("%H:%M")) }}</div>
+    {% set grounded = quality.get("evidence_quote_grounded") %}{% set red_flags = quality.get("desk_review_red_flags", 0) %}{% set citation_count = quality.get("citation_count", 0) %}{% set contradictions = quality.get("contradictions") %}
+    <div><h3 style="margin-bottom:var(--s-3)">Quality checks</h3><ul class="checks">
+      <li><span class="ck {{ 'c-ok' if citation_count else 'c-part' }}"><svg class="i"><use href="#i-{{ 'check' if citation_count else 'alert' }}"/></svg></span>Citations<span class="res">{{ citation_count }}</span></li>
+      <li><span class="ck {{ 'c-ok' if grounded is sameas true else 'c-non' if grounded is sameas false else 'c-insuf' }}"><svg class="i"><use href="#i-{{ 'check' if grounded is sameas true else 'alert' if grounded is sameas false else 'x' }}"/></svg></span>Evidence quote found in the document<span class="res">{% if grounded is sameas true %}Grounded{% elif grounded is sameas false %}Not grounded{% else %}No quote offered{% endif %}</span></li>
+      <li><span class="ck {{ 'c-non' if quality.get('unsupported_assertion') else 'c-ok' }}"><svg class="i"><use href="#i-{{ 'alert' if quality.get('unsupported_assertion') else 'check' }}"/></svg></span>Unsupported assertion<span class="res">{{ "Yes" if quality.get("unsupported_assertion") else "None" }}</span></li>
+      <li><span class="ck {{ 'c-part' if quality.get('needs_review') else 'c-ok' }}"><svg class="i"><use href="#i-{{ 'alert' if quality.get('needs_review') else 'check' }}"/></svg></span>Flagged for review by the model<span class="res">{{ "Yes" if quality.get("needs_review") else "No" }}</span></li>
+      <li><span class="ck {{ 'c-part' if red_flags else 'c-ok' }}"><svg class="i"><use href="#i-{{ 'alert' if red_flags else 'check' }}"/></svg></span>Desk-review red flags<span class="res">{{ red_flags }}</span></li>
+      {% if quality.get("desk_review_absence") %}<li><span class="ck c-part"><svg class="i"><use href="#i-alert"/></svg></span>Desk review found the evidence absent<span class="res">Yes</span></li>{% endif %}
+      <li><span class="ck {{ 'c-insuf' if contradictions is none else 'c-part' if contradictions else 'c-ok' }}"><svg class="i"><use href="#i-{{ 'x' if contradictions is none else 'alert' if contradictions else 'check' }}"/></svg></span>Contradictions<span class="res">{{ "Not assessed" if contradictions is none else contradictions }}</span></li>
+    </ul></div>
+    {% if grounded is sameas false %}<div class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div><b>Ungrounded quote offered by the model</b>Not found in any evidence, so not treated as support: {{ item.get("evidence_quote") }}</div></div>{% endif %}
+    <div><h3 style="margin-bottom:var(--s-3)">Citations</h3>{{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}</div>
+    {% if card.unsupported_assertion %}<div class="alert c-non"><svg class="i"><use href="#i-alert"/></svg><div><b>This supporting outcome has no grounded citation.</b></div></div>{% endif %}
+    {% endif %}
+    {% if card.withheld_proposal %}<div class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div><b>A newer AI proposal was withheld</b>This conclusion is locked.{% if card.withheld_proposal.outcome %} The newer proposal was {{ outcome_label(card.withheld_proposal.outcome) }}.{% endif %}</div></div>{% endif %}
+  </div></div>
+
+  {{ card_open("Consultant decision") }}
+    {% if not entry.in_scope %}
+    <div class="alert c-neutral"><svg class="i"><use href="#i-alert"/></svg><div><b>Excluded by scope enforcement</b>This requirement was set to not applicable at analysis time, so there is no conclusion to decide.</div></div>
+    {% elif card.legacy_bulk_approval %}
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy bulk approval, not individually reviewed</span>{{ outcome_pill(card.conclusion.outcome) }}</div><p class="sub">Approved in bulk before decisions were recorded one by one.</p>
+    {% else %}
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="chip">{{ "AI proposal" if card.conclusion.ai_proposed else "Consultant-edited" }}</span>{{ outcome_pill(card.conclusion.outcome) }}{{ risk_pill(card.conclusion.risk_level) }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{{ field("Rationale", card.conclusion.rationale, true) }}{{ field("Gaps identified", card.conclusion.gaps_identified, true) }}{{ field("Recommended action", card.conclusion.recommended_action, true) }}{{ field("Evidence summary", card.conclusion.evidence_summary or "No grounded supporting quote", true) }}</div>
+    {% set edited_note = not card.conclusion.ai_proposed and card.previous_outcome %}
+    {% if edited_note or card.last_decision or card.state == "edited" %}<p class="sub">{% if edited_note %}The AI proposed {{ outcome_label(card.previous_outcome) }} before this edit. {% endif %}{% if card.last_decision %}{{ {"approved": "Approved", "edited": "Approved", "rejected": "Rejected", "reopened": "Reopened"}.get(card.last_decision.action, card.last_decision.action|capitalize) }} by {{ card.last_decision.actor_display }}, {{ card.last_decision.created_at|display_date }}. {% endif %}{% if card.state == "edited" %}Edits carry no citations; the citations above belong to the AI proposal this edit replaced.{% endif %}</p>{% endif %}
+    {% endif %}
+  </div></div>
+
+  {% if entry.in_scope %}
+  {{ card_open("Revision history") }}
+    <div class="glass rows" data-revision-history>{% for rev in entry.revisions %}{% set action = rev.revision.action %}
+      <div data-revision-action="{{ action }}"><span class="ico accent"><svg class="i"><use href="#i-history"/></svg></span><div class="txt"><b>{% if action == "proposed" %}{{ "Proposed by the AI" if rev.run else "Proposed" }}{% elif action == "edited" %}Edited{% elif action == "proposal_withheld" %}AI proposal withheld{% else %}{{ rev.action_label }}{% endif %}</b><span class="sub">{% if rev.run %}{{ framework_label(rev.run.framework_id) }} run{% elif action == "proposed" %}Migrated from the legacy report{% else %}{{ rev.actor_display }}{% endif %} · {{ rev.revision.created_at|display_date }}</span>
+        {%- if action == "proposed" and not rev.run %}<span class="sub">No run record for this proposal.</span>
+        {%- elif action in ("proposed", "proposal_withheld") and rev.claim %}{% set cite_count = rev.citations|length ~ " citation" ~ ("" if rev.citations|length == 1 else "s") %}<span class="sub">{{ outcome_label(rev.claim.get("outcome")) }}{% if rev.claim.get("disposition") %}, {{ rev.claim.get("disposition")|replace("_", " ") }}{% endif %}, {{ cite_count }}</span>
+        {%- elif action == "edited" and rev.revision.previous_outcome is not none %}<span class="sub">{{ outcome_label(rev.revision.previous_outcome) }} to {{ outcome_label(rev.outcome_after) }}.{% if rev.rationale_after %} Reason: {{ rev.rationale_after }}{% endif %}</span>
+        {%- elif action == "edited" and rev.rationale_after %}<span class="sub">Reason: {{ rev.rationale_after }}</span>
+        {%- elif action == "reopened" and rev.revision.previous_outcome is not none %}<span class="sub">Before: {{ outcome_label(rev.revision.previous_outcome) }}.{% if rev.revision.previous_rationale %} Rationale before reopening: {{ rev.revision.previous_rationale }}{% endif %}</span>{% endif %}
+        {%- if action in ("proposed", "proposal_withheld") and rev.claim and rev.citations and rev is not sameas entry.ai_proposal %}<div class="rev-cites-list" data-revision-citations>{% for citation in rev.citations %}{{ cite(citation) }}{% endfor %}</div>{% endif %}</div></div>{% endfor %}
     </div>
-    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
-      {% if entry.card.locked %}<span class="font-medium text-amber-700 dark:text-amber-300">Locked: re-analysis will not overwrite this</span>{% endif %}
-      <a href="/assessments/{{ assessment.id }}/conclusions#conclusion-card-{{ entry.card.conclusion.id }}" class="font-medium text-brand dark:text-navy-300 hover:underline">Decide on the conclusions page →</a>
-      {% for finding in entry.findings %}<a data-workpaper-finding href="{{ finding.href }}" class="font-medium text-brand dark:text-navy-300 hover:underline">Finding: {{ finding.title }} →</a>{% endfor %}
-    </div>
-    {% if entry.card.legacy_report_status %}<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">Report view differs: {{ entry.card.legacy_report_status|replace('_', ' ')|title }}</p>{% endif %}
-  </header>
-
-  <div class="p-5 space-y-6">
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">1. Client response</h4>
-      {% if entry.client_response %}
-      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Answer</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ entry.client_response.answer|replace('_', ' ')|title }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Question id</dt><dd class="font-mono text-gray-700 dark:text-gray-300">{{ entry.client_response.question_id }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Answer source</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.answer_source or 'Not recorded' }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Confidence</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.confidence or 'Not recorded' }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">N/A reason</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.na_reason or 'Not recorded' }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Submitted</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.client_response.submitted_at }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Notes</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.client_response.notes or 'None recorded' }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Evidence reference</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.client_response.evidence_reference or 'None recorded' }}</dd></div>
-      </dl>
-      {% if entry.client_response.matched_on == 'cluster' %}<p class="mt-3 text-sm text-blue-700 dark:text-blue-300">Shared cluster question {{ entry.client_response.question_id }}: one answer informs every framework requirement in this cluster.</p>{% endif %}
-      {% else %}
-      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No questionnaire response recorded for this requirement.</p>
-      {% endif %}
-    </section>
-
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">2. Evidence</h4>
-      <h5 class="mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">Mapped evidence</h5>
-      {% if entry.mapped_evidence %}
-      <ul class="mt-2 space-y-2">
-        {% for row in entry.mapped_evidence %}
-        <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-700 dark:text-gray-300">
-          <a href="/evidence/{{ row.evidence_id }}" class="font-medium text-brand dark:text-navy-300 hover:underline">{{ row.filename }}</a>
-          <span class="ml-2">{{ row.relevance }} · {{ row.evidence_status }}</span>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No evidence mapped to this requirement.</p>{% endif %}
-
-      <h5 class="mt-4 text-sm font-medium text-gray-800 dark:text-gray-200">Current desk review (replaced when desk review is re-run)</h5>
-      {% if entry.desk_review_findings %}
-      <ul class="mt-2 space-y-3">
-        {% for finding in entry.desk_review_findings %}
-        <li class="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ finding.finding_type|title }} · {{ finding.severity|title }}</p>
-          <p class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ finding.content }}</p>
-          {% if finding.source_quote %}<p class="mt-2 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ finding.source_quote }}</p>{% endif %}
-          {% if finding.source_location %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ finding.source_location }}</p>{% endif %}
-          {{ citation_list(finding.citations, finding.citations_captured) }}
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No desk-review findings for this requirement.</p>{% endif %}
-    </section>
-
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3. AI proposal</h4>
-      {% if not entry.ai_proposal %}
-      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No AI proposal recorded.</p>
-      {% elif entry.ai_proposal.claim is none %}
-      <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">No run record for this proposal (migrated from the legacy report).</p>
-      {{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
-      {% else %}
-      {% set claim = entry.ai_proposal.claim %}
-      {% set item = claim.get('item') or {} %}
-      {% set quality = claim.get('quality') or {} %}
-      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ claim.get('outcome')|replace('_', ' ')|title }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Disposition</dt><dd class="text-gray-700 dark:text-gray-300">{{ claim.get('disposition') }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ item.get('current_state') }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gap description</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ item.get('gap_description') }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="text-gray-700 dark:text-gray-300">{{ item.get('risk_level') }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Remediation action</dt><dd class="text-gray-700 dark:text-gray-300">{{ item.get('remediation_action') }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Model</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.model_id }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Started</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.started_at }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Trigger</dt><dd class="font-mono text-gray-700 dark:text-gray-300">{{ entry.ai_proposal.run.trigger_id }}</dd></div>
-      </dl>
-      {% if claim.get('scope_enforced') %}<p class="mt-3 text-sm font-medium text-amber-700 dark:text-amber-300">Scope-enforced to not applicable at analysis time</p>{% endif %}
-      <ul class="mt-3 grid gap-2 sm:grid-cols-2 text-sm text-gray-700 dark:text-gray-300">
-        <li>Citations: {{ quality.get('citation_count', 0) }}</li>
-        <li>Evidence quote: {% if quality.get('evidence_quote_grounded') is sameas true %}grounded{% elif quality.get('evidence_quote_grounded') is sameas false %}not grounded{% else %}no quote offered{% endif %}</li>
-        <li>Unsupported assertion: {{ 'yes' if quality.get('unsupported_assertion') else 'no' }}</li>
-        <li>Model flagged for review: {{ 'yes' if quality.get('needs_review') else 'no' }}</li>
-        <li>Desk-review red flags: {{ quality.get('desk_review_red_flags', 0) }}</li>
-        <li>Desk-review absence: {{ 'yes' if quality.get('desk_review_absence') else 'no' }}</li>
-        <li>Contradictions: {{ 'Not assessed' if quality.get('contradictions') is none else quality.get('contradictions') }}</li>
-      </ul>
-      {% if quality.get('evidence_quote_grounded') is sameas false %}<p class="mt-3 text-sm text-amber-700 dark:text-amber-300">Ungrounded quote offered by the model (not found in any evidence; not treated as support):</p><p class="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('evidence_quote') }}</p>{% endif %}
-      {{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
-      {% if entry.card.unsupported_assertion %}<p class="mt-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">This supporting outcome has no grounded citation.</p>{% endif %}
-      {% endif %}
-      {% if entry.card.withheld_proposal %}
-      <div class="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">
-        <p class="font-medium">A newer AI proposal was withheld because this conclusion is locked</p>
-        {% if entry.card.withheld_proposal.outcome %}<p class="mt-1">Outcome: {{ entry.card.withheld_proposal.outcome|replace('_', ' ')|title }}</p>{% endif %}
-        {% if entry.card.withheld_proposal.rationale %}<p class="mt-1 whitespace-pre-wrap">{{ entry.card.withheld_proposal.rationale }}</p>{% endif %}
-      </div>
-      {% endif %}
-    </section>
-
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">4. Consultant decision</h4>
-      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ 'AI proposal' if entry.card.conclusion.ai_proposed else 'Consultant-edited' }}</p>
-      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ entry.card.conclusion.outcome|replace('_', ' ')|title }}</dd></div>
-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.risk_level|title }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.rationale }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gaps identified</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.gaps_identified }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Recommended action</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.recommended_action }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Evidence summary</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ entry.card.conclusion.evidence_summary or 'No grounded supporting quote' }}</dd></div>
-      </dl>
-      {% if not entry.card.conclusion.ai_proposed and entry.card.previous_outcome %}<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">AI proposed before edit: {{ entry.card.previous_outcome|replace('_', ' ')|title }}</p>{% endif %}
-      {% if entry.card.last_decision %}<p class="mt-3 text-sm text-gray-700 dark:text-gray-300">{{ entry.card.last_decision.action }} by {{ entry.card.last_decision.actor_display }} at {{ entry.card.last_decision.created_at }}</p>{% endif %}
-      {% if entry.card.state == 'edited' %}<p class="mt-3 text-sm text-amber-700 dark:text-amber-300">Consultant edits carry no citations; the citations above belong to the AI proposal this edit replaced.</p>{% endif %}
-    </section>
-
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">5. Revision history</h4>
-      <ol data-revision-history class="mt-3 space-y-3">
-        {% for rev in entry.revisions %}
-        <li data-revision-action="{{ rev.revision.action }}" class="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
-          <p class="font-medium text-gray-900 dark:text-gray-100">#{{ rev.sequence }} · {{ rev.revision.created_at }} · {{ rev.action_label }} by {{ rev.actor_display }}</p>
-          {% if rev.revision.previous_outcome is not none %}<p class="mt-2 text-gray-700 dark:text-gray-300">Before: {{ rev.revision.previous_outcome|replace('_', ' ')|title }}</p><p class="mt-1 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ rev.revision.previous_rationale }}</p>{% endif %}
-          {% if rev.outcome_after is not none %}<p class="mt-2 text-gray-700 dark:text-gray-300">After: {{ rev.outcome_after|replace('_', ' ')|title }}</p><p class="mt-1 whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ rev.rationale_after }}</p>{% endif %}
-          {% if rev.run %}
-          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Run {{ rev.run.id[:8] }} · {{ rev.run.framework_id|upper }} · {{ rev.run.model_id }} · {{ rev.run.status }}</p>
-          {% if rev.claim %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Claim: {{ rev.claim.get('outcome')|replace('_', ' ')|title }} · {{ rev.claim.get('disposition') }}</p>{{ citation_list(rev.citations, rev.citations_captured) }}{% endif %}
-          {% elif rev.revision.action == 'proposed' %}<p class="mt-2 text-sm text-amber-700 dark:text-amber-300">No run record for this proposal (migrated from the legacy report).</p>{% endif %}
-        </li>
-        {% endfor %}
-      </ol>
-    </section>
-  </div>
+  </div></div>
+  {% endif %}
 </article>
+{% endif %}
