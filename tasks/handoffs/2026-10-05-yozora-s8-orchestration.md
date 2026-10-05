@@ -63,7 +63,10 @@ One Sonnet 5.5 cloud thread, branch `claude/yozora-s8` off `origin/main`. Prompt
 ## Hand Saqlain
 The builder's PR (draft) and the Opus review verdict; then S9.
 
-## Open questions for Saqlain (recommended answer first)
+## Decisions from Saqlain (5 Oct 2026, do not reopen)
+Saqlain accepted the recommended answer to all six questions below.
+
+## Questions asked (recommended answer first, all accepted)
 1. **Overview AWS link:** remove it, since Evidence has "Pull from AWS"? Recommend yes.
 2. **Scope's "Prepare RFI" link:** keep going straight to the assessment's RFI page, as the approved mockup draws it, rather than the Requests list? Recommend yes.
 3. **SoA one-click save:** post the changed rows one after another over the existing route, with no new bulk route? Recommend yes (a bulk route is a backend change).
