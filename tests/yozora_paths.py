@@ -171,6 +171,7 @@ YOZORA_S5_PATHS = (
     "design/harness/seed_s5.py",
     "docs/product/yozora-migration-map.md",
     "tasks/handoffs/2026-10-01-yozora-s5-handoff.md",
+    "tasks/handoffs/2026-10-04-yozora-s5-s6-orchestration.md",
     "tasks/todo.md",
     "tests/test_p5_4_adaptive_ucc_questionnaire.py",
     "tests/test_report_snapshots.py",
