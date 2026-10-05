@@ -73,8 +73,10 @@ def test_engagement_linked_overview_renders_context_block(db, http):
 
     assert page.status_code == 200
     assert "Retention" in page.text
-    assert "Client evidence links" in page.text
-    assert f"/engagements/{engagement.id}/aws-evidence" in page.text
+    assert "Client evidence links" not in page.text
+    assert f"/engagements/{engagement.id}/aws-evidence" not in page.text
+    requests_page = http.get(f"/engagements/{engagement.id}/requests")
+    assert requests_page.status_code == 200 and "New link" in requests_page.text
 
 
 def test_documents_url_redirects_to_evidence_without_documents_tab(db, http):

@@ -1,126 +1,147 @@
 {% extends "base.html" %}
-{% block title %}Request for information{% endblock %}
+{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/ui.html" import alert, button, icon, link_button, pill %}
+
+{% block title %}{{ assessment.display_name }} request{% endblock %}
+
+{% block crumbs %}
+  {% if client %}<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}
+  {% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/evidence">Evidence</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/requests">Requests</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}
+  <b>{{ assessment.display_name }} request</b>
+{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <a href="/assessments/{{ assessment.id }}" class="text-sm text-gray-500 hover:text-brand transition-colors">&larr; {{ assessment.company_name }}</a>
-  <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Request for information</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Prepare an evidence request for {{ assessment.company_name }}.</p>
-    </div>
-    <label class="text-xs text-gray-500 dark:text-gray-400">
-      Consultant name
-      <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" maxlength="200"
-             class="block mt-1 w-56 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-    </label>
+{% set period = engagement_period(engagement) if engagement else none %}
+<header class="page-head">
+  <div>
+    <h1>{{ assessment.display_name }} request</h1>
+    <p class="meta-line">{{ assessment.company_name }}{% if period %} · Period {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p>
   </div>
-</div>
+  <div class="acts">
+    {% if preview_state == "loading" %}
+    {% elif not scope_recorded %}
+    {{ link_button("Record scope", "/assessments/" ~ assessment.id ~ "?tab=scope", "primary") }}
+    {% else %}
+    <form data-rfi-generate-form hx-post="/api/assessments/{{ assessment.id }}/rfi/versions" hx-include="#reviewer-name, [data-rfi-omit]" hx-swap="none">
+      {{ button("Generate new RFI version", "secondary" if preview_state == "issue" else "primary", "", "", false, button_type="submit") }}
+    </form>
+    {% endif %}
+  </div>
+</header>
 
-{% if not scope_recorded %}
-<div data-rfi-scope-required class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 px-5 py-4 text-sm text-amber-800 dark:text-amber-300">
-  Record the assessment scope before preparing an RFI.
-  <a href="/assessments/{{ assessment.id }}?tab=scope" class="ml-2 font-medium underline">Record scope</a>
-</div>
+{% if engagement %}
+<div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
+{% endif %}
+
+{% if preview_state == "loading" %}
+<div class="solid card"><span class="skel" style="width:40%"></span><span class="skel" style="width:90%;margin-top:14px"></span><span class="skel" style="width:70%;margin-top:14px"></span><span class="skel" style="width:85%;margin-top:14px"></span></div>
 {% else %}
-<section data-rfi-preview class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 mb-6">
-  <div class="mb-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">RFI preview</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Only conclusions you have individually approved as Insufficient evidence are included. AI proposals, scores and findings are never included.</p>
-    {% if evidence_requests %}<p data-rfi-requests-note class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ evidence_requests_note }}</p>{% endif %}
-  </div>
-  <ul class="space-y-3">
-    {% for item in preview["items"] %}
-    <li data-rfi-item="{{ item.item_id }}" data-rfi-kind="{{ item.kind }}" class="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-xs text-brand dark:text-navy-300">{{ item.item_id }}</span>
-            <span class="text-xs rounded-full px-2 py-0.5 {% if item.required %}bg-orange-50 text-orange-700{% else %}bg-green-50 text-green-700{% endif %}">{{ "Required" if item.required else "Recommended" }}</span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ item.group }}</span>
+{% if preview_state == "error" %}
+<div class="alert c-non" style="margin-bottom:var(--s-6)">{{ icon("alert") }}<div><b>The RFI version was not generated</b><span>The request timed out. Try again in a moment.</span></div></div>
+{% endif %}
+{% if not scope_recorded %}
+<div data-rfi-scope-required class="alert c-warn" style="margin-bottom:var(--s-6)">{{ icon("alert") }}<div><b>Scope is not recorded</b><span>Record the assessment scope before preparing a request for information.</span></div></div>
+<a href="/assessments/{{ assessment.id }}?tab=scope" class="btn secondary">Record scope</a>
+{% else %}
+<label class="label" for="reviewer-name">Consultant name</label>
+<label class="field" style="max-width:240px;margin-bottom:var(--s-6)"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" maxlength="200"></label>
+
+<div data-rfi-scope>
+  {% set rfi_tabs = [
+    {"label": "Items", "key": "items", "href": "/assessments/" ~ assessment.id ~ "/rfi?tab=items"},
+    {"label": "Versions", "key": "versions", "href": "/assessments/" ~ assessment.id ~ "/rfi?tab=versions"},
+    {"label": "Client links", "key": "links", "href": "/assessments/" ~ assessment.id ~ "/rfi?tab=links"}
+  ] %}
+  <div style="margin-bottom:var(--s-6)">{{ seg(rfi_tabs, rfi_tab) }}</div>
+
+  <section data-panel="items" data-rfi-preview{% if rfi_tab != "items" %} hidden{% endif %}>
+    <p class="sub" style="margin-bottom:var(--s-4)">Only conclusions you have individually approved as insufficient evidence are included. AI proposals, scores and findings are never sent.</p>
+    {% if evidence_requests %}<p data-rfi-requests-note class="sub" style="margin-bottom:var(--s-4)">{{ evidence_requests_note }}</p>{% endif %}
+    <div class="solid rows">
+      {% for item in preview["items"] %}
+      <div data-rfi-item="{{ item.item_id }}" data-rfi-kind="{{ item.kind }}">
+        <div class="txt">
+          <div class="hrow">
+            <b>{{ item.title }}</b>
+            {{ pill("Required" if item.required else "Recommended", "accent" if item.required else "neutral") }}
           </div>
-          <h3 class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.title }}</h3>
-          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ item.request }}</p>
-          <div class="mt-2 flex flex-wrap gap-1">
-            {% for framework_id, requirement_id in item.requirements %}
-            <span class="font-mono text-xs rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-gray-600 dark:text-gray-300">{{ framework_id }}:{{ requirement_id }}</span>
-            {% endfor %}
+          <span class="sub">{{ item.request }}</span>
+          <div class="chips" style="margin-top:var(--s-3)">
+            {% for framework_id, requirement_id in item.requirements %}{{ pill(framework_label(framework_id), "neutral") }}{% endfor %}
+            <span class="sub">{{ item.group }}</span>
           </div>
           {% if item.kind == "document" %}
           {% set hint = mapped_hints.get(item.document_type, (0, item.requirements | length)) %}
-          <span data-rfi-mapped class="mt-2 inline-block text-xs text-gray-500 dark:text-gray-400">Evidence already mapped for {{ hint[0] }} of {{ hint[1] }} requirements</span>
+          <span data-rfi-mapped class="sub" style="display:block;margin-top:var(--s-2)">Evidence already mapped for {{ hint[0] }} of {{ hint[1] }} requirements</span>
+          {% if current_issue %}
+          {% for received_item in received.get((current_issue.id, item.item_id), []) %}
+          <span data-rfi-received class="sub" style="display:block;margin-top:var(--s-2)"><a href="/evidence/{{ received_item.evidence_id }}">{{ received_item.filename }}</a> · {{ received_item.status }}</span>
+          {% endfor %}
+          {% endif %}
           {% endif %}
         </div>
         {% if item.kind == "document" %}
-        <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-          <input type="checkbox" name="omit" value="{{ item.document_type }}" data-rfi-omit class="rounded border-gray-300">
-          Omit (already received)
-        </label>
+        <label class="choice" style="flex:none"><input type="checkbox" name="omit" value="{{ item.document_type }}" data-rfi-omit>Already received</label>
         {% endif %}
       </div>
-    </li>
-    {% endfor %}
-  </ul>
-  {% if evidence_requests %}
-  <div data-rfi-requests class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Evidence requests added from requirement cards</h3>
-    <ul class="mt-3 space-y-3 text-sm">
+      {% endfor %}
+    </div>
+
+    {% if evidence_requests %}
+    <div class="sec"><h2>Added from requirement cards</h2></div>
+    <ul data-rfi-requests class="solid rows">
       {% for evidence_request in evidence_requests %}
-      <li data-rfi-request="{{ evidence_request.request_key }}" data-conclusion-id="{{ evidence_request.conclusion_id }}" class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
-        <p class="font-medium text-gray-900 dark:text-gray-100">{{ evidence_request.framework_id }}:{{ evidence_request.requirement_id }} · {{ evidence_request.title }}</p>
-        <p class="mt-1 text-gray-700 dark:text-gray-300">{{ evidence_request.request }}</p>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Added by {{ evidence_request.requested_by }}</p>
-        <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ evidence_request.conclusion_id }}/withdraw" hx-include="#reviewer-name" hx-swap="none" class="mt-2">
+      <li data-rfi-request="{{ evidence_request.request_key }}" data-conclusion-id="{{ evidence_request.conclusion_id }}">
+        <div class="txt"><b>{{ evidence_request.title }}</b><span class="sub">{{ evidence_request.request }}</span><span class="sub">{{ evidence_request.framework_id }}:{{ evidence_request.requirement_id }} · Added by {{ evidence_request.requested_by }}</span></div>
+        <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ evidence_request.conclusion_id }}/withdraw" hx-include="#reviewer-name" hx-swap="none">
           <input type="hidden" name="request_key" value="{{ evidence_request.request_key }}">
           <input type="hidden" name="origin" value="rfi">
-          <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+          {{ button("Remove from draft RFI", "ghost", "sm", button_type="submit") }}
         </form>
       </li>
       {% endfor %}
     </ul>
-  </div>
+    {% endif %}
+  </section>
+
+  <section data-panel="versions" data-rfi-versions{% if rfi_tab != "versions" %} hidden{% endif %}>
+    <div class="sec" style="margin-top:0"><h2>RFI versions</h2></div>
+    <div class="solid rows">
+      {% for row in versions %}
+      <div data-rfi-version-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}">
+        <div class="txt">
+          <b>Version {{ row.sequence }}</b>
+          <span class="sub">{% if row.issued_at %}Issued {{ row.issued_at.strftime("%d %b %Y, %H:%M") }}{% else %}Generated {{ row.snapshot.generated_at.strftime("%d %b %Y, %H:%M") }}{% endif %}</span>
+          {% if row.source_changed %}<span class="warn" style="display:block;margin-top:var(--s-2)">{{ icon("alert") }}Source data changed since generation</span>{% endif %}
+        </div>
+        <div class="hrow">
+          {% if row.is_current_issue %}{{ pill("Issued (current)", "accent") }}{% elif row.state == "issued" %}{{ pill("Issued", "accent") }}{% elif row.state == "superseded" %}{{ pill("Draft (superseded)", "neutral") }}{% else %}{{ pill("Draft", "neutral") }}{% endif %}
+          <a class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file">PDF</a>
+          <a class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/docx">DOCX</a>
+          {% if row.issuable %}
+          <form data-rfi-issue-control hx-post="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-swap="none">
+            {{ button("Issue", "secondary", "sm", button_type="submit") }}
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="empty"><h3>No RFI versions yet</h3><p>Generate a version after reviewing the requested items.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section data-panel="links"{% if rfi_tab != "links" %} hidden{% endif %}>
+    {% if current_issue %}
+    {% include "partials/rfi_links.html" %}
+    {% else %}
+    <div class="glass empty"><h3>No issued RFI yet</h3><p>Issue an RFI version before creating a client link.</p></div>
+    {% endif %}
+  </section>
+  {% if preview_state == "issue" %}
+  <div class="scrim-modal" role="dialog" aria-modal="true"><div class="modal"><h2>Issue version 3?</h2><p>Issued versions are permanent. You cannot change or withdraw them, and the client can be sent links to them.</p><div class="foot"><button class="btn ghost" type="button">Cancel</button>{{ button("Issue version 3", "primary", "", "", false, button_type="button") }}</div></div></div>
   {% endif %}
-  <form data-rfi-generate-form class="mt-6" hx-post="/api/assessments/{{ assessment.id }}/rfi/versions" hx-include="#reviewer-name, [data-rfi-omit]" hx-swap="none">
-    <button type="submit" class="inline-flex items-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light">Generate new RFI version</button>
-  </form>
-</section>
-
-<section data-rfi-versions class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 mb-6">
-  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">RFI versions</h2>
-  <div class="overflow-x-auto">
-    <table class="w-full text-left text-sm">
-      <thead class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        <tr><th class="py-2 pr-3">Version</th><th class="py-2 pr-3">State</th><th class="py-2 pr-3">Generated</th><th class="py-2 pr-3">Issued</th><th class="py-2 pr-3">SHA-256</th><th class="py-2">Actions</th></tr>
-      </thead>
-      <tbody>
-        {% for row in versions %}
-        <tr data-rfi-version-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}" class="border-t border-gray-100 dark:border-gray-800">
-          <td class="py-3 pr-3 font-medium">v{{ row.sequence }}</td>
-          <td class="py-3 pr-3">{{ row.state }}</td>
-          <td class="py-3 pr-3">{{ row.snapshot.generated_at.strftime("%d %b %Y %H:%M") }}</td>
-          <td class="py-3 pr-3">{{ row.issued_at.strftime("%d %b %Y %H:%M") if row.issued_at else "" }}</td>
-          <td class="py-3 pr-3 font-mono text-xs">{{ row.sha256[:12] if row.sha256 else "" }}</td>
-          <td class="py-3">
-            <div class="flex flex-wrap items-center gap-3">
-              <a href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file" class="text-brand hover:underline">PDF</a>
-              <a href="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/docx" class="text-brand hover:underline">DOCX</a>
-              {% if row.source_changed %}<span class="text-xs text-amber-700">Source data changed since generation</span>{% endif %}
-              {% if row.issuable %}
-              <form data-rfi-issue-control hx-post="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-swap="none">
-                <button type="submit" class="text-brand hover:underline" hx-confirm="Issue this RFI version? Issued versions are permanent and cannot be changed or withdrawn.">Issue</button>
-              </form>
-              {% endif %}
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
-{% if current_issue %}
-{% include "partials/rfi_links.html" %}
+</div>
 {% endif %}
 {% endif %}
 {% endblock %}

@@ -251,9 +251,12 @@ def test_engagement_overview_archive_unarchive_and_tools_are_visible(db, http):
     (archive,) = [attrs for attrs, _ in _elements(page, "form", data_archive_control=True)]
     assert archive["hx-post"] == f"/api/engagements/{engagement.id}/archive" and archive["hx-include"] == "#reviewer-name"
     assert _visible(page, "input", id="reviewer-name")
-    assert _visible(page, "a", href=f"/engagements/{engagement.id}/aws-evidence")
+    assert not _visible(page, "a", href=f"/engagements/{engagement.id}/aws-evidence")
+    assert _visible(page, "a", href=f"/engagements/{engagement.id}/evidence")
     assert _visible(page, "a", href=f"/assessments/{first.id}")
-    assert any(attrs.get("hx-post") == f"/engagements/{engagement.id}/magic-links" for attrs in _visible(page, "form"))
+    assert not any(attrs.get("hx-post") == f"/engagements/{engagement.id}/magic-links" for attrs in _visible(page, "form"))
+    requests_page = http.get(f"/engagements/{engagement.id}/requests")
+    assert any(attrs.get("hx-post") == f"/engagements/{engagement.id}/magic-links" for attrs in _visible(requests_page.text, "form"))
     _assert_no_display_none(page)
 
     assert http.post(f"/api/engagements/{engagement.id}/archive", data={"reviewer_name": "Priya"}).status_code == 200

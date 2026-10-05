@@ -27,6 +27,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import app.models  # noqa: F401 - register every model before create_all()
+from app.config import settings
 from app.database import Base
 from app.models.firm_settings import FirmSettings
 from design.harness.seed_s4 import FROZEN_NOW, _report_basis_event
@@ -65,6 +66,8 @@ def seed_s8(output: str | Path, *, screen: str, state: str = "default") -> dict:
 
     output_path = Path(output).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.upload_dir = str(output_path.with_suffix(".uploads"))
+    Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     if output_path.exists():
         output_path.unlink()
     engine = create_engine(f"sqlite:///{output_path}")

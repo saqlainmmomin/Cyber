@@ -3,17 +3,22 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
 from app.config import settings
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.audit_event import AuditEvent
+from app.models.client import Client
+from app.models.engagement import Engagement
+from app.models.evidence import Evidence
 from app.routers.web import templates
 from app.services import evidence as evidence_service
-from app.services import firm_settings, magic_links as magic_service, rfi_requests, report_snapshots
+from app.services import firm_settings, magic_links as magic_service, request_summary, rfi_requests, report_snapshots
 from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(include_in_schema=False)
@@ -59,6 +64,111 @@ def _upload_context(request: Request, db: Session, link: magic_service.MagicLink
     }
 
 
+def _consultant_link_cards(
+    db: Session,
+    engagement_id: str,
+    summaries: list[request_summary.RequestSummary],
+) -> list[dict]:
+    """Build the request-card view without exposing a capability token.
+
+    ``magic_link_rows`` remains the source for link metadata. Receipt events are
+    joined here so the Requests page can show one marker and the latest file for
+    each requested item, while the assessment table uses the shared summary
+    service for its version and count rollups.
+    """
+    raw_links = (
+        db.query(magic_service.MagicLink)
+        .filter(magic_service.MagicLink.engagement_id == engagement_id)
+        .order_by(magic_service.MagicLink.created_at.desc(), magic_service.MagicLink.id.desc())
+        .all()
+    )
+    if not raw_links:
+        return []
+
+    received: dict[str, dict[str, dict]] = defaultdict(dict)
+    events = (
+        db.query(AuditEvent)
+        .filter(
+            AuditEvent.entity_type == "magic_link",
+            AuditEvent.action == "magic_link.upload_received",
+            AuditEvent.entity_id.in_([link.id for link in raw_links]),
+        )
+        .order_by(AuditEvent.created_at, AuditEvent.id)
+        .all()
+    )
+    for event in events:
+        try:
+            metadata = json.loads(event.metadata_json or "{}")
+        except (json.JSONDecodeError, TypeError):
+            continue
+        item_key = metadata.get("item_key")
+        evidence_id = metadata.get("evidence_id")
+        evidence = db.get(Evidence, evidence_id) if evidence_id else None
+        if not isinstance(item_key, str) or evidence is None:
+            continue
+        received[event.entity_id][item_key] = {
+            "evidence_id": evidence.id,
+            "filename": evidence.original_filename,
+            "status": evidence.status,
+            "uploaded_at": evidence.created_at,
+        }
+
+    summary_by_assessment = {summary.assessment_id: summary for summary in summaries}
+    row_by_id = {row["id"]: row for row in magic_service.magic_link_rows(db, engagement_id)}
+    cards = []
+    for link in raw_links:
+        row = row_by_id[link.id]
+        items = []
+        for item in magic_service.scope_items(link):
+            receipt = received.get(link.id, {}).get(item.get("key"))
+            item_status = receipt["status"] if receipt else None
+            items.append(
+                {
+                    "title": item.get("title", "Requested item"),
+                    "received": receipt is not None and item_status != "rejected",
+                    "evidence_id": receipt["evidence_id"] if receipt else None,
+                    "filename": receipt["filename"] if receipt else None,
+                    "status": item_status,
+                    "uploaded_at": receipt["uploaded_at"] if receipt else None,
+                }
+            )
+        received_count = sum(item["received"] for item in items)
+        total = len(items)
+        raw_scope = json.loads(link.scope_json)
+        rfi = raw_scope.get("rfi") if isinstance(raw_scope, dict) else None
+        summary = summary_by_assessment.get(rfi.get("assessment_id")) if isinstance(rfi, dict) else None
+        if rfi and summary and summary.version is not None:
+            source_label = f"From RFI version {summary.version}"
+        elif rfi:
+            source_label = "From RFI"
+        else:
+            source_label = "Manual request"
+        status = row["status"]
+        if status == "active" and total and received_count == total:
+            status_label, status_tone = "Complete", "ok"
+        elif status == "active":
+            status_label, status_tone = "Active", "accent"
+        elif status == "expired":
+            status_label, status_tone = "Expired", "neutral"
+        else:
+            status_label, status_tone = "Revoked", "neutral"
+        cards.append(
+            {
+                **row,
+                "contact_display": row["contact_name"] or "Client contact",
+                "source_label": source_label,
+                "items": items,
+                "received_count": received_count,
+                "total_items": total,
+                "progress_percent": (received_count / total * 100) if total else 0,
+                "status_label": status_label,
+                "status_tone": status_tone,
+                "revoke_path": f"/engagements/{engagement_id}/magic-links/{link.id}/revoke",
+            }
+        )
+    return cards
+
+
 def _render_upload(
     request: Request,
     db: Session,
@@ -87,10 +197,16 @@ def _consultant_context(
     error: str | None = None,
     new_link_url: str | None = None,
 ) -> dict:
+    summaries = request_summary.engagement_summaries(db, engagement_id)
+    engagement = db.get(Engagement, engagement_id)
+    client = db.get(Client, engagement.client_id) if engagement else None
     return {
         "request": request,
         "engagement_id": engagement_id,
-        "magic_links": magic_service.magic_link_rows(db, engagement_id),
+        "engagement": engagement,
+        "client": client,
+        "request_summaries": summaries,
+        "magic_links": _consultant_link_cards(db, engagement_id, summaries),
         "client_uploads": magic_service.client_upload_rows(db, engagement_id),
         "error": error,
         "new_link_url": new_link_url,
@@ -105,7 +221,13 @@ def _render_consultant(
     status_code: int = 200,
     error: str | None = None,
     new_link_url: str | None = None,
+    toast_message: str | None = None,
+    toast_type: str = "success",
 ):
+    headers = dict(_CONSULTANT_HEADERS)
+    if toast_message:
+        headers["X-Toast-Message"] = toast_message
+        headers["X-Toast-Type"] = toast_type
     return templates.TemplateResponse(
         "partials/magic_links.html",
         _consultant_context(
@@ -116,7 +238,25 @@ def _render_consultant(
             new_link_url=new_link_url,
         ),
         status_code=status_code,
-        headers=_CONSULTANT_HEADERS,
+        headers=headers,
+    )
+
+
+@router.get("/engagements/{engagement_id}/requests")
+def requests_page(
+    engagement_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    client = db.get(Client, engagement.client_id)
+    if client is None:
+        raise HTTPException(404, "Client not found")
+    return templates.TemplateResponse(
+        "pages/requests.html",
+        _consultant_context(request, db, engagement_id),
     )
 
 
@@ -141,6 +281,8 @@ def _render_rfi_links(
     error: str | None = None,
     new_link_url: str | None = None,
     status_code: int = 200,
+    toast_message: str | None = None,
+    toast_type: str = "success",
 ):
     try:
         context = rfi_requests.page_context(db, assessment)
@@ -166,11 +308,15 @@ def _render_rfi_links(
             "new_link_url": new_link_url,
         }
     )
+    headers = dict(_CONSULTANT_HEADERS)
+    if toast_message:
+        headers["X-Toast-Message"] = toast_message
+        headers["X-Toast-Type"] = toast_type
     return templates.TemplateResponse(
         "partials/rfi_links.html",
         context,
         status_code=status_code,
-        headers=_CONSULTANT_HEADERS,
+        headers=headers,
     )
 
 
@@ -349,6 +495,7 @@ async def create_magic_link(
         db,
         engagement_id,
         new_link_url=new_link_url,
+        toast_message="Client link created.",
     )
 
 
@@ -461,6 +608,7 @@ async def create_rfi_magic_link(
         db,
         assessment,
         new_link_url=new_link_url,
+        toast_message="Client link created.",
     )
 
 
@@ -490,4 +638,9 @@ def revoke_magic_link(
     except magic_service.MagicLinkConflict as exc:
         db.rollback()
         return _render_consultant(request, db, engagement_id, error=exc.message)
-    return _render_consultant(request, db, engagement_id)
+    return _render_consultant(
+        request,
+        db,
+        engagement_id,
+        toast_message="Client link revoked.",
+    )

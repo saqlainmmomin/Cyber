@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/ui.html" import icon %}
+
+{% block title %}Requests{% if engagement %} — {{ engagement.name }}{% endif %}{% endblock %}
+
+{% block crumbs %}
+  <a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a>
+  <svg class="i sl hide-sm"><use href="#i-slash"/></svg>
+  <a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a>
+  <svg class="i sl"><use href="#i-slash"/></svg>
+  <a href="/engagements/{{ engagement.id }}/evidence">Evidence</a>
+  <svg class="i sl"><use href="#i-slash"/></svg>
+  <b>Requests</b>
+{% endblock %}
+
+{% block content %}
+{% set period = engagement_period(engagement) %}
+<header class="page-head">
+  <div>
+    <h1>Requests</h1>
+    <p class="meta-line">{{ client.name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence requests{% endif %}</p>
+  </div>
+</header>
+
+<div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
+<div style="margin-bottom:var(--s-6)">{{ seg([
+  {"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"},
+  {"label": "Requests", "key": "requests", "href": "/engagements/" ~ engagement.id ~ "/requests"}
+], "requests") }}</div>
+
+<div class="sec" style="margin-top:0"><h2>Requests by assessment</h2></div>
+{% if request_summaries %}
+<div class="solid" style="margin-bottom:var(--s-8)">
+  <table>
+    <thead><tr><th>Assessment</th><th class="hide-sm">Version</th><th>Items</th><th class="hide-sm"></th></tr></thead>
+    <tbody>
+      {% for summary in request_summaries %}
+      <tr data-request-summary data-href="/assessments/{{ summary.assessment_id }}/rfi">
+        <td>
+          <a class="t-title" href="/assessments/{{ summary.assessment_id }}/rfi">{{ summary.assessment_name }}</a>
+          <div class="t-sub show-sm">{% if summary.version %}RFI version {{ summary.version }}{% else %}No issued RFI{% endif %}</div>
+        </td>
+        <td class="hide-sm">{% if summary.version %}RFI version {{ summary.version }}{% else %}No issued RFI{% endif %}</td>
+        <td>{% if summary.items is not none %}{{ summary.received }} of {{ summary.items }} received{% else %}No issued requests{% endif %}</td>
+        <td class="go hide-sm"><a href="/assessments/{{ summary.assessment_id }}/rfi" aria-label="Open {{ summary.assessment_name }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="glass empty">{{ icon("briefcase", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No assessments yet</h3><p>Add an assessment before requesting evidence.</p></div>
+{% endif %}
+
+{% include "partials/magic_links.html" %}
+{% endblock %}

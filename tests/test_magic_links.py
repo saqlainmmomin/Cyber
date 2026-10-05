@@ -394,11 +394,11 @@ def test_consultant_create_route_shows_token_once(db, http):
     assert link.token_digest == m.token_digest(token)
     assert [i["title"] for i in json.loads(link.scope_json)["items"]] == ITEMS
 
-    page = http.get(f"/engagements/{engagement.id}")
+    page = http.get(f"/engagements/{engagement.id}/requests")
     assert page.status_code == 200
     assert token not in page.text
     assert link.id[:8] in page.text
-    assert "0 of 20 uploads" in page.text
+    assert "0 of 2 received" in page.text
     assert "Active" in page.text
 
     invalid = http.post(
@@ -412,6 +412,48 @@ def test_consultant_create_route_shows_token_once(db, http):
         "/engagements/missing/magic-links",
         data={"items": "X", "expires_in_days": "7", "max_uploads": "20", "max_total_mb": "100"},
     ).status_code == 404
+
+
+def test_requests_view_owns_consultant_links_and_renders_cards(db, http):
+    """The engagement Requests view is the only consultant link surface."""
+    m = ml()
+    _client, engagement, assessment = _seed(db, client_name="Meridian Ledger Technologies", engagement_name="FY2026 privacy readiness")
+    created = _create(db, engagement)
+    m.set_contact(db, created.link, contact_name="Ananya Rao", contact_email="ananya@example.com")
+    db.commit()
+
+    response = http.get(f"/engagements/{engagement.id}/requests")
+    assert response.status_code == 200, response.text
+    assert "Requests by assessment" in response.text
+    assert "Ananya Rao" in response.text
+    assert "ananya@example.com" in response.text
+    assert "0 of 2 received" in response.text
+    assert "Information security policy" in response.text
+    assert f"/assessments/{assessment.id}/rfi" in response.text
+
+    overview = http.get(f"/assessments/{assessment.id}?tab=overview")
+    assert overview.status_code == 200
+    assert "Client evidence links" not in overview.text
+    assert "data-aws-evidence-link" not in overview.text
+    assert "data-assessment-identity" in overview.text
+    assert "retention" in overview.text.lower()
+
+    assert response.headers.get("x-toast-message") is None
+
+
+def test_consultant_link_mutations_return_toast_headers(db, http):
+    """HTMX link mutations expose a non-empty toast contract."""
+    _client, engagement, _assessment = _seed(db)
+    created = http.post(
+        f"/engagements/{engagement.id}/magic-links",
+        data={"items": "Information security policy", "expires_in_days": "7", "max_uploads": "20", "max_total_mb": "100"},
+    )
+    assert created.headers.get("x-toast-type") == "success"
+    assert created.headers.get("x-toast-message")
+    link = db.query(MagicLink).one()
+    revoked = http.post(f"/engagements/{engagement.id}/magic-links/{link.id}/revoke")
+    assert revoked.headers.get("x-toast-type") == "success"
+    assert revoked.headers.get("x-toast-message")
 
 
 # --------------------------------------------------------------------------- #
@@ -586,9 +628,9 @@ def test_client_upload_creates_engagement_level_evidence(db, http, texts):
     page = http.get(f"/magic/{created.token}")
     assert "ISMS Policy.pdf" in page.text and "Received" in page.text
 
-    detail = http.get(f"/engagements/{engagement.id}")
-    assert f"/evidence/{evidence.id}" in detail.text
-    assert "1 of 20 uploads" in detail.text
+    requests = http.get(f"/engagements/{engagement.id}/requests")
+    assert f"/evidence/{evidence.id}" in requests.text
+    assert "1 of 2 received" in requests.text
 
 
 def test_upload_must_name_one_of_the_links_items(db, http, texts):

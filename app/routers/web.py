@@ -3452,7 +3452,17 @@ def rfi_page(
     if assessment is None:
         raise HTTPException(404, "Assessment not found")
     context = rfi_requests.page_context(db, assessment)
-    context["request"] = request
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    context.update(
+        {
+            "request": request,
+            "engagement": engagement,
+            "client": db.get(Client, engagement.client_id) if engagement else None,
+            "rfi_tab": request.query_params.get("tab", "items")
+            if request.query_params.get("tab", "items") in {"items", "versions", "links"}
+            else "items",
+        }
+    )
     return templates.TemplateResponse("pages/rfi.html", context)
 
 

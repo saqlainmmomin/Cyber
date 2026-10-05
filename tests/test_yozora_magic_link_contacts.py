@@ -48,7 +48,7 @@ def test_create_with_a_contact_stores_and_shows_it(db, http):
     assert "data-link-contact" in response.text
     assert "Ananya Rao" in response.text and "ananya@client.example" in response.text
     assert TOKEN_IN_URL.search(response.text)  # the token is still shown once, at creation
-    page = http.get(f"/engagements/{engagement.id}").text
+    page = http.get(f"/engagements/{engagement.id}/requests").text
     assert "Ananya Rao" in page and "ananya@client.example" in page
     assert not TOKEN_IN_URL.search(page)  # and never again
     row = magic_links.magic_link_rows(db, engagement.id)[0]

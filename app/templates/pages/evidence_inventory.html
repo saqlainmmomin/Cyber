@@ -28,7 +28,7 @@
       <div class="menu" id="add-from-menu" role="menu" aria-label="Add evidence from">
         <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}Pull from AWS</a>
         {% set menu_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
-        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("history") }}Reuse from another assessment</a><a href="/assessments/{{ menu_assessment.id }}/rfi" role="menuitem">{{ icon("link") }}Ask the client</a>{% endif %}
+        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("history") }}Reuse from another assessment</a><a href="/engagements/{{ engagement.id }}/requests" role="menuitem">{{ icon("link") }}Ask the client</a>{% endif %}
       </div>
     </div>
     {% if upload_assessment_id and not engagement_empty %}<button class="btn primary lead" type="button" data-upload-open data-head-upload>{{ icon("upload") }}Upload evidence</button>{% endif %}
@@ -41,7 +41,7 @@
 <div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
 {% set evidence_sections = [{"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"}] %}
 {% set tab_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
-{% if tab_assessment %}{% set evidence_sections = evidence_sections + [{"label": "Requests", "key": "requests", "href": "/assessments/" ~ tab_assessment.id ~ "/rfi"}] %}{% endif %}
+{% if tab_assessment %}{% set evidence_sections = evidence_sections + [{"label": "Requests", "key": "requests", "href": "/engagements/" ~ engagement.id ~ "/requests"}] %}{% endif %}
 <div style="margin-bottom:var(--s-6)">{{ seg(evidence_sections, "inventory") }}</div>
 </div>
 {% endif %}

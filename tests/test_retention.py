@@ -26,7 +26,7 @@ from app.config import settings
 from app.database import Base, get_db
 from app.dpdpa.framework import get_all_requirements
 from app.main import app
-from tests.yozora_paths import YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS  # Yozora per-PR allowance
 from app.models.action import Action
 from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment, AssessmentDocument, _new_id
@@ -1669,8 +1669,8 @@ def test_scenario_13_only_new_retention_test_file_changes():
         capture_output=True,
         text=True,
     ).stdout.splitlines()
-    changed_tests = [path for path in changed_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS)]  # Yozora per-PR allowance
-    staged_tests = [path for path in staged_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS)]  # Yozora per-PR allowance
+    changed_tests = [path for path in changed_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS)]  # Yozora per-PR allowance
+    staged_tests = [path for path in staged_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS)]  # Yozora per-PR allowance
     assert changed_tests == []
     assert staged_tests == []
     assert (REPO_ROOT / "tests/test_retention.py").exists()

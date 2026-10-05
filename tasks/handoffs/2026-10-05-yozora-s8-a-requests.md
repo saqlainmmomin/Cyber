@@ -1,6 +1,6 @@
 # Yozora S8 group A: Requests page, RFI page, request links
 
-**Status: NOT DISPATCHED.** **Worktree:** `../cyberassess-yozora-s8-a`, branch `codex/yozora-s8-requests` (off `codex/yozora-s8` after the scaffold). One of three parallel Codex builds; B (versions) and C (client) run beside you.
+**Status: IMPLEMENTED; visual gate blocked by the local sandbox.** **Worktree:** `../cyberassess-yozora-s8-a`, branch `codex/yozora-s8-requests` (off `codex/yozora-s8` after the scaffold). One of three parallel Codex builds; B (versions) and C (client) run beside you.
 
 ## Goal
 Build the engagement Requests view and the RFI page, and take request links out of the Overview. Client links render as request cards (requested items, "N of M received", expiry, per-item checklist, contact name and email when set) using the `.req*` and `.mk` components.
@@ -37,5 +37,61 @@ Every state of your mockups passes or is a recorded exception, light and dark at
 Write the question in Results and stop if: a visual detail is in neither the guide nor the mockup; two mockups disagree; a must-keep cannot be kept; a mockup shows an action with no route and the brief does not cover it; the work needs a model, migration, prompt, scoring or PDF change.
 
 ## Results
-(Codex fills in: what was built, per-state gate table with percentages, exceptions with causes, tests changed old to new, guards touched, decisions, open questions, full-suite summary line.)
 
+### What was built
+
+- Added `GET /engagements/{engagement_id}/requests` with the engagement Evidence > Requests navigation, per-assessment RFI summary rows, and request cards for manual and RFI-scoped client links.
+- Rebuilt the consultant request-card, RFI item/version, and RFI client-link surfaces while preserving the existing `id`, `hx-*`, and `data-*` interaction contracts. New-link, revoke, issue, and withdraw flows use toast headers; the existing issue/withdraw endpoints already supplied their headers.
+- Removed magic-link and AWS evidence panels from Overview, kept retention and `data-assessment-identity`, and re-pointed Evidence inventory's Requests and Ask the client links to the Requests view.
+- Added real-template S8 preview registration and deterministic Requests/RFI fixture seeds. Fixture tokens are fixed digests and are never exposed as usable client capability tokens. No new CSS was needed; the existing `.req*`/`.mk` pattern blocks were reused.
+
+### Preview state gate
+
+The required command was attempted with `OPENROUTER_KEY="" .venv/bin/python design/harness/gate_s8.py ...`. It stopped before seeding/capture at `_free_port()` with `PermissionError: [Errno 1] Operation not permitted`; this environment denies localhost socket binding. Therefore no screenshot percentage exists (`n/a`), and every state is recorded as the same infrastructure exception rather than treated as a visual pass.
+
+| screen | state | themes / widths | diff | verdict |
+|---|---|---|---:|---|
+| b6-magic_links | default | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-magic_links | empty | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-magic_links | error | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-magic_links | loading | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-magic_links | newlink | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-magic_links | revoke | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | default | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | error | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | issue | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | loading | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | noscope | light/dark, 1440/1024 | n/a | blocked before capture |
+| b6-rfi | versions | light/dark, 1440/1024 | n/a | blocked before capture |
+
+### Exceptions
+
+- Visual gate: one environment exception applies to all 12 states: localhost socket binding is denied before either the mockup server or app server can start. Evidence: the command exited with the traceback ending at `design/harness/gate_s8.py:48`, `sock.bind(("127.0.0.1", 0))`.
+- Required AWS and retention controls remain available at their dedicated routes, but the Overview links were intentionally removed by the S8 decision. Existing assertions were moved to the Requests route or changed to assert absence.
+- The live RFI page displays the actual seeded/generated RFI data, so copy/count differences from static mockup text are data-driven rather than hard-coded. The route/seed checks passed for all states.
+
+### Tests changed: old → new
+
+- `tests/test_magic_links.py`: Overview magic-link assertions → `/engagements/{id}/requests`; legacy “0 of 20 uploads” → card “0 of 2 received”; uploaded evidence is asserted on the Requests page. Added card ownership and toast-header contracts.
+- `tests/test_aws_evidence.py`: Overview AWS href present → absent, matching the accepted S8 removal decision.
+- `tests/test_longitudinal_demo.py`: client-upload labels on the assessment Overview → the engagement Requests page; added S8 guard allowance.
+- `tests/test_yozora_magic_link_contacts.py`: contact rendering on Overview → Requests.
+- `tests/test_yozora_s4.py`: AWS and magic-link controls on Overview → AWS absent, Evidence remains, and the link form is asserted on Requests.
+- `tests/test_yozora_s5.py`: Overview client-link/AWS copy → absence on Overview plus a live Requests-page check.
+- Existing RFI assertions were preserved; the RFI template adds the missing `data-rfi-scope-required`, received-evidence links, and evidence-request note markup required by the contracts.
+
+### Guards touched
+
+Added the new Requests/RFI files and affected downstream contract tests to `YOZORA_S8_PATHS`, then made add-only S8 allowances in the stale P6-7/P6-7b/P6-8/P6-9/P6-10/V3-A/retention/longitudinal guards. No guard was deleted or weakened; no models, migrations, scoring, analyzer, prompts, v2 flag, or PDF code was changed.
+
+### Decisions and open questions
+
+- Kept free-text requested items and the exact `/assessments/{id}/rfi` Prepare RFI target.
+- Kept all consultant link mutations as HTMX partial responses and used response headers for toasts only.
+- No open implementation questions. The only handoff item is environmental: rerun the S8 visual gate in an environment that permits localhost socket binding and Chromium capture.
+
+### Verification
+
+- Focused Requests/RFI regressions: `65 passed` (`test_magic_links`, `test_p5_6_rfi_rebuild`, `test_p6_7b_add_to_rfi`).
+- Design lint plus preview route/registry checks: `8 passed`.
+- Full suite: `1529 passed, 30 skipped in 197.82s (0:03:17)`.

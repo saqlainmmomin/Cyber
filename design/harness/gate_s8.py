@@ -69,7 +69,8 @@ def _start_mockup_server():
 
 def _start_app(db_path: str):
     port = _free_port()
-    env = {**os.environ, "DATABASE_URL": f"sqlite:///{db_path}", "OPENROUTER_KEY": "", "DEBUG": "1"}
+    upload_dir = str(Path(db_path).with_suffix(".uploads"))
+    env = {**os.environ, "DATABASE_URL": f"sqlite:///{db_path}", "UPLOAD_DIR": upload_dir, "OPENROUTER_KEY": "", "DEBUG": "1"}
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
         cwd=REPO_ROOT,
