@@ -133,7 +133,7 @@ def test_scenario_1_compares_with_the_previous_issued_period_from_its_sidecar(db
     assert set(frameworks["dpdpa"]) == {
         "framework_id", "name", "compared", "prior_version", "current_version", "prior_pack_version",
         "current_pack_version", "prior_score", "current_score", "score_delta", "prior_rating",
-        "current_rating", "counts",
+        "current_rating", "counts", "domains",
     }
     assert frameworks["dpdpa"]["counts"] == {
         "improved": 1, "regressed": 1, "unchanged": 1, "changed": 0, "new": 1, "no_longer_assessed": 0,

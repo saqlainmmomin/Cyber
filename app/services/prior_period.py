@@ -195,6 +195,30 @@ def _comparison_change(
     }
 
 
+def _domain_comparison(current_section: dict, prior_section: dict) -> list[dict]:
+    prior_scores = {
+        domain.get("domain_id"): domain.get("score")
+        for domain in prior_section.get("domains", [])
+        if isinstance(domain, dict) and domain.get("domain_id")
+    }
+    domains = []
+    for domain in current_section.get("domains", []):
+        prior_score = prior_scores.get(domain["domain_id"])
+        current_score = domain.get("score")
+        compared = prior_score is not None and current_score is not None
+        domains.append(
+            {
+                "domain_id": domain["domain_id"],
+                "title": domain.get("title"),
+                "prior_score": prior_score,
+                "current_score": current_score,
+                "score_delta": round(current_score - prior_score, 1) if compared else None,
+                "compared": compared,
+            }
+        )
+    return domains
+
+
 def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict:
     raw_period_start = current.get("basis", {}).get("period_start")
     try:
@@ -238,6 +262,16 @@ def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict
         for framework in current.get("summary", {}).get("frameworks", [])
         if isinstance(framework, dict) and framework.get("framework_id")
     }
+    prior_sections = {
+        section.get("framework_id"): section
+        for section in prior.get("framework_sections", [])
+        if isinstance(section, dict) and section.get("framework_id")
+    }
+    current_sections = {
+        section.get("framework_id"): section
+        for section in current.get("framework_sections", [])
+        if isinstance(section, dict) and section.get("framework_id")
+    }
     current_packs = {
         framework["framework_id"]: framework.get("pack_version")
         for framework in current.get("frameworks", [])
@@ -269,6 +303,7 @@ def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict
             "prior_rating": None,
             "current_rating": current_summary_row.get("rating"),
             "counts": None,
+            "domains": [],
         }
         if prior_framework is None:
             notes.append(NOT_IN_PRIOR_TEXT.format(name=name))
@@ -350,6 +385,9 @@ def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict
                     )
                 )
         current_entry["counts"] = counts
+        current_entry["domains"] = _domain_comparison(
+            current_sections.get(framework_id, {}), prior_sections.get(framework_id, {})
+        )
         comparison_frameworks.append(current_entry)
 
     changes_with_sort.sort(key=lambda item: item[:4])
