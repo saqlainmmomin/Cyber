@@ -38,5 +38,46 @@ Every state of your mockups passes or is a recorded exception, light and dark at
 Write the question in Results and stop if: a visual detail is in neither the guide nor the mockup; two mockups disagree; a must-keep cannot be kept; a mockup shows an action with no route and the brief does not cover it; the work needs a model, migration, prompt, scoring or PDF change.
 
 ## Results
-(Codex fills in: what was built, per-state gate table with percentages, exceptions with causes, tests changed old to new, guards touched, decisions, open questions, full-suite summary line.)
 
+### Built
+
+- Rebuilt `magic/upload.html` and `magic/invalid.html` as standalone Yozora client pages with the required `file-upload`, `item-key`, `data-*`, and upload form contracts intact. Upload states are `default`, `uploading`, `done`, and `error`; invalid states are `expired`, `revoked`, and `unknown`.
+- Added app-driven client context in `magic.py`: firm name/contact settings, contact first-name greeting, received-item markers, expiry date, issued-link state copy, and firm-only invalid-page privacy. The token is never passed into template context, mailto links, or log text.
+- Added deterministic fixed-token fixtures in `design/harness/seed_s8_client.py` and preview rendering in `app/routers/design_s8_client.py`. The live upload default uses the seeded database; transient upload states and invalid states use `PREVIEW_PAGES` fixtures. `b7-link-expired` shares the invalid-page template and app-driven copy.
+- Added the delimited client-page pattern block to both design/source CSS copies and rebuilt the generated static copy.
+
+### Pixel gate
+
+The required threshold remained 0.4% differing pixels with no changed region over 40x40. The gate could not capture a screenshot in this managed environment: `b6-magic_upload:default` failed while starting its local server with `PermissionError: [Errno 1] Operation not permitted` at `socket.bind`, before baseline/candidate comparison. The remaining states have the same recorded environment exception and therefore have no percentage to report.
+
+| Screen | States | Result |
+|---|---|---|
+| `b6-magic_upload` | `default`, `uploading`, `done`, `error` | Not captured — localhost bind blocked before screenshot |
+| `b6-magic_invalid` | `expired`, `revoked`, `unknown` | Not captured — same harness bind block |
+| `b7-link-expired` | `expired` | Not captured — same harness bind block |
+
+### Exceptions
+
+- Pixel evidence is unavailable for the cause above; no threshold or region limit was loosened.
+- Invalid-page copy intentionally differs from the mockup's sample expiry/person text: the orchestration decision requires firm settings and link expiry, forbids invented “14 days” and named-person copy, and keeps client/engagement names out of the response.
+- The upload page keeps a visually hidden `<select>` option list because the existing validation harness discovers requested item keys from those options; the visible interaction remains per-item Yozora buttons targeting `item-key`.
+
+### Tests changed (old → new)
+
+- `test_invalid_tokens_are_indistinguishable` → `test_invalid_tokens_render_the_issued_state_without_context_leaks`: retained 404, security-header, generic-message, and no-context assertions; replaced byte-identical bodies with the expected expired/revoked/unknown heading for each issued state.
+- The valid-page external-content assertion stopped rejecting same-origin `<link>`/`src=` references; it still rejects `http://`, `https://`, and form `action=` leakage because the client shell now loads the vendored Yozora styles and submits to the current URL.
+- The contact invalid-page test stopped requiring an expired response to be byte-identical to an unknown response; it now asserts state-specific headings and an identical expired GET/POST response while retaining firm-only privacy checks.
+- Added `tests/test_yozora_s8_client.py` for page structure, HTTP state copy, conditional mailto/contact behavior, token secrecy, and exact state registration.
+
+### Guards touched
+
+Added the client files and the two existing magic-link test files to `YOZORA_S8_PATHS`. Updated the stale add-only S8 allowances in `tests/p6_10_support.py`, `test_longitudinal_demo.py`, `test_p6_7_requirement_card.py`, `test_p6_7b_add_to_rfi.py`, `test_p6_8_b2_docx_xlsx.py`, `test_p6_8_board_report_v2.py`, `test_p6_8_v3a_data_capture.py`, `test_p6_9_file_set.py`, and `test_retention.py` so parallel-slice file-set guards recognize this authorized S8 work. No guard was deleted or weakened.
+
+### Decisions and verification
+
+- Fixed fake tokens are used only in fixtures; the default seeded route uses `AbCdEfGhIjKlMnOpQrStUv`.
+- The invalid-page contact action appears only when `FirmSettings.contact_email` is present, and its mailto contains no token.
+- Focused client/security regression set: 47 passed. Design lint, token sync, and client contract set: 13 passed. `git diff --check`, compileall, CSS sync, and deterministic S8 registry/seed checks passed.
+- Full suite: **1,529 passed, 30 skipped in 201.86s (3:21)**.
+
+Open questions: none. Browser/pixel re-run requires an environment that permits the harness to bind its local server.

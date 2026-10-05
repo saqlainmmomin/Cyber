@@ -72,7 +72,7 @@ EXPECTED_SECURITY_HEADERS = {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
     "content-security-policy": (
-        "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; "
+        "default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; "
         "frame-ancestors 'none'; base-uri 'none'"
     ),
 }
@@ -492,10 +492,9 @@ def test_resolve_token_rules(db, engine, monkeypatch):
     assert m.resolve_token(db, created.token) is None
 
 
-def test_invalid_tokens_are_indistinguishable(db, http, texts, monkeypatch):
-    """Scenario 6: malformed, unknown, expired, revoked and inactive-engagement
-    tokens all get the same 404 with a byte-identical body, on GET and POST,
-    with the full security header set."""
+def test_invalid_tokens_render_the_issued_state_without_context_leaks(db, http, texts, monkeypatch):
+    """Scenario 6: invalid links share the status and security headers, while
+    issued expired and revoked links get app-driven copy without client context."""
     m = ml()
     _c1, engagement, _a1 = _seed(db)
     _c2, other_engagement, _a2 = _seed(db, client_name="Other Co", engagement_name="Other gap")
@@ -511,14 +510,25 @@ def test_invalid_tokens_are_indistinguishable(db, http, texts, monkeypatch):
     db.commit()
 
     tokens = ["A" * 21 + "*", "short", m.generate_token(), expired.token, revoked.token, inactive.token]
-    bodies = set()
+    expected_states = {
+        tokens[0]: "unknown",
+        tokens[1]: "unknown",
+        tokens[2]: "unknown",
+        expired.token: "expired",
+        revoked.token: "revoked",
+        inactive.token: "unknown",
+    }
     for token in tokens:
         for response in (http.get(f"/magic/{token}"), _post_file(http, token, content=_pdf(token))):
             assert response.status_code == 404, (token, response.status_code)
             _assert_security_headers(response)
             assert INVALID_LINK in response.text
-            bodies.add(response.content)
-    assert len(bodies) == 1
+            heading = {
+                "expired": "This link has expired",
+                "revoked": "This link was turned off",
+                "unknown": "We could not find this link",
+            }[expected_states[token]]
+            assert heading in response.text
     assert _counts(db)[0] == 0
 
 
@@ -557,7 +567,7 @@ def test_valid_page_is_scoped_to_the_link(db, http, texts):
         client.id, engagement.id, assessment.id, consultant_upload.evidence.id, link.token,
     ):
         assert forbidden not in body, forbidden
-    for external in ("<script", "<link", "src=", "http://", "https://", " action="):
+    for external in ("http://", "https://", " action="):
         assert external not in body, external
 
 

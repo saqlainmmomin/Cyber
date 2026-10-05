@@ -9,13 +9,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
-from app.config import settings
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.client import Client
 from app.models.engagement import Engagement
 from app.models.evidence import Evidence
+from app.models.magic_link import MagicLink
 from app.routers.web import templates
 from app.services import evidence as evidence_service
 from app.services import firm_settings, magic_links as magic_service, request_summary, rfi_requests, report_snapshots
@@ -29,19 +29,69 @@ _CONSULTANT_HEADERS = {
 }
 
 
-def _render_invalid(request: Request, db: Session):
-    # Firm-level only: the same page for every invalid, expired or revoked token (never the token,
-    # the engagement or the client).
+def _client_headers() -> dict[str, str]:
+    """Allow the standalone client page to load the vendored Yozora styles and script."""
+    headers = dict(magic_service.SECURITY_HEADERS)
+    headers["Content-Security-Policy"] = headers["Content-Security-Policy"].replace(
+        "style-src 'unsafe-inline'", "style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'"
+    )
+    return headers
+
+
+def _inactive_link(db: Session, token: str) -> MagicLink | None:
+    """Find an issued, inactive link for app-driven invalid-page copy.
+
+    This only hashes a syntactically valid path token and never returns the link's
+    engagement or client to the template. Active links and inactive engagements are
+    deliberately treated as unknown here.
+    """
+    if not isinstance(token, str) or magic_service.TOKEN_PATTERN.fullmatch(token) is None:
+        return None
+    matches = (
+        db.query(MagicLink)
+        .filter(MagicLink.token_digest == magic_service.token_digest(token))
+        .all()
+    )
+    if len(matches) != 1:
+        return None
+    link = matches[0]
+    engagement = db.get(Engagement, link.engagement_id)
+    if engagement is None or engagement.status != "active":
+        return None
+    return link if magic_service.link_status(link) in {"expired", "revoked"} else None
+
+
+def _invalid_context(request: Request, db: Session, link: MagicLink | None = None) -> dict:
+    firm = firm_settings.get(db)
+    state = magic_service.link_status(link) if link is not None else "unknown"
+    return {
+        "request": request,
+        "firm_name": firm.firm_name,
+        "firm_contact_email": firm.contact_email,
+        "invalid_state": state,
+        "expired_on": (
+            magic_service._as_utc(link.expires_at).strftime("%-d %b %Y")
+            if link is not None and state == "expired"
+            else None
+        ),
+        "message": magic_service.INVALID_LINK_MESSAGE,
+    }
+
+
+def _render_invalid(
+    request: Request,
+    db: Session,
+    *,
+    link: MagicLink | None = None,
+    status_code: int = 404,
+    headers: dict[str, str] | None = None,
+):
+    # Firm-level only: do not reveal the token, engagement, client or client contact.
     return templates.TemplateResponse(
         "magic/invalid.html",
-        {
-            "request": request,
-            "firm_name": settings.firm_name,
-            "message": magic_service.INVALID_LINK_MESSAGE,
-            "firm_contact_email": firm_settings.get(db).contact_email,
-        },
-        status_code=404,
-        headers=magic_service.SECURITY_HEADERS,
+        _invalid_context(request, db, link),
+        status_code=status_code,
+        headers=headers or _client_headers(),
     )
 
 
@@ -52,14 +102,28 @@ def _upload_context(request: Request, db: Session, link: magic_service.MagicLink
         for row in magic_service.client_upload_rows(db, link.engagement_id)
         if row["magic_link_id"] == link.id
     ]
+    items = []
+    for item in magic_service.scope_items(link):
+        received = next(
+            (
+                upload
+                for upload in uploads
+                if upload["status"] != "rejected"
+                and upload["change_reason"].endswith(f": {item['title']}")
+            ),
+            None,
+        )
+        items.append({**item, "received": received is not None, "filename": received["filename"] if received else None})
+    firm = firm_settings.get(db)
     return {
         "request": request,
-        "firm_name": settings.firm_name,
-        "items": magic_service.scope_items(link),
+        "firm_name": firm.firm_name,
+        "items": items,
         "contact_first_name": magic_service.contact_first_name(link),
         "remaining": max(0, link.max_uploads - usage.uploads_total),
         "max_uploads": link.max_uploads,
-        "expires_at": magic_service._as_utc(link.expires_at).strftime("%Y-%m-%d %H:%M"),
+        "received_count": sum(1 for item in items if item["received"]),
+        "expires_on": magic_service._as_utc(link.expires_at).strftime("%-d %b %Y"),
         "uploads": uploads,
     }
 
@@ -185,7 +249,7 @@ def _render_upload(
         "magic/upload.html",
         context,
         status_code=status_code,
-        headers=headers or magic_service.SECURITY_HEADERS,
+        headers=headers or _client_headers(),
     )
 
 
@@ -324,7 +388,7 @@ def _render_rfi_links(
 def get_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
     link = magic_service.resolve_token(db, token)
     if link is None:
-        return _render_invalid(request, db)
+        return _render_invalid(request, db, link=_inactive_link(db, token))
     return _render_upload(request, db, link)
 
 
@@ -332,7 +396,7 @@ def get_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
 async def post_magic_link(token: str, request: Request, db: Session = Depends(get_db)):
     link = magic_service.resolve_token(db, token)
     if link is None:
-        return _render_invalid(request, db)
+        return _render_invalid(request, db, link=_inactive_link(db, token))
 
     content_length = request.headers.get("content-length")
     try:
@@ -359,7 +423,7 @@ async def post_magic_link(token: str, request: Request, db: Session = Depends(ge
     try:
         usage = magic_service.check_upload_allowed(db, link)
     except magic_service.RateLimited as exc:
-        headers = dict(magic_service.SECURITY_HEADERS)
+        headers = _client_headers()
         headers["Retry-After"] = str(exc.retry_after_seconds)
         return _render_upload(
             request,
