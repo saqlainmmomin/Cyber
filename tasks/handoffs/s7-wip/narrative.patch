@@ -1,0 +1,1030 @@
+diff --git a/app/routers/board_inputs.py b/app/routers/board_inputs.py
+index 4b615dd..46e9c49 100644
+--- a/app/routers/board_inputs.py
++++ b/app/routers/board_inputs.py
+@@ -12,6 +12,7 @@ from app.database import get_db
+ from app.models.action import Action
+ from app.models.assessment import Assessment
+ from app.models.audit_event import AuditEvent
++from app.models.engagement import Engagement
+ from app.models.finding import Finding
+ from app.models.initiative_metadata import InitiativeMetadata
+ from app.services import (
+@@ -21,7 +22,7 @@ from app.services import (
+     remediation_groups,
+     report_content,
+ )
+-from app.template_config import configure_templates
++from app.template_config import configure_templates, engagement_period
+ 
+ 
+ router = APIRouter(tags=["board-inputs"])
+@@ -77,6 +78,28 @@ def _latest_reviewer_name(db: Session, assessment_id: str) -> str:
+     return event.actor.removeprefix("consultant:") if event else ""
+ 
+ 
++def board_inputs_page_context(db: Session, assessment: Assessment, **overrides) -> dict:
++    """Everything pages/board_inputs.html needs; the design previews pass ``overrides``."""
++    page = finding_service.findings_page(db, assessment.id)
++    findings = report_content.assessment_findings(db, assessment).findings
++    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
++    context = {
++        "assessment": assessment,
++        "engagement": engagement,
++        "period": engagement_period(engagement) if engagement else None,
++        "page": page,
++        "groups": remediation_groups.build_groups(findings, assessment.frameworks),
++        "initiative_data": board_inputs.initiative_metadata(db, assessment.id),
++        "asks": board_inputs.board_asks(assessment),
++        "reviewer_name": _latest_reviewer_name(db, assessment.id),
++        "responsibilities": board_inputs.RESPONSIBILITIES,
++        "levels": board_inputs.LEVELS,
++        "field_errors": {},
++    }
++    context.update(overrides)
++    return context
++
++
+ @router.get("/assessments/{assessment_id}/board-inputs", response_class=HTMLResponse)
+ def board_inputs_page(
+     assessment_id: str,
+@@ -91,23 +114,12 @@ def board_inputs_page(
+             detail=message,
+             headers={"X-Toast-Message": quote(message), "X-Toast-Type": "error"},
+         )
+-    page = finding_service.findings_page(db, assessment_id)
+-    findings = report_content.assessment_findings(db, assessment).findings
+-    groups = remediation_groups.build_groups(findings, assessment.frameworks)
++    context = board_inputs_page_context(db, assessment)
++    context["request"] = request
+     return _templates.TemplateResponse(
+         request=request,
+         name="pages/board_inputs.html",
+-        context={
+-            "request": request,
+-            "assessment": assessment,
+-            "page": page,
+-            "groups": groups,
+-            "initiative_data": board_inputs.initiative_metadata(db, assessment_id),
+-            "asks": board_inputs.board_asks(assessment),
+-            "reviewer_name": _latest_reviewer_name(db, assessment_id),
+-            "responsibilities": board_inputs.RESPONSIBILITIES,
+-            "levels": board_inputs.LEVELS,
+-        },
++        context=context,
+     )
+ 
+ 
+diff --git a/app/routers/design_s7_narrative.py b/app/routers/design_s7_narrative.py
+new file mode 100644
+index 0000000..81aadb1
+--- /dev/null
++++ b/app/routers/design_s7_narrative.py
+@@ -0,0 +1,80 @@
++"""Design previews for the S7 narrative group (b5-narrative, b5-board-inputs).
++
++Transient states no stored data can produce: the in-flight "generating" request on the narrative
++page, and the board-input validation errors (the live save endpoints answer those with a toast and
++leave the page as it is). Each preview renders the real page for a real assessment
++(``?assessment_id=``) with the state set here, as the S5 live previews do. Debug-only, like every
++``/design`` route.
++"""
++
++from __future__ import annotations
++
++from dataclasses import replace
++from types import SimpleNamespace
++
++from fastapi import HTTPException, Request, Response
++from sqlalchemy.orm import Session
++
++from app.models.assessment import Assessment
++from app.routers import board_inputs as board_inputs_router
++from app.routers import drafting
++from app.routers.design import DB_PREVIEWS, PREVIEW_PAGES
++
++LONG_RECOMMENDATION = (
++    "Add a notification step to the incident procedure with named owners and a template. "
++    + "Name an owner for each step, agree the template with legal counsel and run a test notification before the next audit. " * 14
++)
++LONG_TITLE = "Strengthen incident response, notification routes and runbooks across every business unit and supplier"
++
++
++def _live_request(request: Request, path: str) -> Request:
++    # Render as if at the live URL so the shell, crumbs and context processors match the real page.
++    return Request(dict(request.scope, path=path, raw_path=path.encode()), request.receive)
++
++
++def _assessment(request: Request, db: Session, expected: tuple[str, ...]) -> tuple[Assessment, str]:
++    state = request.query_params.get("state")
++    assessment_id = request.query_params.get("assessment_id")
++    assessment = db.get(Assessment, assessment_id) if assessment_id else None
++    if state not in expected or assessment is None:
++        raise HTTPException(status_code=404, detail="Not found")
++    return assessment, state
++
++
++def narrative_preview(request: Request, db: Session = None) -> Response:
++    assessment, _state = _assessment(request, db, ("generating",))
++    live = _live_request(request, f"/assessments/{assessment.id}/narrative")
++    context = drafting.narrative_page_context(db, assessment, generating=True)
++    context["request"] = live
++    return drafting._templates.TemplateResponse(request=live, name="pages/narrative.html", context=context)
++
++
++def board_inputs_preview(request: Request, db: Session = None) -> Response:
++    assessment, _state = _assessment(request, db, ("error",))
++    live = _live_request(request, f"/assessments/{assessment.id}/board-inputs")
++    context = board_inputs_router.board_inputs_page_context(db, assessment)
++    views = list(context["page"].findings)
++    first = views[0].finding
++    long_copy = SimpleNamespace(
++        id=first.id, title=first.title, description=first.description,
++        business_impact=first.business_impact, recommendation=LONG_RECOMMENDATION,
++    )
++    views[0] = replace(views[0], finding=long_copy)
++    context["page"] = SimpleNamespace(findings=views, eligible=context["page"].eligible)
++    group = context["groups"][0]["group_id"]
++    initiative = dict(context["initiative_data"].get(group, {}), title=LONG_TITLE)
++    context["initiative_data"] = {**context["initiative_data"], group: initiative}
++    context["groups"] = context["groups"][:1]
++    context["field_errors"] = {
++        f"finding:{first.id}:recommendation": "Recommendation must be 1500 characters or fewer.",
++        f"initiative:{group}:title": "Initiative title must be 120 characters or fewer.",
++    }
++    context["request"] = live
++    return board_inputs_router._templates.TemplateResponse(
++        request=live, name="pages/board_inputs.html", context=context
++    )
++
++
++PREVIEW_PAGES["b5-narrative"] = narrative_preview
++PREVIEW_PAGES["b5-board-inputs"] = board_inputs_preview
++DB_PREVIEWS.update({"b5-narrative", "b5-board-inputs"})
+diff --git a/app/routers/drafting.py b/app/routers/drafting.py
+index 2bbe81a..decee50 100644
+--- a/app/routers/drafting.py
++++ b/app/routers/drafting.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import re
+ from pathlib import Path
+ from urllib.parse import quote
+ 
+@@ -12,8 +13,9 @@ from sqlalchemy.orm import Session
+ 
+ from app.database import get_db
+ from app.models.assessment import Assessment
++from app.models.engagement import Engagement
+ from app.services import approved_report, conclusion_review, narrative, remediation_draft
+-from app.template_config import configure_templates
++from app.template_config import configure_templates, engagement_period
+ 
+ router = APIRouter(tags=["drafting"])
+ 
+@@ -34,6 +36,83 @@ def _error(status_code: int, message: str) -> JSONResponse:
+     return _toast(response, message, "error")
+ 
+ 
++_LABEL_SUFFIX = re.compile(r"\s*\([a-z0-9_-]+\)$")
++
++
++def short_label(label: str) -> str:
++    """The section label without its trailing ``(section-id)``: "Executive overview"."""
++    return _LABEL_SUFFIX.sub("", label)
++
++
++def short_blocker(blocker: str) -> str:
++    """A report blocker ("Executive overview (executive): ...") without the section id."""
++    head, separator, rest = blocker.partition(": ")
++    return f"{short_label(head)}{separator}{rest}"
++
++
++def generate_toast_message(outcomes: dict[str, str], labels: dict[str, str]) -> str:
++    """Toast copy for draft failures and the draft limit; empty when every section drafted or was skipped."""
++    failed = [labels.get(section_id, section_id) for section_id, value in outcomes.items() if value == "failed"]
++    limited = [labels.get(section_id, section_id) for section_id, value in outcomes.items() if value == "limit_reached"]
++    parts = []
++    if failed:
++        parts.append(
++            f"{', '.join(failed)} could not be drafted. The section stays as it was. Write it yourself or try again."
++        )
++    if limited:
++        parts.append(f"Draft limit reached for {', '.join(limited)}. Write this section yourself.")
++    return " ".join(parts)
++
++
++def _section_view(section, ref_by_id: dict[str, str]) -> dict:
++    """One narrative section as the page shows it: label, status line, edit text and cited aliases."""
++    lines = []
++    cites: list[str] = []
++    for sentence in section.sentences:
++        aliases = [ref_by_id[finding_id] for finding_id in sentence.get("finding_ids", []) if finding_id in ref_by_id]
++        lines.append(f"{sentence.get('text', '')} [{', '.join(aliases)}]")
++        cites.extend(alias for alias in aliases if alias not in cites)
++    warn = ""
++    if section.status == "none":
++        status_label, tone = "Not drafted", "c-insuf"
++    elif section.status == "draft":
++        status_label, tone = "Draft, not accepted", "c-accent"
++    else:
++        status_label, tone = "Accepted", "c-ok"
++    if section.stale and section.status != "none":
++        warn = "Findings changed since this was written"
++    return {
++        "section": section,
++        "label": short_label(section.label),
++        "text": "\n".join(lines),
++        "cites": sorted(cites, key=lambda alias: (len(alias), alias)),
++        "status_label": status_label,
++        "tone": tone,
++        "warn": warn,
++        "needs_accept": section.status == "draft" or (section.status == "accepted" and section.stale),
++    }
++
++
++def narrative_page_context(db: Session, assessment: Assessment, **overrides) -> dict:
++    """Everything pages/narrative.html needs; the design previews pass ``overrides``."""
++    current_state = narrative.state(db, assessment)
++    ref_by_id = {ref.finding_id: ref.alias for ref in current_state.findings}
++    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
++    context = {
++        "assessment": assessment,
++        "engagement": engagement,
++        "period": engagement_period(engagement) if engagement else None,
++        "state": current_state,
++        "sections": [_section_view(section, ref_by_id) for section in current_state.sections],
++        "released": approved_report.is_released(db, assessment),
++        "blockers": [short_blocker(blocker) for blocker in narrative.report_blockers(db, assessment)],
++        "reviewer_name": "",
++        "generating": False,
++    }
++    context.update(overrides)
++    return context
++
++
+ def _redirect_success(assessment_id: str, payload: dict) -> JSONResponse:
+     response = JSONResponse(payload)
+     response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/narrative"
+@@ -138,32 +217,12 @@ def narrative_page(
+     assessment = db.get(Assessment, assessment_id)
+     if assessment is None:
+         raise HTTPException(404, "Assessment not found")
+-    current_state = narrative.state(db, assessment)
+-    ref_by_id = {ref.finding_id: ref.alias for ref in current_state.findings}
+-    sections = []
+-    for section in current_state.sections:
+-        lines = []
+-        for sentence in section.sentences:
+-            aliases = [ref_by_id[finding_id] for finding_id in sentence.get("finding_ids", []) if finding_id in ref_by_id]
+-            lines.append(f"{sentence.get('text', '')} [{', '.join(aliases)}]")
+-        sections.append(
+-            {
+-                "section": section,
+-                "text": "\n".join(lines),
+-            }
+-        )
++    context = narrative_page_context(db, assessment)
++    context["request"] = request
+     return _templates.TemplateResponse(
+         request=request,
+         name="pages/narrative.html",
+-        context={
+-            "request": request,
+-            "assessment": assessment,
+-            "state": current_state,
+-            "sections": sections,
+-            "released": approved_report.is_released(db, assessment),
+-            "blockers": narrative.report_blockers(db, assessment),
+-            "reviewer_name": "",
+-        },
++        context=context,
+     )
+ 
+ 
+@@ -192,6 +251,12 @@ async def generate_narrative(
+     failed = any(value in ("failed", "limit_reached") for value in sections.values())
+     response = _redirect_success(assessment_id, {"sections": sections})
+     response.headers["X-Toast-Type"] = "error" if failed else "success"
++    if failed:
++        labels = {
++            section.section_id: short_label(section.label)
++            for section in narrative.state(db, assessment).sections
++        }
++        response.headers["X-Toast-Message"] = quote(generate_toast_message(sections, labels))
+     return response
+ 
+ 
+diff --git a/app/static/css/yozora-patterns.css b/app/static/css/yozora-patterns.css
+index d7341e8..556c7da 100644
+--- a/app/static/css/yozora-patterns.css
++++ b/app/static/css/yozora-patterns.css
+@@ -258,3 +258,9 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-narrative */
++/* The narrative textareas carry a placeholder (no draft yet). Tailwind preflight in the app sets a lighter
++   placeholder colour than the mockup shows; inputs already use --muted, so textareas follow them. */
++.field textarea::placeholder{color:var(--muted)}
++/* /s7-narrative */
+diff --git a/app/templates/pages/board_inputs.html b/app/templates/pages/board_inputs.html
+index 4daa9ad..33f9429 100644
+--- a/app/templates/pages/board_inputs.html
++++ b/app/templates/pages/board_inputs.html
+@@ -1,84 +1,148 @@
+ {% extends "base.html" %}
+-{% block title %}Board inputs — {{ assessment.company_name }}{% endblock %}
++{% from "components/layout.html" import assessment_tabs %}
++{% from "components/seg_rows.html" import report_seg %}
++{% from "components/ui.html" import icon %}
++{# b5 "Board inputs": reviewed context that accompanies the board report. Rows save one at a time
++   (hx-swap none); the saved indicator is the stored state, not a client-side guess.
++   Rendered by GET /assessments/{id}/board-inputs and by the design preview b5-board-inputs.
++   ``field_errors`` ("finding:<id>:recommendation", "initiative:<group>:title", "asks") is only set by previews:
++   the live save endpoints answer with a toast and keep the page as it is. #}
++{% set page_title = "Board inputs" %}
++{% set field_errors = field_errors or {} %}
++
++{% block title %}{{ page_title }} — {{ assessment.company_name }}{% endblock %}
++
++{% block crumbs %}
++<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
++{% endblock %}
++
++{% macro save_row(saved, failed=false) -%}
++<div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--s-3);min-height:32px">
++  {% if failed %}<span class="status"><i class="dot c-non"></i>Not saved</span>
++  {% elif saved %}<span class="status"><i class="dot c-ok"></i>Saved</span>{% endif %}
++  <button type="submit" class="btn ghost sm">Save</button>
++</div>
++{%- endmacro %}
+ 
+ {% block content %}
+-<nav class="mb-2 text-xs text-gray-400 dark:text-gray-500">
+-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+-  <span class="mx-1.5">/</span>
+-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+-  <span class="mx-1.5">/</span>
+-  <span class="text-gray-600 dark:text-gray-300">Board inputs</span>
+-</nav>
++{# Symbols the shared sprite in base.html does not have; declared here so the page needs no edit to it. #}
++<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol></svg>
+ 
+-<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
++<div class="page-head">
+   <div>
+-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Board inputs</h1>
+-    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Add the reviewed context that will accompany the board report. These fields do not change findings, conclusions or action workflow.</p>
++    <h1>{{ page_title }}</h1>
++    <p class="meta-line">{% if period %}{{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %}{{ assessment.display_name }}{% endif %}</p>
+   </div>
+-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-    Reviewer name
+-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
+-  </label>
++  <div class="acts"></div>
+ </div>
++{{ assessment_tabs(assessment, "report") }}
++<div style="overflow-x:auto;margin:var(--s-4) 0">{{ report_seg(assessment, "board-inputs") }}</div>
++<p class="sub" style="max-width:68ch">Add the reviewed context that will accompany the board report. These fields do not change findings, conclusions or action workflow.</p>
+ 
+-<section class="mb-10">
+-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Observations</h2>
+-  <div class="space-y-5">
+-    {% for view in page.findings %}
+-    <article class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+-      <div class="mb-4">
+-        <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ view.finding.title }}</h3>
+-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ view.finding.description }}</p>
++<div style="max-width:320px;margin:var(--s-6) 0">
++  <label class="label" for="reviewer-name">Reviewer name</label>
++  <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"></label>
++</div>
++
++<div class="sec"><h2>Observations</h2><div class="acts"></div></div>
++{% if page.findings %}
++<div style="display:flex;flex-direction:column;gap:var(--s-4)">
++  {% for view in page.findings %}
++  {% set finding = view.finding %}
++  {% set impact_error = field_errors.get("finding:" ~ finding.id ~ ":business_impact") %}
++  {% set recommendation_error = field_errors.get("finding:" ~ finding.id ~ ":recommendation") %}
++  <article class="glass" style="padding:var(--s-5) var(--s-6)">
++    <div class="between" style="flex-wrap:wrap">
++      <div style="flex:1;min-width:240px">
++        <div class="t-title">{{ finding.title }}</div>
++        <div class="t-sub">{{ finding.description }}</div>
+       </div>
+-      <form data-board-finding="{{ view.finding.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/observations/{{ view.finding.id }}" hx-include="#reviewer-name" hx-swap="none" class="grid gap-4 sm:grid-cols-2">
+-        <label class="text-sm text-gray-700 dark:text-gray-300">Why it matters<textarea name="business_impact" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{{ view.finding.business_impact or '' }}</textarea></label>
+-        <label class="text-sm text-gray-700 dark:text-gray-300">Recommendation<textarea name="recommendation" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{{ view.finding.recommendation or '' }}</textarea></label>
+-        <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save observation</button></div>
+-      </form>
+-      {% if view.actions %}
+-      <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-4">
+-        <h4 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Responsibility</h4>
+-        <div class="space-y-3">
+-          {% for action_view in view.actions %}
+-          <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" hx-trigger="change" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+-            <span class="text-sm text-gray-600 dark:text-gray-300">{{ action_view.action.title }}</span>
+-            <select name="responsibility" class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-48">
+-              <option value="">Not recorded</option>
+-              {% for value in responsibilities %}<option value="{{ value }}" {% if action_view.action.responsibility == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
+-            </select>
+-          </form>
+-          {% endfor %}
++    </div>
++    <form data-board-finding="{{ finding.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/observations/{{ finding.id }}" hx-include="#reviewer-name" hx-swap="none" style="margin-top:var(--s-4)">
++      <div class="fw-grid">
++        <div>
++          <label class="label" for="finding-{{ finding.id }}-w">Why it matters</label>
++          <label class="field area{% if impact_error %} invalid{% endif %}"><textarea id="finding-{{ finding.id }}-w" name="business_impact" rows="3">{{ finding.business_impact or '' }}</textarea></label>
++          {% if impact_error %}<p class="err">{{ impact_error }}</p>{% endif %}
++        </div>
++        <div>
++          <label class="label" for="finding-{{ finding.id }}-r">Recommendation</label>
++          <label class="field area{% if recommendation_error %} invalid{% endif %}"><textarea id="finding-{{ finding.id }}-r" name="recommendation" rows="3">{{ finding.recommendation or '' }}</textarea></label>
++          {% if recommendation_error %}<p class="err">{{ recommendation_error }}</p>{% endif %}
+         </div>
+       </div>
+-      {% endif %}
+-    </article>
+-    {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No findings recorded.</p>{% endfor %}
+-  </div>
+-</section>
+-
+-<section class="mb-10">
+-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Initiatives</h2>
+-  <div class="space-y-4">
+-    {% for group in groups %}
+-    {% set item = initiative_data.get(group.group_id, {}) %}
+-    <form data-board-initiative="{{ group.group_id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/initiatives" hx-include="#reviewer-name" hx-swap="none" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm grid gap-4 sm:grid-cols-3">
+-      <div class="sm:col-span-3"><h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ group.topic }}</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ group.headline }}</p></div>
+-      <input type="hidden" name="group_id" value="{{ group.group_id }}">
+-      <label class="text-sm text-gray-700 dark:text-gray-300 sm:col-span-3">Title<input name="title" value="{{ item.get('title') or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
+-      <label class="text-sm text-gray-700 dark:text-gray-300">Complexity<select name="complexity" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('complexity') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
+-      <label class="text-sm text-gray-700 dark:text-gray-300">Benefit<select name="benefit" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('benefit') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
+-      <div class="sm:col-span-3"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save initiative</button></div>
++      <div style="margin-top:var(--s-3)">{{ save_row(finding.business_impact or finding.recommendation, impact_error or recommendation_error) }}</div>
+     </form>
+-    {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No current roadmap initiatives.</p>{% endfor %}
+-  </div>
+-</section>
++    {% if view.actions %}
++    <div style="margin-top:var(--s-5);padding-top:var(--s-4);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:var(--s-3)">
++      <h3>Responsibility</h3>
++      {% for action_view in view.actions %}
++      <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" hx-trigger="change" style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);flex-wrap:wrap">
++        <span style="flex:1;min-width:200px">{{ action_view.action.title }}</span>
++        <label class="field" style="width:180px;flex:none">
++          <select name="responsibility" aria-label="Responsibility for {{ action_view.action.title }}">
++            <option value="">Not recorded</option>
++            {% for value in responsibilities %}<option value="{{ value }}" {% if action_view.action.responsibility == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
++          </select>
++        </label>
++      </form>
++      {% endfor %}
++    </div>
++    {% endif %}
++  </article>
++  {% endfor %}
++</div>
++{% else %}
++<div class="solid"><div class="empty">{{ icon("file", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No findings recorded</h3></div></div>
++{% endif %}
+ 
+-<section>
+-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Board decisions</h2>
+-  <form data-board-asks hx-post="/api/assessments/{{ assessment.id }}/board-inputs/asks" hx-include="#reviewer-name" hx-swap="none" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm space-y-4">
+-    {% for index in (1, 2, 3) %}<label class="block text-sm text-gray-700 dark:text-gray-300">Decision {{ index }}<input name="ask_{{ index }}" value="{{ asks.consultant[index - 1] if asks.consultant|length >= index else '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>{% endfor %}
+-    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save board decisions</button>
++<div class="sec"><h2>Initiatives</h2><div class="acts"></div></div>
++{% if groups %}
++<div style="display:flex;flex-direction:column;gap:var(--s-4)">
++  {% for group in groups %}
++  {% set item = initiative_data.get(group.group_id, {}) %}
++  {% set title_error = field_errors.get("initiative:" ~ group.group_id ~ ":title") %}
++  <form data-board-initiative="{{ group.group_id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/initiatives" hx-include="#reviewer-name" hx-swap="none" class="glass" style="padding:var(--s-5) var(--s-6);display:flex;flex-direction:column;gap:var(--s-4)">
++    <input type="hidden" name="group_id" value="{{ group.group_id }}">
++    <div class="between" style="flex-wrap:wrap">
++      <div style="flex:1;min-width:240px">
++        <div class="t-title">{{ group.topic }}</div>
++        <div class="t-sub">{{ group.headline }}</div>
++      </div>
++    </div>
++    <div>
++      <label class="label" for="{{ group.group_id }}-title">Title</label>
++      <label class="field{% if title_error %} invalid{% endif %}"><input id="{{ group.group_id }}-title" name="title" value="{{ item.get('title') or '' }}" placeholder="Short name for the board deck"></label>
++      {% if title_error %}<p class="err">{{ title_error }}</p>{% endif %}
++    </div>
++    <div class="form-grid">
++      <div>
++        <label class="label" for="{{ group.group_id }}-complexity">Complexity</label>
++        <label class="field"><select id="{{ group.group_id }}-complexity" name="complexity"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('complexity') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
++      </div>
++      <div>
++        <label class="label" for="{{ group.group_id }}-benefit">Benefit</label>
++        <label class="field"><select id="{{ group.group_id }}-benefit" name="benefit"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('benefit') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
++      </div>
++    </div>
++    {{ save_row(item.get('title') or item.get('complexity') or item.get('benefit'), title_error) }}
+   </form>
+-</section>
+-{% endblock %}
++  {% endfor %}
++</div>
++{% else %}
++<div class="solid"><div class="empty">{{ icon("chart", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No current roadmap initiatives</h3></div></div>
++{% endif %}
+ 
++<div class="sec"><h2>Board decisions</h2><div class="acts"></div></div>
++{% set ask_error = field_errors.get("asks") %}
++<form data-board-asks hx-post="/api/assessments/{{ assessment.id }}/board-inputs/asks" hx-include="#reviewer-name" hx-swap="none" class="glass" style="padding:var(--s-5) var(--s-6);display:flex;flex-direction:column;gap:var(--s-3)">
++  <div>{% if ask_error %}<p class="err">{{ ask_error }}</p>{% endif %}</div>
++  {% for index in (1, 2, 3) %}
++  <div>
++    <label class="label" for="ask-{{ index }}">Decision {{ index }}</label>
++    <label class="field"><input id="ask-{{ index }}" name="ask_{{ index }}" value="{{ asks.consultant[index - 1] if asks.consultant|length >= index else '' }}" maxlength="400"></label>
++  </div>
++  {% endfor %}
++  {{ save_row(asks.consultant|length > 0, ask_error) }}
++</form>
++{% endblock %}
+diff --git a/app/templates/pages/narrative.html b/app/templates/pages/narrative.html
+index ee4d45a..9d4055e 100644
+--- a/app/templates/pages/narrative.html
++++ b/app/templates/pages/narrative.html
+@@ -1,80 +1,152 @@
+ {% extends "base.html" %}
+-{% block title %}Report narrative — {{ assessment.company_name }}{% endblock %}
++{% from "components/layout.html" import assessment_tabs %}
++{% from "components/seg_rows.html" import report_seg %}
++{% from "components/ui.html" import icon %}
++{# b5 "Narrative": draft, edit and accept the board-report narrative sections.
++   Rendered by GET /assessments/{id}/narrative and by the design preview b5-narrative. #}
++{% set page_title = "Narrative" %}
++
++{% block title %}{{ page_title }} — {{ assessment.company_name }}{% endblock %}
++
++{% block crumbs %}
++<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
++{% endblock %}
+ 
+ {% block content %}
+-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+-  <span class="mx-1.5">/</span>
+-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+-  <span class="mx-1.5">/</span>
+-  <span class="text-gray-600 dark:text-gray-300">Report narrative</span>
+-</nav>
++{# Two symbols the shared sprite in base.html does not have; declared here so the page needs no edit to it. #}
++<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol></svg>
+ 
+-<div class="mb-6">
+-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Report narrative</h1>
+-  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">Draft the board-report narrative from approved findings, then edit and accept each section.</p>
++{% set locked = not released %}
++{# Exactly one primary. While nothing is drafted it is the page-level draft button; afterwards it is the
++   first section that still needs accepting; when everything is accepted there is none. #}
++{% set has_text = sections | selectattr("section.status", "ne", "none") | list | length > 0 %}
++{% set needs_accept = sections | selectattr("needs_accept") | list %}
++{% set primary_section = needs_accept[0].section.section_id if needs_accept else "" %}
++{% set draft_is_primary = (not has_text) and (not locked) and (not generating) %}
++
++<div class="page-head">
++  <div>
++    <h1>{{ page_title }}</h1>
++    <p class="meta-line">{% if period %}{{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %}{{ assessment.display_name }}{% endif %}</p>
++  </div>
++  <div class="acts"></div>
+ </div>
++{{ assessment_tabs(assessment, "report") }}
++<div style="overflow-x:auto;margin:var(--s-4) 0">{{ report_seg(assessment, "narrative") }}</div>
++<p class="sub" style="max-width:68ch">Draft the board-report narrative from approved findings, then edit and accept each section.</p>
+ 
+-<div class="mb-6 max-w-sm">
+-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
+-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
+-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
++{% if not locked and sections %}
++<div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;justify-content:flex-end;margin:var(--s-6) 0 var(--s-4)">
++  {% if generating %}<span class="sub" role="status">Drafting…</span>{% endif %}
++  <form hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
++    {% if generating %}<button type="submit" class="btn secondary loading" aria-busy="true">Drafting…</button>
++    {% else %}<button type="submit" class="btn {{ 'primary' if draft_is_primary else 'secondary' }}">Draft missing or stale sections</button>{% endif %}
++  </form>
+ </div>
++{% endif %}
+ 
+-{% if not released %}
+-<p data-narrative-unreleased class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">The report must be released before the narrative can be drafted or accepted.</p>
++{% if blockers and not locked %}
++<div class="alert c-medium">
++  {{ icon("alert") }}
++  <div>
++    <b>Review the narrative before generating a board report version</b>
++    <ul style="margin:var(--s-2) 0 0 var(--s-5)">{% for blocker in blockers %}<li data-narrative-blocker>{{ blocker }}</li>{% endfor %}</ul>
++  </div>
++</div>
++<div style="height:var(--s-6)"></div>
+ {% endif %}
+ 
+-{% if blockers %}
+-<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+-  {% for blocker in blockers %}<p data-narrative-blocker>{{ blocker }}</p>{% endfor %}
++{% if locked %}
++<div class="alert c-medium" style="margin-top:var(--s-6)">
++  {{ icon("alert") }}
++  <div><span data-narrative-unreleased>The report must be released before the narrative can be drafted or accepted.</span></div>
+ </div>
++<div style="height:var(--s-6)"></div>
+ {% endif %}
+ 
+-<div class="mb-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+-  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Approved findings</h2>
+-  {% if state.findings %}
+-  <ul class="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+-    {% for ref in state.findings %}<li data-finding-ref="{{ ref.alias }}"><span class="font-mono">{{ ref.alias }}</span>: {{ ref.title }} ({{ ref.framework_name }} {{ ref.requirement_id }})</li>{% endfor %}
+-  </ul>
+-  {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No approved findings are available.</p>{% endif %}
++<div style="max-width:320px;margin-bottom:var(--s-6)">
++  <label class="label" for="reviewer-name">Consultant name</label>
++  <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"></label>
+ </div>
+ 
+-<form class="mb-6" hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
+-  <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Draft missing or stale sections</button>
+-</form>
++{% if state.findings %}
++<details style="margin-bottom:var(--s-6)">
++  <summary class="btn ghost sm" style="margin-left:calc(var(--s-3) * -1)">Approved findings, {{ state.findings | length }}{{ icon("chev-d") }}</summary>
++  <div class="glass" style="margin-top:var(--s-2);padding:var(--s-2) var(--s-6)">
++    <div class="domains" style="margin-top:0">
++      {% for ref in state.findings %}
++      <div id="ref-{{ ref.alias }}" data-finding-ref="{{ ref.alias }}"><span class="chip">{{ ref.alias }}</span><span style="flex:1;min-width:0">{{ ref.title }}</span><span class="muted">{{ ref.framework_name }} {{ ref.requirement_id }}</span></div>
++      {% endfor %}
++    </div>
++  </div>
++</details>
++{% else %}
++<div class="glass" style="padding:var(--s-4) var(--s-6);margin-bottom:var(--s-6)"><p class="sub">No approved findings are available.</p></div>
++{% endif %}
+ 
+-<div class="space-y-6">
++<div style="display:flex;flex-direction:column;gap:var(--s-4)">
+ {% for item in sections %}
+ {% set section = item.section %}
+-<section data-narrative-section="{{ section.section_id }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+-  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
++<section class="glass" data-narrative-section="{{ section.section_id }}" style="padding:var(--s-6)">
++  <div class="between" style="flex-wrap:wrap">
++    <div class="stack-s">
++      <h2>{{ item.label }}</h2>
++      <div style="display:flex;gap:var(--s-2);align-items:center;flex-wrap:wrap">
++        <span class="status"><i class="dot {{ item.tone }}"></i>{{ item.status_label }}</span>
++        {% if item.warn %}<span class="warn">{{ icon("alert") }} {{ item.warn }}</span>{% endif %}
++      </div>
++    </div>
+     <div>
+-      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ section.label }}</h2>
+-      <p class="text-xs text-gray-500 dark:text-gray-400">Status: {{ section.status }}{% if section.stale %} (stale){% endif %}</p>
++      <form hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
++        <input type="hidden" name="section_id" value="{{ section.section_id }}">
++        <button type="submit" class="btn ghost sm lead"{% if locked %} disabled{% endif %}>{{ icon("refresh") }} Regenerate</button>
++      </form>
+     </div>
+-    <form hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
+-      <input type="hidden" name="section_id" value="{{ section.section_id }}">
+-      <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 text-xs font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Regenerate</button>
+-    </form>
+   </div>
+   {% if section.dropped %}
+-  <div class="mb-3 text-xs text-amber-700 dark:text-amber-300">
+-    {% for dropped in section.dropped %}<p data-narrative-dropped>Draft sentence dropped ({{ dropped.reason }}): {{ dropped.text }}</p>{% endfor %}
++  <div style="margin-top:var(--s-3)">
++    {% for dropped in section.dropped %}<p class="help" data-narrative-dropped>Draft sentence dropped ({{ dropped.reason }}): {{ dropped.text }}</p>{% endfor %}
+   </div>
+   {% endif %}
+-  <form data-narrative-accept-form hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/accept" hx-include="#reviewer-name" hx-swap="none">
++  <form data-narrative-accept-form hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/accept" hx-include="#reviewer-name" hx-swap="none" style="margin-top:var(--s-4)">
+     <input type="hidden" name="findings_sha256" value="{{ state.findings_sha256 }}">
+-    <textarea name="text" rows="6" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ item.text }}</textarea>
+-    <div class="mt-2 flex flex-wrap gap-2">
+-      <button type="submit" class="rounded-md bg-brand px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Save and accept</button>
++    <label class="field area"{% if locked %} aria-disabled="true"{% endif %}><textarea name="text" rows="6" aria-label="{{ item.label }} text"{% if section.status == "none" %} placeholder="No draft yet. Draft this section from the approved findings, or write it yourself."{% endif %}{% if locked %} disabled{% endif %}>{{ item.text }}</textarea></label>
++    {% if item.cites %}
++    <div style="margin-top:var(--s-3)">
++      <div class="chips" style="align-items:center"><span class="sub">Cites</span>{% for alias in item.cites %}<a class="chip" href="#ref-{{ alias }}">{{ alias }}</a>{% endfor %}</div>
++    </div>
++    {% endif %}
++    {% if section.status != "none" %}<p class="help">Regenerating replaces this section’s text with a new draft. Earlier text stays in the history.</p>{% endif %}
++    <div style="display:flex;gap:var(--s-2);flex-wrap:wrap;margin-top:var(--s-4)">
++      <button type="submit" class="btn {{ 'primary' if section.section_id == primary_section and not locked else 'secondary' }}"{% if locked %} disabled{% endif %}>Save and accept</button>
++      {% if section.status != "none" %}<button type="button" class="btn ghost" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none"{% if locked %} disabled{% endif %}>Discard</button>{% endif %}
+     </div>
+-  </form>
+-  <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Regenerating replaces this section's text with a new draft; earlier text stays in the history.</p>
+-  <form class="mt-2" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none">
+-    <button type="submit" class="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Discard</button>
+   </form>
+ </section>
+ {% endfor %}
+ </div>
+ {% endblock %}
++
++{% block scripts %}
++<script>
++/* Busy state for the draft actions: a non-primary loading button with its label kept in the markup
++   (the loading style hides it visually, screen readers still read it); no primary until the response returns. */
++document.body.addEventListener('htmx:beforeRequest', function (event) {
++  var form = event.detail.elt;
++  if (!form || !form.matches || !form.matches('form[hx-post$="/narrative/generate"]')) return;
++  var button = form.querySelector('button[type=submit]');
++  if (!button || button.classList.contains('loading')) return;
++  button.dataset.idleClass = button.className;
++  button.classList.remove('primary', 'ghost');
++  button.classList.add('secondary', 'loading');
++  button.setAttribute('aria-busy', 'true');
++});
++document.body.addEventListener('htmx:afterRequest', function (event) {
++  var form = event.detail.elt;
++  var button = form && form.querySelector && form.querySelector('button[data-idle-class]');
++  if (!button) return;
++  button.className = button.dataset.idleClass;
++  button.removeAttribute('aria-busy');
++});
++</script>
++{% endblock %}
+diff --git a/design/harness/seed_s7_narrative.py b/design/harness/seed_s7_narrative.py
+new file mode 100644
+index 0000000..b574b45
+--- /dev/null
++++ b/design/harness/seed_s7_narrative.py
+@@ -0,0 +1,249 @@
++"""S7 group "narrative": seeds for b5-narrative and b5-board-inputs.
++
++Both pages read the approved findings of a released report, so every state starts from the same
++builder: approved conclusions, a real ``record_release`` (omitted for the not-released state), findings
++and actions created through ``app.services.findings.create_finding``. Narrative drafts and acceptances
++are the real audit events written by ``app.services.narrative`` (``_write_event``), with the real basis
++hashes, so ``narrative.state()`` reports them exactly as the page would see them after a live run.
++
++States that no stored data can produce (the in-flight "generating" request, the board-input
++validation errors, which the live endpoints answer with a toast and never render) go through
++``app/routers/design_s7_narrative.py`` and are marked ``preview-state``.
++"""
++
++from __future__ import annotations
++
++import json
++
++from app.models.action import Action
++from app.models.conclusion import Conclusion, ConclusionRevision
++from app.models.finding import Finding
++from app.models.initiative_metadata import InitiativeMetadata
++from design.harness.seed_s4 import SEED_ACTOR, _time
++
++SCREEN_STATES = {
++    "b5-narrative": ("empty", "generating", "drafted", "partly-accepted", "accepted", "error", "not-released"),
++    "b5-board-inputs": ("empty", "partly", "complete", "dense", "error"),
++}
++
++# (framework, control index, title, description, severity, priority, why it matters, recommendation,
++#  [(action title, responsibility)]). Severity then priority decide the F1..Fn aliases, so the list
++# order is the alias order.
++BREACH = ("dpdpa", 0, "Breach notification process", "No route exists to notify the Board and affected data principals within the required window.", "high", 1,
++          "A late or missed notification exposes the company to regulatory action and loss of customer trust.",
++          "Add a notification step to the incident procedure with named owners and a template.",
++          [("Add notification step to the incident procedure", "client"), ("Review the template with legal counsel", "shared")])
++CONSENT = ("dpdpa", 1, "Consent withdrawal mechanism", "Withdrawal is possible only by emailing the data protection officer.", "high", 2,
++           "Customers cannot withdraw consent as easily as they gave it, which the Act requires.",
++           "Add a withdrawal control to account settings.",
++           [("Build the withdrawal control", "client")])
++NOTICE = ("dpdpa", 2, "Notice in regional languages", "The privacy notice is available in English only.", "high", 3, "", "",
++          [("Translate the notice", "client"), ("Check the translation", "consultant")])
++BACKUPS = ("dpdpa", 3, "Backups not encrypted at rest", "Backups of the payments database are stored unencrypted.", "medium", 1, "", "",
++           [("Enable encryption on backup storage", "client")])
++RETENTION = ("dpdpa", 4, "Data retention schedule", "No retention schedule covers customer records.", "medium", 2, "", "",
++             [("Publish a retention schedule", "")])
++ACCESS = ("iso27001", 0, "Access rights", "Access reviews skip some production systems.", "medium", 3, "", "",
++          [("Extend the access review to production systems", "")])
++RECOVERY = ("iso27001", 1, "Disaster recovery testing", "The last recovery test missed its objective.", "low", 1, "", "",
++            [("Re-run the recovery test", "")])
++SUPPLIER = ("iso27001", 2, "Supplier security reviews", "Some payment processors have no supplier review on file.", "low", 2, "", "",
++            [("Review the payment processors", "")])
++
++NARRATIVE_SPEC = [BREACH, CONSENT, NOTICE, BACKUPS, RETENTION, ACCESS, RECOVERY, SUPPLIER]
++
++DENSE_SPEC = [
++    BREACH, CONSENT, NOTICE, BACKUPS,
++    ("iso27001", 0, "Access reviews skip production systems", "Quarterly reviews leave out the payments estate.", "medium", 1, "", "", [("Extend the access review", "client")]),
++    ("iso27001", 1, "Disaster recovery test missed its objective", "The last recovery test overran its objective.", "medium", 2, "", "", [("Re-run the recovery test", "shared")]),
++    ("iso27001", 2, "Supplier security reviews missing", "Payment processors have no review on file.", "medium", 3, "", "", [("Review the payment processors", "")]),
++    ("dpdpa", 4, "Data retention schedule", "No retention schedule covers customer records.", "low", 1, "", "", [("Publish a retention schedule", "client")]),
++    ("iso27001", 3, "Privileged access list incomplete", "Not every privileged account has a named owner.", "low", 2, "", "", [("Name an owner for each privileged account", "")]),
++    ("iso27001", 4, "Incident register lacks severity", "Incidents are logged without a severity.", "low", 3, "", "", [("Add severity to the incident register", "")]),
++    ("dpdpa", 5, "Vendor onboarding skips privacy checks", "New vendors are onboarded without a privacy review.", "low", 4, "", "", [("Add a privacy check to vendor onboarding", "")]),
++    ("iso27001", 5, "Staff awareness training not tracked", "Completion of awareness training is not recorded.", "low", 4, "", "", [("Track training completion", "consultant")]),
++]
++
++COMPLETE_SPEC = [
++    BREACH[:6] + ("A late or missed notification exposes the company to regulatory action and loss of customer trust.",
++                  "Add a notification step to the incident procedure with named owners and a template.",
++                  [("Add notification step to the incident procedure", "client"), ("Review the template with legal counsel", "shared")]),
++    CONSENT[:6] + ("Customers cannot withdraw consent as easily as they gave it, which the Act requires.",
++                   "Add a withdrawal control to account settings.", [("Build the withdrawal control", "client")]),
++    ACCESS[:5] + (1, "Unreviewed access can stay active for longer than intended.",
++                  "Extend the access review to every production system.", [("Extend the access review to production systems", "consultant")]),
++]
++
++ASKS = ["Approve funding for the incident response work", "Name an executive owner for the access review programme", "Set the date for the next recovery test"]
++
++NARRATIVE_TEXT = {
++    "executive": [
++        ("Meridian Ledger Technologies has documented most of what a privacy and security programme needs, but some controls do not yet work as written.", (1, 6)),
++        ("The most serious gaps are where customers act on their data and where incidents must be reported.", (1, 2)),
++        ("Closing the access review and incident notification gaps would reduce the most exposure.", (1, 6)),
++    ],
++    "cross-framework": [
++        ("Under both frameworks, controls exist on paper but are not applied everywhere.", (4, 6)),
++        ("Access to some production systems is not reviewed, and backups are not encrypted at rest, which weakens safeguards the policies already promise.", (4, 6)),
++    ],
++    "framework-dpdpa": [
++        ("The record of processing and the incident register are in place.", (1,)),
++        ("Consent can be withdrawn only by emailing the data protection officer, the privacy notice is in English only, and the breach procedure has no route to notify affected data principals.", (1, 2, 3)),
++    ],
++    "framework-iso27001": [
++        ("The management system is documented and the policy set is current.", (6,)),
++        ("Operation lags the documents: access reviews skip some production systems, the last recovery test missed its objective, and some payment processors have no supplier review on file.", (6, 7, 8)),
++    ],
++}
++SECTION_ORDER = ("executive", "cross-framework", "framework-dpdpa", "framework-iso27001")
++
++
++def _seed_findings(db, assessment, spec, *, release: bool = True) -> None:
++    """Approved conclusions for the spec's controls, the release, then one finding per spec row."""
++    from app.frameworks.registry import FrameworkRegistry
++    from app.models.report import GapReport
++    from app.services import approved_report
++    from app.services import findings as finding_service
++
++    controls = {
++        framework_id: FrameworkRegistry.get_all_controls(framework_id) for framework_id in assessment.frameworks
++    }
++    applicable = [controls[row[0]][row[1]].id for row in spec]
++    assessment.applicable_requirements = json.dumps(applicable)
++    assessment.scope_answers = json.dumps({})
++    db.add(GapReport(id=f"gap-report-{assessment.id}", assessment_id=assessment.id, overall_score=0.0,
++                     chapter_scores="{}", executive_summary="Seeded analysis report.", raw_ai_response="{}",
++                     framework_scores=None, generated_at=_time(-12)))
++    db.flush()
++    conclusions = []
++    for index, row in enumerate(spec):
++        framework_id, control_index, title, description, severity = row[:5]
++        control = controls[framework_id][control_index]
++        conclusion = Conclusion(
++            id=f"conclusion-narrative-{assessment.id}-{index}", assessment_id=assessment.id,
++            framework_id=framework_id, requirement_id=control.id, outcome="partially_compliant",
++            rationale="Seeded approved conclusion.", evidence_summary="Seeded evidence summary.",
++            gaps_identified=description, risk_level=severity, recommended_action=row[7] or "Close the gap.",
++            ai_proposed=True, created_at=_time(-12), updated_at=_time(-11),
++        )
++        db.add(conclusion)
++        db.flush()
++        db.add(ConclusionRevision(id=f"revision-proposed-{conclusion.id}", conclusion_id=conclusion.id,
++                                  actor="system:analysis", action="proposed", created_at=_time(-12)))
++        db.add(ConclusionRevision(id=f"revision-approved-{conclusion.id}", conclusion_id=conclusion.id,
++                                  actor=SEED_ACTOR, action="approved", created_at=_time(-11)))
++        conclusions.append(conclusion)
++    db.flush()
++    if release:
++        approved_report.record_release(db, assessment, actor=SEED_ACTOR)
++        db.flush()
++    for conclusion, row in zip(conclusions, spec):
++        _framework_id, _index, title, description, severity, priority, impact, recommendation, actions = row
++        finding = finding_service.create_finding(
++            db, assessment_id=assessment.id, conclusion_id=conclusion.id, conclusion_version=conclusion.version,
++            title=title, description=description, severity=severity, priority=priority,
++            action_title=actions[0][0], action_owner=None, action_target_date=None, notes=None, actor=SEED_ACTOR,
++        )
++        finding.business_impact = impact or None
++        finding.recommendation = recommendation or None
++        first = db.query(Action).filter(Action.finding_id == finding.id).one()
++        first.responsibility = actions[0][1] or None
++        for position, (action_title, responsibility) in enumerate(actions[1:], start=1):
++            db.add(Action(id=f"action-{finding.id}-{position}", finding_id=finding.id, title=action_title,
++                          owner=None, responsibility=responsibility or None, status="open", history_json="[]",
++                          created_at=_time(-10), updated_at=_time(-10)))
++    db.flush()
++
++
++def _seed_narrative(db, assessment, statuses: dict[str, str]) -> None:
++    """Write drafted / accepted events for each section; ``statuses`` maps section id to
++    draft, accepted, accepted-stale or none."""
++    from app.services import narrative
++
++    refs = narrative.finding_refs(db, assessment)
++    section_ids = narrative.section_ids(assessment, refs)
++    for section_id in SECTION_ORDER:
++        status = statuses.get(section_id, "none")
++        if status == "none" or section_id not in section_ids:
++            continue
++        sentences = [
++            {"text": text, "finding_ids": [refs[number - 1].finding_id for number in numbers]}
++            for text, numbers in NARRATIVE_TEXT[section_id]
++        ]
++        basis = narrative._basis_sha256(section_id, refs)
++        draft = narrative._write_event(
++            db, actor=SEED_ACTOR, action=narrative.AUDIT_DRAFTED, assessment_id=assessment.id,
++            metadata={"section_id": section_id, "basis_sha256": basis, "status": "ok", "sentences": sentences,
++                      "dropped": [], "prompt_sha256": narrative.prompt_sha256(), "prompt_version": narrative.PROMPT_VERSION,
++                      "calls": [], "error_type": None},
++        )
++        if status.startswith("accepted"):
++            narrative._write_event(
++                db, actor=SEED_ACTOR, action=narrative.AUDIT_ACCEPTED, assessment_id=assessment.id,
++                metadata={"section_id": section_id,
++                          "basis_sha256": "0" * 64 if status == "accepted-stale" else basis,
++                          "sentences": sentences, "source_event_id": draft.id},
++            )
++    db.flush()
++
++
++def _seed_board(db, assessment, state: str) -> None:
++    from app.services import board_inputs, report_content, remediation_groups
++
++    if state == "empty":
++        return
++    spec = {"partly": [BREACH, CONSENT, NOTICE, BACKUPS], "complete": COMPLETE_SPEC, "dense": DENSE_SPEC,
++            "error": [BREACH, CONSENT]}[state]
++    _seed_findings(db, assessment, spec)
++    findings = report_content.assessment_findings(db, assessment).findings
++    groups = remediation_groups.build_groups(findings, assessment.frameworks)
++    saved = {"partly": (0, 2), "complete": (0, 1, 2), "error": (0,)}.get(state, ())
++    for position in saved:
++        if position >= len(groups):
++            continue
++        group = groups[position]
++        db.add(InitiativeMetadata(
++            assessment_id=assessment.id, group_id=group["group_id"],
++            title={0: "Strengthen incident response", 1: "Close access review gaps", 2: "Fix the notice"}.get(position, "Initiative"),
++            complexity="high" if position == 0 else "low", benefit="high" if position == 0 else None,
++        ))
++    if state in ("partly", "complete", "error"):
++        assessment.board_asks_json = json.dumps(
++            {"asks": ASKS[:3] if state == "complete" else ASKS[:1], "by": "Priya Sharma"}
++        )
++    db.flush()
++
++
++def apply(db, screen, state, assessment, engagement, data) -> dict:
++    if screen == "b5-board-inputs":
++        _seed_board(db, assessment, state)
++        if state == "error":
++            return {"data_state": "preview-state", "note": "Stored rows come from the database; the over-limit text and the limit errors are drawn by the design preview because the live save endpoints reject long text with a toast and keep the page unchanged."}
++        return {"data_state": "database", "note": "Findings, actions, initiative metadata and board decisions seeded through the real services; saved indicators come from the stored values."}
++
++    spec = NARRATIVE_SPEC
++    _seed_findings(db, assessment, spec, release=state != "not-released")
++    if state == "not-released":
++        return {"data_state": "database", "note": "Approved conclusions and findings exist but no release is recorded, so approved_report.is_released is false (drafting and accepting return 403)."}
++    statuses = {
++        "drafted": {key: "draft" for key in SECTION_ORDER},
++        "partly-accepted": {"executive": "accepted", "cross-framework": "draft", "framework-dpdpa": "accepted", "framework-iso27001": "accepted-stale"},
++        "accepted": {key: "accepted" for key in SECTION_ORDER},
++        "error": {key: "accepted" for key in SECTION_ORDER},
++    }.get(state, {})
++    _seed_narrative(db, assessment, statuses)
++    if state == "generating":
++        return {"data_state": "preview-state", "note": "The in-flight request is drawn by the design preview (generating=True) on top of the empty database state."}
++    if state == "error":
++        return {"data_state": "preview-state", "note": "The failure and draft-limit toasts are response headers (X-Toast-Message), not page markup; the page is the accepted state. Toast headers are covered by tests/test_yozora_s7_narrative.py."}
++    return {"data_state": "database", "note": "Narrative audit events written with narrative._write_event and the real basis hashes."}
++
++
++def route(screen: str, state: str, assessment_id: str) -> str:
++    if screen == "b5-narrative":
++        if state == "generating":
++            return f"/design/pages/b5-narrative?state=generating&assessment_id={assessment_id}"
++        return f"/assessments/{assessment_id}/narrative"
++    if state == "error":
++        return f"/design/pages/b5-board-inputs?state=error&assessment_id={assessment_id}"
++    return f"/assessments/{assessment_id}/board-inputs"
+diff --git a/design/yozora-patterns.css b/design/yozora-patterns.css
+index d7341e8..556c7da 100644
+--- a/design/yozora-patterns.css
++++ b/design/yozora-patterns.css
+@@ -258,3 +258,9 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-narrative */
++/* The narrative textareas carry a placeholder (no draft yet). Tailwind preflight in the app sets a lighter
++   placeholder colour than the mockup shows; inputs already use --muted, so textareas follow them. */
++.field textarea::placeholder{color:var(--muted)}
++/* /s7-narrative */

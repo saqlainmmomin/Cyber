@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.assessment import Assessment
 from app.services import approved_report, conclusion_review, narrative, remediation_draft
-from app.template_config import configure_templates
+from app.template_config import configure_templates, framework_label
 
 router = APIRouter(tags=["drafting"])
 
@@ -39,6 +39,39 @@ def _redirect_success(assessment_id: str, payload: dict) -> JSONResponse:
     response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/narrative"
     response.headers["X-Toast-Type"] = "success"
     return response
+
+
+def _narrative_section_label(section_id: str) -> str:
+    if section_id == narrative.EXECUTIVE:
+        return "Executive overview"
+    if section_id == narrative.CROSS_FRAMEWORK:
+        return "Across frameworks"
+    framework_id = section_id.removeprefix(narrative.FRAMEWORK_PREFIX)
+    return f"{framework_label(framework_id, full=True)} posture"
+
+
+def _narrative_failure_message(outcomes: dict[str, str]) -> str:
+    failed = [
+        _narrative_section_label(section_id)
+        for section_id, outcome in outcomes.items()
+        if outcome == "failed"
+    ]
+    limited = [
+        _narrative_section_label(section_id)
+        for section_id, outcome in outcomes.items()
+        if outcome == "limit_reached"
+    ]
+    messages = []
+    if failed:
+        labels = ", ".join(failed)
+        messages.append(
+            f"{labels} could not be drafted. The section stays as it was. "
+            "Write it yourself or try again."
+        )
+    if limited:
+        labels = ", ".join(limited)
+        messages.append(f"Draft limit reached for {labels}. Write this section yourself.")
+    return " ".join(messages)
 
 
 def _partial(
@@ -115,6 +148,7 @@ async def draft_recommended_action(
         )
 
     db.commit()
+    draft_notice = remediation_draft.DRAFT_NOTICE.replace("Save & Approve", "Save and approve")
     return _toast(
         _partial(
             request,
@@ -122,9 +156,9 @@ async def draft_recommended_action(
             conclusion_id=conclusion_id,
             recommended_action=draft.recommended_action,
             draft=draft,
-            draft_notice=remediation_draft.DRAFT_NOTICE,
+            draft_notice=draft_notice,
         ),
-        remediation_draft.DRAFT_NOTICE,
+        draft_notice,
         "success",
     )
 
@@ -190,9 +224,15 @@ async def generate_narrative(
         db.rollback()
         return _error(exc.status_code, exc.message)
     failed = any(value in ("failed", "limit_reached") for value in sections.values())
-    response = _redirect_success(assessment_id, {"sections": sections})
-    response.headers["X-Toast-Type"] = "error" if failed else "success"
-    return response
+    if failed:
+        # No HX-Redirect: htmx navigates on a redirect without swapping, so the
+        # toast (shown on htmx:afterSwap) would never appear.
+        return _toast(
+            JSONResponse({"sections": sections}),
+            _narrative_failure_message(sections),
+            "error",
+        )
+    return _redirect_success(assessment_id, {"sections": sections})
 
 
 @router.post("/api/assessments/{assessment_id}/narrative/{section_id}/accept")

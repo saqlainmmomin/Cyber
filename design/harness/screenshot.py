@@ -194,6 +194,9 @@ def render(args: argparse.Namespace) -> int:
             page.clock.install(time="2026-10-03T12:00:00Z")
         page.goto(url, wait_until="networkidle")
         _apply_state(page, args.state)
+        prep_js = getattr(args, "prep_js", None)
+        if prep_js:
+            page.evaluate(prep_js)
         page.add_style_tag(
             content="*,:before,:after{animation:none!important;transition:none!important;caret-color:transparent!important}"
         )

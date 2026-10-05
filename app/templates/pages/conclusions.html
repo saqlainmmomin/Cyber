@@ -1,55 +1,73 @@
 {% extends "base.html" %}
-{% block title %}Conclusions — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/ui.html" import icon %}
+{% from "components/seg_rows.html" import review_seg %}
+
+{% set page_title = "Conclusions" %}
+{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"} %}
+{% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
+{% set risk_tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}
+{% set stats = [("pending", "Pending"), ("approved", "Approved"), ("edited", "Edited and approved"), ("rejected", "Rejected"), ("legacy_bulk", "Approved in bulk")] %}
+{% set basis = report_basis_for(assessment) %}
+{% set shell_context = assessment_engagement_context(request) %}
+{% set page_engagement = shell_context.engagement if shell_context else (engagement_row if engagement_row is defined else none) %}
+
+{% macro period_meta() -%}
+  {% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }} · Evidence cut-off {{ basis.cutoff_label }}{% else %}Assessment period not recorded · Evidence cut-off not recorded{% endif %}
+{%- endmacro %}
+
+{% macro requirement_reference(conclusion) -%}
+  {% set reference = conclusion.requirement_id %}
+  {% if conclusion.framework_id == "iso27001" %}{{ reference|replace("ISO.", "") }}{% elif conclusion.requirement_id == "CH2.CONSENT.3" %}s.6{% elif conclusion.requirement_id == "CH2.SECURITY.1" %}s.8{% elif conclusion.requirement_id == "CM.RECORDS.1" %}s.6{% else %}{{ reference }}{% endif %}
+{%- endmacro %}
+
+{% macro decision_cell(card) -%}
+  {% if card.legacy_bulk_approval %}<span class="status"><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Not individually reviewed</span></span>{% elif card.state == "approved" %}<span class="status"><svg class="i"><use href="#i-check"/></svg>Approved</span>{% elif card.state == "edited" %}<span class="status"><svg class="i"><use href="#i-pen"/></svg>Edited and approved</span>{% elif card.state == "rejected" %}<span class="status"><svg class="i"><use href="#i-x"/></svg>Rejected</span>{% else %}<span class="status"><span class="st"></span>Pending</span>{% endif %}
+{%- endmacro %}
+
+{% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if page_engagement %}<a class="hide-sm" href="/engagements/{{ page_engagement.id }}">{{ page_engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/review-queue">Review</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Conclusions</span>
-</nav>
+<div class="conclusions-page">
+  <div class="page-head"><div><h1>{{ page_title }}</h1><p class="meta-line">{{ period_meta() }}</p></div><div class="acts">{% if cards %}<a class="btn {{ "secondary" if release.released or not release.blockers else "primary" }} lead" href="/assessments/{{ assessment.id }}/review-queue">Open review queue<svg class="i"><use href="#i-arrow-r"/></svg></a>{% endif %}</div></div>
+  {{ assessment_tabs(assessment, "review") }}
+  <div class="rv-seg-row"><div class="rv-seg">{{ review_seg(assessment, "conclusions") }}</div><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
 
-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Conclusions: individual approval</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Review the evidence and proposal for each conclusion before deciding.</p>
-    <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (read-only trace) →</a>
-    <a href="/assessments/{{ assessment.id }}/findings" class="ml-3 text-sm font-medium text-brand dark:text-navy-300 hover:underline">Findings and actions →</a>
-    <a href="/assessments/{{ assessment.id }}/review-queue" class="ml-3 text-sm font-medium text-brand dark:text-navy-300 hover:underline">Review queue →</a>
+  {% if cards %}
+  <div class="glass rv-stats">{% for key, label in stats %}<div{% if key == "legacy_bulk" and not counts[key] %} hidden{% endif %}><span class="sub">{{ label }}</span><div class="big-n num" data-count="{{ key }}">{{ counts[key] }}</div></div>{% endfor %}</div>
+  <div class="glass rows rv-summary">
+    <div><span class="ico">{{ icon("clock") }}</span><div class="txt"><b>Period and sign-off</b><span class="sub">{{ period_meta() }}.{% if period_locked %} Locked while conclusions are approved.{% endif %}</span></div></div>
+    <div><span class="ico">{{ icon("report") }}</span><div class="txt"><b>Release</b><span class="sub">{% if release.released %}Released.{% elif release.stale %}Out of date: a conclusion changed after release.{% elif release.blockers %}Not ready: {{ release.blockers[0] }}{% else %}Ready to release.{% endif %}</span></div></div>
   </div>
-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-    Reviewer name
-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
-  </label>
-</div>
+  {% set basis_save_variant = "secondary" %}
+  <div class="rv-panels" id="rv-panels">{% include "partials/report_basis_panel.html" %}{% include "partials/release_panel.html" %}</div>
 
-<div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
-  {% for key, label in [('pending', 'Pending'), ('rejected', 'Rejected'), ('approved', 'Approved'), ('edited', 'Edited'), ('legacy_bulk', 'Legacy bulk approvals')] %}
-  <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
-    <p class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</p>
-    <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100" data-count="{{ key }}">{{ counts[key] }}</p>
-  </div>
-  {% endfor %}
-</div>
-
-{% include "partials/report_basis_panel.html" %}
-{% include "partials/release_panel.html" %}
-
-{% if cards %}
+  {% set current_framework = namespace(value="") %}
   {% for card in cards %}
-    {% if loop.first or card.conclusion.framework_id != cards[loop.index0 - 1].conclusion.framework_id %}
-      {% if not loop.first %}</div></section>{% endif %}
-      <section class="mb-8">
-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">{{ card.conclusion.framework_id|upper }}</h2>
-        <div class="space-y-4">
+    {% if card.conclusion.framework_id != current_framework.value %}
+      {% if current_framework.value %}</tbody></table></div>{% endif %}{% set current_framework.value = card.conclusion.framework_id %}
+      <div class="sec"><h2>{{ framework_label(card.conclusion.framework_id, true) }}</h2></div><div class="solid"><table data-conclusion-table="{{ card.conclusion.framework_id }}"><thead><tr><th>Requirement</th><th class="hide-sm">Outcome</th><th class="hide-sm">Risk</th><th>Decision</th><th class="hide-sm"></th></tr></thead><tbody>
     {% endif %}
-    {% include "components/conclusion_card.html" %}
-    {% if loop.last %}</div></section>{% endif %}
+    {% set conclusion = card.conclusion %}
+    <tr class="rv-row" data-conclusion-row="{{ conclusion.id }}" data-state="{{ card.state }}"{% if card.legacy_bulk_approval %} data-legacy="yes"{% endif %} aria-expanded="false"><td><button type="button" class="rv-toggle" aria-expanded="false" aria-controls="conclusion-detail-{{ conclusion.id }}"><span class="t-title">{{ card.requirement_title }}</span><span class="t-sub">{{ requirement_reference(conclusion) }}</span></button></td><td class="hide-sm"><span class="pill {{ outcome_tones.get(conclusion.outcome, "c-neutral") }}">{{ outcome_labels.get(conclusion.outcome, conclusion.outcome) }}</span></td><td class="hide-sm"><span class="pill {{ risk_tones.get(conclusion.risk_level, "c-neutral") }}">{{ conclusion.risk_level|replace("_", " ")|title }}</span></td><td data-decision-cell>{{ decision_cell(card) }}</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+    <tr class="rv-detail" id="conclusion-detail-{{ conclusion.id }}" hidden><td colspan="5"><div class="rv-card">{% include "components/conclusion_card.html" %}</div></td></tr>
   {% endfor %}
-{% else %}
-<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-16 text-center">
-  <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">No conclusions yet. Run the gap analysis first.</h2>
+  {% if current_framework.value %}</tbody></table></div>{% endif %}
+  {% else %}<div class="glass empty"><svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-inbox"/></svg><h3>No conclusions yet</h3><p>Run the analysis to produce conclusions to review.</p><span class="sr-only">No conclusions yet. Run the gap analysis first.</span><a class="btn primary" href="/assessments/{{ assessment.id }}?tab=questionnaire">Run analysis</a></div>{% endif %}
 </div>
-{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script data-conclusion-rows>
+(() => {
+  const labels = { pending: '<span class="status"><span class="st"></span>Pending</span>', approved: '<span class="status"><svg class="i"><use href="#i-check"/></svg>Approved</span>', edited: '<span class="status"><svg class="i"><use href="#i-pen"/></svg>Edited and approved</span>', rejected: '<span class="status"><svg class="i"><use href="#i-x"/></svg>Rejected</span>' };
+  const setOpen = (row, open) => { const detail = document.getElementById("conclusion-detail-" + row.dataset.conclusionRow); if (!detail) return; detail.hidden = !open; row.setAttribute("aria-expanded", open ? "true" : "false"); const toggle = row.querySelector(".rv-toggle"); if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false"); };
+  document.addEventListener("click", (event) => { const row = event.target.closest && event.target.closest("tr.rv-row"); if (!row || event.target.closest("a")) return; setOpen(row, row.getAttribute("aria-expanded") !== "true"); });
+  const sync = () => { const counts = { pending: 0, rejected: 0, approved: 0, edited: 0, legacy_bulk: 0 }; document.querySelectorAll("tr.rv-row").forEach((row) => { const card = document.getElementById("conclusion-card-" + row.dataset.conclusionRow); const state = card ? card.dataset.state : row.dataset.state; if (state !== row.dataset.state) { row.dataset.state = state; row.removeAttribute("data-legacy"); const cell = row.querySelector("[data-decision-cell]"); if (cell && labels[state]) cell.innerHTML = labels[state]; } if (row.dataset.legacy === "yes") counts.legacy_bulk += 1; else if (counts[state] !== undefined) counts[state] += 1; }); Object.keys(counts).forEach((key) => { const node = document.querySelector('[data-count="' + key + '"]'); if (node) node.textContent = counts[key]; if (key === "legacy_bulk" && node && node.parentElement) node.parentElement.hidden = counts[key] === 0; }); };
+  document.body.addEventListener("htmx:afterSwap", sync);
+})();
+</script>
 {% endblock %}

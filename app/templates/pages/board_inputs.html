@@ -1,84 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Board inputs — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import icon, status %}
+{% set basis = report_basis_for(assessment) %}
+{% set errors = field_errors|default({}) %}
 
-{% block content %}
-<nav class="mb-2 text-xs text-gray-400 dark:text-gray-500">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Board inputs</span>
-</nav>
+{% macro level_options(selected) -%}
+<option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}"{% if selected == value %} selected{% endif %}>{{ value|replace("_", " ")|capitalize }}</option>{% endfor %}
+{%- endmacro %}
 
-<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Board inputs</h1>
-    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Add the reviewed context that will accompany the board report. These fields do not change findings, conclusions or action workflow.</p>
-  </div>
-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-    Reviewer name
-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
-  </label>
-</div>
+{% block title %}Board inputs · {{ assessment.display_name }}{% endblock %}
 
-<section class="mb-10">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Observations</h2>
-  <div class="space-y-5">
-    {% for view in page.findings %}
-    <article class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
-      <div class="mb-4">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ view.finding.title }}</h3>
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ view.finding.description }}</p>
-      </div>
-      <form data-board-finding="{{ view.finding.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/observations/{{ view.finding.id }}" hx-include="#reviewer-name" hx-swap="none" class="grid gap-4 sm:grid-cols-2">
-        <label class="text-sm text-gray-700 dark:text-gray-300">Why it matters<textarea name="business_impact" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{{ view.finding.business_impact or '' }}</textarea></label>
-        <label class="text-sm text-gray-700 dark:text-gray-300">Recommendation<textarea name="recommendation" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{{ view.finding.recommendation or '' }}</textarea></label>
-        <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save observation</button></div>
-      </form>
-      {% if view.actions %}
-      <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-4">
-        <h4 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Responsibility</h4>
-        <div class="space-y-3">
-          {% for action_view in view.actions %}
-          <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" hx-trigger="change" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span class="text-sm text-gray-600 dark:text-gray-300">{{ action_view.action.title }}</span>
-            <select name="responsibility" class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-48">
-              <option value="">Not recorded</option>
-              {% for value in responsibilities %}<option value="{{ value }}" {% if action_view.action.responsibility == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
-            </select>
-          </form>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-    </article>
-    {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No findings recorded.</p>{% endfor %}
-  </div>
-</section>
-
-<section class="mb-10">
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Initiatives</h2>
-  <div class="space-y-4">
-    {% for group in groups %}
-    {% set item = initiative_data.get(group.group_id, {}) %}
-    <form data-board-initiative="{{ group.group_id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/initiatives" hx-include="#reviewer-name" hx-swap="none" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm grid gap-4 sm:grid-cols-3">
-      <div class="sm:col-span-3"><h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ group.topic }}</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ group.headline }}</p></div>
-      <input type="hidden" name="group_id" value="{{ group.group_id }}">
-      <label class="text-sm text-gray-700 dark:text-gray-300 sm:col-span-3">Title<input name="title" value="{{ item.get('title') or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-      <label class="text-sm text-gray-700 dark:text-gray-300">Complexity<select name="complexity" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('complexity') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
-      <label class="text-sm text-gray-700 dark:text-gray-300">Benefit<select name="benefit" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Not recorded</option>{% for value in levels %}<option value="{{ value }}" {% if item.get('benefit') == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
-      <div class="sm:col-span-3"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save initiative</button></div>
-    </form>
-    {% else %}<p class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-sm text-gray-500 dark:text-gray-400">No current roadmap initiatives.</p>{% endfor %}
-  </div>
-</section>
-
-<section>
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Board decisions</h2>
-  <form data-board-asks hx-post="/api/assessments/{{ assessment.id }}/board-inputs/asks" hx-include="#reviewer-name" hx-swap="none" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm space-y-4">
-    {% for index in (1, 2, 3) %}<label class="block text-sm text-gray-700 dark:text-gray-300">Decision {{ index }}<input name="ask_{{ index }}" value="{{ asks.consultant[index - 1] if asks.consultant|length >= index else '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>{% endfor %}
-    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save board decisions</button>
-  </form>
-</section>
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Board inputs</b>
 {% endblock %}
 
+{% block content %}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+</svg>
+<div class="page-head">
+  <div>
+    <h1>Board inputs</h1>
+    <p class="meta-line">{% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }}{% else %}Assessment period not recorded{% endif %} · Evidence cut-off {{ basis.cutoff_label }}</p>
+  </div>
+  <div class="acts"></div>
+</div>
+{{ assessment_tabs(assessment, "report") }}
+<div class="nv-seg">{{ report_seg(assessment, "board-inputs") }}</div>
+<p class="sub nv-lede">Add the reviewed context that will accompany the board report. These fields do not change findings, conclusions or action workflow.</p>
+
+<div class="nv-reviewer">
+  <label class="label" for="reviewer-name">Reviewer name</label>
+  <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}" autocomplete="name"></label>
+</div>
+
+<div class="sec"><h2>Observations</h2><div class="acts"></div></div>
+{% if page.findings %}
+<div class="nv-stack">
+{% for view in page.findings %}
+{% set finding = view.finding %}
+{% set impact_error = errors.get(finding.id ~ ":business_impact") or errors.get(finding.id ~ ":impact") %}
+{% set recommendation_error = errors.get(finding.id ~ ":recommendation") %}
+<article class="glass bi-card" data-board-finding-card="{{ finding.id }}">
+  <div class="between"><div class="bi-head"><div class="t-title">{{ finding.title }}</div><div class="t-sub">{{ finding.description }}</div></div></div>
+  <form class="bi-form" data-board-finding="{{ finding.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/observations/{{ finding.id }}" hx-include="#reviewer-name" hx-swap="none">
+    <div class="fw-grid">
+      <div><label class="label" for="impact-{{ finding.id }}">Why it matters</label><label class="field area{% if impact_error %} invalid{% endif %}"><textarea id="impact-{{ finding.id }}" name="business_impact" rows="3">{{ finding.business_impact or "" }}</textarea></label>{% if impact_error %}<p class="err">{{ impact_error }}</p>{% endif %}</div>
+      <div><label class="label" for="recommendation-{{ finding.id }}">Recommendation</label><label class="field area{% if recommendation_error %} invalid{% endif %}"><textarea id="recommendation-{{ finding.id }}" name="recommendation" rows="3">{{ finding.recommendation or "" }}</textarea></label>{% if recommendation_error %}<p class="err">{{ recommendation_error }}</p>{% endif %}</div>
+    </div>
+    <div class="bi-foot">{% if recommendation_error or impact_error %}{{ status("Not saved", tone="non") }}{% endif %}<button type="submit" class="btn ghost sm">Save</button></div>
+  </form>
+  {% if view.actions %}
+  <div class="bi-resp">
+    <h3>Responsibility</h3>
+    {% for action_view in view.actions %}
+    <form data-board-action="{{ action_view.action.id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/actions/{{ action_view.action.id }}/responsibility" hx-include="#reviewer-name" hx-swap="none" hx-trigger="change">
+      <span>{{ action_view.action.title }}</span>
+      <label class="field"><select name="responsibility" aria-label="Responsibility for {{ action_view.action.title }}"><option value="">Not recorded</option>{% for value in responsibilities %}<option value="{{ value }}"{% if action_view.action.responsibility == value %} selected{% endif %}>{{ value|replace("_", " ")|capitalize }}</option>{% endfor %}</select></label>
+    </form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+</div>
+{% else %}
+<div class="solid"><div class="empty"><svg class="i big"><use href="#i-file"/></svg><h3>No findings recorded</h3></div></div>
+{% endif %}
+
+<div class="sec"><h2>Initiatives</h2><div class="acts"></div></div>
+{% if groups %}
+<div class="nv-stack">
+{% for group in groups %}
+{% set item = initiative_data.get(group.group_id, {}) %}
+{% set initiative_error = errors.get(group.group_id ~ ":title") %}
+<form data-board-initiative="{{ group.group_id }}" hx-post="/api/assessments/{{ assessment.id }}/board-inputs/initiatives" hx-include="#reviewer-name" hx-swap="none" class="glass bi-card bi-initiative">
+  <input type="hidden" name="group_id" value="{{ group.group_id }}">
+  <div class="between"><div class="bi-head"><div class="t-title">{{ group.topic }}</div><div class="t-sub">{{ group.headline }}</div></div></div>
+  <div><label class="label" for="initiative-title-{{ group.group_id }}">Title</label><label class="field{% if initiative_error %} invalid{% endif %}"><input id="initiative-title-{{ group.group_id }}" name="title" value="{{ item.get('title') or '' }}" placeholder="Short name for the board deck"></label>{% if initiative_error %}<p class="err">{{ initiative_error }}</p>{% endif %}</div>
+  <div class="form-grid">
+    <div><label class="label" for="complexity-{{ group.group_id }}">Complexity</label><label class="field"><select id="complexity-{{ group.group_id }}" name="complexity">{{ level_options(item.get("complexity")) }}</select></label></div>
+    <div><label class="label" for="benefit-{{ group.group_id }}">Benefit</label><label class="field"><select id="benefit-{{ group.group_id }}" name="benefit">{{ level_options(item.get("benefit")) }}</select></label></div>
+  </div>
+  <div class="bi-foot">{% if initiative_error %}{{ status("Not saved", tone="non") }}{% endif %}<button type="submit" class="btn ghost sm">Save</button></div>
+</form>
+{% endfor %}
+</div>
+{% else %}
+<div class="solid"><div class="empty"><svg class="i big"><use href="#i-chart"/></svg><h3>No current roadmap initiatives</h3></div></div>
+{% endif %}
+
+<div class="sec"><h2>Board decisions</h2><div class="acts"></div></div>
+<form data-board-asks hx-post="/api/assessments/{{ assessment.id }}/board-inputs/asks" hx-include="#reviewer-name" hx-swap="none" class="glass bi-card bi-asks">
+  {% for index in (1, 2, 3) %}<div><label class="label" for="ask-{{ index }}">Decision {{ index }}</label><label class="field"><input id="ask-{{ index }}" name="ask_{{ index }}" value="{{ asks.consultant[index - 1] if asks.consultant|length >= index else '' }}" maxlength="400"></label></div>{% endfor %}
+  <div class="bi-foot"><button type="submit" class="btn ghost sm">Save</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,560 @@
+diff --git a/app/static/css/yozora-patterns.css b/app/static/css/yozora-patterns.css
+index 54444aa..c35f2c8 100644
+--- a/app/static/css/yozora-patterns.css
++++ b/app/static/css/yozora-patterns.css
+@@ -266,4 +266,7 @@ button.item .txt{color:inherit}
+ .f-inline summary::-webkit-details-marker{display:none}
+ .f-form{padding:var(--s-6);margin-top:var(--s-3);display:flex;flex-direction:column;gap:var(--s-4)}
+ .f-form[hidden],.block[hidden]{display:none}
++.f-table tbody tr{position:relative}
++.f-table .t-title a{color:inherit}
++.f-table .t-title a::after{content:"";position:absolute;inset:0}
+ /* /s7-findings */
+diff --git a/app/templates/components/finding_card.html b/app/templates/components/finding_card.html
+index 3022d2a..bacb852 100644
+--- a/app/templates/components/finding_card.html
++++ b/app/templates/components/finding_card.html
+@@ -16,7 +16,7 @@
+ {% for row in view.actions if not lead.kind and row.allowed_statuses %}{% set lead.kind = 'status' %}{% set lead.id = row.action.id %}{% endfor %}
+ {% if not lead.kind %}{% set lead.kind = 'source' if (not view.source_approved and view.card) else 'add' %}{% endif %}
+ <article data-finding-card id="finding-{{ view.finding.id }}" data-finding-origin="{{ view.origin }}" data-source-approved="{{ 'true' if view.source_approved else 'false' }}" class="solid f-card" style="padding:var(--s-8) var(--s-10)">
+-  <div class="d-title"><h2 class="big">{{ view.finding.title }}</h2>{{ status_mark(view.finding.status, view.status_label) }}</div>
++  <div class="d-title"><h2 class="big">{{ view.finding.title }}</h2>{{ status_mark(view.finding.status, 'Verified' if view.finding.status == 'resolved' else view.status_label) }}</div>
+   <div class="meta">
+     <span class="pill {{ severity_tones.get(view.finding.severity, 'c-neutral') }}">{{ view.finding.severity|title }}</span>
+     {% if view.card %}<span class="chip">{{ framework_label(view.card.conclusion.framework_id) }}</span><span class="pill {{ outcome_tones.get(view.card.conclusion.outcome, 'c-neutral') }}">{{ view.card.conclusion.outcome|replace('_', ' ')|capitalize }}</span>{% endif %}
+diff --git a/app/templates/pages/findings.html b/app/templates/pages/findings.html
+index 7bbb87a..c78dde4 100644
+--- a/app/templates/pages/findings.html
++++ b/app/templates/pages/findings.html
+@@ -35,9 +35,9 @@
+   </div>
+   <div class="acts">
+     <div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap">
+-      {% if detail %}<a class="btn ghost" href="{{ lists }}">All findings</a>{% else %}<a data-board-inputs-link class="btn ghost" href="{{ base }}/board-inputs">Board inputs</a>{% endif %}
++      {% if detail %}<a class="btn ghost" href="{{ lists }}">All findings</a>{% endif %}
+       {% if engagement and not detail %}<a class="btn ghost" href="/engagements/{{ engagement.id }}/remediation">Open in engagement</a>{% endif %}
+-      <label class="field" style="min-width:12rem"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" aria-label="Your name" autocomplete="name"></label>
++      <label class="field" style="width:9.5rem"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" aria-label="Your name" autocomplete="name"></label>
+     </div>
+   </div>
+ </div>
+@@ -86,9 +86,9 @@
+ {% endfor %}
+ {% else %}<p class="muted">No approved conclusions are waiting for a finding.</p>{% endif %}
+ 
+-<div class="sec"><h2>Findings</h2></div>
++<div class="sec"><h2>Findings</h2><div class="acts" style="display:flex;gap:var(--s-2)"><a data-board-inputs-link class="btn ghost sm" href="{{ base }}/board-inputs">Board inputs</a></div></div>
+ {% if page.findings %}
+-<div class="solid">
++<div class="solid f-table">
+   <table>
+     <thead><tr><th>Finding</th><th style="width:110px">Severity</th><th class="hide-sm" style="width:190px">Status</th><th class="hide-sm" style="width:110px">Owner</th><th class="hide-sm n" style="width:130px">Next target</th><th class="hide-sm" style="width:44px"></th></tr></thead>
+     <tbody>
+@@ -101,10 +101,10 @@
+       <tr>
+         <td class="t-title"><a href="{{ lists }}?finding={{ view.finding.id }}">{{ view.finding.title }}</a></td>
+         <td><span class="pill {{ severity_tones.get(view.finding.severity, 'c-neutral') }}">{{ view.finding.severity|title }}</span></td>
+-        <td class="hide-sm">{{ mark(view.finding.status, view.status_label) }}</td>
++        <td class="hide-sm">{{ mark(view.finding.status, 'Verified' if view.finding.status == 'resolved' else view.status_label) }}</td>
+         <td class="hide-sm">{{ nxt.owner or 'Not set' }}</td>
+         <td class="hide-sm n num">{% if view.actions and nxt.done %}Done{% elif nxt.date %}{{ nxt.date|display_date }}{% else %}None set{% endif %}</td>
+-        <td class="go hide-sm"><a href="{{ lists }}?finding={{ view.finding.id }}" aria-label="Open {{ view.finding.title }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td>
++        <td class="go hide-sm"><svg class="i" aria-hidden="true"><use href="#i-chev-r"/></svg></td>
+       </tr>
+       {% endfor %}
+     </tbody>
+diff --git a/design/harness/seed_s7_findings.py b/design/harness/seed_s7_findings.py
+new file mode 100644
+index 0000000..26aaef1
+--- /dev/null
++++ b/design/harness/seed_s7_findings.py
+@@ -0,0 +1,476 @@
++"""S7 findings group: b5-findings, b5-finding-card and the b7 dark dense specimen.
++
++Everything here is database state (no preview fixtures): findings, actions and their histories are
++written as rows with fixed timestamps, the way the findings service would have stored them, so the
++page renders the same text every run. Dates follow the mockup (22 Sep 2026 created, 24 Sep approved).
++"""
++
++from __future__ import annotations
++
++import json
++from datetime import datetime, timezone
++
++from app.models.action import Action
++from app.models.conclusion import Conclusion, ConclusionRevision
++from app.models.evidence import Evidence, EvidenceVersion
++from app.models.finding import Finding
++from design.harness.seed_s4 import SEED_ACTOR, _audit
++
++ARJUN = "consultant:Arjun Mehta"
++
++SCREEN_STATES = {
++    "b5-findings": ("default", "create", "empty"),
++    "b5-finding-card": (
++        "open",
++        "in-progress",
++        "no-evidence",
++        "verify",
++        "verified",
++        "legacy",
++        "source-changed",
++        "migrated",
++        "add-action",
++    ),
++    "b7-dark-dense": ("dense",),
++}
++
++ELIGIBLE_ID = "conclusion-s7f-eligible"
++CARD_FINDING_ID = "finding-s7f-backups"
++
++
++def _sep(day: int, hour: int = 12) -> datetime:
++    return datetime(2026, 9, day, hour, tzinfo=timezone.utc)
++
++
++def _date(year: int, month: int, day: int) -> datetime:
++    return datetime(year, month, day, tzinfo=timezone.utc)
++
++
++def _entry(action: str, actor: str, when: datetime, *, notes=None, changes=None, evidence=None) -> dict:
++    entry = {
++        "actor": actor,
++        "action": action,
++        "timestamp": when.isoformat(),
++        "notes": notes,
++        "changes": changes or {},
++    }
++    if evidence is not None:
++        entry["evidence"] = evidence
++    return entry
++
++
++def _created(action_title: str, owner: str | None, target: datetime | None, when: datetime, actor: str = SEED_ACTOR) -> dict:
++    return _entry(
++        "created",
++        actor,
++        when,
++        changes={
++            "title": {"from": None, "to": action_title},
++            "owner": {"from": None, "to": owner},
++            "target_date": {"from": None, "to": target.date().isoformat() if target else None},
++            "status": {"from": None, "to": "open"},
++        },
++    )
++
++
++def _started(when: datetime = None) -> dict:
++    return _entry("status_changed", ARJUN, when or _sep(26), changes={"status": {"from": "open", "to": "in_progress"}})
++
++
++def _closed(evidence: dict, when: datetime = None) -> dict:
++    return _entry(
++        "closed",
++        ARJUN,
++        when or _sep(28),
++        changes={"status": {"from": "in_progress", "to": "closed"}},
++        evidence=evidence,
++    )
++
++
++def _verified(when: datetime = None) -> dict:
++    return _entry("verified", SEED_ACTOR, when or _sep(30), changes={"status": {"from": "closed", "to": "verified"}})
++
++
++def _evidence_rows(db, assessment, engagement) -> dict:
++    rows = {}
++    for index, (name, version) in enumerate((("backup_encryption_config.pdf", 1), ("kms_key_policy.pdf", 2))):
++        evidence = Evidence(
++            id=f"evidence-s7f-{index}",
++            engagement_id=engagement.id,
++            assessment_id=assessment.id,
++            original_filename=name,
++            storage_path=f"evidence/{engagement.id}/s7f-{index}.pdf",
++            file_hash_sha256=f"{index + 1:064x}",
++            file_size_bytes=2048,
++            mime_type="application/pdf",
++            status="active",
++            uploaded_by=SEED_ACTOR,
++            created_at=_sep(20 + index),
++        )
++        db.add(evidence)
++        db.flush()
++        row = EvidenceVersion(
++            id=f"evidence-version-s7f-{index}",
++            evidence_id=evidence.id,
++            version_number=version,
++            storage_path=evidence.storage_path,
++            file_hash_sha256=evidence.file_hash_sha256,
++            file_size_bytes=2048,
++            status="active",
++            original_filename=name,
++            mime_type="application/pdf",
++            created_at=_sep(20 + index),
++        )
++        db.add(row)
++        db.flush()
++        rows[name] = {
++            "evidence_id": evidence.id,
++            "evidence_version_id": row.id,
++            "version_number": version,
++            "sha256": row.file_hash_sha256,
++            "filename": name,
++        }
++    return rows
++
++
++def _conclusion(
++    db,
++    assessment,
++    key: str,
++    requirement_id: str,
++    *,
++    outcome: str = "partially_compliant",
++    risk: str = "medium",
++    decided: str | None = "approved",
++    decided_at: datetime | None = None,
++    actor: str = SEED_ACTOR,
++    reopened: bool = False,
++) -> Conclusion:
++    conclusion = Conclusion(
++        id=key,
++        assessment_id=assessment.id,
++        framework_id="dpdpa",
++        requirement_id=requirement_id,
++        outcome=outcome,
++        rationale="Production databases are encrypted. Nightly backups to the secondary region are not.",
++        evidence_summary="Architecture note and backup configuration.",
++        gaps_identified="Nightly backups to the secondary region are not encrypted at rest.",
++        risk_level=risk,
++        recommended_action="Enable encryption on backup storage.",
++        ai_proposed=False,
++        created_at=_sep(15),
++        updated_at=_sep(15),
++    )
++    db.add(conclusion)
++    db.flush()
++    db.add(
++        ConclusionRevision(
++            id=f"revision-proposed-{key}",
++            conclusion_id=key,
++            actor="system:analysis",
++            action="proposed",
++            created_at=_sep(15),
++        )
++    )
++    if decided:
++        db.add(
++            ConclusionRevision(
++                id=f"revision-{decided}-{key}",
++                conclusion_id=key,
++                actor=actor,
++                action=decided,
++                created_at=decided_at or _sep(20),
++            )
++        )
++    if reopened:
++        db.add(
++            ConclusionRevision(
++                id=f"revision-reopened-{key}",
++                conclusion_id=key,
++                actor=SEED_ACTOR,
++                action="reopened",
++                created_at=_sep(29),
++            )
++        )
++    db.flush()
++    return conclusion
++
++
++def _finding(
++    db,
++    assessment,
++    key: str,
++    requirement_id: str,
++    title: str,
++    *,
++    description: str,
++    severity: str,
++    priority: int,
++    status: str,
++    actions: list[dict],
++    outcome: str = "partially_compliant",
++    origin: str = "consultant",
++    reopened: bool = False,
++    created: datetime | None = None,
++) -> Finding:
++    created = created or _sep(22)
++    conclusion = _conclusion(
++        db,
++        assessment,
++        f"conclusion-{key}",
++        requirement_id,
++        outcome=outcome,
++        risk=severity,
++        reopened=reopened,
++    )
++    finding = Finding(
++        id=f"finding-{key}" if key != "backups" else CARD_FINDING_ID,
++        assessment_id=assessment.id,
++        conclusion_id=conclusion.id,
++        title=title,
++        description=description,
++        severity=severity,
++        priority=priority,
++        status=status,
++        created_at=created,
++        updated_at=created,
++    )
++    db.add(finding)
++    db.flush()
++    for index, spec in enumerate(actions):
++        db.add(
++            Action(
++                id=f"action-{key}-{index}",
++                finding_id=finding.id,
++                title=spec["title"],
++                owner=spec.get("owner"),
++                responsibility=spec.get("responsibility"),
++                target_date=spec.get("target"),
++                status=spec["status"],
++                history_json=json.dumps(spec["history"]),
++                created_at=created,
++                updated_at=created,
++            )
++        )
++    if origin == "consultant":
++        db.add(
++            _audit(
++                f"audit-finding-{key}",
++                action="finding_created",
++                entity_type="finding",
++                entity_id=finding.id,
++                created_at=created,
++                metadata={"assessment_id": assessment.id, "conclusion_id": conclusion.id},
++            )
++        )
++    db.flush()
++    return finding
++
++
++BACKUP_DESCRIPTION = (
++    "Production databases are encrypted. Nightly backups to the secondary region are not, "
++    "so a copy of customer records sits unencrypted."
++)
++ENABLE = "Enable encryption on backup storage"
++RESTORE = "Add a restore test for encrypted backups"
++OWNER = "Meridian infrastructure"
++
++
++def _backup_action(status: str, history: list[dict], **extra) -> dict:
++    return {
++        "title": ENABLE,
++        "owner": OWNER,
++        "responsibility": "client",
++        "target": _date(2026, 11, 30),
++        "status": status,
++        "history": history,
++        **extra,
++    }
++
++
++def _eligible(db, assessment) -> None:
++    _conclusion(
++        db,
++        assessment,
++        ELIGIBLE_ID,
++        "CH2.SECURITY.1",
++        outcome="partially_compliant",
++        risk="medium",
++        decided_at=_sep(24),
++    )
++
++
++def _list_findings(db, assessment) -> None:
++    rows = (
++        ("consent", "CH2.CONSENT.3", "No in-app consent withdrawal", "high", 1, "open", "open", "client", _date(2026, 11, 30)),
++        ("mfa", "CH2.SECURITY.2", "Three service accounts exempt from MFA", "high", 1, "in_progress", "in_progress", "client", _date(2026, 11, 15)),
++        ("dr", "CH2.SECURITY.3", "DR failover exceeded the 4-hour RTO", "medium", 2, "in_progress", "in_progress", "shared", _date(2026, 12, 31)),
++        ("notice", "CH2.NOTICE.1", "Privacy notice available in English only", "medium", 2, "resolved", "verified", "client", _date(2026, 10, 15)),
++    )
++    for key, requirement, title, severity, priority, status, action_status, responsibility, target in rows:
++        history = [_created(f"Fix: {title}", OWNER, target, _sep(22))]
++        if action_status in ("in_progress", "verified"):
++            history.append(_started())
++        if action_status == "verified":
++            history.append(_closed({"evidence_id": "e", "evidence_version_id": "v", "version_number": 1, "sha256": "0" * 64, "filename": "notice.pdf"}))
++            history.append(_verified())
++        _finding(
++            db,
++            assessment,
++            key,
++            requirement,
++            title,
++            description=title,
++            severity=severity,
++            priority=priority,
++            status=status,
++            actions=[
++                {
++                    "title": f"Fix: {title}",
++                    "owner": OWNER,
++                    "responsibility": responsibility,
++                    "target": target,
++                    "status": action_status,
++                    "history": history,
++                }
++            ],
++        )
++
++
++DENSE_ROWS = (
++    ("d1", "CH2.CONSENT.3", "No in-app consent withdrawal", "high", "open", "client"),
++    ("d2", "CH2.SECURITY.2", "Breach notification runbook not tested in 12 months", "high", "in_progress", "client"),
++    ("d3", "CH2.SECURITY.3", "Processor contracts lack deletion clauses", "medium", "open", "shared"),
++    ("d4", "CH2.NOTICE.1", "Privacy notice not offered in Hindi or Marathi", "medium", "in_progress", "client"),
++    ("d5", "CH2.MINIMIZE.3", "No retention schedule for support tickets", "medium", "open", "client"),
++    ("d6", "CH4.CHILD.3", "Age gate for children's data not verified", "low", "open", "shared"),
++    ("d7", "CH2.NOTICE.2", "Cookie banner pre-selects analytics", "low", "in_progress", "client"),
++    ("d8", "CH3.GRIEVANCE.1", "Grievance officer contact outdated on website", "low", "resolved", "client"),
++)
++
++
++def _dense_findings(db, assessment) -> None:
++    for key, requirement, title, severity, status, responsibility in DENSE_ROWS:
++        action_status = {"open": "open", "in_progress": "in_progress", "resolved": "verified"}[status]
++        history = [_created(f"Fix: {title}", OWNER, _date(2026, 12, 15), _sep(22))]
++        if action_status != "open":
++            history.append(_started())
++        if action_status == "verified":
++            history.append(_closed({"evidence_id": "e", "evidence_version_id": "v", "version_number": 1, "sha256": "0" * 64, "filename": "contact.pdf"}))
++            history.append(_verified())
++        _finding(
++            db,
++            assessment,
++            key,
++            requirement,
++            title,
++            description=title,
++            severity=severity,
++            priority=2,
++            status=status,
++            actions=[
++                {
++                    "title": f"Fix: {title}",
++                    "owner": OWNER,
++                    "responsibility": responsibility,
++                    "target": _date(2026, 12, 15),
++                    "status": action_status,
++                    "history": history,
++                }
++            ],
++        )
++
++
++def _card_state(db, assessment, engagement, state: str) -> None:
++    evidence = _evidence_rows(db, assessment, engagement) if state != "no-evidence" else {}
++    config = evidence.get("backup_encryption_config.pdf")
++    created = _created(ENABLE, OWNER, _date(2026, 11, 30), _sep(22))
++    second = {
++        "title": RESTORE,
++        "owner": OWNER,
++        "responsibility": "client",
++        "target": _date(2026, 12, 31),
++        "status": "open",
++        "history": [_created(RESTORE, OWNER, _date(2026, 12, 31), _sep(22))],
++    }
++    finding_status = "in_progress"
++    reopened = False
++    origin = "consultant"
++    if state == "open":
++        actions = [_backup_action("open", [created]), second]
++        finding_status = "open"
++    elif state in ("in-progress", "no-evidence", "source-changed", "add-action"):
++        actions = [_backup_action("in_progress", [created, _started()])]
++        reopened = state == "source-changed"
++    elif state == "verify":
++        actions = [_backup_action("closed", [created, _started(), _closed(config)])]
++    elif state == "verified":
++        actions = [_backup_action("verified", [created, _started(), _closed(config), _verified()])]
++        finding_status = "resolved"
++    elif state == "legacy":
++        actions = [_backup_action("closed", [created, _started()])]
++    elif state == "migrated":
++        actions = [
++            {
++                "title": ENABLE,
++                "owner": None,
++                "responsibility": None,
++                "target": None,
++                "status": "open",
++                "history": [
++                    _entry(
++                        "imported",
++                        "system:migration",
++                        _date(2026, 8, 12),
++                        notes=None,
++                        changes={"status": {"from": None, "to": "open"}},
++                    )
++                ],
++            }
++        ]
++        finding_status = "open"
++        origin = "migrated"
++    else:
++        raise ValueError(state)
++    _finding(
++        db,
++        assessment,
++        "backups",
++        "CH2.SECURITY.2",
++        "Backups are not encrypted at rest",
++        description=BACKUP_DESCRIPTION,
++        severity="medium",
++        priority=2,
++        status=finding_status,
++        actions=actions,
++        origin=origin,
++        reopened=reopened,
++    )
++
++
++def apply(db, screen, state, assessment, engagement, data) -> dict:
++    if screen == "b5-findings":
++        if state in ("default", "create"):
++            _eligible(db, assessment)
++            _list_findings(db, assessment)
++        note = "Approved conclusion, four findings with one action each, written as database rows."
++        if state == "empty":
++            note = "Assessment with no approved conclusion and no findings."
++        return {"data_state": "database", "note": note}
++    if screen == "b5-finding-card":
++        _card_state(db, assessment, engagement, state)
++        return {"data_state": "database", "note": f"One finding in the {state} state, written as database rows."}
++    if screen == "b7-dark-dense":
++        _dense_findings(db, assessment)
++        return {"data_state": "database", "note": "Eight findings (2 high, 3 medium, 3 low) as database rows."}
++    raise ValueError(screen)
++
++
++def route(screen: str, state: str, assessment_id: str) -> str:
++    base = f"/assessments/{assessment_id}/findings"
++    if screen == "b5-findings":
++        return f"{base}?create={ELIGIBLE_ID}" if state == "create" else base
++    if screen == "b5-finding-card":
++        suffix = "&add=1" if state == "add-action" else ""
++        return f"{base}?finding={CARD_FINDING_ID}{suffix}"
++    return base
+diff --git a/design/yozora-patterns.css b/design/yozora-patterns.css
+index 54444aa..c35f2c8 100644
+--- a/design/yozora-patterns.css
++++ b/design/yozora-patterns.css
+@@ -266,4 +266,7 @@ button.item .txt{color:inherit}
+ .f-inline summary::-webkit-details-marker{display:none}
+ .f-form{padding:var(--s-6);margin-top:var(--s-3);display:flex;flex-direction:column;gap:var(--s-4)}
+ .f-form[hidden],.block[hidden]{display:none}
++.f-table tbody tr{position:relative}
++.f-table .t-title a{color:inherit}
++.f-table .t-title a::after{content:"";position:absolute;inset:0}
+ /* /s7-findings */

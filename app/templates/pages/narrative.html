@@ -1,80 +1,139 @@
 {% extends "base.html" %}
-{% block title %}Report narrative — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import empty_state, icon, status %}
+{% set basis = report_basis_for(assessment) %}
+{% set is_generating = generating|default(false) %}
+
+{# Display order: executive overview, across frameworks, then one card per framework in scope. #}
+{% set ordered = (sections|selectattr("section.section_id", "equalto", "executive")|list)
+  + (sections|selectattr("section.section_id", "equalto", "cross-framework")|list)
+  + (sections|rejectattr("section.section_id", "in", ["executive", "cross-framework"])|list) %}
+{% set ns = namespace(has_content=false, primary_section="") %}
+{% for item in ordered %}
+  {% if item.section.status != "none" %}{% set ns.has_content = true %}{% endif %}
+  {% if not ns.primary_section and (item.section.status == "draft" or (item.section.status == "accepted" and item.section.stale)) %}
+    {% set ns.primary_section = item.section.section_id %}
+  {% endif %}
+{% endfor %}
+{% set page_primary = not ns.has_content and not is_generating and released and sections %}
+
+{% macro section_title(section) -%}
+{% if section.section_id == "executive" %}Executive overview{% elif section.section_id == "cross-framework" %}Across frameworks{% else %}{{ framework_label(section.framework_id, true) }} posture{% endif %}
+{%- endmacro %}
+
+{% block title %}Narrative · {{ assessment.display_name }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Narrative</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Report narrative</span>
-</nav>
-
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Report narrative</h1>
-  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">Draft the board-report narrative from approved findings, then edit and accept each section.</p>
-</div>
-
-<div class="mb-6 max-w-sm">
-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-</div>
-
-{% if not released %}
-<p data-narrative-unreleased class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">The report must be released before the narrative can be drafted or accepted.</p>
-{% endif %}
-
-{% if blockers %}
-<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-  {% for blocker in blockers %}<p data-narrative-blocker>{{ blocker }}</p>{% endfor %}
-</div>
-{% endif %}
-
-<div class="mb-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Approved findings</h2>
-  {% if state.findings %}
-  <ul class="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-    {% for ref in state.findings %}<li data-finding-ref="{{ ref.alias }}"><span class="font-mono">{{ ref.alias }}</span>: {{ ref.title }} ({{ ref.framework_name }} {{ ref.requirement_id }})</li>{% endfor %}
-  </ul>
-  {% else %}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No approved findings are available.</p>{% endif %}
-</div>
-
-<form class="mb-6" hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
-  <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Draft missing or stale sections</button>
-</form>
-
-<div class="space-y-6">
-{% for item in sections %}
-{% set section = item.section %}
-<section data-narrative-section="{{ section.section_id }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ section.label }}</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Status: {{ section.status }}{% if section.stale %} (stale){% endif %}</p>
-    </div>
-    <form hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
-      <input type="hidden" name="section_id" value="{{ section.section_id }}">
-      <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 text-xs font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Regenerate</button>
-    </form>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+<div class="page-head">
+  <div>
+    <h1>Narrative</h1>
+    <p class="meta-line">{% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }}{% else %}Assessment period not recorded{% endif %} · Evidence cut-off {{ basis.cutoff_label }}</p>
   </div>
-  {% if section.dropped %}
-  <div class="mb-3 text-xs text-amber-700 dark:text-amber-300">
-    {% for dropped in section.dropped %}<p data-narrative-dropped>Draft sentence dropped ({{ dropped.reason }}): {{ dropped.text }}</p>{% endfor %}
-  </div>
-  {% endif %}
-  <form data-narrative-accept-form hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/accept" hx-include="#reviewer-name" hx-swap="none">
-    <input type="hidden" name="findings_sha256" value="{{ state.findings_sha256 }}">
-    <textarea name="text" rows="6" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ item.text }}</textarea>
-    <div class="mt-2 flex flex-wrap gap-2">
-      <button type="submit" class="rounded-md bg-brand px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Save and accept</button>
-    </div>
+  <div class="acts"></div>
+</div>
+{{ assessment_tabs(assessment, "report") }}
+<div class="nv-seg">{{ report_seg(assessment, "narrative") }}</div>
+<p class="sub nv-lede">Draft the board-report narrative from approved findings, then edit and accept each section.</p>
+
+{% if released and sections %}
+<div class="nv-acts">
+    <form data-narrative-generate hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none" style="display:contents">
+    <button type="submit" class="btn {{ 'secondary loading' if is_generating else 'primary' if page_primary else 'secondary' }}"{% if is_generating %} aria-busy="true"{% endif %}>{% if is_generating %}Drafting…{% else %}Draft missing or stale sections{% endif %}</button>
   </form>
-  <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Regenerating replaces this section's text with a new draft; earlier text stays in the history.</p>
-  <form class="mt-2" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none">
-    <button type="submit" class="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Discard</button>
+</div>
+{% endif %}
+
+{% if is_generating %}<div class="alert c-accent nv-alert" role="status" aria-busy="true">{{ icon("clock") }}<div><b>Drafting narrative…</b>Each section is being prepared from the approved findings.</div></div><div class="nv-gap"></div>{% endif %}
+
+{% if not released or blockers %}
+<div class="alert c-medium nv-alert" role="status"{% if blockers %} data-narrative-blockers{% endif %}>
+  {{ icon("alert") }}
+  <div>
+    {% if not released %}<span data-narrative-unreleased>The report must be released before the narrative can be drafted or accepted.</span>{% endif %}
+    {% if blockers %}<b>Review the narrative before generating a board report version</b>
+    <ul>
+      {% set shown = namespace(items=[]) %}
+      {% for item in ordered %}{% for blocker in blockers if blocker.startswith(item.section.label ~ ":") %}{% set shown.items = shown.items + [blocker] %}<li data-narrative-blocker>{{ section_title(item.section) }}{{ blocker[item.section.label|length:] }}</li>{% endfor %}{% endfor %}
+      {% for blocker in blockers if blocker not in shown.items %}<li data-narrative-blocker>{{ blocker }}</li>{% endfor %}
+    </ul>{% endif %}
+  </div>
+</div>
+<div class="nv-gap"></div>
+{% endif %}
+
+<div class="nv-reviewer">
+  <label class="label" for="reviewer-name">Consultant name</label>
+  <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}" autocomplete="name"></label>
+</div>
+
+{% if state.findings %}
+<details class="nv-findings">
+  <summary class="btn ghost sm">Approved findings, {{ state.findings|length }}{{ icon("chev-d") }}</summary>
+  <div class="glass"><div class="domains">
+    {% for ref in state.findings %}<a id="ref-{{ ref.alias }}" data-finding-ref="{{ ref.alias }}" href="/assessments/{{ assessment.id }}/findings#finding-{{ ref.finding_id }}"><span class="chip">{{ ref.alias }}</span><span class="nv-title">{{ ref.title }}</span><span class="muted">{{ framework_label(ref.framework_id, true) }} {{ ref.requirement_id }}</span></a>{% endfor %}
+  </div></div>
+</details>
+{% else %}
+<div class="nv-findings">{{ empty_state("No approved findings yet", "Approve findings before drafting the board narrative.", icon_id="file") }}</div>
+{% endif %}
+
+{% set locked = not released or is_generating %}
+<div class="nv-stack">
+{% for item in ordered %}
+{% set section = item.section %}
+{% set title = section_title(section) %}
+<section class="glass nv-card" data-narrative-section="{{ section.section_id }}">
+  <div class="between">
+    <div class="stack-s">
+      <h2>{{ title }}</h2>
+      <div class="nv-status">
+        {% if section.status == "accepted" %}{{ status("Accepted", tone="ok") }}{% if section.stale %}<span class="warn">{{ icon("alert") }} Findings changed since this was written</span>{% endif %}{% elif section.status == "draft" %}{{ status("Draft, not accepted", tone="accent") }}{% else %}{{ status("Not drafted", tone="insuf") }}{% endif %}
+      </div>
+    </div>
+    <div>
+      <form class="narrative-regenerate" hx-post="/api/assessments/{{ assessment.id }}/narrative/generate" hx-include="#reviewer-name" hx-swap="none">
+        <input type="hidden" name="section_id" value="{{ section.section_id }}">
+        <button type="submit" class="btn ghost sm lead"{% if locked %} disabled{% endif %}>{{ icon("refresh") }} Regenerate</button>
+      </form>
+    </div>
+  </div>
+
+  {% if section.dropped %}<div class="stack-s nv-dropped">{% for dropped in section.dropped %}<p class="warn" data-narrative-dropped>{{ icon("alert") }}<span>Draft sentence left out: {{ dropped.text }}</span></p>{% endfor %}</div>{% endif %}
+
+  <form class="nv-form" data-narrative-accept-form hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/accept" hx-include="#reviewer-name" hx-swap="none">
+    <input type="hidden" name="findings_sha256" value="{{ state.findings_sha256 }}">
+    <label class="field area"><textarea id="narrative-{{ section.section_id }}" name="text" rows="6" aria-label="{{ title }} text"{% if not item.text %} placeholder="No draft yet. Draft this section from the approved findings, or write it yourself."{% endif %}{% if locked %} disabled{% endif %}>{{ item.text }}</textarea></label>
+    {% set cited = state.findings|selectattr("alias", "in", item.text)|list if item.text else [] %}
+    {% if cited %}<div class="nv-cites"><div class="chips"><span class="sub">Cites</span>{% for ref in cited %}<a class="chip" href="#ref-{{ ref.alias }}">{{ ref.alias }}</a>{% endfor %}</div></div>{% endif %}
+    {% if item.text %}<p class="help">Regenerating replaces this section’s text with a new draft. Earlier text stays in the history.</p>{% endif %}
+    <div class="nv-buttons">
+      <button type="submit" class="btn {{ 'primary' if section.section_id == ns.primary_section and released and not is_generating else 'secondary' }}"{% if locked %} disabled{% endif %}>Save and accept</button>
+      {% if section.status != "none" %}<button type="button" class="btn ghost" hx-post="/api/assessments/{{ assessment.id }}/narrative/{{ section.section_id }}/discard" hx-include="#reviewer-name" hx-swap="none"{% if locked %} disabled{% endif %}>Discard</button>{% endif %}
+    </div>
   </form>
 </section>
-{% endfor %}
+{% else %}{{ empty_state("No narrative sections", "Approved findings will appear here when the report is ready.", icon_id="file") }}{% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('htmx:beforeRequest', (event) => {
+    const form = event.detail.elt?.closest?.('form');
+    const button = form?.querySelector('button[type="submit"]');
+    if (!button || !form?.matches('[data-narrative-generate], .narrative-regenerate')) return;
+    button.classList.remove('primary');
+    button.classList.add('secondary', 'loading');
+    button.setAttribute('aria-busy', 'true');
+  });
+</script>
 {% endblock %}

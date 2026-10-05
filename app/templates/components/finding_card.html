@@ -1,111 +1,153 @@
-<article data-finding-card id="finding-{{ view.finding.id }}" data-finding-origin="{{ view.origin }}" data-source-approved="{{ 'true' if view.source_approved else 'false' }}" class="scroll-mt-6 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-  <header class="border-b border-gray-100 dark:border-gray-800 px-5 py-4">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ view.finding.title }}</h3>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ view.finding.severity|title }} · Priority {{ view.finding.priority }} · Status: {{ view.status_label }}</p>
-      </div>
-      {% if view.workpaper_href %}<a href="{{ view.workpaper_href }}" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>{% endif %}
-    </div>
-    {% if view.card %}<p class="mt-3 text-sm text-gray-600 dark:text-gray-300"><span class="font-semibold">{{ view.card.conclusion.framework_id|upper }}</span> · <span class="font-mono">{{ view.card.conclusion.requirement_id }}</span> · {{ view.card.requirement_title }} · {{ view.card.conclusion.outcome|replace('_', ' ')|title }}</p>{% endif %}
-    {% if view.origin == 'migrated' %}<p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Migrated from legacy remediation</p>{% else %}<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Created by {{ view.created_by }}</p>{% endif %}
-    {% if view.card and view.card.legacy_bulk_approval %}<p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Legacy bulk approval, not individually reviewed</p>{% endif %}
-    {% if not view.source_approved %}<p class="mt-2 text-sm font-medium text-amber-700 dark:text-amber-300">Source conclusion is no longer approved (now {{ view.card.state if view.card else 'missing' }}). Review it before relying on this finding.</p>{% endif %}
-    <p class="mt-3 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ view.finding.description }}</p>
-  </header>
+{# One finding with its actions (S4 remediation), drawn to b5-finding-card. Rendered on the
+   finding detail view and returned by every action route (hx-swap outerHTML). Exactly one
+   visible primary: the first control that moves the work on, else Add action. #}
+{% set severity_tones = {"critical": "critical", "high": "high", "medium": "medium", "low": "low"} %}
+{% set outcome_tones = {"compliant": "ok", "partially_compliant": "part", "non_compliant": "non", "insufficient_evidence": "insuf"} %}
+{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence"} %}
+{% set status_words = {"open": "Open", "in_progress": "In progress", "closed": "Closed, to verify", "verified": "Verified"} %}
+{% set finding_url = "/api/assessments/" ~ assessment.id ~ "/findings/" ~ view.finding.id %}
+{% set detail_href = "/assessments/" ~ assessment.id ~ "/findings?finding=" ~ view.finding.id %}
+{% set adding = adding is defined and adding %}
+{% set action_statuses = view.actions | map(attribute="action.status") | list %}
+{% set awaiting_verification = view.finding.status == "in_progress" and action_statuses and "closed" in action_statuses and (action_statuses | reject("in", ["closed", "verified"]) | list | length) == 0 %}
+{% set primary = namespace(used=adding or (not view.source_approved and view.card is not none), first_open=true) %}
+{% macro edit_details(row) -%}
+<details class="f-more">
+  <summary class="btn ghost sm">Edit details</summary>
+  <form hx-post="{{ finding_url }}/actions/{{ row.action.id }}/update" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="f-more-body">
+    <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+    <div><label class="label" for="et-{{ row.action.id }}">Title</label><label class="field"><input id="et-{{ row.action.id }}" name="title" value="{{ row.action.title }}"></label></div>
+    <div class="fw-grid"><div><label class="label" for="eo-{{ row.action.id }}">Owner</label><label class="field"><input id="eo-{{ row.action.id }}" name="owner" value="{{ row.action.owner or '' }}"></label></div><div><label class="label" for="ed-{{ row.action.id }}">Target date</label><label class="field"><input id="ed-{{ row.action.id }}" type="date" name="target_date" value="{{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else '' }}"></label></div></div>
+    <div><label class="label" for="en-{{ row.action.id }}">Notes</label><label class="field"><input id="en-{{ row.action.id }}" name="notes"></label></div>
+    <div><button type="submit" class="btn secondary">Save details</button></div>
+  </form>
+</details>
+{%- endmacro %}
+{% macro reopen_details(row, size="sm") -%}
+<details class="f-more" data-reopen-control>
+  <summary class="btn ghost{{ ' sm' if size == 'sm' else '' }}">Reopen</summary>
+  <form hx-post="{{ finding_url }}/actions/{{ row.action.id }}/reopen" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="f-more-body">
+    <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+    <div><label class="label" for="ro-{{ row.action.id }}">Reason for reopening</label><label class="field area"><textarea id="ro-{{ row.action.id }}" name="notes" rows="2" required></textarea></label></div>
+    <div><button type="submit" class="btn secondary">Reopen action</button></div>
+  </form>
+</details>
+{%- endmacro %}
+{% macro state_status(state, label) -%}
+{% if state in ("verified", "resolved") %}<span class="status"><svg class="i"><use href="#i-check"/></svg> {{ label }}</span>{% elif state == "closed" %}<span class="status"><svg class="i"><use href="#i-clock"/></svg> {{ label }}</span>{% elif state == "in_progress" %}<span class="status"><span class="st prog"></span>{{ label }}</span>{% else %}<span class="status"><span class="st"></span>{{ label }}</span>{% endif %}
+{%- endmacro %}
+<article data-finding-card id="finding-{{ view.finding.id }}" data-finding-origin="{{ view.origin }}" data-source-approved="{{ 'true' if view.source_approved else 'false' }}" class="solid f-card">
+  <div class="d-title">
+    <h2 class="big">{{ view.finding.title }}</h2>
+    <span class="sr-only">Status: {{ view.status_label }}</span>
+    {% if view.finding.status == "resolved" %}{{ state_status("verified", "Verified") }}{% elif awaiting_verification %}{{ state_status("closed", "Closed, to verify") }}{% elif view.finding.status == "accepted_risk" %}<span class="status"><span class="dot c-neutral"></span>{{ view.status_label }}</span>{% else %}{{ state_status(view.finding.status, view.status_label) }}{% endif %}
+  </div>
+  <div class="meta">
+    <span class="pill c-{{ severity_tones.get(view.finding.severity, 'neutral') }}">{{ view.finding.severity|capitalize }}</span>
+    {% if view.card %}<span class="chip">{{ framework_label(view.card.conclusion.framework_id) }}</span><span class="pill c-{{ outcome_tones.get(view.card.conclusion.outcome, 'neutral') }}">{{ outcome_labels.get(view.card.conclusion.outcome, view.card.conclusion.outcome|replace('_', ' ')|capitalize) }}</span>{% endif %}
+    {% if view.origin == "migrated" %}<span class="ref">Migrated from the earlier remediation tracker</span>{% else %}<span class="ref">Created by {{ view.created_by }} on {{ view.finding.created_at|display_date }}</span>{% endif %}
+    {% if view.workpaper_href %}<a class="btn ghost sm lead" href="{{ view.workpaper_href }}"><svg class="i"><use href="#i-link"/></svg>Workpaper trace</a>{% endif %}
+  </div>
+  {% if view.card and view.card.legacy_bulk_approval %}<p class="help">Legacy bulk approval, not individually reviewed</p>{% endif %}
+  {% if not view.source_approved %}<div class="alert c-medium f-mt6"><svg class="i"><use href="#i-alert"/></svg><div><b>The source conclusion is no longer approved</b>{% if view.card %}It is now {{ view.card.state|replace('_', ' ') }}. {% endif %}Read it before you rely on this finding.</div></div>{% endif %}
+  <p class="concl f-mt4">{{ view.finding.description }}</p>
 
-  <div class="space-y-5 p-5">
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Actions</h4>
-      <div class="mt-3 space-y-4">
-        {% for row in view.actions %}
-        <div data-action-row id="action-{{ row.action.id }}" data-action-status="{{ row.action.status }}" class="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-          <h5 class="font-medium text-gray-900 dark:text-gray-100">{{ row.action.title }}</h5>
-          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Owner: {{ row.action.owner if row.action.owner else 'Unassigned' }} · Target: {{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else 'No target date' }} · Status: {{ row.status_label }}</p>
+  <div class="block">
+    <h3>Actions</h3>
+    <div class="f-stack">
+      {% for row in view.actions %}
+      {% set status_value = row.action.status %}
+      <div data-action-row id="action-{{ row.action.id }}" data-action-status="{{ status_value }}" class="cite">
+        <div class="cite-head f-act-head"><b class="f-act-title">{{ row.action.title }}</b><span class="sp"></span>{{ state_status(status_value, status_words.get(status_value, row.status_label)) }}</div>
+        <div class="f-act-body">
+          <p class="muted">Owner: {{ row.action.owner if row.action.owner else "Unassigned" }} · Target: {{ row.action.target_date|display_date if row.action.target_date else "No target date" }}</p>
           {% if row.history_readable %}
-          <ol data-action-history class="mt-3 space-y-2">
-            {% for e in row.history %}
-            <li data-history-action="{{ e.action }}" class="rounded bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-700 dark:text-gray-300">
-              <p class="font-medium">#{{ e.sequence }} · {{ e.timestamp }} · {{ e.label }} · {{ e.actor_display }}</p>
-              {% for name, change in e.changes.items() %}<p class="mt-1 text-xs">{{ name }}: {{ change['from'] or '—' }} → {{ change['to'] or '—' }}</p>{% endfor %}
-              {% if e.evidence %}<p class="mt-2 text-xs">Evidence: <a href="/evidence/{{ e.evidence.evidence_id }}" class="text-brand dark:text-navy-300 hover:underline">{{ e.evidence.filename }}</a> v{{ e.evidence.version_number }} (SHA-256 {{ e.evidence.sha256[:12] }})</p>{% endif %}
-              {% if e.notes %}<p class="mt-2 whitespace-pre-wrap">{{ e.notes }}</p>{% endif %}
-            </li>
-            {% endfor %}
-          </ol>
-          {% else %}<p class="mt-3 text-sm font-medium text-red-700 dark:text-red-300">History could not be read.</p>{% endif %}
+          <details class="f-mt3">
+            <summary class="btn ghost sm lead f-hist-sum"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>History</summary>
+            <ul data-action-history class="checks f-mt2">
+              {% for e in row.history | reverse %}
+              <li data-history-action="{{ e.action }}"><div><b>{{ e.label }}</b>{% if e.notes %}<p class="sub">{{ e.notes }}</p>{% endif %}{% if e.action != "created" %}{% for name, change in e.changes.items() %}{% if name == "status" %}<p class="sub">{{ status_words.get(change['from'], change['from'] or 'None') }} to {{ status_words.get(change['to'], change['to'] or 'None') }}</p>{% else %}<p class="sub">{{ name|replace('_', ' ')|capitalize }}: {{ change['from'] or 'None' }} to {{ change['to'] or 'None' }}</p>{% endif %}{% endfor %}{% endif %}{% if e.evidence %}<p class="sub">Evidence: <a href="/evidence/{{ e.evidence.evidence_id }}" title="SHA-256 {{ e.evidence.sha256 }}">{{ e.evidence.filename }}, version {{ e.evidence.version_number }}</a></p>{% endif %}</div><span class="res">{{ e.timestamp|display_timestamp }}{% if e.actor_display %}, {{ e.actor_display }}{% endif %}</span></li>
+              {% endfor %}
+            </ul>
+          </details>
+          {% else %}<p class="help">History could not be read.</p>{% endif %}
+          {% set noted = row.history | selectattr("notes") | list %}
+          {% if noted and row.editable %}<p class="muted">{{ (noted | last).notes }}</p>{% endif %}
 
-          {% if row.allowed_statuses %}
-          <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/status" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-4 flex flex-wrap items-end gap-3">
+          {% if adding %}
+          {# Adding an action: the other controls step back until the new action is saved or cancelled. #}
+          {% elif status_value == "open" and row.allowed_statuses and primary.first_open %}
+          {% set primary.first_open = false %}
+          {% set lead = not primary.used %}{% set primary.used = true %}
+          <form id="status-{{ row.action.id }}" hx-post="{{ finding_url }}/actions/{{ row.action.id }}/status" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="fw-grid">
             <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
-            <label class="text-sm text-gray-700 dark:text-gray-300">Status<select name="status" class="mt-1 block rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">{% for value in row.allowed_statuses %}<option value="{{ value }}">{{ value|replace('_', ' ')|title }}</option>{% endfor %}</select></label>
-            <label class="min-w-64 flex-1 text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-            <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Update status</button>
+            <div><label class="label" for="st-{{ row.action.id }}">Status</label><label class="field"><select id="st-{{ row.action.id }}" name="status">{% for value in row.allowed_statuses %}<option value="{{ value }}">{{ status_words.get(value, value) }}</option>{% endfor %}</select></label></div><div><label class="label" for="sn-{{ row.action.id }}">Notes</label><label class="field"><input id="sn-{{ row.action.id }}" name="notes"></label></div>
           </form>
-          {% endif %}
-
-          {% if row.closable %}
-          <details data-close-control class="mt-4">
-            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Close with evidence</summary>
-            {% if view.closure_options %}
-            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/close" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3">
-              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
-              <label class="text-sm text-gray-700 dark:text-gray-300">Closure evidence<select name="evidence_version_id" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"><option value="">Choose closure evidence</option>{% for option in view.closure_options %}<option value="{{ option.evidence_version_id }}">{{ option.label }}</option>{% endfor %}</select></label>
-              <label class="text-sm text-gray-700 dark:text-gray-300">Notes<textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></textarea></label>
-              <div><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Close action</button></div>
-            </form>
-            {% else %}<p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Upload closure evidence to this assessment first. <a href="/assessments/{{ assessment.id }}" class="text-brand dark:text-navy-300 hover:underline">Upload evidence →</a></p>{% endif %}
-          </details>
-          {% endif %}
-
-          {% if row.verifiable %}
-          <div class="mt-4 text-sm text-gray-600 dark:text-gray-300">Closure evidence: <a href="/evidence/{{ row.closure_evidence.evidence_id }}" class="text-brand dark:text-navy-300 hover:underline">{{ row.closure_evidence.filename }} v{{ row.closure_evidence.version_number }}</a></div>
-          <form data-verify-control hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/verify" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div><input type="hidden" name="expected_history_length" value="{{ row.history_length }}"><label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label></div>
-            <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Verify closure</button>
+          <div class="f-acts"><button type="submit" form="status-{{ row.action.id }}" class="btn {{ 'primary' if lead else 'secondary' }}">Update status</button>{{ edit_details(row) }}</div>
+          {% elif status_value == "open" and row.allowed_statuses %}
+          <form hx-post="{{ finding_url }}/actions/{{ row.action.id }}/status" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="f-acts">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}"><input type="hidden" name="status" value="in_progress">
+            <button type="submit" class="btn secondary sm">Start work</button>
           </form>
+          {% elif status_value == "in_progress" and view.source_approved and view.closure_options %}
+          {% set lead = not primary.used %}{% set primary.used = true %}
+          <form id="close-{{ row.action.id }}" data-close-control hx-post="{{ finding_url }}/actions/{{ row.action.id }}/close" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="fw-grid">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+            <div><label class="label" for="ce-{{ row.action.id }}">Closure evidence</label><label class="field"><select id="ce-{{ row.action.id }}" name="evidence_version_id"><option value="">Choose closure evidence</option>{% for option in view.closure_options %}<option value="{{ option.evidence_version_id }}">{{ option.label }}</option>{% endfor %}</select></label></div><div><label class="label" for="cn-{{ row.action.id }}">Notes</label><label class="field"><input id="cn-{{ row.action.id }}" name="notes"></label></div>
+          </form>
+          <div class="f-acts"><button type="submit" form="close-{{ row.action.id }}" class="btn {{ 'primary' if lead else 'secondary' }}">Close action</button>{{ edit_details(row) }}</div>
+          {% elif status_value == "in_progress" and view.source_approved %}
+          <div data-close-control class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div>No closure evidence is on file. Upload evidence to this assessment first. <a href="/assessments/{{ assessment.id }}?tab=overview" class="f-ul">Upload evidence</a></div></div>
+          <div class="f-acts">{{ edit_details(row) }}</div>
+          {% elif status_value == "in_progress" %}
+          {# The source conclusion is no longer approved: no closing until it is; status and details stay within reach. #}
+          <form id="status-{{ row.action.id }}" hx-post="{{ finding_url }}/actions/{{ row.action.id }}/status" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="fw-grid">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+            <div><label class="label" for="st-{{ row.action.id }}">Status</label><label class="field"><select id="st-{{ row.action.id }}" name="status">{% for value in row.allowed_statuses %}<option value="{{ value }}">{{ status_words.get(value, value) }}</option>{% endfor %}</select></label></div><div><label class="label" for="sn-{{ row.action.id }}">Notes</label><label class="field"><input id="sn-{{ row.action.id }}" name="notes"></label></div>
+          </form>
+          <div class="f-acts"><button type="submit" form="status-{{ row.action.id }}" class="btn secondary">Update status</button>{{ edit_details(row) }}</div>
+          {% elif row.verifiable %}
+          {% set lead = not primary.used %}{% set primary.used = true %}
+          <p>Closure evidence: <a href="/evidence/{{ row.closure_evidence.evidence_id }}" class="f-ul" title="SHA-256 {{ row.closure_evidence.sha256 }}">{{ row.closure_evidence.filename }}, version {{ row.closure_evidence.version_number }}</a></p>
+          <form id="verify-{{ row.action.id }}" data-verify-control hx-post="{{ finding_url }}/actions/{{ row.action.id }}/verify" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+            <div><label class="label" for="vn-{{ row.action.id }}">Notes</label><label class="field"><input id="vn-{{ row.action.id }}" name="notes"></label></div>
+          </form>
+          <div class="f-acts"><button type="submit" form="verify-{{ row.action.id }}" class="btn {{ 'primary' if lead else 'secondary' }} lead"><svg class="i"><use href="#i-check"/></svg>Verify closure</button>{{ reopen_details(row, "md") }}</div>
+          {% elif row.legacy_closure %}
+          {% set lead = not primary.used %}{% set primary.used = true %}
+          <div class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div>Closed without closure evidence (legacy). Reopen it to close it again with evidence.</div></div>
+          <form id="reopen-{{ row.action.id }}" data-reopen-control hx-post="{{ finding_url }}/actions/{{ row.action.id }}/reopen" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+            <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
+            <div><label class="label" for="rr-{{ row.action.id }}">Reason for reopening</label><label class="field area"><textarea id="rr-{{ row.action.id }}" name="notes" rows="2" required></textarea></label></div>
+          </form>
+          <div class="f-acts"><button type="submit" form="reopen-{{ row.action.id }}" class="btn {{ 'primary' if lead else 'secondary' }}">Reopen action</button></div>
+          {% elif row.reopenable %}
+          <p class="muted">Closed and verified actions cannot be changed here.</p>
+          <div>{{ reopen_details(row) }}</div>
           {% endif %}
-
-          {% if row.legacy_closure %}<p class="mt-4 text-sm font-medium text-amber-700 dark:text-amber-300">Closed without closure evidence (legacy). Reopen it to close it again with evidence.</p>{% endif %}
-
-          {% if row.reopenable %}
-          <details data-reopen-control class="mt-4">
-            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Reopen</summary>
-            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/reopen" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3">
-              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
-              <label class="text-sm text-gray-700 dark:text-gray-300">Reason for reopening<textarea name="notes" rows="2" required placeholder="Reason for reopening" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></textarea></label>
-              <div><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Reopen action</button></div>
-            </form>
-          </details>
-          {% endif %}
-
-          {% if row.editable %}
-          <details class="mt-4">
-            <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Edit details</summary>
-            <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions/{{ row.action.id }}/update" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-2">
-              <input type="hidden" name="expected_history_length" value="{{ row.history_length }}">
-              <label class="text-sm text-gray-700 dark:text-gray-300">Title<input name="title" value="{{ row.action.title }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-              <label class="text-sm text-gray-700 dark:text-gray-300">Owner<input name="owner" value="{{ row.action.owner or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-              <label class="text-sm text-gray-700 dark:text-gray-300">Target date<input type="date" name="target_date" value="{{ row.action.target_date.strftime('%Y-%m-%d') if row.action.target_date else '' }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-              <label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-              <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Save details</button></div>
-            </form>
-          </details>
-          {% else %}<p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Closed and verified actions cannot be changed here.</p>{% endif %}
+          {% if not row.editable and not row.reopenable %}<p class="muted">Closed and verified actions cannot be changed here.</p>{% endif %}
         </div>
-        {% endfor %}
       </div>
-    </section>
+      {% endfor %}
+    </div>
+  </div>
 
-    <details>
-      <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Add action</summary>
-      <form hx-post="/api/assessments/{{ assessment.id }}/findings/{{ view.finding.id }}/actions" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 grid gap-3 sm:grid-cols-2">
-        <label class="text-sm text-gray-700 dark:text-gray-300">Title<input name="title" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-        <label class="text-sm text-gray-700 dark:text-gray-300">Owner<input name="owner" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-        <label class="text-sm text-gray-700 dark:text-gray-300">Target date<input type="date" name="target_date" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-        <label class="text-sm text-gray-700 dark:text-gray-300">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"></label>
-        <div class="sm:col-span-2"><button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90">Add action</button></div>
-      </form>
-    </details>
+  {% if adding %}
+  <div class="block"><h3>Add action</h3>
+    <form hx-post="{{ finding_url }}/actions" hx-target="#finding-{{ view.finding.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="f-stack">
+      <div><label class="label" for="at-{{ view.finding.id }}">Title</label><label class="field"><input id="at-{{ view.finding.id }}" name="title" required></label></div>
+      <div class="fw-grid"><div><label class="label" for="ao-{{ view.finding.id }}">Owner</label><label class="field"><input id="ao-{{ view.finding.id }}" name="owner"></label></div><div><label class="label" for="ad-{{ view.finding.id }}">Target date</label><label class="field"><input id="ad-{{ view.finding.id }}" type="date" name="target_date"></label></div></div>
+      <div><label class="label" for="an-{{ view.finding.id }}">Notes</label><label class="field"><input id="an-{{ view.finding.id }}" name="notes"></label></div>
+      <div class="f-acts"><button type="submit" class="btn primary">Add action</button><a class="btn ghost" href="{{ detail_href }}">Cancel</a></div>
+    </form>
+  </div>
+  {% endif %}
+  {# Add action steps aside while an action is waiting on a decision (verify, legacy closure) and on migrated findings. #}
+  {% set add = namespace(blocked=view.origin == "migrated", underway=false) %}
+  {% for row in view.actions %}{% if row.verifiable or row.legacy_closure %}{% set add.blocked = true %}{% endif %}{% if row.action.status == "in_progress" %}{% set add.underway = true %}{% endif %}{% endfor %}
+  <div class="f-acts f-foot">
+    {% if not view.source_approved and view.card %}<a class="btn primary" href="/assessments/{{ assessment.id }}/conclusions#conclusion-card-{{ view.card.conclusion.id }}">Open the conclusion</a>
+    {% elif not adding and not add.blocked %}<a class="btn {{ ('ghost' if add.underway else 'secondary') if primary.used else 'primary' }} lead" href="{{ detail_href }}&amp;add=1"><svg class="i"><use href="#i-plus"/></svg>Add action</a>{% endif %}
   </div>
 </article>

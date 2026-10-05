@@ -1,0 +1,672 @@
+diff --git a/app/services/remediation_draft.py b/app/services/remediation_draft.py
+index fa6a7d6..c67ac1b 100644
+--- a/app/services/remediation_draft.py
++++ b/app/services/remediation_draft.py
+@@ -39,7 +39,7 @@ LIMIT_REACHED = (
+     "The AI draft limit for this conclusion has been reached. Write the recommended action yourself."
+ )
+ DRAFT_FAILED = "The AI draft could not be produced. Write the recommended action yourself."
+-DRAFT_NOTICE = "AI draft: review and edit it before saving. Nothing is saved until you choose Save & Approve."
++DRAFT_NOTICE = "AI draft: review and edit it before saving. Nothing is saved until you choose Save and approve."
+ 
+ SYSTEM_PROMPT = """You draft a remediation action for one gap that a consultant has already concluded.
+ Write at most three sentences describing what the organisation should do. The suggested owner role
+diff --git a/app/static/css/yozora-patterns.css b/app/static/css/yozora-patterns.css
+index d7341e8..24db316 100644
+--- a/app/static/css/yozora-patterns.css
++++ b/app/static/css/yozora-patterns.css
+@@ -258,3 +258,29 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-cards */
++.cc-card{margin:0}
++.cc-pre{white-space:pre-line}
++.cc-hint{margin-left:var(--s-3);font-size:var(--t-sm);font-weight:400;color:var(--muted)}
++.cc-claims{list-style:none;display:flex;flex-direction:column;gap:var(--s-3)}
++.cc-claims + .cc-claims{margin-top:var(--s-3)}
++.cc-claims li.alert{margin-top:var(--s-1)}
++.cc-rfi-list{list-style:none;display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-rfi-list > li{display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
++.cc-ack{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-3)}
++.cc-form{display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-blocker{margin:0 var(--s-10) var(--s-3)}
++.cc-drafting{display:none;flex-direction:column;gap:10px}
++.cc-drafting .skel:nth-child(1){width:94%}
++.cc-drafting .skel:nth-child(2){width:88%}
++.cc-drafting .skel:nth-child(3){width:52%}
++[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .field.area{display:none}
++[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .cc-drafting{display:flex}
++[data-remediation-draft-button].htmx-request{pointer-events:none;color:transparent;position:relative}
++[data-remediation-draft-button].htmx-request::after{content:"";position:absolute;width:14px;height:14px;border-radius:var(--r-full);border:2px solid var(--text-2);border-top-color:transparent;animation:spin .7s linear infinite}
++.cc-card:has([data-remediation-draft-button].htmx-request) [data-edit-actions] .btn.primary{color:var(--text);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-control),0 1px 2px rgba(20,24,44,.05)}
++[data-theme=dark] .cc-card:has([data-remediation-draft-button].htmx-request) [data-edit-actions] .btn.primary{background:rgba(255,255,255,.07)}
++@media (max-width:860px){.cc-blocker{margin-left:var(--s-5);margin-right:var(--s-5)}}
++/* /s7-cards */
+diff --git a/app/templates/components/conclusion_card.html b/app/templates/components/conclusion_card.html
+index 89b7cd9..3f381a9 100644
+--- a/app/templates/components/conclusion_card.html
++++ b/app/templates/components/conclusion_card.html
+@@ -1,179 +1,175 @@
+-<div id="conclusion-card-{{ card.conclusion.id }}"
+-     data-conclusion-card
++{% set outcome_labels = {'compliant': 'Compliant', 'partially_compliant': 'Partially compliant', 'non_compliant': 'Non-compliant', 'not_applicable': 'Not applicable', 'insufficient_evidence': 'Insufficient evidence'} %}
++{% set outcome_tones = {'compliant': 'c-ok', 'partially_compliant': 'c-part', 'non_compliant': 'c-non', 'insufficient_evidence': 'c-insuf'} %}
++{% set cid = card.conclusion.id %}
++{% set can_edit = 'edited' in card.allowed_actions %}
++{% set bulk = card.legacy_bulk_approval %}
++{% set decision = card.last_decision %}
++<div id="conclusion-card-{{ cid }}"
+      data-state="{{ card.state }}"
+      data-version="{{ card.conclusion.version }}"
+-     class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
+-  <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+-    <div class="flex flex-wrap items-start justify-between gap-3">
+-      <div>
+-        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+-          <span class="font-semibold text-brand dark:text-navy-300">{{ card.conclusion.framework_id|upper }}</span>
+-          <span class="font-mono">{{ card.conclusion.requirement_id }}</span>
+-          <span>v{{ card.conclusion.version }}</span>
+-          <a href="/assessments/{{ assessment.id }}/workpaper#wp-{{ card.conclusion.framework_id }}-{{ card.conclusion.requirement_id }}" class="text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
+-        </div>
+-        <h3 class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ card.requirement_title }}</h3>
+-      </div>
+-      <div class="flex flex-wrap items-center gap-2">
+-        {% if card.legacy_bulk_approval %}
+-        <span class="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">Legacy bulk approval, not individually reviewed</span>
+-        {% elif card.state == 'approved' %}
+-        <span class="rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300">Approved</span>
+-        {% elif card.state == 'edited' %}
+-        <span class="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">Edited &amp; approved</span>
+-        {% elif card.state == 'rejected' %}
+-        <span class="rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-300">Rejected</span>
+-        {% else %}
+-        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">Pending</span>
+-        {% endif %}
+-      </div>
++     data-conclusion-card
++     class="rq-detail cc-card">
++  <div class="rq-body">
++    <div class="d-title">
++      <h2 class="big">{{ card.requirement_title }}</h2>
++      {% if card.state == 'approved' %}<span class="status"><svg class="i"><use href="#i-check"/></svg> Approved</span>
++      {% elif card.state == 'edited' %}<span class="status"><svg class="i"><use href="#i-pen"/></svg> Edited and approved</span>
++      {% elif card.state == 'rejected' %}<span class="status"><svg class="i"><use href="#i-x"/></svg> Rejected</span>
++      {% else %}<span class="status"><span class="st"></span>Pending</span>{% endif %}
++    </div>
++    <div class="meta">
++      <span class="pill {{ outcome_tones.get(card.conclusion.outcome, 'c-neutral') }}">{{ outcome_labels.get(card.conclusion.outcome, card.conclusion.outcome|replace('_', ' ')|capitalize) }}</span>
++      <span class="pill c-{{ card.conclusion.risk_level }}">{{ card.conclusion.risk_level|capitalize }}</span>
++      <span class="ai">{{ 'AI proposed' if card.conclusion.ai_proposed else 'Edited by consultant' }}</span>
++      <span class="ref">{{ framework_label(card.conclusion.framework_id) }} {{ card.conclusion.requirement_id }} · Version {{ card.conclusion.version }}</span>
++      <a class="btn ghost sm lead" href="/assessments/{{ assessment.id }}/workpaper#wp-{{ card.conclusion.framework_id }}-{{ card.conclusion.requirement_id }}"><svg class="i"><use href="#i-link"/></svg>Workpaper trace</a>
++      {% if card.locked %}<span class="warn" title="Re-analysis will not overwrite this"><svg class="i"><use href="#i-lock"/></svg>Locked</span>{% endif %}
+     </div>
+-    {% if card.locked %}
+-    <p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Locked: re-analysis will not overwrite this</p>
+-    {% endif %}
+-  </div>
+ 
+-  {% if conflict is defined and conflict %}
+-  <div class="m-5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
+-    <p class="font-semibold">This conclusion changed since you loaded it (you had version {{ conflict.submitted_version }}, it is now {{ card.conclusion.version }}). Nothing was saved. Review the current state and decide again.</p>
+-    {% if conflict.diff %}
+-    <div class="mt-3 overflow-x-auto">
+-      <table class="min-w-full text-left text-xs">
+-        <thead><tr><th class="pr-4 py-1">Field</th><th class="pr-4 py-1">Current value</th><th class="py-1">Your unsaved value</th></tr></thead>
+-        <tbody>
++    {% if conflict is defined and conflict %}
++    <div class="alert c-medium" role="alert" style="margin-top:var(--s-6)">
++      <svg class="i"><use href="#i-alert"/></svg>
++      <div style="flex:1"><b>This conclusion changed since you loaded it</b>You had version {{ conflict.submitted_version }} and it is now {{ card.conclusion.version }}. Nothing was saved. Read the current version and decide again.
++        {% if conflict.diff %}
++        <div class="solid" style="margin-top:var(--s-3)"><table><thead><tr><th>Field</th><th>Current</th><th>Your unsaved value</th></tr></thead><tbody>
+           {% for row in conflict.diff %}
+-          <tr class="border-t border-red-200 dark:border-red-800">
+-            <td class="pr-4 py-2 font-medium">{{ row.field|replace('_', ' ')|title }}</td>
+-            <td class="pr-4 py-2 whitespace-pre-wrap">{{ row.current }}</td>
+-            <td class="py-2 whitespace-pre-wrap">{{ row.submitted }}</td>
++          <tr>
++            <td class="t-title">{{ row.field|replace('_', ' ')|capitalize }}</td>
++            <td class="cc-pre">{{ outcome_labels.get(row.current, row.current) if row.field == 'outcome' else (row.current|capitalize if row.field == 'risk_level' else row.current) }}</td>
++            <td class="cc-pre">{{ outcome_labels.get(row.submitted, row.submitted) if row.field == 'outcome' else (row.submitted|capitalize if row.field == 'risk_level' else row.submitted) }}</td>
+           </tr>
+           {% endfor %}
+-        </tbody>
+-      </table>
++        </tbody></table></div>
++        {% endif %}
++      </div>
+     </div>
+     {% endif %}
+-  </div>
+-  {% endif %}
+ 
+-  <div class="p-5 space-y-5">
+-    <section>
+-      <div class="flex flex-wrap items-center gap-2">
+-        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current conclusion</h4>
+-        <span class="text-xs text-gray-400 dark:text-gray-500">{{ 'AI proposal' if card.conclusion.ai_proposed else 'Consultant-edited' }}</span>
+-      </div>
+-      <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Outcome</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ card.conclusion.outcome|replace('_', ' ')|title }}</dd></div>
+-        <div><dt class="text-xs text-gray-500 dark:text-gray-400">Risk level</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{{ card.conclusion.risk_level|title }}</dd></div>
+-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Rationale</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.rationale }}</dd></div>
+-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Gaps identified</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.gaps_identified or 'None recorded' }}</dd></div>
+-        <div class="sm:col-span-2"><dt class="text-xs text-gray-500 dark:text-gray-400">Recommended action</dt><dd class="mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ card.conclusion.recommended_action or 'None recorded' }}</dd></div>
+-      </dl>
+-      {% if not card.conclusion.ai_proposed and card.previous_outcome %}
+-      <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">AI proposed before edit: {{ card.previous_outcome|replace('_', ' ')|title }}</p>
+-      {% endif %}
+-    </section>
++    {% if bulk %}
++    <div class="alert c-medium" style="margin-top:var(--s-6)"><svg class="i"><use href="#i-alert"/></svg><div><b>Approved in bulk, not individually reviewed</b>This approval predates individual review. Reopen it to review the evidence and decide.</div></div>
++    {% endif %}
+ 
+-    {% include "components/requirement_card_body.html" %}
++    {% if card.withheld_proposal %}
++    <div class="alert c-medium" style="margin-top:var(--s-6)"><svg class="i"><use href="#i-lock"/></svg><div><b>A newer AI proposal was withheld</b>This conclusion is locked, so the latest analysis did not overwrite it.{% if card.withheld_proposal.outcome %} The proposal was {{ outcome_labels.get(card.withheld_proposal.outcome, card.withheld_proposal.outcome|replace('_', ' ')|capitalize) }}{% if card.withheld_proposal.citation_count is not none %} with {{ card.withheld_proposal.citation_count }} {{ 'citation' if card.withheld_proposal.citation_count == 1 else 'citations' }}{% endif %}.{% endif %} Reopen the conclusion to let the next analysis apply it.{% if card.withheld_proposal.rationale %}<span class="sub cc-pre" style="display:block;margin-top:var(--s-2)">{{ card.withheld_proposal.rationale }}</span>{% endif %}</div></div>
++    {% endif %}
+ 
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence summary</h4>
+-      <p class="mt-2 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ card.conclusion.evidence_summary or 'No grounded supporting quote' }}</p>
+-    </section>
++    <div class="block">
++      <h3>Conclusion</h3>
++      <p class="concl cc-pre">{{ card.conclusion.rationale }}</p>
++      {% if card.conclusion.gaps_identified %}<p class="muted cc-pre" style="margin-top:var(--s-3)">{{ card.conclusion.gaps_identified }}</p>{% endif %}
++      {% if card.conclusion.recommended_action %}<div class="rec"><svg class="i"><use href="#i-arrow-r"/></svg><div><b>Recommended action</b><span class="cc-pre">{{ card.conclusion.recommended_action }}</span></div></div>{% endif %}
++    </div>
+ 
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Citations</h4>
++    <div class="block">
++      <h3>Evidence</h3>
++      {% set summary = card.conclusion.evidence_summary %}
++      {% if summary and summary not in (card.citations|map(attribute='excerpt')|list) %}<p class="muted cc-pre" style="margin-bottom:var(--s-3)">{{ summary }}</p>{% endif %}
+       {% if not card.citations_captured %}
+-      <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">Evidence support not captured (legacy)</p>
++      <div class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div><b>Evidence support not captured (legacy)</b>This conclusion has no recorded citations. Re-run the analysis before approving.</div></div>
+       {% elif not card.citations %}
+-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No supporting citation (explicit evidence absence)</p>
++        {% if card.unsupported_assertion %}
++      <div class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div><b>No supporting citation</b>This outcome has no grounded citation. Read the evidence before approving.</div></div>
++        {% else %}
++      <p class="muted">No supporting citation (explicit evidence absence)</p>
++        {% endif %}
+       {% else %}
+-      <ul class="mt-2 space-y-3">
+         {% for citation in card.citations %}
+-        <li class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm">
+-          <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ citation.excerpt }}</p>
+-          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+-            {% if citation.resolved %}<a class="font-medium text-brand dark:text-navy-300 hover:underline" href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or 'Unresolved evidence' }}{% endif %}
+-            {% if citation.version_number %} v{{ citation.version_number }}{% endif %}
+-            · {{ citation.location_ref }}
+-            {% if not citation.is_current %}<span class="text-amber-700 dark:text-amber-300">(superseded version)</span>{% endif %}
+-          </p>
+-        </li>
++      <div{% if not loop.first %} style="margin-top:var(--s-3)"{% endif %}>
++        <div class="cite">
++          <div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>{% if citation.resolved %}<a href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or 'Unresolved evidence' }}{% endif %}{% if citation.version_number %} <span class="pg">v{{ citation.version_number }}</span>{% endif %}, <span class="pg">{{ citation.location_ref }}</span></span><span class="sp"></span>{% if not citation.is_current %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Superseded version</span>{% endif %}</div>
++          <blockquote class="cc-pre">{{ citation.excerpt }}</blockquote>
++        </div>
++      </div>
+         {% endfor %}
+-      </ul>
+-      {% endif %}
+-      {% if card.unsupported_assertion %}
+-      <p class="mt-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">This supporting outcome has no grounded citation. Review the evidence before approving.</p>
+       {% endif %}
+-    </section>
++    </div>
+ 
+-    {% if card.withheld_proposal %}
+-    <section class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4 text-sm text-blue-900 dark:text-blue-200">
+-      <p class="font-semibold">A newer AI proposal was withheld because this conclusion is locked{% if card.withheld_proposal.outcome %}: {{ card.withheld_proposal.outcome|replace('_', ' ')|title }}{% endif %}. Reopen to let the next analysis apply it.</p>
+-      {% if card.withheld_proposal.rationale %}<p class="mt-2 whitespace-pre-wrap">{{ card.withheld_proposal.rationale }}</p>{% endif %}
+-      <p class="mt-2 text-xs">{{ card.withheld_proposal.citation_count }} citation(s) · run {{ card.withheld_proposal.run_id or 'unknown' }}</p>
+-    </section>
++    {% include "components/requirement_card_body.html" %}
++
++    {% if can_edit %}
++    <div class="block" data-edit-panel hidden>
++      <h3>Edit conclusion</h3>
++      <form id="conclusion-edit-{{ cid }}" data-edit-form class="cc-form" hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ cid }}/edit" hx-target="#conclusion-card-{{ cid }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++        <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
++        <div class="fw-grid">
++          <div>
++            <label class="label" for="cc-outcome-{{ cid }}">Outcome</label>
++            <label class="field"><select id="cc-outcome-{{ cid }}" name="outcome">{% for value in ['compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'insufficient_evidence'] %}<option value="{{ value }}"{% if card.conclusion.outcome == value %} selected{% endif %}>{{ outcome_labels[value] }}</option>{% endfor %}</select></label>
++          </div>
++          <div>
++            <label class="label" for="cc-risk-{{ cid }}">Risk level</label>
++            <label class="field"><select id="cc-risk-{{ cid }}" name="risk_level">{% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}"{% if card.conclusion.risk_level == value %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}</select></label>
++          </div>
++        </div>
++        <div>
++          <label class="label" for="cc-rationale-{{ cid }}">Rationale</label>
++          <label class="field area"><textarea id="cc-rationale-{{ cid }}" name="rationale" rows="3">{{ card.conclusion.rationale }}</textarea></label>
++        </div>
++        <div>
++          <label class="label" for="cc-gaps-{{ cid }}">Gaps identified</label>
++          <label class="field area"><textarea id="cc-gaps-{{ cid }}" name="gaps_identified" rows="3">{{ card.conclusion.gaps_identified }}</textarea></label>
++        </div>
++        {% with assessment_id=assessment.id, conclusion_id=cid, recommended_action=card.conclusion.recommended_action, draft=None, error=None %}
++        {% include "partials/remediation_draft.html" %}
++        {% endwith %}
++      </form>
++    </div>
+     {% endif %}
+ 
+-    {% if card.last_decision %}
+-    <p class="text-xs text-gray-500 dark:text-gray-400">{{ card.last_decision.action }} by {{ card.last_decision.actor_display }} at {{ card.last_decision.created_at }}</p>
++    {% if decision %}
++    <p class="sub" style="margin-top:var(--s-8)">
++      {%- if bulk -%}
++      Approved in bulk{% if decision.created_at %} on {{ decision.created_at|display_date }}{% endif %}.
++      {%- else -%}
++      {{ {'approved': 'Approved', 'edited': 'Edited and approved', 'rejected': 'Rejected', 'reopened': 'Reopened'}.get(decision.action, decision.action|capitalize) }} by {{ decision.actor_display }}{% if decision.created_at %} on {{ decision.created_at|display_date }} at {{ decision.created_at.strftime('%H:%M') }}{% endif %}.
++      {%- if decision.action == 'edited' and card.previous_outcome %} The AI proposed {{ outcome_labels.get(card.previous_outcome, card.previous_outcome|replace('_', ' ')|capitalize) }}.{% endif -%}
++      {%- if decision.action == 'rejected' %} It is left out of the report until it is reopened.{% endif -%}
++      {%- endif -%}
++    </p>
++    {% elif not card.conclusion.ai_proposed and card.previous_outcome %}
++    <p class="sub" style="margin-top:var(--s-8)">The AI proposed {{ outcome_labels.get(card.previous_outcome, card.previous_outcome|replace('_', ' ')|capitalize) }}.</p>
+     {% endif %}
+     {% if card.legacy_report_status %}
+-    <p class="rounded-lg bg-purple-50 dark:bg-purple-950/30 p-3 text-sm text-purple-800 dark:text-purple-200">Report view differs: {{ card.legacy_report_status|replace('_', ' ')|title }}</p>
++    <div class="alert c-accent" style="margin-top:var(--s-6)"><svg class="i"><use href="#i-alert"/></svg><div><b>Report view differs</b>The report currently shows {{ outcome_labels.get(card.legacy_report_status, card.legacy_report_status|replace('_', ' ')|capitalize) }} for this requirement.</div></div>
+     {% endif %}
++  </div>
+ 
+-    <div class="flex flex-wrap items-start gap-3 border-t border-gray-100 dark:border-gray-800 pt-4">
+-      {% if 'approved' in card.allowed_actions %}
+-      <div>
+-        <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/approve" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+-          <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+-          <button type="submit" {% if card.approval_blocker %}disabled{% endif %} class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
+-        </form>
+-        {% if card.approval_blocker %}<p class="mt-2 max-w-sm text-xs text-amber-700 dark:text-amber-300">{{ card.approval_blocker }}</p>{% endif %}
+-      </div>
+-      {% endif %}
+-
+-      {% if 'edited' in card.allowed_actions %}
+-      <details class="w-full rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:w-auto sm:min-w-[32rem]">
+-        <summary class="cursor-pointer text-sm font-medium text-brand dark:text-navy-300">Edit &amp; Approve</summary>
+-        <form class="mt-4 grid gap-3" hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/edit" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+-          <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+-          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Outcome
+-            <select name="outcome" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-              {% for value in ['compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'insufficient_evidence'] %}<option value="{{ value }}" {% if card.conclusion.outcome == value %}selected{% endif %}>{{ value|replace('_', ' ')|title }}</option>{% endfor %}
+-            </select>
+-          </label>
+-          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Risk level
+-            <select name="risk_level" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-              {% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}" {% if card.conclusion.risk_level == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}
+-            </select>
+-          </label>
+-          {% for field, label, value in [('rationale', 'Rationale', card.conclusion.rationale), ('gaps_identified', 'Gaps identified', card.conclusion.gaps_identified)] %}
+-          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ label }}
+-            <textarea name="{{ field }}" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ value }}</textarea>
+-          </label>
+-          {% endfor %}
+-          {% with assessment_id=assessment.id, conclusion_id=card.conclusion.id, recommended_action=card.conclusion.recommended_action, draft=None, error=None %}
+-          {% include "partials/remediation_draft.html" %}
+-          {% endwith %}
+-          <button type="submit" {% if card.approval_blocker and not card.citations_captured %}disabled{% endif %} class="justify-self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">Save &amp; Approve</button>
+-          {% if card.approval_blocker and not card.citations_captured %}<p class="text-xs text-amber-700 dark:text-amber-300">{{ card.approval_blocker }}</p>{% endif %}
+-        </form>
+-      </details>
+-      {% endif %}
++  {% if card.approval_blocker and ('approved' in card.allowed_actions or can_edit) %}<p class="err cc-blocker" data-approval-blocker>{{ card.approval_blocker }}</p>{% endif %}
+ 
+-      {% if 'rejected' in card.allowed_actions %}
+-      <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/reject" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+-        <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+-        <button type="submit" class="rounded-lg border border-red-300 dark:border-red-700 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40">Reject</button>
+-      </form>
+-      {% endif %}
+-
+-      {% if 'reopened' in card.allowed_actions %}
+-      <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/reopen" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+-        <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+-        <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Reopen</button>
+-      </form>
+-      {% endif %}
+-    </div>
++  <div class="actions" data-view-actions>
++    {% if 'approved' in card.allowed_actions and not card.approval_blocker %}
++    <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ cid }}/approve" hx-target="#conclusion-card-{{ cid }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++      <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
++      <button type="submit" class="btn primary">Approve</button>
++    </form>
++    {% endif %}
++    {% if can_edit %}
++    <button type="button" class="btn secondary" data-edit-toggle aria-expanded="false" aria-controls="conclusion-edit-{{ cid }}" onclick="var c=this.closest('.cc-card');c.querySelector('[data-edit-panel]').hidden=false;c.querySelector('[data-view-actions]').hidden=true;c.querySelector('[data-edit-actions]').hidden=false;this.setAttribute('aria-expanded','true');c.querySelector('[data-edit-panel] select').focus()">Edit</button>
++    {% endif %}
++    {% if 'rejected' in card.allowed_actions %}
++    <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ cid }}/reject" hx-target="#conclusion-card-{{ cid }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++      <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
++      <button type="submit" class="btn danger">Reject</button>
++    </form>
++    {% endif %}
++    {% if 'reopened' in card.allowed_actions %}
++    <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ cid }}/reopen" hx-target="#conclusion-card-{{ cid }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++      <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
++      <button type="submit" class="btn {{ 'primary' if (bulk or card.locked) else 'ghost' }}">Reopen</button>
++    </form>
++    {% endif %}
++    {% if bulk or card.locked or card.state == 'rejected' %}
++    <button type="button" class="btn ghost" data-next-conclusion onclick="var all=Array.from(document.querySelectorAll('.cc-card')),n=all[all.indexOf(this.closest('.cc-card'))+1];if(n){n.scrollIntoView({block:'start'})}">Next conclusion</button>
++    {% endif %}
+   </div>
++  {% if can_edit %}
++  <div class="actions" data-edit-actions hidden>
++    {% if card.approval_blocker and not card.citations_captured %}
++    <button type="submit" form="conclusion-edit-{{ cid }}" class="btn secondary" disabled>Save and approve</button>
++    {% else %}
++    <button type="submit" form="conclusion-edit-{{ cid }}" class="btn primary">Save and approve</button>
++    {% endif %}
++    <button type="button" class="btn ghost" onclick="var c=this.closest('.cc-card');c.querySelector('[data-edit-form]').reset();c.querySelector('[data-edit-panel]').hidden=true;c.querySelector('[data-view-actions]').hidden=false;c.querySelector('[data-edit-actions]').hidden=true;c.querySelector('[data-edit-toggle]').setAttribute('aria-expanded','false')">Cancel</button>
++  </div>
++  {% endif %}
+ </div>
+diff --git a/app/templates/components/requirement_card_body.html b/app/templates/components/requirement_card_body.html
+index f2adf5f..f6b8a4d 100644
+--- a/app/templates/components/requirement_card_body.html
++++ b/app/templates/components/requirement_card_body.html
+@@ -1,121 +1,149 @@
+ {% if card.requirement %}
+   {% set requirement = card.requirement %}
+-  <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or '' }}" class="space-y-4">
++  {% set outcome_labels = {'compliant': 'Compliant', 'partially_compliant': 'Partially compliant', 'non_compliant': 'Non-compliant', 'not_applicable': 'Not applicable', 'insufficient_evidence': 'Insufficient evidence'} %}
++  <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or '' }}">
+     {% if requirement.source == 'none' %}
+-    <p class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-600 dark:text-gray-300">No analysis run is linked to this conclusion.</p>
++    <div class="block"><p class="muted">No analysis run is linked to this conclusion.</p></div>
+     {% else %}
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI proposal</h4>
+-      {% if requirement.proposed_outcome %}<p class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">AI proposal: {{ requirement.proposed_outcome|replace('_', ' ')|title }}</p>{% endif %}
+-      {% if requirement.reason %}<p data-proposal-reason class="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ requirement.reason }}</p>{% endif %}
+-    </section>
++    {% if requirement.proposed_outcome or requirement.reason %}
++    <div class="block">
++      <h3>AI proposal</h3>
++      {% if requirement.proposed_outcome %}<p><span class="ai">AI proposed</span> &nbsp;{{ outcome_labels.get(requirement.proposed_outcome, requirement.proposed_outcome|replace('_', ' ')|capitalize) }}</p>{% endif %}
++      {% if requirement.reason %}<p data-proposal-reason class="muted" style="margin-top:var(--s-2)">{{ requirement.reason }}</p>{% endif %}
++    </div>
++    {% endif %}
+ 
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Criteria checklist</h4>
++    <div class="block">
+       {% if requirement.source == 'v1' %}
+-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.criteria_label }}</p>
++      <h3>Criteria</h3>
++      <p class="muted">{{ requirement.criteria_label }}</p>
+       {% else %}
+-      {% if requirement.criteria_label %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.criteria_label }}</p>{% endif %}
+-      <ul class="mt-2 space-y-2 text-sm">
++      <h3>Criteria{% if requirement.criteria_label %}<span class="cc-hint">{{ requirement.criteria_label }}</span>{% endif %}</h3>
++      <ul class="checks">
+         {% for criterion in requirement.criteria %}
+-        <li data-criterion="{{ criterion.criterion_id }}" data-criterion-result="{{ criterion.result }}" class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
+-          <span class="mr-1 font-semibold">{{ criterion.symbol }}</span><span class="font-mono text-xs">{{ criterion.criterion_id }}</span> <span>{{ criterion.statement }}</span>
++        <li data-criterion="{{ criterion.criterion_id }}" data-criterion-result="{{ criterion.result }}">
++          <span class="ck {{ {'met': 'c-ok', 'not_met': 'c-non'}.get(criterion.result, 'c-insuf') }}"><svg class="i"><use href="#i-{{ {'met': 'check', 'not_met': 'x'}.get(criterion.result, 'clock') }}"/></svg><span class="sr-only">{{ criterion.symbol }}</span></span>
++          <div>{{ criterion.statement }}{% if criterion.met_without_claim %}<p class="sub">The model said met without a verified claim, so it is treated as no evidence.</p>{% endif %}</div>
+           {% for claim_id in criterion.claim_ids %}
+             {% for claim in requirement.claims %}
+               {% if claim.claim_id == claim_id %}
+-                {% if claim.href %}<a data-claim-link="{{ claim.claim_id }}" href="{{ claim.href }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">{{ claim.claim_id }}</a>{% else %}<span data-claim-link="{{ claim.claim_id }}" class="ml-2">{{ claim.claim_id }}</span>{% endif %}
++                {% if claim.href %}<a data-claim-link="{{ claim.claim_id }}" href="{{ claim.href }}" class="res">Evidence {{ loop.index }}</a>{% else %}<span data-claim-link="{{ claim.claim_id }}" class="res">Evidence {{ loop.index }}</span>{% endif %}
+               {% endif %}
+             {% endfor %}
+           {% endfor %}
+-          {% if criterion.met_without_claim %}<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">The model said met without a verified claim; treated as no evidence.</p>{% endif %}
+         </li>
+         {% endfor %}
+       </ul>
+       {% endif %}
+-    </section>
++    </div>
+ 
+     {% if requirement.source == 'v2' %}
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">What the client said vs what the evidence shows</h4>
+-      <div data-client-said class="mt-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm"><span class="font-medium">What the client said</span><br>{% if requirement.response %}{{ requirement.response.answer_label }} · {{ requirement.response.source_label }}{% else %}No confirmed questionnaire response.{% endif %}</div>
+-      <div data-evidence-shows{% if group_evidence is defined and group_evidence %} data-evidence-shared{% endif %} class="mt-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm"><span class="font-medium">What the evidence shows</span>{% if group_evidence is defined and group_evidence %}<p class="mt-1">Evidence for this group is shown once, above.</p>{% elif requirement.claims %}<ul class="mt-2 space-y-2">{% for claim in requirement.claims %}<li data-claim="{{ claim.claim_id }}"><span class="font-medium">{{ claim.statement }}</span><br><span class="whitespace-pre-wrap">{{ claim.quote }}</span>{% if claim.href %}<br><a href="{{ claim.href }}" class="text-brand dark:text-navy-300 hover:underline">{{ claim.filename }}</a>{% else %}<br>{{ claim.filename }}{% endif %} · {{ claim.kind }}</li>{% endfor %}</ul>{% else %}<p class="mt-1">No verified claim addresses this requirement.</p>{% endif %}</div>
+-      {% if requirement.contradictions %}<ul class="mt-2 space-y-2 text-sm text-amber-700 dark:text-amber-300">{% for contradiction in requirement.contradictions %}<li data-contradiction="{{ contradiction.claim_id }}">Contradiction ({{ contradiction.claim_id }}): {{ contradiction.note }}</li>{% endfor %}</ul>{% endif %}
+-    </section>
++    <div class="block">
++      <h3>What the client said and what the evidence shows</h3>
++      <div class="fw-grid" style="gap:var(--s-3)">
++        <div class="cite">
++          <div class="cite-head"><span>What the client said</span></div>
++          <blockquote data-client-said>{% if requirement.response %}{{ requirement.response.answer_label }} <span class="muted">{{ requirement.response.source_label }}</span>{% else %}No confirmed questionnaire response.{% endif %}</blockquote>
++        </div>
++        <div class="cite">
++          <div class="cite-head"><span>What the evidence shows</span></div>
++          <blockquote data-evidence-shows{% if group_evidence is defined and group_evidence %} data-evidence-shared{% endif %}>
++            {% if group_evidence is defined and group_evidence %}<p class="muted">Evidence for this group is shown once, above.</p>
++            {% elif requirement.claims %}
++            <ul class="cc-claims">{% for claim in requirement.claims %}<li data-claim="{{ claim.claim_id }}"><p>{{ claim.quote }} <span class="muted">{% if claim.href %}<a href="{{ claim.href }}">{{ claim.filename }}</a>{% else %}{{ claim.filename }}{% endif %}</span></p>{% if claim.statement and claim.statement != claim.quote %}<p class="sub">{{ claim.statement }}</p>{% endif %}</li>{% endfor %}</ul>
++            {% else %}<p class="muted">No verified claim addresses this requirement.</p>{% endif %}
++            {% if requirement.contradictions %}<ul class="cc-claims">{% for contradiction in requirement.contradictions %}<li data-contradiction="{{ contradiction.claim_id }}" class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><div><b>Contradiction</b>{{ contradiction.note }}</div></li>{% endfor %}</ul>{% endif %}
++          </blockquote>
++        </div>
++      </div>
++    </div>
+     {% endif %}
+ 
+-    {% if requirement.unsupported_assertion %}<p data-unsupported-assertion class="rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">Unsupported assertion: no verified evidence supports this response or proposal.</p>{% endif %}
++    {% if requirement.unsupported_assertion %}
++    <div class="block"><p data-unsupported-assertion class="alert c-medium"><svg class="i"><use href="#i-alert"/></svg><span>Unsupported assertion: no verified evidence supports this response or proposal.</span></p></div>
++    {% endif %}
+ 
+     {% if requirement.quality %}
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence quality</h4>
+-      <div class="mt-2 flex flex-wrap gap-2">{% for chip in requirement.quality %}<span data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}" class="rounded-full px-2.5 py-1 text-xs {% if chip.tone == 'warn' %}bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300{% elif chip.tone == 'ok' %}bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300{% endif %}">{{ chip.label }}</span>{% endfor %}</div>
+-    </section>
++    <div class="block">
++      <h3>Evidence quality</h3>
++      <div class="chips">{% for chip in requirement.quality %}{% if chip.tone == 'warn' %}<span class="warn" data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}"><svg class="i"><use href="#i-alert"/></svg>{{ chip.label }}</span>{% else %}<span class="chip" data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endif %}{% endfor %}</div>
++    </div>
+     {% endif %}
+ 
+     {% if requirement.missing_evidence or requirement.other_rfi_requests %}
+-    <section>
+-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Missing evidence</h4>
+-      {% if requirement.missing_evidence_label %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.missing_evidence_label }}</p>{% endif %}
++    <div class="block">
++      <h3>Missing evidence</h3>
++      {% if requirement.missing_evidence_label %}<p class="sub" style="margin-bottom:var(--s-3)">{{ requirement.missing_evidence_label }}</p>{% endif %}
+       {% if requirement.missing_evidence %}
+-      <ul class="mt-2 space-y-2 text-sm">
++      <ul class="cc-rfi-list">
+         {% for request in requirement.missing_evidence %}
+         {% if requirement.source == "v2" %}
+         <li data-missing-evidence="{{ request.document_type }}" data-rfi-request-key="{{ request.request_key }}" data-rfi-state="{{ request.rfi_state }}">
+-          <span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}
++          <div><b>{{ request.label }}</b><p class="sub">{{ request.what_it_would_show }}</p></div>
+           {% if request.rfi_state == "available" %}
+-          <p data-rfi-request-preview class="mt-1 text-gray-600 dark:text-gray-300">{{ request.request_text }}</p>
+-          <form data-rfi-add-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+-            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+-            <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-light">Add to draft RFI</button>
+-          </form>
++          <div class="cite" style="margin-top:var(--s-1)"><blockquote data-rfi-request-preview class="sub">{{ request.request_text }}</blockquote></div>
++          <div>
++            <form data-rfi-add-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++              <input type="hidden" name="request_key" value="{{ request.request_key }}">
++              <button type="submit" class="btn secondary sm lead" title="Goes to the client request under Evidence &gt; Requests"><svg class="i"><use href="#i-plus"/></svg>Add to draft RFI</button>
++            </form>
++          </div>
+           {% else %}
+-          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ request.rfi_status_label }}</p>
+-          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+-            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+-            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+-          </form>
++          <div class="cc-row">
++            <span class="status" data-rfi-request-status><span class="dot c-accent"></span>{{ request.rfi_status_label }}</span>
++            <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++              <input type="hidden" name="request_key" value="{{ request.request_key }}">
++              <button type="submit" class="btn ghost sm">Remove from draft RFI</button>
++            </form>
++          </div>
+           {% endif %}
+         </li>
+         {% else %}
+-        <li data-missing-evidence="{{ request.document_type }}"><span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}</li>
++        <li data-missing-evidence="{{ request.document_type }}"><div><b>{{ request.label }}</b><p class="sub">{{ request.what_it_would_show }}</p></div></li>
+         {% endif %}
+         {% endfor %}
+       </ul>
+       {% endif %}
+       {% if requirement.other_rfi_requests %}
+-      <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Also on the draft RFI for this conclusion</p>
+-      <ul class="mt-2 space-y-2 text-sm">
++      <p class="sub" style="margin-top:var(--s-4)">Also on the draft RFI for this conclusion</p>
++      <ul class="cc-rfi-list" style="margin-top:var(--s-2)">
+         {% for state in requirement.other_rfi_requests %}
+         {% set request = state.request %}
+         <li data-rfi-request="{{ request.request_key }}" data-rfi-state="{{ state.state }}">
+-          <span class="font-medium">{{ request.title }}:</span> {{ request.request }}
+-          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ state.status_label }}</p>
+-          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+-            <input type="hidden" name="request_key" value="{{ request.request_key }}">
+-            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+-          </form>
++          <div><b>{{ request.title }}</b><p class="sub">{{ request.request }}</p></div>
++          <div class="cc-row">
++            <span class="status" data-rfi-request-status><span class="dot c-accent"></span>{{ state.status_label }}</span>
++            <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
++              <input type="hidden" name="request_key" value="{{ request.request_key }}">
++              <button type="submit" class="btn ghost sm">Remove from draft RFI</button>
++            </form>
++          </div>
+         </li>
+         {% endfor %}
+       </ul>
+       {% endif %}
+-      <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">Approved insufficient-evidence conclusions are added to the next RFI version.</p>
+-      <a class="mt-1 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline" href="/assessments/{{ assessment.id }}/rfi">Open the RFI page →</a>
+-    </section>
++      <p class="sub" style="margin-top:var(--s-4)">Items on the draft RFI go to the client as a request under Evidence &gt; Requests. Approved insufficient-evidence conclusions are added to the next RFI version. <a href="/assessments/{{ assessment.id }}/rfi" style="text-decoration:underline">Open the RFI</a> or <a href="/assessments/{{ assessment.id }}" style="text-decoration:underline">see client requests</a>.</p>
++    </div>
+     {% endif %}
+ 
+     {% if requirement.divergence %}
+-    <section data-divergence-note="{{ requirement.divergence.cluster_id }}" data-acknowledged="{{ 'yes' if requirement.divergence.acknowledged else 'no' }}" class="rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200">
+-      <p class="font-semibold">Framework divergence ({{ requirement.divergence.cluster_id }})</p>
+-      <p class="mt-1">{{ requirement.divergence.sentence }}</p>
+-      {% if requirement.divergence.acknowledged %}<p class="mt-2">Acknowledged by {{ requirement.divergence.acknowledged_by }} at {{ requirement.divergence.acknowledged_at }}{% if requirement.divergence.note %}: {{ requirement.divergence.note }}{% endif %}</p>{% else %}
+-      <form data-divergence-ack-form hx-post="/api/assessments/{{ assessment.id }}/divergence-notes/{{ card.conclusion.id }}/acknowledge" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 space-y-2">
+-        <input type="hidden" name="analysis_run_id" value="{{ requirement.divergence.analysis_run_id }}">
+-        <input type="hidden" name="cluster_id" value="{{ requirement.divergence.cluster_id }}">
+-        <textarea name="note" maxlength="500" rows="2" placeholder="Optional acknowledgement note" class="block w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"></textarea>
+-        <button type="submit" class="rounded-lg border border-amber-500 px-3 py-2 text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40">Acknowledge divergence</button>
+-      </form>
+-      {% endif %}
+-    </section>
++    <div class="block" data-divergence-note="{{ requirement.divergence.cluster_id }}" data-acknowledged="{{ 'yes' if requirement.divergence.acknowledged else 'no' }}">
++      <div class="alert c-accent">
++        <svg class="i"><use href="#i-{{ 'check' if requirement.divergence.acknowledged else 'link' }}"/></svg>
++        <div style="flex:1">
++          <b>The frameworks read this differently</b>{{ requirement.divergence.sentence }}
++          <span class="sr-only">Framework divergence ({{ requirement.divergence.cluster_id }})</span>
++          {% if requirement.divergence.acknowledged %}<p class="sub" style="margin-top:var(--s-2)">Acknowledged by {{ requirement.divergence.acknowledged_by }}{% if requirement.divergence.acknowledged_at %} on {{ requirement.divergence.acknowledged_at|display_date }}{% endif %}{% if requirement.divergence.note %}: {{ requirement.divergence.note }}{% endif %}</p>{% else %}
++          <form data-divergence-ack-form hx-post="/api/assessments/{{ assessment.id }}/divergence-notes/{{ card.conclusion.id }}/acknowledge" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="cc-ack">
++            <input type="hidden" name="analysis_run_id" value="{{ requirement.divergence.analysis_run_id }}">
++            <input type="hidden" name="cluster_id" value="{{ requirement.divergence.cluster_id }}">
++            <label class="field area" style="width:100%;background:var(--solid)"><textarea name="note" maxlength="500" rows="2" placeholder="Add a note (optional)" aria-label="Acknowledgement note"></textarea></label>
++            <div><button type="submit" class="btn secondary sm">Acknowledge</button></div>
++          </form>
++          {% endif %}
++        </div>
++      </div>
++    </div>
+     {% endif %}
+     {% endif %}
+   </section>
+diff --git a/app/templates/partials/remediation_draft.html b/app/templates/partials/remediation_draft.html
+index be1d930..1556b58 100644
+--- a/app/templates/partials/remediation_draft.html
++++ b/app/templates/partials/remediation_draft.html
+@@ -1,15 +1,24 @@
++{% set ra_field = 'cc-action-' ~ conclusion_id %}
+ <div id="recommended-action-{{ conclusion_id }}" data-recommended-action-field>
+-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Recommended action
+-    <textarea name="recommended_action" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ recommended_action }}</textarea>
+-  </label>
++  <label class="label" for="{{ ra_field }}">Recommended action</label>
++  <label class="field area"><textarea id="{{ ra_field }}" name="recommended_action" rows="3"{% if draft %} oninput="var n=this.closest('[data-recommended-action-field]').querySelector('[data-draft-notice]');if(n){n.textContent=this.value===this.defaultValue?n.dataset.noticeDraft:n.dataset.noticeEdited}"{% endif %}>{{ recommended_action }}</textarea></label>
++  <div class="cc-drafting" role="status" aria-busy="true" aria-label="Drafting"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
+   {% if draft %}
+-  <p data-remediation-draft="{{ draft.event_id }}">{{ draft_notice }}</p>
+-  {% if draft.suggested_owner_role %}<p data-suggested-owner-role>Suggested owner role: {{ draft.suggested_owner_role }} (a hint for the Action owner; not saved)</p>{% endif %}
++  {% set notice_parts = (draft_notice or '').split('. ', 1) %}
++  {% set notice_tail = notice_parts[1] if notice_parts|length > 1 else '' %}
++  {% set notice_lead = notice_parts[0]|replace('AI draft: ', '', 1) %}
++  {% set notice_text = notice_lead[:1]|upper ~ notice_lead[1:] ~ ('. ' ~ notice_tail if notice_tail else '') %}
++  <p class="alert c-accent" data-remediation-draft="{{ draft.event_id }}" style="margin-top:var(--s-3);align-items:center"><span class="ai">AI draft</span><span data-draft-notice data-notice-draft="{{ notice_text }}" data-notice-edited="Edited from the model draft. {{ notice_tail }}">{{ notice_text }}</span></p>
++  {% if draft.suggested_owner_role %}<p class="help" data-suggested-owner-role>Suggested owner role: {{ draft.suggested_owner_role }}. A hint for the action owner. It is not saved.</p>{% endif %}
+   {% endif %}
+-  {% if error %}<p data-remediation-draft-error>{{ error }}</p>{% endif %}
+-  <button type="button" data-remediation-draft-button
+-          hx-post="/api/assessments/{{ assessment_id }}/recommended-action-drafts/{{ conclusion_id }}"
+-          hx-include="closest form, #reviewer-name"
+-          hx-target="#recommended-action-{{ conclusion_id }}"
+-          hx-swap="outerHTML">Draft recommended action</button>
++  {% if error %}<p class="alert c-non" data-remediation-draft-error style="margin-top:var(--s-3)"><svg class="i"><use href="#i-x"/></svg><span>{{ error }}</span></p>{% endif %}
++  <div style="margin-top:var(--s-3)">
++    <button type="button" class="btn {{ 'ghost' if draft else 'secondary' }} sm lead" data-remediation-draft-button
++            hx-post="/api/assessments/{{ assessment_id }}/recommended-action-drafts/{{ conclusion_id }}"
++            hx-include="closest form, #reviewer-name"
++            hx-target="#recommended-action-{{ conclusion_id }}"
++            hx-swap="outerHTML"
++            hx-disabled-elt="this"{% if draft %}
++            hx-vals='{"regenerate": "1"}'{% endif %}><svg class="i"><use href="#i-{{ 'refresh' if draft else 'pen' }}"/></svg>{{ 'Draft again' if draft else 'Draft recommended action' }}</button>
++  </div>
+ </div>
+diff --git a/design/yozora-patterns.css b/design/yozora-patterns.css
+index d7341e8..24db316 100644
+--- a/design/yozora-patterns.css
++++ b/design/yozora-patterns.css
+@@ -258,3 +258,29 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-cards */
++.cc-card{margin:0}
++.cc-pre{white-space:pre-line}
++.cc-hint{margin-left:var(--s-3);font-size:var(--t-sm);font-weight:400;color:var(--muted)}
++.cc-claims{list-style:none;display:flex;flex-direction:column;gap:var(--s-3)}
++.cc-claims + .cc-claims{margin-top:var(--s-3)}
++.cc-claims li.alert{margin-top:var(--s-1)}
++.cc-rfi-list{list-style:none;display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-rfi-list > li{display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
++.cc-ack{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-3)}
++.cc-form{display:flex;flex-direction:column;gap:var(--s-4)}
++.cc-blocker{margin:0 var(--s-10) var(--s-3)}
++.cc-drafting{display:none;flex-direction:column;gap:10px}
++.cc-drafting .skel:nth-child(1){width:94%}
++.cc-drafting .skel:nth-child(2){width:88%}
++.cc-drafting .skel:nth-child(3){width:52%}
++[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .field.area{display:none}
++[data-recommended-action-field]:has([data-remediation-draft-button].htmx-request) .cc-drafting{display:flex}
++[data-remediation-draft-button].htmx-request{pointer-events:none;color:transparent;position:relative}
++[data-remediation-draft-button].htmx-request::after{content:"";position:absolute;width:14px;height:14px;border-radius:var(--r-full);border:2px solid var(--text-2);border-top-color:transparent;animation:spin .7s linear infinite}
++.cc-card:has([data-remediation-draft-button].htmx-request) [data-edit-actions] .btn.primary{color:var(--text);background:rgba(255,255,255,.88);box-shadow:inset 0 0 0 1px var(--line-control),0 1px 2px rgba(20,24,44,.05)}
++[data-theme=dark] .cc-card:has([data-remediation-draft-button].htmx-request) [data-edit-actions] .btn.primary{background:rgba(255,255,255,.07)}
++@media (max-width:860px){.cc-blocker{margin-left:var(--s-5);margin-right:var(--s-5)}}
++/* /s7-cards */

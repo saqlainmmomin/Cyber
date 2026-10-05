@@ -324,7 +324,7 @@ def test_review_card_shows_distinct_needs_review_marker():
 
     assert "Needs review" in rendered
     assert "model flagged this verdict" in rendered
-    assert "text-amber-700 dark:text-amber-300" in rendered
+    assert 'class="warn"' in rendered
 
 
 def test_review_card_omits_needs_review_marker_for_false_flag():

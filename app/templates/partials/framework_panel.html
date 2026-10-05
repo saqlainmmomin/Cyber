@@ -1,20 +1,26 @@
-<div class="rounded-b-lg border border-t-0 border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-  <div class="flex flex-wrap items-start justify-between gap-3">
+{% from "components/ui.html" import link_button %}
+{% set terms = framework_terms | default({"unit": "requirement", "group": "domain"}) %}
+{% set aid = assessment.id if assessment is defined else assessment_id %}
+{% set control_total = framework.control_count() %}
+{% set domain_total = framework.domains | length %}
+<div class="glass fw fw-panel" data-framework-panel="{{ framework.id }}">
+  <div class="fw-head">
     <div>
-      <p class="font-semibold text-gray-900">{{ framework.name }} {{ framework.version }}</p>
-      <p>{{ framework.control_count() }} controls across {{ framework.domains | length }} domains{% if finding_count %} · {{ finding_count }} report findings{% endif %}</p>
+      <h2>{{ framework_label(framework.id, full=true) }}</h2>
+      <p class="sub">{{ control_total }} {{ terms.unit }}{{ "" if control_total == 1 else "s" }} in {{ domain_total }} {{ terms.group }}{{ "" if domain_total == 1 else "s" }}{% if finding_count %} · {{ finding_count }} {{ "finding" if finding_count == 1 else "findings" }} in this report{% endif %}</p>
     </div>
-    <div class="flex gap-3">
-      <a href="/assessments/{{ assessment.id }}?tab=questionnaire&amp;framework={{ framework.id }}" class="font-medium text-brand hover:underline">Questionnaire</a>
-      <a href="/assessments/{{ assessment.id }}?tab=report&amp;framework={{ framework.id }}" class="font-medium text-brand hover:underline">Report</a>
+    <div class="acts">
+      {{ link_button("Questionnaire", "/assessments/" ~ aid ~ "?tab=questionnaire&framework=" ~ framework.id, "ghost", "sm") }}
+      {{ link_button("Report", "/assessments/" ~ aid ~ "?tab=report&framework=" ~ framework.id, "ghost", "sm") }}
     </div>
   </div>
-  <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-    {% for domain in framework.domains.values() %}
-    <div class="rounded border border-gray-200 bg-white px-3 py-2">
-      <p class="font-medium text-gray-800">{{ domain.title }}</p>
-      <p class="text-xs text-gray-500">{{ domain.sections.values() | map(attribute='controls') | map('length') | sum }} controls</p>
+  <details class="fw-more">
+    <summary class="btn ghost sm">{{ terms.group | capitalize }}s</summary>
+    <div class="domains">
+      {% for domain in framework.domains.values() %}
+      {% set domain_controls = domain.sections.values() | map(attribute='controls') | map('length') | sum %}
+      <div><span>{{ domain.title }}</span><span class="muted num">{{ domain_controls }} {{ terms.unit }}{{ "" if domain_controls == 1 else "s" }}</span></div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
+  </details>
 </div>

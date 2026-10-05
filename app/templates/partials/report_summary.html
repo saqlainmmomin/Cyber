@@ -1,547 +1,159 @@
-<div id="review-banner" data-release-state="{{ release_status }}">
-  {% if release_status == 'released' %}
-  <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 flex items-center gap-2">
-    <span class="text-sm text-green-700 dark:text-green-400 font-medium">Released</span>
-    <span class="text-xs text-green-600 dark:text-green-500">by {{ release.released_by }} · {{ release.released_at.strftime('%d %b %Y') }}</span>
-  </div>
-  {% elif release_status == 'stale' %}
-  <div class="mb-4 px-4 py-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 flex items-center justify-between">
-    <span class="text-sm text-yellow-700 dark:text-yellow-400 font-medium">The released version is out of date: an in-scope conclusion or the scope changed after release. Release again to reopen exports.</span>
-    <a href="/assessments/{{ assessment_id }}/conclusions" class="text-xs text-brand dark:text-navy-300 font-medium">Open conclusions →</a>
-  </div>
+{% from "components/ui.html" import alert, icon, link_button, pill %}
+{% set fw = framework_display.get(active_framework, {}) %}
+{% set fw_title = framework_label(active_framework, full=true) %}
+{% set selected_rows = gap_items | selectattr("framework_id", "equalto", active_framework) | list %}
+{% set selected_critical = critical_findings | selectattr("framework_id", "equalto", active_framework) | list %}
+{% set has_dpdpa_scope = active_framework == "dpdpa" and show_dpdpa_readiness_note %}
+{% set terms = framework_terms %}
+{% set failed_frameworks = framework_display.values() | selectattr("failed") | list %}
+{% set selected_metrics = namespace(compliant=0, partial=0, non_compliant=0, insufficient=0, has_gaps=false, high_risk=0) %}
+{% for row in selected_rows %}
+  {% if row.compliance_status == "compliant" %}{% set selected_metrics.compliant = selected_metrics.compliant + 1 %}{% endif %}
+  {% if row.compliance_status == "partially_compliant" %}{% set selected_metrics.partial = selected_metrics.partial + 1 %}{% set selected_metrics.has_gaps = true %}{% endif %}
+  {% if row.compliance_status == "non_compliant" %}{% set selected_metrics.non_compliant = selected_metrics.non_compliant + 1 %}{% set selected_metrics.has_gaps = true %}{% endif %}
+  {% if row.compliance_status == "insufficient_evidence" %}{% set selected_metrics.insufficient = selected_metrics.insufficient + 1 %}{% endif %}
+  {% if row.risk_level in ("critical", "high") and row.compliance_status in ("partially_compliant", "non_compliant") %}{% set selected_metrics.high_risk = selected_metrics.high_risk + 1 %}{% endif %}
+{% endfor %}
+
+{% macro findings_table(rows, terms, assessment_id) %}
+<div class="solid"><table>
+  <thead><tr><th>{{ terms.unit | capitalize }}</th><th class="rp-col-risk">Risk</th><th class="hide-sm rp-col-outcome">Outcome</th><th class="hide-sm rp-col-go"></th></tr></thead>
+  <tbody>
+  {% for item in rows %}
+  <tr data-finding-id="{{ item.id }}"><td><div class="t-title">{{ item.requirement_title }}</div><div class="t-sub">{{ item.requirement_id }}{% if item.gap_description %} · {{ item.gap_description }}{% endif %}</div></td><td>{{ pill(item.risk_level | capitalize, item.risk_level if item.risk_level in ('critical','high','medium','low') else 'neutral') }}</td><td class="hide-sm">{{ pill(item.compliance_status | replace('_', ' ') | capitalize, 'ok' if item.compliance_status == 'compliant' else 'part' if item.compliance_status == 'partially_compliant' else 'non' if item.compliance_status == 'non_compliant' else 'insuf') }}</td><td class="go hide-sm"><a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" aria-label="Workpaper trace">{{ icon("chev-r") }}</a></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endmacro %}
+{% macro findings_sections(critical, rows, terms, assessment_id) %}
+{% if critical %}
+<div class="sec" data-fix-first><h2>Fix first</h2></div>
+{{ findings_table(critical, terms, assessment_id) }}
+{% endif %}
+<div class="sec" data-detailed-findings><h2>Detailed findings</h2><div class="acts"><a class="btn ghost sm" href="/assessments/{{ assessment_id }}/workpaper">Open workpaper</a></div></div>
+{{ findings_table(rows, terms, assessment_id) }}
+{% endmacro %}
+{% set impact = namespace(chapters=[], needing=0) %}
+{% for row in selected_rows %}
+  {% if row.compliance_status in ("partially_compliant", "non_compliant") %}{% set impact.needing = impact.needing + 1 %}{% endif %}
+  {% if row.risk_level in ("critical", "high") and row.compliance_status in ("partially_compliant", "non_compliant") and row.chapter_title not in impact.chapters %}{% set impact.chapters = impact.chapters + [row.chapter_title] %}{% endif %}
+{% endfor %}
+{% set pending_frameworks = framework_display.values() | rejectattr("failed") | selectattr("status", "in", ["pending_review", "not_scored"]) | list %}
+{% set active_scored = not fw.failed and fw.status not in ("pending_review", "not_scored") and fw.score is not none %}
+{% set unscored_frameworks = framework_display.items() | rejectattr("1.failed") | selectattr("1.score", "none") | list %}
+
+<div class="rp-acts">
+  {% if release_status == "released" %}{{ link_button("Live PDF", "/api/assessments/" ~ assessment_id ~ "/report/pdf", "primary", "", "download", true) }}{% else %}{{ link_button("Open conclusions", "/assessments/" ~ assessment_id ~ "/conclusions?framework=" ~ active_framework, "primary", "", "arrow-r") }}{% endif %}
+</div>
+
+<div id="review-banner" data-release-state="{{ release_status }}" data-view-mode="{{ view_mode }}"{% if failed_frameworks %} data-analysis-incomplete-banner{% endif %}>
+  {% if release_status == "released" %}
+  <div class="alert c-ok">{{ icon("circle-check") }}<div><b>Released by {{ release.released_by }} on {{ release.released_at | display_date }}</b>Exports use the conclusions as they were approved at release.</div></div>
+  {% elif release_status == "stale" %}
+  {{ alert("Released version is out of date", "An in-scope conclusion or scope changed after release. Release again to reopen exports.", "medium", "alert") }}
   {% else %}
-  <div class="mb-4 px-4 py-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
-    <p class="text-sm text-yellow-700 dark:text-yellow-400 font-medium">Not released: exports stay closed until every in-scope conclusion is individually approved and the report is released.</p>
-    <ul data-release-blockers class="mt-2 list-disc pl-5 text-xs text-yellow-700 dark:text-yellow-400">
-      {% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}
-    </ul>
-    <a href="/assessments/{{ assessment_id }}/conclusions" class="mt-2 inline-block text-xs text-brand dark:text-navy-300 font-medium">Open conclusions →</a>
-  </div>
+  <div class="alert c-medium" data-release-blockers>{{ icon("alert") }}<div><b>Not released</b>Exports stay closed until every in-scope conclusion is individually approved and the report is released.<ul class="rp-blockers">{% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul></div></div>
   {% endif %}
 </div>
-{% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list %}
-{% if failed_names %}
-<div data-analysis-incomplete-banner class="mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-sm text-red-800 dark:text-red-300">
-  Analysis failed for {{ failed_names | join(", ") }}. This report is incomplete: those frameworks have no score, and the report cannot be released until analysis is run again.
-</div>
-{% endif %}
 
-<!-- ── A. Hero Metrics Row ─────────────────────────────────────────────────── -->
-<div class="grid grid-cols-2 md:grid-cols-{{ [framework_display | length + 3, 4] | min }} gap-4 mb-6">
-
-  <!-- Per-framework score gauges -->
-  {% for fw_id, fw_data in framework_display.items() %}
-  {% if fw_data.failed %}
-  <div data-framework-failed="{{ fw_id }}" class="bg-white dark:bg-gray-900 rounded-xl border border-red-200 dark:border-red-800 p-5 flex flex-col items-center justify-center text-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
-    <p class="text-sm font-medium text-red-600 dark:text-red-400">Analysis failed</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Not scored. Run analysis again.</p>
-  </div>
-  {% elif fw_data.status == 'pending_review' %}
-  <div data-framework-pending="{{ fw_id }}" class="bg-white dark:bg-gray-900 rounded-xl border border-yellow-200 dark:border-yellow-800 p-5 flex flex-col items-center justify-center text-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
-    <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Awaiting consultant review</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ fw_data.coverage.eligible }} of {{ fw_data.coverage.in_scope }} conclusions approved</p>
-  </div>
-  {% elif fw_data.status == 'not_scored' %}
-  <div data-framework-not-scored="{{ fw_id }}" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col items-center justify-center text-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
-    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Not scored</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">No in-scope requirement has a scoring outcome</p>
-  </div>
-  {% elif fw_data.score is not none %}
-  {% set fw_score = fw_data.score %}
-  {% set fw_color = "#22c55e" if fw_score >= 80 else ("#eab308" if fw_score >= 60 else ("#f97316" if fw_score >= 40 else "#ef4444")) %}
-  {% set fw_circ = 251.327 %}
-  {% set fw_offset = (fw_circ * (1 - fw_score / 100)) | round(2) %}
-      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col items-center justify-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ fw_data.name }}</p>
-    <svg viewBox="0 0 100 100" class="w-28 h-28" role="img" aria-label="{{ fw_data.name }} score: {{ fw_score | round(0) | int }}%">
-      <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-      <circle cx="50" cy="50" r="40" fill="none"
-              stroke="{{ fw_color }}" stroke-width="8"
-              stroke-dasharray="{{ fw_circ }}"
-              stroke-dashoffset="{{ fw_offset }}"
-              stroke-linecap="round"
-              transform="rotate(-90 50 50)"/>
-      <text x="50" y="46" text-anchor="middle" font-size="16" font-weight="700" fill="{{ fw_color }}">{{ fw_score | round(0) | int }}%</text>
-      <text x="50" y="60" text-anchor="middle" font-size="7" fill="#9ca3af">{{ fw_data.rating }}</text>
-    </svg>
-    {% if fw_data.coverage %}<p data-framework-coverage="{{ fw_id }}" class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ fw_data.coverage.scored }} of {{ fw_data.coverage.in_scope }} scored · {{ fw_data.coverage.insufficient_evidence }} insufficient evidence · {{ fw_data.coverage.not_applicable }} not applicable</p>{% endif %}
-  </div>
+{% if failed_frameworks or pending_frameworks or unscored_frameworks %}
+<div class="fw-grid rp-status-grid">
+  {% for fw_id, other in framework_display.items() if other.failed or other.status in ("pending_review", "not_scored") or other.score is none %}
+  {% if other.failed %}
+  <section class="glass fw" data-framework-failed="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><i class="dot c-non"></i>Analysis failed</span><p class="sub">Not scored. Run the analysis again.</p><div>{{ link_button("Run analysis again", "/assessments/" ~ assessment_id ~ "/analysis", "secondary", "sm", "rotate", true) }}</div></div></section>
+  {% elif other.status == "pending_review" %}
+  <section class="glass fw" data-framework-pending="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><span class="dot c-accent"></span>Awaiting consultant review</span><p class="sub">{{ other.coverage.eligible }} of {{ other.coverage.in_scope }} conclusions approved. The score appears when all are approved.</p></div></section>
   {% else %}
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col items-center justify-center text-center">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ fw_data.name }}</p>
-    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Scores unavailable</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Re-run analysis</p>
-  </div>
+  <section class="glass fw" data-framework-not-scored="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><span class="dot c-accent"></span>Scores unavailable</span><p class="sub">Approve the framework conclusions to calculate a score.</p></div></section>
   {% endif %}
   {% endfor %}
+</div>
+{% endif %}
 
-  <!-- Requirements Summary -->
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Requirements</p>
-    <div class="space-y-2">
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-green-600 dark:text-green-400 font-medium">Compliant</span>
-        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ status_counts.get("compliant", 0) }}</span>
-      </div>
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-yellow-600 dark:text-yellow-400 font-medium">Partial</span>
-        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ status_counts.get("partially_compliant", 0) }}</span>
-      </div>
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-red-600 dark:text-red-400 font-medium">Non-Compliant</span>
-        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ status_counts.get("non_compliant", 0) }}</span>
-      </div>
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-purple-600 dark:text-purple-400 font-medium">Insufficient evidence</span>
-        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ status_counts.get("insufficient_evidence", 0) }}</span>
-      </div>
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-gray-400 dark:text-gray-500">Not Applicable</span>
-        <span class="font-semibold text-gray-500 dark:text-gray-500">{{ status_counts.get("not_applicable", 0) }}</span>
-      </div>
-    </div>
-  </div>
+{% if has_dpdpa_scope and not active_scored %}<div class="alert c-accent rp-note" data-dpdpa-readiness-note>{{ icon("circle-check") }}<div>{{ dpdpa_readiness_note }}</div></div>{% endif %}
 
-  <!-- Risk Exposure -->
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">High-Risk Gaps</p>
-    {% if business_impact.critical_high_count > 0 %}
-    <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ business_impact.critical_high_count }}</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">critical or high severity</p>
-    {% else %}
-    <p class="text-3xl font-bold text-green-600 dark:text-green-400">0</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">no critical or high gaps</p>
+{% macro business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) %}
+    <section class="glass fw" data-business-impact>
+      <h2>Business impact</h2>
+      <div class="domains rp-impact">
+        <div><span>Critical or high gaps</span><span class="big-n num">{{ selected_metrics.high_risk }}</span></div>
+        <div><span>{{ terms.unit | capitalize }}s needing action</span><span class="big-n num">{{ impact.needing }}</span></div>
+        {% if active_framework == "dpdpa" and business_impact.has_dpdpa_exposure %}<div><span>Regulatory exposure</span><span class="big-n">Up to ₹{{ business_impact.max_penalty_cr }} crore</span></div>{% endif %}
+        {% if impact.chapters %}<div><span>{{ terms.group | capitalize }}s affected</span><span class="muted">{{ impact.chapters | join(", ") }}</span></div>{% endif %}
+      </div>
+    </section>
+{% endmacro %}
+
+{% if active_scored and selected_frameworks | length > 1 %}
+<nav class="tabs rp-tabs" aria-label="Frameworks">
+  {% for option in selected_frameworks %}<a href="/assessments/{{ assessment_id }}?tab=report&amp;framework={{ option.id }}" aria-selected="{{ 'true' if option.id == active_framework else 'false' }}">{{ option.name }}</a>{% endfor %}
+</nav>
+{% endif %}
+<div class="rp-panel">
+  {% if active_scored %}
+  {% include "partials/framework_panel.html" %}
+
+  <div class="fw-grid rp-grid">
+    <section class="glass fw" data-framework-card="{{ active_framework }}" data-framework-coverage="{{ active_framework }}">
+      <h2>{{ fw_title }}</h2>
+      <p class="sub">{{ fw.coverage.eligible }} of {{ fw.coverage.in_scope }} {{ terms.unit }}s scored</p>
+      <div class="fw-top">
+        <div class="ring" role="img" aria-label="Score {{ fw.score | round(0) | int }} out of 100"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="val" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="{{ fw.score | round(0) | int }} 100"/></svg><b>{{ fw.score | round(0) | int }}</b></div>
+        <div class="dist">
+          <div><i class="dot c-ok"></i><span>Compliant</span><b>{{ selected_metrics.compliant }}</b></div>
+          <div><i class="dot c-part"></i><span>Partially compliant</span><b>{{ selected_metrics.partial }}</b></div>
+          <div><i class="dot c-non"></i><span>Non-compliant</span><b>{{ selected_metrics.non_compliant }}</b></div>
+          <div><i class="dot c-insuf"></i><span>Insufficient evidence</span><b>{{ selected_metrics.insufficient }}</b></div>
+        </div>
+      </div>
+    </section>
+    {% if selected_metrics.has_gaps or selected_critical %}
+{{ business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) }}
     {% endif %}
   </div>
 
-  <!-- Regulatory Exposure -->
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Max Regulatory Exposure</p>
-    {% if business_impact.has_dpdpa_exposure %}
-    <p class="text-2xl font-bold text-red-600 dark:text-red-400">₹{{ business_impact.max_penalty_cr }}Cr</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">maximum under the DPDPA 2023 Schedule</p>
-    {% elif business_impact.has_gaps %}
-    <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ business_impact.critical_high_count }} gaps</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">critical/high severity</p>
-    {% else %}
-    <p class="text-2xl font-bold text-green-600 dark:text-green-400">—</p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">no active gap exposure</p>
-    {% endif %}
-  </div>
-</div>
-
-<!-- Include hook for Session B remediation summary -->
-<div id="remediation-summary-area">
-  {% include "partials/remediation_summary.html" ignore missing %}
-</div>
-
-
-<!-- ── B. Business Impact ──────────────────────────────────────────────────── -->
-{% if business_impact.has_gaps %}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Business Impact Assessment</h3>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <!-- Regulatory Exposure -->
-    <div>
-      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Regulatory Exposure</p>
-      {% if business_impact.has_dpdpa_exposure %}
-      <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">Up to ₹{{ business_impact.max_penalty_cr }} Crore</p>
-      <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-        Maximum penalty the Board may impose for a significant breach under the DPDPA 2023 Schedule (s.33), for the highest-severity category identified. Penalty provisions apply from mid-May 2027.
-      </p>
-      {% else %}
-      <p class="text-lg font-bold text-red-600 dark:text-red-400 mb-1">{{ business_impact.critical_high_count }} high-severity gaps</p>
-      <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-        Gaps identified in critical or high-severity controls that may expose the organisation to regulatory action.
-      </p>
-      {% endif %}
-    </div>
-
-    <!-- Affected Risk Domains -->
-    <div>
-      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Risk Domains Affected</p>
-      {% if business_impact.affected_domains %}
-      <div class="flex flex-wrap gap-1.5">
-        {% for domain in business_impact.affected_domains %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800">
-          {{ domain }}
-        </span>
-        {% endfor %}
-      </div>
-      {% else %}
-      <p class="text-xs text-gray-400 dark:text-gray-500">No specific domains identified.</p>
-      {% endif %}
-    </div>
-
-    <!-- Operational Risk -->
-    <div>
-      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Operational Risk</p>
-      <div class="space-y-1.5">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
-          <span class="text-xs text-gray-700 dark:text-gray-300">
-            <span class="font-semibold">{{ business_impact.critical_high_count }}</span> high-severity controls without adequate safeguards
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></span>
-          <span class="text-xs text-gray-700 dark:text-gray-300">
-            <span class="font-semibold">{{ status_counts.get("non_compliant", 0) + status_counts.get("partially_compliant", 0) }}</span> requirements require remediation action
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0"></span>
-          <span class="text-xs text-gray-700 dark:text-gray-300">
-            Potential regulatory investigation if a breach occurs before gaps are remediated
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
-
-
-<!-- ── C. Executive Summary ───────────────────────────────────────────────── -->
-{% if summary_text %}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <div class="flex items-center justify-between mb-3">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Executive Summary</h3>
-    <div class="flex items-center gap-3">
-      {% if comparable_assessments %}
-      <a href="/assessments/{{ assessment_id }}/compare/{{ comparable_assessments[0].id }}"
-         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">
-        Compare with previous
-      </a>
-      {% endif %}
-      <button class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              data-copy-trigger="executive-summary" aria-label="Copy executive summary">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-  <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line" data-copy-target="executive-summary">
-    {{ summary_text }}
-  </div>
-</div>
-{% endif %}
-{% if show_dpdpa_readiness_note %}
-<p data-dpdpa-readiness-note class="-mt-3 mb-6 text-xs text-gray-500 dark:text-gray-400">{{ dpdpa_readiness_note }}</p>
-{% endif %}
-
-
-<div data-view-mode="{{ view_mode }}" class="mb-4 flex justify-end gap-2 text-xs">
-  <a href="/assessments/{{ assessment_id }}/report?view=combined&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'combined' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Combined</a>
-  <a href="/assessments/{{ assessment_id }}/report?view=per_framework&amp;framework={{ active_framework }}" class="rounded border px-3 py-1.5 {% if view_mode == 'per_framework' %}border-brand text-brand{% else %}border-gray-200 text-gray-500{% endif %}">Per framework</a>
-</div>
-
-<!-- ── D. Compliance Distribution by Chapter ─────────────────────────────── -->
-{% if chapter_scores %}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Compliance by Chapter</h3>
-    <div class="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-green-500 inline-block"></span>Compliant</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-yellow-400 inline-block"></span>Partial</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span>Non-Compliant</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-gray-200 dark:bg-gray-700 inline-block"></span>N/A</span>
-    </div>
-  </div>
-  <div class="space-y-4">
-    {% for chapter_key, data in chapter_scores.items() %}
-    {% set ch_counts = chapter_status_counts.get(chapter_key, {}) %}
-    {% set total = ch_counts.get("total", 1) %}
-    {% set compliant_pct   = ((ch_counts.get("compliant", 0) / total) * 100) | round(1) %}
-    {% set partial_pct     = ((ch_counts.get("partially_compliant", 0) / total) * 100) | round(1) %}
-    {% set nc_pct          = ((ch_counts.get("non_compliant", 0) / total) * 100) | round(1) %}
-    {% set na_pct          = (((ch_counts.get("not_applicable", 0) + ch_counts.get("not_assessed", 0) + ch_counts.get("insufficient_evidence", 0)) / total) * 100) | round(1) %}
-    <div>
-      <div class="flex items-center justify-between mb-1.5">
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{ data.title if data.title is defined else (chapter_key | replace("_", " ") | title) }}</span>
-          {% if not (data.applicable if data.applicable is defined else true) %}
-          <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">Not applicable</span>
-          {% endif %}
-        </div>
-        <div class="flex items-center gap-3 text-xs">
-          {% if ch_counts.get("non_compliant", 0) > 0 %}
-          <span class="text-red-600 dark:text-red-400 font-medium">{{ ch_counts.get("non_compliant", 0) }} NC</span>
-          {% endif %}
-          {% if ch_counts.get("partially_compliant", 0) > 0 %}
-          <span class="text-yellow-600 dark:text-yellow-400 font-medium">{{ ch_counts.get("partially_compliant", 0) }} P</span>
-          {% endif %}
-          <span class="font-semibold {% if data.score is defined %}{% if data.score >= 80 %}text-green-600 dark:text-green-400{% elif data.score >= 60 %}text-yellow-600 dark:text-yellow-400{% elif data.score >= 40 %}text-orange-500 dark:text-orange-400{% else %}text-red-600 dark:text-red-400{% endif %}{% else %}text-gray-600 dark:text-gray-400{% endif %}">
-            {{ (data.score if data.score is defined else 0) | round(0) | int }}%
-          </span>
-        </div>
-      </div>
-      {% if (data.applicable if data.applicable is defined else true) %}
-      <div class="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-        {% if compliant_pct > 0 %}<div class="bg-green-500 transition-all" style="width: {{ compliant_pct }}%" title="{{ ch_counts.get('compliant', 0) }} compliant"></div>{% endif %}
-        {% if partial_pct > 0 %}<div class="bg-yellow-400 transition-all" style="width: {{ partial_pct }}%" title="{{ ch_counts.get('partially_compliant', 0) }} partial"></div>{% endif %}
-        {% if nc_pct > 0 %}<div class="bg-red-500 transition-all" style="width: {{ nc_pct }}%" title="{{ ch_counts.get('non_compliant', 0) }} non-compliant"></div>{% endif %}
-        {% if na_pct > 0 %}<div class="bg-gray-300 dark:bg-gray-600 transition-all" style="width: {{ na_pct }}%" title="N/A or not assessed"></div>{% endif %}
-      </div>
-      {% else %}
-      <div class="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-        <div class="bg-gray-200 dark:bg-gray-700 w-full"></div>
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
-
-<!-- ── E. Critical Findings + Quick Wins ─────────────────────────────────── -->
-{% if critical_findings or quick_wins %}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-
-  <!-- Critical Findings -->
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-      Critical Findings
-      {% if critical_findings %}
-      <span class="ml-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/40 border border-red-100 dark:border-red-800 px-1.5 py-0.5 rounded-full">{{ critical_findings | length }}</span>
-      {% endif %}
-    </h3>
-    {% if critical_findings %}
-    <div class="space-y-3">
-      {% for item in critical_findings %}
-      <div class="border-l-2 {% if item.risk_level == 'critical' %}border-red-500{% else %}border-orange-400{% endif %} pl-3">
-        <div class="flex items-start justify-between gap-2">
-          <p class="text-xs font-medium text-gray-800 dark:text-gray-200 leading-snug">{{ item.requirement_title }}</p>
-          <span class="flex-shrink-0 text-xs font-medium {% if item.risk_level == 'critical' %}text-red-600 dark:text-red-400{% else %}text-orange-600 dark:text-orange-400{% endif %}">
-            {{ item.risk_level | title }}
-          </span>
-        </div>
-        {% if item.gap_description %}
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-          {{ item.gap_description[:120] }}{% if item.gap_description | length > 120 %}…{% endif %}
-        </p>
-        {% endif %}
-        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ item.requirement_id }}<a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a></p>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-sm text-gray-400 dark:text-gray-500">No critical or high-risk findings identified.</p>
-    {% endif %}
-  </div>
-
-  <!-- Quick Wins -->
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Quick Wins</h3>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">High priority · Low effort · Fix within weeks</p>
-    {% if quick_wins %}
-    <div class="space-y-3">
-      {% for item in quick_wins %}
-      <div class="flex items-start gap-2.5">
-        <span class="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-          <svg class="h-3 w-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-          </svg>
-        </span>
-        <div>
-          <p class="text-xs font-medium text-gray-800 dark:text-gray-200 leading-snug">{{ item.requirement_title }}</p>
-          {% if item.remediation_action %}
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.remediation_action[:100] }}{% if item.remediation_action | length > 100 %}…{% endif %}</p>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
-      <svg class="h-4 w-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-      </svg>
-    {% if quick_wins_available is defined and not quick_wins_available %}Effort is not estimated in approved conclusions, so quick wins are not shown.{% else %}No quick wins identified — all gaps require medium or high effort to remediate.{% endif %}
-    </div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-
-<!-- ── G. Detailed Findings (grouped by chapter if available, flat fallback) ─ -->
-<details class="mb-6" open>
-  <summary class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Detailed Findings</h3>
-      <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{{ gap_items | length }} requirements</span>
-    </div>
-    <div class="flex items-center gap-3">
-      <a href="/api/assessments/{{ assessment_id }}/report/pdf" onclick="event.stopPropagation()"
-         class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Live PDF</a>
-      <a href="/assessments/{{ assessment_id }}/snapshots" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Report versions</a>
-      <a href="/assessments/{{ assessment_id }}/workpaper" onclick="event.stopPropagation()" class="text-xs text-brand dark:text-navy-300 hover:text-brand-light font-medium">Workpaper</a>
-      <svg class="h-4 w-4 text-gray-400 dark:text-gray-500 details-chevron transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-      </svg>
-    </div>
-  </summary>
-
-  {% if gap_items_by_chapter is defined %}
-  <!-- Grouped view (when Session C passes gap_items_by_chapter) -->
-  <div class="space-y-3 mt-3">
-    {% for chapter_key, chapter_items in gap_items_by_chapter.items() %}
-    <details class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden" open>
-      <summary class="px-5 py-3 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ chapter_key }}</span>
-        <div class="flex items-center gap-3">
-          {% set nc = chapter_items | selectattr('compliance_status', 'equalto', 'non_compliant') | list | length %}
-          {% set partial = chapter_items | selectattr('compliance_status', 'equalto', 'partially_compliant') | list | length %}
-          {% set compliant = chapter_items | selectattr('compliance_status', 'equalto', 'compliant') | list | length %}
-          {% if nc > 0 %}<span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/40 px-1.5 py-0.5 rounded">{{ nc }} NC</span>{% endif %}
-          {% if partial > 0 %}<span class="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/40 px-1.5 py-0.5 rounded">{{ partial }} P</span>{% endif %}
-          {% if compliant > 0 %}<span class="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/40 px-1.5 py-0.5 rounded">{{ compliant }} ✓</span>{% endif %}
-          <svg class="h-4 w-4 text-gray-400 dark:text-gray-500 details-chevron transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-          </svg>
-        </div>
-      </summary>
-      <div class="divide-y divide-gray-100 dark:divide-gray-800">
-        {% for item in chapter_items %}
-        <div class="px-5 py-4">
-          <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</p>
-              <p class="text-xs text-gray-400 dark:text-gray-500" data-copy-target="requirement-id">{{ item.requirement_id }}</p>
-              <a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
-              {% if item.gap_description %}
-              <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                {{ item.gap_description[:200] }}{% if item.gap_description | length > 200 %}...{% endif %}
-              </p>
-              {% endif %}
-            </div>
-            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                     {% if item.compliance_status == 'compliant' %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400
-                     {% elif item.compliance_status == 'partially_compliant' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400
-                     {% elif item.compliance_status == 'non_compliant' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400
-                     {% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400{% endif %}">
-                {{ item.compliance_status | replace("_", " ") | title }}
-              </span>
-              <span class="text-xs font-medium
-                     {% if item.risk_level == 'critical' %}text-red-600 dark:text-red-400
-                     {% elif item.risk_level == 'high' %}text-orange-600 dark:text-orange-400
-                     {% elif item.risk_level == 'medium' %}text-yellow-600 dark:text-yellow-400
-                     {% else %}text-green-600 dark:text-green-400{% endif %}">
-                {{ item.risk_level | title }}
-              </span>
-            </div>
-          </div>
-          <div id="remediation-{{ item.id }}">
-            {% set legacy = legacy_remediation.get((item.framework_id, item.requirement_id)) %}
-            {% if legacy %}<div data-legacy-remediation="{{ item.requirement_id }}">{% with item = legacy %}{% include "partials/remediation_panel.html" ignore missing %}{% endwith %}</div>{% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </details>
-    {% endfor %}
-  </div>
-
-  {% else %}
-  <!-- Flat table fallback (until Session C passes gap_items_by_chapter) -->
-  <div class="bg-white dark:bg-gray-900 border border-t-0 border-gray-200 dark:border-gray-800 rounded-b-xl overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-        <thead class="bg-gray-50 dark:bg-gray-800/50">
-          <tr>
-            {% if is_multi_framework %}
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Framework</th>
-            {% endif %}
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Requirement</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Risk</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Evidence</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Gap</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-          {% for item in gap_items %}
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-            {% if is_multi_framework %}
-            <td class="px-4 py-3">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                {{ (item.framework_id or 'dpdpa') | upper }}
-              </span>
-            </td>
-            {% endif %}
-            <td class="px-4 py-3">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</p>
-              <p class="text-xs text-gray-400 dark:text-gray-500" data-copy-target="requirement-id">{{ item.requirement_id }}</p>
-              <a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">Workpaper trace →</a>
-            </td>
-            <td class="px-4 py-3">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                     {% if item.compliance_status == 'compliant' %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400
-                     {% elif item.compliance_status == 'partially_compliant' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400
-                     {% elif item.compliance_status == 'non_compliant' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400
-                     {% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400{% endif %}">
-                {{ item.compliance_status | replace("_", " ") | title }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <span class="text-xs font-medium
-                     {% if item.risk_level == 'critical' %}text-red-600 dark:text-red-400
-                     {% elif item.risk_level == 'high' %}text-orange-600 dark:text-orange-400
-                     {% elif item.risk_level == 'medium' %}text-yellow-600 dark:text-yellow-400
-                     {% else %}text-green-600 dark:text-green-400{% endif %}">
-                {{ item.risk_level | title }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              {% set conf = item.evidence_confidence or 'weak' %}
-              <span class="inline-flex items-center gap-1 text-xs
-                     {% if conf == 'strong' %}text-green-600 dark:text-green-400
-                     {% elif conf == 'moderate' %}text-yellow-600 dark:text-yellow-400
-                     {% else %}text-gray-400 dark:text-gray-500{% endif %}"
-                    title="{% if conf == 'strong' %}Backed by document evidence + self-report{% elif conf == 'moderate' %}Document or self-report with supporting docs{% else %}Self-reported only{% endif %}">
-                {% if conf == 'strong' %}
-                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
-                {% elif conf == 'moderate' %}
-                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                {% else %}
-                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 .75.75 0 011.06 1.06zm2.12 0a.75.75 0 11-1.06-1.061.75.75 0 011.06 1.06zM10 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                {% endif %}
-                {{ conf | title }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-md">
-              {{ item.gap_description[:150] }}{% if item.gap_description | length > 150 %}...{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  {% if has_dpdpa_scope %}<div class="alert c-accent rp-note" data-dpdpa-readiness-note>{{ icon("circle-check") }}<div>{{ dpdpa_readiness_note }}</div></div>{% endif %}
+  {% elif not fw.failed %}
+  <p class="meta-line" data-framework-coverage="{{ active_framework }}">{{ fw.version }} · {{ selected_rows | length }} approved findings in this framework</p>
+  {% if selected_metrics.has_gaps or selected_critical %}
+{{ business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) }}
   {% endif %}
-</details>
+  {% endif %}
 
+  {% if not fw.failed %}
+  <div class="sec"><h2>Executive summary</h2><div class="acts"><button class="btn ghost sm lead" type="button" data-copy-trigger="executive-summary">Copy</button>{% if comparable_assessments %}<a class="btn ghost sm" href="/assessments/{{ assessment_id }}/compare">Compare with last year</a>{% endif %}</div></div>
+  <div class="glass rp-summary" data-executive-summary data-copy-target="executive-summary">{% for paragraph in summary_text.split("\n\n") if paragraph.strip() %}<p>{{ paragraph.strip() }}</p>{% endfor %}</div>
 
-<!-- ── H. RFI Section ─────────────────────────────────────────────────────── -->
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <div>
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Request for Information (RFI)</h3>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Prepare a versioned evidence request from the scope and your approved conclusions.</p>
+  {% include "partials/remediation_summary.html" %}
+
+  <div class="sec" data-domain-findings><h2>By domain</h2><div class="acts"><a class="btn ghost sm" href="/assessments/{{ assessment_id }}/findings?framework={{ active_framework }}">View all findings</a></div></div>
+  <div class="glass fw rp-domains"><div class="domains">
+    {% for chapter, items in gap_items_by_chapter.items() %}
+    {% set chapter_rows = items | selectattr("framework_id", "equalto", active_framework) | list %}
+    {% if chapter_rows %}
+    {% set d = namespace(critical=0, high=0, partial=0, non=0, insuf=0) %}
+    {% for item in chapter_rows %}
+      {% if item.compliance_status in ("partially_compliant", "non_compliant") and item.risk_level == "critical" %}{% set d.critical = d.critical + 1 %}
+      {% elif item.compliance_status in ("partially_compliant", "non_compliant") and item.risk_level == "high" %}{% set d.high = d.high + 1 %}
+      {% elif item.compliance_status == "partially_compliant" %}{% set d.partial = d.partial + 1 %}
+      {% elif item.compliance_status == "non_compliant" %}{% set d.non = d.non + 1 %}
+      {% elif item.compliance_status == "insufficient_evidence" %}{% set d.insuf = d.insuf + 1 %}{% endif %}
+    {% endfor %}
+    <div><span>{{ chapter }}</span>
+      {% if d.critical %}<span class="status"><i class="dot c-critical"></i>{{ d.critical }} critical {{ "gap" if d.critical == 1 else "gaps" }}</span>
+      {% elif d.high %}<span class="status"><i class="dot c-high"></i>{{ d.high }} high-severity {{ "gap" if d.high == 1 else "gaps" }}</span>
+      {% elif d.non %}<span class="status"><i class="dot c-non"></i>{{ d.non }} non-compliant</span>
+      {% elif d.partial %}<span class="status"><i class="dot c-part"></i>{{ d.partial }} partial</span>
+      {% elif d.insuf %}<span class="status"><i class="dot c-insuf"></i>{{ d.insuf }} without evidence</span>
+      {% else %}<span class="status calm">No gaps</span>{% endif %}
     </div>
-  </div>
-  <div id="rfi-section">
-    <a href="/assessments/{{ assessment_id }}/rfi" data-rfi-link
-       class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-      Open RFI
-    </a>
-  </div>
+    {% endif %}
+    {% endfor %}
+  </div></div>
+  {% endif %}
+
+  {{ findings_sections(selected_critical, selected_rows, terms, assessment_id) }}
 </div>
+
+{% for legacy in legacy_remediation.values() if (legacy.framework_id or "dpdpa") == active_framework %}<article class="glass rp-legacy" data-legacy-remediation><h3>{{ legacy.requirement_title }}</h3>{% with item = legacy %}{% include "partials/remediation_panel.html" %}{% endwith %}</article>{% endfor %}
+<div id="rfi-section" data-rfi-link class="meta-line rp-rfi"><a href="/assessments/{{ assessment_id }}/rfi">Open request for information</a> · <a href="/assessments/{{ assessment_id }}/snapshots">Report versions</a></div>

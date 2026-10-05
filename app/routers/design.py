@@ -554,3 +554,19 @@ def design_preview(request: Request, name: str, db: Session = Depends(get_db)) -
     if name in DB_PREVIEWS:
         return preview(request, db=db)
     return preview(request)
+
+
+# S7 preview fixtures live in app/routers/design_s7_*.py; each module registers
+# its own PREVIEW_PAGES entries on import so slice groups never share this file.
+def _load_s7_previews() -> None:
+    import importlib
+    import pkgutil
+
+    import app.routers as routers_package
+
+    for module in pkgutil.iter_modules(routers_package.__path__):
+        if module.name.startswith("design_s7_"):
+            importlib.import_module(f"app.routers.{module.name}")
+
+
+_load_s7_previews()

@@ -305,7 +305,10 @@ def test_report_view_mode_defaults_and_validation(client, db_session):
     assert 'data-view-mode="per_framework"' in per_framework.text
     assert "DPDPA" in per_framework.text
     assert "ISO 27001" in per_framework.text
-    assert "view=combined&amp;framework=iso27001" in per_framework.text
+    # The route keeps the legacy view query contract, but the report partial
+    # no longer renders a combined cross-framework toggle or content.
+    assert "view=combined&amp;framework=iso27001" not in per_framework.text
+    assert 'data-framework-card="dpdpa"' not in per_framework.text
     htmx_partial = client.get(
         f"/assessments/{multi.id}/report?view=combined&framework=iso27001",
         headers={"HX-Request": "true"},

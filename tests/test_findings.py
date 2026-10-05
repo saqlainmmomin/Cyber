@@ -569,7 +569,8 @@ def test_scenario_3_one_finding_per_conclusion(db, http, gate, monkeypatch):
     response = _create(http, second_a, second)
     assert (response.status_code, response.json()["detail"]) == (400, findings.DUPLICATE)
     assert _nothing_snapshot(db) == before
-    page = http.get(f"/assessments/{second_a.id}/findings")
+    # Yozora S7: the finding card lives on its detail view (?finding=); the list is a table.
+    page = http.get(f"/assessments/{second_a.id}/findings?finding={migrated.id}")
     assert page.status_code == 200
     assert 'data-finding-origin="migrated"' in page.text
 
@@ -660,8 +661,9 @@ def test_scenario_4_terminal_and_unknown_status(db, http, gate, monkeypatch):
         data={"title": action.title, "expected_history_length": 1},
     )
     assert (response.status_code, response.json()["detail"]) == (400, findings.TERMINAL)
-    page = http.get(f"/assessments/{assessment.id}/findings")
-    assert "Closed and verified actions cannot be changed here." in page.text
+    # Yozora S7: card on the detail view; a closed action without closure evidence is the legacy case.
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
+    assert "Closed without closure evidence (legacy)" in page.text
     action_html = page.text[page.text.index(f'id="action-{action.id}"') :]
     assert f"actions/{action.id}/status" not in action_html
     response = http.post(
@@ -722,7 +724,7 @@ def test_scenario_5_append_concurrency_and_unreadable_history(
     )
     assert (response.status_code, response.json()["detail"]) == (400, findings.UNREADABLE_HISTORY)
     assert _nothing_snapshot(db) == before
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     assert page.status_code == 200
     assert "History could not be read." in page.text
 
@@ -917,10 +919,14 @@ def test_scenario_7_page_render_reopen_escaping_and_single_card_read(
     )
     assert response.status_code == 200
     finding_id = response.json()["finding_id"]
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: the list is a table linking to each finding's detail view, which holds the card.
+    listing = http.get(f"/assessments/{assessment.id}/findings")
+    assert listing.text.count("data-finding-card") == 0
+    assert f'href="/assessments/{assessment.id}/findings?finding={finding_id}"' in listing.text
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding_id}")
     assert page.text.count("data-finding-card") == 1
     assert "Created by Priya" in page.text
-    assert "Workpaper trace →" in page.text
+    assert "Workpaper trace" in page.text
     assert page.text.count("data-action-row") == 1
     assert 'data-history-action="created"' in page.text
     assert "consultant:Priya" not in page.text
@@ -928,15 +934,16 @@ def test_scenario_7_page_render_reopen_escaping_and_single_card_read(
     assert "<script>alert(1)</script>" not in page.text
 
     assert _decide(http, assessment, conclusion, "reopen").status_code == 200
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding_id}")
     assert 'data-source-approved="false"' in page.text
-    assert "Source conclusion is no longer approved (now pending)" in page.text
+    assert "The source conclusion is no longer approved" in page.text
+    assert "It is now pending." in page.text
     assert f'id="finding-{finding_id}"' in page.text
 
     empty = _seed(db, client_name="Empty")
     empty_page = http.get(f"/assessments/{empty.id}/findings")
     assert "No approved conclusions are waiting for a finding." in empty_page.text
-    assert "No findings yet." in empty_page.text
+    assert "<h3>No findings yet</h3>" in empty_page.text  # Yozora S7: empty-state title
     assert http.get("/assessments/unknown/findings").status_code == 404
 
 
@@ -968,7 +975,7 @@ def test_scenario_8_workpaper_linkage(db, http, gate, monkeypatch):
     assert workpaper_page.text.count("data-workpaper-entry") == len(entries)
     anchor = f"wp-dpdpa-{REQS[0]}"
     assert workpaper_page.text.count(f'id="{anchor}"') == 1
-    findings_page = http.get(f"/assessments/{assessment.id}/findings")
+    findings_page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     assert f'href="/assessments/{assessment.id}/workpaper#{anchor}"' in findings_page.text
     assert f'href="/assessments/{assessment.id}/findings"' in workpaper_page.text
     conclusions_page = http.get(f"/assessments/{assessment.id}/conclusions")
@@ -992,9 +999,14 @@ def test_scenario_9_legacy_coexistence_and_rerun(db, http):
     )
     stats = run_migration(db)
     assert (stats.findings, stats.actions) == (2, 2)
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: one card per detail view; read both migrated findings.
+    detail_text = "".join(
+        http.get(f"/assessments/{assessment.id}/findings?finding={row.id}").text
+        for row in db.query(Finding).filter_by(assessment_id=assessment.id).all()
+    )
+    page = type("Page", (), {"text": detail_text})()
     assert page.text.count('data-finding-origin="migrated"') == 2
-    assert page.text.count("Migrated from legacy remediation") >= 2
+    assert page.text.count("Migrated from the earlier remediation tracker") >= 2
     assert page.text.count("Imported from legacy remediation") == 2
 
     open_action = db.query(Action).filter_by(status="open").one()

@@ -45,6 +45,7 @@ def review_queue_page(
         context={
             "request": request,
             "assessment": assessment,
+            "engagement_row": db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None,
             "groups": groups,
             "total": total,
             "open_count": open_count,

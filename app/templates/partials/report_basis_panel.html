@@ -1,29 +1,20 @@
-<section data-report-basis-panel data-period-recorded="{{ 'yes' if report_basis.period_recorded else 'no' }}" data-period-locked="{{ 'yes' if period_locked else 'no' }}" class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-  <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Assessment period and sign-off</h2>
-  <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">The period and evidence cut-off are required before any conclusion can be approved, and are printed on every report.{% if period_locked %} They are locked while any conclusion is approved; reopen approved conclusions to change them.{% endif %}</p>
-  <form data-report-basis-form class="mt-4 grid gap-4 sm:grid-cols-2" hx-post="/api/assessments/{{ assessment.id }}/report-basis" hx-include="#reviewer-name" hx-swap="none">
-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-      Period start
-      <input type="date" name="period_start" value="{{ report_basis.period_start.isoformat() if report_basis.period_start else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-    </label>
-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-      Period end
-      <input type="date" name="period_end" value="{{ report_basis.period_end.isoformat() if report_basis.period_end else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-    </label>
-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-      Evidence cut-off
-      <input type="date" name="evidence_cutoff" value="{{ report_basis.evidence_cutoff.isoformat() if report_basis.evidence_cutoff else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-    </label>
-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-      Prepared by
-      <input type="text" name="prepared_by" maxlength="200" value="{{ report_basis.prepared_by or '' }}" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-    </label>
-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
-      Reviewed by
-      <input type="text" name="reviewed_by" maxlength="200" value="{{ report_basis.reviewed_by or '' }}" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-    </label>
-    <div class="flex items-end">
-      <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Save period and sign-off</button>
+{% from "components/ui.html" import alert %}
+{% set basis_save_variant = basis_save_variant | default("primary") %}
+<section data-report-basis-panel data-period-recorded="{{ "yes" if report_basis.period_recorded else "no" }}" data-period-locked="{{ "yes" if period_locked else "no" }}" class="glass card">
+  <h2>Period and sign-off</h2>
+  {% if period_locked %}
+  <div class="basis-alert">{{ alert("Locked while conclusions are approved", "Reopen the approved conclusions to change the period or the evidence cut-off.", "accent", icon_id="lock") }}</div>
+  {% elif not report_basis.period_recorded %}
+  <div class="basis-alert">{{ alert("Record the period and evidence cut-off", "No conclusion can be approved until they are set. They are printed on every report.", "medium") }}</div>
+  {% endif %}
+  <form data-report-basis-form hx-post="/api/assessments/{{ assessment.id }}/report-basis" hx-include="#reviewer-name" hx-swap="none">
+    <div class="fw-grid basis-grid">
+      <div><label class="label" for="period_start">Period start</label><label class="field{% if field_errors and field_errors.period_start %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="period_start" name="period_start" type="date" value="{{ report_basis.period_start.isoformat() if report_basis.period_start else "" }}"{% if period_locked %} readonly{% endif %}></label>{% if field_errors and field_errors.period_start %}<p class="err">{{ field_errors.period_start }}</p>{% endif %}</div>
+      <div><label class="label" for="period_end">Period end</label><label class="field{% if field_errors and field_errors.period_end %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="period_end" name="period_end" type="date" value="{{ report_basis.period_end.isoformat() if report_basis.period_end else "" }}"{% if period_locked %} readonly{% endif %}></label>{% if field_errors and field_errors.period_end %}<p class="err">{{ field_errors.period_end }}</p>{% endif %}</div>
+      <div><label class="label" for="evidence_cutoff">Evidence cut-off</label><label class="field{% if field_errors and field_errors.evidence_cutoff %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="evidence_cutoff" name="evidence_cutoff" type="date" value="{{ report_basis.evidence_cutoff.isoformat() if report_basis.evidence_cutoff else "" }}"{% if period_locked %} readonly{% endif %}></label>{% if field_errors and field_errors.evidence_cutoff %}<p class="err">{{ field_errors.evidence_cutoff }}</p>{% elif report_basis.period_recorded and not field_errors %}<p class="help">Evidence dated after this is left out of the analysis.</p>{% endif %}</div>
+      <div><label class="label" for="prepared_by">Prepared by</label><label class="field"><input id="prepared_by" name="prepared_by" type="text" maxlength="200" value="{{ report_basis.prepared_by or "" }}"></label></div>
+      <div><label class="label" for="reviewed_by">Reviewed by</label><label class="field"><input id="reviewed_by" name="reviewed_by" type="text" maxlength="200" value="{{ report_basis.reviewed_by or "" }}"></label></div>
     </div>
+    <div class="hrow basis-acts">{% if period_locked %}<button type="submit" class="btn ghost">Save sign-off names</button>{% else %}<button type="submit" class="btn {{ basis_save_variant }}">Save period and sign-off</button>{% endif %}</div>
   </form>
 </section>

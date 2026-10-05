@@ -1,13 +1,14 @@
-<div class="flex items-center gap-4 p-4 rounded-lg bg-navy-50 dark:bg-navy-900/40 border border-navy-200 dark:border-navy-800"
+{% from "components/ui.html" import skeleton %}
+<div class="stack" role="status" aria-live="polite"
      hx-get="/assessments/{{ assessment_id }}/analysis-status"
      hx-trigger="every 3s"
      hx-swap="outerHTML">
-  <svg class="animate-spin h-6 w-6 text-brand dark:text-navy-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-  </svg>
-  <div>
-    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Analysis in progress…</p>
-    <p class="text-xs text-gray-500 dark:text-gray-400">The analysis is reading your documents and questionnaire responses. This typically takes 15–30 seconds.</p>
+  <span class="status"><span class="st prog"></span>Analysis is running</span>
+  <h2>{% if document_count is defined and response_count is defined %}Reading {{ document_count }} document{{ "" if document_count == 1 else "s" }} and {{ response_count }} questionnaire response{{ "" if response_count == 1 else "s" }}{% else %}Reading your documents and questionnaire responses{% endif %}</h2>
+  <p class="sub">This page updates by itself. You can leave it and come back; the analysis keeps running.</p>
+  <div class="stack tight an-skels" aria-busy="true" aria-label="Loading">
+    {{ skeleton("70%") }}
+    {{ skeleton("92%") }}
+    {{ skeleton("48%") }}
   </div>
 </div>

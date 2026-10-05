@@ -1,0 +1,28 @@
+{% from "components/layout.html" import seg %}
+
+{# S7: the two shared sub-view rows. Review pages (queue, conclusions, findings,
+   workpaper) call review_seg; report pages (report, versions, applicability,
+   narrative, board inputs) call report_seg. Same items, same order everywhere. #}
+{% macro review_seg(assessment, current) -%}
+{% set base = "/assessments/" ~ assessment.id %}
+{{ seg([
+  {"key": "queue", "label": "Queue", "href": base ~ "/review-queue"},
+  {"key": "conclusions", "label": "Conclusions", "href": base ~ "/conclusions"},
+  {"key": "findings", "label": "Findings", "href": base ~ "/findings"},
+  {"key": "workpaper", "label": "Workpaper", "href": base ~ "/workpaper"}
+], current) }}
+{%- endmacro %}
+
+{% macro report_seg(assessment, current) -%}
+{% set base = "/assessments/" ~ assessment.id %}
+{% set items = [
+  {"key": "report", "label": "Report", "href": base ~ "/report"},
+  {"key": "versions", "label": "Versions", "href": base ~ "/snapshots"}
+] %}
+{% if "iso27001" in assessment.frameworks %}{% set items = items + [{"key": "applicability", "label": "Applicability", "href": base ~ "/soa"}] %}{% endif %}
+{% set items = items + [
+  {"key": "narrative", "label": "Narrative", "href": base ~ "/narrative"},
+  {"key": "board-inputs", "label": "Board inputs", "href": base ~ "/board-inputs"}
+] %}
+{{ seg(items, current) }}
+{%- endmacro %}
