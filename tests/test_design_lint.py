@@ -22,6 +22,30 @@ MIGRATED_TEMPLATES = {
     "pages/design_assessment_preview.html",
     "partials/desk_review_prefilling.html",
     "pages/desk_review.html",  # s5-b4: live b4 page
+    # Yozora per-PR allowance (S7)
+    "components/seg_rows.html",
+    "components/conclusion_card.html",
+    "components/finding_card.html",
+    "components/requirement_card_body.html",
+    "pages/conclusions.html",
+    "pages/findings.html",
+    "pages/review_queue.html",
+    "pages/board_inputs.html",
+    "pages/narrative.html",
+    "partials/analysis_complete.html",
+    "partials/analysis_error.html",
+    "partials/analysis_gate_blocked.html",
+    "partials/analysis_running.html",
+    "partials/framework_panel.html",
+    "partials/no_report.html",
+    "partials/release_panel.html",
+    "partials/remediation_draft.html",
+    "partials/remediation_panel.html",
+    "partials/remediation_summary.html",
+    "partials/report_basis_panel.html",
+    "partials/report_summary.html",
+    "partials/report_tab.html",
+    "partials/review_finding_card.html",
 }
 
 
