@@ -22,10 +22,10 @@ SHELL = """
 {% from "components/layout.html" import assessment_tabs %}
 {% from "components/ui.html" import icon %}
 {% block title %}{{ heading }}{% endblock %}
-{% block crumbs %}<a class="hide-sm" href="/">{{ assessment.company_name }}</a>{{ icon("slash") }}{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a>{{ icon("slash") }}{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a>{% for label, href in trail %}{{ icon("slash") }}{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<b>{{ label }}</b>{% endif %}{% endfor %}{% endblock %}
+{% block crumbs %}<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a>{% for label, href in trail %}<svg class="i sl"><use href="#i-slash"/></svg>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<b>{{ label }}</b>{% endif %}{% endfor %}{% endblock %}
 {% macro specimen_head() %}<div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;margin-bottom:var(--s-4)"><span class="chip">State</span><h2>{{ specimen }}</h2></div>{% endmacro %}
 {% macro page_head(first=False) %}<div class="page-head"{% if first %} style="margin-top:0"{% endif %}><div><h1>{{ heading }}</h1><p class="meta-line">{{ meta_line }}</p></div><div class="acts"></div></div>{{ assessment_tabs(assessment, tab) }}{% endmacro %}
-{% block content %}{% if head_inside %}<section style="margin-top:var(--s-12)">{{ specimen_head() }}{{ page_head(True) }}{% else %}{{ page_head() }}<section style="margin-top:var(--s-12)">{{ specimen_head() }}{% endif %}{% if layout == "analysis" %}<div class="glass card"><div id="analysis-area">{% include partial %}</div></div>{% elif layout == "finding" %}{% include partial %}{% else %}{% include partial %}{% endif %}{% if toast %}<div style="margin-top:var(--s-4)"><div class="toast">{{ icon("check") }}<span>{{ toast }}</span></div></div>{% endif %}</section>{% endblock %}
+{% block content %}{% if head_inside %}<section style="margin-top:var(--s-12)">{{ specimen_head() }}{{ page_head(True) }}{% else %}{{ page_head() }}<section style="margin-top:var(--s-12)">{{ specimen_head() }}{% endif %}{% if layout == "analysis" %}<div class="glass card"><div id="analysis-area">{% include partial %}</div></div>{% elif layout == "confirm" %}<div class="rel-confirm-host">{% include partial %}</div>{% else %}{% include partial %}{% endif %}{% if toast %}<div style="margin-top:var(--s-4)"><div class="toast">{{ icon("check") }}<span>{{ toast }}</span></div></div>{% endif %}</section>{% endblock %}
 """
 
 STATE_HEADS = {
@@ -63,7 +63,7 @@ def _render(request, db, screen, state, assessment, engagement) -> Response:
 
     basis = report_basis.current_basis(db, assessment)
     context = {"request": request, "assessment": assessment, "engagement": engagement, "specimen": STATE_HEADS[screen][state], "layout": "plain", "head_inside": False, "toast": "", "meta_line": _meta_line(basis), "assessment_id": assessment.id}
-    context["trail"] = [("Review", f"/assessments/{assessment.id}/review-queue")]
+    context["trail"] = [("Review", f"/assessments/{assessment.id}/review-queue"), ("Review", "")]
 
     if screen == "b5-analysis":
         context.update({"heading": "Review", "tab": "review", "partial": f"partials/analysis_{'gate_blocked' if state.startswith('gate') else state}.html", "layout": "analysis"})
@@ -74,13 +74,15 @@ def _render(request, db, screen, state, assessment, engagement) -> Response:
         else:
             response = web.analysis_status(request, assessment.id, db=db)
             context.update(response.context)
-            context["partial"] = f"partials/analysis_{state}.html"
+            context["partial"] = f"partials/analysis_{state.removesuffix('-all')}.html"
             if state == "error":
                 context["framework_display"] = context.get("framework_display", {})
     elif screen == "b5-release":
         context.update({"heading": "Release", "tab": "report", "partial": "partials/release_panel.html", "trail": [("Report", f"/assessments/{assessment.id}?tab=report"), ("Release", "")]})
         context["release"] = approved_report.release_state(db, assessment)
         context["release_confirm"] = state == "confirm"
+        if state == "confirm":
+            context["layout"] = "confirm"
         if state == "blocked":
             context["release"] = SimpleNamespace(released=False, stale=False, blockers=("3 in-scope conclusions are not approved", "The assessment period is not recorded"))
         context["counts"] = SimpleNamespace(approved=6)
@@ -97,10 +99,17 @@ def _render(request, db, screen, state, assessment, engagement) -> Response:
         if state == "empty": context["meta_line"] = _meta_line(shown)
         if state == "saved": context["toast"] = "Period and sign-off saved"
     else:
-        context.update({"heading": "Finding review", "tab": "review", "partial": "partials/review_finding_card.html", "layout": "finding", "trail": [("Review", f"/assessments/{assessment.id}/review-queue"), ("Findings", ""), ("Finding review", "")]})
+        context.update({"heading": "Finding review", "tab": "review", "partial": "partials/review_finding_card.html", "layout": "finding", "trail": [("Review", f"/assessments/{assessment.id}/review-queue"), ("Findings", f"/assessments/{assessment.id}/findings"), ("Finding review", "")]})
         context["item"] = db.query(GapItem).order_by(GapItem.id).first()
         context["notes_open"] = state == "notes"
 
+    # Render as if at the live assessment URL so the shell (side menu, account tile)
+    # comes from the same context processors as the real pages.
+    path = f"/assessments/{assessment.id}/review-queue"
+    live_request = Request(dict(request.scope, path=path, raw_path=path.encode()), request.receive)
+    for processor in templates.context_processors:
+        context.update(processor(live_request))
+    context["request"] = request
     template = templates.env.from_string(SHELL)
     return _TemplateResponse(template, context)
 

@@ -2,20 +2,26 @@
 <div class="stack" data-completion-gate-blocked>
   {{ alert("Analysis has not started", message, "medium") }}
   {% if show_override %}
-  <form class="stack form-narrow" data-completion-override-form hx-post="/assessments/{{ assessment_id }}/run-analysis" hx-target="#analysis-area" hx-swap="innerHTML" hx-confirm="Run analysis on an incomplete questionnaire? The override and its reason are recorded in the audit log.">
-    <label class="label" for="override_reason">Reason for the override</label>
-    <select class="field" id="override_reason" name="override_reason" required>
-      {% for code, label in override_reasons.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
-    </select>
-    <p class="help">The override and its reason are recorded in the audit log.</p>
-    <label class="label" for="reviewer-name">Your name</label>
-    <input class="field" id="reviewer-name" name="reviewer_name" placeholder="Your name">
+  <form class="stack" data-completion-override-form hx-post="/assessments/{{ assessment_id }}/run-analysis" hx-target="#analysis-area" hx-swap="innerHTML" hx-confirm="Run analysis on an incomplete questionnaire? The override and its reason are recorded in the audit log.">
+    <div class="stack an-override">
+      <div>
+        <label class="label" for="override_reason">Reason for the override</label>
+        <label class="field"><select id="override_reason" name="override_reason" required>
+          {% for code, label in override_reasons.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+        </select></label>
+        <p class="help">The override and its reason are recorded in the audit log.</p>
+      </div>
+      <div>
+        <label class="label" for="reviewer-name">Your name</label>
+        <label class="field"><input id="reviewer-name" name="reviewer_name" placeholder="Your name"></label>
+      </div>
+    </div>
     <div class="hrow">
-      {{ link_button("Back", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}
-      <button type="submit" class="btn secondary">Run with override</button>
+      {{ link_button("Back to questionnaire", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}
+      <button type="submit" class="btn secondary">Run analysis with override</button>
     </div>
   </form>
   {% else %}
-  <div class="hrow">{{ link_button("Back", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}</div>
+  <div class="hrow">{{ link_button("Back to questionnaire", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}</div>
   {% endif %}
 </div>

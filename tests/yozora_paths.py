@@ -219,6 +219,8 @@ YOZORA_S7_PATHS = (
     "app/routers/design_s7_pages.py",
     "app/routers/design_s7_report.py",
     "app/routers/drafting.py",
+    "tests/test_findings.py",  # Yozora per-PR allowance (guard file)
+    "app/routers/requirement_review.py",  # Yozora per-PR allowance (engagement crumb context)
     "app/static/css/yozora-patterns.css",
     "app/templates/components/conclusion_card.html",
     "app/templates/components/finding_card.html",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import partial
 
 from sqlalchemy import select
@@ -182,6 +183,16 @@ def display_date(moment) -> str:
     return f"{moment.day} {moment:%b %Y}"
 
 
+def display_timestamp(value) -> str:
+    """An ISO timestamp string (action history) as '3 Feb 2026'; other text passes through."""
+    if not value:
+        return ""
+    try:
+        return display_date(datetime.fromisoformat(str(value)))
+    except ValueError:
+        return str(value)
+
+
 def _session(instance):
     from sqlalchemy.orm import object_session
     from sqlalchemy.orm.exc import UnmappedInstanceError
@@ -292,6 +303,7 @@ def configure_templates(templates):
     templates.env.globals["latest_issued_version"] = latest_issued_version
     templates.env.globals["engagement_assessment_meta"] = engagement_assessment_meta
     templates.env.filters["display_date"] = display_date
+    templates.env.filters["display_timestamp"] = display_timestamp
     branding_context = partial(_branding_context, templates)
     branding_context._yozora_branding_context = True
     if not any(

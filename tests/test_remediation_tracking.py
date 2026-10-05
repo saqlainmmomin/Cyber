@@ -422,7 +422,7 @@ def test_scenario_1_full_lifecycle_and_closure_history(db, http, gate, monkeypat
     )
     assert response.status_code == 200
     assert 'data-action-status="closed"' in response.text
-    assert "Closed, awaiting verification" in response.text
+    assert "Closed, to verify" in response.text  # Yozora S7: approved mockup status copy
     assert 'data-verify-control' in response.text
     assert _history(db, action.id)[:-1] == history_before_close
     assert db.get(Finding, finding.id).status == "in_progress"
@@ -454,7 +454,8 @@ def test_scenario_1_full_lifecycle_and_closure_history(db, http, gate, monkeypat
     assert history[-1]["evidence"] == expected_evidence
     assert history[-2]["actor"] == history[-1]["actor"] == "consultant:Priya"
     assert all(datetime.fromisoformat(entry["timestamp"]).tzinfo for entry in history)
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: the finding card lives on its detail view (?finding=).
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     assert "Closure verified" in page.text
     assert "Closed with evidence" in page.text
     assert f'href="/evidence/{evidence.id}"' in page.text
@@ -696,7 +697,8 @@ def test_scenario_6_finding_status_derivation_and_accepted_risk(db, http, gate, 
     view = next(view for view in page_model.findings if view.finding.id == finding.id)
     assert view.status_label == "Accepted risk"
     assert view.closure_options is page_model.findings[0].closure_options
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: the finding card lives on its detail view (?finding=).
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     assert "Status: Accepted risk" in page.text
 
 
@@ -716,7 +718,8 @@ def test_scenario_7_migrated_closed_actions_require_reverification(db, http):
     assert (stats.findings, stats.actions) == (1, 1)
     action = db.query(Action).one()
     finding = db.get(Finding, action.finding_id)
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: the finding card lives on its detail view (?finding=).
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     action_html = page.text[page.text.index(f'id="action-{action.id}"'):]
     assert "Closed without closure evidence (legacy)" in action_html
     assert "data-reopen-control" in action_html
@@ -806,7 +809,8 @@ def test_scenario_8_append_concurrency_and_unreadable_history(db, http, gate, mo
         expected_history_length=4,
     )
     assert (response.status_code, response.json()["detail"]) == (400, findings.UNREADABLE_HISTORY)
-    page = http.get(f"/assessments/{assessment.id}/findings")
+    # Yozora S7: the finding card lives on its detail view (?finding=).
+    page = http.get(f"/assessments/{assessment.id}/findings?finding={finding.id}")
     action_html = page.text[page.text.index(f'id="action-{action.id}"'):]
     assert "History could not be read." in action_html
     assert "data-close-control" not in action_html

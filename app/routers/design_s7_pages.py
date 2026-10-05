@@ -7,6 +7,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.models.assessment import Assessment
+from app.models.engagement import Engagement
 from app.routers import design
 from app.routers.web import _latest_reviewer_name, templates
 from app.services import approved_report, conclusion_review, report_basis, review_queue
@@ -54,7 +55,7 @@ def _preview(screen: str, request: Request, db: Session) -> Response:
             "period_locked": report_basis.period_locked(db, assessment),
         }
         template_name = "pages/conclusions.html"
-    context.update({"request": request, "assessment": assessment, "preview_screen": screen, "preview_state": state})
+    context.update({"request": request, "assessment": assessment, "engagement_row": db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None, "preview_screen": screen, "preview_state": state})
     return templates.TemplateResponse(request=request, name=template_name, context=context)
 
 

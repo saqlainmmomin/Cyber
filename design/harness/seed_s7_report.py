@@ -72,11 +72,11 @@ def _report(db, assessment, *, failed_iso: bool = False) -> None:
 def apply(db, screen, state, assessment, engagement, data):
     from app.frameworks.registry import FrameworkRegistry
 
-    assessment.status = "completed"
     if screen == "b5-no-report":
         assessment.scope_answers = json.dumps({})
         return {"data_state": "database", "note": "Assessment without a GapReport."}
 
+    assessment.status = "completed"
     controls = {
         framework_id: FrameworkRegistry.get_all_controls(framework_id)[: (3 if state == "not-released" else 2)]
         for framework_id in assessment.frameworks
@@ -104,3 +104,10 @@ def apply(db, screen, state, assessment, engagement, data):
         "data_state": "preview-state" if state == "loading" else "database",
         "note": "Loading uses the live report shell with a deterministic preview state." if state == "loading" else "",
     }
+
+
+def route(screen, state, assessment_id):
+    """Live report route; loading goes through the b5-report-loading preview of the same shell."""
+    if screen == "b5-report" and state == "loading":
+        return f"/design/pages/b5-report-loading?assessment_id={assessment_id}"
+    return f"/assessments/{assessment_id}/report"

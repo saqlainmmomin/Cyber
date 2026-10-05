@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.engagement import Engagement
 from app.services import conclusion_review, requirement_card, review_queue, rfi_evidence_requests
 from app.template_config import configure_templates
 
@@ -42,6 +43,7 @@ def review_queue_page(
         context={
             "request": request,
             "assessment": assessment,
+            "engagement_row": db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None,
             "groups": groups,
             "total": total,
             "open_count": open_count,

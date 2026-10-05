@@ -224,11 +224,15 @@ async def generate_narrative(
         db.rollback()
         return _error(exc.status_code, exc.message)
     failed = any(value in ("failed", "limit_reached") for value in sections.values())
-    response = _redirect_success(assessment_id, {"sections": sections})
-    response.headers["X-Toast-Type"] = "error" if failed else "success"
     if failed:
-        response.headers["X-Toast-Message"] = quote(_narrative_failure_message(sections))
-    return response
+        # No HX-Redirect: htmx navigates on a redirect without swapping, so the
+        # toast (shown on htmx:afterSwap) would never appear.
+        return _toast(
+            JSONResponse({"sections": sections}),
+            _narrative_failure_message(sections),
+            "error",
+        )
+    return _redirect_success(assessment_id, {"sections": sections})
 
 
 @router.post("/api/assessments/{assessment_id}/narrative/{section_id}/accept")

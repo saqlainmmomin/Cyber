@@ -1,121 +1,124 @@
+{% from "components/ui.html" import icon %}
 {% if card.requirement %}
   {% set requirement = card.requirement %}
-  <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or '' }}" class="space-y-4 cc-requirement">
-    {% if requirement.source == 'none' %}
-    <p class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm text-gray-600 dark:text-gray-300">No analysis run is linked to this conclusion.</p>
+  {% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "not_applicable": "Not applicable", "insufficient_evidence": "Insufficient evidence"} %}
+  <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or "" }}" class="cc-requirement">
+    {% if requirement.source == "none" %}
+    <div class="block"><p class="muted">No analysis run is linked to this conclusion.</p></div>
     {% else %}
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI proposal</h4>
-      {% if requirement.proposed_outcome %}<p class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">AI proposal: {{ requirement.proposed_outcome|replace('_', ' ')|title }}</p>{% endif %}
-      {% if requirement.reason %}<p data-proposal-reason class="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{{ requirement.reason }}</p>{% endif %}
-    </section>
+    <div class="block">
+      <h3>AI proposal</h3>
+      {% if requirement.proposed_outcome %}<p><span class="ai">AI proposed</span> {{ outcome_labels.get(requirement.proposed_outcome, requirement.proposed_outcome|replace("_", " ")|capitalize) }}</p>{% endif %}
+      {% if requirement.reason %}<p data-proposal-reason class="muted cc-pre cc-reason">{{ requirement.reason }}</p>{% endif %}
+    </div>
 
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Criteria checklist</h4>
-      {% if requirement.source == 'v1' %}
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.criteria_label }}</p>
+    <div class="block">
+      {% if requirement.source == "v1" %}
+      <h3>Criteria</h3>
+      <p class="muted">{{ requirement.criteria_label }}</p>
       {% else %}
-      {% if requirement.criteria_label %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.criteria_label }}</p>{% endif %}
-      <ul class="mt-2 space-y-2 text-sm">
+      <h3 class="cc-head">Criteria{% if requirement.criteria_label %}<span class="sub">{{ requirement.criteria_label }}</span>{% endif %}</h3>
+      <ul class="checks">
         {% for criterion in requirement.criteria %}
-        <li data-criterion="{{ criterion.criterion_id }}" data-criterion-result="{{ criterion.result }}" class="rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
-          <span class="mr-1 font-semibold">{{ criterion.symbol }}</span><span class="font-mono text-xs">{{ criterion.criterion_id }}</span> <span>{{ criterion.statement }}</span>
-          {% for claim_id in criterion.claim_ids %}
-            {% for claim in requirement.claims %}
-              {% if claim.claim_id == claim_id %}
-                {% if claim.href %}<a data-claim-link="{{ claim.claim_id }}" href="{{ claim.href }}" class="ml-2 text-brand dark:text-navy-300 hover:underline">{{ claim.claim_id }}</a>{% else %}<span data-claim-link="{{ claim.claim_id }}" class="ml-2">{{ claim.claim_id }}</span>{% endif %}
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
-          {% if criterion.met_without_claim %}<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">The model said met without a verified claim; treated as no evidence.</p>{% endif %}
+        {% set tone = {"met": ("c-ok", "check"), "not_met": ("c-non", "x")}.get(criterion.result, ("c-insuf", "clock")) %}
+        <li data-criterion="{{ criterion.criterion_id }}" data-criterion-result="{{ criterion.result }}">
+          <span class="ck {{ tone[0] }}">{{ icon(tone[1]) }}<span class="sr-only">{{ criterion.symbol }}</span></span>
+          <div><span class="cc-crit-id">{{ criterion.criterion_id }}</span> {{ criterion.statement }}{% if criterion.met_without_claim %}<p class="sub">The model said met without a verified claim, so it is treated as no evidence.</p>{% endif %}</div>
+          {% for claim_id in criterion.claim_ids %}{% for claim in requirement.claims %}{% if claim.claim_id == claim_id %}{% if claim.href %}<a class="res" data-claim-link="{{ claim.claim_id }}" href="{{ claim.href }}">Evidence {{ loop.index }}</a>{% else %}<span class="res" data-claim-link="{{ claim.claim_id }}">Evidence {{ loop.index }}</span>{% endif %}{% endif %}{% endfor %}{% endfor %}
         </li>
         {% endfor %}
       </ul>
       {% endif %}
-    </section>
+    </div>
 
-    {% if requirement.source == 'v2' %}
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">What the client said vs what the evidence shows</h4>
-      <div data-client-said class="mt-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm"><span class="font-medium">What the client said</span><br>{% if requirement.response %}{{ requirement.response.answer_label }} · {{ requirement.response.source_label }}{% else %}No confirmed questionnaire response.{% endif %}</div>
-      <div data-evidence-shows{% if group_evidence is defined and group_evidence %} data-evidence-shared{% endif %} class="mt-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3 text-sm"><span class="font-medium">What the evidence shows</span>{% if group_evidence is defined and group_evidence %}<p class="mt-1">Evidence for this group is shown once, above.</p>{% elif requirement.claims %}<ul class="mt-2 space-y-2">{% for claim in requirement.claims %}<li data-claim="{{ claim.claim_id }}"><span class="font-medium">{{ claim.statement }}</span><br><span class="whitespace-pre-wrap">{{ claim.quote }}</span>{% if claim.href %}<br><a href="{{ claim.href }}" class="text-brand dark:text-navy-300 hover:underline">{{ claim.filename }}</a>{% else %}<br>{{ claim.filename }}{% endif %} · {{ claim.kind }}</li>{% endfor %}</ul>{% else %}<p class="mt-1">No verified claim addresses this requirement.</p>{% endif %}</div>
-      {% if requirement.contradictions %}<ul class="mt-2 space-y-2 text-sm text-amber-700 dark:text-amber-300">{% for contradiction in requirement.contradictions %}<li data-contradiction="{{ contradiction.claim_id }}">Contradiction ({{ contradiction.claim_id }}): {{ contradiction.note }}</li>{% endfor %}</ul>{% endif %}
-    </section>
+    {% if requirement.source == "v2" %}
+    <div class="block">
+      <h3>What the client said and what the evidence shows</h3>
+      <div class="fw-grid cc-said">
+        <div class="cite"><div class="cite-head"><span>What the client said</span></div><blockquote data-client-said>{% if requirement.response %}{{ requirement.response.answer_label }} <span class="muted">{{ requirement.response.source_label }}</span>{% else %}No confirmed questionnaire response.{% endif %}</blockquote></div>
+        <div class="cite"><div class="cite-head"><span>What the evidence shows</span></div><blockquote data-evidence-shows{% if group_evidence is defined and group_evidence %} data-evidence-shared{% endif %}>
+          {% if group_evidence is defined and group_evidence %}<p class="muted">Evidence for this group is shown once, above.</p>
+          {% elif requirement.claims %}<ul class="cc-claims">{% for claim in requirement.claims %}<li data-claim="{{ claim.claim_id }}"><p>{% if claim.href %}<a href="{{ claim.href }}" title="{{ claim.filename }}">{{ claim.statement }}</a>{% else %}<span title="{{ claim.filename }}">{{ claim.statement }}</span>{% endif %}</p>{% if claim.quote and claim.quote != claim.statement %}<p class="sub cc-pre">“{{ claim.quote }}”</p>{% endif %}</li>{% endfor %}</ul>
+          {% else %}<p class="muted">No verified claim addresses this requirement.</p>{% endif %}
+          {% if requirement.contradictions %}<ul class="cc-claims cc-contradictions">{% for contradiction in requirement.contradictions %}<li data-contradiction="{{ contradiction.claim_id }}"><div class="alert c-medium">{{ icon("alert") }}<div><b>Contradiction</b>{{ contradiction.note }}</div></div></li>{% endfor %}</ul>{% endif %}
+        </blockquote></div>
+      </div>
+    </div>
     {% endif %}
 
-    {% if requirement.unsupported_assertion %}<p data-unsupported-assertion class="rounded-lg bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">Unsupported assertion: no verified evidence supports this response or proposal.</p>{% endif %}
+    {% if requirement.unsupported_assertion %}<div class="block"><div class="alert c-medium" data-unsupported-assertion>{{ icon("alert") }}<div>Unsupported assertion: no verified evidence supports this response or proposal.</div></div></div>{% endif %}
 
     {% if requirement.quality %}
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence quality</h4>
-      <div class="mt-2 flex flex-wrap gap-2">{% for chip in requirement.quality %}<span data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}" class="rounded-full px-2.5 py-1 text-xs {% if chip.tone == 'warn' %}bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300{% elif chip.tone == 'ok' %}bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300{% endif %}">{{ chip.label }}</span>{% endfor %}</div>
-    </section>
+    <div class="block">
+      <h3>Evidence quality</h3>
+      <div class="chips">{% for chip in requirement.quality %}{% if chip.tone == "warn" %}<span data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}" class="warn">{{ icon("alert") }}{{ chip.label }}</span>{% else %}<span data-quality-chip="{{ chip.key }}" data-tone="{{ chip.tone }}" class="chip">{{ chip.label }}</span>{% endif %}{% endfor %}</div>
+    </div>
     {% endif %}
 
     {% if requirement.missing_evidence or requirement.other_rfi_requests %}
-    <section>
-      <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Missing evidence</h4>
-      {% if requirement.missing_evidence_label %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ requirement.missing_evidence_label }}</p>{% endif %}
+    <div class="block">
+      <h3>Missing evidence</h3>
+      {% if requirement.missing_evidence_label %}<p class="sub cc-below">{{ requirement.missing_evidence_label }}</p>{% endif %}
       {% if requirement.missing_evidence %}
-      <ul class="mt-2 space-y-2 text-sm">
+      <ul class="cc-req-list">
         {% for request in requirement.missing_evidence %}
         {% if requirement.source == "v2" %}
         <li data-missing-evidence="{{ request.document_type }}" data-rfi-request-key="{{ request.request_key }}" data-rfi-state="{{ request.rfi_state }}">
-          <span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}
+          <div><b>{{ request.label }}</b><p class="sub">{{ request.what_it_would_show }}</p></div>
           {% if request.rfi_state == "available" %}
-          <p data-rfi-request-preview class="mt-1 text-gray-600 dark:text-gray-300">{{ request.request_text }}</p>
-          <form data-rfi-add-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+          <div class="cite cc-preview"><blockquote class="sub" data-rfi-request-preview>{{ request.request_text }}</blockquote></div>
+          <form data-rfi-add-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
             <input type="hidden" name="request_key" value="{{ request.request_key }}">
-            <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-light">Add to draft RFI</button>
+            <button type="submit" class="btn secondary sm lead" title="Goes to the client request under Evidence, Requests">{{ icon("plus") }}Add to draft RFI</button>
           </form>
           {% else %}
-          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ request.rfi_status_label }}</p>
-          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+          <form class="hrow" data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+            <span class="status" data-rfi-request-status><span class="dot c-accent"></span>{{ request.rfi_status_label }}</span>
             <input type="hidden" name="request_key" value="{{ request.request_key }}">
-            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+            <button type="submit" class="btn ghost sm">Remove from draft RFI</button>
           </form>
           {% endif %}
         </li>
         {% else %}
-        <li data-missing-evidence="{{ request.document_type }}"><span class="font-medium">{{ request.label }}:</span> {{ request.what_it_would_show }}</li>
+        <li data-missing-evidence="{{ request.document_type }}"><div><b>{{ request.label }}</b><p class="sub">{{ request.what_it_would_show }}</p></div></li>
         {% endif %}
         {% endfor %}
       </ul>
       {% endif %}
       {% if requirement.other_rfi_requests %}
-      <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Also on the draft RFI for this conclusion</p>
-      <ul class="mt-2 space-y-2 text-sm">
+      <p class="sub cc-gap">Also on the draft RFI for this conclusion</p>
+      <ul class="cc-req-list cc-tight">
         {% for state in requirement.other_rfi_requests %}
         {% set request = state.request %}
         <li data-rfi-request="{{ request.request_key }}" data-rfi-state="{{ state.state }}">
-          <span class="font-medium">{{ request.title }}:</span> {{ request.request }}
-          <p data-rfi-request-status class="mt-1 text-gray-600 dark:text-gray-300">{{ state.status_label }}</p>
-          <form data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-2">
+          <div><b>{{ request.title }}</b><p class="sub">{{ request.request }}</p></div>
+          <form class="hrow" data-rfi-withdraw-form hx-post="/api/assessments/{{ assessment.id }}/rfi-requests/{{ card.conclusion.id }}/withdraw" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+            <span class="status" data-rfi-request-status><span class="dot c-accent"></span>{{ state.status_label }}</span>
             <input type="hidden" name="request_key" value="{{ request.request_key }}">
-            <button type="submit" class="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800">Remove from draft RFI</button>
+            <button type="submit" class="btn ghost sm">Remove from draft RFI</button>
           </form>
         </li>
         {% endfor %}
       </ul>
       {% endif %}
-      <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">Approved insufficient-evidence conclusions are added to the next RFI version.</p>
-      <a class="mt-1 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline" href="/assessments/{{ assessment.id }}/rfi">Open the RFI page →</a>
-    </section>
+      <p class="sub cc-gap">Items on the draft RFI go to the client as a request under Evidence &gt; Requests. Approved insufficient-evidence conclusions are added to the next RFI version. <a class="cc-link" href="/assessments/{{ assessment.id }}/rfi">Open the RFI</a>.</p>
+    </div>
     {% endif %}
 
     {% if requirement.divergence %}
-    <section data-divergence-note="{{ requirement.divergence.cluster_id }}" data-acknowledged="{{ 'yes' if requirement.divergence.acknowledged else 'no' }}" class="rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200">
-      <p class="font-semibold">Framework divergence ({{ requirement.divergence.cluster_id }})</p>
-      <p class="mt-1">{{ requirement.divergence.sentence }}</p>
-      {% if requirement.divergence.acknowledged %}<p class="mt-2">Acknowledged by {{ requirement.divergence.acknowledged_by }} at {{ requirement.divergence.acknowledged_at }}{% if requirement.divergence.note %}: {{ requirement.divergence.note }}{% endif %}</p>{% else %}
-      <form data-divergence-ack-form hx-post="/api/assessments/{{ assessment.id }}/divergence-notes/{{ card.conclusion.id }}/acknowledge" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name" class="mt-3 space-y-2">
-        <input type="hidden" name="analysis_run_id" value="{{ requirement.divergence.analysis_run_id }}">
-        <input type="hidden" name="cluster_id" value="{{ requirement.divergence.cluster_id }}">
-        <textarea name="note" maxlength="500" rows="2" placeholder="Optional acknowledgement note" class="block w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"></textarea>
-        <button type="submit" class="rounded-lg border border-amber-500 px-3 py-2 text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40">Acknowledge divergence</button>
-      </form>
-      {% endif %}
-    </section>
+    <div class="block" data-divergence-note="{{ requirement.divergence.cluster_id }}" data-acknowledged="{{ "yes" if requirement.divergence.acknowledged else "no" }}">
+      <div class="alert c-accent">{{ icon("check" if requirement.divergence.acknowledged else "link") }}<div class="cc-grow"><b>The frameworks read this differently</b>{{ requirement.divergence.sentence }}
+        {% if requirement.divergence.acknowledged %}<p class="sub cc-ack">Acknowledged by {{ requirement.divergence.acknowledged_by }}{% if requirement.divergence.acknowledged_at %} on {{ requirement.divergence.acknowledged_at.day ~ " " ~ requirement.divergence.acknowledged_at.strftime("%b %Y") if requirement.divergence.acknowledged_at.strftime is defined else requirement.divergence.acknowledged_at }}{% endif %}{% if requirement.divergence.note %}: {{ requirement.divergence.note }}{% endif %}</p>
+        {% else %}
+        <form class="stack cc-ack" data-divergence-ack-form hx-post="/api/assessments/{{ assessment.id }}/divergence-notes/{{ card.conclusion.id }}/acknowledge" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+          <input type="hidden" name="analysis_run_id" value="{{ requirement.divergence.analysis_run_id }}">
+          <input type="hidden" name="cluster_id" value="{{ requirement.divergence.cluster_id }}">
+          <label class="field area cc-solid-field"><textarea name="note" maxlength="500" rows="2" aria-label="Acknowledgement note" placeholder="Add a note (optional)"></textarea></label>
+          <div><button type="submit" class="btn secondary sm">Acknowledge</button></div>
+        </form>
+        {% endif %}
+      </div></div>
+    </div>
     {% endif %}
     {% endif %}
   </section>

@@ -1,17 +1,19 @@
+{% from "components/ui.html" import icon %}
 {% set is_drafting = drafting|default(false) %}
-<div id="recommended-action-{{ conclusion_id }}" data-recommended-action-field class="cc-remediation">
-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Recommended action
-    <textarea name="recommended_action" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">{{ recommended_action }}</textarea>
-  </label>
+<div id="recommended-action-{{ conclusion_id }}" data-recommended-action-field class="cc-remediation{% if is_drafting %} is-drafting{% endif %}">
+  <label class="label" for="recommended-action-text-{{ conclusion_id }}">Recommended action</label>
+  <label class="field area"><textarea id="recommended-action-text-{{ conclusion_id }}" name="recommended_action" rows="3">{{ recommended_action or "" }}</textarea></label>
+  <div class="skel-stack cc-drafting" aria-busy="true" aria-label="Drafting"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
   {% if draft %}
-  <p data-remediation-draft="{{ draft.event_id }}"><strong>AI draft</strong> {{ draft_notice|replace('Save & Approve', 'Save and approve') }}</p>
-  {% if draft.suggested_owner_role %}<p data-suggested-owner-role>Suggested owner role: {{ draft.suggested_owner_role }} (a hint for the Action owner; not saved)</p>{% endif %}
+  <p class="alert c-accent cc-draft-note" data-remediation-draft="{{ draft.event_id }}"><span class="ai">AI draft</span><span>{{ (draft_notice or "")|replace("AI draft: review", "Review") }}</span></p>
+  {% if draft.suggested_owner_role %}<p class="help" data-suggested-owner-role>Suggested owner role: {{ draft.suggested_owner_role }}. A hint for the action owner. It is not saved.</p>{% endif %}
   {% endif %}
-  {% if error %}<p data-remediation-draft-error>{{ error }}</p>{% endif %}
-  {% if is_drafting %}<div class="cc-drafting" style="display:flex" role="status"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>{% endif %}
-  <button class="btn {% if is_drafting %}loading{% else %}secondary{% endif %} sm" type="button" data-remediation-draft-button
-          hx-post="/api/assessments/{{ assessment_id }}/recommended-action-drafts/{{ conclusion_id }}"
-          hx-include="closest form, #reviewer-name"
-          hx-target="#recommended-action-{{ conclusion_id }}"
-          hx-swap="outerHTML">{% if is_drafting %}Drafting…{% else %}Draft recommended action{% endif %}</button>
+  {% if error %}<p class="alert c-non cc-draft-note" data-remediation-draft-error>{{ icon("x") }}<span>{{ error }}</span></p>{% endif %}
+  <div class="cc-draft-btn">
+    <button class="btn {{ "ghost" if draft else "secondary" }} sm lead{% if is_drafting %} loading{% endif %}" type="button" data-remediation-draft-button{% if is_drafting %} aria-busy="true"{% endif %}
+            hx-post="/api/assessments/{{ assessment_id }}/recommended-action-drafts/{{ conclusion_id }}"
+            hx-include="closest form, #reviewer-name"
+            hx-target="#recommended-action-{{ conclusion_id }}"
+            hx-swap="outerHTML">{% if is_drafting %}Drafting…{% elif draft %}{{ icon("refresh") }}Draft again{% else %}{{ icon("pen") }}Draft recommended action{% endif %}</button>
+  </div>
 </div>

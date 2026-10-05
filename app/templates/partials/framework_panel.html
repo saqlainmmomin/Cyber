@@ -1,19 +1,26 @@
 {% from "components/ui.html" import link_button %}
-<div class="glass fw" data-framework-panel="{{ framework.id }}">
-  <div class="fw-full">
+{% set terms = framework_terms | default({"unit": "requirement", "group": "domain"}) %}
+{% set aid = assessment.id if assessment is defined else assessment_id %}
+{% set control_total = framework.control_count() %}
+{% set domain_total = framework.domains | length %}
+<div class="glass fw fw-panel" data-framework-panel="{{ framework.id }}">
+  <div class="fw-head">
     <div>
       <h2>{{ framework_label(framework.id, full=true) }}</h2>
-      <p class="meta-line">{{ framework.control_count() }} controls across {{ framework.domains | length }} domains{% if finding_count %} · {{ finding_count }} report findings{% endif %}</p>
+      <p class="sub">{{ control_total }} {{ terms.unit }}{{ "" if control_total == 1 else "s" }} in {{ domain_total }} {{ terms.group }}{{ "" if domain_total == 1 else "s" }}{% if finding_count %} · {{ finding_count }} {{ "finding" if finding_count == 1 else "findings" }} in this report{% endif %}</p>
     </div>
-    <span class="chip">{{ framework.version }}</span>
+    <div class="acts">
+      {{ link_button("Questionnaire", "/assessments/" ~ aid ~ "?tab=questionnaire&framework=" ~ framework.id, "ghost", "sm") }}
+      {{ link_button("Report", "/assessments/" ~ aid ~ "?tab=report&framework=" ~ framework.id, "ghost", "sm") }}
+    </div>
   </div>
-  <div class="acts">
-    {{ link_button("Questionnaire", "/assessments/" ~ assessment.id ~ "?tab=questionnaire&framework=" ~ framework.id, "secondary", "sm") }}
-    {{ link_button("Report", "/assessments/" ~ assessment.id ~ "?tab=report&framework=" ~ framework.id, "ghost", "sm") }}
-  </div>
-  <div class="domains">
-    {% for domain in framework.domains.values() %}
-    <div><span class="status"><span class="dot c-accent"></span>{{ domain.title }}</span><span class="muted">{{ domain.sections.values() | map(attribute='controls') | map('length') | sum }} controls</span></div>
-    {% endfor %}
-  </div>
+  <details class="fw-more">
+    <summary class="btn ghost sm">{{ terms.group | capitalize }}s</summary>
+    <div class="domains">
+      {% for domain in framework.domains.values() %}
+      {% set domain_controls = domain.sections.values() | map(attribute='controls') | map('length') | sum %}
+      <div><span>{{ domain.title }}</span><span class="muted num">{{ domain_controls }} {{ terms.unit }}{{ "" if domain_controls == 1 else "s" }}</span></div>
+      {% endfor %}
+    </div>
+  </details>
 </div>

@@ -1,9 +1,10 @@
-{% from "components/ui.html" import alert, icon, link_button, pill, ring %}
+{% from "components/ui.html" import alert, icon, link_button, pill %}
 {% set fw = framework_display.get(active_framework, {}) %}
 {% set fw_title = framework_label(active_framework, full=true) %}
 {% set selected_rows = gap_items | selectattr("framework_id", "equalto", active_framework) | list %}
 {% set selected_critical = critical_findings | selectattr("framework_id", "equalto", active_framework) | list %}
 {% set has_dpdpa_scope = active_framework == "dpdpa" and show_dpdpa_readiness_note %}
+{% set terms = framework_terms %}
 {% set failed_frameworks = framework_display.values() | selectattr("failed") | list %}
 {% set selected_metrics = namespace(compliant=0, partial=0, non_compliant=0, insufficient=0, has_gaps=false, high_risk=0) %}
 {% for row in selected_rows %}
@@ -14,91 +15,145 @@
   {% if row.risk_level in ("critical", "high") and row.compliance_status in ("partially_compliant", "non_compliant") %}{% set selected_metrics.high_risk = selected_metrics.high_risk + 1 %}{% endif %}
 {% endfor %}
 
-<div id="review-banner" data-release-state="{{ release_status }}" data-view-mode="{{ view_mode }}">
+{% macro findings_table(rows, terms, assessment_id) %}
+<div class="solid"><table>
+  <thead><tr><th>{{ terms.unit | capitalize }}</th><th class="rp-col-risk">Risk</th><th class="hide-sm rp-col-outcome">Outcome</th><th class="hide-sm rp-col-go"></th></tr></thead>
+  <tbody>
+  {% for item in rows %}
+  <tr data-finding-id="{{ item.id }}"><td><div class="t-title">{{ item.requirement_title }}</div><div class="t-sub">{{ item.requirement_id }}{% if item.gap_description %} · {{ item.gap_description }}{% endif %}</div></td><td>{{ pill(item.risk_level | capitalize, item.risk_level if item.risk_level in ('critical','high','medium','low') else 'neutral') }}</td><td class="hide-sm">{{ pill(item.compliance_status | replace('_', ' ') | capitalize, 'ok' if item.compliance_status == 'compliant' else 'part' if item.compliance_status == 'partially_compliant' else 'non' if item.compliance_status == 'non_compliant' else 'insuf') }}</td><td class="go hide-sm"><a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}" aria-label="Workpaper trace">{{ icon("chev-r") }}</a></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endmacro %}
+{% macro findings_sections(critical, rows, terms, assessment_id) %}
+{% if critical %}
+<div class="sec" data-fix-first><h2>Fix first</h2></div>
+{{ findings_table(critical, terms, assessment_id) }}
+{% endif %}
+<div class="sec" data-detailed-findings><h2>Detailed findings</h2><div class="acts"><a class="btn ghost sm" href="/assessments/{{ assessment_id }}/workpaper">Open workpaper</a></div></div>
+{{ findings_table(rows, terms, assessment_id) }}
+{% endmacro %}
+{% set impact = namespace(chapters=[], needing=0) %}
+{% for row in selected_rows %}
+  {% if row.compliance_status in ("partially_compliant", "non_compliant") %}{% set impact.needing = impact.needing + 1 %}{% endif %}
+  {% if row.risk_level in ("critical", "high") and row.compliance_status in ("partially_compliant", "non_compliant") and row.chapter_title not in impact.chapters %}{% set impact.chapters = impact.chapters + [row.chapter_title] %}{% endif %}
+{% endfor %}
+{% set pending_frameworks = framework_display.values() | rejectattr("failed") | selectattr("status", "in", ["pending_review", "not_scored"]) | list %}
+{% set active_scored = not fw.failed and fw.status not in ("pending_review", "not_scored") and fw.score is not none %}
+{% set unscored_frameworks = framework_display.items() | rejectattr("1.failed") | selectattr("1.score", "none") | list %}
+
+<div class="rp-acts">
+  {% if release_status == "released" %}{{ link_button("Live PDF", "/api/assessments/" ~ assessment_id ~ "/report/pdf", "primary", "", "download", true) }}{% else %}{{ link_button("Open conclusions", "/assessments/" ~ assessment_id ~ "/conclusions?framework=" ~ active_framework, "primary", "", "arrow-r") }}{% endif %}
+</div>
+
+<div id="review-banner" data-release-state="{{ release_status }}" data-view-mode="{{ view_mode }}"{% if failed_frameworks %} data-analysis-incomplete-banner{% endif %}>
   {% if release_status == "released" %}
-  {{ alert("Released", "by " ~ release.released_by ~ " · " ~ release.released_at.strftime('%d %b %Y') ~ ". Exports use the conclusions as they were approved at release.", "accent", "check") }}
+  <div class="alert c-ok">{{ icon("circle-check") }}<div><b>Released by {{ release.released_by }} on {{ release.released_at | display_date }}</b>Exports use the conclusions as they were approved at release.</div></div>
   {% elif release_status == "stale" %}
   {{ alert("Released version is out of date", "An in-scope conclusion or scope changed after release. Release again to reopen exports.", "medium", "alert") }}
   {% else %}
-  <div class="alert c-medium" data-release-blockers>{{ icon("alert") }}<div><b>Not released</b><ul>{% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul><a href="/assessments/{{ assessment_id }}/conclusions">Open conclusions</a></div></div>
+  <div class="alert c-medium" data-release-blockers>{{ icon("alert") }}<div><b>Not released</b>Exports stay closed until every in-scope conclusion is individually approved and the report is released.<ul class="rp-blockers">{% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul></div></div>
   {% endif %}
 </div>
 
-{% if failed_frameworks %}
-<div data-analysis-incomplete-banner>{{ alert("Analysis failed", fw_title ~ " analysis failed. Run analysis again before releasing this report.", "noncompliant", "alert") }}</div>
-{% endif %}
-
-<div class="fw-full" style="margin-top:var(--s-5)">
-  <div><p class="meta-line">Report</p><h2>{{ fw_title }}</h2><p class="meta-line" data-framework-coverage="{{ active_framework }}">{{ fw.version }} · {{ selected_rows | length }} approved findings in this framework</p></div>
-  <div class="acts">
-    {% if release_status == "released" %}{{ link_button("Live PDF", "/api/assessments/" ~ assessment_id ~ "/report/pdf", "primary") }}{% else %}{{ link_button("Open conclusions", "/assessments/" ~ assessment_id ~ "/conclusions?framework=" ~ active_framework, "primary") }}{% endif %}
-    <a class="btn ghost sm" href="/assessments/{{ assessment_id }}/snapshots">Report versions</a>
-  </div>
+{% if failed_frameworks or pending_frameworks or unscored_frameworks %}
+<div class="fw-grid rp-status-grid">
+  {% for fw_id, other in framework_display.items() if other.failed or other.status in ("pending_review", "not_scored") or other.score is none %}
+  {% if other.failed %}
+  <section class="glass fw" data-framework-failed="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><i class="dot c-non"></i>Analysis failed</span><p class="sub">Not scored. Run the analysis again.</p><div>{{ link_button("Run analysis again", "/assessments/" ~ assessment_id ~ "/analysis", "secondary", "sm", "rotate", true) }}</div></div></section>
+  {% elif other.status == "pending_review" %}
+  <section class="glass fw" data-framework-pending="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><span class="dot c-accent"></span>Awaiting consultant review</span><p class="sub">{{ other.coverage.eligible }} of {{ other.coverage.in_scope }} conclusions approved. The score appears when all are approved.</p></div></section>
+  {% else %}
+  <section class="glass fw" data-framework-not-scored="{{ fw_id }}"><h2>{{ framework_label(fw_id, full=true) }}</h2><div class="rp-status"><span class="status"><span class="dot c-accent"></span>Scores unavailable</span><p class="sub">Approve the framework conclusions to calculate a score.</p></div></section>
+  {% endif %}
+  {% endfor %}
 </div>
-
-{% for fw_id, failed_fw in framework_display.items() if failed_fw.failed %}
-<section class="glass empty" data-framework-failed="{{ fw_id }}"><h3>Analysis failed</h3><p>This framework has no score. Run analysis again to continue.</p>{{ link_button("Run analysis again", "/assessments/" ~ assessment_id ~ "/analysis", "secondary") }}</section>
-{% endfor %}
-{% if not fw.failed and fw.status == "pending_review" %}
-<section class="glass empty" data-framework-pending="{{ active_framework }}"><h3>Awaiting consultant review</h3><p>{{ fw.coverage.eligible }} of {{ fw.coverage.in_scope }} conclusions approved.</p>{{ link_button("Open conclusions", "/assessments/" ~ assessment_id ~ "/conclusions?framework=" ~ active_framework, "secondary") }}</section>
-{% elif not fw.failed and (fw.status == "not_scored" or fw.score is none) %}
-<section class="glass empty" data-framework-not-scored="{{ active_framework }}"><h3>Scores unavailable</h3><p>Approve the framework conclusions to calculate a score.</p></section>
-{% elif not fw.failed %}
-<section class="glass fw" data-framework-card="{{ active_framework }}">
-  <div class="fw-top">
-    {{ ring(fw.score | round(0) | int, fw_title ~ " score") }}
-    <div class="dist">
-      <div><span class="dot c-ok"></span><span>Implemented</span><b>{{ selected_metrics.compliant }}</b></div>
-      <div><span class="dot c-part"></span><span>Partial</span><b>{{ selected_metrics.partial }}</b></div>
-      <div><span class="dot c-non"></span><span>Not implemented</span><b>{{ selected_metrics.non_compliant }}</b></div>
-      <div><span class="dot c-insuf"></span><span>Insufficient evidence</span><b>{{ selected_metrics.insufficient }}</b></div>
-    </div>
-    <div class="stat"><span class="l">Rating</span><span class="v">{{ fw.rating or "Not scored" }}</span></div>
-  </div>
-  <div class="domains">
-    {% for domain_name, domain_score in fw.domain_scores.items() %}
-    <div><span class="status"><span class="dot c-accent"></span>{{ domain_name }}</span><span class="muted">{{ domain_score.get("score", 0) | round(0) | int }}%</span></div>
-    {% endfor %}
-  </div>
-</section>
 {% endif %}
 
-{% if not fw.failed and (selected_metrics.has_gaps or selected_critical) %}
-<section class="glass sec" data-business-impact>
-  <h2>Business impact</h2>
-  <div class="kv" style="margin-top:var(--s-4)">
-    <div><dt>High-risk gaps</dt><dd class="big-n">{{ selected_metrics.high_risk }}</dd></div>
-    {% if active_framework == "dpdpa" and business_impact.has_dpdpa_exposure %}<div><dt>Maximum regulatory exposure</dt><dd class="big-n">₹{{ business_impact.max_penalty_cr }}Cr</dd></div>{% endif %}
-  </div>
-</section>
+{% if has_dpdpa_scope and not active_scored %}<div class="alert c-accent rp-note" data-dpdpa-readiness-note>{{ icon("circle-check") }}<div>{{ dpdpa_readiness_note }}</div></div>{% endif %}
+
+{% macro business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) %}
+    <section class="glass fw" data-business-impact>
+      <h2>Business impact</h2>
+      <div class="domains rp-impact">
+        <div><span>Critical or high gaps</span><span class="big-n num">{{ selected_metrics.high_risk }}</span></div>
+        <div><span>{{ terms.unit | capitalize }}s needing action</span><span class="big-n num">{{ impact.needing }}</span></div>
+        {% if active_framework == "dpdpa" and business_impact.has_dpdpa_exposure %}<div><span>Regulatory exposure</span><span class="big-n">Up to ₹{{ business_impact.max_penalty_cr }} crore</span></div>{% endif %}
+        {% if impact.chapters %}<div><span>{{ terms.group | capitalize }}s affected</span><span class="muted">{{ impact.chapters | join(", ") }}</span></div>{% endif %}
+      </div>
+    </section>
+{% endmacro %}
+
+{% if active_scored and selected_frameworks | length > 1 %}
+<nav class="tabs rp-tabs" aria-label="Frameworks">
+  {% for option in selected_frameworks %}<a href="/assessments/{{ assessment_id }}?tab=report&amp;framework={{ option.id }}" aria-selected="{{ 'true' if option.id == active_framework else 'false' }}">{{ option.name }}</a>{% endfor %}
+</nav>
 {% endif %}
+<div class="rp-panel">
+  {% if active_scored %}
+  {% include "partials/framework_panel.html" %}
 
-{% if has_dpdpa_scope %}<div data-dpdpa-readiness-note>{{ alert("DPDPA readiness note", dpdpa_readiness_note, "medium", "info") }}</div>{% endif %}
+  <div class="fw-grid rp-grid">
+    <section class="glass fw" data-framework-card="{{ active_framework }}" data-framework-coverage="{{ active_framework }}">
+      <h2>{{ fw_title }}</h2>
+      <p class="sub">{{ fw.coverage.eligible }} of {{ fw.coverage.in_scope }} {{ terms.unit }}s scored</p>
+      <div class="fw-top">
+        <div class="ring" role="img" aria-label="Score {{ fw.score | round(0) | int }} out of 100"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="val" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="{{ fw.score | round(0) | int }} 100"/></svg><b>{{ fw.score | round(0) | int }}</b></div>
+        <div class="dist">
+          <div><i class="dot c-ok"></i><span>Compliant</span><b>{{ selected_metrics.compliant }}</b></div>
+          <div><i class="dot c-part"></i><span>Partially compliant</span><b>{{ selected_metrics.partial }}</b></div>
+          <div><i class="dot c-non"></i><span>Non-compliant</span><b>{{ selected_metrics.non_compliant }}</b></div>
+          <div><i class="dot c-insuf"></i><span>Insufficient evidence</span><b>{{ selected_metrics.insufficient }}</b></div>
+        </div>
+      </div>
+    </section>
+    {% if selected_metrics.has_gaps or selected_critical %}
+{{ business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) }}
+    {% endif %}
+  </div>
 
-<section class="glass sec" data-executive-summary>
-  <div class="fw-full"><h2>Executive summary</h2><button class="btn ghost sm" type="button" data-copy-trigger="executive-summary">{{ icon("copy") }}Copy</button></div>
-  <p data-copy-target="executive-summary" class="summary-copy">{{ summary_text }}</p>
-  {% if comparable_assessments %}<a class="meta-line" href="/assessments/{{ assessment_id }}/compare">Compare with last year</a>{% endif %}
-</section>
+  {% if has_dpdpa_scope %}<div class="alert c-accent rp-note" data-dpdpa-readiness-note>{{ icon("circle-check") }}<div>{{ dpdpa_readiness_note }}</div></div>{% endif %}
+  {% elif not fw.failed %}
+  <p class="meta-line" data-framework-coverage="{{ active_framework }}">{{ fw.version }} · {{ selected_rows | length }} approved findings in this framework</p>
+  {% if selected_metrics.has_gaps or selected_critical %}
+{{ business_impact_section(selected_metrics, impact, terms, active_framework, business_impact) }}
+  {% endif %}
+  {% endif %}
 
-{% include "partials/remediation_summary.html" %}
+  {% if not fw.failed %}
+  <div class="sec"><h2>Executive summary</h2><div class="acts"><button class="btn ghost sm lead" type="button" data-copy-trigger="executive-summary">Copy</button>{% if comparable_assessments %}<a class="btn ghost sm" href="/assessments/{{ assessment_id }}/compare">Compare with last year</a>{% endif %}</div></div>
+  <div class="glass rp-summary" data-executive-summary data-copy-target="executive-summary">{% for paragraph in summary_text.split("\n\n") if paragraph.strip() %}<p>{{ paragraph.strip() }}</p>{% endfor %}</div>
 
-<section class="sec" data-domain-findings>
-  <div class="fw-full"><h2>By domain</h2><a class="meta-line" href="/assessments/{{ assessment_id }}/findings?framework={{ active_framework }}">View all findings</a></div>
-  {% for chapter, items in gap_items_by_chapter.items() %}
-  {% set chapter_rows = items | selectattr("framework_id", "equalto", active_framework) | list %}
-  {% if chapter_rows %}
-  <div class="glass sec" style="margin-top:var(--s-3)"><h3>{{ chapter }}</h3><div class="rows" style="margin-top:var(--s-2)">
+  {% include "partials/remediation_summary.html" %}
+
+  <div class="sec" data-domain-findings><h2>By domain</h2><div class="acts"><a class="btn ghost sm" href="/assessments/{{ assessment_id }}/findings?framework={{ active_framework }}">View all findings</a></div></div>
+  <div class="glass fw rp-domains"><div class="domains">
+    {% for chapter, items in gap_items_by_chapter.items() %}
+    {% set chapter_rows = items | selectattr("framework_id", "equalto", active_framework) | list %}
+    {% if chapter_rows %}
+    {% set d = namespace(critical=0, high=0, partial=0, non=0, insuf=0) %}
     {% for item in chapter_rows %}
-    <div data-finding-id="{{ item.id }}"><span class="ico">{{ icon("alert") }}</span><span class="txt"><b>{{ item.requirement_title }}</b><span class="sub">{{ item.gap_description }}</span></span>{{ pill(item.risk_level | title, item.risk_level if item.risk_level in ('critical','high','medium','low') else 'neutral') }}</div>
+      {% if item.compliance_status in ("partially_compliant", "non_compliant") and item.risk_level == "critical" %}{% set d.critical = d.critical + 1 %}
+      {% elif item.compliance_status in ("partially_compliant", "non_compliant") and item.risk_level == "high" %}{% set d.high = d.high + 1 %}
+      {% elif item.compliance_status == "partially_compliant" %}{% set d.partial = d.partial + 1 %}
+      {% elif item.compliance_status == "non_compliant" %}{% set d.non = d.non + 1 %}
+      {% elif item.compliance_status == "insufficient_evidence" %}{% set d.insuf = d.insuf + 1 %}{% endif %}
+    {% endfor %}
+    <div><span>{{ chapter }}</span>
+      {% if d.critical %}<span class="status"><i class="dot c-critical"></i>{{ d.critical }} critical {{ "gap" if d.critical == 1 else "gaps" }}</span>
+      {% elif d.high %}<span class="status"><i class="dot c-high"></i>{{ d.high }} high-severity {{ "gap" if d.high == 1 else "gaps" }}</span>
+      {% elif d.non %}<span class="status"><i class="dot c-non"></i>{{ d.non }} non-compliant</span>
+      {% elif d.partial %}<span class="status"><i class="dot c-part"></i>{{ d.partial }} partial</span>
+      {% elif d.insuf %}<span class="status"><i class="dot c-insuf"></i>{{ d.insuf }} without evidence</span>
+      {% else %}<span class="status calm">No gaps</span>{% endif %}
+    </div>
+    {% endif %}
     {% endfor %}
   </div></div>
   {% endif %}
-  {% endfor %}
-</section>
 
-{% if selected_critical %}<section class="glass sec" data-fix-first><h2>Fix first</h2><div class="rows">{% for item in selected_critical %}<div><span class="ico accent">{{ icon("alert") }}</span><span class="txt"><b>{{ item.requirement_title }}</b><span class="sub">{{ item.remediation_action }}</span><a class="meta-line" href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}">Workpaper trace →</a></span>{{ pill(item.risk_level | title, item.risk_level) }}</div>{% endfor %}</div></section>{% endif %}
+  {{ findings_sections(selected_critical, selected_rows, terms, assessment_id) }}
+</div>
 
-<section class="sec" data-detailed-findings><div class="fw-full"><h2>Detailed findings</h2><a class="meta-line" href="/assessments/{{ assessment_id }}/workpaper">Workpaper</a></div>{% for item in selected_rows %}<article class="glass sec" style="margin-top:var(--s-3)"><div class="fw-full"><h3>{{ item.requirement_title }}</h3>{{ pill(item.compliance_status | replace('_', ' ') | title, 'ok' if item.compliance_status == 'compliant' else 'part' if item.compliance_status == 'partially_compliant' else 'non' if item.compliance_status == 'non_compliant' else 'insuf') }}</div><p class="meta-line">{{ item.requirement_id }} <a href="/assessments/{{ assessment_id }}/workpaper#wp-{{ item.framework_id or 'dpdpa' }}-{{ item.requirement_id }}">Workpaper trace →</a></p><p class="sub" style="margin-top:var(--s-2)">{{ item.gap_description }}</p><p style="margin-top:var(--s-2)"><b>Recommended action:</b> {{ item.remediation_action }}</p>{% set legacy = legacy_remediation.get((item.framework_id, item.requirement_id)) %}{% if legacy %}{% with item = legacy %}{% include "partials/remediation_panel.html" %}{% endwith %}{% endif %}</article>{% endfor %}{% for legacy in legacy_remediation.values() %}{% if (legacy.framework_id or "dpdpa") == active_framework %}<article class="glass sec" data-legacy-remediation style="margin-top:var(--s-3)"><h3>{{ legacy.requirement_title }}</h3>{% with item = legacy %}{% include "partials/remediation_panel.html" %}{% endwith %}</article>{% endif %}{% endfor %}</section>
-
-<div id="rfi-section" data-rfi-link class="meta-line" style="margin-top:var(--s-5)"><a href="/assessments/{{ assessment_id }}/rfi">Open request for information</a></div>
+{% for legacy in legacy_remediation.values() if (legacy.framework_id or "dpdpa") == active_framework %}<article class="glass rp-legacy" data-legacy-remediation><h3>{{ legacy.requirement_title }}</h3>{% with item = legacy %}{% include "partials/remediation_panel.html" %}{% endwith %}</article>{% endfor %}
+<div id="rfi-section" data-rfi-link class="meta-line rp-rfi"><a href="/assessments/{{ assessment_id }}/rfi">Open request for information</a> · <a href="/assessments/{{ assessment_id }}/snapshots">Report versions</a></div>

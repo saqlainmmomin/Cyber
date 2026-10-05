@@ -1,14 +1,15 @@
 {% from "components/ui.html" import link_button %}
 {% set total = remediation_counts.total | default(0) %}
 {% if total %}
-<section class="glass sec" data-remediation-summary>
-  <div class="fw-full"><div><h2>Remediation progress</h2><p class="meta-line">{{ remediation_counts.verified }} of {{ total }} actions closed and verified</p></div>{{ link_button("Findings and actions", "/assessments/" ~ assessment_id ~ "/findings", "ghost", "sm") }}</div>
-  <div class="progress-bar" style="margin-top:var(--s-4)"><i style="width:{{ ((remediation_counts.verified / total) * 100) | round(1) }}%"></i></div>
-  <div class="chips" style="margin-top:var(--s-3)">
+<div class="sec"><h2>Remediation progress</h2><div class="acts">{{ link_button("Findings and actions", "/assessments/" ~ assessment_id ~ "/findings", "ghost", "sm") }}</div></div>
+<section class="glass rp-remed" data-remediation-summary>
+  <p class="sub">{{ remediation_counts.verified }} of {{ total }} actions closed and verified</p>
+  <div class="progress-bar"><i style="width:{{ ((remediation_counts.verified / total) * 100) | round(1) }}%"></i></div>
+  <div class="chips">
     <span class="chip">Verified {{ remediation_counts.verified }}</span><span class="chip">Awaiting verification {{ remediation_counts.awaiting_verification }}</span><span class="chip">In progress {{ remediation_counts.in_progress }}</span><span class="chip">Open {{ remediation_counts.open }}</span>
   </div>
-  {% if remediation_counts.overdue %}<p class="meta-line" style="margin-top:var(--s-2)">{{ remediation_counts.overdue }} overdue</p>{% endif %}
+  {% if remediation_counts.overdue %}<p class="sub">{{ remediation_counts.overdue }} overdue</p>{% endif %}
 </section>
 {% else %}
-<p class="meta-line" data-remediation-summary>No remediation actions yet. <a href="/assessments/{{ assessment_id }}/findings">Open findings and actions</a>.</p>
+<p class="meta-line rp-remed-empty" data-remediation-summary>No remediation actions yet. <a href="/assessments/{{ assessment_id }}/findings">Open findings and actions</a>.</p>
 {% endif %}

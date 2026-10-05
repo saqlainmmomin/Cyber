@@ -46,7 +46,8 @@ def test_narrative_and_board_pages_keep_report_row_and_live_contracts(
     assert 'data-narrative-accept-form' in narrative.text
     assert 'hx-post="/api/assessments/' in narrative.text
     assert 'data-finding-ref="F1"' in narrative.text
-    assert 'data-narrative-unreleased' not in narrative.text
+    assert 'data-narrative-unreleased' not in narrative.text  # released here
+
 
     board = http.get(f"/assessments/{assessment.id}/board-inputs")
     assert board.status_code == 200
@@ -108,11 +109,28 @@ def test_generation_failure_and_limit_toasts_match_mockup_copy(
         assert failed.status_code == 200
         assert failed.headers["X-Toast-Type"] == "error"
         assert unquote(failed.headers["X-Toast-Message"]) == expected_failure
+        assert "HX-Redirect" not in failed.headers
 
     limited = http.post(endpoint, data=data)
     assert limited.status_code == 200
     assert limited.headers["X-Toast-Type"] == "error"
     assert unquote(limited.headers["X-Toast-Message"]) == expected_limit
+    assert "HX-Redirect" not in limited.headers
+
+
+def test_unreleased_narrative_keeps_unreleased_marker_and_blockers(
+    db, http, gate, monkeypatch
+):
+    assessment, *_ = released_assessment(db, http, gate, monkeypatch)
+    drafting = importlib.import_module("app.routers.drafting")
+    monkeypatch.setattr(drafting.approved_report, "is_released", lambda *_a, **_k: False)
+    monkeypatch.setattr(
+        drafting.narrative, "report_blockers", lambda *_a, **_k: ["Executive overview: not accepted"]
+    )
+    page = http.get(f"/assessments/{assessment.id}/narrative")
+    assert page.status_code == 200
+    assert "data-narrative-unreleased" in page.text
+    assert "data-narrative-blocker" in page.text
 
 
 def test_board_error_preview_surfaces_validation_copy(db, http, gate, monkeypatch):

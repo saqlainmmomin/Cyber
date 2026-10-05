@@ -1,33 +1,36 @@
 {% from "components/ui.html" import alert, icon, link_button %}
 {% set release_state = "released" if release.released else ("stale" if release.stale else "not_released") %}
-<section data-release-panel data-release-state="{{ release_state }}" class="glass card stack">
+{% macro release_date(value) %}{{ value.day }} {{ value.strftime("%b %Y") }}{% endmacro %}
+<section data-release-panel data-release-state="{{ release_state }}" class="glass card stack rel-panel">
   {% if release.released %}
-  {{ alert("Released by " ~ release.released_by ~ " on " ~ release.released_at.strftime("%d %b %Y"), "Exports use the conclusions as they were approved at release.", "accent") }}
+  <div class="alert c-ok">{{ icon("circle-check") }}<div><b>Released by {{ release.released_by }} on {{ release_date(release.released_at) }}</b>Exports use the conclusions as they were approved at release.</div></div>
   <div class="hrow">
     <a class="btn primary lead" href="/api/assessments/{{ assessment.id }}/report/pdf">{{ icon("download") }}Download PDF</a>
     {{ link_button("Report versions", "/assessments/" ~ assessment.id ~ "/snapshots", "ghost") }}
   </div>
   {% else %}
-    {% if release.stale %}{{ alert("The release is out of date", "A conclusion changed after the report was released on 24 Sep 2026. Exports stay closed until you release again.", "medium") }}{% endif %}
+    {% if release.stale %}{{ alert("The release is out of date", "A conclusion changed after the report was released" ~ (" on " ~ release_date(release.released_at) if release.released_at else "") ~ ". Exports stay closed until you release again.", "medium") }}{% endif %}
     {% if release.blockers %}
     <h2>Not ready to release</h2>
-    <ul data-release-blockers style="margin-left:var(--s-5);color:var(--text-2)">{% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+    <ul data-release-blockers class="rel-blockers">{% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
     {% else %}
     {% if not release.stale %}<h2>Ready to release</h2>{% endif %}
-    {% if counts is defined and counts.approved is defined %}<p>All {{ counts.approved }} in-scope conclusions are individually approved.</p>{% endif %}
+    {% if counts is defined and counts.approved is defined and not release.stale %}<p class="muted">All {{ counts.approved }} in-scope conclusions are individually approved.</p>{% endif %}
     <div class="hrow">
-      <button type="button" class="btn {{ "secondary" if release_confirm|default(false) or release.stale else "primary" }}" data-modal-open="release-modal">{{ "Release again" if release.stale else "Release report" }}</button>
+      <button type="button" class="btn {{ "secondary" if release_confirm|default(false) else "primary" }}" data-modal-open="release-modal">{{ "Release again" if release.stale else "Release report" }}</button>
       {% if release.stale %}{{ link_button("Open conclusions", "/assessments/" ~ assessment.id ~ "/conclusions", "ghost") }}{% endif %}
-    </div>
-    <div id="release-modal" class="scrim-modal"{% if not release_confirm|default(false) %} hidden{% endif %}>
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="release-modal-title">
-        <h2 id="release-modal-title">Release this report?</h2>
-        <p>Exports will use the conclusions exactly as they are approved now.</p>
-        <form data-release-form hx-post="/api/assessments/{{ assessment.id }}/release" hx-include="#reviewer-name" hx-swap="none">
-          <div class="foot"><button type="button" class="btn ghost" data-modal-close="release-modal">Cancel</button><button type="submit" class="btn {{ "primary" if release_confirm|default(false) else "secondary" }}">Release report</button></div>
-        </form>
-      </div>
     </div>
     {% endif %}
   {% endif %}
 </section>
+{% if not release.released and not release.blockers %}
+<div id="release-modal" class="scrim-modal" data-modal{% if not release_confirm|default(false) %} hidden{% endif %}>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="release-modal-title">
+    <h2 id="release-modal-title">Release this report?</h2>
+    <p>Exports will use the conclusions exactly as they are approved now. If you change a conclusion later, the release becomes out of date and exports close until you release again.</p>
+    <form data-release-form hx-post="/api/assessments/{{ assessment.id }}/release" hx-include="#reviewer-name" hx-swap="none">
+      <div class="foot"><button type="button" class="btn ghost" data-modal-close="release-modal">Cancel</button><button type="submit" class="btn {{ "primary" if release_confirm|default(false) else "secondary" }}">Release report</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}

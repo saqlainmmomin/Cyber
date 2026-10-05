@@ -92,13 +92,26 @@ def _start_app(db_path: str) -> tuple[subprocess.Popen, str]:
     return proc, base
 
 
-def _shoot(source: str, base_url: str, state: str | None, theme: str, width: int, output: Path) -> None:
+# Content mode compares only the main column (``.page``), so shell chrome the slice cannot change
+# (sidebar items, user tile) does not count. The mockup-only "State" scaffold row (a div holding
+# ``span.chip`` "State" and a heading) is hidden on the mockup, and the spec-sheet margin-top on each
+# ``[data-mock-state]`` section is zeroed, so no compensating padding is needed in the app.
+HIDE_STATE_ROWS = (
+    "document.querySelectorAll('span.chip').forEach(c => {"
+    " if (c.textContent.trim() === 'State' && c.parentElement) c.parentElement.style.display = 'none'; });"
+    " document.querySelectorAll('[data-mock-state]').forEach(s => { s.style.marginTop = '0'; });"
+)
+
+
+def _shoot(source: str, base_url: str, state: str | None, theme: str, width: int, output: Path, *, content: bool = False, mockup: bool = False) -> None:
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         screenshot.render(
             Namespace(
                 source=source, base_url=base_url, state=state, theme=theme, width=width, height=900,
-                output=str(output), baseline=None, diff=None, max_diff_percent=0.4, full_page=True, clip=None, mask=[],
+                output=str(output), baseline=None, diff=None, max_diff_percent=0.4,
+                full_page=True, clip=".page" if content else None, mask=[],
+                prep_js=HIDE_STATE_ROWS if (content and mockup) else None,
             )
         )
 
@@ -121,7 +134,7 @@ def _compare(baseline: Path, candidate: Path, diff_path: Path) -> tuple[float, s
     return pct, f"{rw}x{rh}", note
 
 
-def run(targets: list[str], out: Path) -> int:
+def run(targets: list[str], out: Path, content: bool = False) -> int:
     out.mkdir(parents=True, exist_ok=True)
     mock_server, mock_base = _start_mockup_server()
     states = screen_states()
@@ -144,8 +157,8 @@ def run(targets: list[str], out: Path) -> int:
                     for width in WIDTHS:
                         stem = f"{screen}-{state}-{theme}-{width}"
                         base_png, cand_png, diff_png = out / f"{stem}-baseline.png", out / f"{stem}-candidate.png", out / f"{stem}-diff.png"
-                        _shoot(f"{MOCKUPS}/{screen}.html", mock_base, state, theme, width, base_png)
-                        _shoot(app_base + path, app_base, None, theme, width, cand_png)
+                        _shoot(f"{MOCKUPS}/{screen}.html", mock_base, state, theme, width, base_png, content=content, mockup=True)
+                        _shoot(app_base + path, app_base, None, theme, width, cand_png, content=content)
                         pct, region, note = _compare(base_png, cand_png, diff_png)
                         ok = pct <= 0.4 and not (re.match(r"(\d+)x(\d+)", region) and all(int(v) > 40 for v in region.split("x"))) and not note
                         failures += 0 if ok else 1
@@ -157,7 +170,7 @@ def run(targets: list[str], out: Path) -> int:
                 proc.wait(timeout=10)
     finally:
         mock_server.shutdown()
-        results = out / "results.md"
+        results = out / ("results-content.md" if content else "results.md")
         header = "" if results.exists() else "| screen | state | theme | width | diff | largest region | data | verdict |\n|---|---|---|---|---|---|---|---|\n"
         with results.open("a") as handle:
             handle.write(header + "\n".join(rows) + "\n")
@@ -168,5 +181,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("targets", nargs="+")
     parser.add_argument("--out", default="/tmp/s7-gate")
+    parser.add_argument("--content", action="store_true", help="compare only the main column, State scaffold row hidden on the mockup")
     args = parser.parse_args()
-    raise SystemExit(run(args.targets, Path(args.out)))
+    raise SystemExit(run(args.targets, Path(args.out), args.content))

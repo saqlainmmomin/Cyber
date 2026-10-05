@@ -6,9 +6,9 @@
   <span class="status"><span class="st prog"></span>Analysis is running</span>
   <h2>{% if document_count is defined and response_count is defined %}Reading {{ document_count }} document{{ "" if document_count == 1 else "s" }} and {{ response_count }} questionnaire response{{ "" if response_count == 1 else "s" }}{% else %}Reading your documents and questionnaire responses{% endif %}</h2>
   <p class="sub">This page updates by itself. You can leave it and come back; the analysis keeps running.</p>
-  <div class="stack tight" aria-busy="true" aria-label="Loading">
+  <div class="stack tight an-skels" aria-busy="true" aria-label="Loading">
     {{ skeleton("70%") }}
-    {{ skeleton("82%") }}
-    {{ skeleton("55%") }}
+    {{ skeleton("92%") }}
+    {{ skeleton("48%") }}
   </div>
 </div>

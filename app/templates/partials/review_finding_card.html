@@ -5,36 +5,39 @@
 {% set risk = item.ai_risk_level or item.risk_level or "medium" %}
 {% set evidence = item.evidence_confidence or "weak" %}
 {% set notes_visible = notes_open|default(false) %}
+{% set compliance_labels = {"non_compliant": "Non-compliant", "partially_compliant": "Partially compliant", "compliant": "Compliant", "insufficient_evidence": "Insufficient evidence"} %}
 <div class="solid card" data-review-card data-review-status="{{ review_state }}" data-risk-level="{{ item.risk_level }}" id="review-card-{{ item.id }}">
   <div class="d-title">
     <div>
-      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="sub">{{ item.chapter or item.requirement_id }}</span></div>
-      <h3 style="margin-top:var(--s-2);font-size:var(--text-lg)">{{ item.requirement_title }}</h3>
+      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="muted">{{ item.chapter or item.requirement_id }}</span></div>
+      <h3 class="rfc-title">{{ item.requirement_title }}</h3>
     </div>
-    <span class="status"><span class="dot {{ "c-ok" if review_state == "accepted" else "c-non" if review_state == "rejected" else "c-neutral" }}"></span>{{ review_state|replace("_", " ")|title }}</span>
+    {% if review_state == "accepted" %}<span class="status">{{ icon("check") }}Accepted</span>
+    {% elif review_state == "rejected" %}<span class="status">{{ icon("x") }}Rejected</span>
+    {% else %}<span class="status"><span class="st"></span>{{ review_state|replace("_", " ")|capitalize }}</span>{% endif %}
   </div>
-  <div class="hrow" style="gap:var(--s-8);margin-top:var(--s-4)">
-    <div><span class="sub">AI status</span><div style="margin-top:var(--s-1)">{{ pill(compliance|replace("_", " ")|title, "non" if compliance == "non_compliant" else "part" if compliance == "partially_compliant" else "ok") }}{% if item.needs_review %} <span class="warn" title="The model flagged this verdict for human review because it lacks supporting evidence." aria-label="Needs review">Needs review</span>{% endif %}</div></div>
-    <div><span class="sub">Risk level</span><div style="margin-top:var(--s-1)">{{ pill(risk|title, "high" if risk == "high" else "medium" if risk == "medium" else "low") }}</div></div>
-    <div><span class="sub">Evidence</span><div style="margin-top:var(--s-1)">{{ chip("No evidence" if not item.evidence_quote else evidence|title) }}</div></div>
+  <div class="hrow rfc-facts">
+    <div><span class="sub">AI status</span><div class="rfc-fact">{{ pill(compliance_labels.get(compliance, compliance|replace("_", " ")|capitalize), "non" if compliance == "non_compliant" else "part" if compliance == "partially_compliant" else "insuf" if compliance == "insufficient_evidence" else "ok") }}{% if item.needs_review %}<span class="warn" title="The model flagged this verdict for review because no evidence supports it." aria-label="Needs review">{{ icon("alert") }}Needs review</span>{% endif %}</div></div>
+    <div><span class="sub">AI risk level</span><div class="rfc-fact">{{ pill(risk|title, "high" if risk == "high" else "medium" if risk == "medium" else "critical" if risk == "critical" else "low") }}</div></div>
+    <div><span class="sub">Evidence</span><div class="rfc-fact">{{ chip("No evidence" if not item.evidence_quote else evidence|title) }}</div></div>
   </div>
-  <p class="concl" style="margin-top:var(--s-4)">{{ item.ai_gap_description or item.gap_description }}</p>
-  {% if item.evidence_quote %}<div class="cite" style="margin-top:var(--s-4)">“{{ item.evidence_quote[:300] }}{% if item.evidence_quote|length > 300 %}…{% endif %}”</div>{% endif %}
-  {% if item.reviewer_notes and not notes_visible %}<div class="cite" style="margin-top:var(--s-4)">Reviewer notes: “{{ item.reviewer_notes }}”</div>{% endif %}
-  <div class="stack" data-notes-panel{% if not notes_visible %} hidden{% endif %} style="margin-top:var(--s-4);padding:var(--s-4);background:var(--surface-2)">
-    <form hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}" hx-target="#review-card-{{ item.id }}" hx-swap="outerHTML">
+  <p class="concl rfc-gap">{{ item.ai_gap_description or item.gap_description }}</p>
+  {% if item.evidence_quote %}<div class="cite rfc-gap"><div class="cite-head">{{ icon("file") }}<span>Evidence quote</span></div><blockquote>{{ item.evidence_quote[:300] }}{% if item.evidence_quote|length > 300 %}…{% endif %}</blockquote></div>{% endif %}
+  {% if item.reviewer_notes and not notes_visible %}<div class="cite rfc-gap"><div class="cite-head"><span>Reviewer notes</span></div><blockquote>{{ item.reviewer_notes }}</blockquote></div>{% endif %}
+  <div class="solid rfc-notes" data-notes-panel{% if not notes_visible %} hidden{% endif %}>
+    <form class="stack" hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}" hx-target="#review-card-{{ item.id }}" hx-swap="outerHTML">
       <label class="label" for="reviewer-notes-{{ item.id }}">Reviewer notes</label>
-      <textarea class="field area" id="reviewer-notes-{{ item.id }}" name="reviewer_notes" placeholder="What should the next reviewer know?">{{ item.reviewer_notes or "" }}</textarea>
-      <button type="submit" class="btn secondary">Save notes</button>
+      <label class="field area"><textarea id="reviewer-notes-{{ item.id }}" name="reviewer_notes" rows="3" placeholder="What should the next reviewer know?">{{ item.reviewer_notes or "" }}</textarea></label>
+      <div><button type="submit" class="btn secondary sm">Save notes</button></div>
     </form>
   </div>
-  <div class="hrow" style="margin-top:var(--s-6)">
+  <div class="hrow rfc-acts">
     {% if review_state in ["accepted", "rejected"] %}
     <button type="button" class="btn ghost" hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}" hx-vals='{"review_status":"draft"}' hx-target="#review-card-{{ item.id }}" hx-swap="outerHTML">Change decision</button>
     {% else %}
     <button type="button" class="btn primary" hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}" hx-vals='{"review_status":"accepted"}' hx-target="#review-card-{{ item.id }}" hx-swap="outerHTML">Accept</button>
     <button type="button" class="btn danger" hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}" hx-vals='{"review_status":"rejected"}' hx-target="#review-card-{{ item.id }}" hx-swap="outerHTML">Reject</button>
-    <button type="button" class="btn ghost" data-notes-toggle aria-controls="reviewer-notes-{{ item.id }}">{{ "Edit notes" if item.reviewer_notes else "Add notes" }}</button>
+    <button type="button" class="btn ghost sm lead" data-notes-toggle aria-controls="reviewer-notes-{{ item.id }}"{% if notes_visible %} hidden{% endif %}>{{ icon("pen") }}{{ "Edit notes" if item.reviewer_notes else "Add notes" }}</button>
     {% endif %}
   </div>
 </div>

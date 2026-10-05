@@ -7,7 +7,7 @@
 {% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
 {% set basis = report_basis_for(assessment) %}
 {% set shell_context = assessment_engagement_context(request) %}
-{% set page_engagement = shell_context.engagement if shell_context else none %}
+{% set page_engagement = shell_context.engagement if shell_context else (engagement_row if engagement_row is defined else none) %}
 
 {% macro period_meta() -%}
   {% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }} · Evidence cut-off {{ basis.cutoff_label }}{% else %}Assessment period not recorded · Evidence cut-off not recorded{% endif %}
@@ -28,13 +28,13 @@
 <div class="review-page">
   <div class="page-head">
     <div><h1>{{ page_title }}</h1><p class="meta-line">{{ period_meta() }}</p></div>
-    <div class="acts"><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
+    <div class="acts"></div>
   </div>
   {{ assessment_tabs(assessment, "review") }}
-  <div class="rq-seg">{{ review_seg(assessment, "queue") }}</div>
+  <div class="rq-seg"><div class="rq-seg-views">{{ review_seg(assessment, "queue") }}</div><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
 
-  {% if total %}
   <div class="progress" aria-label="Review progress"><span data-queue-keys class="sub"><span class="sr-only">Keyboard: j next, k previous</span>Next <kbd>j</kbd> Previous <kbd>k</kbd></span><span class="num">{{ total - open_count }} of {{ total }} decided</span><span class="ticks">{% for index in range(total) %}<i{% if index < total - open_count %} class="on"{% endif %}></i>{% endfor %}</span></div>
+  {% if total %}
   {% set initial = 0 if open_count else -1 %}
   <div class="glass rq">
     <div class="rq-list" role="navigation" aria-label="Conclusions to review">

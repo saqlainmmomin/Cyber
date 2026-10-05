@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import assessment_tabs %}
+{% from "components/ui.html" import icon %}
 {% from "components/seg_rows.html" import review_seg %}
 
 {% set page_title = "Conclusions" %}
@@ -9,7 +10,7 @@
 {% set stats = [("pending", "Pending"), ("approved", "Approved"), ("edited", "Edited and approved"), ("rejected", "Rejected"), ("legacy_bulk", "Approved in bulk")] %}
 {% set basis = report_basis_for(assessment) %}
 {% set shell_context = assessment_engagement_context(request) %}
-{% set page_engagement = shell_context.engagement if shell_context else none %}
+{% set page_engagement = shell_context.engagement if shell_context else (engagement_row if engagement_row is defined else none) %}
 
 {% macro period_meta() -%}
   {% if basis.period_recorded %}{{ basis.period_start.day }} {{ basis.period_start.strftime("%b %Y") }} – {{ basis.period_end.day }} {{ basis.period_end.strftime("%b %Y") }} · Evidence cut-off {{ basis.cutoff_label }}{% else %}Assessment period not recorded · Evidence cut-off not recorded{% endif %}
@@ -30,14 +31,19 @@
 {% endblock %}
 
 {% block content %}
-<div class="review-page">
-  <div class="page-head"><div><h1>{{ page_title }}</h1><p class="meta-line">{{ period_meta() }}</p></div><div class="acts"><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label>{% if cards %}<a class="btn primary lead" href="/assessments/{{ assessment.id }}/review-queue">Open review queue<svg class="i"><use href="#i-arrow-r"/></svg></a>{% endif %}</div></div>
+<div class="conclusions-page">
+  <div class="page-head"><div><h1>{{ page_title }}</h1><p class="meta-line">{{ period_meta() }}</p></div><div class="acts">{% if cards %}<a class="btn {{ "secondary" if release.released or not release.blockers else "primary" }} lead" href="/assessments/{{ assessment.id }}/review-queue">Open review queue<svg class="i"><use href="#i-arrow-r"/></svg></a>{% endif %}</div></div>
   {{ assessment_tabs(assessment, "review") }}
-  <div class="rq-seg">{{ review_seg(assessment, "conclusions") }}</div>
+  <div class="rv-seg-row"><div class="rv-seg">{{ review_seg(assessment, "conclusions") }}</div><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
 
   {% if cards %}
   <div class="glass rv-stats">{% for key, label in stats %}<div{% if key == "legacy_bulk" and not counts[key] %} hidden{% endif %}><span class="sub">{{ label }}</span><div class="big-n num" data-count="{{ key }}">{{ counts[key] }}</div></div>{% endfor %}</div>
-  <div class="rv-panels">{% include "partials/report_basis_panel.html" %}{% include "partials/release_panel.html" %}</div>
+  <div class="glass rows rv-summary">
+    <div><span class="ico">{{ icon("clock") }}</span><div class="txt"><b>Period and sign-off</b><span class="sub">{{ period_meta() }}.{% if period_locked %} Locked while conclusions are approved.{% endif %}</span></div></div>
+    <div><span class="ico">{{ icon("report") }}</span><div class="txt"><b>Release</b><span class="sub">{% if release.released %}Released.{% elif release.stale %}Out of date: a conclusion changed after release.{% elif release.blockers %}Not ready: {{ release.blockers[0] }}{% else %}Ready to release.{% endif %}</span></div></div>
+  </div>
+  {% set basis_save_variant = "secondary" %}
+  <div class="rv-panels" id="rv-panels">{% include "partials/report_basis_panel.html" %}{% include "partials/release_panel.html" %}</div>
 
   {% set current_framework = namespace(value="") %}
   {% for card in cards %}

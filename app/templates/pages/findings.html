@@ -1,130 +1,102 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import assessment_tabs %}
 {% from "components/seg_rows.html" import review_seg %}
-{% from "components/ui.html" import alert, empty_state, icon, pill, status %}
+{% from "components/ui.html" import empty_state, pill, status %}
 
-{% set preview = preview_screen is defined %}
 {% set basis = report_basis_for(assessment) %}
-{% set engagement_context = assessment_engagement_context(request) %}
-{% set engagement = engagement_context.get("engagement") %}
-{% set engagement_id = assessment.engagement_id %}
-{% set priority_labels = {1: "Do first", 2: "Next", 3: "Planned", 4: "Backlog"} %}
+{% set base = "/assessments/" ~ assessment.id ~ "/findings" %}
 {% set severity_tones = {"critical": "critical", "high": "high", "medium": "medium", "low": "low"} %}
+{% set outcome_tones = {"compliant": "ok", "partially_compliant": "part", "non_compliant": "non", "insufficient_evidence": "insuf"} %}
+{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence"} %}
+{% set decision_words = {"approved": "Approved", "edited": "Edited and approved"} %}
+{% set priority_labels = {1: "Do first", 2: "Next", 3: "Planned", 4: "Backlog"} %}
 
-{% block title %}Findings — {{ assessment.company_name }}{% endblock %}
+{% macro period_meta() -%}
+{% if basis.period_recorded %}{{ basis.period_start|display_date }} – {{ basis.period_end|display_date }} · Evidence cut-off {{ basis.cutoff_label }}{% else %}Assessment period not recorded · Evidence cut-off not recorded{% endif %}
+{%- endmacro %}
+
+{% macro reviewer_field() -%}
+<label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label>
+{%- endmacro %}
+
+{% block title %}{% if focus %}{{ focus.finding.title }}{% else %}Findings and actions{% endif %} · {{ assessment.display_name }}{% endblock %}
 
 {% block crumbs %}
-<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"></use></svg>
-{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"></use></svg>{% endif %}
-<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"></use></svg>
-<a href="/assessments/{{ assessment.id }}/review-queue">Review</a><svg class="i sl"><use href="#i-slash"></use></svg><b>Findings</b>
+{% if client %}<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a>{% else %}<a class="hide-sm" href="/">{{ assessment.company_name }}</a>{% endif %}<svg class="i sl hide-sm"><use href="#i-slash"/></svg>
+{% if focus and engagement %}
+<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/remediation">Findings and actions</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ focus.finding.title }}</b>
+{% else %}
+{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/review-queue">Review</a><svg class="i sl"><use href="#i-slash"/></svg>{% if focus %}<a href="{{ base }}">Findings</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ focus.finding.title }}</b>{% else %}<b>Findings</b>{% endif %}
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="page-head">
-  <div>
-    <h1>Findings</h1>
-    <p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p>
-  </div>
-  <div class="acts">
-    {% if engagement_id %}<a class="btn ghost" href="/engagements/{{ engagement_id }}/remediation">Open in engagement</a>{% endif %}
-  </div>
-</div>
-
+{% if focus %}
+{# Finding detail: the S4 action card on its own, under the engagement's Findings and actions tab. #}
+{% set period = engagement_period(engagement) if engagement else none %}
+<div class="page-head f-head"><div><h1>Finding detail</h1><p class="meta-line">{% if engagement %}{{ engagement.name }} · {{ client.name if client else assessment.company_name }} · {% if period %}Review period {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %}{{ period_meta() }}{% endif %}{% else %}{{ period_meta() }}{% endif %}</p></div><div class="f-reviewer">{{ reviewer_field() }}</div></div>
+{% if engagement %}
+<nav class="tabs" style="overflow-x:auto;margin-bottom:var(--s-6)" aria-label="Engagement"><a href="/engagements/{{ engagement.id }}">Overview</a><a href="/engagements/{{ engagement.id }}/evidence">Evidence</a><a href="/engagements/{{ engagement.id }}/remediation" aria-selected="true">Findings and actions</a><a href="/engagements/{{ engagement.id }}/integrated-reports">Reports</a></nav>
+{% else %}
 {{ assessment_tabs(assessment, "review") }}
 <div style="overflow-x:auto;margin:var(--s-4) 0">{{ review_seg(assessment, "findings") }}</div>
-<span class="sr-only">Findings and actions</span>
-
-{% if not preview %}
-<label class="label" style="max-width:320px">Reviewer name<input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" autocomplete="name" class="field"></label>
-<div class="block">
-  <h2>Approved conclusions without a finding</h2>
-  {% if page.eligible %}
-  <div class="rows glass" style="margin-top:var(--s-3)">
-    {% for row in page.eligible %}
-    <div data-eligible-conclusion id="eligible-{{ row.card.conclusion.id }}">
-      <span class="txt"><b>{{ row.card.requirement_title }}</b><span class="sub">{{ framework_label(row.card.conclusion.framework_id) }} · {{ row.card.conclusion.outcome|replace('_', ' ')|capitalize }}</span><a class="sub" href="{{ row.workpaper_href }}">Workpaper trace →</a></span>
-      <span class="pill c-{{ severity_tones.get(row.card.conclusion.risk_level, 'neutral') }}">{{ row.card.conclusion.risk_level|capitalize }}</span>
-      <details>
-        <summary class="btn primary sm">Create finding</summary>
-        <form hx-post="/api/assessments/{{ assessment.id }}/findings" hx-swap="none" hx-include="#reviewer-name" style="padding:var(--s-6) 0 0;display:grid;gap:var(--s-4);grid-template-columns:repeat(2,minmax(0,1fr))">
-          <input type="hidden" name="conclusion_id" value="{{ row.card.conclusion.id }}">
-          <input type="hidden" name="conclusion_version" value="{{ row.card.conclusion.version }}">
-          <label class="label">Title<input name="title" value="{{ row.prefill.title }}" class="field"></label>
-          <label class="label">Severity<select name="severity" class="field">{% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}"{% if value == row.prefill.severity %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}</select></label>
-          <label class="label" style="grid-column:1/-1">Description<textarea name="description" rows="3" class="field area">{{ row.prefill.description }}</textarea></label>
-          <label class="label">Remediation order<select name="priority" class="field">{% for value in [1, 2, 3, 4] %}<option value="{{ value }}"{% if value == row.prefill.priority %} selected{% endif %}>{{ priority_labels[value] }}</option>{% endfor %}</select></label>
-          <label class="label">Action title<input name="action_title" value="{{ row.prefill.action_title }}" class="field"></label>
-          <label class="label">Owner<input name="action_owner" class="field"></label>
-          <label class="label">Target date<input type="date" name="action_target_date" class="field"></label>
-          <label class="label" style="grid-column:1/-1">Notes<textarea name="notes" rows="2" class="field area"></textarea></label>
-          <div style="grid-column:1/-1"><button type="submit" class="btn primary">Create finding</button></div>
-        </form>
-      </details>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}<p class="muted" style="margin-top:var(--s-3)">No approved conclusions are waiting for a finding.</p>{% endif %}
-</div>
-
-<div class="sec" style="margin-top:var(--s-10)"><h2>Findings</h2><div class="acts"><a class="btn ghost sm" data-board-inputs-link href="/assessments/{{ assessment.id }}/board-inputs">Board inputs</a></div></div>
-{% if page.findings %}
-<div class="stack">{% for view in page.findings %}{% include "components/finding_card.html" %}{% endfor %}</div>
-{% else %}<p class="muted">No findings yet.</p>{% endif %}
-
-{% else %}
-<input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" aria-label="Reviewer name" class="sr-only">
-
-{% if preview_screen == "b5-findings" %}
-<section data-preview-state="{{ preview_state }}">
-  <div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;margin-top:var(--s-8)"><span class="chip">State</span><h2>{% if preview_state == "create" %}Creating a finding{% elif preview_state == "empty" %}No findings{% else %}Findings in progress{% endif %}</h2></div>
-  <div class="sec"><h2>Approved conclusions without a finding</h2></div>
-  {% if page.eligible %}
-  <div class="rows glass">
-    {% for row in page.eligible %}
-    <div data-eligible-conclusion id="eligible-{{ row.card.conclusion.id }}">
-      <span class="txt"><b>{{ row.card.requirement_title }}</b><span class="sub">Approved by Priya Sharma on 24 Sep 2026</span></span>
-      <span class="hide-sm">{{ pill("Partially compliant", "part") }}</span>
-      <span class="hide-sm">{{ pill(row.card.conclusion.risk_level|capitalize, row.card.conclusion.risk_level) }}</span>
-      {% if preview_state == "create" %}{% else %}<button class="btn primary sm" type="button" data-create-finding="{{ row.card.conclusion.id }}">Create finding</button>{% endif %}
-    </div>
-    {% endfor %}
-  </div>
-  {% if preview_state == "create" %}
-  {% set row = page.eligible[0] %}
-  <div class="solid" style="padding:var(--s-6);margin-top:var(--s-3);display:flex;flex-direction:column;gap:var(--s-4)">
-    <h3>New finding from {{ row.card.requirement_title }}</h3>
-    <div><label class="label" for="finding-title">Title</label><label class="field"><input id="finding-title" name="title" value="Backups are not encrypted at rest"></label></div>
-    <div class="fw-grid"><div><label class="label" for="finding-severity">Severity</label><label class="field"><select id="finding-severity" name="severity"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select></label></div><div><label class="label" for="finding-priority">Remediation order</label><label class="field"><select id="finding-priority" name="priority"><option>Do first</option><option selected>Next</option><option>Planned</option><option>Backlog</option></select></label></div></div>
-    <div><label class="label" for="finding-description">Description</label><label class="field area"><textarea id="finding-description" name="description" rows="3">Production databases are encrypted. Nightly backups to the secondary region are not, so a copy of customer records sits unencrypted.</textarea></label></div>
-    <h3 style="margin-top:var(--s-2)">First action</h3>
-    <div><label class="label" for="finding-action-title">Action title</label><label class="field"><input id="finding-action-title" name="action_title" value="Enable encryption on backup storage"></label></div>
-    <div class="fw-grid"><div><label class="label" for="finding-owner">Owner</label><label class="field"><input id="finding-owner" name="action_owner" value="Meridian infrastructure"></label></div><div><label class="label" for="finding-target">Target date</label><label class="field"><input id="finding-target" type="date" name="action_target_date" value="2026-11-30"></label></div></div>
-    <div><label class="label" for="finding-notes">Notes</label><label class="field area"><textarea id="finding-notes" name="notes" rows="2"></textarea></label></div>
-    <div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap"><button class="btn primary" type="button">Create finding</button><button class="btn ghost" type="button">Cancel</button></div>
-  </div>
-  {% endif %}
-  {% endif %}
-  <div class="sec"><h2>Findings</h2></div>
-  {% if page.findings %}
-  <div class="solid"><table><thead><tr><th>Finding</th><th style="width:110px">Severity</th><th class="hide-sm" style="width:190px">Status</th><th class="hide-sm" style="width:110px">Owner</th><th class="hide-sm n" style="width:130px">Next target</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody>
-    {% for view in page.findings %}{% set row = view.actions[0] if view.actions else none %}<tr data-finding-row="{{ view.finding.id }}"><td class="t-title">{{ view.finding.title }}</td><td>{{ pill(view.finding.severity|capitalize, severity_tones.get(view.finding.severity, "neutral")) }}</td><td class="hide-sm">{{ status("Verified" if view.finding.status == "resolved" else view.status_label, "in_progress" if view.finding.status == "in_progress" else "open", "ok" if view.finding.status == "resolved" else "") }}</td><td class="hide-sm">{{ row.action.owner if row else "Not set" }}</td><td class="hide-sm n num">{% if view.finding.status == "resolved" %}Done{% elif row and row.action.target_date %}{{ row.action.target_date|display_date }}{% else %}None set{% endif %}</td><td class="go hide-sm"><svg class="i" aria-hidden="true"><use href="#i-chev-r"></use></svg></td></tr>{% endfor %}
-  </tbody></table></div>
-  {% else %}{{ empty_state("No findings yet", "Create a finding from an approved conclusion to start tracking its actions.", "Open conclusions", "/assessments/" ~ assessment.id ~ "/conclusions", "report") }}{% endif %}
-</section>
-{% elif preview_screen == "b7-dark-dense" %}
-<section data-preview-state="dense">
-  <div class="alert c-medium" role="status">{{ icon("alert") }}<div><b>Two evidence files are past the cut-off</b>They are dated after {{ basis.cutoff_label }} and were left out of the analysis.</div></div>
-  <div class="top-sum" style="margin-top:var(--s-4)">
-    {% for label, tone, count in [("Critical", "critical", 0), ("High", "high", 2), ("Medium", "medium", 3), ("Low", "low", 3)] %}<div class="glass"><span class="l"><i class="dot c-{{ tone }}"></i>{{ label }}</span><span class="big-n num">{{ count }}</span></div>{% endfor %}
-  </div>
-  <div class="filter-bar"><label class="field"><svg class="i"><use href="#i-search"></use></svg><input placeholder="Search findings" aria-label="Search findings"></label><div class="seg" role="group" aria-label="Status"><button aria-pressed="true">All</button><button aria-pressed="false">Open</button><button aria-pressed="false">Resolved</button></div><span class="sp"></span><button class="btn secondary sm" type="button">Filter</button></div>
-  <div class="solid"><table><thead><tr><th>Finding</th><th style="width:120px">Severity</th><th class="hide-sm" style="width:150px">Status</th><th class="hide-sm" style="width:90px">Owner</th><th class="n hide-sm" style="width:90px">Evidence</th><th class="hide-sm" style="width:110px">Order</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody>
-    {% for view in page.findings %}{% set row = view.actions[0] if view.actions else none %}<tr data-finding-row="{{ view.finding.id }}"><td><div class="t-title">{{ view.finding.title }}</div><div class="t-sub">{{ view.card.requirement_title if view.card else "Finding" }}</div></td><td>{{ pill(view.finding.severity|capitalize, severity_tones.get(view.finding.severity, "neutral")) }}</td><td class="hide-sm">{{ status("Verified" if view.finding.status == "resolved" else view.status_label, "in_progress" if view.finding.status == "in_progress" else "open", "ok" if view.finding.status == "resolved" else "") }}</td><td class="hide-sm">{{ row.action.owner if row else "Not set" }}</td><td class="n num hide-sm">{{ loop.index }}</td><td class="hide-sm">{{ priority_labels.get(view.finding.priority, "Planned") }}</td><td class="go hide-sm"><svg class="i" aria-hidden="true"><use href="#i-chev-r"></use></svg></td></tr>{% endfor %}
-  </tbody></table></div>
-</section>
-{% else %}
-<section data-preview-state="{{ preview_state }}" style="margin-top:var(--s-12)">{% for view in page.findings %}{% include "components/finding_card.html" %}{% endfor %}</section>
 {% endif %}
+{% set view = focus %}
+{% include "components/finding_card.html" %}
+{% else %}
+<div class="page-head"><div><h1>Findings and actions</h1><p class="meta-line">{{ period_meta() }}</p></div><div class="acts">{% if engagement %}<a class="btn ghost" href="/engagements/{{ engagement.id }}/remediation">Open in engagement</a>{% endif %}</div></div>
+{{ assessment_tabs(assessment, "review") }}
+<div class="f-segrow"><div class="f-seg">{{ review_seg(assessment, "findings") }}</div><div class="f-tools">{{ reviewer_field() }}<a class="btn ghost" data-board-inputs-link href="/assessments/{{ assessment.id }}/board-inputs">Board inputs</a></div></div>
+
+<div class="sec"><h2>Approved conclusions without a finding</h2></div>
+{% if page.eligible %}
+<div class="glass rows">
+  {% for row in page.eligible %}
+  {% set decision = row.card.last_decision %}
+  <div data-eligible-conclusion id="eligible-{{ row.card.conclusion.id }}">
+    <div class="txt"><b>{{ row.card.requirement_title }}</b>{% if decision %}<span class="sub">{{ decision_words.get(decision.action, decision.action|capitalize) }} by {{ decision.actor_display }} on {{ decision.created_at|display_date }}</span>{% endif %}</div>
+    <span class="hide-sm">{{ pill(outcome_labels.get(row.card.conclusion.outcome, row.card.conclusion.outcome|replace('_', ' ')|capitalize), outcome_tones.get(row.card.conclusion.outcome, "neutral")) }}</span>
+    <span class="hide-sm">{{ pill(row.card.conclusion.risk_level|capitalize, severity_tones.get(row.card.conclusion.risk_level, "neutral")) }}</span>
+    {% if not create_id %}<a class="btn {{ 'primary' if loop.first else 'secondary' }} sm" href="{{ base }}?create={{ row.card.conclusion.id }}#new-finding-{{ row.card.conclusion.id }}">Create finding</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% for row in page.eligible %}
+{% set open_form = create_id == row.card.conclusion.id %}
+<div class="glass" id="new-finding-{{ row.card.conclusion.id }}" style="padding:var(--s-6);margin-top:var(--s-3)"{% if not open_form %} hidden{% endif %}>
+  <form hx-post="/api/assessments/{{ assessment.id }}/findings" hx-swap="none" hx-include="#reviewer-name" style="display:flex;flex-direction:column;gap:var(--s-4)">
+    <input type="hidden" name="conclusion_id" value="{{ row.card.conclusion.id }}">
+    <input type="hidden" name="conclusion_version" value="{{ row.card.conclusion.version }}">
+    <h3>New finding from {{ row.card.requirement_title }}</h3>
+    <div><label class="label" for="ft-{{ loop.index }}">Title</label><label class="field"><input id="ft-{{ loop.index }}" name="title" value="{{ row.prefill.title }}"></label></div>
+    <div class="fw-grid"><div><label class="label" for="fs-{{ loop.index }}">Severity</label><label class="field"><select id="fs-{{ loop.index }}" name="severity">{% for value in ['critical', 'high', 'medium', 'low'] %}<option value="{{ value }}"{% if value == row.prefill.severity %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}</select></label></div><div><label class="label" for="fo-{{ loop.index }}">Remediation order</label><label class="field"><select id="fo-{{ loop.index }}" name="priority">{% for value in [1, 2, 3, 4] %}<option value="{{ value }}"{% if value == row.prefill.priority %} selected{% endif %}>{{ priority_labels[value] }}</option>{% endfor %}</select></label></div></div>
+    <div><label class="label" for="fd-{{ loop.index }}">Description</label><label class="field area"><textarea id="fd-{{ loop.index }}" name="description" rows="3">{{ row.prefill.description }}</textarea></label></div>
+    <h3 style="margin-top:var(--s-2)">First action</h3>
+    <div><label class="label" for="fa-{{ loop.index }}">Action title</label><label class="field"><input id="fa-{{ loop.index }}" name="action_title" value="{{ row.prefill.action_title }}"></label></div>
+    <div class="fw-grid"><div><label class="label" for="fw-{{ loop.index }}">Owner</label><label class="field"><input id="fw-{{ loop.index }}" name="action_owner"></label></div><div><label class="label" for="fx-{{ loop.index }}">Target date</label><label class="field"><input id="fx-{{ loop.index }}" type="date" name="action_target_date"></label></div></div>
+    <div><label class="label" for="fn-{{ loop.index }}">Notes</label><label class="field area"><textarea id="fn-{{ loop.index }}" name="notes" rows="2"></textarea></label></div>
+    <div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap"><button type="submit" class="btn {{ 'primary' if open_form else 'secondary' }}">Create finding</button><a class="btn ghost" href="{{ base }}">Cancel</a><span class="sp"></span><a class="btn ghost sm" href="{{ row.workpaper_href }}">Workpaper trace</a></div>
+  </form>
+</div>
+{% endfor %}
+{% else %}
+<p class="muted">No approved conclusions are waiting for a finding.</p>
+{% endif %}
+
+<div class="sec"><h2>Findings</h2></div>
+{% if page.findings %}
+<div class="solid"><table><thead><tr><th>Finding</th><th style="width:110px">Severity</th><th class="hide-sm" style="width:190px">Status</th><th class="hide-sm" style="width:110px">Owner</th><th class="hide-sm n" style="width:130px">Next target</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody>
+  {% for view in page.findings %}
+  {% set live = view.actions | rejectattr("action.status", "in", ["closed", "verified"]) | list %}
+  {% set next_row = (live | selectattr("action.target_date") | sort(attribute="action.target_date") | first) or (live | first) or (view.actions | first) %}
+  {% set href = base ~ "?finding=" ~ view.finding.id %}
+  <tr data-finding-row="{{ view.finding.id }}" onclick="location.href=this.dataset.href" data-href="{{ href }}"><td class="t-title"><a href="{{ href }}">{{ view.finding.title }}</a></td><td>{{ pill(view.finding.severity|capitalize, severity_tones.get(view.finding.severity, "neutral")) }}</td><td class="hide-sm">{% if view.finding.status == "resolved" %}<span class="status"><svg class="i"><use href="#i-check"/></svg> Verified</span>{% else %}{{ status(view.status_label, view.finding.status) }}{% endif %}</td><td class="hide-sm">{{ next_row.action.owner if next_row and next_row.action.owner else "Unassigned" }}</td><td class="hide-sm n num">{% if view.finding.status == "resolved" or not live %}Done{% elif next_row and next_row.action.target_date %}{{ next_row.action.target_date|display_date }}{% else %}None set{% endif %}</td><td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td></tr>
+  {% endfor %}
+</tbody></table></div>
+{% else %}
+{{ empty_state("No findings yet", "Create a finding from an approved conclusion to start tracking its actions.", "Open conclusions", "/assessments/" ~ assessment.id ~ "/conclusions", "report") }}
+{% endif %}
+{# Older links point at #finding-<id> on this page; the card now lives on its detail view. #}
+<script>if (/^#finding-/.test(location.hash)) location.replace("{{ base }}?finding=" + encodeURIComponent(location.hash.slice(9)));</script>
 {% endif %}
 {% endblock %}

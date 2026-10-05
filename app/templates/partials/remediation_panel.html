@@ -1,14 +1,14 @@
 {% from "components/ui.html" import link_button %}
 {% if item is defined and (item.remediation_owner or item.remediation_target_date or item.remediation_notes or item.remediation_closed_at or (item.remediation_status and item.remediation_status != 'open')) %}
-<div data-legacy-remediation class="sub" style="margin-top:var(--s-3)">
+<div data-legacy-remediation class="sub rp-legacy-panel">
   <b>Legacy remediation record (read-only)</b>
-  <dl class="kv" style="margin-top:var(--s-2)">
+  <dl class="kv">
     {% if item.remediation_status and item.remediation_status != 'open' %}<div><dt>Status</dt><dd>{{ item.remediation_status | replace('_', ' ') | title }}</dd></div>{% endif %}
     {% if item.remediation_owner %}<div><dt>Owner</dt><dd>{{ item.remediation_owner }}</dd></div>{% endif %}
     {% if item.remediation_target_date %}<div><dt>Target date</dt><dd>{{ item.remediation_target_date.strftime('%Y-%m-%d') }}</dd></div>{% endif %}
     {% if item.remediation_closed_at %}<div><dt>Closed</dt><dd>{{ item.remediation_closed_at.strftime('%Y-%m-%d') }}</dd></div>{% endif %}
   </dl>
-  {% if item.remediation_notes %}<p style="white-space:pre-wrap;margin-top:var(--s-2)">{{ item.remediation_notes }}</p>{% endif %}
+  {% if item.remediation_notes %}<p class="rp-legacy-notes">{{ item.remediation_notes }}</p>{% endif %}
   {{ link_button("Track on findings and actions", "/assessments/" ~ assessment_id ~ "/findings", "ghost", "sm") }}
 </div>
 {% endif %}

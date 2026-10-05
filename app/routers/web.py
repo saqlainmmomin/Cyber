@@ -2753,6 +2753,13 @@ def assessment_report_page(
     return render_assessment_detail(request, db, assessment_id, tab="report")
 
 
+# Report wording per framework: (unit, group) singular nouns; the default is the requirement model.
+_REPORT_TERMS = {
+    "iso27001": {"unit": "control", "group": "theme"},
+    "default": {"unit": "requirement", "group": "domain"},
+}
+
+
 @router.get("/assessments/{assessment_id}/report-summary", response_class=HTMLResponse)
 def report_summary(
     request: Request,
@@ -2760,6 +2767,8 @@ def report_summary(
     view: str | None = None,
     db: Session = Depends(get_db),
 ):
+    from app.frameworks.registry import FrameworkRegistry
+
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
@@ -2886,6 +2895,13 @@ def report_summary(
             "release": release,
             "release_status": release_status,
             "timeline_steps": timeline_steps,
+            "assessment": assessment,
+            "framework": FrameworkRegistry.get(active_framework),
+            "finding_count": sum(1 for item in gap_items if item.framework_id == active_framework),
+            "framework_terms": _REPORT_TERMS.get(active_framework, _REPORT_TERMS["default"]),
+            "selected_frameworks": [
+                {"id": fid, "name": framework_label(fid, full=True)} for fid in assessment.frameworks
+            ],
         },
     )
 
@@ -2957,6 +2973,7 @@ def conclusions_page(
         context={
             "request": request,
             "assessment": assessment,
+            "engagement_row": db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None,
             "cards": cards,
             "counts": counts,
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
@@ -2994,6 +3011,16 @@ def findings_page(
     if assessment is None:
         raise HTTPException(404, "Assessment not found")
     page = finding_service.findings_page(db, assessment_id)
+    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
+    client = db.get(Client, engagement.client_id) if engagement else None
+    # Read-only view switches on the one findings route: ?finding=<id> shows that finding's
+    # detail (the S4 action card), ?create=<conclusion id> opens the create form, ?add=1
+    # opens the add-action form on the detail view.
+    focus_id = request.query_params.get("finding")
+    focus = next((view for view in page.findings if view.finding.id == focus_id), None)
+    create_id = request.query_params.get("create")
+    if not any(row.card.conclusion.id == create_id for row in page.eligible):
+        create_id = None
     return templates.TemplateResponse(
         request=request,
         name="pages/findings.html",
@@ -3001,6 +3028,11 @@ def findings_page(
             "request": request,
             "assessment": assessment,
             "page": page,
+            "engagement": engagement,
+            "client": client,
+            "focus": focus,
+            "create_id": create_id,
+            "adding": focus is not None and request.query_params.get("add") == "1",
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
         },
     )

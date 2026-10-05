@@ -10,3 +10,7 @@ SCREEN_STATES = {
 def apply(db, screen, state, assessment, engagement, data):
     """Keep in-flight card and toast states explicit preview states."""
     return {"data_state": "preview-state", "note": f"Rendered by design_s7_cards for {screen}:{state}"}
+
+
+def route(screen, state, assessment_id) -> str:
+    return f"/design/pages/{screen}?state={state}&assessment_id={assessment_id}"

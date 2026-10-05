@@ -41,19 +41,43 @@ RECOVERY = _row("iso27001", 1, "Disaster recovery testing", "The last recovery t
 SUPPLIER = _row("iso27001", 2, "Supplier security reviews", "Some payment processors have no supplier review on file.", "low", 2, "", "", [("Review the payment processors", "")])
 
 NARRATIVE_SPEC = [BREACH, CONSENT, NOTICE, BACKUPS, RETENTION, ACCESS, RECOVERY, SUPPLIER]
-DENSE_SPEC = NARRATIVE_SPEC + [
-    _row("iso27001", 3, "Privileged access list incomplete", "Not every privileged account has a named owner.", "low", 3, "", "", [("Name an owner for each privileged account", "")]),
-    _row("iso27001", 4, "Incident register lacks severity", "Incidents are logged without a severity.", "low", 4, "", "", [("Add severity to the incident register", "")]),
-    _row("dpdpa", 5, "Vendor onboarding skips privacy checks", "New vendors are onboarded without a privacy review.", "low", 4, "", "", [("Add a privacy check to vendor onboarding", "")]),
-    _row("iso27001", 5, "Staff awareness training not tracked", "Completion of awareness training is not recorded.", "low", 4, "", "", [("Track training completion", "consultant")]),
-]
-COMPLETE_SPEC = [BREACH, CONSENT, ACCESS]
+
+# Board-input rows carry the b5-board-inputs mockup's titles, context and actions.
+B_NOTICE = _row("dpdpa", 2, "Notice in regional languages", "The privacy notice is available in English only.", "high", 3, "Customers who read Hindi or Marathi cannot give informed consent.", "Publish the notice in Hindi and Marathi.", [("Translate the notice", "client"), ("Check the translation", "consultant")])
+B_BACKUPS = _row("dpdpa", 3, "Backups not encrypted at rest", "Backups of the payments database are stored unencrypted.", "medium", 1, "A lost backup would expose cardholder and account data.", "Encrypt backups and rotate the keys.", [("Enable encryption on backup storage", "client")])
+B_ACCESS = _row("iso27001", 0, "Access reviews skip production systems", "Three production systems were left out of the Q1 access review.", "medium", 3, "Leavers and role changes on those systems may keep access they should not have.", "Extend the quarterly access review to every production system.", [("Add the three systems to the review scope", "client")])
+B_RECOVERY = _row("iso27001", 1, "Disaster recovery test missed its objective", "Failover took six hours against a four-hour objective.", "low", 1, "A real outage would stop payments for longer than the business has agreed it can bear.", "Fix the failover runbook and run the test again.", [("Update the failover runbook", "client"), ("Observe the repeat test", "consultant")])
+B_SUPPLIER = _row("iso27001", 2, "Supplier security reviews missing", "Two payment processors have no security review on file.", "low", 2, "Weak controls at a processor become the company’s exposure.", "Review both processors and set a yearly cycle.", [("Collect assurance reports from both processors", "shared")])
+B_RETENTION = _row("dpdpa", 4, "Data retention schedule", "No schedule exists for payment dispute records.", "medium", 2, "Records are kept longer than needed, which increases breach impact.", "Agree retention periods and automate deletion.", [("Draft the retention schedule", "shared")])
+B_PRIVILEGED = _row("iso27001", 3, "Privileged access list incomplete", "The list of privileged accounts has no owners recorded.", "low", 3, "Nobody is accountable for removing standing admin rights.", "Record an owner for every privileged account.", [("Assign owners", "client")])
+B_INCIDENTS = _row("iso27001", 4, "Incident register lacks severity", "Incidents are logged without a severity rating.", "low", 4, "", "", [("Add the severity field", "client")])
+B_VENDORS = _row("dpdpa", 5, "Vendor onboarding skips privacy checks", "New vendors are not asked how they handle personal data.", "low", 4, "", "", [("Draft the question set", "consultant")])
+B_TRAINING = _row("iso27001", 5, "Staff awareness training not tracked", "Completion of annual training is not recorded.", "low", 4, "", "", [("Set up completion tracking", "client")])
+
+
+def _blank(row):
+    return {**row, "impact": "", "recommendation": ""}
+
+
 BOARD_SPECS = {
-    "partly": [BREACH, CONSENT, NOTICE, BACKUPS],
-    "complete": COMPLETE_SPEC,
-    "dense": DENSE_SPEC,
+    # Backups sit on requirement 4 so the three findings span three roadmap groups, as in the mockup.
+    "partly": [BREACH, CONSENT, _blank(B_NOTICE), _blank({**B_BACKUPS, "index": 4})],
+    "complete": [BREACH, {**CONSENT, "index": 2}, {**B_NOTICE, "index": 4}],
+    "dense": [BREACH, CONSENT, B_NOTICE, B_BACKUPS, B_ACCESS, B_RECOVERY, B_SUPPLIER, B_RETENTION, B_PRIVILEGED, {**B_INCIDENTS, "index": 10}, B_VENDORS, B_TRAINING],
     "error": [BREACH, CONSENT],
 }
+# Initiative metadata by roadmap-group position (the group topics themselves come from
+# the real control clusters, so they differ from the mockup's invented topics).
+_INCIDENT = ("Strengthen incident response", "high", "high")
+_CONSENT = ("Make consent easy to give and withdraw", "medium", "high")
+_ACCESS = ("Close access review gaps", "low", "high")
+BOARD_INITIATIVES = {
+    "partly": [_INCIDENT, None, ("Close access review gaps", "low", None)],
+    "complete": [_INCIDENT, _CONSENT, _ACCESS],
+    "dense": [_INCIDENT, _CONSENT, _ACCESS, ("Encrypt backups", "medium", "medium"), ("Meet the recovery objective", "medium", "medium"), ("Review payment processors", "low", "medium")],
+    "error": [_INCIDENT],
+}
+BOARD_ASK_COUNT = {"partly": 1, "complete": 3, "dense": 2, "error": 1}
 ASKS = [
     "Approve funding for the incident response work",
     "Name an executive owner for the access review programme",
@@ -139,6 +163,7 @@ def _seed_findings(db, assessment, spec, *, release=True) -> None:
         finding.recommendation = row["recommendation"] or None
         first = db.query(Action).filter(Action.finding_id == finding.id).one()
         first.responsibility = actions[0][1] or None
+        first.created_at = _time(-10)
         for position, (action_title, responsibility) in enumerate(actions[1:], start=1):
             db.add(Action(id=f"action-{finding.id}-{position}", finding_id=finding.id, title=action_title, owner=None, responsibility=responsibility or None, status="open", history_json="[]", created_at=_time(-10), updated_at=_time(-10)))
     db.flush()
@@ -148,53 +173,52 @@ def _seed_narrative(db, assessment, state: str) -> None:
     from app.services import narrative
 
     refs = narrative.finding_refs(db, assessment)
-    by_title = {ref.title: ref for ref in refs}
-    section_refs = {
-        "executive": refs[:3],
-        "cross-framework": tuple(ref for ref in refs if ref.framework_id == "dpdpa")[:1] + tuple(ref for ref in refs if ref.framework_id == "iso27001")[:1],
-        "framework-dpdpa": tuple(ref for ref in refs if ref.framework_id == "dpdpa")[:3],
-        "framework-iso27001": tuple(ref for ref in refs if ref.framework_id == "iso27001")[:3],
-    }
+
+    def cite(*positions):
+        # 1-based positions in NARRATIVE_SPEC order (the mockup's R-01 to R-08).
+        return [refs[position - 1].finding_id for position in positions]
+
     status_map = {
         "drafted": {key: "draft" for key in SECTION_ORDER},
         "partly-accepted": {"executive": "accepted", "cross-framework": "draft", "framework-dpdpa": "accepted", "framework-iso27001": "accepted-stale"},
         "accepted": {key: "accepted" for key in SECTION_ORDER},
-        "error": {key: "accepted" for key in SECTION_ORDER},
+        "error": {"executive": "accepted", "cross-framework": "accepted", "framework-dpdpa": "accepted"},
     }.get(state, {})
     sentences = {
         "executive": [
-            "The assessment shows documented controls with gaps in customer response and operating evidence.",
-            "The most significant exposure is concentrated in notification, access review and recovery practice.",
+            ("Meridian Ledger Technologies has documented most of what a privacy and security programme needs, but some controls do not yet work as written.", cite(1, 6)),
+            ("The most serious gaps are where customers act on their data and where incidents must be reported.", cite(1, 2)),
+            ("Closing the access review and incident notification gaps would reduce the most exposure.", cite(1, 6)),
         ],
         "cross-framework": [
-            "Controls exist on paper but are not applied consistently across the privacy and security frameworks.",
-            "Access review and backup safeguards need the same accountable operating rhythm.",
+            ("Under both frameworks, controls exist on paper but are not applied everywhere.", cite(4, 6)),
+            ("Access to some production systems is not reviewed, and backups are not encrypted at rest, which weakens safeguards the policies already promise.", cite(4, 6)),
         ],
         "framework-dpdpa": [
-            "The privacy programme has gaps in notice, consent withdrawal and incident response.",
-            "These gaps leave customer-facing obligations dependent on manual follow-up.",
+            ("The record of processing and the incident register are in place.", cite(1)),
+            ("Consent can be withdrawn only by emailing the data protection officer, the privacy notice is in English only, and the breach procedure has no route to notify affected data principals.", cite(1, 2, 3)),
         ],
         "framework-iso27001": [
-            "The security management system is documented, but operating evidence is incomplete.",
-            "Access reviews, recovery testing and supplier oversight need consistent execution.",
+            ("The management system is documented and the policy set is current.", cite(6)),
+            ("Operation lags the documents: access reviews skip some production systems, the last recovery test missed its objective, and some payment processors have no supplier review on file.", cite(6, 7, 8)),
         ],
     }
+    # The mockup shows a dropped sentence only in the just-drafted state.
+    dropped = {
+        "framework-dpdpa": [{"text": "Most organisations at this stage benefit from a dedicated privacy officer.", "reason": "no_reference"}],
+    } if state == "drafted" else {}
     for section_id in SECTION_ORDER:
         status = status_map.get(section_id, "none")
         if status == "none" or section_id not in narrative.section_ids(assessment, refs):
             continue
-        refs_for_section = section_refs[section_id]
-        sentence_rows = [
-            {"text": text, "finding_ids": [ref.finding_id for ref in refs_for_section]}
-            for text in sentences[section_id]
-        ]
+        sentence_rows = [{"text": text, "finding_ids": ids} for text, ids in sentences[section_id]]
         basis = narrative._basis_sha256(section_id, refs)
         draft = narrative._write_event(
             db,
             actor=SEED_ACTOR,
             action=narrative.AUDIT_DRAFTED,
             assessment_id=assessment.id,
-            metadata={"section_id": section_id, "basis_sha256": basis, "status": "ok", "sentences": sentence_rows, "dropped": [], "prompt_sha256": narrative.prompt_sha256(), "prompt_version": narrative.PROMPT_VERSION, "calls": [], "error_type": None},
+            metadata={"section_id": section_id, "basis_sha256": basis, "status": "ok", "sentences": sentence_rows, "dropped": dropped.get(section_id, []), "prompt_sha256": narrative.prompt_sha256(), "prompt_version": narrative.PROMPT_VERSION, "calls": [], "error_type": None},
         )
         if status.startswith("accepted"):
             narrative._write_event(
@@ -215,14 +239,13 @@ def _seed_board(db, assessment, state: str) -> None:
     _seed_findings(db, assessment, BOARD_SPECS[state])
     findings = report_content.assessment_findings(db, assessment).findings
     groups = remediation_groups.build_groups(findings, assessment.frameworks)
-    saved_positions = {"partly": (0, 2), "complete": (0, 1, 2), "error": (0,)}.get(state, ())
-    for position in saved_positions:
-        if position >= len(groups):
+    for group, initiative in zip(groups, BOARD_INITIATIVES.get(state, [])):
+        if initiative is None:
             continue
-        group = groups[position]
-        db.add(InitiativeMetadata(assessment_id=assessment.id, group_id=group["group_id"], title={0: "Strengthen incident response", 1: "Close access review gaps", 2: "Fix the notice"}.get(position, "Initiative"), complexity="high" if position == 0 else "low", benefit="high" if position == 0 else None))
-    if state in ("partly", "complete", "error"):
-        assessment.board_asks_json = json.dumps({"consultant": ASKS[:3] if state == "complete" else ASKS[:1], "by": "Priya Sharma"})
+        title, complexity, benefit = initiative
+        db.add(InitiativeMetadata(assessment_id=assessment.id, group_id=group["group_id"], title=title, complexity=complexity, benefit=benefit))
+    # Through the real service, so the stored shape and the reviewer-name audit event are genuine.
+    board_inputs.update_board_asks(db, assessment.id, ASKS[: BOARD_ASK_COUNT[state]], SEED_ACTOR)
     db.flush()
 
 

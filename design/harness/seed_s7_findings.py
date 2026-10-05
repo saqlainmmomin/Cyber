@@ -69,7 +69,7 @@ def _created(title: str, *, owner: str | None, target: datetime | None) -> dict:
     return _history_entry(
         "created",
         SEED_ACTOR,
-        "22 Sep 2026",
+        "2026-09-22T09:00:00+00:00",
         changes={
             "title": {"from": None, "to": title},
             "owner": {"from": None, "to": owner},
@@ -83,7 +83,7 @@ def _started() -> dict:
     return _history_entry(
         "status_changed",
         "consultant:Arjun Mehta",
-        "26 Sep 2026",
+        "2026-09-26T10:00:00+00:00",
         changes={"status": {"from": "open", "to": "in_progress"}},
     )
 
@@ -92,7 +92,7 @@ def _closure(evidence: dict) -> dict:
     return _history_entry(
         "closed",
         "consultant:Arjun Mehta",
-        "28 Sep 2026",
+        "2026-09-28T11:00:00+00:00",
         changes={"status": {"from": "in_progress", "to": "closed"}},
         evidence=evidence,
     )
@@ -102,7 +102,7 @@ def _verified() -> dict:
     return _history_entry(
         "verified",
         SEED_ACTOR,
-        "30 Sep 2026",
+        "2026-09-30T12:00:00+00:00",
         changes={"status": {"from": "closed", "to": "verified"}},
     )
 
@@ -319,7 +319,10 @@ def _backup_state(db, assessment, engagement, state: str) -> None:
     reopened = False
 
     if state in {"in-progress", "no-evidence", "source-changed", "add-action"}:
-        history.append(_started())
+        started = _started()
+        if state == "add-action":
+            started["notes"] = "Waiting on the key rotation window."
+        history.append(started)
         status = finding_status = "in_progress"
         reopened = state == "source-changed"
     elif state == "verify":
@@ -339,7 +342,7 @@ def _backup_state(db, assessment, engagement, state: str) -> None:
             _history_entry(
                 "imported",
                 "system:migration",
-                "12 Aug 2026",
+                "2026-08-12T09:00:00+00:00",
                 changes={"status": {"from": None, "to": "open"}},
             )
         ]
@@ -399,7 +402,7 @@ def _backup_state(db, assessment, engagement, state: str) -> None:
 
 
 def _eligible(db, assessment) -> None:
-    _conclusion(db, assessment, f"conclusion-s7-eligible-{assessment.id}", "CH2.PURPOSE.1")
+    _conclusion(db, assessment, f"conclusion-s7-eligible-{assessment.id}", "CH2.SECURITY.1")
 
 
 def _list_findings(db, assessment, engagement, *, dense: bool = False) -> None:
@@ -419,7 +422,7 @@ def _list_findings(db, assessment, engagement, *, dense: bool = False) -> None:
         )
         rows = rows[:8]
     for key, requirement_id, title, severity, priority, finding_status, action_status, owner, target_label in rows:
-        target = None if target_label == "Done" else _date(2026, 12, 15)
+        target = None if target_label == "Done" else datetime.strptime(target_label, "%d %b %Y").replace(tzinfo=timezone.utc)
         action_history = [_created(f"Fix: {title}", owner=owner, target=target)]
         if action_status != "open":
             action_history.append(_started())
@@ -483,4 +486,11 @@ def apply(db, screen: str, state: str, assessment, engagement, data) -> dict:
 
 
 def route(screen: str, state: str, assessment_id: str) -> str:
-    return f"/design/pages/{screen}?state={state}"
+    """The live findings route: list, create form (?create=), finding detail (?finding=)."""
+    base = f"/assessments/{assessment_id}/findings"
+    if screen == "b5-findings" and state == "create":
+        return f"{base}?create=conclusion-s7-eligible-{assessment_id}"
+    if screen == "b5-finding-card":
+        detail = f"{base}?finding=finding-s7-backups-{assessment_id}"
+        return detail + ("&add=1" if state == "add-action" else "")
+    return base

@@ -1,7 +1,7 @@
 {% from "components/ui.html" import icon, link_button %}
-<div class="glass empty" data-report-state="empty">
-  {{ icon("report", "") }}
+<div class="no-report"><div class="glass empty" data-report-state="empty">
+  {{ icon("report", "", "width:24px;height:24px;color:var(--muted)") }}
   <h3>No report yet</h3>
   <p>Complete the questionnaire and run the analysis to generate the report.</p>
   {{ link_button("Open questionnaire", "/assessments/" ~ (assessment_id or assessment.id) ~ "?tab=questionnaire", "primary") }}
-</div>
+</div></div>

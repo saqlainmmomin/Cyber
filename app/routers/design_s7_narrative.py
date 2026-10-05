@@ -96,7 +96,10 @@ def _board_preview(request: Request, db: Session) -> Response:
     if state == "error" and context["page"].findings:
         first = context["page"].findings[0]
         finding = first.finding
-        overlong_recommendation = "Name an accountable owner and publish evidence of the control review. " * 40
+        overlong_recommendation = " ".join(
+            [finding.recommendation or ""]
+            + ["Name an owner for each step, agree the template with legal counsel and run a test notification before the next audit."] * 14
+        ).strip()
         context["page"] = SimpleNamespace(
             findings=[
                 replace(first, finding=SimpleNamespace(
@@ -120,7 +123,7 @@ def _board_preview(request: Request, db: Session) -> Response:
         if context["groups"]:
             context["initiative_data"].setdefault(context["groups"][0]["group_id"], {})[
                 "title"
-            ] = "Improve access review evidence and ownership " * 5
+            ] = "Strengthen incident response, notification routes and runbooks across every business unit and supplier"
     return board_inputs_router._templates.TemplateResponse("pages/board_inputs.html", context)
 
 
