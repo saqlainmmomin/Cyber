@@ -15,8 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:8000")
 SIDE_NAV_CLIP = {
     "top": ".side-in",
-    # S3 and S4 make Home, Clients, Engagements, Review and Reports live. Stop at the last
-    # live main-nav row so the unavailable Evidence row stays outside this comparison.
+    # Stop at the last live main-nav row (Reports). Evidence sits above it and is live
+    # since S6, so the clip covers it too; Settings and the account menu stay outside.
     "bottom": '.side-in > .nav > a[data-nav-key="reports"]',
 }
 

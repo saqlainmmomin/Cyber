@@ -2,6 +2,14 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## S6 adversarial review fixes (2026-10-04)
+
+- [x] Add regression coverage for B1–B5 and S1–S9 contracts, including fixture imports.
+- [x] Repair S6 route context, filters, status counts, redirects, freshness, legacy visibility, and reuse/upload behavior without touching protected surfaces.
+- [x] Rebuild S6 templates against the approved structures: inventory, detail/span, AWS, reuse, workpaper, and workpaper-entry preview states.
+- [x] Align deterministic S6 seed data and register a design-only workpaper-entry preview fixture.
+- [x] Run focused HTTP/template/design checks plus smoke verification; append a Review fixes subsection to the S6 handoff.
+
 ## S5 review fixes (2026-10-04)
 
 - [x] Restore S5 fixture imports and add the engagement-linked Overview HTTP smoke test.
@@ -173,3 +181,21 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] Add deterministic S4 seed scenarios, visual clip coverage, migration-map rows, and stale-guard allowances.
 - [x] Run focused local checks available without a server, browser, network, or boto3; record limits in the S4 handoff.
 - [x] Restore orchestrator-detected S4 content regressions and complete the requested full-suite verification. Seven requested regressions, both stale file-set guards, the redirect/protected-surface contracts, and the full suite pass; only the authorized S3 Home longitudinal failure remains.
+
+# Yozora S6 execution (2026-10-04)
+
+- [x] Wire engagement and cross-engagement Evidence inventory routes to `evidence_inventory` and `prefill_freshness`; redirect explicit assessment Documents links with HTTP 303.
+- [x] Move the upload panel into the inventory, preserve live HTMX upload/delete/version controls, delete the obsolete Documents partial, and update the migration map.
+- [x] Restyle AWS pull, reuse, evidence detail/span, and read-only workpaper surfaces with their must-keep ids and `hx-*`/`data-*` contracts.
+- [x] Add the sequential per-candidate reuse confirmation script; document its stop-on-first-error limitation.
+- [x] Add deterministic S6 seed data and frozen-clock manifest for Meridian Ledger Technologies, Loomwire Labs, and Kestrel Advisory; stamp Alembic head after `create_all`.
+- [x] Add HTTP inventory/redirect/upload/delete/version tests and preserve Superseded/Legacy badge coverage.
+- [ ] Run orchestrator-only full suite and pixel gate after S5 merges; this environment has no server, browser, network, or boto3.
+
+# Yozora S6 review fixes, round 3 (2026-10-04)
+
+- [x] Remove production mockup state switchers and correct evidence/AWS/reuse/detail/span/workpaper page structure.
+- [x] Preserve evidence action/filter contracts, freshness and migration notices, and add the requested round-3 HTTP coverage.
+- [x] Restore the P6-6 reporting-basis contract and make the workpaper entry fixture render inside a page shell.
+- [x] Match the supplied S6 geometry/content fixture, including compact workpaper conclusions and the upload disclosure behavior.
+- [x] Run focused tests, the relevant regression suite, and static collision checks; record verified results in the S6 handoff. Full suite: 1463 passed, 30 skipped.

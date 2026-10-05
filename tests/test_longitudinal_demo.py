@@ -38,7 +38,7 @@ from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links, remediation_rollup, report_content
 from app.services.report_snapshots import generated_event
 from app.services.evidence_reuse import AUDIT_METADATA_KEYS
-from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S5_PATHS  # Yozora S3/S5 per-PR allowance
+from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS  # Yozora S3/S5 per-PR allowance
 
 from scripts.seed_test_companies import (
     DEMO_CLIENT_A,
@@ -275,6 +275,13 @@ def test_scenario_4_reuse_prompt_requires_confirmation_and_audit(db, http, demo)
     assert "189 days" in page.text
     assert 'name="acknowledge_warnings"' in page.text
     assert "Confirm reuse" in page.text
+    # Nothing is ticked on load, so the confirm button starts disabled; the page script
+    # counts ticked boxes only ("Confirm reuse of N").
+    assert re.search(r'<button class="btn primary" type="button" id="confirm-reuse" disabled>Confirm reuse</button>', page.text)
+    assert "Confirm reuse of" not in page.text.split("<script", 1)[0]
+    assert len(re.findall(r"<form[^>]*data-reuse-confirm(?:\s|>)", page.text)) == 1
+    assert 'data-reuse-error role="alert"' in page.text and 'hidden></div>' in page.text
+    assert 'data-reuse-select checked' not in page.text
     assert 'hx-boost="false"' in page.text
     assert f'href="/evidence/{demo.evidence_ids["a_access_q1"]}"' in page.text
     assert "Declining records nothing." in page.text
@@ -307,13 +314,13 @@ def test_scenario_4_reuse_prompt_requires_confirmation_and_audit(db, http, demo)
     assert metadata["reference_date"] == _day(demo, -7).isoformat()
     after_page = http.get(f"/assessments/{validation_id}/evidence-reuse")
     assert 'data-reuse-candidate ' not in after_page.text
-    assert "No evidence from earlier assessments is waiting for confirmation." in after_page.text
+    assert "Nothing is waiting for confirmation" in after_page.text
     repeated = http.post(f"/assessments/{validation_id}/evidence-reuse/{source_use_id}/confirm", data={"acknowledge_warnings": "yes"})
     assert repeated.status_code == 409
     assert evidence_reuse.REUSE_NOT_AVAILABLE in repeated.text
-    documents = http.get(f"/assessments/{validation_id}?tab=documents")
-    assert 'data-evidence-reuse-link' in documents.text
-    assert f'href="/assessments/{validation_id}/evidence-reuse"' in documents.text
+    documents = http.get(f"/assessments/{validation_id}?tab=documents", follow_redirects=False)
+    assert documents.status_code == 303
+    assert documents.headers["location"] == f"/engagements/{demo.engagement_ids['a']}/evidence?assessment={validation_id}"
 
 
 def test_scenario_5_boundaries_invalidation_unmigrated_and_query_bound(db, http, demo, engine):
@@ -548,7 +555,12 @@ def test_scenario_12_structural_guards(db, http, demo):
     assert "delete" not in service_source.lower()
     assert ".commit(" not in inspect.getsource(web.assessment_detail)
     assert re.search(r"confirm all|select all|approve all|\bmultiple\b|\|\s*safe\b|bulk", service_source + router_source + template_source, re.I) is None
-    assert template_source.count('type="checkbox"') == 1
+    # Each candidate has exactly one selection tick. For a warning-bearing candidate that tick
+    # is the acknowledgement itself (name="acknowledge_warnings"); the template holds the two variants.
+    assert template_source.count('type="checkbox"') == 2
+    assert 'name="selected_candidates"' not in template_source
+    assert 'data-reuse-select' in template_source
+    assert 'name="acknowledge_warnings"' in template_source
     assert "CyberAssess" not in template_source
     assert "overall_score" not in template_source
     from scripts import seed_test_companies
@@ -580,5 +592,5 @@ def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
         text=True,
         check=True,
     ).stdout.splitlines()
-    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS)]
+    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS)]
     assert changed == []

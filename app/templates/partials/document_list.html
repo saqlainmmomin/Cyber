@@ -1,62 +1,82 @@
-{% if documents %}
-<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-  <thead class="bg-gray-50 dark:bg-gray-800">
-    <tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">File</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Version</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SHA-256</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
-    </tr>
-  </thead>
-  <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-    {% for row in documents %}
-    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-      <td class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-        {% if row.source == "evidence" %}
-        <a href="/evidence/{{ row.id }}" class="text-brand dark:text-navy-300 hover:underline">{{ row.filename }}</a>
-        {% else %}
-        {{ row.filename }}
-        {% endif %}
-        {% if row.mapped_in %}<p class="text-xs text-gray-500 dark:text-gray-400">Mapped from another assessment</p>{% endif %}
-        {% if row.source == "legacy" %}<p class="text-xs text-gray-500 dark:text-gray-400">Uploaded before evidence versioning. Run <code>scripts/migrate_documents_to_evidence.py</code> to enable versioning and archiving.</p>{% endif %}
-      </td>
-      <td class="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">{{ row.category | replace("_", " ") | title }}</td>
-      <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400 uppercase">{{ row.file_type }}</td>
-      <td class="px-6 py-3">
-        {% with status=row.status %}{% include "components/evidence_status_badge.html" %}{% endwith %}
-      </td>
-      <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
-        {% if row.source == "evidence" %}v{{ row.current_version_number or row.version_count }} of {{ row.version_count }}{% else %}—{% endif %}
-      </td>
-      <td class="px-6 py-3 text-sm font-mono text-gray-500 dark:text-gray-400">{% if row.sha256_prefix %}{{ row.sha256_prefix }}…{% else %}—{% endif %}</td>
-      <td class="px-6 py-3 text-right text-sm">
-        {% if row.can_archive %}
-        <button hx-delete="/assessments/{{ assessment_id }}/documents/{{ row.id }}"
-                hx-target="#document-list"
-                hx-swap="innerHTML"
-                hx-confirm="Archive {{ row.filename }}? It will be excluded from analysis but retained."
-                class="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors">Archive</button>
-        {% endif %}
-        {% if row.can_add_version %}
-        <details class="inline-block ml-3 text-left">
-          <summary class="cursor-pointer text-brand dark:text-navy-300">New version</summary>
-          <form class="mt-2 space-y-2" hx-post="/assessments/{{ assessment_id }}/evidence/{{ row.id }}/versions" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
-            <input type="file" name="file" required class="block text-xs text-gray-500 dark:text-gray-400">
-            <input type="text" name="change_reason" required placeholder="Change reason" class="w-40 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-xs">
-            <button type="submit" class="text-brand dark:text-navy-300 text-xs">Upload</button>
-          </form>
-        </details>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<div class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-  No documents uploaded yet. Upload privacy policies, consent forms, or other compliance documents.
+{% from "components/ui.html" import icon, status %}
+{% set legacy_rows = legacy_inventory_rows|default([]) %}
+{% if inventory_rows or legacy_rows %}
+<div class="solid" style="overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        {% if cross_engagement %}<th class="hide-sm">Engagement</th>{% endif %}
+        <th class="hide-sm">Source</th>
+        <th class="hide-sm">Assessment</th>
+        <th class="hide-sm">Supports</th>
+        <th>Status</th>
+        <th hidden><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in inventory_rows %}
+      {% set action = document_actions.get(row.evidence_id) if document_actions is defined else none %}
+      {% set action_assessment_id = action.action_assessment_id if action else none %}
+      {% set source_detail = row.contact_name or ("From " ~ row.reused_from if row.reused_from else "") %}
+      <tr data-evidence-id="{{ row.evidence_id }}">
+        <td>
+          <a class="t-title" href="/evidence/{{ row.evidence_id }}">{{ row.filename }}</a>
+          <div class="t-sub">{{ row.type_label }} · {% if row.size_bytes >= 1000000 %}{{ "%.1f"|format(row.size_bytes / 1000000) }} MB{% elif row.size_bytes >= 500 %}{{ "%.0f"|format(row.size_bytes / 1000) }} KB{% else %}{{ row.size_bytes }} bytes{% endif %}</div>
+          <div class="t-sub show-sm">{{ row.source_label }}{% if source_detail %} · {{ source_detail }}{% endif %}</div>
+        </td>
+        {% if cross_engagement %}<td class="hide-sm" style="white-space:nowrap"><a class="t-title" href="/engagements/{{ row.engagement_id }}/evidence">{{ row.engagement_name }}</a><div class="t-sub">{{ row.client_name }}</div></td>{% endif %}
+        <td class="hide-sm"><span class="status">{{ row.source_label }}</span>{% if source_detail %}<div class="t-sub">{{ source_detail }}</div>{% endif %}</td>
+        <td class="hide-sm">
+          {% if row.used_by %}<div class="chips"><span class="chip">{% if row.used_by|length == 2 %}Both assessments{% elif row.used_by|length > 2 %}{{ row.used_by|length }} assessments{% else %}{{ row.used_by[0].name }}{% endif %}</span></div>
+          {% else %}<span class="t-sub">Not mapped</span>{% endif %}
+        </td>
+        <td class="hide-sm" style="white-space:nowrap">{% if row.supports %}<span class="t-sub">{{ row.supports[:2]|join(" · ") }}{% if row.supports|length > 2 %} · +{{ row.supports|length - 2 }}{% endif %}</span>{% else %}<span class="t-sub">—</span>{% endif %}</td>
+        <td>{% if row.status == "quarantined" %}{{ status(row.status_label, "in_progress") }}{% elif row.status == "active" %}{{ status(row.status_label, tone="ok") }}{% elif row.status == "rejected" %}{{ status(row.status_label, tone="non") }}{% else %}{{ status(row.status_label, tone="medium") }}{% endif %}<div class="t-sub">{{ inventory_display_dates.get(row.evidence_id, row.updated_at)|display_date }}</div></td>
+        <td class="actions" hidden>
+          {% if action and action.can_archive %}
+          <button class="btn ghost sm" type="button"
+                  hx-delete="/assessments/{{ action_assessment_id }}/documents/{{ row.evidence_id }}{% if fragment_query %}?{{ fragment_query }}{% endif %}"
+                  hx-target="#document-list"
+                  hx-swap="innerHTML"
+                  hx-confirm="Archive {{ row.filename }}? It will be excluded from analysis but retained.">Archive</button>
+          {% endif %}
+          {% if action and action.can_add_version %}
+          <details class="version-action">
+            <summary class="link">New version</summary>
+            <form hx-post="/assessments/{{ action_assessment_id }}/evidence/{{ row.evidence_id }}/versions{% if fragment_query %}?{{ fragment_query }}{% endif %}"
+                  hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+              <label class="field"><input type="file" name="file" required></label>
+              <label class="field"><input type="text" name="change_reason" required placeholder="Change reason"></label>
+              <button class="btn secondary sm" type="submit">Upload</button>
+            </form>
+          </details>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% for doc in legacy_rows %}
+      <tr data-legacy-document-id="{{ doc.id }}">
+        <td>
+          <span class="t-title">{{ doc.filename }}</span>
+          <div class="t-sub">{{ (doc.file_type or "File")|upper }}</div>
+          <div class="t-sub show-sm">Upload</div>
+        </td>
+        {% if cross_engagement %}<td class="hide-sm"></td>{% endif %}
+        <td class="hide-sm"><span class="status">Upload</span></td>
+        <td class="hide-sm"><div class="chips"><span class="chip">{{ doc.assessment_name }}</span></div></td>
+        <td class="hide-sm"><span class="t-sub">—</span></td>
+        <td>{{ status("Legacy (not migrated)", tone="neutral") }}{% if doc.uploaded_at %}<div class="t-sub">{{ doc.uploaded_at|display_date }}</div>{% endif %}</td>
+        <td class="actions" hidden></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+{% elif inventory_filtered %}
+<div class="glass empty" data-empty-evidence>{{ icon("search", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence matches the filters</h3><p>Try clearing one or more filters to see the evidence inventory.</p><a class="btn secondary" href="{{ inventory_path or request.url.path }}">Clear filters</a></div>
+{% elif cross_engagement %}
+<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Evidence appears here once it is added to an engagement.</p></div>
+{% else %}
+<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Upload documents or send the client a request.</p><div class="acts2"><button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% if request_assessment_id %}<a class="btn ghost lead" href="/assessments/{{ request_assessment_id }}/rfi">{{ icon("link") }}Ask the client</a>{% endif %}</div></div>
 {% endif %}

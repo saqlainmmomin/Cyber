@@ -17,6 +17,7 @@ MIGRATED_TEMPLATES = {
     "components/layout.html",
     "components/ui.html",
     "pages/design.html",
+    "pages/evidence_inventory.html",
     # Yozora per-PR allowance (S5)
     "partials/framework_hub_panel.html",
     "pages/design_assessment_preview.html",

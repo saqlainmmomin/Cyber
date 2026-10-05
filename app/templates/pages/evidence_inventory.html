@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/ui.html" import alert, button, icon, link_button, skeleton, status %}
+
+{% block title %}Evidence{% if engagement %} — {{ engagement.name }}{% endif %}{% endblock %}
+
+{% block crumbs %}
+  {% if engagement %}
+  <a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>
+  <a href="/engagements/{{ engagement.id }}" class="hide-sm">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Evidence</b>
+  {% else %}<b>Evidence</b>{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set state = view_state or "default" %}
+{% set action_query = "?" ~ fragment_query if fragment_query else "" %}
+{% set period = engagement_period(engagement) if engagement else none %}
+{% set engagement_empty = engagement and not engagement_total and not inventory_filtered %}
+<header class="page-head">
+  <div>
+    <h1>{% if engagement %}{{ engagement.name }}{% else %}Evidence{% endif %}</h1>
+    {% if engagement %}<p class="meta-line">{{ client.name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence inventory{% endif %}</p>{% else %}<p class="meta-line">Every file across your engagements</p>{% endif %}
+  </div>
+  {% if engagement and state != "loading" %}
+  <div class="acts">
+    <div class="anchor">
+      <button class="btn secondary lead" type="button" id="add-from" aria-haspopup="menu" aria-expanded="false">{{ icon("plus") }}Add from{{ icon("chev-d") }}</button>
+      <div class="menu" id="add-from-menu" role="menu" aria-label="Add evidence from">
+        <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}Pull from AWS</a>
+        {% set menu_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
+        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("history") }}Reuse from another assessment</a><a href="/assessments/{{ menu_assessment.id }}/rfi" role="menuitem">{{ icon("link") }}Ask the client</a>{% endif %}
+      </div>
+    </div>
+    {% if upload_assessment_id and not engagement_empty %}<button class="btn primary lead" type="button" data-upload-open data-head-upload>{{ icon("upload") }}Upload evidence</button>{% endif %}
+  </div>
+  {% endif %}
+</header>
+
+{% if engagement %}
+<div>
+<div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
+{% set evidence_sections = [{"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"}] %}
+{% set tab_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
+{% if tab_assessment %}{% set evidence_sections = evidence_sections + [{"label": "Requests", "key": "requests", "href": "/assessments/" ~ tab_assessment.id ~ "/rfi"}] %}{% endif %}
+<div style="margin-bottom:var(--s-6)">{{ seg(evidence_sections, "inventory") }}</div>
+</div>
+{% endif %}
+
+{% if state == "loading" %}
+<div class="solid" role="status" aria-label="Loading evidence">
+  {% for width in ("50%", "64%", "42%", "58%", "46%") %}<div style="padding:var(--s-4) var(--s-5);border-top:1px solid var(--line)">{{ skeleton(width) }}{{ skeleton("22%", "line", "10px") }}</div>{% endfor %}
+</div>
+{% elif state == "error" %}
+<div class="alert c-non" role="alert">{{ icon("alert") }}<div><b>Evidence could not be loaded</b>Check your connection and try again.</div><a class="btn secondary sm" style="margin-left:auto" href="{{ request.url.path }}">Try again</a></div>
+{% else %}
+{% if upload_assessment_id %}
+<div class="glass" style="padding:var(--s-6);margin-bottom:var(--s-6)" id="upload-panel" data-upload-panel{% if state != "upload" %} hidden{% endif %}>
+  <form method="post" action="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" enctype="multipart/form-data" hx-post="/assessments/{{ upload_assessment_id }}/upload{{ action_query }}" hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data" data-upload-form>
+    <div class="between"><div><h2>Upload evidence</h2><p class="help" style="margin-top:2px">PDF, DOCX, PNG, JPG or WEBP. Files are scanned before they are used.</p></div><button class="btn ghost icon sm" type="button" aria-label="Close upload" data-upload-cancel>{{ icon("x") }}</button></div>
+    <div id="drop-zone" class="center-block" style="margin-top:var(--s-4);padding:var(--s-8) var(--s-6);border:1px dashed var(--line-strong);border-radius:var(--r-md)" data-drop-zone>
+      {{ icon("upload", "", "width:24px;height:24px;color:var(--muted)") }}
+      <div><div class="t-title">Drop files here</div></div>
+      <label class="btn secondary" for="file-input">Choose files</label><input id="file-input" type="file" name="file" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp" required hidden data-upload-file>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,320px));gap:var(--s-4);margin-top:var(--s-4)">
+      {% if assessment_options %}<div><label class="label" for="upload-assessment">Applies to</label><label class="field"><select id="upload-assessment" name="upload_assessment_id" aria-label="Applies to" data-upload-assessment>{% for option in assessment_options %}<option value="{{ option.id }}"{% if option.id == upload_assessment_id %} selected{% endif %}>{{ option.display_name }}</option>{% endfor %}</select></label></div>{% endif %}
+      <div><label class="label" for="upload-category">Category</label><label class="field"><select id="upload-category" name="category" aria-label="Category">{% for category in doc_categories %}<option value="{{ category }}">{{ category|replace("_", " ")|capitalize }}</option>{% endfor %}</select></label></div>
+    </div>
+    <div id="upload-progress" style="margin-top:var(--s-5);visibility:hidden" data-upload-progress><div class="hrow" style="justify-content:space-between;margin-bottom:var(--s-2)"><span class="status"><span class="st prog"></span>Uploading <span id="file-name-display" data-file-name></span></span><span class="sub num" data-upload-percent>0%</span></div><div class="progress-bar"><i id="upload-progress-bar"></i></div></div>
+    <button class="sr-only" type="submit">Upload file</button>
+  </form>
+</div>
+{% endif %}
+
+{% if not engagement_empty %}
+<div class="hrow" style="gap:var(--s-5);margin-bottom:var(--s-4)"><span class="sub">{{ inventory_counts.get("total", 0) }} item{% if inventory_counts.get("total", 0) != 1 %}s{% endif %}</span>{{ status(inventory_counts.get("Available", 0) ~ " available", tone="ok") }}{{ status(inventory_counts.get("Scanning", 0) ~ " scanning", "in_progress") }}{{ status(inventory_counts.get("Rejected", 0) ~ " rejected", tone="non") }}{{ status(inventory_counts.get("Out of date", 0) ~ " out of date", tone="medium") }}</div>
+
+<form class="tools keep-row" method="get" action="{{ request.url.path }}" data-inventory-filters>
+  <label class="field">{{ icon("search") }}<input name="search" value="{{ search }}" placeholder="Search evidence" aria-label="Search evidence"></label>
+  <label class="field sel"><select name="source" aria-label="Source"><option value="">Source</option>{% for key, label in [("upload", "Upload"), ("aws", "AWS"), ("client_link", "Client link"), ("reused", "Reused")] %}<option value="{{ key }}"{% if selected_source == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label class="field sel"><select name="status" aria-label="Status"><option value="">Status</option>{% for key, label in EVIDENCE_STATUS_LABELS.items() %}<option value="{{ key }}"{% if selected_status == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  {% if engagement and assessment %}
+  <input type="hidden" name="assessment" value="{{ assessment.id }}">
+  {% elif engagement %}
+  <label class="field sel"><select name="assessment" aria-label="Assessment"><option value="">Assessment</option>{% for option in assessment_options %}<option value="{{ option.id }}">{{ option.display_name }}</option>{% endfor %}</select></label>
+  {% else %}
+  <label class="field sel"><select name="engagement" aria-label="Engagement"><option value="">Engagement</option>{% for option in engagements %}<option value="{{ option.id }}"{% if selected_engagement_id == option.id %} selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+  {% endif %}
+  <span class="sp"></span>
+  <button class="sr-only" type="submit">Filter</button>
+</form>
+{% if engagement and assessment %}
+{% set clear_params = [] %}
+{% for key, value in [("source", selected_source), ("status", selected_status), ("search", search)] %}{% if value %}{% set _ = clear_params.append(key ~ "=" ~ value|urlencode) %}{% endif %}{% endfor %}
+<div class="hrow" style="margin:calc(var(--s-1) * -1) 0 var(--s-4);gap:var(--s-3)"><span class="sub">Showing</span><a class="chip" style="gap:6px" href="{{ request.url.path }}{% if clear_params %}?{{ clear_params|join('&') }}{% endif %}" aria-label="Remove {{ assessment.display_name }} filter">{{ assessment.display_name }}{{ icon("x", "", "width:12px;height:12px") }}</a><span class="sub">{{ inventory_counts.get("total", 0) }} of {{ engagement_total }} items</span></div>
+{% endif %}
+{% endif %}
+
+{% if legacy_documents %}
+{{ alert("Legacy documents need migration", "Legacy documents are not in the evidence inventory. Run scripts/migrate_documents_to_evidence.py to migrate them before managing versions or archive actions.", "medium") }}
+{% endif %}
+
+<div id="document-list">
+  {% include "partials/document_list.html" %}
+</div>
+{% for note in prefill_notes or [] %}
+<p class="sub" style="margin-top:var(--s-4)" data-prefill-note>{{ note.freshness.new_since_last_prefill }} new document{% if note.freshness.new_since_last_prefill != 1 %}s{% endif %} since the {{ note.assessment.display_name }} questionnaire was last pre-filled. <a href="/assessments/{{ note.assessment.id }}?tab=questionnaire"><u>Pre-fill again</u></a></p>
+{% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const menuButton = document.getElementById('add-from');
+    const menu = document.getElementById('add-from-menu');
+    const setMenu = (open) => {
+      menu?.classList.toggle('open', open);
+      menuButton?.setAttribute('aria-expanded', String(open));
+    };
+    menuButton?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setMenu(!menu?.classList.contains('open'));
+    });
+    document.addEventListener('click', () => setMenu(false));
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
+
+    const panel = document.querySelector('[data-upload-panel]');
+    document.body.addEventListener('click', (event) => {
+      if (!event.target.closest('[data-upload-open]')) return;
+      if (panel) { panel.hidden = false; panel.scrollIntoView({behavior: 'smooth', block: 'nearest'}); }
+    });
+    document.querySelector('[data-upload-cancel]')?.addEventListener('click', () => { if (panel) panel.hidden = true; });
+
+    const filters = document.querySelector('[data-inventory-filters]');
+    filters?.querySelectorAll('select').forEach((select) => select.addEventListener('change', () => filters.requestSubmit()));
+
+    const fileInput = document.querySelector('[data-upload-file]');
+    const dropZone = document.querySelector('[data-drop-zone]');
+    const uploadAssessment = document.querySelector('[data-upload-assessment]');
+    const uploadForm = document.querySelector('[data-upload-form]');
+    const progress = document.querySelector('[data-upload-progress]');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const percent = document.querySelector('[data-upload-percent]');
+    const fragmentQuery = {{ fragment_query|tojson }};
+    const updateUploadTarget = () => {
+      if (!uploadAssessment || !uploadForm) return;
+      const suffix = fragmentQuery ? `?${fragmentQuery}` : '';
+      const target = `/assessments/${encodeURIComponent(uploadAssessment.value)}/upload${suffix}`;
+      uploadForm.action = target;
+      uploadForm.setAttribute('hx-post', target);
+      if (window.htmx) window.htmx.process(uploadForm);
+    };
+    uploadAssessment?.addEventListener('change', updateUploadTarget);
+    updateUploadTarget();
+    const setProgress = (value) => {
+      progressBar?.style.setProperty('width', `${value}%`);
+      if (percent) percent.textContent = `${value}%`;
+    };
+    const startUpload = (file) => {
+      if (!file || !uploadForm) return;
+      const label = document.querySelector('[data-file-name]');
+      if (label) label.textContent = file.name;
+      uploadForm.requestSubmit();
+    };
+    fileInput?.addEventListener('change', () => startUpload(fileInput.files?.[0]));
+    dropZone?.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.classList.add('is-dragging');
+    });
+    dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('is-dragging'));
+    dropZone?.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('is-dragging');
+      const files = event.dataTransfer?.files;
+      if (files?.length && fileInput) {
+        fileInput.files = files;
+        startUpload(files[0]);
+      }
+    });
+    const isUpload = (event) => event.detail.elt === uploadForm;
+    document.body.addEventListener('htmx:beforeRequest', (event) => {
+      if (!isUpload(event)) return;
+      setProgress(0);
+      if (progress) progress.style.visibility = 'visible';
+    });
+    document.body.addEventListener('htmx:xhr:progress', (event) => {
+      if (isUpload(event) && event.detail.total) setProgress(Math.round((event.detail.loaded / event.detail.total) * 100));
+    });
+    document.body.addEventListener('htmx:afterSwap', (event) => {
+      if (event.detail.target?.id !== 'document-list') return;
+      // One primary per state: the empty card carries its own Upload evidence button.
+      const headUpload = document.querySelector('[data-head-upload]');
+      if (headUpload) headUpload.hidden = Boolean(document.querySelector('#document-list [data-upload-open]'));
+    });
+    document.body.addEventListener('htmx:afterRequest', (event) => {
+      if (!isUpload(event)) return;
+      setProgress(100);
+      if (progress) progress.style.visibility = 'hidden';
+      if (fileInput) fileInput.value = '';
+    });
+  })();
+</script>
+{% endblock %}
