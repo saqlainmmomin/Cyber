@@ -10,6 +10,15 @@
 - [x] Align deterministic S6 seed data and register a design-only workpaper-entry preview fixture.
 - [x] Run focused HTTP/template/design checks plus smoke verification; append a Review fixes subsection to the S6 handoff.
 
+## S5 review fixes (2026-10-04)
+
+- [x] Restore S5 fixture imports and add the engagement-linked Overview HTTP smoke test.
+- [x] Move the S5 pattern CSS into `design/yozora-patterns.css`, regenerate static CSS, and verify token sync.
+- [x] Restore engagement context variables, compact Overview routing/header, framework-tab selection, and SoA conditional copy.
+- [x] Restore questionnaire pre-fill access, section counts/control codes/evidence locations, desk-review coverage details, freshness notes, and one-primary state handling.
+- [x] Add hub state rendering, transient/partial preview fixtures, deterministic S5 seed content, and the `b4-desk_review` state name.
+- [x] Update only intentionally retired test markup/copy assertions and record every old/new string in the handoff Results.
+
 ## S4 visual gate repair (2026-10-04)
 
 - [ ] Capture baseline `domcmp.py` and `gate2.py` measurements for all S4 cases.
@@ -22,6 +31,13 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
 
 ## Current: Yozora UI redesign (slices built by Codex, reviewed by Claude)
 
+### Review fixes, round 3
+
+- [x] Guard questionnaire desk-review stats, correct questionnaire selection/counters, and update the redirect/test contract.
+- [x] Align the assessment chrome, production state handling, scope/questionnaire/desk-review partials, and shared S2 macros.
+- [x] Rework S5 previews to use real app partials with fixture context and update deterministic seed data for real pre-fill/count states.
+- [x] Run focused regressions, the full available suite, and record results in the S5 handoff without committing.
+
 - [x] S1 shell, tokens, harness (#100). [x] S2 component macros, `/design`, control token (#103).
 - [x] S3 Home, clients, firm settings, sign-in, `/review`. [x] S4 engagements, `/reports`. (parallel; S3 merges first)
 - [ ] S3 visual repair from gate measurements: source/layout/seed corrections implemented and test-verified; rerun `domcmp.py`/`gate2.py` for every case when the orchestrator's server/Chromium environment is available.
@@ -30,6 +46,12 @@ Mark a task complete only with its plan test/smoke evidence. `[AR]` is an advers
   - [x] Align Settings unmigrated copy, accent label colour, and saved banner geometry.
   - [x] Run focused regressions and the full suite; record evidence in the S3 Results.
 - [ ] S5 assessment, scope, questionnaire, pre-fill. [ ] S6 evidence. [ ] S7 analysis, review, report (needs mockup approval). [ ] S8 requests, versions, SoA, compare, client pages. [ ] S9 system states, dark/mobile pass, Tailwind retirement.
+- [ ] **Yozora S5 execution (2026-10-04):** assessment overview/stepper, scope, questionnaire, context/screening/follow-ups, and desk-review pre-fill on Questionnaire; add S5 seed, route/markup contracts, guard allowances, and handoff Results.
+  - [x] Wire the assessment route to the five-tab shell, real stage service, freshness data, and Overview engagement context.
+  - [x] Restyle the S5 templates while preserving all required controls, ids, `hx-*`, and `data-*` contracts.
+  - [x] Add deterministic S5 seed states and focused route/markup tests.
+  - [x] Run available checks and record environment limitations.
+  - [ ] Commit the complete local change (blocked by the external worktree Git metadata permissions).
 - Briefs: `tasks/handoffs/2026-10-01-yozora-sN-handoff.md`. Status: `tasks/2026-10-04-status-log.md`.
 
 ## Done

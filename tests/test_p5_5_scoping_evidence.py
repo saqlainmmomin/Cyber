@@ -441,8 +441,8 @@ def test_scope_card_gates_dpdpa_flags_and_renders_proposals(client, db_session):
     assert iso_response.status_code == 200
     assert "Cross-border transfers" not in iso_response.text
     assert "Children's data" not in iso_response.text
-    assert "SDF obligations" not in iso_response.text
-    assert "Evidence Request" in iso_response.text
+    assert "Significant data fiduciary obligations" not in iso_response.text
+    assert "Evidence request" in iso_response.text
     assert "Statement of Applicability (current version)" in iso_response.text
     assert "proposed as likely not applicable" in iso_response.text
     assert "ISO.A7.1" in iso_response.text
@@ -452,14 +452,14 @@ def test_scope_card_gates_dpdpa_flags_and_renders_proposals(client, db_session):
     dpdpa.scope_answers = json.dumps({"SCP.1": "yes"})
     db_session.commit()
     dpdpa_response = client.get(f"/assessments/{dpdpa.id}?tab=scope")
-    assert all(label in dpdpa_response.text for label in ("Cross-border transfers", "Children's data", "SDF obligations", "Third-party processors"))
+    assert all(label in dpdpa_response.text for label in ("Cross-border transfers", "Children's data", "Significant data fiduciary obligations", "Third-party processors"))
     assert "proposed as likely not applicable" not in dpdpa_response.text
 
     mixed = _assessment(db_session, ["dpdpa", "iso27001"])
     mixed.scope_answers = json.dumps({})
     db_session.commit()
     mixed_response = client.get(f"/assessments/{mixed.id}?tab=scope")
-    assert all(label in mixed_response.text for label in ("Cross-border transfers", "Children's data", "SDF obligations", "Third-party processors"))
+    assert all(label in mixed_response.text for label in ("Cross-border transfers", "Children's data", "Significant data fiduciary obligations", "Third-party processors"))
     assert mixed_response.text.count("Breach notification procedure / incident response plan") == 1
 
 

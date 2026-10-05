@@ -38,7 +38,7 @@ from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links, remediation_rollup, report_content
 from app.services.report_snapshots import generated_event
 from app.services.evidence_reuse import AUDIT_METADATA_KEYS
-from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S6_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS  # Yozora S3/S5 per-PR allowance
 
 from scripts.seed_test_companies import (
     DEMO_CLIENT_A,
@@ -221,8 +221,11 @@ def test_scenario_2_dashboard_has_both_clients_and_hierarchy(db, http, demo):
     assert page_a.text.index(f'href="/assessments/{demo.assessment_ids["validation"]}"') < page_a.text.index(f'href="/assessments/{demo.assessment_ids["baseline"]}"')
     assert "Baseline gap assessment (DPDPA + ISO 27001)" in page_a.text
     assert "Remediation validation (ISO 27001)" in page_a.text
-    page_b = http.get(f"/engagements/{engagement_b.id}")
-    assert "NIST CSF 2.0 baseline gap assessment" in page_b.text
+    page_b_redirect = http.get(f"/engagements/{engagement_b.id}", follow_redirects=False)
+    assert page_b_redirect.status_code == 303
+    assert page_b_redirect.headers["location"] == f"/assessments/{demo.assessment_ids['nist']}?tab=overview"
+    page_b = http.get(page_b_redirect.headers["location"])
+    assert engagement_b.name in page_b.text
     assert "Information security policy" in page_b.text
     assert "Incident response plan" in page_b.text
     assert engagement_a.name in http.get(f"/clients/{client_a.id}").text
@@ -589,5 +592,5 @@ def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
         text=True,
         check=True,
     ).stdout.splitlines()
-    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S6_PATHS)]  # Yozora per-PR allowance
+    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS)]
     assert changed == []

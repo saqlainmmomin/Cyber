@@ -1,0 +1,6 @@
+{% from "components/ui.html" import skeleton %}
+<div role="status" aria-live="polite">
+  <h2>Reading {{ prefill_freshness.available }} document{{ 's' if prefill_freshness.available != 1 else '' }}</h2>
+  <p class="sub">This takes a few minutes. You can keep answering; pre-filled answers appear as they are found.</p>
+  <div class="mt"><div class="skel-stack" aria-busy="true" aria-label="Loading">{{ skeleton("60%") }}{{ skeleton("35%") }}</div></div>
+</div>

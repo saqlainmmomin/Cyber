@@ -32,6 +32,7 @@ partials/analysis_complete.html
 partials/analysis_error.html
 partials/analysis_gate_blocked.html
 partials/analysis_running.html
+partials/assessment_header.html
 partials/aws_evidence_panel.html
 partials/client_picker.html
 partials/context_complete.html

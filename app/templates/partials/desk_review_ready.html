@@ -1,22 +1,44 @@
-<div class="text-center py-4">
-  <p class="text-sm text-gray-600 mb-4">Documents are ready for analysis. Run the desk review to identify evidence, gaps, and red flags before starting the questionnaire.</p>
-  <button hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+{% from "components/ui.html" import icon, skeleton %}
+{% set count = prefill_freshness.available %}
+{% if questionnaire_surface %}
+<div class="between">
+  <div>
+    <h2>Pre-fill from documents</h2>
+    {% if count %}
+    <p class="sub">{{ count }} document{{ 's are' if count != 1 else ' is' }} ready. Answers they support are filled in with the quoted passage, for you to confirm.</p>
+    {% else %}
+    <p class="sub">Upload evidence before pre-filling answers. <a href="/assessments/{{ assessment_id }}?tab=documents">Upload evidence</a></p>
+    {% endif %}
+  </div>
+  {% if count %}
+  <button class="btn {{ 'primary' if context_done else 'secondary' }}" type="button"
+          hx-post="/assessments/{{ assessment_id }}/run-desk-review?surface=questionnaire"
           hx-target="#desk-review-area"
           hx-swap="innerHTML"
-          hx-indicator="#dr-spinner"
-          class="inline-flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-    </svg>
-    Run Desk Review
-  </button>
-  <div id="dr-spinner" class="htmx-indicator mt-3">
-    <div class="flex items-center justify-center gap-2">
-      <svg class="animate-spin h-5 w-5 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-      <span class="text-sm text-gray-500">Analyzing documents... this may take 15-30 seconds</span>
-    </div>
+          hx-indicator="#dr-spinner">Pre-fill answers</button>
+  {% endif %}
+</div>
+{% else %}
+<div class="glass dr-card">
+  <h2>Desk review</h2>
+  {% if count %}
+  <p class="dr-lede">{{ count }} document{{ 's are' if count != 1 else ' is' }} ready to analyse. The review finds evidence, gaps and red flags before the questionnaire.</p>
+  {% if framework_names %}<div class="chips dr-chips">{% for name in framework_names %}<span class="chip">{{ name }}</span>{% endfor %}</div>{% endif %}
+  <div class="dr-actions">
+    <button class="btn primary lead" type="button"
+            hx-post="/assessments/{{ assessment_id }}/run-desk-review"
+            hx-target="#desk-review-area"
+            hx-swap="innerHTML"
+            hx-indicator="#dr-spinner">{{ icon("search") }}Run desk review</button>
+    <span class="help">Takes 15 to 30 seconds.</span>
+  </div>
+  {% else %}
+  <p class="dr-lede">Upload evidence before running a desk review. <a href="/assessments/{{ assessment_id }}?tab=documents">Upload evidence</a></p>
+  {% endif %}
+{% endif %}
+<div id="dr-spinner" class="htmx-indicator" role="status" aria-live="polite">
+  <div class="hrow" style="margin-top:var(--s-4)">
+    {{ skeleton("32px", "circle") }}
   </div>
 </div>
+{% if not questionnaire_surface %}</div>{% endif %}

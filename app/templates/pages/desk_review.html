@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "components/layout.html" import assessment_tabs %}
+{# b4 "Pre-fill from documents": the desk-review status endpoint's partial inside the assessment chrome.
+   Rendered by GET /assessments/{id}/desk-review and by the debug preview /design/pages/b4-desk_review. #}
+{% set page_title = "Pre-fill from documents" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}?tab=questionnaire">Questionnaire</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ page_title }}</h1>
+    <p class="meta-line">{{ assessment.display_name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p>
+  </div>
+</div>
+<div class="desk-review-tabs">{{ assessment_tabs(assessment, "questionnaire", active_framework) }}</div>
+<div id="desk-review-area">
+  {% include desk_review_partial %}
+</div>
+{% endblock %}

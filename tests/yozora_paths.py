@@ -177,6 +177,64 @@ YOZORA_S3_PATHS = (
     "tests/yozora_paths.py",
 )
 
+# Yozora per-PR allowance.
+YOZORA_S5_PATHS = (
+    "app/static/js/app.js",  # s5-quest: save indicator fires on saves only
+    "app/services/screening.py",  # s5 review: SCREENING_UNAVAILABLE_COPY constant (copy only)
+    "app/routers/web.py",
+    "app/static/css/yozora-patterns.css",
+    "app/templates/components/layout.html",
+    "app/templates/components/engagement_status_badge.html",
+    "app/templates/components/status_badge.html",
+    "app/templates/pages/assessment.html",
+    "app/templates/partials/assessment_header.html",
+    "app/templates/partials/analysis_running.html",
+    "app/templates/partials/context_complete.html",
+    "app/templates/partials/desk_review_error.html",
+    "app/templates/partials/desk_review_findings.html",
+    "app/templates/partials/desk_review_ready.html",
+    "app/templates/partials/desk_review_running.html",
+    "app/templates/partials/followup_questions.html",
+    "app/templates/partials/framework_tabs.html",
+    "app/templates/partials/question_step.html",
+    "app/templates/partials/questionnaire_sections.html",
+    "app/templates/partials/questionnaire_tab.html",
+    "app/templates/partials/scope_complete.html",
+    "app/templates/partials/scope_form.html",
+    "app/templates/partials/scope_tab.html",
+    "app/templates/partials/screening_form.html",
+    "app/templates/partials/section_questions.html",
+    "app/templates/partials/section_saved.html",
+    "app/templates/partials/status_timeline.html",
+    "design/harness/seed_s5.py",
+    "docs/product/yozora-migration-map.md",
+    "tasks/handoffs/2026-10-01-yozora-s5-handoff.md",
+    "tasks/handoffs/2026-10-04-yozora-s5-s6-orchestration.md",
+    "tasks/todo.md",
+    "tests/test_p5_4_adaptive_ucc_questionnaire.py",
+    "tests/test_report_snapshots.py",
+    "tests/test_retention.py",
+    "tests/test_p5_5_scoping_evidence.py",
+    "tests/p6_10_support.py",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_yozora_s5.py",
+    "app/templates/pages/design_assessment_preview.html",
+    "app/templates/partials/analysis_complete.html",
+    "app/templates/partials/analysis_error.html",
+    "app/templates/partials/desk_review_prefilling.html",
+    "app/templates/pages/desk_review.html",  # s5-b4: live b4 "Pre-fill from documents" page
+    "app/templates/partials/framework_hub_panel.html",
+    "tests/test_p5_3_framework_desk_review.py",
+    "tests/test_picker_and_scoring_contract.py",
+    "tests/yozora_paths.py",
+)
+
 YOZORA_DESIGN_FILES = (
     "design/tokens.json",
     "design/tokens_tool.py",
@@ -200,5 +258,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S6_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

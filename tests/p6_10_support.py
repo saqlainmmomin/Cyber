@@ -42,7 +42,7 @@ from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S6_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS  # Yozora per-PR allowance
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PERIOD = {
@@ -124,7 +124,7 @@ def assert_p6_10_file_set() -> None:
     committed = git("diff", "--name-only", "main...HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     working = git("diff", "--name-only", "HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
     assert committed == [] and working == [], committed + working
-    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S6_PATHS and path not in V3C_PRIOR_DOMAINS_PATHS)  # Yozora per-PR allowance, V3-C prior domains
+    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS and path not in YOZORA_S6_PATHS and path not in V3C_PRIOR_DOMAINS_PATHS)  # V3-A, Yozora allowances (backend, S1-S5), V3-C prior domains
     assert outside == [], outside
     llm_modules = {
         str(path.relative_to(REPO_ROOT))
