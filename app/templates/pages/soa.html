@@ -1,60 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Statement of Applicability — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import alert, empty_state, icon, pill, skeleton %}
+
+{% set preview = preview_state|default("") %}
+{% set outcome_tones = {"compliant": "ok", "partially_compliant": "part", "non_compliant": "non", "insufficient_evidence": "insuf", "not_applicable": "neutral"} %}
+
+{% macro soa_row(row, index) -%}
+<article class="s8-soa-row" data-soa-row="{{ row.control_id }}" data-applicability="{{ row.applicability }}">
+  <div class="s8-soa-copy"><b>{{ row.title }}</b><span class="t-sub">{{ row.reference }}</span><div class="chips"><span class="chip">{{ row.theme }}</span></div><div class="chips"><span class="pill {{ 'c-accent' if row.applicability == 'applicable' else 'c-neutral' }}">{{ row.applicability_label }}</span>{{ pill(row.implementation_label, outcome_tones.get(row.outcome, "insuf")) }}</div></div>
+  <form data-soa-justification-form data-initial-value="{{ row.justification or '' }}" hx-post="/api/assessments/{{ assessment.id }}/soa/justifications" hx-include="#reviewer-name" hx-swap="none">
+    <input type="hidden" name="requirement_id" value="{{ row.control_id }}">
+    <label class="label" for="soa-{{ index }}">Justification</label>
+    <label class="field area"><textarea id="soa-{{ index }}" name="justification" rows="3" maxlength="{{ max_chars }}">{{ row.justification or '' }}</textarea></label>
+    <div class="s8-soa-foot"><p class="help num"><span data-soa-count>{{ (row.justification or '')|length }}</span> of {{ max_chars }} characters</p><span class="status" data-soa-result hidden></span></div>
+    {% if rationale.get(row.control_id) %}<p data-approved-rationale class="sub s8-rationale">Approved rationale: {{ rationale[row.control_id] }}</p>{% endif %}
+  </form>
+</article>
+{%- endmacro %}
+
+{% block title %}Statement of applicability · {{ assessment.company_name }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/report">Report</a><svg class="i sl"><use href="#i-slash"/></svg><b>Applicability</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Statement of Applicability</span>
-</nav>
+<div class="page-head"><div><h1>Statement of applicability</h1><p class="meta-line">{{ report_basis.period_label }} · Evidence cut-off {{ report_basis.cutoff_label }}</p></div><div class="acts">{% if preview not in ("loading", "saved") %}<button class="btn primary" id="soa-save" type="button" data-soa-save>Save changes</button>{% endif %}</div></div>
+{{ assessment_tabs(assessment, "report") }}
+<div class="s8-report-seg">{{ report_seg(assessment, "applicability") }}</div>
+<p class="s8-soa-intro">Each justification says why an ISO 27001 control applies or is excluded. The firm approves the wording before the board report relies on it.</p>
+<div class="s8-reviewer"><label class="label" for="reviewer-name">Consultant name</label><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" autocomplete="name"></label></div>
 
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Statement of Applicability</h1>
-  <p class="mt-1 max-w-4xl text-sm text-gray-500 dark:text-gray-400">{{ soa.intro }}</p>
-  <p class="mt-2 max-w-4xl text-xs text-gray-500 dark:text-gray-400">{{ soa.reliance }}</p>
+{% if preview == "error" %}{{ alert("Your changes were not saved", "The justification is over 600 characters in one control. Shorten it and save again.", "noncompliant", extra_class="s8-page-alert") }}{% endif %}
+{% if preview == "loading" %}
+<div class="solid s8-loading" role="status" aria-label="Loading statement of applicability">{{ skeleton("30%") }}{{ skeleton("85%", margin_top="14px") }}{{ skeleton("60%", margin_top="14px") }}</div>
+{% elif preview == "empty" %}
+{{ empty_state("No controls to justify", "Controls appear here once ISO 27001 scope is recorded for this engagement.", icon_id="file") }}
+{% else %}
+<div class="s8-soa-list" data-soa-page data-soa-state="{{ 'saved' if preview == 'saved' else 'default' }}">
+  <div class="seg" role="group" aria-label="Filter controls"><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Applicable</button><button type="button" aria-pressed="false">Excluded</button></div>
+  <div class="solid rows">{% for row in soa.rows %}{{ soa_row(row, loop.index0) }}{% endfor %}</div>
 </div>
+{% if preview == "saved" %}<div class="s8-toast" role="status">{{ icon("check") }}Justification saved</div>{% endif %}
+{% endif %}
+{% endblock %}
 
-<div class="mb-6 max-w-sm">
-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-</div>
-
-{% for note in soa.notes %}
-<p class="mb-2 text-sm text-gray-600 dark:text-gray-300">{{ note }}</p>
-{% endfor %}
-
-<div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-  <table class="min-w-full text-left text-xs">
-    <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
-      <tr>
-        <th class="px-3 py-2">Control</th>
-        <th class="px-3 py-2">Theme</th>
-        <th class="px-3 py-2">Applicability</th>
-        <th class="px-3 py-2">Implementation</th>
-        <th class="px-3 py-2">Justification</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
-      {% for row in soa.rows %}
-      <tr data-soa-row="{{ row.control_id }}" data-applicability="{{ row.applicability }}">
-        <td class="px-3 py-3"><div class="font-medium">{{ row.reference }}</div><div>{{ row.title }}</div></td>
-        <td class="px-3 py-3">{{ row.theme }}</td>
-        <td class="px-3 py-3">{{ row.applicability_label }}</td>
-        <td class="px-3 py-3">{{ row.implementation_label }}</td>
-        <td class="px-3 py-3">
-          {% if rationale.get(row.control_id) %}<p data-approved-rationale class="mb-2 text-xs text-gray-500 dark:text-gray-400">Approved rationale: {{ rationale[row.control_id] }}</p>{% endif %}
-          <form data-soa-justification-form hx-post="/api/assessments/{{ assessment.id }}/soa/justifications" hx-include="#reviewer-name" hx-swap="none">
-            <input type="hidden" name="requirement_id" value="{{ row.control_id }}">
-            <textarea name="justification" maxlength="{{ max_chars }}" rows="2" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100">{{ row.justification or '' }}</textarea>
-            <button type="submit" class="mt-1 rounded-md border border-brand px-2.5 py-1.5 font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Save</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% block scripts %}
+<script>
+(() => {
+  const page = document.querySelector('[data-soa-page]');
+  const save = document.querySelector('[data-soa-save]');
+  if (!page || !save) return;
+  const forms = [...page.querySelectorAll('[data-' + 'soa-justification-form]')];
+  const reviewer = document.getElementById('reviewer-name');
+  forms.forEach((form) => {
+    const textarea = form.querySelector('textarea');
+    const count = form.querySelector('[data-soa-count]');
+    const result = form.querySelector('[data-soa-result]');
+    textarea.addEventListener('input', () => {
+      count.textContent = textarea.value.length;
+      form.closest('[data-soa-row]').dataset.saveState = textarea.value !== form.dataset.initialValue ? 'unsaved' : '';
+      result.hidden = true;
+    });
+  });
+  save.addEventListener('click', async () => {
+    const changed = forms.filter((form) => form.querySelector('textarea').value !== form.dataset.initialValue);
+    if (!changed.length) return;
+    page.dataset.soaState = 'saving';
+    save.disabled = true;
+    let failed = false;
+    for (const form of changed) {
+      const row = form.closest('[data-soa-row]');
+      const result = form.querySelector('[data-soa-result]');
+      row.dataset.saveState = 'saving';
+      result.hidden = false;
+      result.textContent = 'Saving';
+      try {
+        const body = new FormData(form);
+        body.append('reviewer_name', reviewer?.value || '');
+        const response = await fetch(form.getAttribute('hx-post'), { method: 'POST', body, headers: { 'HX-Request': 'true' } });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.detail || 'This justification could not be saved.');
+        form.dataset.initialValue = form.querySelector('textarea').value;
+        row.dataset.saveState = 'saved';
+        result.textContent = 'Saved';
+      } catch (error) {
+        failed = true;
+        row.dataset.saveState = 'error';
+        result.textContent = error.message;
+      }
+    }
+    page.dataset.soaState = failed ? 'error' : 'saved';
+    save.disabled = false;
+  });
+})();
+</script>
 {% endblock %}
