@@ -351,3 +351,6 @@ Decisions recorded:
 - `tests/visual/test_shell_visual.py` clip now reaches Reports; its S1 baseline images are shorter than that clip, so the shell visual test needs new baselines when it is next run (it is skipped in the normal suite).
 
 Suite: 1464 passed, 30 skipped, plus `test_p6_8_board_report_v2::test_scenario_3` (byte-for-byte PDF determinism), which is flaky on `main` too (2 of 8 runs failed on a clean main checkout).
+
+### After S5 merged (5 Oct 2026)
+Merged `main` (S5 and V3-C) into this branch. Full suite: 1492 passed, 30 skipped after changing one S5 test: `?tab=documents` now asserts the S6 303 to the inventory instead of the old rendered view. The gate was re-run (fast numpy mode, same matrix): 57 of 116 pass, against 61 before the merge. Four shots moved from just under the 0.4% limit to just over it, all at 1440: AWS result dark (0.27% to 0.45%), AWS not configured dark (0.39% to 0.57%), evidence detail current light and dark (0.36% and 0.35% to 0.64% and 0.63%). The diffs are text rows (account tile and real requirement titles and codes against the mockup's) and the changed regions are one text line high. S5's `.table-scroll` rule was ruled out as the cause. The remaining states are unchanged real-data exceptions.
