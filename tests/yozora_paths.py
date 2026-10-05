@@ -311,6 +311,45 @@ YOZORA_S7_GUARD_PATHS = (
     "tests/test_p6_4_cap_upload_limit.py",
 )
 
+# Yozora per-PR allowance (S8 scaffold and planned slice files).
+YOZORA_S8_PATHS = (
+    "app/routers/design.py",
+    "app/routers/design_s8_requests.py",
+    "app/routers/design_s8_versions.py",
+    "app/routers/design_s8_client.py",
+    "app/routers/magic.py",
+    "app/routers/snapshots.py",
+    "app/routers/soa.py",
+    "app/routers/web.py",
+    "app/templates/magic/invalid.html",
+    "app/templates/magic/upload.html",
+    "app/templates/pages/comparison.html",
+    "app/templates/pages/report_snapshots.html",
+    "app/templates/pages/rfi.html",
+    "app/templates/pages/soa.html",
+    "app/templates/pages/requests.html",
+    "app/templates/partials/magic_links.html",
+    "app/templates/partials/rfi_links.html",
+    "design/harness/gate_s8.py",
+    "design/harness/seed_s8.py",
+    "design/harness/seed_s8_requests.py",
+    "design/harness/seed_s8_versions.py",
+    "design/harness/seed_s8_client.py",
+    "tasks/handoffs/2026-10-01-yozora-s8-handoff.md",
+    "tasks/handoffs/2026-10-05-yozora-s8-a-requests.md",
+    "tasks/handoffs/2026-10-05-yozora-s8-b-versions.md",
+    "tasks/handoffs/2026-10-05-yozora-s8-c-client.md",
+    "tasks/handoffs/2026-10-05-yozora-s8-codex-orchestration.md",
+    "tasks/handoffs/2026-10-05-yozora-s8-orchestration.md",
+    "tasks/todo.md",
+    "tests/test_design_lint.py",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_yozora_s8_requests.py",
+    "tests/test_yozora_s8_versions.py",
+    "tests/test_yozora_s8_client.py",
+    "tests/yozora_paths.py",
+)
+
 # Per-PR allowance: V3-C board deck design pass (mockup, scope, dumbbell backend handoff).
 V3C_MOCKUP_PATHS = (
     "docs/product/2026-10-04-board-deck-v3c-mockup/deck_template.html",
@@ -322,5 +361,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]
