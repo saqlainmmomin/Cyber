@@ -14,6 +14,7 @@ from app.models.assessment import Assessment
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.services import approved_report, soa
 from app.services.conclusion_review import reviewer_actor
+from app.services import report_basis
 from app.template_config import configure_templates
 
 
@@ -72,6 +73,8 @@ def soa_page(assessment_id: str, request: Request, db: Session = Depends(get_db)
             "rationale": rationale,
             "max_chars": soa.JUSTIFICATION_MAX_CHARS,
             "reviewer_name": _latest_reviewer_name(db, assessment_id),
+            "report_basis": report_basis.current_basis(db, assessment),
+            "preview_state": request.query_params.get("state", "") if request.url.path.startswith("/design/pages/") else "",
         },
     )
 

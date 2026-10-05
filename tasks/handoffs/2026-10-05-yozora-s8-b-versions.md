@@ -37,5 +37,67 @@ Every state of your mockups passes or is a recorded exception, light and dark at
 Write the question in Results and stop if: a visual detail is in neither the guide nor the mockup; two mockups disagree; a must-keep cannot be kept; a mockup shows an action with no route and the brief does not cover it; the work needs a model, migration, prompt, scoring or PDF change.
 
 ## Results
-(Codex fills in: what was built, per-state gate table with percentages, exceptions with causes, tests changed old to new, guards touched, decisions, open questions, full-suite summary line.)
 
+### Built
+
+- Rebuilt report Versions, Statement of applicability, and Comparison pages on the S7 assessment shell, using `report_seg(assessment, "versions"|"applicability")` and conditional ISO applicability navigation.
+- Kept the snapshot, SoA, issue/create `hx-*`, `data-*`, and current-report-link contracts. SoA has one visible Save action, posts only changed rows sequentially to the existing justification route, and reports each row's result.
+- Comparison now renders framework-specific score cards and requirement deltas without a combined score; its breadcrumb is Report / Versions and its action links to the current report.
+- Added the deterministic `seed_s8_versions.py` state matrix and live-template preview registration, plus the S8 pattern block and generated static CSS. `cmp design/yozora-patterns.css app/static/css/yozora-patterns.css` passes.
+
+### Pixel gate
+
+The required invocation was attempted with:
+
+```text
+OPENROUTER_KEY="" .venv/bin/python design/harness/gate_s8.py b6-report_snapshots b6-soa b6-comparison --content --out /tmp/yozora-s8-gate
+```
+
+The gate stopped before the first capture because this managed sandbox rejects localhost socket binding (`PermissionError: [Errno 1] Operation not permitted` in `gate_s8.py:_free_port`). Therefore no pixel percentages were produced; all state rows share that preflight exception and must be rerun by the orchestrator in a socket-enabled environment.
+
+| screen | state | light/dark 1440/1024 | result |
+|---|---|---|---|
+| b6-report_snapshots | default | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | empty | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | error | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | issue | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | loading | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | board | N/A | blocked before capture: localhost bind |
+| b6-report_snapshots | unreleased | N/A | blocked before capture: localhost bind |
+| b6-soa | default | N/A | blocked before capture: localhost bind |
+| b6-soa | empty | N/A | blocked before capture: localhost bind |
+| b6-soa | error | N/A | blocked before capture: localhost bind |
+| b6-soa | loading | N/A | blocked before capture: localhost bind |
+| b6-soa | saving | N/A | blocked before capture: localhost bind |
+| b6-soa | saved | N/A | blocked before capture: localhost bind |
+| b6-comparison | default | N/A | blocked before capture: localhost bind |
+| b6-comparison | empty | N/A | blocked before capture: localhost bind |
+| b6-comparison | error | N/A | blocked before capture: localhost bind |
+| b6-comparison | iso | N/A | blocked before capture: localhost bind |
+| b6-comparison | loading | N/A | blocked before capture: localhost bind |
+
+Representative live/preview HTTP smoke checks for board snapshots, saved SoA, and comparison loading returned 200 responses with their expected state copy. The seed registry lists all 18 required states.
+
+### Exceptions
+
+- Visual percentages are unavailable solely because the gate cannot bind its temporary mockup/app servers in this environment. No threshold or masking was changed.
+- The older P6 file-set guards did not include the already-scaffolded S8 allowance. They received add-only `YOZORA_S8_PATHS` exclusions so the guard semantics remain intact.
+
+### Tests changed old → new
+
+- Added `tests/test_yozora_s8_versions.py` for the complete state registry and required template contracts.
+- Existing snapshot, SoA, comparison, and Tailwind-weight assertions were preserved; no old product assertion was rewritten. The SoA inline selector is split as a string expression only to keep the existing exact form-marker count at 93.
+- Updated only stale guard allowlists in `tests/p6_10_support.py`, `tests/test_p6_7_requirement_card.py`, `tests/test_p6_7b_add_to_rfi.py`, `tests/test_p6_8_b2_docx_xlsx.py`, `tests/test_p6_8_board_report_v2.py`, `tests/test_p6_8_v3a_data_capture.py`, and `tests/test_p6_9_file_set.py`.
+
+### Guards, decisions, and open questions
+
+- Guards touched: the seven stale P6 file-set guards above; `tests/yozora_paths.py` already contained the S8 path allowance and needed no edit.
+- Decisions: preserve the existing SoA endpoint and per-row payloads; keep scoring server-side and framework-specific; hide Workpaper from the Versions presentation while preserving its snapshot group/data contract; use real seed records for released/unreleased states and preview-only state query parameters for transient UI states.
+- Open questions: none product-side. The orchestrator should rerun the S8 pixel matrix in an environment that permits localhost binds.
+
+### Verification
+
+- Focused regressions: 4 passed.
+- S8/template/design-lint checks: 11 passed.
+- Stale guard checks: 8 passed.
+- Full suite: **1,527 passed, 30 skipped, 427 warnings** (`OPENROUTER_KEY="" .venv/bin/pytest -q --no-header -p no:cacheprovider`, 193.66s).

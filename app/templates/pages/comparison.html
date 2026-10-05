@@ -1,85 +1,60 @@
 {% extends "base.html" %}
-{% block title %}Compare — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import alert, empty_state, icon, pill, skeleton %}
+
+{% set preview = preview_state|default("") %}
+
+{% macro status_label(value) -%}
+  {% if value %}{{ value|replace("_", " ")|title }}{% else %}Not present{% endif %}
+{%- endmacro %}
+
+{% macro status_tone(value) -%}
+  {% if value == "compliant" or value == "not_applicable" %}ok{% elif value == "partially_compliant" or value == "planned" %}part{% elif value == "non_compliant" %}non{% else %}neutral{% endif %}
+{%- endmacro %}
+
+{% macro framework_panel(framework) -%}
+<section class="s8-comparison-panel" data-framework="{{ framework.framework_id }}">
+  <div class="s8-section-title"><div><span class="eyebrow">Framework</span><h2>{{ framework.name }}</h2></div><span class="sub">{{ framework.summary.improved }} improved · {{ framework.summary.regressed }} regressed</span></div>
+  <div class="s8-score-card">
+    <div><span class="eyebrow">Current score</span>{% if framework.current is none %}<strong class="s8-score-value">—</strong>{% else %}<strong class="s8-score-value">{{ framework.current|round(0)|int }}%</strong>{% endif %}</div>
+    <div class="s8-score-stats"><span>Previous <b>{% if framework.previous is none %}—{% else %}{{ framework.previous|round(0)|int }}%{% endif %}</b></span><span>Change <b class="{% if framework.delta is not none and framework.delta > 0 %}positive{% elif framework.delta is not none and framework.delta < 0 %}negative{% endif %}">{% if framework.delta is none %}—{% elif framework.delta > 0 %}+{% endif %}{% if framework.delta is not none %}{{ framework.delta|round(1) }}%{% endif %}</b></span></div>
+  </div>
+  <div class="s8-change-list">
+    <div class="s8-section-title compact"><h3>Requirement changes</h3><span class="sub">{{ framework.deltas|selectattr("status_changed")|list|length }} changed</span></div>
+    {% set changed = framework.deltas|selectattr("status_changed")|list %}
+    {% if not changed %}
+      <div class="glass empty s8-inline-empty"><h3>No changes</h3><p>Every approved requirement has the same status in both reports.</p></div>
+    {% else %}
+      {% for delta in changed %}
+      <article>
+        <div class="s8-change-copy"><b>{{ delta.requirement_title }}</b><span class="sub num">{{ delta.requirement_id }}</span></div>
+        <div class="s8-change-status">{% if delta.is_new %}<span class="sub">New</span>{% else %}{{ pill(status_label(delta.old_status), status_tone(delta.old_status)) }}{{ icon("arrow-r") }}{% endif %}{{ pill(status_label(delta.new_status), status_tone(delta.new_status)) }}</div>
+      </article>
+      {% endfor %}
+    {% endif %}
+  </div>
+</section>
+{%- endmacro %}
+
+{% block title %}Compare reports · {{ assessment.company_name }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/report">Report</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/snapshots">Versions</a><svg class="i sl"><use href="#i-slash"/></svg><b>Compare</b>
+{% endblock %}
 
 {% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Compare</span>
-</nav>
+<div class="page-head"><div><h1>Compare reports</h1><p class="meta-line">{{ current_basis.period_label }} · Evidence cut-off {{ current_basis.cutoff_label }} <span class="s8-meta-divider">vs</span> {{ previous_basis.period_label }}</p></div><div class="acts"><a data-current-report-link class="btn secondary" href="{{ current_report_url }}">Open current report</a></div></div>
+{{ assessment_tabs(assessment, "report") }}
+<div class="s8-report-seg">{{ report_seg(assessment, "versions") }}</div>
 
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Assessment Comparison</h1>
-  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-    {{ current_report.generated_at.strftime('%d %b %Y') }} vs {{ previous_report.generated_at.strftime('%d %b %Y') }}
-  </p>
-  <a data-current-report-link href="{{ current_report_url }}" class="mt-2 inline-block text-sm font-medium text-brand dark:text-navy-300 hover:underline">Open current report →</a>
-</div>
-
-{# Summary cards #}
-<div class="grid grid-cols-3 gap-4 mb-6">
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-center">
-    <p class="text-3xl font-bold text-green-600">{{ delta_summary.improved }}</p>
-    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Improved</p>
-  </div>
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-center">
-    <p class="text-3xl font-bold text-red-600">{{ delta_summary.regressed }}</p>
-    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Regressed</p>
-  </div>
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-center">
-    <p class="text-3xl font-bold text-gray-400 dark:text-gray-500">{{ delta_summary.unchanged }}</p>
-    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unchanged</p>
-  </div>
-</div>
-
-{# Per-framework score deltas #}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
-  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Framework Scores</h3>
-  <div class="divide-y divide-gray-100 dark:divide-gray-800">
-    {% for framework in framework_deltas %}
-    <div class="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
-      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ framework.name }}</span>
-      {% if framework.delta is none %}
-      <span class="text-sm text-gray-500 dark:text-gray-400">—</span>
-      {% else %}
-      <div class="flex items-baseline gap-3">
-        <span class="text-2xl font-bold {% if framework.delta > 0 %}text-green-600{% elif framework.delta < 0 %}text-red-600{% else %}text-gray-500 dark:text-gray-400{% endif %}">
-          {% if framework.delta > 0 %}+{% endif %}{{ framework.delta | round(1) }}%
-        </span>
-        <span class="text-sm text-gray-500 dark:text-gray-400">{{ framework.previous | round(0) | int }}% → {{ framework.current | round(0) | int }}%</span>
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-</div>
-
-{# Detailed changes #}
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-  <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Requirement Changes</h3>
-  </div>
-  <div class="divide-y divide-gray-100 dark:divide-gray-800">
-    {% for delta in deltas %}
-    {% if delta.status_changed %}
-    <div class="px-5 py-3 flex items-center justify-between">
-      <div>
-        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ delta.requirement_title }}</p>
-        <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ delta.requirement_id }}</span>
-      </div>
-      <div class="flex items-center gap-2 text-xs">
-        {% set status_colors = {'compliant': 'text-green-600', 'partially_compliant': 'text-yellow-600', 'non_compliant': 'text-red-600'} %}
-        <span class="{{ status_colors.get(delta.old_status, 'text-gray-500 dark:text-gray-400') }} font-medium">{{ delta.old_status | replace('_', ' ') | title }}</span>
-        <svg class="h-4 w-4 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
-        </svg>
-        <span class="{{ status_colors.get(delta.new_status, 'text-gray-500 dark:text-gray-400') }} font-medium">{{ delta.new_status | replace('_', ' ') | title }}</span>
-      </div>
-    </div>
-    {% endif %}
-    {% endfor %}
-  </div>
-</div>
+{% if preview == "error" %}{{ alert("Comparison is unavailable", "The previous report could not be loaded. Try again in a moment.", "noncompliant", extra_class="s8-page-alert") }}{% endif %}
+{% if preview == "empty" %}{{ empty_state("No previous report", "Generate and release another report before comparing versions.", "Back to versions", "/assessments/" ~ assessment.id ~ "/snapshots", "file") }}{% endif %}
+{% if preview == "loading" %}<div class="solid s8-loading" role="status" aria-label="Loading report comparison">{{ skeleton("32%") }}{{ skeleton("72%", margin_top="14px") }}{{ skeleton("52%", margin_top="14px") }}</div>{% else %}
+<main class="s8-comparison">
+  <section class="s8-summary-strip"><div><span class="eyebrow">Report comparison</span><h2>{{ previous_report.generated_at|display_date }} <span>to</span> {{ current_report.generated_at|display_date }}</h2></div><div class="s8-summary-stats"><span><b>{{ delta_summary.improved }}</b> improved</span><span><b>{{ delta_summary.regressed }}</b> regressed</span><span><b>{{ delta_summary.unchanged }}</b> unchanged</span></div></section>
+  <div class="s8-section-title"><div><span class="eyebrow">Score movement</span><h2>Framework Scores</h2></div><span class="sub">Scores are shown separately for each framework.</span></div>
+  <div class="s8-framework-grid">{% for framework in framework_deltas %}{{ framework_panel(framework) }}{% endfor %}</div>
+</main>
+{% endif %}
 {% endblock %}

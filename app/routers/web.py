@@ -3361,6 +3361,9 @@ def snapshots_page(
             "reviewer_name": reviewer_name,
             "type_labels": report_snapshots.TYPE_LABELS,
             "release": approved_report.release_state(db, assessment),
+            "report_basis": report_basis.current_basis(db, assessment),
+            "preview_state": request.query_params.get("state", "") if request.url.path.startswith("/design/pages/") else "",
+            "report_panel": request.query_params.get("panel", "gap") if request.url.path.startswith("/design/pages/") else "gap",
         },
     )
 
@@ -3385,16 +3388,23 @@ def comparison_page(
     current_view = approved_report.build_approved_report(db, assessment)
     previous_view = approved_report.build_approved_report(db, previous_assessment)
     result = compute_delta(list(current_view.rows), list(previous_view.rows))
-    framework_names = _selected_framework_names(assessment)
+    current_basis = report_basis.current_basis(db, assessment)
+    previous_basis = report_basis.current_basis(db, previous_assessment)
     framework_deltas = []
     for framework_id in assessment.frameworks:
         current = current_view.framework_scores.get(framework_id, {})
         previous = previous_view.framework_scores.get(framework_id, {})
         current_score = current.get("overall_score") if current.get("status") == "scored" else None
         previous_score = previous.get("overall_score") if previous.get("status") == "scored" else None
+        current_rows = current_view.framework_reviews.get(framework_id)
+        previous_rows = previous_view.framework_reviews.get(framework_id)
+        framework_result = compute_delta(
+            list(current_rows.rows) if current_rows else [],
+            list(previous_rows.rows) if previous_rows else [],
+        )
         framework_deltas.append({
             "framework_id": framework_id,
-            "name": framework_names[assessment.frameworks.index(framework_id)],
+            "name": framework_label(framework_id, full=True),
             "current": current_score,
             "previous": previous_score,
             "delta": (
@@ -3402,6 +3412,8 @@ def comparison_page(
                 if current_score is not None and previous_score is not None
                 else None
             ),
+            "deltas": framework_result["deltas"],
+            "summary": framework_result["summary"],
         })
 
     return templates.TemplateResponse(
@@ -3414,6 +3426,9 @@ def comparison_page(
             "framework_deltas": framework_deltas,
             "deltas": result["deltas"],
             "delta_summary": result["summary"],
+            "current_basis": current_basis,
+            "previous_basis": previous_basis,
+            "preview_state": request.query_params.get("state", "") if request.url.path.startswith("/design/pages/") else "",
             # The same URL as the assessment's Report tab.
             "current_report_url": f"/assessments/{assessment.id}?tab=report",
         },
