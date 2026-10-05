@@ -1,4 +1,4 @@
-{% if scope_done %}
+{% if scope_done and not scope_editing %}
   {% include "partials/scope_complete.html" %}
 {% else %}
   {% include "partials/scope_form.html" %}

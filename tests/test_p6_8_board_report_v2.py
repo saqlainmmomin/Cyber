@@ -1091,7 +1091,7 @@ P6_8_B1_APP_ALLOWLIST = (
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS  # Yozora S1/S2/S3/S4 per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS  # Yozora S1/S2/S3/S4/S5 per-PR allowance
 
 P6_8_FORBIDDEN_PATHS = (
     # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
@@ -1182,7 +1182,7 @@ def test_scenario_14_no_llm_and_b1_file_set():
         and path not in YOZORA_BACKEND_APP_PATHS  # Yozora backend
         and path not in YOZORA_S1_PATHS  # Yozora S1
         and path not in YOZORA_S2_PATHS  # Yozora S2
-        and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS  # Yozora S4
+        and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS  # Yozora S4/S5
     )
     outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
     assert outside == [], outside

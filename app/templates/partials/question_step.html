@@ -1,147 +1,74 @@
-<!-- Single context block in the wizard -->
+{% from "components/ui.html" import icon %}
 <form id="context-form-{{ block_index }}"
       {% if block_index < total_blocks - 1 %}
       hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index + 1 }}"
-      hx-target="#context-wizard"
-      hx-swap="innerHTML"
       {% else %}
       hx-post="/assessments/{{ assessment_id }}/context/save"
-      {% endif %}>
+      {% endif %}
+      hx-target="#context-wizard"
+      hx-swap="innerHTML">
+  <div class="between"><h2 class="big">{{ block.title | capitalize }}</h2><div class="progress"><span class="num">{{ block_index + 1 }} of {{ total_blocks }}</span><span class="ticks" aria-hidden="true">{% for i in range(total_blocks) %}<i{% if i <= block_index %} class="on"{% endif %}></i>{% endfor %}</span></div></div>
+  <p class="sub mt">{{ block.description }}</p>
 
-  <!-- Progress -->
-  <div class="flex items-center gap-2 mb-6">
-    {% for i in range(total_blocks) %}
-    <div class="flex-1 h-1.5 rounded-full {% if i <= block_index %}bg-brand{% else %}bg-gray-200{% endif %} transition-colors"></div>
-    {% endfor %}
-    <span class="text-xs text-gray-500 ml-2">{{ block_index + 1 }}/{{ total_blocks }}</span>
-  </div>
-
-  <h3 class="text-base font-semibold text-gray-900 mb-1">{{ block.title }}</h3>
-  <p class="text-sm text-gray-500 mb-5">{{ block.description }}</p>
-
-  <div class="space-y-5">
+  <div class="mt">
     {% for q in block.questions %}
-    <div class="question-group"
-         {% if q.get('depends_on') %}
-         {% set dep_key = q.depends_on.keys() | list | first %}
-         {% set dep_val = q.depends_on[dep_key] %}
-         x-show="false"
-         data-depends-on="{{ dep_key }}"
-         data-depends-value="{{ dep_val }}"
-         style="display: none;"
-         {% endif %}>
-      <label class="block text-sm font-medium text-gray-700 mb-2">{{ q.question }}</label>
-
-      {% if q.type == 'single_select' %}
-      <div class="flex flex-wrap gap-2">
-        {% for opt in q.options %}
-        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-navy-300 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-navy-50">
-          <input type="radio" name="{{ q.id }}" value="{{ opt }}"
-                 class="text-brand focus:ring-navy-500"
-                 onchange="handleDependency(this)">
-          <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
-        </label>
-        {% endfor %}
-      </div>
-
-      {% elif q.type == 'multi_select' %}
-      <div class="flex flex-wrap gap-2">
-        {% for opt in q.options %}
-        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-navy-300 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-navy-50">
-          <input type="checkbox" name="{{ q.id }}" value="{{ opt }}"
-                 class="rounded text-brand focus:ring-navy-500">
-          <span class="text-sm text-gray-700">{{ opt | replace("_", " ") | title }}</span>
-        </label>
-        {% endfor %}
-      </div>
-
-      {% elif q.type == 'text' %}
-      <textarea name="{{ q.id }}" rows="2"
-                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-navy-500 focus:ring-2 focus:ring-navy-100 outline-none transition"
-                placeholder="Enter your answer..."></textarea>
-      {% endif %}
+    {% set dep_key = (q.depends_on.keys() | list | first) if q.get('depends_on') else none %}
+    {% if q.type in ('single_select', 'multi_select') %}
+    <fieldset class="qgroup"{% if dep_key %} data-depends-on="{{ dep_key }}" data-depends-value="{{ q.depends_on[dep_key] }}" hidden{% endif %}>
+      <legend class="label">{{ q.question }}</legend>
+      <div class="opts">{% for opt in q.options %}<label class="choice"><input type="{{ 'radio' if q.type == 'single_select' else 'checkbox' }}" name="{{ q.id }}" value="{{ opt }}"{% if q.type == 'single_select' %} onchange="handleDependency(this)"{% endif %}>{{ opt | replace("_", " ") | capitalize }}</label>{% endfor %}</div>
+    </fieldset>
+    {% else %}
+    <div class="qgroup"{% if dep_key %} data-depends-on="{{ dep_key }}" data-depends-value="{{ q.depends_on[dep_key] }}" hidden{% endif %}>
+      <label class="label" for="ctx-{{ q.id }}">{{ q.question }}</label>
+      <label class="field area"><textarea id="ctx-{{ q.id }}" name="{{ q.id }}" placeholder="Your answer"></textarea></label>
     </div>
+    {% endif %}
     {% endfor %}
   </div>
 
-  <!-- Include answers from previous blocks as hidden fields -->
   <div id="previous-answers"></div>
-
-  <div class="flex justify-between mt-6 pt-4 border-t border-gray-100">
-    {% if block_index > 0 %}
-    <button type="button"
-            hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index - 1 }}"
-            hx-target="#context-wizard"
-            hx-swap="innerHTML"
-            class="text-sm text-gray-600 hover:text-brand transition-colors">
-      &larr; Previous
-    </button>
-    {% else %}
-    <div></div>
-    {% endif %}
-
-    <button type="submit"
-            class="bg-brand hover:bg-brand-light text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors">
-      {% if block_index < total_blocks - 1 %}
-      Next &rarr;
-      {% else %}
-      Submit Context &amp; Continue
-      {% endif %}
-    </button>
+  <div class="action-row">
+    {% if block_index > 0 %}<button type="button" class="btn ghost lead" hx-get="/assessments/{{ assessment_id }}/context/block/{{ block_index - 1 }}" hx-target="#context-wizard" hx-swap="innerHTML">{{ icon("arrow-l") }}Previous</button>{% else %}<span></span>{% endif %}
+    <button type="submit" class="btn primary">{% if block_index < total_blocks - 1 %}Next{% else %}Submit context and continue{% endif %}</button>
   </div>
 </form>
 
 <script>
-// Carry forward answers from previous blocks
-document.addEventListener('htmx:afterSettle', function(e) {
-  if (e.target.id === 'context-wizard') {
-    const prev = document.getElementById('previous-answers');
-    if (prev && window._contextAnswers) {
-      for (const [k, v] of Object.entries(window._contextAnswers)) {
-        if (Array.isArray(v)) {
-          v.forEach(val => {
-            const input = document.createElement('input');
-            input.type = 'hidden'; input.name = k; input.value = val;
-            prev.appendChild(input);
-          });
-        } else {
-          const input = document.createElement('input');
-          input.type = 'hidden'; input.name = k; input.value = v;
-          prev.appendChild(input);
-        }
-      }
+document.addEventListener('htmx:afterSettle', function(event) {
+  if (event.target.id !== 'context-wizard') return;
+  const previous = document.getElementById('previous-answers');
+  if (!previous || !window._contextAnswers) return;
+  previous.replaceChildren();
+  for (const [key, value] of Object.entries(window._contextAnswers)) {
+    for (const item of (Array.isArray(value) ? value : [value])) {
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = key; input.value = item;
+      previous.appendChild(input);
     }
   }
 });
 
-// Save current block's answers before navigating
 if (!window._contextAnswers) window._contextAnswers = {};
-document.addEventListener('htmx:configRequest', function(e) {
-  const form = e.target.closest?.('form');
-  if (form && form.id?.startsWith('context-form-')) {
-    const fd = new FormData(form);
-    for (const [k, v] of fd.entries()) {
-      if (k.startsWith('CTX.')) {
-        if (window._contextAnswers[k]) {
-          if (!Array.isArray(window._contextAnswers[k])) {
-            window._contextAnswers[k] = [window._contextAnswers[k]];
-          }
-          window._contextAnswers[k].push(v);
-        } else {
-          window._contextAnswers[k] = v;
-        }
-      }
+document.addEventListener('htmx:configRequest', function(event) {
+  const form = event.target.closest?.('form');
+  if (!form || !form.id?.startsWith('context-form-')) return;
+  const answers = new FormData(form);
+  for (const [key, value] of answers.entries()) {
+    if (!key.startsWith('CTX.')) continue;
+    if (window._contextAnswers[key]) {
+      const existing = Array.isArray(window._contextAnswers[key]) ? window._contextAnswers[key] : [window._contextAnswers[key]];
+      window._contextAnswers[key] = [...existing, value];
+    } else {
+      window._contextAnswers[key] = value;
     }
   }
 });
 
 function handleDependency(input) {
-  const groups = document.querySelectorAll('[data-depends-on]');
-  groups.forEach(g => {
-    const depOn = g.dataset.dependsOn;
-    const depVal = g.dataset.dependsValue;
-    const checked = document.querySelector(`input[name="${depOn}"]:checked`);
-    g.style.display = (checked && checked.value === depVal) ? 'block' : 'none';
+  document.querySelectorAll('[data-depends-on]').forEach((group) => {
+    const checked = document.querySelector(`input[name="${group.dataset.dependsOn}"]:checked`);
+    group.hidden = !(checked && checked.value === group.dataset.dependsValue);
   });
 }
 </script>

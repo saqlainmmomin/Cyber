@@ -1,13 +1,17 @@
-<div class="flex items-center gap-4 p-4 rounded-lg bg-navy-50 dark:bg-navy-900/40 border border-navy-200 dark:border-navy-800"
-     hx-get="/assessments/{{ assessment_id }}/desk-review-status"
+{% from "components/ui.html" import skeleton %}
+{% set poll %}{% if not preview_static %}hx-get="/assessments/{{ assessment_id }}/desk-review-status{% if questionnaire_surface %}?surface=questionnaire{% endif %}"
      hx-trigger="every 3s"
-     hx-swap="outerHTML">
-  <svg class="animate-spin h-6 w-6 text-brand dark:text-navy-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-  </svg>
-  <div>
-    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Desk review in progress...</p>
-    <p class="text-xs text-gray-500 dark:text-gray-400">Claude is analyzing your documents against applicable compliance requirements. This typically takes 15-30 seconds.</p>
+     hx-swap="outerHTML"{% endif %}{% endset %}
+{% if questionnaire_surface %}
+<div {{ poll }}>
+  {% include "partials/desk_review_prefilling.html" %}
+</div>
+{% else %}
+<div class="glass dr-card" role="status" aria-live="polite" {{ poll }}>
+  <h2>Desk review</h2>
+  <div class="dr-status"><span class="status"><span class="st prog"></span>Analysing {{ document_count }} document{{ 's' if document_count != 1 else '' }}{% if framework_text %} against {{ framework_text }}{% endif %}</span></div>
+  <div class="dr-skels" aria-busy="true" aria-label="Loading">
+    {{ skeleton("70%") }}{{ skeleton("90%") }}{{ skeleton("55%") }}
   </div>
 </div>
+{% endif %}

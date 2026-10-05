@@ -32,6 +32,12 @@ SCREENING_NOT_APPLICABLE_MESSAGE = (
     "Answer the questionnaire for this assessment directly."
 )
 
+# Questionnaire-tab copy where screening does not apply. It names no
+# framework, because framework-specific copy must stay conditional.
+SCREENING_UNAVAILABLE_COPY = (
+    "Screening is not available for this assessment. Complete the questionnaire directly."
+)
+
 
 class ScreeningNotApplicable(ValueError):
     """Raised before any LLM call when screening cannot pre-fill this assessment's questionnaire."""

@@ -1,0 +1,23 @@
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/ui.html" import icon, link_button %}
+
+<div class="page-head">
+  <div>
+    <h1 data-assessment-identity>{{ assessment.display_name }}</h1>
+    <p class="meta-line">
+      {{ assessment.company_name }}{% if engagement %} · {{ engagement.name }}{% endif %}
+      {% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}
+    </p>
+  </div>
+  <div class="acts">
+    {% if tab == "overview" and workflow.action_href and not engagement_archived and preview_state != "loading" %}
+    <a class="btn primary" href="{{ workflow.action_href }}">{{ workflow.stage.next_label }}{{ icon("arrow-r") }}</a>
+    {% endif %}
+    {% if assessment.status == 'completed' %}
+    {{ link_button("Live PDF", "/api/assessments/" ~ assessment.id ~ "/report/pdf", "secondary", "sm", "download", true) }}
+    {{ link_button("Report versions", "/assessments/" ~ assessment.id ~ "/snapshots", "secondary", "sm") }}
+    {% endif %}
+  </div>
+</div>
+
+{{ assessment_tabs(assessment, "overview" if tab == "overview" else tab, active_framework) }}

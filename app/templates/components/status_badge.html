@@ -2,7 +2,7 @@
 {% set status = a.status if a is defined else assessment.status if assessment is defined else "created" %}
 {% set labels = {
   "created": "New", "documents_uploaded": "Documents uploaded", "context_gathered": "Context gathered",
-  "questionnaire_done": "Questionnaire done", "analyzing": "Analyzing…", "completed": "Completed", "error": "Error"
+  "questionnaire_done": "Questionnaire done", "analyzing": "Analysing…", "completed": "Completed", "error": "Error"
 } %}
 {% set tones = {"documents_uploaded": "accent", "context_gathered": "accent", "questionnaire_done": "medium", "analyzing": "accent", "completed": "ok", "error": "non"} %}
 {{ pill(labels.get(status, status | replace("_", " ") | title), tones.get(status, "neutral")) }}

@@ -1,5 +1,18 @@
 {% extends "base.html" %}
-{% block title %}{{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import stepper %}
+{% from "components/ui.html" import alert, icon, skeleton %}
+
+{% block title %}{{ assessment.display_name }}{% endblock %}
+
+{% block crumbs %}
+{% set crumb_context = assessment_engagement_context(request) %}
+{% set crumb_engagement = crumb_context.get("engagement") %}
+{% if crumb_engagement %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/engagements/{{ crumb_engagement.id }}">{{ crumb_engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
+{% else %}
+<a href="/">Assessments</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ assessment.display_name }}</b>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 {% set engagement_context = assessment_engagement_context(request) %}
@@ -8,102 +21,48 @@
 {% set magic_links = engagement_context.get("magic_links", []) %}
 {% set client_uploads = engagement_context.get("client_uploads", []) %}
 {% set retention = engagement_context.get("retention") %}
-{% if engagement_archived %}
-<div data-archived-banner class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">This assessment belongs to an archived engagement and is read-only. Changes are refused until the engagement is unarchived.</div>
-{% endif %}
-<div class="mb-6 flex items-center justify-between">
-  <div>
-    <a href="/" class="text-sm text-gray-500 hover:text-brand transition-colors">&larr; Dashboard</a>
-    <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ assessment.company_name }}</h1>
-    {% if assessment.name or assessment.description %}<p class="text-sm text-gray-700 mt-0.5" data-assessment-identity>{{ assessment.name or '' }}{% if assessment.name and assessment.description %} &middot; {% endif %}{{ assessment.description or '' }}</p>{% endif %}
-    <p class="text-sm text-gray-500 mt-0.5">
-      {{ assessment.industry | replace("_", " ") | title }} &middot;
-      {{ assessment.company_size | title }} &middot;
-      {% include "components/status_badge.html" with context %}
-    </p>
-    {% if selected_frameworks and selected_frameworks | length > 0 %}
-    <div class="flex flex-wrap gap-1.5 mt-2">
-      {% for fw in selected_frameworks %}
-      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-navy-50 text-brand border border-navy-100" style="background-color: #eef0f6; border-color: #c8cce0;">
-        {{ fw.name }}
-        <span class="text-gray-400 ml-0.5">{{ fw.version }}</span>
-      </span>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% include "partials/status_timeline.html" %}
-  </div>
-  {% if assessment.status == 'completed' %}
-  <a href="/api/assessments/{{ assessment.id }}/report/pdf"
-     class="inline-flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-    </svg>
-    Live PDF
-  </a>
-  <a href="/assessments/{{ assessment.id }}/snapshots"
-     class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-    Report versions
-  </a>
-  {% endif %}
-</div>
+{% set period = engagement_period(engagement) if engagement else none %}
 
+{% if engagement_archived %}
+<div data-archived-banner class="alert c-medium" role="status" style="margin-bottom:var(--s-4)">
+  {{ icon("lock") }}
+  <div><b>This assessment is read-only</b>Its engagement is archived. Unarchive the engagement to make changes.</div>
+</div>
+{% endif %}
+
+{% include "partials/assessment_header.html" %}
+
+<div data-assessment-id="{{ assessment.id }}">
+{% if tab == "overview" %}
+<div class="mt-lg"></div>
+{{ stepper(stepper_stages) }}
+{% set hub_state = "archived" if engagement_archived else (preview_state if preview_state in ('loading', 'error') else workflow.hub_state) %}
+{% if assessment.is_multi_framework %}
+<div class="sec"><h2>Frameworks</h2></div>
+{% include "partials/framework_tabs.html" %}
+{% else %}
+<div class="mt" id="framework-panel" role="tabpanel">
+  {% set framework = active_framework_definition %}
+  {% set finding_count = active_framework_finding_count %}
+  {% include "partials/framework_hub_panel.html" %}
+</div>
+{% endif %}
 {% if engagement %}
-<div data-visual-mask>
-  <a href="/engagements/{{ engagement.id }}/aws-evidence">AWS evidence</a>
+{# S4 engagement context (AWS link, retention, magic links): no Overview mockup counterpart; S8 owns the magic links. #}
+<div data-visual-mask class="stack" style="margin-top:var(--s-8)">
+  <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
   {% include "partials/engagement_retention.html" %}
   {% include "partials/magic_links.html" %}
 </div>
 {% endif %}
-
-{% if assessment.is_multi_framework %}
-  {% include "partials/framework_tabs.html" %}
-{% endif %}
-
-<!-- Tabs -->
-<div class="border-b border-gray-200 mb-6">
-  <nav class="flex gap-6" aria-label="Tabs">
-    <a href="/assessments/{{ assessment.id }}?tab=scope&amp;framework={{ active_framework }}"
-       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'scope' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-      Scope
-      {% if scope_done %}
-      <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">&#10003;</span>
-      {% endif %}
-    </a>
-    <a href="/assessments/{{ assessment.id }}?tab=documents&amp;framework={{ active_framework }}"
-       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'documents' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-      Documents
-      <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ documents | length }}</span>
-    </a>
-    <a href="/assessments/{{ assessment.id }}?tab=questionnaire&amp;framework={{ active_framework }}"
-       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'questionnaire' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-      Questionnaire
-      {% if response_count > 0 %}
-      <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{{ response_count }}</span>
-      {% endif %}
-    </a>
-    <a href="/assessments/{{ assessment.id }}?tab=report&amp;framework={{ active_framework }}&amp;view={{ report_view_mode }}"
-       class="py-3 px-1 text-sm font-medium border-b-2 transition-colors
-              {% if tab == 'report' %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-      Report
-      {% if report %}
-      <span class="ml-1 text-xs bg-navy-100 text-brand px-2 py-0.5 rounded-full">{{ framework_display | length }} framework{{ 's' if framework_display | length != 1 }}</span>
-      {% endif %}
-    </a>
-  </nav>
-</div>
-
-<!-- Tab content -->
-{% if tab == 'scope' %}
+{% elif tab == "scope" %}
   {% include "partials/scope_tab.html" %}
-{% elif tab == 'documents' %}
+{% elif tab == "documents" %}
   {% include "partials/documents_tab.html" %}
-{% elif tab == 'questionnaire' %}
+{% elif tab == "questionnaire" %}
   {% include "partials/questionnaire_tab.html" %}
-{% elif tab == 'report' %}
+{% elif tab == "report" %}
   {% include "partials/report_tab.html" %}
 {% endif %}
+</div>
 {% endblock %}
