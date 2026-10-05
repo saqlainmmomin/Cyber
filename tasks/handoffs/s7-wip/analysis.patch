@@ -1,0 +1,1084 @@
+diff --git a/app/routers/design_s7_analysis.py b/app/routers/design_s7_analysis.py
+new file mode 100644
+index 0000000..153720b
+--- /dev/null
++++ b/app/routers/design_s7_analysis.py
+@@ -0,0 +1,199 @@
++"""Design preview fixtures for the S7 "analysis" group (debug only, reached via /design/pages/<name>).
++
++Four screens have no page of their own: the analysis partials render into S5's questionnaire card,
++and the release and report-basis panels are included by the conclusions page that another group owns.
++Each fixture renders the real partial inside the standard assessment shell, with real data read from
++the database (``?assessment_id=``) and the specimen heading the approved mockups use. Nothing here
++changes data; the gate states call the same views the browser calls and render their context.
++"""
++
++from __future__ import annotations
++
++from fastapi import HTTPException, Request
++from fastapi.responses import Response
++
++from app.database import SessionLocal
++from app.models.assessment import Assessment
++from app.models.engagement import Engagement
++from app.models.report import GapItem
++from app.routers.design import PREVIEW_PAGES
++from app.routers.web import templates
++
++SHELL = """
++{% extends "base.html" %}
++{% from "components/layout.html" import assessment_tabs %}
++{% from "components/ui.html" import icon %}
++{% block title %}{{ heading }}{% endblock %}
++{% block crumbs %}<a class="hide-sm" href="/">{{ assessment.company_name }}</a>{{ icon("slash", style="") }}{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a>{{ icon("slash") }}{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a>{% for label, href in trail %}<svg class="i sl"><use href="#i-slash"/></svg>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<b>{{ label }}</b>{% endif %}{% endfor %}{% endblock %}
++{% macro specimen_head() %}<div style="display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;margin-bottom:var(--s-4)"><span class="chip">State</span><h2>{{ specimen }}</h2></div>{% endmacro %}
++{% macro page_head(first=False) %}<div class="page-head"{% if first %} style="margin-top:0"{% endif %}><div><h1>{{ heading }}</h1><p class="meta-line">{{ meta_line }}</p></div><div class="acts"></div></div>{{ assessment_tabs(assessment, tab) }}{% endmacro %}
++{% block content %}
++{% if head_inside %}
++<section style="margin-top:var(--s-12)">{{ specimen_head() }}{{ page_head(True) }}
++{% else %}
++{{ page_head() }}
++<section style="margin-top:var(--s-12)">{{ specimen_head() }}
++{% endif %}
++{% if layout == "analysis" %}
++<div class="glass card" style="margin-top:var(--s-4)"><div id="analysis-area">{% include partial %}</div></div>
++{% elif layout == "confirm" %}
++<div style="position:relative;min-height:400px">{% include partial %}</div>
++<style>#release-modal{position:absolute;border-radius:var(--r-lg)}</style>
++<script>(() => { const modal = document.getElementById("release-modal"); if (modal) modal.hidden = false; })();</script>
++{% elif layout == "finding" %}
++{% include partial %}
++{% else %}
++{% include partial %}
++{% endif %}
++{% if toast %}<div style="margin-top:var(--s-4)"><div class="toast">{{ icon("check") }}{{ toast }}</div></div>{% endif %}
++</section>
++{% endblock %}
++"""
++
++STATE_HEADS = {
++    "b5-analysis": {
++        "running": "Running",
++        "complete": "Complete",
++        "error": "Failed for one framework",
++        "error-all": "Failed with no detail",
++        "gate": "Blocked by an incomplete questionnaire",
++        "gate-no-override": "Blocked, no override offered",
++    },
++    "b5-release": {
++        "blocked": "Not ready",
++        "ready": "Ready",
++        "confirm": "Confirming the release",
++        "released": "Released",
++        "stale": "Out of date after release",
++    },
++    "b5-basis": {
++        "empty": "Not recorded",
++        "filled": "Recorded",
++        "invalid": "Invalid dates",
++        "locked": "Locked",
++        "saved": "Saved",
++    },
++    "b5-review-finding-card": {
++        "draft": "Draft",
++        "needs-review": "Flagged for review, no quote",
++        "notes": "Adding notes",
++        "accepted": "Accepted",
++        "rejected": "Rejected with notes",
++    },
++}
++
++# Same wording the routes send as toast headers (app/routers/review.py).
++SAVED_TOAST = "Period and sign-off saved"
++RELEASED_TOAST = "Report released"
++
++
++def _meta_line(basis) -> str:
++    from app.template_config import display_date
++
++    if not basis.period_recorded:
++        return "Period not set · Evidence cut-off not set"
++    return (
++        f"{display_date(basis.period_start)} – {display_date(basis.period_end)}"
++        f" · Evidence cut-off {display_date(basis.evidence_cutoff)}"
++    )
++
++
++def _analysis_context(request: Request, db, assessment: Assessment, state: str) -> tuple[str, dict]:
++    from app.routers import web
++    from app.routers.analysis import COMPLETION_OVERRIDE_REASONS
++
++    if state in {"gate", "gate-no-override"}:
++        previous = assessment.status
++        # The real route; the gate refuses before any model call. Status is restored by the route.
++        response = web.run_analysis_web(request, assessment.id, override_reason="", reviewer_name="", db=db)
++        db.refresh(assessment)
++        assessment.status = previous
++        context = dict(response.context)
++        context.setdefault("override_reasons", COMPLETION_OVERRIDE_REASONS)
++        return response.template.name, context
++    response = web.analysis_status(request, assessment.id, db=db)
++    return response.template.name, dict(response.context)
++
++
++def _page(request: Request, screen: str) -> Response:
++    state = request.query_params.get("state", "")
++    if state not in STATE_HEADS[screen]:
++        raise HTTPException(status_code=404, detail="Not found")
++    with SessionLocal() as db:
++        assessment_id = request.query_params.get("assessment_id")
++        assessment = db.get(Assessment, assessment_id) if assessment_id else db.query(Assessment).first()
++        if assessment is None:
++            raise HTTPException(status_code=404, detail="Not found")
++        engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
++        return _render(request, db, screen, state, assessment, engagement)
++
++
++def _render(request: Request, db, screen: str, state: str, assessment: Assessment, engagement) -> Response:
++    from app.services import approved_report, report_basis
++
++    basis = report_basis.current_basis(db, assessment)
++    context: dict = {
++        "request": request,
++        "assessment": assessment,
++        "engagement": engagement,
++        "specimen": STATE_HEADS[screen][state],
++        "layout": "plain",
++        "head_inside": False,
++        "toast": "",
++        "preview_static": True,
++        "meta_line": _meta_line(basis),
++    }
++    review_trail = [("Review", f"/assessments/{assessment.id}/review-queue")]
++    report_trail = [("Report", f"/assessments/{assessment.id}/report")]
++
++    if screen == "b5-analysis":
++        partial, extra = _analysis_context(request, db, assessment, state)
++        context.update(extra)
++        context.update(
++            heading="Review", tab="review", partial=partial, layout="analysis",
++            trail=[*review_trail, ("Review", "")],
++        )
++    elif screen == "b5-release":
++        release = approved_report.release_state(db, assessment)
++        context.update(
++            heading="Release", tab="report", partial="partials/release_panel.html", release=release,
++            trail=[*report_trail, ("Release", "")],
++        )
++        if state == "confirm":
++            context["layout"] = "confirm"
++        if state == "released":
++            context["toast"] = RELEASED_TOAST
++    elif screen == "b5-basis":
++        field_errors = {}
++        shown = basis
++        if state == "empty":
++            shown = report_basis.EMPTY_BASIS
++            context["meta_line"] = _meta_line(shown)
++        if state == "invalid":
++            field_errors = {"period_end": "The period end must be after the period start."}
++            from dataclasses import replace
++            from datetime import timedelta
++
++            shown = replace(basis, period_end=basis.period_start - timedelta(days=1))
++        context.update(
++            heading="Period and sign-off", tab="report", partial="partials/report_basis_panel.html",
++            report_basis=shown, period_locked=report_basis.period_locked(db, assessment),
++            field_errors=field_errors, head_inside=True,
++            trail=[*report_trail, ("Period and sign-off", "")],
++            toast=SAVED_TOAST if state == "saved" else "",
++        )
++    else:
++        item = db.query(GapItem).order_by(GapItem.id).first()
++        if item is None:
++            raise HTTPException(status_code=404, detail="Not found")
++        context.update(
++            heading="Finding review", tab="review", partial="partials/review_finding_card.html",
++            item=item, layout="finding", notes_open=state == "notes",
++            trail=[*review_trail, ("Findings", f"/assessments/{assessment.id}/findings"), ("Finding review", "")],
++        )
++    context["assessment_id"] = assessment.id
++    return templates.TemplateResponse(request=request, name=templates.env.from_string(SHELL), context=context)
++
++
++for _screen in STATE_HEADS:
++    PREVIEW_PAGES[_screen] = lambda request, screen=_screen: _page(request, screen)
+diff --git a/app/routers/review.py b/app/routers/review.py
+index 953e450..dd41275 100644
+--- a/app/routers/review.py
++++ b/app/routers/review.py
+@@ -66,7 +66,7 @@ def save_report_basis(
+     db.commit()
+     response = JSONResponse({"status": "saved", **basis.to_metadata()}, status_code=200)
+     response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/conclusions"
+-    response.headers["X-Toast-Message"] = "Assessment period and sign-off saved"
++    response.headers["X-Toast-Message"] = "Period and sign-off saved"
+     response.headers["X-Toast-Type"] = "success"
+     return response
+ 
+diff --git a/app/routers/web.py b/app/routers/web.py
+index 371e3c5..0754678 100644
+--- a/app/routers/web.py
++++ b/app/routers/web.py
+@@ -2498,6 +2498,26 @@ async def submit_screening(
+     )
+ 
+ 
++def _analysis_input_counts(db: Session, assessment_id: str) -> dict:
++    """Counts the running-analysis panel names: documents read and answered questions."""
++    try:
++        document_count = len(analysis_documents(db, assessment_id))
++        response_count = (
++            db.query(QuestionnaireResponse)
++            .filter(
++                QuestionnaireResponse.assessment_id == assessment_id,
++                confirmed_response_clause(),
++            )
++            .filter(~QuestionnaireResponse.question_id.like("FU.%"))
++            .filter(func.trim(func.coalesce(QuestionnaireResponse.answer, "")) != "")
++            .count()
++        )
++    except Exception:
++        logger.warning("Analysis input counts unavailable", extra={"assessment_id": assessment_id}, exc_info=True)
++        return {}
++    return {"document_count": document_count, "response_count": response_count}
++
++
+ # --- Analysis trigger ---
+ 
+ 
+@@ -2580,7 +2600,7 @@ def run_analysis_web(
+ 
+     response = templates.TemplateResponse(
+         "partials/analysis_running.html",
+-        {"request": request, "assessment_id": assessment_id},
++        {"request": request, "assessment_id": assessment_id, **_analysis_input_counts(db, assessment_id)},
+     )
+     return _with_toast(response, "Analysis started", "info")
+ 
+@@ -2629,7 +2649,7 @@ def analysis_status(
+ 
+     return templates.TemplateResponse(
+         "partials/analysis_running.html",
+-        {"request": request, "assessment_id": assessment_id},
++        {"request": request, "assessment_id": assessment_id, **_analysis_input_counts(db, assessment_id)},
+     )
+ 
+ 
+diff --git a/app/static/css/yozora-patterns.css b/app/static/css/yozora-patterns.css
+index d7341e8..40a2133 100644
+--- a/app/static/css/yozora-patterns.css
++++ b/app/static/css/yozora-patterns.css
+@@ -258,3 +258,16 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-analysis */
++.bullets{margin-left:var(--s-5);color:var(--text-2);list-style:disc}
++.basis-note{margin-top:var(--s-3)}
++.basis-form{margin-top:var(--s-4)}
++.basis-actions{margin-top:var(--s-6)}
++h3.card-title{margin-top:var(--s-1);font-size:var(--t-md)}
++.facts{display:flex;gap:var(--s-8);flex-wrap:wrap;margin-top:var(--s-4)}
++.facts .fact-value{margin-top:var(--s-1)}
++.card-notes{padding:var(--s-4)}
++.card-notes[hidden]{display:none}
++.card-actions{margin-top:var(--s-6)}
++/* /s7-analysis */
+diff --git a/app/templates/partials/analysis_complete.html b/app/templates/partials/analysis_complete.html
+index 20ccde1..f11995d 100644
+--- a/app/templates/partials/analysis_complete.html
++++ b/app/templates/partials/analysis_complete.html
+@@ -1,35 +1,24 @@
+-<div class="p-4 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+-  <div class="flex items-center gap-3 mb-3">
+-    <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+-    </svg>
+-    <p class="text-sm font-medium text-green-900 dark:text-green-300">Analysis complete</p>
+-  </div>
+-  {% if report %}
+-  <p class="text-sm text-green-700 dark:text-green-400 mb-3">
+-    Framework scores:
++{% from "components/ui.html" import icon, link_button %}
++<div class="stack">
++  <h2>Analysis complete</h2>
++  {% if report and framework_display %}
++  <div class="solid rows">
+     {% for fw_id, fw_data in framework_display.items() %}
+-      {% if not loop.first %}, {% endif %}
+-      <span><strong>{{ fw_data.name }}</strong> {% if fw_data.failed %}analysis failed{% elif fw_data.status == 'pending_review' %}awaiting consultant review{% elif fw_data.score is not none %}{{ fw_data.score | round(0) | int }}%{% else %}scores unavailable{% endif %}</span>
++    <div data-analysis-framework="{{ fw_id }}">
++      <div class="txt">
++        <b>{{ fw_data.name }}</b>
++        {% if fw_data.coverage %}<span class="sub">{{ fw_data.coverage.eligible }} of {{ fw_data.coverage.in_scope }} conclusions approved</span>{% endif %}
++      </div>
++      {% if fw_data.failed %}<span class="status"><span class="dot c-non"></span>Analysis failed</span>
++      {% elif fw_data.status == 'pending_review' %}<span class="status"><span class="dot c-accent"></span>Awaiting consultant review</span>
++      {% elif fw_data.score is not none %}<span class="status"><span class="dot c-ok"></span>{{ fw_data.score | round(0) | int }}%</span>
++      {% else %}<span class="status"><span class="dot c-neutral"></span>Scores unavailable</span>{% endif %}
++    </div>
+     {% endfor %}
+-  </p>
++  </div>
+   {% endif %}
+-  <div class="flex gap-3">
+-    <a href="/assessments/{{ assessment_id }}?tab=report"
+-       class="inline-flex items-center gap-2 bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+-      View Report
+-    </a>
+-    <a href="/assessments/{{ assessment_id }}/conclusions" data-review-conclusions-link
+-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+-      Review conclusions
+-    </a>
+-    <a href="/api/assessments/{{ assessment_id }}/report/pdf"
+-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+-      Live PDF
+-    </a>
+-    <a href="/assessments/{{ assessment_id }}/snapshots"
+-       class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+-      Report versions
+-    </a>
++  <div class="hrow">
++    <a class="btn primary" href="/assessments/{{ assessment_id }}/review-queue" data-review-conclusions-link>Open review queue{{ icon("arrow-r") }}</a>
++    {{ link_button("View report", "/assessments/" ~ assessment_id ~ "?tab=report", "secondary") }}
+   </div>
+ </div>
+diff --git a/app/templates/partials/analysis_error.html b/app/templates/partials/analysis_error.html
+index f71fa8f..2139ecc 100644
+--- a/app/templates/partials/analysis_error.html
++++ b/app/templates/partials/analysis_error.html
+@@ -1,20 +1,16 @@
+-<div class="p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+-  <div class="flex items-center gap-3 mb-2">
+-    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+-    </svg>
+-    <p class="text-sm font-medium text-red-900 dark:text-red-300">Analysis failed</p>
+-  </div>
+-  {% if framework_display is defined and framework_display.values() | selectattr("failed") | list %}
+-  {% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list %}
+-  <p data-analysis-failed-frameworks class="text-sm text-red-700 dark:text-red-400 mb-3">Analysis failed for {{ failed_names | join(", ") }}. Results for the other frameworks were saved. Run analysis again to complete the assessment.</p>
++{% from "components/ui.html" import alert, icon %}
++{% set failed_names = framework_display.values() | selectattr("failed") | map(attribute="name") | list if framework_display is defined else [] %}
++{% set saved_names = framework_display.values() | rejectattr("failed") | map(attribute="name") | list if framework_display is defined else [] %}
++<div class="stack">
++  {% if failed_names %}
++  <div data-analysis-failed-frameworks>{{ alert("Analysis failed for " ~ failed_names | join(", "), ((("The results for " ~ saved_names | join(", ") ~ " were saved. ") if saved_names else "") ~ "Run the analysis again to complete the assessment."), "noncompliant") }}</div>
+   {% else %}
+-  <p class="text-sm text-red-700 dark:text-red-400 mb-3">Something went wrong during the analysis. Please try again.</p>
++  {{ alert("The analysis did not finish", "Something went wrong before any framework was analysed. Nothing was saved. Run the analysis again.", "noncompliant") }}
+   {% endif %}
+-  <button hx-post="/assessments/{{ assessment_id }}/run-analysis"
+-          hx-target="#analysis-area"
+-          hx-swap="innerHTML"
+-          class="bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+-    Retry analysis
+-  </button>
++  <div class="hrow">
++    <button class="btn primary lead" type="button"
++            hx-post="/assessments/{{ assessment_id }}/run-analysis"
++            hx-target="#analysis-area"
++            hx-swap="innerHTML">{{ icon("rotate") }}Run analysis again</button>
++  </div>
+ </div>
+diff --git a/app/templates/partials/analysis_gate_blocked.html b/app/templates/partials/analysis_gate_blocked.html
+index fe815f8..cbafc78 100644
+--- a/app/templates/partials/analysis_gate_blocked.html
++++ b/app/templates/partials/analysis_gate_blocked.html
+@@ -1,25 +1,29 @@
+-<div data-completion-gate-blocked class="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800">
+-  <div class="flex items-center gap-3 mb-2">
+-    <p class="text-sm font-medium text-yellow-900 dark:text-yellow-300">Analysis not started</p>
+-  </div>
+-  <p class="text-sm text-yellow-800 dark:text-yellow-400 mb-4">{{ message }}</p>
++{% from "components/ui.html" import alert, field, link_button %}
++<div data-completion-gate-blocked class="stack">
++  {{ alert("Analysis has not started", message, "medium") }}
+   {% if show_override %}
+-  <form data-completion-override-form
++  <form data-completion-override-form class="stack form-narrow"
+         hx-post="/assessments/{{ assessment_id }}/run-analysis"
+         hx-target="#analysis-area"
+         hx-swap="innerHTML"
+         hx-confirm="Run analysis on an incomplete questionnaire? The override and its reason are recorded in the audit log.">
+-    <div class="space-y-3 mb-4">
+-      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300" for="override_reason">Override reason</label>
+-      <select id="override_reason" name="override_reason" required class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm">
+-        {% for code, label in override_reasons.items() %}
+-        <option value="{{ code }}">{{ label }}</option>
+-        {% endfor %}
+-      </select>
+-      <input name="reviewer_name" placeholder="Your name" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm">
++    <div>
++      <label class="label" for="override_reason">Reason for the override</label>
++      <label class="field"><select id="override_reason" name="override_reason" required>
++        {% for code, label in override_reasons.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
++      </select></label>
++      <p class="help">The override and its reason are recorded in the audit log.</p>
++    </div>
++    <div>
++      <label class="label" for="override_reviewer_name">Your name</label>
++      <label class="field"><input id="override_reviewer_name" name="reviewer_name" autocomplete="name" placeholder="Recorded with the override"></label>
++    </div>
++    <div class="hrow">
++      {{ link_button("Back to questionnaire", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}
++      <button class="btn secondary" type="submit">Run analysis with override</button>
+     </div>
+-    <button type="submit" class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Run analysis with override</button>
+   </form>
++  {% else %}
++  <div class="hrow">{{ link_button("Back to questionnaire", "/assessments/" ~ assessment_id ~ "?tab=questionnaire", "secondary") }}</div>
+   {% endif %}
+-  <a href="/assessments/{{ assessment_id }}?tab=questionnaire" class="inline-block mt-4 text-sm text-brand dark:text-navy-300 hover:underline">Back to questionnaire</a>
+ </div>
+diff --git a/app/templates/partials/analysis_running.html b/app/templates/partials/analysis_running.html
+index 6dace67..227274b 100644
+--- a/app/templates/partials/analysis_running.html
++++ b/app/templates/partials/analysis_running.html
+@@ -1,13 +1,12 @@
+-<div class="flex items-center gap-4 p-4 rounded-lg bg-navy-50 dark:bg-navy-900/40 border border-navy-200 dark:border-navy-800"
++{% from "components/ui.html" import skeleton %}
++<div class="stack" role="status" aria-live="polite"{% if not preview_static %}
+      hx-get="/assessments/{{ assessment_id }}/analysis-status"
+      hx-trigger="every 3s"
+-     hx-swap="outerHTML">
+-  <svg class="animate-spin h-6 w-6 text-brand dark:text-navy-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+-  </svg>
+-  <div>
+-    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Analysis in progress…</p>
+-    <p class="text-xs text-gray-500 dark:text-gray-400">The analysis is reading your documents and questionnaire responses. This typically takes 15–30 seconds.</p>
++     hx-swap="outerHTML"{% endif %}>
++  <span class="status"><span class="st prog"></span>Analysis is running</span>
++  <h2>{% if document_count is defined and response_count is defined %}Reading {{ document_count }} document{{ "" if document_count == 1 else "s" }} and {{ response_count }} questionnaire response{{ "" if response_count == 1 else "s" }}{% else %}Reading your documents and questionnaire responses{% endif %}</h2>
++  <p class="sub">This page updates by itself. You can leave it and come back; the analysis keeps running.</p>
++  <div class="stack tight" aria-busy="true" aria-label="Loading">
++    {{ skeleton("70%") }}{{ skeleton("92%") }}{{ skeleton("48%") }}
+   </div>
+ </div>
+diff --git a/app/templates/partials/release_panel.html b/app/templates/partials/release_panel.html
+index 564d9d2..21c09d0 100644
+--- a/app/templates/partials/release_panel.html
++++ b/app/templates/partials/release_panel.html
+@@ -1,14 +1,63 @@
+-<section data-release-panel data-release-state="{% if release.released %}released{% elif release.stale %}stale{% else %}not_released{% endif %}" class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
++{% from "components/ui.html" import alert, icon, link_button %}
++{# Release panel included by pages/conclusions.html. Context: assessment, release (ReleaseState), optional counts. #}
++{% set release_state = "released" if release.released else ("stale" if release.stale else "not_released") %}
++{% set release_date = release.released_at.strftime("%d %b %Y") if release.released_at else "" %}
++<section data-release-panel data-release-state="{{ release_state }}" class="glass card stack">
+   {% if release.released %}
+-  <p class="text-sm font-medium text-green-700 dark:text-green-400">Released by {{ release.released_by }} on {{ release.released_at.strftime("%d %b %Y") }}</p>
+-  {% elif release.blockers %}
+-  <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Not ready to release</h2>
+-  <ul data-release-blockers class="mt-2 list-disc pl-5 text-xs text-gray-600 dark:text-gray-400">
++  {{ alert("Released by " ~ release.released_by ~ " on " ~ release_date, "Exports use the conclusions as they were approved at release.", "ok", "circle-check") }}
++  <div class="hrow">
++    {{ link_button("Live PDF", "/api/assessments/" ~ assessment.id ~ "/report/pdf", "primary", "", "download", true) }}
++    {{ link_button("Report versions", "/assessments/" ~ assessment.id ~ "/snapshots", "ghost") }}
++  </div>
++  {% else %}
++  {% if release.stale %}
++  {{ alert("The release is out of date", "A conclusion changed after the report was released" ~ (" on " ~ release_date if release_date else "") ~ ". Exports stay closed until you release again.", "medium") }}
++  {% endif %}
++  {% if release.blockers %}
++  <h2>Not ready to release</h2>
++  <ul data-release-blockers class="bullets">
+     {% for blocker in release.blockers %}<li>{{ blocker }}</li>{% endfor %}
+   </ul>
+   {% else %}
+-  <form data-release-form hx-post="/api/assessments/{{ assessment.id }}/release" hx-include="#reviewer-name" hx-swap="none" hx-confirm="Release this report? Exports will use the approved conclusions exactly as they are now.">
+-    <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Release report</button>
+-  </form>
++  {% if not release.stale %}
++  <h2>Ready to release</h2>
++  {% if counts is defined and counts.pending == 0 and counts.rejected == 0 and counts.legacy_bulk == 0 and (counts.approved + counts.edited) > 0 %}
++  {% set approved_total = counts.approved + counts.edited %}
++  <p class="muted">{% if approved_total == 1 %}The one in-scope conclusion is individually approved.{% else %}All {{ approved_total }} in-scope conclusions are individually approved.{% endif %}</p>
++  {% else %}
++  <p class="muted">All in-scope conclusions are individually approved.</p>
++  {% endif %}
++  {% endif %}
++  <div class="hrow">
++    <button class="btn primary" type="button" id="release-open" data-modal-open="release-modal">{{ "Release again" if release.stale else "Release report" }}</button>
++    {% if release.stale %}{{ link_button("Open conclusions", "/assessments/" ~ assessment.id ~ "/conclusions", "ghost") }}{% endif %}
++  </div>
++  {% endif %}
+   {% endif %}
+ </section>
++{% if not release.released and not release.blockers %}
++  <div class="scrim-modal" id="release-modal" data-modal hidden>
++    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="release-modal-title">
++      <h2 id="release-modal-title">Release this report?</h2>
++      <p>Exports will use the conclusions exactly as they are approved now. If you change a conclusion later, the release becomes out of date and exports close until you release again.</p>
++      <form class="foot" data-release-form hx-post="/api/assessments/{{ assessment.id }}/release" hx-include="#reviewer-name" hx-swap="none">
++        <button class="btn ghost" type="button" data-modal-close>Cancel</button>
++        <button class="btn primary" type="submit">Release report</button>
++      </form>
++    </div>
++  </div>
++  {% include "partials/yozora_page_controls.html" %}
++  <script>
++  (() => {
++    const modal = document.getElementById("release-modal");
++    const opener = document.getElementById("release-open");
++    if (!modal || !opener || !window.MutationObserver) return;
++    const sync = () => {
++      opener.classList.toggle("primary", modal.hidden);
++      opener.classList.toggle("secondary", !modal.hidden);
++    };
++    new MutationObserver(sync).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
++  })();
++  </script>
++{% endif %}
++
+diff --git a/app/templates/partials/report_basis_panel.html b/app/templates/partials/report_basis_panel.html
+index 80f43de..9c3a8de 100644
+--- a/app/templates/partials/report_basis_panel.html
++++ b/app/templates/partials/report_basis_panel.html
+@@ -1,29 +1,42 @@
+-<section data-report-basis-panel data-period-recorded="{{ 'yes' if report_basis.period_recorded else 'no' }}" data-period-locked="{{ 'yes' if period_locked else 'no' }}" class="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+-  <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Assessment period and sign-off</h2>
+-  <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">The period and evidence cut-off are required before any conclusion can be approved, and are printed on every report.{% if period_locked %} They are locked while any conclusion is approved; reopen approved conclusions to change them.{% endif %}</p>
+-  <form data-report-basis-form class="mt-4 grid gap-4 sm:grid-cols-2" hx-post="/api/assessments/{{ assessment.id }}/report-basis" hx-include="#reviewer-name" hx-swap="none">
+-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-      Period start
+-      <input type="date" name="period_start" value="{{ report_basis.period_start.isoformat() if report_basis.period_start else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-    </label>
+-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-      Period end
+-      <input type="date" name="period_end" value="{{ report_basis.period_end.isoformat() if report_basis.period_end else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-    </label>
+-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-      Evidence cut-off
+-      <input type="date" name="evidence_cutoff" value="{{ report_basis.evidence_cutoff.isoformat() if report_basis.evidence_cutoff else '' }}"{% if period_locked %} readonly{% endif %} class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-    </label>
+-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-      Prepared by
+-      <input type="text" name="prepared_by" maxlength="200" value="{{ report_basis.prepared_by or '' }}" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-    </label>
+-    <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-      Reviewed by
+-      <input type="text" name="reviewed_by" maxlength="200" value="{{ report_basis.reviewed_by or '' }}" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+-    </label>
+-    <div class="flex items-end">
+-      <button type="submit" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Save period and sign-off</button>
++{% from "components/ui.html" import alert %}
++{# Assessment period and sign-off, included by pages/conclusions.html.
++   Context: assessment, report_basis, period_locked; field_errors is optional (preview only today). #}
++{% set errors = field_errors if field_errors is defined and field_errors else {} %}
++<section data-report-basis-panel data-period-recorded="{{ 'yes' if report_basis.period_recorded else 'no' }}" data-period-locked="{{ 'yes' if period_locked else 'no' }}" class="glass card">
++  <h2>Period and sign-off</h2>
++  {% if period_locked %}
++  <div class="basis-note">{{ alert("Locked while conclusions are approved", "Reopen the approved conclusions to change the period or the evidence cut-off.", "accent", "lock") }}</div>
++  {% elif not report_basis.period_recorded %}
++  <div class="basis-note">{{ alert("Record the period and evidence cut-off", "No conclusion can be approved until they are set. They are printed on every report.", "medium") }}</div>
++  {% endif %}
++  <form data-report-basis-form class="basis-form" hx-post="/api/assessments/{{ assessment.id }}/report-basis" hx-include="#reviewer-name" hx-swap="none">
++    <div class="fw-grid">
++    <div>
++      <label class="label" for="period_start">Period start</label>
++      <label class="field{% if errors.period_start %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="period_start" type="date" name="period_start" value="{{ report_basis.period_start.isoformat() if report_basis.period_start else '' }}"{% if period_locked %} readonly{% endif %}></label>
++      {% if errors.period_start %}<p class="err">{{ errors.period_start }}</p>{% endif %}
++    </div>
++    <div>
++      <label class="label" for="period_end">Period end</label>
++      <label class="field{% if errors.period_end %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="period_end" type="date" name="period_end" value="{{ report_basis.period_end.isoformat() if report_basis.period_end else '' }}"{% if period_locked %} readonly{% endif %}></label>
++      {% if errors.period_end %}<p class="err">{{ errors.period_end }}</p>{% endif %}
++    </div>
++    <div>
++      <label class="label" for="evidence_cutoff">Evidence cut-off</label>
++      <label class="field{% if errors.evidence_cutoff %} invalid{% endif %}"{% if period_locked %} aria-disabled="true"{% endif %}><input id="evidence_cutoff" type="date" name="evidence_cutoff" value="{{ report_basis.evidence_cutoff.isoformat() if report_basis.evidence_cutoff else '' }}"{% if period_locked %} readonly{% endif %}></label>
++      {% if errors.evidence_cutoff %}<p class="err">{{ errors.evidence_cutoff }}</p>{% elif report_basis.evidence_cutoff and not errors %}<p class="help">Evidence dated after this is left out of the analysis.</p>{% endif %}
++    </div>
++    <div>
++      <label class="label" for="prepared_by">Prepared by</label>
++      <label class="field"><input id="prepared_by" type="text" name="prepared_by" maxlength="200" value="{{ report_basis.prepared_by or '' }}"></label>
++    </div>
++    <div>
++      <label class="label" for="reviewed_by">Reviewed by</label>
++      <label class="field"><input id="reviewed_by" type="text" name="reviewed_by" maxlength="200" value="{{ report_basis.reviewed_by or '' }}"></label>
++    </div>
++    </div>
++    <div class="hrow basis-actions">
++      <button class="btn {{ 'secondary' if period_locked else 'primary' }}" type="submit">Save period and sign-off</button>
+     </div>
+   </form>
+ </section>
+diff --git a/app/templates/partials/review_finding_card.html b/app/templates/partials/review_finding_card.html
+index d090e3c..d4001fc 100644
+--- a/app/templates/partials/review_finding_card.html
++++ b/app/templates/partials/review_finding_card.html
+@@ -1,103 +1,110 @@
+ {# Individual finding review card #}
+-{# Expects: item (GapItem with review + ai_* fields), assessment (Assessment) #}
+-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
++{# Expects: item (GapItem with review + ai_* fields), assessment (Assessment). Optional: notes_open (specimen only). #}
++{% from "components/ui.html" import icon %}
++{% set review_state = item.review_status or 'draft' %}
++{% set ai_status = item.ai_compliance_status or item.compliance_status %}
++{% set status_tones = {'compliant': 'c-ok', 'partially_compliant': 'c-part', 'non_compliant': 'c-non', 'insufficient_evidence': 'c-insuf'} %}
++{% set status_labels = {'compliant': 'Compliant', 'partially_compliant': 'Partially compliant', 'non_compliant': 'Non-compliant', 'insufficient_evidence': 'Insufficient evidence'} %}
++{% set risk_level = item.ai_risk_level or item.risk_level %}
++{% set risk_tones = {'critical': 'c-critical', 'high': 'c-high', 'medium': 'c-medium', 'low': 'c-low'} %}
++{% set notes_visible = notes_open is defined and notes_open %}
++<div class="solid card"
+      data-review-card
+-     data-review-status="{{ item.review_status or 'draft' }}"
++     data-review-status="{{ review_state }}"
+      data-risk-level="{{ item.risk_level }}"
+      id="review-card-{{ item.id }}">
+-
+-  <div class="px-5 py-4">
+-    {# Header: requirement + badges #}
+-    <div class="flex items-start justify-between mb-3">
+-      <div>
+-        <div class="flex items-center gap-2 mb-1">
+-          {% if item.framework_id is defined and item.framework_id %}
+-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">{{ item.framework_id | upper }}</span>
+-          {% endif %}
+-          <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ item.requirement_id }}</span>
+-        </div>
+-        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.requirement_title }}</h4>
+-      </div>
+-      <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+-        {% set review_badge = {
+-          'draft': 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+-          'accepted': 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+-          'rejected': 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
+-        } %}
+-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ review_badge.get(item.review_status or 'draft', review_badge['draft']) }}">
+-          {{ (item.review_status or 'draft') | title }}
+-        </span>
++  <div class="d-title">
++    <div>
++      <div class="hrow">
++        {% if item.framework_id is defined and item.framework_id %}<span class="chip">{{ item.framework_id | upper }}</span>{% endif %}
++        {% if item.chapter %}<span class="muted">{{ item.chapter }}</span>{% else %}<span class="muted">{{ item.requirement_id }}</span>{% endif %}
+       </div>
++      <h3 class="card-title">{{ item.requirement_title }}</h3>
+     </div>
++    {% if review_state == 'accepted' %}<span class="status">{{ icon("check") }} Accepted</span>
++    {% elif review_state == 'rejected' %}<span class="status">{{ icon("x") }} Rejected</span>
++    {% else %}<span class="status"><span class="st"></span>Draft</span>{% endif %}
++  </div>
+ 
+-    {# AI assessment (read-only) #}
+-    <div class="grid grid-cols-3 gap-4 mb-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+-      <div>
+-        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">AI Status</p>
+-        {% set status_colors = {'compliant': 'text-green-600', 'partially_compliant': 'text-yellow-600', 'non_compliant': 'text-red-600'} %}
+-        <p class="text-sm font-medium {{ status_colors.get(item.ai_compliance_status or item.compliance_status, 'text-gray-600 dark:text-gray-400') }}">
+-          {{ (item.ai_compliance_status or item.compliance_status) | replace('_', ' ') | title }}
+-          {% if item.needs_review %}
+-          <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
+-                title="The model flagged this verdict for human review because it lacks supporting evidence."
+-                aria-label="Needs review">⚠ Needs review</span>
+-          {% endif %}
+-        </p>
+-      </div>
+-      <div>
+-        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">AI Risk Level</p>
+-        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ (item.ai_risk_level or item.risk_level) | title }}</p>
+-      </div>
+-      <div>
+-        <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Evidence</p>
+-        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ (item.evidence_confidence or 'weak') | title }}</p>
+-      </div>
++  <div class="facts">
++    <div>
++      <span class="sub">AI status</span>
++      <div class="fact-value"><span class="pill {{ status_tones.get(ai_status, 'c-neutral') }}">{{ status_labels.get(ai_status, (ai_status or 'unknown') | replace('_', ' ') | capitalize) }}</span>
++      {% if item.needs_review %}<span class="warn" title="The model flagged this verdict for review because no evidence supports it.">{{ icon("alert") }}Needs review</span>{% endif %}</div>
++    </div>
++    <div>
++      <span class="sub">AI risk level</span>
++      <div class="fact-value"><span class="pill {{ risk_tones.get(risk_level, 'c-neutral') }}">{{ (risk_level or 'unknown') | capitalize }}</span></div>
+     </div>
++    <div>
++      <span class="sub">Evidence</span>
++      <div class="fact-value"><span class="chip">{% if not item.evidence_quote and item.needs_review %}No evidence{% else %}{{ (item.evidence_confidence or 'weak') | capitalize }}{% endif %}</span></div>
++    </div>
++  </div>
+ 
+-    {# Gap description #}
+-    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">{{ item.ai_gap_description or item.gap_description }}</p>
++  <p class="concl mt">{{ item.ai_gap_description or item.gap_description }}</p>
+ 
+-    {% if item.evidence_quote %}
+-    <div class="mb-3 pl-3 border-l-2 border-navy-200 dark:border-navy-700">
+-      <p class="text-xs text-gray-500 dark:text-gray-400 italic">"{{ item.evidence_quote[:300] }}{% if item.evidence_quote | length > 300 %}...{% endif %}"</p>
+-    </div>
+-    {% endif %}
++  {% if item.evidence_quote %}
++  <div class="cite mt">
++    <div class="cite-head">{{ icon("file") }}<span>Evidence quote</span></div>
++    <blockquote>{{ item.evidence_quote[:300] }}{% if item.evidence_quote | length > 300 %}...{% endif %}</blockquote>
++  </div>
++  {% endif %}
+ 
+-    {# Reviewer actions #}
+-    <div class="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+-      <button hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+-              hx-vals='{"review_status": "accepted"}'
+-              hx-target="#review-card-{{ item.id }}"
+-              hx-swap="outerHTML"
+-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+-                     {% if item.review_status == 'accepted' %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800
+-                     {% else %}text-gray-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-700{% endif %}">
+-        ✓ Accept
+-      </button>
+-      <button hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+-              hx-vals='{"review_status": "rejected"}'
+-              hx-target="#review-card-{{ item.id }}"
+-              hx-swap="outerHTML"
+-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+-                     {% if item.review_status == 'rejected' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800
+-                     {% else %}text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-gray-700{% endif %}">
+-        ✕ Reject
+-      </button>
+-      <div class="flex-1"></div>
+-      <details class="relative">
+-        <summary class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors">
+-          Add Notes
+-        </summary>
+-        <div class="absolute right-0 mt-1 w-80 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-lg p-3 z-10">
+-          <form hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
+-                hx-target="#review-card-{{ item.id }}"
+-                hx-swap="outerHTML">
+-            <textarea name="reviewer_notes" rows="3" placeholder="Reviewer notes..."
+-                      class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:border-navy-500 dark:focus:border-navy-400 outline-none resize-none mb-2">{{ item.reviewer_notes or '' }}</textarea>
+-            <button type="submit" class="bg-brand dark:bg-navy-600 hover:bg-brand-light dark:hover:bg-navy-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Save Notes</button>
+-          </form>
+-        </div>
+-      </details>
+-    </div>
++  {% if item.reviewer_notes and not notes_visible %}
++  <div class="cite mt">
++    <div class="cite-head"><span>Reviewer notes</span></div>
++    <blockquote>{{ item.reviewer_notes }}</blockquote>
++  </div>
++  {% endif %}
++
++  <div class="solid card-notes mt" data-notes-panel{% if not notes_visible %} hidden{% endif %}>
++    <form class="stack"
++          hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
++          hx-target="#review-card-{{ item.id }}"
++          hx-swap="outerHTML">
++      <label class="label" for="reviewer-notes-{{ item.id }}">Reviewer notes</label>
++      <label class="field area"><textarea id="reviewer-notes-{{ item.id }}" name="reviewer_notes" rows="3" placeholder="What should the next reviewer know?">{{ item.reviewer_notes or '' }}</textarea></label>
++      <div><button class="btn secondary sm" type="submit">Save notes</button></div>
++    </form>
++  </div>
++
++  <div class="hrow card-actions">
++    {% if review_state == 'accepted' or review_state == 'rejected' %}
++    <button class="btn ghost" type="button"
++            hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
++            hx-vals='{"review_status": "draft"}'
++            hx-target="#review-card-{{ item.id }}"
++            hx-swap="outerHTML">Change decision</button>
++    {% else %}
++    <button class="btn primary" type="button"
++            hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
++            hx-vals='{"review_status": "accepted"}'
++            hx-target="#review-card-{{ item.id }}"
++            hx-swap="outerHTML">Accept</button>
++    <button class="btn danger" type="button"
++            hx-patch="/api/assessments/{{ assessment.id }}/review/items/{{ item.id }}"
++            hx-vals='{"review_status": "rejected"}'
++            hx-target="#review-card-{{ item.id }}"
++            hx-swap="outerHTML">Reject</button>
++    <button class="btn ghost sm lead" type="button" data-notes-toggle{% if notes_visible %} hidden{% endif %}>{{ icon("pen") }}{{ "Edit notes" if item.reviewer_notes else "Add notes" }}</button>
++    {% endif %}
+   </div>
++  <script>
++  (() => {
++    if (window.__reviewNotesToggle) return;
++    window.__reviewNotesToggle = true;
++    document.addEventListener("click", (event) => {
++      const toggle = event.target.closest("[data-notes-toggle]");
++      if (!toggle) return;
++      const card = toggle.closest("[data-review-card]");
++      const panel = card && card.querySelector("[data-notes-panel]");
++      if (!panel) return;
++      panel.hidden = false;
++      toggle.hidden = true;
++      const field = panel.querySelector("textarea");
++      if (field) field.focus();
++    });
++  })();
++  </script>
+ </div>
+diff --git a/design/harness/seed_s7_analysis.py b/design/harness/seed_s7_analysis.py
+new file mode 100644
+index 0000000..34afe68
+--- /dev/null
++++ b/design/harness/seed_s7_analysis.py
+@@ -0,0 +1,242 @@
++"""S7 group "analysis": analysis states, release panel, report basis panel, finding review card.
++
++Mockups: b5-analysis, b5-release, b5-basis, b5-review-finding-card. All four render through
++``/design/pages/<screen>?state=<state>&assessment_id=<id>`` (``app/routers/design_s7_analysis.py``):
++the partials are fragments with no page of their own, or are included by pages another group owns.
++The fixture reads real data from the seeded database; what the seed cannot produce is listed in
++each ``note``.
++"""
++
++from __future__ import annotations
++
++import json
++
++from design.harness.seed_s4 import SEED_ACTOR, _audit, _time
++
++SCREEN_STATES = {
++    "b5-analysis": ("running", "complete", "error", "error-all", "gate", "gate-no-override"),
++    "b5-release": ("blocked", "ready", "confirm", "released", "stale"),
++    "b5-basis": ("empty", "filled", "invalid", "locked", "saved"),
++    "b5-review-finding-card": ("draft", "needs-review", "notes", "accepted", "rejected"),
++}
++
++PREPARED_BY = "Arjun Mehta"
++REVIEWED_BY = "Priya Sharma"
++
++
++def route(screen: str, state: str, assessment_id: str) -> str:
++    return f"/design/pages/{screen}?state={state}&assessment_id={assessment_id}"
++
++
++def _controls(assessment, per_framework: int = 3) -> dict[str, list]:
++    from app.frameworks.registry import FrameworkRegistry
++
++    return {
++        framework_id: list(FrameworkRegistry.get_all_controls(framework_id)[:per_framework])
++        for framework_id in assessment.frameworks
++    }
++
++
++def _gap_report(db, assessment, framework_scores: dict | None = None) -> None:
++    from app.models.report import GapReport
++
++    db.add(
++        GapReport(
++            id=f"gap-report-{assessment.id}",
++            assessment_id=assessment.id,
++            overall_score=0.0,
++            chapter_scores="{}",
++            executive_summary="Seeded analysis report.",
++            raw_ai_response="{}",
++            framework_scores=json.dumps(framework_scores) if framework_scores else None,
++            generated_at=_time(-1),
++        )
++    )
++    db.flush()
++
++
++def _conclusions(db, assessment, approved: dict[str, int], per_framework: int = 3) -> None:
++    """Three in-scope conclusions per framework; the first ``approved[framework]`` are approved."""
++    from app.models.conclusion import Conclusion, ConclusionRevision
++
++    controls = _controls(assessment, per_framework)
++    assessment.applicable_requirements = json.dumps(
++        [control.id for framework_controls in controls.values() for control in framework_controls]
++    )
++    assessment.scope_answers = json.dumps({})
++    db.flush()
++    for framework_id, framework_controls in controls.items():
++        for index, control in enumerate(framework_controls):
++            conclusion = Conclusion(
++                id=f"conclusion-s7a-{framework_id}-{index}",
++                assessment_id=assessment.id,
++                framework_id=framework_id,
++                requirement_id=control.id,
++                outcome="partially_compliant",
++                rationale="Seeded conclusion.",
++                evidence_summary="Seeded evidence summary.",
++                gaps_identified="Seeded gap.",
++                risk_level="medium",
++                recommended_action="Seeded recommendation.",
++                ai_proposed=True,
++                created_at=_time(-6),
++                updated_at=_time(-5),
++            )
++            db.add(conclusion)
++            db.flush()
++            db.add(ConclusionRevision(id=f"revision-proposed-{conclusion.id}", conclusion_id=conclusion.id,
++                                      actor="system:analysis", action="proposed", created_at=_time(-6)))
++            if index < approved.get(framework_id, 0):
++                db.add(ConclusionRevision(id=f"revision-approved-{conclusion.id}", conclusion_id=conclusion.id,
++                                          actor=SEED_ACTOR, action="approved", created_at=_time(-5)))
++    db.flush()
++
++
++def _basis_names(db, assessment) -> None:
++    """Record the sign-off names the basis mockup shows, on top of the base period event."""
++    db.add(
++        _audit(
++            f"audit-basis-names-{assessment.id}",
++            action="assessment.report_basis_updated",
++            entity_type="assessment",
++            entity_id=assessment.id,
++            created_at=_time(-26),
++            metadata={
++                "after": {
++                    "period_start": "2025-04-01",
++                    "period_end": "2026-03-31",
++                    "evidence_cutoff": "2026-03-15",
++                    "prepared_by": PREPARED_BY,
++                    "reviewed_by": REVIEWED_BY,
++                }
++            },
++        )
++    )
++    db.flush()
++
++
++def _release(db, assessment) -> None:
++    from app.services import approved_report
++
++    event = approved_report.record_release(db, assessment, actor=SEED_ACTOR)
++    event.created_at = _time(-6)  # 24 Sep 2026
++    db.flush()
++
++
++def _finding_item(db, assessment, state: str) -> None:
++    from app.models.report import GapItem
++
++    _gap_report(db, assessment)
++    quote = (
++        None
++        if state == "needs-review"
++        else "The consent preference page lets users view their choices. "
++        "Changes are requested through the data protection officer."
++    )
++    db.add(
++        GapItem(
++            id="gap-item-s7-consent",
++            report_id=f"gap-report-{assessment.id}",
++            requirement_id="CH2.CONSENT.3",
++            framework_id="dpdpa",
++            chapter="Consent",
++            requirement_title="Consent withdrawal mechanism",
++            compliance_status="non_compliant",
++            current_state="Withdrawal is by email only.",
++            gap_description=(
++                "Users cannot withdraw consent in the product. "
++                "The only route is an email to the data protection officer."
++            ),
++            risk_level="high",
++            remediation_action="Add a withdrawal control to the preference page.",
++            remediation_priority=1,
++            remediation_effort="medium",
++            timeline_weeks=6,
++            evidence_quote=quote,
++            evidence_confidence="weak",
++            review_status={"accepted": "accepted", "rejected": "rejected"}.get(state, "draft"),
++            needs_review=state == "needs-review",
++            ai_compliance_status="non_compliant",
++            ai_risk_level="high",
++            reviewer_notes=(
++                "The mechanism exists in the mobile app. Evidence is for the web product only."
++                if state == "rejected"
++                else None
++            ),
++        )
++    )
++    db.flush()
++
++
++def apply(db, screen, state, assessment, engagement, data) -> dict:
++    from design.harness.seed_s5 import _seed_documents, _seed_questionnaire_responses
++
++    if screen == "b5-analysis":
++        if state == "running":
++            assessment.status = "analyzing"
++            _seed_documents(db, engagement, assessment, 14, "s7a")
++            _seed_questionnaire_responses(db, assessment, complete=True)
++            return {"data_state": "database", "note": "Assessment status analyzing; 14 documents and the full questionnaire seeded, counts read live."}
++        if state == "complete":
++            assessment.status = "completed"
++            _gap_report(db, assessment)
++            _conclusions(db, assessment, {"dpdpa": 2, "iso27001": 1})
++            return {"data_state": "database", "note": "Completed analysis with 2 of 3 DPDPA and 1 of 3 ISO 27001 conclusions approved; panel rendered from analysis_status."}
++        if state == "error":
++            from app.services.scoring import failed_framework_scores
++
++            assessment.status = "error"
++            _gap_report(db, assessment, {"iso27001": failed_framework_scores()})
++            _conclusions(db, assessment, {"dpdpa": 0})
++            return {"data_state": "database", "note": "Stored report marks ISO 27001 failed; panel rendered from analysis_status."}
++        if state == "error-all":
++            assessment.status = "error"
++            return {"data_state": "database", "note": "Assessment status error with no stored report; panel rendered from analysis_status."}
++        if state == "gate":
++            assessment.status = "created"
++            _seed_documents(db, engagement, assessment, 14, "s7a")
++            return {"data_state": "database", "note": "Run-analysis refused by the real completion gate (documents, empty questionnaire)."}
++        assessment.status = "created"
++        assessment.applicable_requirements = json.dumps([])
++        return {"data_state": "database", "note": "No evidence and no in-scope questions: the real run-analysis route refuses with no override."}
++
++    if screen == "b5-release":
++        _gap_report(db, assessment)
++        if state == "blocked":
++            _conclusions(db, assessment, {"dpdpa": 3, "iso27001": 0})
++            return {"data_state": "database", "note": "3 of 6 conclusions approved, so the real release blockers show."}
++        _conclusions(db, assessment, {"dpdpa": 3, "iso27001": 3})
++        if state in {"released", "stale"}:
++            _release(db, assessment)
++        if state == "stale":
++            from app.models.conclusion import Conclusion
++
++            conclusion = db.get(Conclusion, "conclusion-s7a-dpdpa-0")
++            conclusion.version += 1
++            conclusion.rationale = "Seeded conclusion, changed after release."
++            db.flush()
++        note = "confirm shows the closed panel with the confirm modal opened by the fixture" if state == "confirm" else "real release state"
++        return {"data_state": "preview-state" if state == "confirm" else "database", "note": note}
++
++    if screen == "b5-basis":
++        if state == "empty":
++            return {"data_state": "preview-state", "note": "The base seed always records a period; the fixture renders the panel with an empty basis."}
++        _basis_names(db, assessment)
++        if state == "locked":
++            _gap_report(db, assessment)
++            _conclusions(db, assessment, {"dpdpa": 2, "iso27001": 0})
++            return {"data_state": "database", "note": "Approved conclusions lock the period (real period_locked)."}
++        if state == "invalid":
++            return {"data_state": "preview-state", "note": "The route answers invalid dates with a toast; the fixture shows the in-field error."}
++        if state == "saved":
++            return {"data_state": "database", "note": "Recorded basis; the fixture appends the save confirmation row."}
++        return {"data_state": "database", "note": "Recorded period and sign-off names."}
++
++    # b5-review-finding-card
++    _finding_item(db, assessment, state)
++    return {
++        "data_state": "preview-state" if state == "notes" else "database",
++        "note": "Legacy gap item seeded with the state's review status; the notes editor is opened by the fixture."
++        if state == "notes"
++        else "Legacy gap item seeded with the state's review status and flags.",
++    }
+diff --git a/design/yozora-patterns.css b/design/yozora-patterns.css
+index d7341e8..40a2133 100644
+--- a/design/yozora-patterns.css
++++ b/design/yozora-patterns.css
+@@ -258,3 +258,16 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++
++/* s7-analysis */
++.bullets{margin-left:var(--s-5);color:var(--text-2);list-style:disc}
++.basis-note{margin-top:var(--s-3)}
++.basis-form{margin-top:var(--s-4)}
++.basis-actions{margin-top:var(--s-6)}
++h3.card-title{margin-top:var(--s-1);font-size:var(--t-md)}
++.facts{display:flex;gap:var(--s-8);flex-wrap:wrap;margin-top:var(--s-4)}
++.facts .fact-value{margin-top:var(--s-1)}
++.card-notes{padding:var(--s-4)}
++.card-notes[hidden]{display:none}
++.card-actions{margin-top:var(--s-6)}
++/* /s7-analysis */

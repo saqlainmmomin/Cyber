@@ -1,0 +1,643 @@
+diff --git a/app/routers/requirement_review.py b/app/routers/requirement_review.py
+index cbd4a6b..e8e0f6b 100644
+--- a/app/routers/requirement_review.py
++++ b/app/routers/requirement_review.py
+@@ -1,5 +1,6 @@
+ """Requirement card, review queue and evidence span routes."""
+ 
++import re
+ from pathlib import Path
+ from urllib.parse import quote
+ 
+@@ -9,7 +10,9 @@ from fastapi.templating import Jinja2Templates
+ from sqlalchemy.orm import Session
+ 
+ from app.database import get_db
++from app.frameworks.registry import FrameworkRegistry
+ from app.models.assessment import Assessment
++from app.models.engagement import Engagement
+ from app.services import conclusion_review, requirement_card, review_queue, rfi_evidence_requests
+ from app.template_config import configure_templates
+ 
+@@ -18,6 +21,28 @@ _templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent /
+ configure_templates(_templates)
+ 
+ 
++def review_page_chrome(db: Session, assessment: Assessment) -> dict:
++    """Engagement, review period and the short requirement reference the Review pages show."""
++    from app.template_config import engagement_period
++
++    engagement = db.get(Engagement, assessment.engagement_id) if assessment.engagement_id else None
++    return {
++        "engagement": engagement,
++        "period": engagement_period(engagement) if engagement else None,
++        "requirement_ref": requirement_ref,
++    }
++
++
++def requirement_ref(framework_id: str, requirement_id: str) -> str:
++    """Short clause reference for a requirement ("A.5.18", "s.6(4)"); empty when the pack has none."""
++    framework = FrameworkRegistry.get_or_none(framework_id)
++    control = framework.get_control(requirement_id) if framework is not None else None
++    reference = (getattr(control, "reference", "") or "") if control is not None else ""
++    first = re.split(r"[;,]", reference)[0].strip()
++    first = re.sub(r"^Annex\s+", "", first)
++    return re.sub(r"^Section\s+", "s.", first)
++
++
+ @router.get("/assessments/{assessment_id}/review-queue", response_class=HTMLResponse)
+ def review_queue_page(
+     request: Request,
+@@ -47,6 +72,8 @@ def review_queue_page(
+             "open_count": open_count,
+             "reviewer_name": _latest_reviewer_name(db, assessment_id),
+             "shared_evidence_label": requirement_card.SHARED_EVIDENCE_LABEL,
++            "decided_count": total - open_count,
++            **review_page_chrome(db, assessment),
+         },
+     )
+ 
+diff --git a/app/routers/web.py b/app/routers/web.py
+index 371e3c5..edf1f43 100644
+--- a/app/routers/web.py
++++ b/app/routers/web.py
+@@ -2951,6 +2951,8 @@ def conclusions_page(
+         "legacy_bulk": sum(card.legacy_bulk_approval for card in cards),
+     }
+     release = approved_report.release_state(db, assessment)
++    from app.routers.requirement_review import review_page_chrome
++
+     return templates.TemplateResponse(
+         request=request,
+         name="pages/conclusions.html",
+@@ -2963,6 +2965,7 @@ def conclusions_page(
+             "release": release,
+             "report_basis": report_basis.current_basis(db, assessment),
+             "period_locked": report_basis.period_locked(db, assessment),
++            **review_page_chrome(db, assessment),
+         },
+     )
+ 
+diff --git a/app/static/css/yozora-patterns.css b/app/static/css/yozora-patterns.css
+index d7341e8..05d9aab 100644
+--- a/app/static/css/yozora-patterns.css
++++ b/app/static/css/yozora-patterns.css
+@@ -258,3 +258,26 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++/* s7-pages */
++.shell-content.page:has(.rq-page){max-width:1120px;padding-top:var(--s-2);padding-bottom:var(--s-6)}
++.rq-seg{overflow-x:auto;margin:var(--s-4) 0}
++.rq-reviewer{width:200px}
++.rq-progress{display:flex;justify-content:flex-end;margin-top:var(--s-8);margin-bottom:var(--s-3)}
++.rq-keys{display:inline-flex;align-items:center;gap:var(--s-3);margin-right:var(--s-3)}
++.rq-list a.item{color:inherit;text-decoration:none}
++.rq-group + .rq-group{margin-top:var(--s-8)}
++.rq-claims{list-style:none;display:flex;flex-direction:column;gap:var(--s-3);margin-top:var(--s-3)}
++.rq-claims a{color:inherit;text-decoration:underline}
++.rq-detail.rq-idle{align-items:center;justify-content:center}
++.rq-idle .rq-body{display:none}
++.rq-detail:not(.rq-idle) [data-queue-done]{display:none}
++.rv-panels{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-4)}
++.rv-toggle{display:block;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
++.rv-toggle .t-title,.rv-toggle .t-sub{display:block}
++.rv-row{cursor:pointer}
++.rv-toggle:focus-visible{outline:none;box-shadow:0 0 0 2px var(--accent-ring);border-radius:var(--r-xs)}
++.rv-row[aria-expanded=true] td.go svg{opacity:1;transform:rotate(90deg)}
++.rv-detail > td{padding:var(--s-4) var(--s-5)}
++.rv-stats{padding:var(--s-5) var(--s-6);display:flex;gap:var(--s-6);flex-wrap:wrap}
++.rv-stats > div{flex:1;min-width:110px}
++/* /s7-pages */
+diff --git a/app/templates/pages/conclusions.html b/app/templates/pages/conclusions.html
+index 4c395a4..b3c42f8 100644
+--- a/app/templates/pages/conclusions.html
++++ b/app/templates/pages/conclusions.html
+@@ -1,55 +1,127 @@
+ {% extends "base.html" %}
+-{% block title %}Conclusions — {{ assessment.company_name }}{% endblock %}
++{% from "components/layout.html" import assessment_tabs %}
++{% from "components/seg_rows.html" import review_seg %}
++{# b5 "Conclusions": one summary table per framework. Each row opens its conclusion card in place,
++   so the card's forms, ids and data-* attributes stay in the page. #}
++{% set page_title = "Conclusions" %}
++{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"} %}
++{% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
++{% set stats = [('pending', 'Pending'), ('approved', 'Approved'), ('edited', 'Edited and approved'), ('rejected', 'Rejected'), ('legacy_bulk', 'Approved in bulk')] %}
++
++{% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}
++
++{% block crumbs %}
++<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/review-queue">Review</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
++{% endblock %}
++
++{% macro decision_cell(card) -%}
++{%- if card.legacy_bulk_approval -%}<span class="status"><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Not individually reviewed</span></span>
++{%- elif card.state == 'approved' -%}<span class="status"><svg class="i"><use href="#i-check"/></svg> Approved</span>
++{%- elif card.state == 'edited' -%}<span class="status"><svg class="i"><use href="#i-pen"/></svg> Edited and approved</span>
++{%- elif card.state == 'rejected' -%}<span class="status"><svg class="i"><use href="#i-x"/></svg> Rejected</span>
++{%- else -%}<span class="status"><span class="st"></span>Pending</span>{%- endif -%}
++{%- endmacro %}
+ 
+ {% block content %}
+-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+-  <span class="mx-1.5">/</span>
+-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+-  <span class="mx-1.5">/</span>
+-  <span class="text-gray-600 dark:text-gray-300">Conclusions</span>
+-</nav>
+-
+-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
++<div class="page-head">
+   <div>
+-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Conclusions: individual approval</h1>
+-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Review the evidence and proposal for each conclusion before deciding.</p>
+-    <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (read-only trace) →</a>
+-    <a href="/assessments/{{ assessment.id }}/findings" class="ml-3 text-sm font-medium text-brand dark:text-navy-300 hover:underline">Findings and actions →</a>
+-    <a href="/assessments/{{ assessment.id }}/review-queue" class="ml-3 text-sm font-medium text-brand dark:text-navy-300 hover:underline">Review queue →</a>
++    <h1>{{ page_title }}</h1>
++    <p class="meta-line">{% if period %}{{ period.period | replace(" to ", " – ") }} · Evidence cut-off {{ period.cutoff }}{% else %}{{ assessment.display_name }}{% endif %}</p>
++  </div>
++  <div class="acts">
++    <label class="field rq-reviewer"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label>
++    {% if cards %}<a class="btn primary lead" href="/assessments/{{ assessment.id }}/review-queue">Open review queue<svg class="i"><use href="#i-arrow-r"/></svg></a>{% endif %}
+   </div>
+-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+-    Reviewer name
+-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
+-  </label>
+ </div>
++{{ assessment_tabs(assessment, "review") }}
++<div class="rq-seg">{{ review_seg(assessment, "conclusions") }}</div>
+ 
+-<div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+-  {% for key, label in [('pending', 'Pending'), ('rejected', 'Rejected'), ('approved', 'Approved'), ('edited', 'Edited'), ('legacy_bulk', 'Legacy bulk approvals')] %}
+-  <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
+-    <p class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</p>
+-    <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100" data-count="{{ key }}">{{ counts[key] }}</p>
+-  </div>
++{% if cards %}
++<div class="glass rv-stats">
++  {% for key, label in stats %}
++  <div{% if key == 'legacy_bulk' and not counts[key] %} hidden{% endif %}><span class="sub">{{ label }}</span><div class="big-n num" style="font-size:var(--t-lg)" data-count="{{ key }}">{{ counts[key] }}</div></div>
+   {% endfor %}
+ </div>
+ 
++<div class="rv-panels">
+ {% include "partials/report_basis_panel.html" %}
+ {% include "partials/release_panel.html" %}
++</div>
+ 
+-{% if cards %}
+-  {% for card in cards %}
+-    {% if loop.first or card.conclusion.framework_id != cards[loop.index0 - 1].conclusion.framework_id %}
+-      {% if not loop.first %}</div></section>{% endif %}
+-      <section class="mb-8">
+-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">{{ card.conclusion.framework_id|upper }}</h2>
+-        <div class="space-y-4">
+-    {% endif %}
++{% for card in cards %}
++  {% if loop.first or card.conclusion.framework_id != cards[loop.index0 - 1].conclusion.framework_id %}
++    {% if not loop.first %}</tbody></table></div>{% endif %}
++    <div class="sec"><h2>{{ framework_label(card.conclusion.framework_id, true) }}</h2></div>
++    <div class="solid"><table data-conclusion-table="{{ card.conclusion.framework_id }}"><thead><tr><th>Requirement</th><th style="width:190px" class="hide-sm">Outcome</th><th style="width:110px" class="hide-sm">Risk</th><th style="width:210px">Decision</th><th class="hide-sm" style="width:44px"></th></tr></thead><tbody>
++  {% endif %}
++  {% set conclusion = card.conclusion %}
++  {% set ref = requirement_ref(conclusion.framework_id, conclusion.requirement_id) %}
++  <tr class="rv-row" data-conclusion-row="{{ conclusion.id }}" data-state="{{ card.state }}"{% if card.legacy_bulk_approval %} data-legacy="yes"{% endif %} aria-expanded="false">
++    <td><button type="button" class="rv-toggle" aria-expanded="false" aria-controls="conclusion-detail-{{ conclusion.id }}"><span class="t-title">{{ card.requirement_title }}</span>{% if ref %}<span class="t-sub">{{ ref }}</span>{% endif %}</button></td>
++    <td class="hide-sm"><span class="pill {{ outcome_tones.get(conclusion.outcome, 'c-neutral') }}">{{ outcome_labels.get(conclusion.outcome, conclusion.outcome) }}</span></td>
++    <td class="hide-sm"><span class="pill c-{{ conclusion.risk_level }}">{{ conclusion.risk_level | capitalize }}</span></td>
++    <td data-decision-cell>{{ decision_cell(card) }}</td>
++    <td class="go hide-sm"><svg class="i"><use href="#i-chev-r"/></svg></td>
++  </tr>
++  <tr class="rv-detail" id="conclusion-detail-{{ conclusion.id }}" hidden><td colspan="5">
+     {% include "components/conclusion_card.html" %}
+-    {% if loop.last %}</div></section>{% endif %}
+-  {% endfor %}
++  </td></tr>
++  {% if loop.last %}</tbody></table></div>{% endif %}
++{% endfor %}
+ {% else %}
+-<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-16 text-center">
+-  <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">No conclusions yet. Run the gap analysis first.</h2>
++<div class="glass empty">
++  <svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-inbox"/></svg>
++  <h3>No conclusions yet</h3>
++  <p>Run the analysis to produce conclusions to review.</p>
++  <a class="btn primary" href="/assessments/{{ assessment.id }}?tab=questionnaire">Run analysis</a>
+ </div>
+ {% endif %}
+ {% endblock %}
++
++{% block scripts %}
++<script data-conclusion-rows>
++(() => {
++  const labels = {
++    pending: '<span class="status"><span class="st"></span>Pending</span>',
++    approved: '<span class="status"><svg class="i"><use href="#i-check"/></svg> Approved</span>',
++    edited: '<span class="status"><svg class="i"><use href="#i-pen"/></svg> Edited and approved</span>',
++    rejected: '<span class="status"><svg class="i"><use href="#i-x"/></svg> Rejected</span>'
++  };
++  const setOpen = (row, open) => {
++    const detail = document.getElementById("conclusion-detail-" + row.dataset.conclusionRow);
++    if (!detail) return;
++    detail.hidden = !open;
++    row.setAttribute("aria-expanded", open ? "true" : "false");
++    const toggle = row.querySelector(".rv-toggle");
++    if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
++  };
++  document.addEventListener("click", (event) => {
++    const row = event.target.closest && event.target.closest("tr.rv-row");
++    if (!row || (event.target.closest("a") && !event.target.closest(".rv-toggle"))) return;
++    setOpen(row, row.getAttribute("aria-expanded") !== "true");
++  });
++  // A card swap (approve, edit, reject, reopen) changes its decision: bring the row and counts in line.
++  const sync = () => {
++    const counts = { pending: 0, rejected: 0, approved: 0, edited: 0, legacy_bulk: 0 };
++    document.querySelectorAll("tr.rv-row").forEach((row) => {
++      const card = document.getElementById("conclusion-card-" + row.dataset.conclusionRow);
++      const state = card ? card.dataset.state : row.dataset.state;
++      if (state !== row.dataset.state) {
++        row.dataset.state = state;
++        row.removeAttribute("data-legacy");
++        const cell = row.querySelector("[data-decision-cell]");
++        if (cell && labels[state]) cell.innerHTML = labels[state];
++      }
++      if (row.dataset.legacy === "yes") counts.legacy_bulk += 1;
++      else if (counts[state] !== undefined) counts[state] += 1;
++    });
++    Object.keys(counts).forEach((key) => {
++      const node = document.querySelector('[data-count="' + key + '"]');
++      if (node) node.textContent = counts[key];
++      if (key === "legacy_bulk" && node && node.parentElement) node.parentElement.hidden = counts[key] === 0;
++    });
++  };
++  document.body.addEventListener("htmx:afterSwap", sync);
++})();
++</script>
++{% endblock %}
+diff --git a/app/templates/pages/review_queue.html b/app/templates/pages/review_queue.html
+index 47d9bc9..19451c3 100644
+--- a/app/templates/pages/review_queue.html
++++ b/app/templates/pages/review_queue.html
+@@ -1,48 +1,130 @@
+ {% extends "base.html" %}
+-{% block title %}Review queue — {{ assessment.company_name }}{% endblock %}
++{% from "components/layout.html" import assessment_tabs %}
++{% from "components/seg_rows.html" import review_seg %}
++{# b5 "Review queue": list of conclusions on the left, one conclusion at a time on the right.
++   Every conclusion card stays in the page (so its forms and data-* attributes are untouched); the
++   script below only shows the selected one. Without JavaScript the <noscript> rule shows them all. #}
++{% set page_title = "Review" %}
++{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"} %}
++{% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
+ 
+-{% block content %}
+-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
+-  <span class="mx-1.5">/</span>
+-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
+-  <span class="mx-1.5">/</span>
+-  <span class="text-gray-600 dark:text-gray-300">Review queue</span>
+-</nav>
++{% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}
++
++{% block crumbs %}
++<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% if engagement %}<a class="hide-sm" href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}<a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>{{ page_title }}</b>
++{% endblock %}
+ 
+-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
++{% block content %}
++<div class="rq-page">
++<div class="page-head">
+   <div>
+-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Review queue</h1>
+-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ open_count }} open of {{ total }} conclusions. Open work appears first, then deterministic risk and flags; shared requirements are grouped so their evidence is read once.</p>
+-    <p data-queue-keys class="mt-2 text-sm text-gray-500 dark:text-gray-400">Keyboard: j next, k previous</p>
++    <h1>{{ page_title }}</h1>
++    <p class="meta-line">{% if period %}{{ period.period | replace(" to ", " – ") }} · Evidence cut-off {{ period.cutoff }}{% else %}{{ assessment.display_name }}{% endif %}</p>
++  </div>
++  <div class="acts"><label class="field rq-reviewer"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Reviewer name" aria-label="Reviewer name" autocomplete="name"></label></div>
++</div>
++{{ assessment_tabs(assessment, "review") }}
++<div class="rq-seg">{{ review_seg(assessment, "queue") }}</div>
++
++{% if total %}
++<div class="rq-progress">
++  <div class="progress">
++    <span data-queue-keys class="hide-sm sub rq-keys"><span class="sr-only">Keyboard: </span>Next <kbd>j</kbd> Previous <kbd>k</kbd></span>
++    <span class="num">{{ decided_count }} of {{ total }} decided</span>
++    <span class="ticks">{% for index in range(total) %}<i{% if index < decided_count %} class="on"{% endif %}></i>{% endfor %}</span>
+   </div>
+-  <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Reviewer name
+-    <input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm sm:w-64">
+-  </label>
+ </div>
+ 
+-<div class="space-y-8">
++{% set initial = 0 if open_count else -1 %}
++<div class="glass rq">
++  <div class="rq-list" role="navigation" aria-label="Conclusions to review">
++    {% set ns = namespace(label="", position=0) %}
++    {% for group in groups %}
++      {% set group_open = group.entries | selectattr("card.state", "in", ["pending", "rejected"]) | list | length > 0 %}
++      {% if group.shared %}{% set label = (group.topic or "Shared evidence") ~ ", shared evidence" %}
++      {% elif group_open %}{% set label = "To review" %}
++      {% else %}{% set label = "Decided" %}{% endif %}
++      {% if label != ns.label %}<div class="grp">{{ label }}</div>{% set ns.label = label %}{% endif %}
++      {% for entry in group.entries %}
++        {% set conclusion = entry.card.conclusion %}
++        {% set ref = requirement_ref(conclusion.framework_id, conclusion.requirement_id) %}
++        <a class="item{% if entry.card.state in ['approved', 'edited'] %} decided{% endif %}{% if ns.position == initial %} sel{% endif %}" href="#conclusion-card-{{ conclusion.id }}" data-queue-select="{{ conclusion.id }}" aria-current="{{ 'true' if ns.position == initial else 'false' }}">
++          <div class="txt"><b>{{ entry.card.requirement_title }}</b><span>{{ framework_label(conclusion.framework_id) }}{% if ref %} · {{ ref }}{% endif %}</span></div>
++          <i class="dot {{ outcome_tones.get(conclusion.outcome, 'c-neutral') }}" title="{{ outcome_labels.get(conclusion.outcome, conclusion.outcome) }}"></i>
++        </a>
++        {% set ns.position = ns.position + 1 %}
++      {% endfor %}
++    {% endfor %}
++  </div>
++  <div class="rq-detail{% if initial < 0 %} rq-idle{% endif %}">
++  {% if not open_count %}
++  <div class="empty" data-queue-done>
++    <svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-circle-check"/></svg>
++    <h3>All {{ total }} conclusions are decided</h3>
++    <p>Release the report when you are ready.</p>
++    <a class="btn primary" href="/assessments/{{ assessment.id }}/report">Go to release</a>
++  </div>
++  {% endif %}
++  <div class="rq-body">
+ {% set queue_index = namespace(value=0) %}
+ {% for group in groups %}
+-  <section data-queue-group="{{ group.group_key }}" data-shared="{{ 'yes' if group.shared else 'no' }}" class="space-y-4">
++  <section data-queue-group="{{ group.group_key }}" data-shared="{{ 'yes' if group.shared else 'no' }}" class="rq-group">
+     {% if group.shared %}
+-    <div class="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
+-      <h2 class="text-sm font-semibold text-blue-900 dark:text-blue-200">Shared evidence: {{ group.topic or group.cluster_id }} ({{ group.entries|length }} requirements)</h2>
+-      <ul class="mt-3 space-y-2 text-sm">{% for claim in group.shared_claims %}<li data-shared-claim="{{ claim.claim_id }}"><span class="font-medium">{{ claim.statement }}</span> — {{ claim.quote }}{% if claim.href %} · <a href="{{ claim.href }}" class="text-brand dark:text-navy-300 hover:underline">{{ claim.filename }}</a>{% else %} · {{ claim.filename }}{% endif %} · {{ claim.claim_id }}</li>{% endfor %}</ul>
++    <div class="block" data-queue-shared-box{% if loop.index0 != 0 or initial < 0 %} hidden{% endif %}>
++      <h3>Shared evidence</h3>
++      <p class="sub">{{ group.entries|length }} requirements use these claims. Read them once.</p>
++      <ul class="rq-claims">{% for claim in group.shared_claims %}<li data-shared-claim="{{ claim.claim_id }}"><div class="cite"><div class="cite-head"><svg class="i"><use href="#i-file"/></svg><span>{% if claim.href %}<a href="{{ claim.href }}">{{ claim.filename }}</a>{% else %}{{ claim.filename }}{% endif %}</span><span class="sp"></span><span class="pg">{{ claim.claim_id }}</span></div><blockquote><b>{{ claim.statement }}</b> {{ claim.quote }}</blockquote></div></li>{% endfor %}</ul>
+     </div>
+     {% endif %}
+     {% for entry in group.entries %}
+-    <div data-queue-item data-conclusion-id="{{ entry.card.conclusion.id }}" data-queue-index="{{ queue_index.value }}" data-state="{{ entry.card.state }}" data-risk="{{ entry.risk }}" data-flags="{{ entry.flags|join(',') }}" tabindex="-1">
++    <div data-queue-item data-conclusion-id="{{ entry.card.conclusion.id }}" data-queue-index="{{ queue_index.value }}" data-state="{{ entry.card.state }}" data-risk="{{ entry.risk }}" data-flags="{{ entry.flags|join(',') }}" tabindex="-1"{% if queue_index.value != initial %} hidden{% endif %}>
+       {% with card=entry.card, group_evidence=group.shared %}{% include "components/conclusion_card.html" %}{% endwith %}
+     </div>
+     {% set queue_index.value = queue_index.value + 1 %}
+     {% endfor %}
+   </section>
+ {% endfor %}
++  </div></div>
++</div>
++<noscript><style>[data-queue-item][hidden],[data-queue-shared-box][hidden]{display:block}.rq-idle .rq-body{display:block}.rq-idle [data-queue-done]{display:none}</style></noscript>
++{% else %}
++<div class="glass empty">
++  <svg class="i" style="width:24px;height:24px;color:var(--muted)"><use href="#i-inbox"/></svg>
++  <h3>No conclusions to review</h3>
++  <p>Run the analysis to produce conclusions.</p>
++  <a class="btn primary" href="/assessments/{{ assessment.id }}?tab=questionnaire">Run analysis</a>
++</div>
++{% endif %}
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
++<script data-queue-select-script>
++(() => {
++  const select = (item) => {
++    if (!item) return;
++    document.querySelectorAll("[data-queue-item]").forEach((other) => { other.hidden = other !== item; });
++    const group = item.closest("[data-queue-group]");
++    document.querySelectorAll("[data-queue-shared-box]").forEach((box) => { box.hidden = box.closest("[data-queue-group]") !== group; });
++    document.querySelectorAll("[data-queue-select]").forEach((link) => {
++      const on = link.dataset.queueSelect === item.dataset.conclusionId;
++      link.classList.toggle("sel", on);
++      link.setAttribute("aria-current", on ? "true" : "false");
++    });
++    const detail = item.closest(".rq-detail");
++    if (detail) detail.classList.remove("rq-idle");
++    const body = item.closest(".rq-body");
++    if (body) body.scrollTop = 0;
++  };
++  window.selectQueueItem = select;
++  document.addEventListener("click", (event) => {
++    const link = event.target.closest && event.target.closest("[data-queue-select]");
++    if (!link) return;
++    event.preventDefault();
++    select(document.querySelector('[data-queue-item][data-conclusion-id="' + link.dataset.queueSelect + '"]'));
++  });
++})();
++</script>
+ <script data-queue-nav>
+ document.addEventListener("keydown", (event) => {
+   if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+@@ -51,9 +133,11 @@ document.addEventListener("keydown", (event) => {
+   if (event.key !== "j" && event.key !== "k") return;
+   const items = Array.from(document.querySelectorAll("[data-queue-item]"));
+   if (!items.length) return;
++  const visible = items.findIndex((item) => !item.hidden);
+   const active = document.activeElement && document.activeElement.closest("[data-queue-item]");
+-  const current = items.indexOf(active);
++  const current = active ? items.indexOf(active) : visible;
+   const next = event.key === "j" ? Math.min(current + 1, items.length - 1) : Math.max(current - 1, 0);
++  if (window.selectQueueItem) window.selectQueueItem(items[next]);
+   items[next].focus();
+   items[next].scrollIntoView({ block: "center" });
+   event.preventDefault();
+diff --git a/design/harness/seed_s7_pages.py b/design/harness/seed_s7_pages.py
+new file mode 100644
+index 0000000..825cfb0
+--- /dev/null
++++ b/design/harness/seed_s7_pages.py
+@@ -0,0 +1,128 @@
++"""S7 group `pages`: the review queue (b5-review-queue) and the conclusions list (b5-conclusions).
++
++Every state is produced from real Conclusion and ConclusionRevision rows through the same
++tables the pipeline writes, so both pages render from the database. Requirement titles come from
++the framework registry, so they differ from the mockup copy where the registry words differ.
++"""
++
++from __future__ import annotations
++
++from app.models.conclusion import Conclusion, ConclusionRevision
++from design.harness.seed_s4 import SEED_ACTOR, _time
++
++SCREEN_STATES = {
++    "b5-review-queue": ("default", "shared", "done", "empty"),
++    "b5-conclusions": ("default", "legacy-bulk", "empty"),
++}
++
++LEGACY_ACTOR = "system:bulk-approve"
++
++# (framework, requirement id, outcome, risk, decision) in the mockup's row order.
++ROWS = (
++    ("dpdpa", "CH2.CONSENT.3", "non_compliant", "high", "pending"),
++    ("dpdpa", "CH2.SECURITY.1", "partially_compliant", "medium", "approved"),
++    ("dpdpa", "CM.RECORDS.1", "compliant", "low", "approved"),
++    ("iso27001", "ISO.A5.18", "non_compliant", "high", "pending"),
++    ("iso27001", "ISO.A5.30", "partially_compliant", "medium", "pending"),
++    ("iso27001", "ISO.A5.1", "compliant", "low", "edited"),
++)
++
++TEXT = {
++    "ISO.A5.18": (
++        "Three production systems were left out of the Q1 access review, so the requirement to review all systems is not met.",
++        "Three production systems were not part of the Q1 access review.",
++        "Extend the quarterly access review to every production system.",
++        "Access reviews were completed for 11 of 14 production systems; the payments ledger, card vault and data warehouse were not reviewed.",
++    ),
++}
++
++
++def _conclusion(assessment, framework_id, requirement_id, outcome, risk, cluster_id=None) -> Conclusion:
++    rationale, gaps, action, evidence = TEXT.get(
++        requirement_id,
++        (
++            "The evidence supports this outcome.",
++            "None recorded." if outcome == "compliant" else "The control is not fully evidenced.",
++            "None." if outcome == "compliant" else "Close the gap and provide evidence.",
++            "The submitted policy describes the control.",
++        ),
++    )
++    return Conclusion(
++        id=f"conclusion-s7-{assessment.id}-{requirement_id}",
++        assessment_id=assessment.id,
++        framework_id=framework_id,
++        requirement_id=requirement_id,
++        cluster_id=cluster_id,
++        outcome=outcome,
++        rationale=rationale,
++        evidence_summary=evidence,
++        gaps_identified=gaps,
++        risk_level=risk,
++        recommended_action=action,
++        ai_proposed=True,
++        created_at=_time(-6),
++        updated_at=_time(-5),
++    )
++
++
++def _revision(conclusion, actor, action, days):
++    return ConclusionRevision(
++        id=f"revision-{action}-{conclusion.id}",
++        conclusion_id=conclusion.id,
++        actor=actor,
++        action=action,
++        created_at=_time(days),
++    )
++
++
++def _seed(db, assessment, *, decisions=None, legacy=(), shared_cluster=None) -> None:
++    """Six conclusions in the mockup's rows. `decisions` overrides a row's decision;
++    `legacy` lists requirement ids approved by a non-consultant actor (legacy bulk)."""
++    decisions = decisions or {}
++    for framework_id, requirement_id, outcome, risk, decision in ROWS:
++        decision = decisions.get(requirement_id, decision)
++        cluster = shared_cluster if shared_cluster and requirement_id in ("ISO.A5.18", "CH2.SECURITY.1") else None
++        conclusion = _conclusion(assessment, framework_id, requirement_id, outcome, risk, cluster)
++        db.add(conclusion)
++        db.flush()
++        db.add(_revision(conclusion, "system:analysis", "proposed", -6))
++        if requirement_id in legacy:
++            db.add(_revision(conclusion, LEGACY_ACTOR, "approved", -5))
++        elif decision == "approved":
++            db.add(_revision(conclusion, SEED_ACTOR, "approved", -5))
++        elif decision == "edited":
++            db.add(_revision(conclusion, SEED_ACTOR, "edited", -5))
++    db.flush()
++
++
++def apply(db, screen, state, assessment, engagement, data) -> dict:
++    if state == "empty":
++        return {"data_state": "database", "note": "No Conclusion rows exist for the assessment."}
++    if screen == "b5-review-queue":
++        if state == "done":
++            decisions = {req: "approved" for _f, req, *_rest in ROWS}
++            _seed(db, assessment, decisions=decisions)
++            return {"data_state": "database", "note": "All six conclusions carry a consultant approval revision."}
++        if state == "shared":
++            _seed(db, assessment, shared_cluster="CLUSTER_006", decisions={"CH2.SECURITY.1": "pending"})
++            # Mockup: 2 of 6 decided. Access rights and Security safeguards share one cluster.
++            return {
++                "data_state": "database",
++                "note": "Access rights and Security safeguards share CLUSTER_006, so the queue groups them.",
++            }
++        _seed(db, assessment)
++        return {"data_state": "database", "note": "Three pending and three decided Conclusion rows."}
++    if state == "legacy-bulk":
++        _seed(db, assessment, legacy=("CH2.SECURITY.1", "CM.RECORDS.1"))
++        return {
++            "data_state": "database",
++            "note": "Two approvals carry a non-consultant actor, which the page reports as legacy bulk approvals.",
++        }
++    _seed(db, assessment)
++    return {"data_state": "database", "note": "Three pending, two approved and one edited Conclusion row."}
++
++
++def route(screen, state, assessment_id) -> str:
++    if screen == "b5-review-queue":
++        return f"/assessments/{assessment_id}/review-queue"
++    return f"/assessments/{assessment_id}/conclusions"
+diff --git a/design/yozora-patterns.css b/design/yozora-patterns.css
+index d7341e8..05d9aab 100644
+--- a/design/yozora-patterns.css
++++ b/design/yozora-patterns.css
+@@ -258,3 +258,26 @@ button.item .txt{color:inherit}
+ .followup-host{max-width:820px}
+ .screening-run .htmx-indicator:not(.htmx-request){display:none}
+ .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
++/* s7-pages */
++.shell-content.page:has(.rq-page){max-width:1120px;padding-top:var(--s-2);padding-bottom:var(--s-6)}
++.rq-seg{overflow-x:auto;margin:var(--s-4) 0}
++.rq-reviewer{width:200px}
++.rq-progress{display:flex;justify-content:flex-end;margin-top:var(--s-8);margin-bottom:var(--s-3)}
++.rq-keys{display:inline-flex;align-items:center;gap:var(--s-3);margin-right:var(--s-3)}
++.rq-list a.item{color:inherit;text-decoration:none}
++.rq-group + .rq-group{margin-top:var(--s-8)}
++.rq-claims{list-style:none;display:flex;flex-direction:column;gap:var(--s-3);margin-top:var(--s-3)}
++.rq-claims a{color:inherit;text-decoration:underline}
++.rq-detail.rq-idle{align-items:center;justify-content:center}
++.rq-idle .rq-body{display:none}
++.rq-detail:not(.rq-idle) [data-queue-done]{display:none}
++.rv-panels{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-4)}
++.rv-toggle{display:block;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
++.rv-toggle .t-title,.rv-toggle .t-sub{display:block}
++.rv-row{cursor:pointer}
++.rv-toggle:focus-visible{outline:none;box-shadow:0 0 0 2px var(--accent-ring);border-radius:var(--r-xs)}
++.rv-row[aria-expanded=true] td.go svg{opacity:1;transform:rotate(90deg)}
++.rv-detail > td{padding:var(--s-4) var(--s-5)}
++.rv-stats{padding:var(--s-5) var(--s-6);display:flex;gap:var(--s-6);flex-wrap:wrap}
++.rv-stats > div{flex:1;min-width:110px}
++/* /s7-pages */
+diff --git a/tests/test_conclusion_approval.py b/tests/test_conclusion_approval.py
+index f93fbef..ed4daf6 100644
+--- a/tests/test_conclusion_approval.py
++++ b/tests/test_conclusion_approval.py
+@@ -822,7 +822,7 @@ def test_scenario_14_page_render_citations_divergence_identity_and_escaping(
+     empty = _seed(db, client_name="Empty Conclusions Corp")
+     empty_page = http.get(f"/assessments/{empty.id}/conclusions")
+     assert empty_page.status_code == 200
+-    assert "No conclusions yet. Run the gap analysis first." in empty_page.text
++    assert "No conclusions yet" in empty_page.text and "Run the analysis to produce conclusions to review." in empty_page.text
+     assert http.get("/assessments/unknown/conclusions").status_code == 404
+ 
+ 
+diff --git a/tests/test_p6_7_requirement_card.py b/tests/test_p6_7_requirement_card.py
+index 99cdcf9..3087a08 100644
+--- a/tests/test_p6_7_requirement_card.py
++++ b/tests/test_p6_7_requirement_card.py
+@@ -929,7 +929,9 @@ def test_scenario_9_review_queue_sorts_flags_groups_and_navigates(db, http, monk
+     assert firsts == sorted(firsts)
+ 
+     # Keyboard navigation and no bulk approval.
+-    assert KEYBOARD_HINT in html and "data-queue-keys" in html
++    assert "data-queue-keys" in html and "Keyboard:" in html
++    assert "Next <kbd>j</kbd> Previous <kbd>k</kbd>" in html
++    assert "<kbd>a</kbd>" not in html.lower() and "<kbd>e</kbd>" not in html.lower() and "<kbd>x</kbd>" not in html.lower()
+     script = html[html.index("<script data-queue-nav"):]
+     script = script[: script.index("</script>")]
+     for token in ('"j"', '"k"', "scrollIntoView", "INPUT", "TEXTAREA", "SELECT", "data-queue-item"):
