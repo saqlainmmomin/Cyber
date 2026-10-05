@@ -285,6 +285,7 @@ YOZORA_S7_PATHS = (
     "app/templates/partials/review_finding_card.html",
     "tasks/handoffs/2026-10-04-yozora-s7-orchestration.md",
     "tasks/handoffs/2026-10-05-yozora-s7-codex-handoff.md",
+    "tasks/handoffs/2026-10-05-yozora-s7-fix-pass.md",
     "tasks/handoffs/s7-wip/analysis.patch",
     "tasks/handoffs/s7-wip/cards.patch",
     "tasks/handoffs/s7-wip/findings.patch",
