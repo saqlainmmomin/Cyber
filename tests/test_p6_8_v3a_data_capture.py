@@ -60,7 +60,7 @@ from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR a
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
 from tests.v3c3_paths import V3C3_XLSX_PATHS  # V3-C3 XLSX per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES, YOZORA_BACKEND_FILES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, CONTEXT_BLOCKS_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
 from tests.test_p6_8_board_report_v2 import _require_renderer
 
 YOZORA_REVISION = "b7d41c9e2a63"  # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md)
@@ -909,7 +909,7 @@ def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     changed = set(git("diff", "--name-only", "main...HEAD", "--", "app", "alembic").split())
     changed |= set(git("diff", "--name-only", "HEAD", "--", "app", "alembic").split())
     changed |= set(git("ls-files", "--others", "--exclude-standard", "app", "alembic").split())
-    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS and path not in YOZORA_S6_PATHS and path not in YOZORA_S7_PATHS and path not in YOZORA_S8_PATHS and path not in YOZORA_S9_PATHS and path not in RFI_REQUESTS_PATHS and path not in ASSESSMENT_EVIDENCE_TAB_PATHS and path not in V3C_PRIOR_DOMAINS_PATHS)  # Yozora allowances (backend, S1-S9, assessment Evidence), V3-C prior domains
+    outside = sorted(path for path in changed if path not in V3A_ALLOWED_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS and path not in YOZORA_S6_PATHS and path not in YOZORA_S7_PATHS and path not in YOZORA_S8_PATHS and path not in YOZORA_S9_PATHS and path not in RFI_REQUESTS_PATHS and path not in ASSESSMENT_EVIDENCE_TAB_PATHS and path not in CONTEXT_BLOCKS_PATHS and path not in V3C_PRIOR_DOMAINS_PATHS)  # Yozora allowances (backend, S1-S9, assessment Evidence), V3-C prior domains
     assert outside == [], outside
     migrations = sorted(
         path.name for path in (REPO_ROOT / "alembic" / "versions").glob("*.py")
@@ -920,7 +920,7 @@ def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     changed_tests = set(git("diff", "--name-only", "main...HEAD", "--", "tests").split())
     changed_tests |= set(git("diff", "--name-only", "HEAD", "--", "tests").split())
     changed_tests |= set(git("ls-files", "--others", "--exclude-standard", "tests").split())
-    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES - set(V3C3_XLSX_PATHS) - set(YOZORA_BACKEND_FILES) - set(YOZORA_S1_PATHS) - set(YOZORA_S2_PATHS) - set(YOZORA_S3_PATHS) - set(YOZORA_S4_PATHS) - set(YOZORA_S5_PATHS) - set(YOZORA_S6_PATHS) - set(YOZORA_S7_PATHS) - set(YOZORA_S8_PATHS) - set(YOZORA_S9_PATHS) - set(RFI_REQUESTS_PATHS) - set(V3C_PRIOR_DOMAINS_PATHS) - set(ASSESSMENT_EVIDENCE_TAB_PATHS))  # Yozora allowances (backend, S1-S9), RFI, V3-C prior domains, V3-C3 XLSX, assessment Evidence
+    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES - set(V3C3_XLSX_PATHS) - set(YOZORA_BACKEND_FILES) - set(YOZORA_S1_PATHS) - set(YOZORA_S2_PATHS) - set(YOZORA_S3_PATHS) - set(YOZORA_S4_PATHS) - set(YOZORA_S5_PATHS) - set(YOZORA_S6_PATHS) - set(YOZORA_S7_PATHS) - set(YOZORA_S8_PATHS) - set(YOZORA_S9_PATHS) - set(RFI_REQUESTS_PATHS) - set(V3C_PRIOR_DOMAINS_PATHS) - set(ASSESSMENT_EVIDENCE_TAB_PATHS) - set(CONTEXT_BLOCKS_PATHS))  # Yozora allowances (backend, S1-S9), RFI, V3-C prior domains, V3-C3 XLSX, assessment Evidence
     assert unexpected == [], unexpected
 
     for relative in ("app/services/board_inputs.py", "app/routers/board_inputs.py", "app/services/firm_theme.py"):

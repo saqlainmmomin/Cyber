@@ -4,13 +4,19 @@ Phase 1 Context Gathering Questions — organizational intelligence before compl
 Four blocks: Data Landscape, Existing Posture, Risk Exposure, Initiative Context.
 These are NOT compliance questions — they profile the organization to enable adaptive assessment.
 
-These questions are framework-agnostic. Framework-specific context (e.g., DPDPA SDF status,
-HIPAA entity type) is captured via per-framework scope questions in the framework definitions.
+The blocks below are the shared base. Privacy-specific blocks/questions carry a `frameworks`
+tag and are shown only when a privacy framework is selected; each framework definition can add
+its own blocks via `FrameworkDefinition.context_blocks`. Use `get_context_blocks()` to resolve
+the wizard for an assessment.
 """
+
+PRIVACY_FRAMEWORKS = frozenset({"dpdpa", "gdpr", "hipaa"})
+_PRIVACY = {"frameworks": PRIVACY_FRAMEWORKS}
 
 CONTEXT_BLOCKS = [
     {
         "id": "data_landscape",
+        **_PRIVACY,
         "title": "Data Landscape",
         "description": "Understanding what personal data you collect and how it flows.",
         "questions": [
@@ -68,6 +74,7 @@ CONTEXT_BLOCKS = [
         "questions": [
             {
                 "id": "CTX.POSTURE.1",
+                **_PRIVACY,
                 "question": "Do you have a dedicated privacy or Data Protection Officer function?",
                 "type": "single_select",
                 "options": ["full_time", "part_time_shared", "no"],
@@ -91,6 +98,7 @@ CONTEXT_BLOCKS = [
             },
             {
                 "id": "CTX.POSTURE.4",
+                **_PRIVACY,
                 "question": "Do you have a documented privacy policy published to users?",
                 "type": "single_select",
                 "options": ["yes_recently_updated", "yes_outdated", "no"],
@@ -104,6 +112,7 @@ CONTEXT_BLOCKS = [
         "questions": [
             {
                 "id": "CTX.RISK.1",
+                **_PRIVACY,
                 "question": "Which of the following apply to your organization?",
                 "type": "multi_select",
                 "options": [
@@ -116,6 +125,7 @@ CONTEXT_BLOCKS = [
             },
             {
                 "id": "CTX.RISK.2",
+                **_PRIVACY,
                 "question": "Roughly how many data principals (individuals whose data you hold) are affected?",
                 "type": "single_select",
                 "options": [
@@ -176,6 +186,43 @@ CONTEXT_BLOCKS = [
         ],
     },
 ]
+
+
+def _applies(item: dict, selected: set[str]) -> bool:
+    scope = item.get("frameworks")
+    return scope is None or bool(scope & selected)
+
+
+def get_context_blocks(framework_ids: list[str] | None = None) -> list[dict]:
+    """Context-wizard blocks for the selected frameworks.
+
+    Shared blocks are filtered by their `frameworks` tags, then each selected
+    framework's own blocks are inserted before the closing Initiative block.
+    `None` returns the full unfiltered base list.
+    """
+    if framework_ids is None:
+        return CONTEXT_BLOCKS
+
+    from app.frameworks.registry import FrameworkRegistry
+
+    selected = set(framework_ids)
+    blocks = []
+    for block in CONTEXT_BLOCKS:
+        if not _applies(block, selected):
+            continue
+        questions = [q for q in block["questions"] if _applies(q, selected)]
+        if questions:
+            blocks.append({**block, "questions": questions})
+
+    framework_blocks = []
+    for fw_id in framework_ids:
+        fw = FrameworkRegistry.get_or_none(fw_id)
+        if fw:
+            framework_blocks.extend(fw.context_blocks)
+    insert_at = next(
+        (i for i, b in enumerate(blocks) if b["id"] == "initiative_context"), len(blocks)
+    )
+    return blocks[:insert_at] + framework_blocks + blocks[insert_at:]
 
 
 def get_context_questions() -> list[dict]:

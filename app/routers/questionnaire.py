@@ -85,6 +85,7 @@ def submit_context(
         context_answers=answers_list,
         industry=assessment.industry,
         company_size=assessment.company_size,
+        framework_ids=assessment.frameworks,
     )
     assessment.context_profile = json.dumps(profile)
 

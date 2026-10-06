@@ -1000,6 +1000,61 @@ _ISO_ROOT_CAUSE_CLUSTERS: dict[str, dict] = {
 
 # ── Scope questions ───────────────────────────────────────────────────────
 
+_ISO_CONTEXT_BLOCKS = [
+    {
+        "id": "isms_context",
+        "title": "Management system",
+        "description": "Where your information security management system stands today.",
+        "questions": [
+            {
+                "id": "CTX.ISO.1",
+                "question": "What is the current status of your ISMS?",
+                "type": "single_select",
+                "options": [
+                    "certified",
+                    "implemented_not_certified",
+                    "being_implemented",
+                    "none",
+                ],
+            },
+            {
+                "id": "CTX.ISO.2",
+                "question": "Which certification event are you preparing for?",
+                "type": "single_select",
+                "options": [
+                    "initial_certification",
+                    "surveillance_audit",
+                    "recertification",
+                    "no_certification_planned",
+                ],
+            },
+            {
+                "id": "CTX.ISO.3",
+                "question": "Do you have a Statement of Applicability?",
+                "type": "single_select",
+                "options": ["approved_and_current", "draft", "none"],
+            },
+            {
+                "id": "CTX.ISO.4",
+                "question": "How do you run information security risk assessment?",
+                "type": "single_select",
+                "options": [
+                    "documented_method_repeated",
+                    "done_once_or_ad_hoc",
+                    "not_done",
+                ],
+            },
+            {
+                "id": "CTX.ISO.5",
+                "question": "In the last 12 months, have you completed an internal ISMS audit and a management review?",
+                "type": "single_select",
+                "options": ["both", "one_of_them", "neither"],
+            },
+        ],
+    },
+]
+
+
 _ISO_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="ISO.SCP.1",
@@ -1202,6 +1257,7 @@ ISO27001_DEFINITION = FrameworkDefinition(
     dependencies=_ISO_DEPENDENCIES,
     root_cause_clusters=_ISO_ROOT_CAUSE_CLUSTERS,
     scope_questions=_ISO_SCOPE_QUESTIONS,
+    context_blocks=_ISO_CONTEXT_BLOCKS,
     questions=_ISO_QUESTIONS,
     red_flag_patterns=_ISO_RED_FLAGS,
     evidence_requests=_ISO_EVIDENCE_REQUESTS,

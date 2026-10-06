@@ -8,6 +8,7 @@ framing that guides the adaptive Phase 2 questionnaire and gap analysis.
 import json
 import logging
 
+from app.dpdpa.context_questions import PRIVACY_FRAMEWORKS
 from app.frameworks.definitions.dpdpa import DPDPA_DEFINITION
 from app.services import llm_client
 
@@ -16,19 +17,37 @@ logger = logging.getLogger(__name__)
 MAX_LIKELY_NOT_APPLICABLE = 20
 
 
-def derive_risk_profile(context_answers: list[dict], industry: str, company_size: str) -> dict:
+def derive_risk_profile(
+    context_answers: list[dict],
+    industry: str,
+    company_size: str,
+    framework_ids: list[str] | None = None,
+) -> dict:
     """
     Call Claude to derive a structured risk profile from context answers.
 
+    `framework_ids=None` keeps the legacy DPDPA framing. Otherwise the DPDPA-only
+    fields (privacy signals, chapters, likely_not_applicable) are used only when
+    the matching framework is selected.
+
     Returns a dict matching ContextProfileOut schema fields.
     """
+    frameworks = framework_ids if framework_ids is not None else ["dpdpa"]
+    has_dpdpa = "dpdpa" in frameworks
+    has_privacy = bool(set(frameworks) & PRIVACY_FRAMEWORKS)
     # First, compute deterministic signals from answers
     signals = _extract_signals(context_answers)
 
     # Build a focused prompt for risk profiling
     known_requirement_ids = _known_requirement_ids()
     prompt = _build_profile_prompt(
-        context_answers, industry, company_size, signals, known_requirement_ids
+        context_answers,
+        industry,
+        company_size,
+        signals,
+        known_requirement_ids,
+        has_dpdpa=has_dpdpa,
+        has_privacy=has_privacy,
     )
 
     raw = _call_claude_context_profile(prompt)
@@ -47,8 +66,12 @@ def derive_risk_profile(context_answers: list[dict], industry: str, company_size
     profile["processes_children_data"] = signals["processes_children_data"]
     profile["cross_border_transfers"] = signals["cross_border_transfers"]
     profile["has_breach_response"] = signals["has_breach_response"]
-    profile["likely_not_applicable"] = _filter_likely_not_applicable(
-        profile.get("likely_not_applicable", []), known_requirement_ids
+    profile["likely_not_applicable"] = (
+        _filter_likely_not_applicable(
+            profile.get("likely_not_applicable", []), known_requirement_ids
+        )
+        if has_dpdpa
+        else []
     )
 
     return profile
@@ -145,21 +168,54 @@ def _build_profile_prompt(
     company_size: str,
     signals: dict,
     known_requirement_ids: set[str],
+    *,
+    has_dpdpa: bool = True,
+    has_privacy: bool = True,
 ) -> str:
     """Build the prompt for risk profile generation."""
     answers_text = "\n".join(
         f"- {a['question_id']}: {json.dumps(a['answer'])}" for a in answers
     )
 
-    return f"""## Organization Context
-- Industry: {industry}
-- Company Size: {company_size}
-- SDF Candidate: {signals['sdf_candidate']}
+    privacy_lines = (
+        f"""- SDF Candidate: {signals['sdf_candidate']}
 - Processes Children's Data: {signals['processes_children_data']}
 - Cross-Border Transfers: {signals['cross_border_transfers']}
 - Sensitive Data: {signals['sensitive_data']}
 - Data Principals Band: {signals['data_principals_band']}
+"""
+        if has_privacy
+        else ""
+    )
 
+    if has_dpdpa:
+        tier_rule = (
+            "HIGH if SDF candidate, sensitive data with >1M principals, or critical infra. "
+            "LOW if <10K principals, no sensitive data, internal policy only. MEDIUM otherwise."
+        )
+        chapters_rule = "Order the DPDPA chapters by relevance. Always include chapter_2 first."
+        na_rule = (
+            "List requirement IDs that are probably not applicable (e.g., SDF requirements "
+            "for non-SDF orgs, children's data requirements if no children's data)."
+        )
+        na_ids_rule = (
+            f"- likely_not_applicable must use only these IDs, at most {MAX_LIKELY_NOT_APPLICABLE}, "
+            f"and must not be padded: {', '.join(sorted(known_requirement_ids))}"
+        )
+    else:
+        tier_rule = (
+            "HIGH if critical infrastructure, a recent incident, no formal security program, or "
+            "no leadership owner for security risk. LOW if a mature, audited program with no "
+            "recent incident. MEDIUM otherwise."
+        )
+        chapters_rule = "Return an empty list."
+        na_rule = "Return an empty list."
+        na_ids_rule = "- likely_not_applicable must be an empty list."
+
+    return f"""## Organization Context
+- Industry: {industry}
+- Company Size: {company_size}
+{privacy_lines}
 ## Context Questionnaire Answers
 {answers_text}
 
@@ -176,9 +232,9 @@ Based on the above, produce a risk profile JSON with these fields:
 }}
 
 Rules:
-- risk_tier: HIGH if SDF candidate, sensitive data with >1M principals, or critical infra. LOW if <10K principals, no sensitive data, internal policy only. MEDIUM otherwise.
-- priority_chapters: Order the DPDPA chapters by relevance. Always include chapter_2 first.
-- likely_not_applicable: List requirement IDs that are probably not applicable (e.g., SDF requirements for non-SDF orgs, children's data requirements if no children's data).
+- risk_tier: {tier_rule}
+- priority_chapters: {chapters_rule}
+- likely_not_applicable: {na_rule}
 - timeline_pressure: Map from the assessment timeline answer (under_3_months=HIGH, 3_to_6=MEDIUM, else LOW).
 - framing_notes: What should the assessor focus on? What's the biggest risk area?
-- likely_not_applicable must use only these IDs, at most {MAX_LIKELY_NOT_APPLICABLE}, and must not be padded: {", ".join(sorted(known_requirement_ids))}"""
+{na_ids_rule}"""

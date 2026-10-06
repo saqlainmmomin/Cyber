@@ -1223,6 +1223,68 @@ _NIST_CSF_ROOT_CAUSE_CLUSTERS: dict[str, dict] = {
 
 # ── Scope questions ─────────────────────────────────────────────────────────
 
+_NIST_CSF_CONTEXT_BLOCKS = [
+    {
+        "id": "cyber_risk_context",
+        "title": "Cyber Risk Context",
+        "description": "How you manage cybersecurity risk and what you are exposed to.",
+        "questions": [
+            {
+                "id": "CTX.NIST.1",
+                "question": "Do you use the NIST Cybersecurity Framework today?",
+                "type": "single_select",
+                "options": ["formal_profile", "informal_reference", "not_used"],
+            },
+            {
+                "id": "CTX.NIST.2",
+                "question": "How would you describe your cybersecurity risk management practices today?",
+                "type": "single_select",
+                "options": [
+                    "ad_hoc",
+                    "approved_but_inconsistent",
+                    "repeatable_and_policy_backed",
+                    "continuously_improved",
+                ],
+            },
+            {
+                "id": "CTX.NIST.3",
+                "question": "Is your organization part of, or a supplier to, critical infrastructure?",
+                "type": "single_select",
+                "options": [
+                    "critical_infrastructure_operator",
+                    "supplier_to_critical_infrastructure",
+                    "no",
+                    "unsure",
+                ],
+            },
+            {
+                "id": "CTX.NIST.4",
+                "question": "Who owns cybersecurity risk at leadership level?",
+                "type": "single_select",
+                "options": [
+                    "security_head_reports_to_board",
+                    "security_head_no_board_reporting",
+                    "no_dedicated_owner",
+                ],
+            },
+            {
+                "id": "CTX.NIST.5",
+                "question": "Which threats concern you most?",
+                "type": "multi_select",
+                "options": [
+                    "ransomware",
+                    "insider_misuse",
+                    "supplier_compromise",
+                    "account_takeover_fraud",
+                    "targeted_state_actors",
+                    "service_outage",
+                ],
+            },
+        ],
+    },
+]
+
+
 _NIST_CSF_SCOPE_QUESTIONS = [
     ScopeQuestion(
         id="NIST.SCP.1",
@@ -1386,6 +1448,7 @@ NIST_CSF_DEFINITION = FrameworkDefinition(
     dependencies=_NIST_CSF_DEPENDENCIES,
     root_cause_clusters=_NIST_CSF_ROOT_CAUSE_CLUSTERS,
     scope_questions=_NIST_CSF_SCOPE_QUESTIONS,
+    context_blocks=_NIST_CSF_CONTEXT_BLOCKS,
     questions=_NIST_CSF_QUESTIONS,
     red_flag_patterns=_NIST_CSF_RED_FLAGS,
     evidence_requests=_NIST_CSF_EVIDENCE_REQUESTS,

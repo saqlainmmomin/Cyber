@@ -126,6 +126,9 @@ class FrameworkDefinition:
     root_cause_clusters: dict[str, dict] = field(default_factory=dict)
 
     scope_questions: list[ScopeQuestion] = field(default_factory=list)
+    # Extra Phase 1 context-wizard blocks (same dict shape as
+    # app.dpdpa.context_questions.CONTEXT_BLOCKS), shown when this framework is selected.
+    context_blocks: list[dict] = field(default_factory=list)
     questions: dict[str, QuestionDef] = field(default_factory=dict)
     red_flag_patterns: list[RedFlagPattern] = field(default_factory=list)
     evidence_requests: list[EvidenceRequest] = field(default_factory=list)

@@ -536,5 +536,29 @@ ASSESSMENT_EVIDENCE_TAB_PATHS = (
     "tests/yozora_paths.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS + ASSESSMENT_EVIDENCE_TAB_PATHS
+# Per-PR allowance: framework-specific context-wizard blocks (ISO 27001, NIST CSF).
+CONTEXT_BLOCKS_PATHS = (
+    "app/dpdpa/context_questions.py",
+    "app/frameworks/definitions/iso27001.py",
+    "app/frameworks/definitions/nist_csf.py",
+    "app/frameworks/schema.py",
+    "app/routers/questionnaire.py",
+    "app/routers/web.py",
+    "app/services/context_profiler.py",
+    "tests/p6_10_support.py",
+    "tests/test_context_blocks_by_framework.py",
+    "tests/test_p6_4_v2_judge.py",
+    "tests/test_p6_6_report_foundations.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_retention.py",
+    "tests/yozora_paths.py",
+)
+CONTEXT_BLOCKS_EXCLUDES = [f":(exclude){path}" for path in CONTEXT_BLOCKS_PATHS]
+
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS + ASSESSMENT_EVIDENCE_TAB_PATHS + CONTEXT_BLOCKS_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

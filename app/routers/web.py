@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dpdpa.context_questions import CONTEXT_BLOCKS
+from app.dpdpa.context_questions import get_context_blocks
 from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.dpdpa.questionnaire import ANSWER_OPTIONS, build_questionnaire
 from app.models.assessment import Assessment, AssessmentDocument
@@ -2414,7 +2414,8 @@ def get_context_block(
     if not assessment:
         raise HTTPException(404)
 
-    if block_index >= len(CONTEXT_BLOCKS):
+    context_blocks = get_context_blocks(_selected_framework_ids(assessment))
+    if block_index >= len(context_blocks):
         # The tier distribution is optional; a tier-engine failure must not
         # break the end of the context wizard.
         try:
@@ -2431,7 +2432,7 @@ def get_context_block(
             {"request": request, "assessment_id": assessment_id, "tier_counts": tier_counts},
         )
 
-    block = CONTEXT_BLOCKS[block_index]
+    block = context_blocks[block_index]
     return templates.TemplateResponse(
         "partials/question_step.html",
         {
@@ -2439,7 +2440,7 @@ def get_context_block(
             "assessment_id": assessment_id,
             "block": block,
             "block_index": block_index,
-            "total_blocks": len(CONTEXT_BLOCKS),
+            "total_blocks": len(context_blocks),
             "is_context": True,
         },
     )
@@ -2461,7 +2462,7 @@ async def save_context_answers(
 
     form = await request.form()
     answers = []
-    for block in CONTEXT_BLOCKS:
+    for block in get_context_blocks(_selected_framework_ids(assessment)):
         for q in block["questions"]:
             qid = q["id"]
             if q["type"] == "multi_select":
@@ -2481,6 +2482,7 @@ async def save_context_answers(
             context_answers=answers,
             industry=assessment.industry,
             company_size=assessment.company_size,
+            framework_ids=_selected_framework_ids(assessment),
         )
         assessment.context_profile = json.dumps(profile)
     except Exception as e:
