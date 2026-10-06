@@ -1,4 +1,4 @@
-{% from "components/ui.html" import button, pill, chip, status, field, checkbox, radio, switch, alert, empty_state, skeleton, toast, modal, progress_bar, key_value, stat, disclosure, code_block, tooltip, request_card %}
+{% from "components/ui.html" import button, pill, chip, status, field, checkbox, radio, switch, alert, empty_state, skeleton, toast, toast_container, modal, menu, progress_bar, key_value, stat, disclosure, code_block, tooltip, request_card %}
 {% from "components/layout.html" import tabs, seg, table, filter_toolbar %}
 <!doctype html>
 <html lang="en" data-theme="{{ 'dark' if dark else 'light' }}" data-accent="midnight">
@@ -14,6 +14,7 @@
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
 <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
 <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
@@ -81,6 +82,15 @@
 <section><h2>Filter row</h2>
 {{ filter_toolbar("Search evidence", [{"label":"Source", "options":[]}, {"label":"Status", "options":[]}, {"label":"Assessment", "options":[]}], "margin-top:var(--s-4)") }}</section>
 
+<section><h2>System states</h2>
+<div class="glass card"><h3>Toasts</h3><div class="row"><button class="btn secondary" data-toast-kind="success" data-toast-message="Conclusion approved" data-toast-action="Undo">Success with action</button><button class="btn secondary" data-toast-kind="information" data-toast-message="Analysis started">Information</button><button class="btn secondary" data-toast-kind="error" data-toast-message="The conclusion was not saved">Error</button></div>{{ toast_container([]) }}</div>
+<div class="glass card"><h3>Skeleton shapes and loading</h3><div class="row"><span class="skel" style="width:180px"></span><span class="skel circle" style="width:48px;height:48px"></span><span class="skel pill-s" style="width:92px"></span><span class="skel chip-s"></span>{{ button("Saving", "secondary", loading=true) }}</div></div>
+<div class="glass card"><h3>Menus and popovers</h3><div class="row"><span class="anchor"><button class="btn secondary" type="button" data-menu aria-haspopup="menu" aria-expanded="false">Open menu</button>{{ menu([{"label":"Open engagement", "href":"/design", "icon_id":"folder"}, {"separator":true}, {"label":"Delete engagement", "bad":true}], heading="Engagement actions") }}</span><span class="anchor"><button class="btn ghost" type="button" data-menu aria-haspopup="dialog" aria-expanded="false">About the cut-off</button><div class="menu wide" role="dialog"><div class="pop-body"><h3>Evidence cut-off</h3><p>Files dated after the cut-off are left out of analysis.</p></div></div></span></div></div>
+<div class="glass card"><h3>Modal and typed confirmation</h3><div class="row"><button class="btn danger" type="button" data-modal-open="design-delete-modal">Try delete dialog</button></div><div class="scrim-modal" id="design-delete-modal" data-modal hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="design-delete-title" data-confirm-value="FY2026 programme"><h2 id="design-delete-title">Permanently purge this engagement?</h2><p>This removes evidence, findings and report versions. This cannot be undone.</p><div class="fields"><div><label class="label" for="design-confirm-name">Type the engagement name to confirm</label><label class="field"><input id="design-confirm-name" data-confirm-input autocomplete="off"></label><p class="help">FY2026 programme</p></div></div><div class="foot"><button class="btn ghost" type="button" data-modal-close>Cancel</button><button class="btn destructive" type="button" data-confirm-submit disabled>Purge engagement</button></div></div></div></div>
+</section>
+
 </div>
 <script>const q=new URLSearchParams(location.search);if(q.has('dark'))document.documentElement.dataset.theme='dark';if(q.has('focus'))document.getElementById('focusme')?.focus();</script>
+<div class="toasts" data-global-toasts aria-live="polite"></div>
+<script src="/static/js/app.js"></script>
 </body></html>

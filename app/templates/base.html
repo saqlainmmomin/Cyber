@@ -30,7 +30,6 @@
   </style>
   {% endif %}
   <link rel="stylesheet" href="/static/css/src/fonts.css">
-  <link rel="stylesheet" href="/static/css/tailwind.css">
   <link rel="stylesheet" href="/static/css/yozora-tokens.css">
   <link rel="stylesheet" href="/static/css/yozora-components.css">
   <link rel="stylesheet" href="/static/css/yozora-patterns.css">
@@ -143,6 +142,8 @@
     </div>
   </div>
   {% endblock %}
+
+  <div class="toasts" data-global-toasts aria-live="polite" aria-atomic="false"></div>
 
   <script src="/static/js/app.js"></script>
   {% block scripts %}{% endblock %}

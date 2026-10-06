@@ -1,12 +1,17 @@
 import logging
+import re
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from alembic import command
 from alembic.config import Config
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.exception_handlers import http_exception_handler
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
@@ -175,3 +180,127 @@ def login(request: Request):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+_ENGAGEMENT_PATH = re.compile(r"^/engagements/[^/]+(?:/|$)")
+
+
+def _reference_code() -> str:
+    token = secrets.token_hex(6)
+    return "-".join(token[index : index + 4] for index in range(0, 12, 4))
+
+
+def _wants_json(request: Request) -> bool:
+    accept = request.headers.get("accept", "").casefold()
+    path = request.url.path
+    return path == "/api" or path.startswith("/api/") or "application/json" in accept
+
+
+def _error_context(request: Request, *, variant: str, reference_code: str) -> dict:
+    variants = {
+        "page": {
+            "crumb": "Page not found",
+            "heading": "Page not found",
+            "message": "The page may have moved, or the link is out of date.",
+            "icon_id": "search",
+            "primary_label": "Go to home",
+            "primary_href": "/",
+            "primary_icon_id": "home",
+            "secondary_label": "Go back",
+            "secondary_href": "/",
+            "secondary_action": "back",
+        },
+        "engagement": {
+            "crumb": "Engagement not found",
+            "heading": "Engagement not found",
+            "message": "It may have been archived or deleted. Check the engagement list for what is current.",
+            "icon_id": "briefcase",
+            "primary_label": "View engagements",
+            "primary_href": "/engagements",
+            "primary_icon_id": "briefcase",
+            "secondary_label": "Go back",
+            "secondary_href": "/",
+            "secondary_action": "back",
+        },
+        "error": {
+            "crumb": "Something went wrong",
+            "heading": "This page couldn't be loaded",
+            "message": "Something failed on our side. Try again in a moment. If it keeps happening, send the reference to support.",
+            "icon_id": "alert",
+            "primary_label": "Try again",
+            "primary_icon_id": "rotate",
+            "primary_action": "retry",
+            "primary_href": "/",
+            "secondary_label": "Go to home",
+            "secondary_href": "/",
+        },
+    }
+    selected = variants.get(variant, variants["error"])
+    previous_href = _safe_referrer(request)
+    if selected.get("secondary_action") == "back":
+        selected = {**selected, "secondary_href": previous_href}
+    if selected.get("primary_action") == "retry":
+        selected = {**selected, "primary_href": previous_href}
+    return {
+        "request": request,
+        "reference_code": reference_code,
+        "variant": variant,
+        **selected,
+    }
+
+
+def _safe_referrer(request: Request) -> str:
+    """Return a same-origin, path-only referrer for error-page fallbacks."""
+    raw_referrer = request.headers.get("referer")
+    if not raw_referrer:
+        return "/"
+    parsed = urlsplit(raw_referrer)
+    if parsed.scheme and parsed.scheme not in {"http", "https"}:
+        return "/"
+    if parsed.netloc and parsed.netloc != request.url.netloc:
+        return "/"
+    if not parsed.path.startswith("/") or parsed.path.startswith("//"):
+        return "/"
+    return urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
+
+
+def _log_error_page(request: Request, exc: Exception, reference_code: str, *, server_error: bool) -> None:
+    message = "error_page reference=%s path=%r exception=%s"
+    values = (reference_code, request.scope.get("raw_path", request.url.path), type(exc).__name__)
+    if server_error and getattr(exc, "__traceback__", None) is not None:
+        logger.error(message, *values, exc_info=(type(exc), exc, exc.__traceback__))
+    else:
+        logger.warning(message, *values)
+
+
+async def _http_error_page(request: Request, exc: StarletteHTTPException):
+    if exc.status_code not in {404, 500} or _wants_json(request):
+        return await http_exception_handler(request, exc)
+    reference_code = _reference_code()
+    _log_error_page(request, exc, reference_code, server_error=exc.status_code >= 500)
+    variant = "engagement" if _ENGAGEMENT_PATH.match(request.url.path) else "page"
+    if exc.status_code == 500:
+        variant = "error"
+    return web.templates.TemplateResponse(
+        request=request,
+        name="pages/error.html",
+        context=_error_context(request, variant=variant, reference_code=reference_code),
+        status_code=exc.status_code,
+    )
+
+
+async def _unhandled_error_page(request: Request, exc: Exception):
+    reference_code = _reference_code()
+    _log_error_page(request, exc, reference_code, server_error=True)
+    if _wants_json(request):
+        return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
+    return web.templates.TemplateResponse(
+        request=request,
+        name="pages/error.html",
+        context=_error_context(request, variant="error", reference_code=reference_code),
+        status_code=500,
+    )
+
+
+app.add_exception_handler(StarletteHTTPException, _http_error_page)
+app.add_exception_handler(Exception, _unhandled_error_page)

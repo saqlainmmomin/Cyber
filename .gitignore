@@ -18,9 +18,7 @@ cyberassess.db
 dashboard.png
 .claude/worktrees/
 
-# Tailwind CLI build artifacts
 node_modules/
-app/static/css/tailwind.css
 
 validation/runs/
 validation/companies/*/rendered/

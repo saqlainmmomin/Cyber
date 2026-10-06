@@ -20,9 +20,6 @@
   padding: var(--s-6) var(--s-8) var(--s-16);
 }
 
-/* tailwind.css is kept for legacy routes, but its preflight resets semantic
-   heading styles after the Yozora component sheet. Restore the design-system
-   type scale at the shell boundary. */
 table {
   border-collapse: separate;
   border-spacing: 0;

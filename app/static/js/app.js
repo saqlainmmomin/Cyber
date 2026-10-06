@@ -6,77 +6,593 @@ document.body.addEventListener('htmx:configRequest', function(event) {
   // Add CSRF or other headers if needed later
 });
 
-// HTMX-aware redirects (e.g., auth redirect on 401)
-document.body.addEventListener('htmx:responseError', function(event) {
-  if (event.detail.xhr.getResponseHeader('X-Conclusion-Conflict')) return;
-  if (event.detail.xhr.status === 401) {
-    window.location.href = '/login';
-  } else {
-    const msg = event.detail.xhr.getResponseHeader('X-Toast-Message');
-    CyberToast.show(
-      msg ? decodeURIComponent(msg) : 'Something went wrong. Please try again.',
-      'error'
-    );
+// ── Global Yozora behaviour ──────────────────────
+
+const activeRequests = new Set();
+const MAX_VISIBLE_TOASTS = 4;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+function decodeHeader(value) {
+  if (!value) return '';
+  try { return decodeURIComponent(value); } catch (_error) { return value; }
+}
+
+function toastContainer() {
+  let container = document.querySelector('[data-global-toasts], .toasts');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toasts';
+    container.setAttribute('data-global-toasts', 'true');
+    container.setAttribute('aria-live', 'polite');
+    document.body.appendChild(container);
   }
+  return container;
+}
+
+function toastIcon(symbol) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', 'i lead-i');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttributeNS(XLINK_NS, 'xlink:href', `#i-${symbol}`);
+  use.setAttribute('href', `#i-${symbol}`);
+  svg.appendChild(use);
+  return svg;
+}
+
+function dismissToast(item) {
+  if (!item) return;
+  if (item._toastTimer) window.clearTimeout(item._toastTimer);
+  item.remove();
+}
+
+function normalizeToastKind(kind) {
+  if (kind === 'error') return 'error';
+  if (kind === 'info' || kind === 'information') return 'information';
+  if (kind === 'success') return 'success';
+  return 'information';
+}
+
+function toast(kind = 'success', message = '', action = null) {
+  const tone = normalizeToastKind(kind);
+  const textMessage = String(message);
+  const container = toastContainer();
+  const existing = [...container.querySelectorAll('.toast')].find((item) => (
+    item.dataset.toastKind === tone && item.dataset.toastMessage === textMessage
+  ));
+  if (existing) {
+    if (existing._toastTimer) window.clearTimeout(existing._toastTimer);
+    if (tone !== 'error') {
+      existing._toastTimer = window.setTimeout(() => dismissToast(existing), 4000);
+    }
+    return existing;
+  }
+
+  const isError = tone === 'error';
+  const item = document.createElement('div');
+  item.className = `toast${isError ? ' bad' : tone === 'information' ? ' info' : ''}`;
+  item.setAttribute('role', isError ? 'alert' : 'status');
+  item.dataset.toastKind = tone;
+  item.dataset.toastMessage = textMessage;
+  item.appendChild(toastIcon(isError ? 'alert' : 'check'));
+
+  const text = document.createElement('span');
+  text.className = 'msg grow';
+  text.textContent = textMessage;
+  item.appendChild(text);
+
+  const actionLabel = typeof action === 'string' ? action : action && action.label;
+  if (actionLabel) {
+    const actionButton = document.createElement('button');
+    actionButton.className = 'btn ghost sm';
+    actionButton.type = 'button';
+    actionButton.textContent = actionLabel;
+    if (action && typeof action.onClick === 'function') actionButton.addEventListener('click', action.onClick);
+    item.appendChild(actionButton);
+  }
+
+  if (isError) {
+    const close = document.createElement('button');
+    close.className = 'btn ghost icon sm';
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Dismiss');
+    close.appendChild(toastIcon('x'));
+    close.addEventListener('click', () => dismissToast(item));
+    item.appendChild(close);
+  }
+
+  container.appendChild(item);
+  while (container.children.length > MAX_VISIBLE_TOASTS) {
+    dismissToast(container.firstElementChild);
+  }
+  if (!isError) item._toastTimer = window.setTimeout(() => dismissToast(item), 4000);
+  return item;
+}
+
+window.toast = toast;
+
+function requestTarget(detail) {
+  if (detail && detail.target) {
+    if (typeof detail.target !== 'string') return detail.target;
+    try { return document.querySelector(detail.target); } catch (_error) { return null; }
+  }
+  const selector = detail && detail.requestConfig && detail.requestConfig.target;
+  if (selector) {
+    if (typeof selector !== 'string') return selector;
+    try { return document.querySelector(selector); } catch (_error) { return null; }
+  }
+  const element = detail && detail.elt;
+  if (!element) return null;
+  return isBoostedRequest(element) ? document.body : element;
+}
+
+function requestSwapStyle(detail) {
+  const configured = detail && detail.requestConfig && detail.requestConfig.swapStyle;
+  if (configured) return configured;
+  const element = detail && detail.elt;
+  const declared = element && (element.getAttribute('hx-swap') || element.getAttribute('data-hx-swap'));
+  return declared ? declared.split(':', 1)[0].trim() : 'innerHTML';
+}
+
+function isBoostedRequest(element) {
+  if (!element.matches?.('a, form')) return false;
+  let current = element;
+  while (current && current !== document) {
+    const declared = current.getAttribute && (current.getAttribute('hx-boost') || current.getAttribute('data-hx-boost'));
+    if (declared !== null && declared !== '') return declared !== 'false';
+    current = current.parentElement;
+  }
+  return false;
+}
+
+function isDocumentTarget(target) {
+  return !target || target === document || target === document.documentElement || target === document.body;
+}
+
+function requestCanShowFeedback(detail, target) {
+  return Boolean(
+    target
+    && !isDocumentTarget(target)
+    && target !== (detail && detail.elt)
+    && requestSwapStyle(detail) !== 'none'
+  );
+}
+
+function requestButton(detail) {
+  const element = detail && detail.elt;
+  if (element && element.matches && element.matches('button')) return element;
+  if (element && element.querySelector) {
+    return element.querySelector('button[type="submit"], button.btn');
+  }
+  return null;
+}
+
+function requestSkeleton(target, state) {
+  if (!requestCanShowFeedback(state.detail, target) || !target.parentNode) return;
+  state.timer = window.setTimeout(() => {
+    if (state.settled || !target.parentNode) return;
+    const stack = document.createElement('span');
+    stack.className = 'skel-stack';
+    stack.dataset.yozoraRequestSkeleton = 'true';
+    stack.setAttribute('aria-hidden', 'true');
+    ['62%', '88%', '72%'].forEach((width) => {
+      const line = document.createElement('span');
+      line.className = 'skel';
+      line.style.width = width;
+      stack.appendChild(line);
+    });
+    target.parentNode.insertBefore(stack, target.nextSibling);
+    target.setAttribute('aria-busy', 'true');
+    state.markedBusy = true;
+    state.skeleton = stack;
+  }, 300);
+}
+
+function cleanupRequest(state) {
+  if (!state) return;
+  state.settled = true;
+  window.clearTimeout(state.timer);
+  if (state.button) {
+    state.button.classList.remove('loading');
+    state.button.removeAttribute('aria-busy');
+  }
+  if (state.markedBusy && state.target) {
+    state.target.removeAttribute('aria-busy');
+  }
+  if (state.skeleton && state.skeleton.isConnected) state.skeleton.remove();
+  activeRequests.delete(state);
+}
+
+function clearRequestAlert(target) {
+  if (!target) return;
+  const alert = target.__yozoraRequestAlert
+    || (target.nextElementSibling && target.nextElementSibling.matches('[data-yozora-request-alert]')
+      ? target.nextElementSibling
+      : null);
+  if (alert) alert.remove();
+  target.__yozoraRequestAlert = null;
+}
+
+function swapAlert(target, title, body) {
+  if (!target || isDocumentTarget(target) || !target.parentNode) return null;
+  clearRequestAlert(target);
+  const alert = document.createElement('div');
+  alert.className = 'alert c-non';
+  alert.setAttribute('role', 'alert');
+  alert.dataset.yozoraRequestAlert = 'true';
+  alert.appendChild(toastIcon('alert'));
+  const copy = document.createElement('div');
+  const heading = document.createElement('b');
+  heading.textContent = title;
+  copy.appendChild(heading);
+  copy.appendChild(document.createTextNode(body));
+  alert.appendChild(copy);
+  target.parentNode.insertBefore(alert, target.nextSibling);
+  target.__yozoraRequestAlert = alert;
+  alert.classList.add('swap-in');
+  window.setTimeout(() => alert.classList.remove('swap-in'), 220);
+  return alert;
+}
+
+function requestError(event, fallback) {
+  const detail = event.detail || {};
+  const xhr = detail.xhr;
+  if (xhr && xhr.getResponseHeader('X-Conclusion-Conflict')) return;
+  if (xhr && xhr.status === 401) {
+    window.location.href = '/login';
+    detail.shouldSwap = false;
+    return;
+  }
+  const message = decodeHeader(xhr && xhr.getResponseHeader('X-Toast-Message')) || fallback;
+  detail.shouldSwap = false;
+  detail.isError = false;
+  const target = requestTarget(detail);
+  if (requestCanShowFeedback(detail, target)) swapAlert(target, 'The request failed', message);
+  toast('error', message);
+}
+
+document.body.addEventListener('htmx:beforeRequest', (event) => {
+  const detail = event.detail || {};
+  const target = requestTarget(detail);
+  clearRequestAlert(target);
+  const state = {
+    detail,
+    elt: detail.elt,
+    target,
+    button: requestButton(detail),
+    settled: false,
+  };
+  if (state.button) {
+    state.button.classList.add('loading');
+    state.button.setAttribute('aria-busy', 'true');
+  }
+  if (state.target) requestSkeleton(state.target, state);
+  activeRequests.add(state);
 });
 
-// Handle HX-Redirect header
+document.body.addEventListener('htmx:responseError', (event) => {
+  requestError(event, 'Something went wrong. Please try again.');
+});
+
+document.body.addEventListener('htmx:sendError', (event) => {
+  const detail = event.detail || {};
+  detail.shouldSwap = false;
+  const message = 'The request could not be completed. Check your connection and try again.';
+  const target = requestTarget(detail);
+  if (requestCanShowFeedback(detail, target)) swapAlert(target, 'The request failed', message);
+  toast('error', message);
+});
+
+// Handle HX-Redirect and the optimistic-concurrency conflict response.
 document.body.addEventListener('htmx:beforeSwap', function(event) {
-  if (event.detail.xhr.status === 409 && event.detail.xhr.getResponseHeader('X-Conclusion-Conflict')) {
+  const xhr = event.detail.xhr;
+  if (xhr && xhr.status === 409 && xhr.getResponseHeader('X-Conclusion-Conflict')) {
     event.detail.shouldSwap = true;
     event.detail.isError = false;
   }
-  if (event.detail.xhr.status === 401) {
+  if (xhr && xhr.status === 401) {
     window.location.href = '/login';
     event.detail.shouldSwap = false;
   }
 });
 
-// ── Toast Notifications ─────────────────────────
-
-const CyberToast = {
-  container: null,
-
-  init() {
-    this.container = document.createElement('div');
-    this.container.className = 'fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none';
-    document.body.appendChild(this.container);
-  },
-
-  show(message, type = 'success') {
-    if (!this.container) this.init();
-    const colors = {
-      success: 'bg-green-800 text-green-100 border-green-700',
-      error: 'bg-red-900 text-red-100 border-red-800',
-      info: 'bg-gray-800 text-gray-100 border-gray-700',
-    };
-    const icons = {
-      success: '✓',
-      error: '✕',
-      info: 'ℹ',
-    };
-    const toast = document.createElement('div');
-    toast.className = `${colors[type] || colors.info} pointer-events-auto px-4 py-3 rounded-lg text-sm border shadow-lg flex items-center gap-2 transform translate-y-2 opacity-0 transition-all duration-200 max-w-sm`;
-    toast.innerHTML = `<span class="font-medium">${icons[type] || ''}</span><span>${message}</span>`;
-    this.container.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.remove('translate-y-2', 'opacity-0');
-    });
-    setTimeout(() => {
-      toast.classList.add('translate-y-2', 'opacity-0');
-      setTimeout(() => toast.remove(), 200);
-    }, 3000);
-  }
-};
-
-// Listen for X-Toast-Message header from HTMX responses
 document.body.addEventListener('htmx:afterSwap', (event) => {
-  const msg = event.detail.xhr?.getResponseHeader('X-Toast-Message');
-  if (msg) {
-    const type = event.detail.xhr.getResponseHeader('X-Toast-Type') || 'success';
-    CyberToast.show(decodeURIComponent(msg), type);
+  const originalTarget = event.detail && event.detail.target;
+  const target = originalTarget && originalTarget.isConnected
+    ? originalTarget
+    : originalTarget && originalTarget.id
+      ? document.getElementById(originalTarget.id)
+      : null;
+  if (target) {
+    clearRequestAlert(target);
+    target.classList.remove('swap-in');
+    void target.offsetWidth;
+    target.classList.add('swap-in');
+    window.setTimeout(() => target.classList.remove('swap-in'), 220);
+  }
+  const xhr = event.detail && event.detail.xhr;
+  const msg = xhr && xhr.getResponseHeader('X-Toast-Message');
+  if (msg) toast(xhr.getResponseHeader('X-Toast-Type') || 'success', decodeHeader(msg));
+});
+
+document.body.addEventListener('htmx:afterRequest', (event) => {
+  const detail = event.detail || {};
+  const modal = detail.elt && detail.elt.closest && detail.elt.closest('[data-modal], .scrim-modal');
+  if (modal && !detail.successful) modalClose(modal);
+  activeRequests.forEach((state) => {
+    if (state.elt === detail.elt) cleanupRequest(state);
+  });
+});
+
+document.body.addEventListener('htmx:afterSettle', (event) => {
+  const target = event.detail && event.detail.target;
+  activeRequests.forEach((state) => {
+    if (state.target === target) cleanupRequest(state);
+  });
+  refreshModalLock();
+});
+
+document.body.addEventListener('htmx:beforeHistorySave', () => {
+  activeRequests.forEach((state) => cleanupRequest(state));
+  document.querySelectorAll('[data-yozora-request-skeleton]').forEach((skeleton) => skeleton.remove());
+  document.querySelectorAll('[data-yozora-request-alert]').forEach((alert) => alert.remove());
+  document.querySelectorAll('[aria-busy="true"]').forEach((element) => element.removeAttribute('aria-busy'));
+});
+
+document.addEventListener('click', (event) => {
+  const toastTrigger = event.target.closest && event.target.closest('[data-toast-kind]');
+  if (toastTrigger) {
+    toast(toastTrigger.dataset.toastKind, toastTrigger.dataset.toastMessage || toastTrigger.textContent.trim(), toastTrigger.dataset.toastAction || null);
+    return;
   }
 });
+
+document.addEventListener('click', (event) => {
+  const row = event.target.closest && event.target.closest('tr[data-href]');
+  if (row && !event.target.closest('a, button, input, select, textarea, label')) {
+    window.location.href = row.dataset.href;
+    return;
+  }
+  const copy = event.target.closest && event.target.closest('[data-copy-checksum]');
+  if (copy && navigator.clipboard) {
+    navigator.clipboard.writeText(copy.dataset.copyChecksum).then(() => toast('success', 'Checksum copied'));
+  }
+});
+
+document.addEventListener('click', (event) => {
+  const action = event.target.closest && event.target.closest('[data-error-action]');
+  if (!action) return;
+  const href = action.getAttribute('href');
+  const type = action.dataset.errorAction;
+  if (type === 'back') {
+    event.preventDefault();
+    let sameOriginReferrer = false;
+    try {
+      sameOriginReferrer = document.referrer && new URL(document.referrer, window.location.href).origin === window.location.origin;
+    } catch (_error) {
+      sameOriginReferrer = false;
+    }
+    if (sameOriginReferrer && window.history.length > 1) window.history.back();
+    else if (href) window.location.assign(href);
+  } else if (type === 'retry') {
+    event.preventDefault();
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (href && href !== current && href !== window.location.href) window.location.assign(href);
+    else window.location.reload();
+  }
+});
+
+// ── Menus and modal dialogs ─────────────────────
+
+function focusable(container) {
+  return [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    .filter((element) => !element.hidden && element.offsetParent !== null);
+}
+
+function modalOpen(modal, opener) {
+  if (!modal) return;
+  modal.__yozoraOpener = opener || modal.__yozoraOpener || null;
+  modal.hidden = false;
+  document.documentElement.classList.add('modal-open');
+  document.body.classList.add('modal-open');
+  const first = modal.querySelector('input:not([type="hidden"]):not([disabled]), [autofocus]') || focusable(modal)[0];
+  if (first) first.focus();
+}
+
+function refreshModalLock() {
+  const open = [...document.querySelectorAll('[data-modal], .scrim-modal, [data-confirm-dialog]')]
+    .some((modal) => !modal.hidden);
+  document.documentElement.classList.toggle('modal-open', open);
+  document.body.classList.toggle('modal-open', open);
+}
+
+function modalClose(modal) {
+  if (!modal) return;
+  const opener = modal.__yozoraOpener;
+  modal.hidden = true;
+  if (modal.matches('[data-confirm-dialog]')) modal.remove();
+  refreshModalLock();
+  if (opener && opener.isConnected) opener.focus();
+}
+
+function syncConfirm(form) {
+  const input = form.querySelector('[name="confirm_name"], [data-confirm-input]');
+  const submit = form.querySelector('[type="submit"], [data-confirm-submit]');
+  if (input && submit && form.dataset.confirmValue !== undefined) {
+    submit.disabled = input.value !== form.dataset.confirmValue;
+  }
+}
+
+function menuFor(trigger) {
+  const selector = trigger.dataset.menuTarget;
+  if (selector) {
+    try { return document.querySelector(selector); } catch (_error) { return null; }
+  }
+  return trigger.closest('.anchor')?.querySelector('.menu') || trigger.parentElement?.querySelector('.menu');
+}
+
+function menuItems(menu) {
+  return [...menu.querySelectorAll('[role="menuitem"], [role="option"], button.mi')]
+    .filter((item) => !item.disabled && item.getAttribute('aria-disabled') !== 'true');
+}
+
+function positionMenu(menu) {
+  if (!menu || !menu.matches('.anchor .menu')) return;
+  menu.classList.remove('flip-x', 'flip-y');
+  requestAnimationFrame(() => {
+    const rect = menu.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - 8) menu.classList.add('flip-y');
+    if (rect.left < 8) menu.classList.add('flip-x');
+  });
+}
+
+function menuClose(menu, restoreFocus = false) {
+  if (!menu) return;
+  menu.classList.remove('open', 'flip-x', 'flip-y');
+  const trigger = menu.__yozoraTrigger;
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  if (restoreFocus && trigger && trigger.isConnected) trigger.focus();
+}
+
+function menusCloseAll(restoreFocus = false, except = null) {
+  document.querySelectorAll('.anchor .menu.open').forEach((menu) => {
+    if (menu !== except) menuClose(menu, restoreFocus);
+  });
+  const account = document.getElementById('userMenu');
+  if (account && account.classList.contains('open') && account !== except) {
+    account.classList.remove('open');
+    document.getElementById('userBtn')?.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) document.getElementById('userBtn')?.focus();
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const opener = event.target.closest && event.target.closest('[data-menu]');
+  if (opener) {
+    const menu = menuFor(opener);
+    if (!menu) return;
+    event.stopPropagation();
+    const open = !menu.classList.contains('open');
+    menusCloseAll(false, menu);
+    menu.__yozoraTrigger = opener;
+    menu.classList.toggle('open', open);
+    opener.setAttribute('aria-expanded', String(open));
+    if (open) {
+      positionMenu(menu);
+      if (menu.getAttribute('role') === 'menu') menuItems(menu)[0]?.focus();
+    }
+    return;
+  }
+  if (!event.target.closest?.('.anchor .menu')) menusCloseAll(false);
+
+  const modalOpener = event.target.closest && event.target.closest('[data-modal-open]');
+  if (modalOpener) {
+    const modal = document.getElementById(modalOpener.dataset.modalOpen);
+    if (modal) modalOpen(modal, modalOpener);
+    return;
+  }
+  const modalCloser = event.target.closest && event.target.closest('[data-modal-close]');
+  if (modalCloser) {
+    event.preventDefault();
+    modalClose(modalCloser.closest('[data-modal], .scrim-modal, [data-confirm-dialog]'));
+    return;
+  }
+  const scrim = event.target.closest && event.target.closest('[data-modal], .scrim-modal, [data-confirm-dialog]');
+  if (scrim && event.target === scrim) modalClose(scrim);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    const modal = [...document.querySelectorAll('[data-modal], .scrim-modal, [data-confirm-dialog]')]
+      .find((item) => !item.hidden);
+    if (modal) modalClose(modal);
+    menusCloseAll(true);
+    return;
+  }
+  if (event.key === 'Tab') {
+    const modal = event.target.closest && event.target.closest('[data-modal], .scrim-modal, [data-confirm-dialog]');
+    if (!modal || modal.hidden) return;
+    const items = focusable(modal);
+    if (!items.length) return;
+    const index = items.indexOf(document.activeElement);
+    const next = items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length];
+    if (index === -1 || (event.shiftKey && index === 0) || (!event.shiftKey && index === items.length - 1)) {
+      event.preventDefault();
+      next.focus();
+    }
+  }
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    const menu = event.target.closest && event.target.closest('.anchor .menu.open');
+    if (!menu) return;
+    const items = menuItems(menu);
+    const index = items.indexOf(document.activeElement);
+    if (!items.length) return;
+    event.preventDefault();
+    items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
+
+document.addEventListener('input', (event) => {
+  const form = event.target.closest && event.target.closest('[data-confirm-value]');
+  if (form) syncConfirm(form);
+});
+document.querySelectorAll('[data-confirm-value]').forEach(syncConfirm);
+refreshModalLock();
+
+document.body.addEventListener('htmx:load', (event) => {
+  const root = event.detail && event.detail.elt ? event.detail.elt : document;
+  root.querySelectorAll?.('[data-confirm-value]').forEach(syncConfirm);
+  refreshModalLock();
+});
+
+// HTMX's native confirmation hook is rendered as the same accessible modal as
+// explicit data-modal controls. The request is only issued after confirmation.
+document.body.addEventListener('htmx:confirm', (event) => {
+  const question = event.detail && event.detail.question;
+  const issueRequest = event.detail && event.detail.issueRequest;
+  if (!question || typeof issueRequest !== 'function') return;
+  event.preventDefault();
+  const scrim = document.createElement('div');
+  scrim.className = 'scrim-modal';
+  scrim.setAttribute('data-confirm-dialog', 'true');
+  scrim.setAttribute('role', 'presentation');
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  const title = document.createElement('h2');
+  title.textContent = 'Confirm action';
+  const copy = document.createElement('p');
+  copy.textContent = question;
+  const foot = document.createElement('div');
+  foot.className = 'foot';
+  const cancel = document.createElement('button');
+  cancel.className = 'btn ghost';
+  cancel.type = 'button';
+  cancel.textContent = 'Cancel';
+  const confirm = document.createElement('button');
+  confirm.className = /delete|purge|archive|revoke/i.test(question) ? 'btn destructive' : 'btn secondary';
+  confirm.type = 'button';
+  confirm.textContent = 'Continue';
+  foot.append(cancel, confirm);
+  modal.append(title, copy, foot);
+  scrim.appendChild(modal);
+  document.body.appendChild(scrim);
+  modalOpen(scrim, event.target);
+  cancel.addEventListener('click', () => modalClose(scrim));
+  confirm.addEventListener('click', () => {
+    modalClose(scrim);
+    issueRequest(true);
+  });
+});
+
+// Close anchored menus before HTMX or modal handlers act on an item inside them.
+document.addEventListener('click', (event) => {
+  const action = event.target.closest && event.target.closest('[data-modal-open], .anchor .menu [hx-post], .anchor .menu [data-hx-post]');
+  const menu = action && action.closest('.anchor .menu');
+  if (menu) menuClose(menu);
+}, true);
 
 // ── Copy to Clipboard ───────────────────────────
 
@@ -90,7 +606,7 @@ document.addEventListener('click', (e) => {
 
   const text = target.textContent.trim();
   navigator.clipboard.writeText(text).then(() => {
-    CyberToast.show('Copied to clipboard', 'info');
+    toast('information', 'Copied to clipboard');
   }).catch(() => {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -100,7 +616,7 @@ document.addEventListener('click', (e) => {
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
-    CyberToast.show('Copied to clipboard', 'info');
+    toast('information', 'Copied to clipboard');
   });
 });
 

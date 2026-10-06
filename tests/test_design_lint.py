@@ -5,11 +5,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_ROOT = ROOT / "app" / "templates"
 CSS_ROOT = ROOT / "app" / "static" / "css" / "src"
-ALLOWLIST = {
-    line.strip()
-    for line in (ROOT / "tests" / "design_lint_allowlist.txt").read_text().splitlines()
-    if line.strip() and not line.startswith("#")
-}
 MIGRATED_TEMPLATES = {
     "components/engagement_status_badge.html",
     "components/evidence_status_badge.html",
@@ -57,6 +52,56 @@ MIGRATED_TEMPLATES = {
     "pages/requests.html",
     "partials/magic_links.html",
     "partials/rfi_links.html",
+    # Yozora per-PR allowance (S9)
+    "pages/error.html",
+    "pages/design_s9_system.html",
+    "pages/assessment.html",
+    "pages/clients.html",
+    "pages/evidence_reuse.html",
+    "pages/integrated_reports.html",
+    "partials/client_picker.html",
+    "partials/context_complete.html",
+    "partials/followup_questions.html",
+    "partials/questionnaire_sections.html",
+    "partials/questionnaire_tab.html",
+    "partials/scope_complete.html",
+    "partials/scope_form.html",
+    "partials/section_questions.html",
+    # Yozora migration sweep: all remaining non-print templates are now covered.
+    "components/workpaper_entry.html",
+    "pages/aws_evidence.html",
+    "pages/client_detail.html",
+    "pages/dashboard.html",
+    "pages/engagement_detail.html",
+    "pages/engagement_purge.html",
+    "pages/engagements.html",
+    "pages/evidence_detail.html",
+    "pages/evidence_span.html",
+    "pages/firm_settings.html",
+    "pages/login.html",
+    "pages/new_assessment.html",
+    "pages/new_engagement.html",
+    "pages/remediation_tracker.html",
+    "pages/reports.html",
+    "pages/review.html",
+    "pages/workpaper.html",
+    "partials/assessment_header.html",
+    "partials/aws_evidence_panel.html",
+    "partials/desk_review_error.html",
+    "partials/desk_review_findings.html",
+    "partials/desk_review_ready.html",
+    "partials/desk_review_running.html",
+    "partials/document_list.html",
+    "partials/engagement_list.html",
+    "partials/engagement_retention.html",
+    "partials/framework_tabs.html",
+    "partials/question_step.html",
+    "partials/scope_tab.html",
+    "partials/screening_form.html",
+    "partials/section_saved.html",
+    "partials/status_timeline.html",
+    "partials/upload_status.html",
+    "partials/yozora_page_controls.html",
 }
 
 
@@ -68,7 +113,7 @@ def _lint_files():
     files = []
     for path in _template_files():
         relative = path.relative_to(TEMPLATE_ROOT).as_posix()
-        if relative not in ALLOWLIST:
+        if not relative.startswith("reports/"):
             files.append(path)
     files.extend(sorted(CSS_ROOT.rglob("*.css")))
     return files
@@ -103,13 +148,14 @@ def test_no_forbidden_visual_effects():
     _assert_no_pattern(r"background-clip\s*:\s*text|blur-3xl", "forbidden visual effect")
 
 
-def test_unmigrated_templates_are_explicitly_allowlisted():
+def test_all_non_print_templates_are_migrated():
     unmigrated = {
         path.relative_to(TEMPLATE_ROOT).as_posix()
         for path in _template_files()
         if path.name != "base.html"
+        and not path.relative_to(TEMPLATE_ROOT).as_posix().startswith("reports/")
     }
-    assert unmigrated <= ALLOWLIST | MIGRATED_TEMPLATES
+    assert unmigrated <= MIGRATED_TEMPLATES
 
 
 def test_shell_has_at_most_one_primary_marker():

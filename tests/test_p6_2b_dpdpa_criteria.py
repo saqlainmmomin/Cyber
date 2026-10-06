@@ -598,7 +598,7 @@ YOZORA_DESIGN_FILES = (
 # P6-8 V3-B: the synthetic v3 deck document (golden).
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, is_v3b_path  # noqa: E402
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # noqa: E402  # V3-C prior domains per-PR allowance
-from tests.yozora_paths import YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS  # noqa: E402  # Yozora S7/S8 per-PR allowance
+from tests.yozora_paths import YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS  # noqa: E402  # Yozora S7-S9 per-PR allowance
 
 P6_8_V3B_EXTRA = (
     "tests/golden/p6_8_v3_deck_document.json", "tests/p6_8_v3b_paths.py", "tests/test_p6_8_v3b_file_set.py",
@@ -628,6 +628,7 @@ def test_scenario_11_only_p6_2b_files_change():
         and f not in YOZORA_S1_FILES
         and f not in YOZORA_S7_PATHS and f not in YOZORA_S7_GUARD_PATHS  # Yozora S7 per-PR allowance
         and f not in YOZORA_S8_PATHS  # Yozora S8 per-PR allowance
+        and f not in YOZORA_S9_PATHS  # Yozora S9 per-PR allowance
         and f not in V3C_PRIOR_DOMAINS_PATHS
     ]
     assert offenders == [], offenders

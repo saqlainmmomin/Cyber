@@ -112,18 +112,18 @@
 {%- endmacro %}
 
 {% macro toast(message, tone="success", action_label="") -%}
-{% set classes = "toast" %}{% if tone == "error" %}{% set classes = classes ~ " bad" %}{% elif tone == "information" %}{% set classes = classes ~ " info" %}{% endif %}
-<div class="{{ classes }}">{{ icon("check" if tone == "success" else "alert", "") }}<span class="msg grow">{{ message }}</span>{% if action_label %}{{ button(action_label, "ghost", "sm") }}{% endif %}</div>
+{% set classes = "toast" %}{% if tone == "error" %}{% set classes = classes ~ " bad" %}{% elif tone in ("information", "info") %}{% set classes = classes ~ " info" %}{% endif %}
+<div class="{{ classes }}" role="{{ 'alert' if tone == 'error' else 'status' }}">{{ icon("check" if tone == "success" else "alert") }}<span class="msg grow">{{ message }}</span>{% if action_label %}{{ button(action_label, "ghost", "sm") }}{% endif %}{% if tone == "error" %}{{ button("", "ghost", "icon sm", "x", aria_label="Dismiss") }}{% endif %}</div>
 {%- endmacro %}
 
 {% macro toast_container(items) -%}<div class="toasts">{% for item in items %}{{ toast(item.message, item.tone, item.action_label if item.action_label is defined else "") }}{% endfor %}</div>{%- endmacro %}
 
-{% macro modal(title, body, cancel_label="Cancel", confirm_label="Delete", destructive=true) -%}
-<div class="modal"><h2>{{ title }}</h2><p>{{ body }}</p><div class="foot">{{ button(cancel_label, "ghost") }}{{ button(confirm_label, "destructive" if destructive else "primary") }}</div></div>
+{% macro modal(title, body, cancel_label="Cancel", confirm_label="Delete", destructive=true, typed_value="", typed_label="Type the name to confirm", typed_help="", modal_id="") -%}
+<div class="modal{% if typed_value %} typed-confirm{% endif %}"{% if modal_id %} id="{{ modal_id }}"{% endif %}{% if typed_value %} data-confirm-value="{{ typed_value }}"{% endif %}><h2>{{ title }}</h2><p>{{ body }}</p>{% if typed_value %}<div class="fields"><div><label class="label" for="{{ modal_id or 'confirm-name' }}">{{ typed_label }}</label><label class="field"><input id="{{ modal_id or 'confirm-name' }}" data-confirm-input autocomplete="off"></label>{% if typed_help %}<p class="help">{{ typed_help }}</p>{% endif %}</div></div>{% endif %}<div class="foot">{{ button(cancel_label, "ghost") }}{{ button(confirm_label, "destructive" if destructive else "primary", disabled=typed_value, button_type="submit") }}</div></div>
 {%- endmacro %}
 
 {% macro menu(items, open=false, heading="") -%}
-<div class="menu{% if open %} open{% endif %}" role="menu">{% if heading %}<div class="gh">{{ heading }}</div>{% endif %}{% for item in items %}{% if item.href is defined %}<a href="{{ item.href }}" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</a>{% else %}<button class="mi{% if item.bad is defined and item.bad %} bad{% endif %}" type="button" role="menuitem">{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}</button>{% endif %}{% endfor %}</div>
+<div class="menu{% if open %} open{% endif %}" role="menu">{% if heading %}<div class="gh">{{ heading }}</div>{% endif %}{% for item in items %}{% if item.separator is defined and item.separator %}<hr>{% elif item.heading is defined and item.heading %}<div class="gh">{{ item.heading }}</div>{% elif item.href is defined %}<a href="{{ item.href }}" role="menuitem"{% if item.disabled is defined and item.disabled %} aria-disabled="true"{% endif %}{% if item.selected is defined and item.selected %} aria-selected="true"{% endif %}{% if item.bad is defined and item.bad %} class="bad"{% endif %}>{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}{% if item.selected is defined and item.selected %}{{ icon("check", "", "margin-left:auto") }}{% endif %}</a>{% else %}<button class="mi{% if item.bad is defined and item.bad %} bad{% endif %}{% if item.selected is defined and item.selected %} sel{% endif %}" type="button" role="menuitem"{% if item.disabled is defined and item.disabled %} aria-disabled="true"{% endif %}{% if item.selected is defined and item.selected %} aria-selected="true"{% endif %}>{% if item.icon_id is defined %}{{ icon(item.icon_id) }}{% endif %}{{ item.label }}{% if item.selected is defined and item.selected %}<span class="tick">{{ icon("check") }}</span>{% endif %}</button>{% endif %}{% endfor %}</div>
 {%- endmacro %}
 
 {% macro code_block(filename, code, copy_label="Copy", style="", copy_target="") -%}

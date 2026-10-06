@@ -585,3 +585,18 @@ def _load_s8_previews() -> None:
 
 
 _load_s8_previews()
+
+
+# S9 preview fixtures follow the same group-owned registration pattern as S8.
+def _load_s9_previews() -> None:
+    import importlib
+    import pkgutil
+
+    import app.routers as routers_package
+
+    for module in pkgutil.iter_modules(routers_package.__path__):
+        if module.name.startswith("design_s9_"):
+            importlib.import_module(f"app.routers.{module.name}")
+
+
+_load_s9_previews()

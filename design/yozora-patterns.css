@@ -109,11 +109,17 @@ fieldset{border:0;min-width:0}
 .top-sum .glass{padding:var(--s-4) var(--s-5)}
 .top-sum .big-n{font-size:var(--t-lg);display:block;margin-top:2px}
 .top-sum .l{display:flex;align-items:center;gap:var(--s-2);font-size:var(--t-sm);color:var(--text-2)}
+.htmx-swapping{opacity:0;transition:opacity .14s var(--ease)}
+.htmx-settling{opacity:1}
+.htmx-settling.swap-in{opacity:1}
 .swap-in{animation:swap-in .2s var(--ease)}
 @keyframes swap-in{from{opacity:0}to{opacity:1}}
 .anchor{position:relative;display:inline-block}
 .anchor .menu{width:240px;position:absolute;top:calc(100% + 6px);bottom:auto;left:auto;right:0;opacity:0;transform:translateY(-4px);pointer-events:none;z-index:20}
 .anchor .menu.open{opacity:1;transform:none;pointer-events:auto}
+.anchor .menu.flip-x{left:0;right:auto}
+.anchor .menu.flip-y{top:auto;bottom:calc(100% + 6px);transform:translateY(4px)}
+.anchor .menu.flip-y.open{transform:none}
 .menu hr{border:0;border-top:1px solid var(--line);margin:4px -6px}
 .menu a:focus-visible,.menu button.mi:focus-visible{box-shadow:0 0 0 2px var(--accent-ring);outline:none}
 .menu .mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 8px;border-radius:var(--r-sm);font-size:var(--t-sm);color:var(--text-2);text-align:left}
@@ -147,6 +153,7 @@ td.act{width:52px;padding-left:0;padding-right:var(--s-3);text-align:right}
 .toast.info svg.lead-i{color:var(--accent-text)}
 .toast .msg b{display:block;font-weight:500}
 .toast .msg span{display:block;color:var(--muted);font-size:var(--t-xs)}
+.toast .btn.icon{margin-left:calc(var(--s-1) * -1)}
 .toasts .toast{animation:toast-in .2s var(--ease)}
 @keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 /* Evidence request: a link or upload request shown as a card with a checklist of requested items (staff links list, client upload page) */
@@ -287,6 +294,7 @@ button.item .txt{color:inherit}
 .cc-pre{white-space:pre-line}
 .cc-evidence{margin-top:var(--s-3);padding:var(--s-4);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md)}
 .cc-claims,.cc-rfi-list{list-style:none;display:flex;flex-direction:column;gap:var(--s-3)}
+.rq-claims{list-style:none;padding-left:0}
 .cc-rfi-list{margin-top:var(--s-3)}
 .cc-rfi-list>li{display:flex;flex-direction:column;gap:var(--s-2)}
 .cc-drafting{display:none;flex-direction:column;gap:10px}
@@ -420,7 +428,7 @@ p.cc-ack{margin-top:var(--s-2)}
 .bi-asks{gap:var(--s-3)}
 /* S7 gate: narrative end */
 /* S7 gate: board-narrative start */
-.nv-alert ul{margin:var(--s-2) 0 0 var(--s-5);list-style:disc}
+.nv-alert ul{margin:var(--s-2) 0 0 var(--s-5);padding-left:var(--s-5);list-style:disc}
 /* S7 gate: board-narrative end */
 /* S7 gate: pages-report start */
 .review-page .rq-seg{position:relative;display:flow-root;margin:var(--s-4) 0}
@@ -613,3 +621,39 @@ p.cc-ack{margin-top:var(--s-2)}
 .invalid-card{padding-left:var(--s-4);padding-right:var(--s-4)}
 }
 /* S8 gate: client-pages end */
+
+/* S9 errors */
+.error-page h1{font-size:var(--t-lg);font-weight:600;letter-spacing:-.014em}
+.error-page .refline{margin-top:var(--s-3)}
+/* S9 gate: shared system behaviour previews */
+.s9-page{max-width:1040px}
+.s9-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-4)}
+.s9-grid>.card{min-width:0}
+.s9-placement{display:grid;grid-template-columns:1fr 220px;gap:var(--s-4);align-items:start;margin-top:var(--s-4)}
+.s9-placement .frame{min-height:144px;display:flex;flex-direction:column;gap:var(--s-3);padding:var(--s-4);position:relative}
+.s9-placement .toast{position:absolute;right:var(--s-3);bottom:var(--s-3)}
+.s9-placement .mob{min-height:180px}
+.s9-loading{min-height:180px}
+.s9-detail-row{display:flex;align-items:center;gap:var(--s-6);margin-top:var(--s-6)}
+.s9-gap{margin-top:var(--s-5)}
+.s9-stat{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--line);color:var(--text-2);font-size:var(--t-sm)}
+.s9-stat:first-child{border-top:0}
+.s9-stat b{color:var(--text);font-weight:600}
+.s9-live{display:flex;flex-direction:column;gap:var(--s-5)}
+.s9-target{min-height:128px;padding:var(--s-5);border-top:1px solid var(--line)}
+.s9-result{display:flex;align-items:center;gap:var(--s-2);font-weight:500;margin-bottom:var(--s-4)}
+.s9-stage{position:relative;min-height:520px;overflow:hidden}
+.s9-ghost{display:flex;flex-direction:column;gap:var(--s-5);padding:var(--s-6)}
+.s9-ghost>.glass{display:flex;flex-direction:column;gap:var(--s-3);padding:var(--s-6)}
+.s9-row{align-items:center;padding:var(--s-4)}
+.s9-row .t-sub{display:block}
+.s9-menu-panel{min-height:190px}
+.s9-menu-panel>.menu{position:static;opacity:1;transform:none;pointer-events:auto;margin-top:var(--s-4);width:240px}
+.s9-menu-panel>.anchor{margin-top:var(--s-4)}
+@media(max-width:760px){
+  .s9-grid{grid-template-columns:1fr}
+  .s9-placement{grid-template-columns:1fr}
+  .s9-placement .mob{display:none}
+  .s9-detail-row{gap:var(--s-4)}
+}
+/* S9 gate: shared system behaviour previews end */
