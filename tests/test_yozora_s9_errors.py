@@ -49,6 +49,28 @@ def test_browser_404_renders_reference_code_and_logs_path(caplog, http):
     )
 
 
+def test_error_log_quotes_paths_that_contain_reference_like_text(caplog, http):
+    caplog.set_level(logging.WARNING, logger="app.main")
+
+    response = http.get("/s9-missing/reference=forged")
+
+    assert response.status_code == 404
+    records = [record for record in caplog.records if record.name == "app.main"]
+    assert any(
+        "path=b'/s9-missing/reference=forged'" in record.getMessage()
+        for record in records
+    )
+
+
+def test_error_actions_are_links_handled_without_inline_javascript(http):
+    response = http.get("/design/pages/b7-500?state=error")
+
+    assert response.status_code == 200
+    assert "onclick=" not in response.text
+    assert 'data-error-action="retry"' in response.text
+    assert 'data-error-action="back"' in response.text
+
+
 def test_forced_500_renders_reference_code_and_does_not_expose_exception(caplog, http):
     caplog.set_level(logging.ERROR, logger="app.main")
 

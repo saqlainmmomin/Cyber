@@ -9,6 +9,9 @@ document.body.addEventListener('htmx:configRequest', function(event) {
 // ── Global Yozora behaviour ──────────────────────
 
 const activeRequests = new Set();
+const MAX_VISIBLE_TOASTS = 4;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
 function decodeHeader(value) {
   if (!value) return '';
@@ -28,9 +31,11 @@ function toastContainer() {
 }
 
 function toastIcon(symbol) {
-  const svg = document.createElement('svg');
-  svg.className = 'i lead-i';
-  const use = document.createElement('use');
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', 'i lead-i');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttributeNS(XLINK_NS, 'xlink:href', `#i-${symbol}`);
   use.setAttribute('href', `#i-${symbol}`);
   svg.appendChild(use);
   return svg;
@@ -42,17 +47,39 @@ function dismissToast(item) {
   item.remove();
 }
 
+function normalizeToastKind(kind) {
+  if (kind === 'error') return 'error';
+  if (kind === 'info' || kind === 'information') return 'information';
+  if (kind === 'success') return 'success';
+  return 'information';
+}
+
 function toast(kind = 'success', message = '', action = null) {
-  const tone = kind === 'info' || kind === 'information' ? 'information' : kind;
+  const tone = normalizeToastKind(kind);
+  const textMessage = String(message);
+  const container = toastContainer();
+  const existing = [...container.querySelectorAll('.toast')].find((item) => (
+    item.dataset.toastKind === tone && item.dataset.toastMessage === textMessage
+  ));
+  if (existing) {
+    if (existing._toastTimer) window.clearTimeout(existing._toastTimer);
+    if (tone !== 'error') {
+      existing._toastTimer = window.setTimeout(() => dismissToast(existing), 4000);
+    }
+    return existing;
+  }
+
   const isError = tone === 'error';
   const item = document.createElement('div');
   item.className = `toast${isError ? ' bad' : tone === 'information' ? ' info' : ''}`;
   item.setAttribute('role', isError ? 'alert' : 'status');
+  item.dataset.toastKind = tone;
+  item.dataset.toastMessage = textMessage;
   item.appendChild(toastIcon(isError ? 'alert' : 'check'));
 
   const text = document.createElement('span');
   text.className = 'msg grow';
-  text.textContent = String(message);
+  text.textContent = textMessage;
   item.appendChild(text);
 
   const actionLabel = typeof action === 'string' ? action : action && action.label;
@@ -75,7 +102,10 @@ function toast(kind = 'success', message = '', action = null) {
     item.appendChild(close);
   }
 
-  toastContainer().appendChild(item);
+  container.appendChild(item);
+  while (container.children.length > MAX_VISIBLE_TOASTS) {
+    dismissToast(container.firstElementChild);
+  }
   if (!isError) item._toastTimer = window.setTimeout(() => dismissToast(item), 4000);
   return item;
 }
@@ -89,9 +119,44 @@ function requestTarget(detail) {
   }
   const selector = detail && detail.requestConfig && detail.requestConfig.target;
   if (selector) {
+    if (typeof selector !== 'string') return selector;
     try { return document.querySelector(selector); } catch (_error) { return null; }
   }
-  return null;
+  const element = detail && detail.elt;
+  if (!element) return null;
+  return isBoostedRequest(element) ? document.body : element;
+}
+
+function requestSwapStyle(detail) {
+  const configured = detail && detail.requestConfig && detail.requestConfig.swapStyle;
+  if (configured) return configured;
+  const element = detail && detail.elt;
+  const declared = element && (element.getAttribute('hx-swap') || element.getAttribute('data-hx-swap'));
+  return declared ? declared.split(':', 1)[0].trim() : 'innerHTML';
+}
+
+function isBoostedRequest(element) {
+  if (!element.matches?.('a, form')) return false;
+  let current = element;
+  while (current && current !== document) {
+    const declared = current.getAttribute && (current.getAttribute('hx-boost') || current.getAttribute('data-hx-boost'));
+    if (declared !== null && declared !== '') return declared !== 'false';
+    current = current.parentElement;
+  }
+  return false;
+}
+
+function isDocumentTarget(target) {
+  return !target || target === document || target === document.documentElement || target === document.body;
+}
+
+function requestCanShowFeedback(detail, target) {
+  return Boolean(
+    target
+    && !isDocumentTarget(target)
+    && target !== (detail && detail.elt)
+    && requestSwapStyle(detail) !== 'none'
+  );
 }
 
 function requestButton(detail) {
@@ -100,24 +165,26 @@ function requestButton(detail) {
   if (element && element.querySelector) {
     return element.querySelector('button[type="submit"], button.btn');
   }
-  return document.activeElement && document.activeElement.closest
-    ? document.activeElement.closest('button.btn')
-    : null;
+  return null;
 }
 
 function requestSkeleton(target, state) {
+  if (!requestCanShowFeedback(state.detail, target) || !target.parentNode) return;
   state.timer = window.setTimeout(() => {
-    if (state.settled || !target) return;
+    if (state.settled || !target.parentNode) return;
     const stack = document.createElement('span');
     stack.className = 'skel-stack';
+    stack.dataset.yozoraRequestSkeleton = 'true';
+    stack.setAttribute('aria-hidden', 'true');
     ['62%', '88%', '72%'].forEach((width) => {
       const line = document.createElement('span');
       line.className = 'skel';
       line.style.width = width;
       stack.appendChild(line);
     });
-    target.replaceChildren(stack);
+    target.parentNode.insertBefore(stack, target.nextSibling);
     target.setAttribute('aria-busy', 'true');
+    state.markedBusy = true;
     state.skeleton = stack;
   }, 300);
 }
@@ -130,18 +197,30 @@ function cleanupRequest(state) {
     state.button.classList.remove('loading');
     state.button.removeAttribute('aria-busy');
   }
-  if (state.target) {
+  if (state.markedBusy && state.target) {
     state.target.removeAttribute('aria-busy');
-    if (state.skeleton && state.skeleton.isConnected) state.skeleton.remove();
   }
+  if (state.skeleton && state.skeleton.isConnected) state.skeleton.remove();
   activeRequests.delete(state);
 }
 
-function swapAlert(target, title, body) {
+function clearRequestAlert(target) {
   if (!target) return;
+  const alert = target.__yozoraRequestAlert
+    || (target.nextElementSibling && target.nextElementSibling.matches('[data-yozora-request-alert]')
+      ? target.nextElementSibling
+      : null);
+  if (alert) alert.remove();
+  target.__yozoraRequestAlert = null;
+}
+
+function swapAlert(target, title, body) {
+  if (!target || isDocumentTarget(target) || !target.parentNode) return null;
+  clearRequestAlert(target);
   const alert = document.createElement('div');
   alert.className = 'alert c-non';
   alert.setAttribute('role', 'alert');
+  alert.dataset.yozoraRequestAlert = 'true';
   alert.appendChild(toastIcon('alert'));
   const copy = document.createElement('div');
   const heading = document.createElement('b');
@@ -149,10 +228,11 @@ function swapAlert(target, title, body) {
   copy.appendChild(heading);
   copy.appendChild(document.createTextNode(body));
   alert.appendChild(copy);
-  target.replaceChildren(alert);
-  target.classList.remove('swap-in');
-  void target.offsetWidth;
-  target.classList.add('swap-in');
+  target.parentNode.insertBefore(alert, target.nextSibling);
+  target.__yozoraRequestAlert = alert;
+  alert.classList.add('swap-in');
+  window.setTimeout(() => alert.classList.remove('swap-in'), 220);
+  return alert;
 }
 
 function requestError(event, fallback) {
@@ -167,13 +247,22 @@ function requestError(event, fallback) {
   const message = decodeHeader(xhr && xhr.getResponseHeader('X-Toast-Message')) || fallback;
   detail.shouldSwap = false;
   detail.isError = false;
-  swapAlert(requestTarget(detail), 'The request failed', message);
+  const target = requestTarget(detail);
+  if (requestCanShowFeedback(detail, target)) swapAlert(target, 'The request failed', message);
   toast('error', message);
 }
 
 document.body.addEventListener('htmx:beforeRequest', (event) => {
   const detail = event.detail || {};
-  const state = { elt: detail.elt, target: requestTarget(detail), button: requestButton(detail), settled: false };
+  const target = requestTarget(detail);
+  clearRequestAlert(target);
+  const state = {
+    detail,
+    elt: detail.elt,
+    target,
+    button: requestButton(detail),
+    settled: false,
+  };
   if (state.button) {
     state.button.classList.add('loading');
     state.button.setAttribute('aria-busy', 'true');
@@ -189,8 +278,10 @@ document.body.addEventListener('htmx:responseError', (event) => {
 document.body.addEventListener('htmx:sendError', (event) => {
   const detail = event.detail || {};
   detail.shouldSwap = false;
-  swapAlert(requestTarget(detail), 'The request failed', 'The request could not be completed. Check your connection and try again.');
-  toast('error', 'The request could not be completed. Check your connection and try again.');
+  const message = 'The request could not be completed. Check your connection and try again.';
+  const target = requestTarget(detail);
+  if (requestCanShowFeedback(detail, target)) swapAlert(target, 'The request failed', message);
+  toast('error', message);
 });
 
 // Handle HX-Redirect and the optimistic-concurrency conflict response.
@@ -207,8 +298,14 @@ document.body.addEventListener('htmx:beforeSwap', function(event) {
 });
 
 document.body.addEventListener('htmx:afterSwap', (event) => {
-  const target = event.detail && event.detail.target;
+  const originalTarget = event.detail && event.detail.target;
+  const target = originalTarget && originalTarget.isConnected
+    ? originalTarget
+    : originalTarget && originalTarget.id
+      ? document.getElementById(originalTarget.id)
+      : null;
   if (target) {
+    clearRequestAlert(target);
     target.classList.remove('swap-in');
     void target.offsetWidth;
     target.classList.add('swap-in');
@@ -233,6 +330,14 @@ document.body.addEventListener('htmx:afterSettle', (event) => {
   activeRequests.forEach((state) => {
     if (state.target === target) cleanupRequest(state);
   });
+  refreshModalLock();
+});
+
+document.body.addEventListener('htmx:beforeHistorySave', () => {
+  activeRequests.forEach((state) => cleanupRequest(state));
+  document.querySelectorAll('[data-yozora-request-skeleton]').forEach((skeleton) => skeleton.remove());
+  document.querySelectorAll('[data-yozora-request-alert]').forEach((alert) => alert.remove());
+  document.querySelectorAll('[aria-busy="true"]').forEach((element) => element.removeAttribute('aria-busy'));
 });
 
 document.addEventListener('click', (event) => {
@@ -252,6 +357,29 @@ document.addEventListener('click', (event) => {
   const copy = event.target.closest && event.target.closest('[data-copy-checksum]');
   if (copy && navigator.clipboard) {
     navigator.clipboard.writeText(copy.dataset.copyChecksum).then(() => toast('success', 'Checksum copied'));
+  }
+});
+
+document.addEventListener('click', (event) => {
+  const action = event.target.closest && event.target.closest('[data-error-action]');
+  if (!action) return;
+  const href = action.getAttribute('href');
+  const type = action.dataset.errorAction;
+  if (type === 'back') {
+    event.preventDefault();
+    let sameOriginReferrer = false;
+    try {
+      sameOriginReferrer = document.referrer && new URL(document.referrer, window.location.href).origin === window.location.origin;
+    } catch (_error) {
+      sameOriginReferrer = false;
+    }
+    if (sameOriginReferrer && window.history.length > 1) window.history.back();
+    else if (href) window.location.assign(href);
+  } else if (type === 'retry') {
+    event.preventDefault();
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (href && href !== current && href !== window.location.href) window.location.assign(href);
+    else window.location.reload();
   }
 });
 
@@ -415,6 +543,7 @@ refreshModalLock();
 document.body.addEventListener('htmx:load', (event) => {
   const root = event.detail && event.detail.elt ? event.detail.elt : document;
   root.querySelectorAll?.('[data-confirm-value]').forEach(syncConfirm);
+  refreshModalLock();
 });
 
 // HTMX's native confirmation hook is rendered as the same accessible modal as
@@ -457,6 +586,13 @@ document.body.addEventListener('htmx:confirm', (event) => {
     issueRequest(true);
   });
 });
+
+// Close anchored menus before HTMX or modal handlers act on an item inside them.
+document.addEventListener('click', (event) => {
+  const action = event.target.closest && event.target.closest('[data-modal-open], .anchor .menu [hx-post], .anchor .menu [data-hx-post]');
+  const menu = action && action.closest('.anchor .menu');
+  if (menu) menuClose(menu);
+}, true);
 
 // ── Copy to Clipboard ───────────────────────────
 

@@ -29,4 +29,26 @@ Convert the JS-injected Tailwind classes in `app.js` (the `?` shortcut modal, da
 Full suite (`OPENROUTER_KEY="" .venv/bin/pytest -q --no-header -p no:cacheprovider -W ignore`; if `boto3` is missing say so and the orchestrator runs it), `tests/test_design_lint.py`, `tokens_tool check`, `node --check app/static/js/app.js`, Jinja parse of changed templates. Add tests for 9 and (structurally) 1 to 4 where an executed test is possible.
 
 ## Results
-(Codex fills in.)
+
+### Implemented
+
+- Fixed the global HTMX request lifecycle in `app/static/js/app.js`: slow-request skeletons are sibling feedback elements only for real swap targets, never for `hx-swap="none"`, the triggering form, `body`, or `html`; errors preserve existing content and show an alert only beside a real swap target, otherwise using a toast; history snapshots remove transient skeletons, alerts, busy state, and loading state first.
+- Fixed SVG icon namespaces, unknown toast types (neutral information), duplicate toast refresh, and a four-toast cap. Removed the unrelated active-element fallback from `requestButton`, refreshed modal locking on `htmx:load`/`afterSettle`, closed anchored menus before modal/HTMX actions, and preserved opener focus on Escape. The outerHTML settle fade no longer applies opacity zero to a detached target.
+- Hardened error pages: log `scope["raw_path"]` with `%r`; replace inline actions with `data-error-action` links handled by `app.js`; use same-origin path-only referrer fallbacks for back/retry; and make preview copy neutral (no hard-coded framework names or mockup dates).
+- Added the two list resets in `design/yozora-patterns.css`, rebuilt generated CSS with `python -m design.tokens_tool build`, and removed the opacity-zero settling rule.
+- Retired the remaining Tailwind artifacts: deleted `app/static/css/input.css` and `tailwind.tokens.cjs`, removed its generator and metadata, removed the `.gitignore` Tailwind output entry and stale shell comment, and removed the ignored generated `app/static/css/tailwind.css` artifact. `package.json` remains because repository documentation still references the former CLI setup; `package-lock.json` was regenerated to match its dependency-free contents, and isolated `npm ci` passes.
+- Added focused structural/regression coverage for request feedback, toast behavior, SVG creation, error logging/actions, and retired token outputs. Added the deleted/generated paths to the S9 file-set allowance. No `tasks/todo.md` change, backend/model/prompt/scoring/PDF/migration change, or pixel work was made.
+
+Known follow-up intentionally left unchanged per the handoff: pre-existing JS-injected Tailwind classes in `app/static/js/app.js` — save-indicator colors at lines 638, 640–641; dashboard filter/input classes at lines 664, 816–819; and the `?` shortcut modal at lines 747, 750, 753–762.
+
+### Verification
+
+- `OPENROUTER_KEY="" .venv/bin/pytest -q --no-header -p no:cacheprovider -W ignore` — **1552 passed, 30 skipped** in 197.11s; `boto3` available.
+- Focused S9/design checks — **26 passed**.
+- File-set/API guard slice — **40 passed**.
+- `python -m design.tokens_tool check` — passed.
+- `node --check app/static/js/app.js` — passed.
+- Jinja parse of `app/templates/pages/error.html` — passed.
+- Isolated `npm ci --ignore-scripts --no-audit --no-fund` using the retained `package.json` and regenerated lockfile — passed.
+- `git diff --check` — passed.
+- `jsdom` is not installed, so no executable DOM harness was available; the SVG namespace, swap-preservation, toast, history-cleanup, and action-handler contracts are covered structurally, with `node --check` used for syntax verification and the final browser behavior left for the orchestrator’s runtime check.

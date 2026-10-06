@@ -32,6 +32,34 @@ def test_global_script_uses_safe_toast_markup_and_preserves_response_headers():
     assert "classList.add('loading')" in source
 
 
+def test_request_feedback_preserves_content_and_handles_swap_boundaries():
+    source = (ROOT / "app/static/js/app.js").read_text()
+
+    assert "replaceChildren" not in source
+    assert "requestCanShowFeedback" in source
+    assert "requestSwapStyle(detail) !== 'none'" in source
+    assert "target !== (detail && detail.elt)" in source
+    assert "target === document.body" in source
+    assert "data-yozora-request-skeleton" in source
+    assert "data-yozora-request-alert" in source
+    assert "htmx:beforeHistorySave" in source
+
+
+def test_toasts_are_namespaced_deduplicated_and_bounded():
+    source = (ROOT / "app/static/js/app.js").read_text()
+    button_start = source.index("function requestButton(")
+    button_end = source.index("function requestSkeleton(", button_start)
+    button_source = source[button_start:button_end]
+
+    assert "createElementNS" in source
+    assert "setAttributeNS" in source
+    assert "normalizeToastKind" in source
+    assert "MAX_VISIBLE_TOASTS = 4" in source
+    assert "toastKind" in source
+    assert "toastMessage" in source
+    assert "activeElement" not in button_source
+
+
 def test_system_css_contains_hidden_guard_and_transition_variants():
     components = (ROOT / "design/yozora-components.css").read_text()
     patterns = (ROOT / "design/yozora-patterns.css").read_text()
@@ -39,6 +67,7 @@ def test_system_css_contains_hidden_guard_and_transition_variants():
     assert "[hidden]{display:none!important}" in patterns
     assert ".htmx-swapping" in patterns
     assert ".htmx-settling" in patterns
+    assert ".htmx-settling{opacity:0}" not in patterns
     assert ".swap-in" in patterns
     assert ".btn.loading" in components
     assert ".anchor .menu.flip-y" in patterns

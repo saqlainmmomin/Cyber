@@ -3,6 +3,7 @@ import re
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from alembic import command
 from alembic.config import Config
@@ -207,6 +208,7 @@ def _error_context(request: Request, *, variant: str, reference_code: str) -> di
             "primary_icon_id": "home",
             "secondary_label": "Go back",
             "secondary_href": "/",
+            "secondary_action": "back",
         },
         "engagement": {
             "crumb": "Engagement not found",
@@ -218,6 +220,7 @@ def _error_context(request: Request, *, variant: str, reference_code: str) -> di
             "primary_icon_id": "briefcase",
             "secondary_label": "Go back",
             "secondary_href": "/",
+            "secondary_action": "back",
         },
         "error": {
             "crumb": "Something went wrong",
@@ -226,12 +229,18 @@ def _error_context(request: Request, *, variant: str, reference_code: str) -> di
             "icon_id": "alert",
             "primary_label": "Try again",
             "primary_icon_id": "rotate",
-            "primary_onclick": "window.location.reload()",
+            "primary_action": "retry",
+            "primary_href": "/",
             "secondary_label": "Go to home",
             "secondary_href": "/",
         },
     }
     selected = variants.get(variant, variants["error"])
+    previous_href = _safe_referrer(request)
+    if selected.get("secondary_action") == "back":
+        selected = {**selected, "secondary_href": previous_href}
+    if selected.get("primary_action") == "retry":
+        selected = {**selected, "primary_href": previous_href}
     return {
         "request": request,
         "reference_code": reference_code,
@@ -240,9 +249,24 @@ def _error_context(request: Request, *, variant: str, reference_code: str) -> di
     }
 
 
+def _safe_referrer(request: Request) -> str:
+    """Return a same-origin, path-only referrer for error-page fallbacks."""
+    raw_referrer = request.headers.get("referer")
+    if not raw_referrer:
+        return "/"
+    parsed = urlsplit(raw_referrer)
+    if parsed.scheme and parsed.scheme not in {"http", "https"}:
+        return "/"
+    if parsed.netloc and parsed.netloc != request.url.netloc:
+        return "/"
+    if not parsed.path.startswith("/") or parsed.path.startswith("//"):
+        return "/"
+    return urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
+
+
 def _log_error_page(request: Request, exc: Exception, reference_code: str, *, server_error: bool) -> None:
-    message = "error_page reference=%s path=%s exception=%s"
-    values = (reference_code, request.url.path, type(exc).__name__)
+    message = "error_page reference=%s path=%r exception=%s"
+    values = (reference_code, request.scope.get("raw_path", request.url.path), type(exc).__name__)
     if server_error and getattr(exc, "__traceback__", None) is not None:
         logger.error(message, *values, exc_info=(type(exc), exc, exc.__traceback__))
     else:

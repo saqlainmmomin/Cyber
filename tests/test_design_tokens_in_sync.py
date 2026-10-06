@@ -5,6 +5,14 @@ def test_generated_design_files_match_tokens_json():
     assert tokens_tool.check() == 0
 
 
+def test_generated_design_files_exclude_retired_tailwind_output():
+    assert set(tokens_tool.generated_files()) == {
+        tokens_tool.STATIC_CSS_DIR / "yozora-tokens.css",
+        tokens_tool.STATIC_CSS_DIR / "yozora-components.css",
+        tokens_tool.STATIC_CSS_DIR / "yozora-patterns.css",
+    }
+
+
 def test_line_strong_is_preserved_until_the_contrast_decision():
     tokens = tokens_tool.load_tokens()
     assert tokens[":root"]["--line-strong"] == "rgba(30,36,56,.14)"

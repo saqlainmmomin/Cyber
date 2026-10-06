@@ -16,12 +16,8 @@
   <div class="refline"><span>Reference</span><span class="chip num">{{ reference_code }}</span></div>
   {% endif %}
   <div class="acts2">
-    {% if primary_onclick %}
-    <button class="btn primary lead" type="button" onclick="{{ primary_onclick }}">{{ icon(primary_icon_id) }}{{ primary_label }}</button>
-    {% else %}
-    <a class="btn primary lead" href="{{ primary_href }}">{{ icon(primary_icon_id) }}{{ primary_label }}</a>
-    {% endif %}
-    {% if secondary_label %}<a class="btn ghost" href="{{ secondary_href }}">{{ secondary_label }}</a>{% endif %}
+    <a class="btn primary lead" href="{{ primary_href }}"{% if primary_action %} data-error-action="{{ primary_action }}"{% endif %}>{{ icon(primary_icon_id) }}{{ primary_label }}</a>
+    {% if secondary_label %}<a class="btn ghost" href="{{ secondary_href }}"{% if secondary_action %} data-error-action="{{ secondary_action }}"{% endif %}>{{ secondary_label }}</a>{% endif %}
   </div>
 </div>
 {% endblock %}

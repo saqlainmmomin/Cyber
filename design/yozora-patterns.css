@@ -110,7 +110,7 @@ fieldset{border:0;min-width:0}
 .top-sum .big-n{font-size:var(--t-lg);display:block;margin-top:2px}
 .top-sum .l{display:flex;align-items:center;gap:var(--s-2);font-size:var(--t-sm);color:var(--text-2)}
 .htmx-swapping{opacity:0;transition:opacity .14s var(--ease)}
-.htmx-settling{opacity:0}
+.htmx-settling{opacity:1}
 .htmx-settling.swap-in{opacity:1}
 .swap-in{animation:swap-in .2s var(--ease)}
 @keyframes swap-in{from{opacity:0}to{opacity:1}}
@@ -294,6 +294,7 @@ button.item .txt{color:inherit}
 .cc-pre{white-space:pre-line}
 .cc-evidence{margin-top:var(--s-3);padding:var(--s-4);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md)}
 .cc-claims,.cc-rfi-list{list-style:none;display:flex;flex-direction:column;gap:var(--s-3)}
+.rq-claims{list-style:none;padding-left:0}
 .cc-rfi-list{margin-top:var(--s-3)}
 .cc-rfi-list>li{display:flex;flex-direction:column;gap:var(--s-2)}
 .cc-drafting{display:none;flex-direction:column;gap:10px}
@@ -427,7 +428,7 @@ p.cc-ack{margin-top:var(--s-2)}
 .bi-asks{gap:var(--s-3)}
 /* S7 gate: narrative end */
 /* S7 gate: board-narrative start */
-.nv-alert ul{margin:var(--s-2) 0 0 var(--s-5);list-style:disc}
+.nv-alert ul{margin:var(--s-2) 0 0 var(--s-5);padding-left:var(--s-5);list-style:disc}
 /* S7 gate: board-narrative end */
 /* S7 gate: pages-report start */
 .review-page .rq-seg{position:relative;display:flow-root;margin:var(--s-4) 0}
