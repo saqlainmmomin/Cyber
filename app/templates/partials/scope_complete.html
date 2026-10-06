@@ -15,13 +15,13 @@
     {% endif %}
     {% if excluded %}
     <details class="mt"><summary class="disclose">{{ excluded | length }} requirement{{ "s" if excluded | length != 1 else "" }} excluded</summary>
-      <ul class="checks mt">{% for item in excluded %}<li><div><b>{{ item.reason }}</b><span class="sub">{{ item.id }}</span></div></li>{% endfor %}</ul>
+      <ul class="line-list mt" data-scope-excluded>{% for item in excluded %}<li><div class="txt"><b>{{ item.reason }}</b><span class="sub" style="display:block;margin-top:var(--s-1)">{{ item.id }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}
     {% if proposed_not_applicable %}
     <details class="mt"><summary class="disclose">{{ proposed_not_applicable | length }} control{{ "s" if proposed_not_applicable | length != 1 else "" }} proposed as likely not applicable. You confirm each during review.</summary>
       <p class="help">These controls stay in scope. To exclude one, record a Not applicable conclusion with your reason during review.{% if proposed_not_applicable | selectattr("framework_id", "equalto", "iso27001") | list %} For ISO 27001 this is a Statement of Applicability decision.{% endif %}</p>
-      <ul class="checks mt">{% for item in proposed_not_applicable %}<li><div><b>{{ item.control_title }}</b><span class="sub grow">{{ framework_label(item.framework_id) }} · {{ item.control_id }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
+      <ul class="line-list mt" data-scope-proposed>{% for item in proposed_not_applicable %}<li><div class="txt"><b>{{ item.control_title }}</b><span class="sub" style="display:block;margin-top:var(--s-1)">{{ framework_label(item.framework_id) }} · {{ item.control_id }} · {{ item.rationale }}</span></div></li>{% endfor %}</ul>
     </details>
     {% endif %}
   </div>
@@ -46,8 +46,8 @@
     {% set recommended_items = checklist | rejectattr("required") | list %}
     <div>
       {% for heading, items in (("Required", required_items), ("Recommended", recommended_items)) if items %}
-      <h3 class="mt-lg">{{ heading }}</h3>
-      <div class="mt">{% for item in items %}<div class="check-row"><div class="grow"><b>{{ item.label }}</b><span class="sub">{{ item.reason }}</span></div><div class="chips">{% for framework_id in item.frameworks %}<span class="chip">{{ framework_label(framework_id) }}</span>{% endfor %}</div></div>{% endfor %}</div>
+      <div class="between" data-checklist-group="{{ "required" if heading == "Required" else "recommended" }}" style="margin-top:{{ "var(--s-6)" if loop.first else "var(--s-8)" }};padding-bottom:var(--s-3);border-bottom:1px solid var(--line)"><h3>{{ heading }}</h3><span class="sub num">{{ items|length }} item{{ "s" if items|length != 1 else "" }}</span></div>
+      {% for item in items %}<div class="check-row" data-checklist-item style="padding:var(--s-4) 0{% if loop.first %};border-top:0{% endif %}"><div class="grow"><b>{{ item.label }}</b><span class="sub" style="display:block;margin-top:var(--s-1)">{{ item.reason }}</span></div><div class="chips" style="flex:none;max-width:40%;justify-content:flex-end">{% for framework_id in item.frameworks %}<span class="chip">{{ framework_label(framework_id) }}</span>{% endfor %}</div></div>{% endfor %}
       {% endfor %}
     </div>
     {% endif %}

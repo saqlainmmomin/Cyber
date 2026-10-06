@@ -26,7 +26,8 @@ from app.config import settings
 from app.database import Base, get_db
 from app.dpdpa.framework import get_all_requirements
 from app.main import app
-from tests.yozora_paths import YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS  # Yozora per-PR allowance
+from app.template_config import display_date
+from tests.yozora_paths import YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
 V3C2_TEST_PATHS = {
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_file_set.py", "tests/test_p6_9_prior_period.py",
     "tests/test_p6_8_v3c2_extra.py",
@@ -673,9 +674,13 @@ def test_scenario_2_archive_state_machine_and_views(db, http, upload_root, engin
     assert detail.status_code == 200
     assert "data-archived-banner" in detail.text
     assert "Eligible for permanent purge on or after" in detail.text
-    assert retention.add_years(record.archived_at, 7).strftime("%d %b %Y") in detail.text
-    assert "data-unarchive-control" in detail.text
-    assert "data-purge-preview-link" in detail.text
+    assert display_date(retention.add_years(record.archived_at, 7)) in detail.text
+    assert "data-unarchive-control" not in detail.text
+    assert "data-purge-preview-link" not in detail.text
+    assert "data-archive-settings-link" in detail.text
+    settings_page = http.get("/settings").text
+    assert f'hx-post="/api/engagements/{engagement.id}/unarchive"' in settings_page
+    assert f'href="/engagements/{engagement.id}/purge"' in settings_page
     assert "data-archive-control" not in detail.text
     assert "data-archived-banner" in http.get(f"/assessments/{assessment.id}").text
     before = _snapshot(db, upload_root)
@@ -1004,7 +1009,7 @@ def test_scenario_5_firm_retention_snapshot_and_legacy_floor(db, http, engine, u
     assert _snapshot(db, upload_root) == before
     settings_page = http.get("/settings").text
     assert 'data-retention-form' in settings_page and 'id="retention-years"' in settings_page and 'value="10"' in settings_page
-    assert "Retention: 10 years after archive (firm setting" in http.get(f"/engagements/{engagement.id}").text
+    assert "data-retention-section" not in http.get(f"/engagements/{engagement.id}").text
 
     _archive(http, engagement.id)
     metadata = _metadata(_audit_rows(db, entity_id=engagement.id, action=retention.ARCHIVED_EVENT)[-1])
@@ -1673,8 +1678,8 @@ def test_scenario_13_only_new_retention_test_file_changes():
         capture_output=True,
         text=True,
     ).stdout.splitlines()
-    changed_tests = [path for path in changed_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *V3C2_TEST_PATHS)]  # per-PR allowances
-    staged_tests = [path for path in staged_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *V3C2_TEST_PATHS)]  # per-PR allowances
+    changed_tests = [path for path in changed_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS, *V3C2_TEST_PATHS)]  # Yozora per-PR allowance
+    staged_tests = [path for path in staged_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS, *V3C2_TEST_PATHS)]  # Yozora per-PR allowance
     assert changed_tests == []
     assert staged_tests == []
     assert (REPO_ROOT / "tests/test_retention.py").exists()
