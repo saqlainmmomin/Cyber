@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberAssess consultant journey</title>
+<style>
+  :root{--bg:#f7f6f2;--card:#fff;--ink:#1d1d1b;--mute:#6b6a64;--line:#e3e1d8;--accent:#2f4bd8;--ok:#1f7a4d;--chg:#b3261e;--q:#a36a00}
+  @media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1e1c;--ink:#ecebe5;--mute:#9b9a92;--line:#33322e;--accent:#8ea2ff;--ok:#5fc08f;--chg:#ff8a80;--q:#e6b34d}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:24px 16px 120px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:20px;margin:0 0 6px}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:18px 0 6px}
+  p{margin:6px 0}
+  .sub{color:var(--mute)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0}
+  .tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:1px 9px;color:var(--mute);margin-right:6px}
+  .cta{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:2px 10px;font-weight:600}
+  ul{margin:4px 0 4px 18px;padding:0}
+  li{margin:3px 0}
+  .today{background:rgba(163,106,0,.08);border-left:3px solid var(--q);padding:8px 12px;border-radius:4px;font-size:14px}
+  .row{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding:9px 0}
+  .row:first-of-type{border-top:0}
+  .row .txt{flex:1}
+  .tri{display:flex;gap:4px;flex:none}
+  .tri button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--mute);border-radius:6px;padding:2px 8px;cursor:pointer}
+  .tri button.on[data-v=ok]{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .tri button.on[data-v=chg]{background:var(--chg);color:#fff;border-color:var(--chg)}
+  .tri button.on[data-v=q]{background:var(--q);color:#fff;border-color:var(--q)}
+  textarea{width:100%;min-height:62px;margin-top:6px;font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+  textarea.small{min-height:40px}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .bar button{font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer}
+  .bar button.ghost{background:transparent;color:var(--accent)}
+  .bar span{color:var(--mute);font-size:13px}
+  .legend span{margin-right:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}.row{flex-direction:column}}
+  .nav a{color:var(--accent);text-decoration:none;margin-right:12px;font-size:14px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Consultant journey: acceptance bar for every screen</h1>
+<p class="sub">Step 1 draft, 2026-10-06. Written from your description plus the code audit. It is a draft for you to correct, not a finished spec.</p>
+
+<div class="card">
+  <h2>How to use this</h2>
+  <p>For every row, mark <b>OK</b>, <b>Change</b> or <b>?</b> and add a comment wherever you disagree. Boxes at the end of each stage are free text. Everything saves in this browser as you type. When you're done, press <b>Download comments</b> at the bottom and paste the file back to me.</p>
+  <p class="legend"><span style="color:var(--ok)">OK = right as written</span><span style="color:var(--chg)">Change = wrong, say how</span><span style="color:var(--q)">? = not sure / need to talk</span></p>
+  <p class="sub">"Today" notes come from a read-only code audit that I have not re-verified line by line. Treat them as claims to check while you use the app.</p>
+  <div class="nav" id="nav"></div>
+</div>
+
+<div id="root"></div>
+
+</div>
+
+<div class="bar">
+  <button id="dl">Download comments (.md)</button>
+  <button id="cp" class="ghost">Copy to clipboard</button>
+  <button id="clr" class="ghost">Clear all</button>
+  <span id="count"></span>
+</div>
+
+<script>
+const PRINCIPLES = [
+  "Every screen has exactly one primary action, and its label says what happens next.",
+  "A screen never asks something that does not change what we request, assess or report.",
+  "Framework-specific wording (data principal, DPO, ISMS boundary and so on) appears only when that framework is in the assessment.",
+  "The consultant can always see where they are in the engagement and what is waiting on them versus on the client.",
+  "Nothing blocks the next step unless the next step truly cannot work without it. No hidden gates.",
+  "Anything the consultant enters can be edited later."
+];
+
+const STAGES = [
+  {
+    id:"setup", name:"0. Engagement setup",
+    goal:"Create the client, the engagement and the assessment, and pick the frameworks in play.",
+    knows:"Client name, which frameworks the client has asked for (or is contractually bound to), rough engagement type (certification readiness, gap assessment, re-assessment).",
+    cta:"Start assessment",
+    shows:["Client + engagement name","Framework picker covering all six (DPDPA, ISO 27001, GDPR, HIPAA, NIST CSF, PCI-DSS), multi-select","If the client already has a previous assessment: offer 'Re-assess' instead of starting blank"],
+    never:["Any assessment questions yet","Budget, funding or timeline questions"],
+    done:"Assessment exists with the chosen frameworks and the consultant lands directly on Scoping.",
+    today:"Only DPDPA, ISO 27001 and NIST CSF can be selected. After creating, you land on the engagement page, not on the assessment, which is one extra click.",
+    rows:[
+      "All six frameworks are selectable at setup, one or many.",
+      "After 'Start assessment' you land on Scoping, not an intermediate page.",
+      "Frameworks can be added or removed later with a clear warning about what changes.",
+      "A repeat assessment for the same client is a first-class option (re-assessment, with comparison to the last one)."
+    ]
+  },
+  {
+    id:"scoping", name:"1. Scoping",
+    goal:"Establish what is in scope so we ask for the right documents and the right controls, and nothing else.",
+    knows:"Business, sites, systems, data processed, who the third parties are, what certification or audit is targeted.",
+    cta:"Generate RFI",
+    shows:["Only questions for the frameworks selected, grouped per framework, with a short 'why we ask' line","Generic engagement context in one short block: existing security programme, prior audits, recent incidents, driver and deadline","Proposed 'likely not applicable' controls for the consultant to confirm (all frameworks, not only DPDPA)","A running summary: 'These answers will exclude N controls and shape M RFI items'"],
+    never:["Privacy questions (data principals, children's data, DPO, privacy notice) in an ISO-only or NIST-only engagement","Budget or funding for remediation","The same fact asked twice (cross-border, processors and children are today asked in both scoping and context)","A second wizard that must be completed before anything else works"],
+    done:"Scope is saved and the consultant presses Generate RFI. Scope stays editable afterwards.",
+    today:"Two separate intakes exist. Framework scope questions are on the Scope tab and are already per framework. A second 'context' wizard (CTX.*) is DPDPA-flavoured, is shown for every framework, lives inside the Questionnaire tab, and gates the questionnaire. Its answers cannot be edited after submit. Going Back can submit both old and new values.",
+    rows:[
+      "Scoping is one screen flow, not two wizards.",
+      "ISO-only engagement shows ISMS-relevant scoping (boundary, sites, outsourced processes, certification target, existing certificates) and zero privacy questions.",
+      "A multi-framework engagement shows each framework's block once, with shared facts asked once.",
+      "'Remediation budget' is removed. Timeline and driver stay, in one short block.",
+      "The consultant can confirm or reject 'likely not applicable' proposals for every framework.",
+      "Answers use human labels, not raw codes like 'Iso 27001 certified'.",
+      "Scope can be re-opened and edited later, and the RFI shows what changed."
+    ]
+  },
+  {
+    id:"rfi", name:"2. RFI: request and send",
+    goal:"Produce the first document request list from the scope and get it to the client.",
+    knows:"What the client typically has; who at the client owns each item; due date.",
+    cta:"Send RFI",
+    shows:["Items grouped by area (policies, procedures, evidence, diagrams), each tagged with the frameworks it serves","Per item: why we need it, what good looks like, owner, due date","Export formats the consultant actually sends (Word/Excel/PDF/email text)","Status per item: requested / received / insufficient / waived"],
+    never:["Items for out-of-scope controls","Duplicate requests for the same document under different frameworks (UCC de-dup)"],
+    done:"RFI exported or sent and its status is tracked on the assessment overview.",
+    today:"RFI is not a stage. It is reachable from the end of Scoping and from the report summary only. The Evidence stage's main button says 'Upload evidence' rather than 'Send RFI'.",
+    rows:[
+      "RFI is a visible stage in the assessment navigation, between Scoping and Evidence.",
+      "The stage button says 'Send RFI' until it has been sent, then 'Upload evidence'.",
+      "A document requested under two frameworks appears once.",
+      "Each RFI item can be marked received, insufficient or waived, and that status is what later steps use."
+    ]
+  },
+  {
+    id:"evidence", name:"3. Evidence in + desk review (design evaluation)",
+    goal:"Take what the client sends back and judge whether the controls are designed adequately on paper.",
+    knows:"Which documents are policies, procedures, diagrams, screenshots or records; roughly how current they are.",
+    cta:"Run desk review",
+    shows:["Drop zone accepting PDF, Word, Excel/CSV, images, and zip bundles","Each file matched to the RFI item it answers (consultant can correct)","Per file: extracted summary, date or period covered, and whether it looks stale","Design findings per control: adequate / partial / missing, with the quote and page that supports it"],
+    never:["Treating a screenshot or spreadsheet as unreadable","Silently ignoring an old document; staleness must be flagged","A score for operating effectiveness here, because this stage is design only"],
+    done:"Every in-scope control has a design finding, or an open RFI item explaining why not.",
+    today:"Uploads accept PDF, DOCX and images only, so a spreadsheet access review cannot be uploaded. Scanned PDFs have no OCR fallback. The prompts get no assessment as-of date, so a two-year-old access review is only caught if the model happens to infer it. Desk review and questionnaire share one tab.",
+    rows:[
+      "Excel and CSV uploads work (access reviews, asset lists, user lists).",
+      "Images (screenshots, network diagrams) and scanned PDFs are read, and the result shows what was extracted.",
+      "Document dates are extracted and compared with the assessment period, with 'stale' shown plainly.",
+      "A document can be wrong-matched and the consultant can re-map it in one click.",
+      "Design findings are shown as their own result, separate from operating-effectiveness results."
+    ]
+  },
+  {
+    id:"questionnaire", name:"4. Questionnaire (operating effectiveness)",
+    goal:"Test whether the designed controls actually operate, using answers pre-filled from the documents.",
+    knows:"How things work in practice at the client, through interviews and observation.",
+    cta:"Confirm and continue",
+    shows:["Only controls that are in scope and still need an operating-effectiveness answer","Each question pre-filled from the document evidence, with the source shown and a one-click confirm or override","Why this was asked and what evidence would settle it","Progress that counts what is left for the consultant"],
+    never:["A gate that asks unrelated context questions first","Questions already answered by evidence, unless the consultant overrides","Wording from a framework that is not in the assessment"],
+    done:"Every in-scope control has a confirmed answer.",
+    today:"The questionnaire only appears once the context wizard is finished. There is one implementation scale and no separate design versus operating-effectiveness result.",
+    rows:[
+      "The questionnaire opens straight after desk review with no context wizard in between.",
+      "Pre-filled answers always show the source document and quote.",
+      "Design findings and operating-effectiveness answers are separate fields, and both feed the final result. (Open decision A below.)",
+      "The consultant can add their own comment or observation to any question."
+    ]
+  },
+  {
+    id:"followups", name:"5. Follow-ups",
+    goal:"Close the gaps and contradictions that remain, with the client.",
+    knows:"Which answers conflict with evidence or lack evidence.",
+    cta:"Send follow-up request",
+    shows:["Targeted follow-up questions per gap or contradiction, with the evidence that triggered each one","Which can go to the client as a short request and which the consultant answers","Status per follow-up"],
+    never:["Generic follow-ups unrelated to a finding","Follow-ups that cannot affect the result"],
+    done:"Every gap is either closed, accepted as a finding, or waived with a reason.",
+    today:"Follow-ups are generated inline while answering the questionnaire. After analysis, the only follow-up is an RFI item for 'insufficient evidence'. It is unverified that follow-up answers reach the multi-framework analysis.",
+    rows:[
+      "Follow-ups are created from gaps and contradictions found after analysis. (Open decision B below.)",
+      "Follow-up answers verifiably change the analysis result.",
+      "Follow-ups are exportable as a client-friendly request."
+    ]
+  },
+  {
+    id:"analysis", name:"6. Analysis and conclusions",
+    goal:"Reach a defensible conclusion for every control and framework, and be able to explain it.",
+    knows:"The consultant's own judgment, which must be able to override the tool.",
+    cta:"Release conclusions",
+    shows:["Per control: conclusion, evidence cited, reasoning in plain words","Scores computed deterministically by the server, never by the model","For multi-framework: one finding mapped to every framework it affects","Consultant can override a conclusion with a reason"],
+    never:["A conclusion with no cited evidence","A score the consultant cannot trace to inputs"],
+    done:"Conclusions reviewed and released.",
+    today:"Conclusions → release → board snapshot exist as stages.",
+    rows:[
+      "Every conclusion shows the evidence it relied on.",
+      "The consultant can override a conclusion and the override is recorded.",
+      "A multi-framework assessment shows one finding with all affected frameworks, not duplicates."
+    ]
+  },
+  {
+    id:"report", name:"7. Report",
+    goal:"Hand the client or board something they can read and act on.",
+    knows:"Audience (board, management, auditors).",
+    cta:"Download report",
+    shows:["Board-level PDF","Findings and remediation roadmap","Only the frameworks that were in scope","Comparison to the previous assessment where one exists"],
+    never:["DPDPA text in a non-DPDPA report","Budget numbers the consultant never entered"],
+    done:"Report downloaded.",
+    today:"The PDF's DPDPA sections are already gated on DPDPA being selected. Budget band in reports is derived from effort and timeline, not from the scoping question.",
+    rows:[
+      "A report for an ISO-only assessment has no privacy-law content.",
+      "A re-assessment report shows what improved or regressed since last time.",
+      "The roadmap is derived from findings, with effort estimates the consultant can edit."
+    ]
+  }
+];
+
+const DECISIONS = [
+  {id:"A", q:"Design vs operating effectiveness: do you want a real split in the data model (each control gets a design result and an operating result, shown and scored separately), or is 'documents pre-fill, questionnaire confirms' enough?"},
+  {id:"B", q:"Follow-ups: should they be generated after analysis from the gaps found, or stay inline while answering the questionnaire, or both?"},
+  {id:"C", q:"Should Step 2 also promote RFI to its own stage and add GDPR, HIPAA and PCI to the setup picker, or should those be separate steps?"},
+  {id:"D", q:"Is the stage order right? Specifically: is Scoping before RFI always true, or do you sometimes send a generic RFI first and scope afterwards?"},
+  {id:"E", q:"What do you do today in a real engagement that this flow leaves out? (kickoff call, interviews, walkthrough of systems, sampling, client review of draft findings...)"}
+];
+
+const KEY = "cyberassess-journey-comments-v1";
+let S = {};
+try { S = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ S = {}; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} updateCount(); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const li = a => '<ul>' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+
+function tri(id){
+  const v = (S[id]||{}).v;
+  return '<div class="tri" data-id="'+id+'">' +
+    [['ok','OK'],['chg','Change'],['q','?']].map(([k,l]) =>
+      '<button data-v="'+k+'" class="'+(v===k?'on':'')+'">'+l+'</button>').join('') + '</div>';
+}
+function box(id, ph, small){
+  return '<textarea class="'+(small?'small':'')+'" data-id="'+id+'" placeholder="'+esc(ph)+'">'+esc((S[id]||{}).t||'')+'</textarea>';
+}
+
+let html = '';
+html += '<div class="card"><h2>Principles for every screen</h2>';
+PRINCIPLES.forEach((p,i) => {
+  const id = 'P'+(i+1);
+  html += '<div class="row"><div class="txt">'+esc(p)+box(id,'Comment (optional)',true)+'</div>'+tri(id)+'</div>';
+});
+html += '</div>';
+
+STAGES.forEach(s => {
+  html += '<section class="card" id="'+s.id+'"><h2>'+esc(s.name)+'</h2>';
+  html += '<p><b>Goal:</b> '+esc(s.goal)+'</p>';
+  html += '<p><b>Consultant knows / has:</b> '+esc(s.knows)+'</p>';
+  html += '<p><b>Primary action:</b> <span class="cta">'+esc(s.cta)+'</span></p>';
+  html += '<div class="grid"><div><h3>Screen shows</h3>'+li(s.shows)+'</div><div><h3>Screen must NOT show or ask</h3>'+li(s.never)+'</div></div>';
+  html += '<h3>Done when</h3><p>'+esc(s.done)+'</p>';
+  html += '<h3>Today (from audit)</h3><div class="today">'+esc(s.today)+'</div>';
+  html += '<h3>Acceptance rows</h3>';
+  s.rows.forEach((r,i) => {
+    const id = s.id+'.'+(i+1);
+    html += '<div class="row"><div class="txt">'+esc(r)+box(id,'Comment (optional)',true)+'</div>'+tri(id)+'</div>';
+  });
+  html += '<h3>Your notes on this stage</h3>'+box(s.id+'.notes','What is missing, wrong, or different in a real engagement?');
+  html += '</section>';
+});
+
+html += '<section class="card" id="decisions"><h2>Open decisions</h2>';
+DECISIONS.forEach(d => {
+  html += '<div class="row"><div class="txt"><b>'+d.id+'.</b> '+esc(d.q)+box('D.'+d.id,'Your answer')+'</div></div>';
+});
+html += '</section>';
+html += '<section class="card" id="general"><h2>Anything else</h2>'+box('general','Anything this draft missed entirely')+'</section>';
+
+document.getElementById('root').innerHTML = html;
+document.getElementById('nav').innerHTML =
+  STAGES.map(s => '<a href="#'+s.id+'">'+esc(s.name.split(' ')[0])+' '+esc(s.name.replace(/^\d+\.\s*/,'').split(/[ :(]/)[0])+'</a>').join('') +
+  '<a href="#decisions">Decisions</a>';
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('.tri button'); if(!b) return;
+  const id = b.parentElement.dataset.id;
+  S[id] = S[id] || {};
+  S[id].v = S[id].v === b.dataset.v ? '' : b.dataset.v;
+  [...b.parentElement.children].forEach(x => x.classList.toggle('on', x.dataset.v === S[id].v));
+  save();
+});
+document.addEventListener('input', e => {
+  const t = e.target.closest('textarea'); if(!t) return;
+  const id = t.dataset.id; S[id] = S[id] || {}; S[id].t = t.value; save();
+});
+
+function updateCount(){
+  const n = Object.values(S).filter(x => x && (x.v || (x.t && x.t.trim()))).length;
+  document.getElementById('count').textContent = n + ' item' + (n===1?'':'s') + ' marked or commented';
+}
+updateCount();
+
+const LBL = {ok:'OK', chg:'CHANGE', q:'?'};
+function buildMd(){
+  const out = ['# Consultant journey: comments', '', 'Exported ' + new Date().toISOString().slice(0,10), ''];
+  const line = (id, text) => {
+    const x = S[id]; if(!x || (!x.v && !(x.t||'').trim())) return;
+    out.push('- **['+(LBL[x.v]||'no mark')+']** '+text);
+    if((x.t||'').trim()) out.push('  > '+x.t.trim().replace(/\n/g,'\n  > '));
+  };
+  out.push('## Principles');
+  PRINCIPLES.forEach((p,i) => line('P'+(i+1), p));
+  STAGES.forEach(s => {
+    out.push('', '## '+s.name);
+    s.rows.forEach((r,i) => line(s.id+'.'+(i+1), r));
+    const n = S[s.id+'.notes'];
+    if(n && (n.t||'').trim()) out.push('', '**Notes:** '+n.t.trim());
+  });
+  out.push('', '## Open decisions');
+  DECISIONS.forEach(d => { const x = S['D.'+d.id]; if(x && (x.t||'').trim()) out.push('- **'+d.id+'.** '+d.q, '  > '+x.t.trim().replace(/\n/g,'\n  > ')); });
+  const g = S['general']; if(g && (g.t||'').trim()) out.push('', '## Anything else', g.t.trim());
+  return out.join('\n');
+}
+document.getElementById('dl').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buildMd()], {type:'text/markdown'}));
+  a.download = 'journey-comments.md'; a.click();
+};
+document.getElementById('cp').onclick = async () => {
+  try { await navigator.clipboard.writeText(buildMd()); document.getElementById('count').textContent = 'Copied'; }
+  catch(e){ document.getElementById('count').textContent = 'Copy blocked: use Download'; }
+};
+document.getElementById('clr').onclick = () => {
+  if(!confirm('Clear every mark and comment?')) return;
+  S = {}; save(); location.reload();
+};
+</script>
+</body>
+</html>
