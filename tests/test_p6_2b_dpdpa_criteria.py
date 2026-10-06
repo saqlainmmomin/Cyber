@@ -630,5 +630,6 @@ def test_scenario_11_only_p6_2b_files_change():
         and f not in YOZORA_S8_PATHS  # Yozora S8 per-PR allowance
         and f not in YOZORA_S9_PATHS  # Yozora S9 per-PR allowance
         and f not in V3C_PRIOR_DOMAINS_PATHS
+        and not f.startswith("docs/product/2026-10-06-v3c2-renders/")  # V3-C2 per-PR allowance: render artefacts
     ]
     assert offenders == [], offenders
