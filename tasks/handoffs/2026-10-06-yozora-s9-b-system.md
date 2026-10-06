@@ -33,5 +33,25 @@ The shared behaviour layer: toasts, skeletons, failed-swap handling, button load
 - Run what you can: focused tests, `tests/test_design_lint.py`, `python -m design.tokens_tool check`, Jinja parse of every template you change, `node --check` for JS.
 
 ## Results
-(Codex fills in.)
 
+Implemented the shared Yozora S9 behaviour layer and system-component previews.
+
+- Replaced `CyberToast` with a global safe-DOM `toast(kind, message, action)` helper. It supports success/information auto-dismiss, persistent errors with dismiss controls, action buttons, URL-decoded `X-Toast-Message`/`X-Toast-Type` headers, 401 redirects, conclusion-conflict 409 swaps, failed-swap alerts, and network-error alerts.
+- Added one global HTMX interaction layer for 300 ms skeletons, button loading state, swap transitions, anchored menus/popovers with Escape/focus return/viewport flipping, modal scroll lock/focus trapping/bottom-sheet layout, typed confirmation, and accessible `hx-confirm` dialogs.
+- Added the `.toasts` container to `base.html`, extended the UI toast/modal/menu macros, and added `/design` specimens plus the `design_s9_system` preview states and deterministic harness seed.
+- Moved the existing page-controls interaction code into the global script so row navigation and checksum copy remain available without per-template script duplication.
+- Updated CSS sources and generated copies through the required token/CSS builds. Added all touched S9 files to `YOZORA_S9_PATHS`; no existing guards were weakened or removed.
+
+Verification:
+
+- `pytest -q --no-header -p no:cacheprovider -W ignore tests/test_yozora_s9_system.py tests/test_design_lint.py tests/test_design_tokens_in_sync.py tests/test_design_harness.py`: **17 passed, 1 skipped**. The skipped test is the app-backed preview registry because this environment lacks `boto3`.
+- `python -m design.tokens_tool check`: passed.
+- `npm run css:build`: passed; only the existing Browserslist freshness warning was emitted.
+- `node --check app/static/js/app.js`: passed.
+- Raw Jinja rendering passed for all 15 S9 preview screen/state combinations; changed templates parse successfully.
+- `git diff --check`: passed.
+- Full `pytest` was attempted but stopped during collection with 60 errors because `boto3` is unavailable in the environment. The orchestrator should rerun app-backed tests with project dependencies installed.
+
+Pixel gate/screenshots: not run. The orchestration rules prohibit attempting the localhost-bound pixel gate in this sandbox; the orchestrator runs it once. No additional mockup exceptions were identified. Date picker, pagination, and tooltip work remain deferred as instructed.
+
+Changes remain uncommitted and unstaged for the orchestrator.

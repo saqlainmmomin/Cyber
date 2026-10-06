@@ -59,6 +59,7 @@ MIGRATED_TEMPLATES = {
     "partials/rfi_links.html",
     # Yozora per-PR allowance (S9)
     "pages/error.html",
+    "pages/design_s9_system.html",
     "pages/assessment.html",
     "pages/clients.html",
     "pages/evidence_reuse.html",
