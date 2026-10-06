@@ -7,6 +7,7 @@ import io
 import openpyxl
 
 from app.services import board_exports
+from app.services import board_view
 from tests.p6_8_v3_support import load_deck_document
 
 
@@ -142,3 +143,33 @@ def test_v3c3_xlsx_exports_a_six_framework_document_without_combining_scores():
     summary_names = [book["Executive Summary"].cell(row=row, column=1).value for row in range(7, 13)]
     assert all(name in summary_names for name in (f"Additional Framework {i + 1}" for i in range(4)))
     assert board_exports.board_report.board_view.NEVER_COMBINED_NOTE in _text(book)
+
+
+def test_v3c3_pptx_titles_follow_presenter_and_keep_required_native_charts():
+    from pptx import Presentation
+    from pptx.enum.chart import XL_CHART_TYPE
+
+    document = load_deck_document()
+    deck = Presentation(
+        io.BytesIO(board_exports.render_pptx(document, document_sha256=SHA))
+    )
+    slides = board_view.view(document)["slides"]
+
+    def first_text(slide):
+        return next(
+            shape.text_frame.text
+            for shape in slide.shapes
+            if shape.has_text_frame and shape.text_frame.text.strip()
+        )
+
+    assert [first_text(slide) for slide in deck.slides] == [
+        slide["title"] for slide in slides
+    ]
+    chart_types = {
+        shape.chart.chart_type
+        for slide in deck.slides
+        for shape in slide.shapes
+        if shape.has_chart
+    }
+    assert XL_CHART_TYPE.BAR_CLUSTERED in chart_types
+    assert XL_CHART_TYPE.BAR_STACKED in chart_types

@@ -30,6 +30,7 @@ from tests.yozora_paths import YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS
 V3C2_TEST_PATHS = {
     "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_file_set.py", "tests/test_p6_9_prior_period.py",
     "tests/test_p6_8_v3c2_extra.py",
+    "tests/test_p6_8_v3c3_extra.py", "tests/v3c3_paths.py",
 }
 from app.models.action import Action
 from app.models.analysis_run import AnalysisRun

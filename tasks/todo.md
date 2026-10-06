@@ -32,6 +32,12 @@
 - [x] Add focused XLSX regression coverage and per-PR guard allowances without touching Part B PPTX work.
 - [x] Run the focused/full verification that the available `.venv` supports and record the evidence in the handoff Results.
 
+## V3-C3 PPTX parity (2026-10-06)
+
+- [x] Mirror the V3-C2 presenter slide set one for one in `render_pptx`, including exact action titles, native evidence objects, theme colours, provenance notes, and v3-only export behavior.
+- [x] Add PPTX structure/title regression coverage and extend the existing per-PR guard allowances for Part B artifacts.
+- [x] Export golden and thin PPTX smoke artifacts, verify them with `python-pptx`, run the focused/export regressions and full suite, and record the LibreOffice limitation in the handoff.
+
 ## S6 adversarial review fixes (2026-10-04)
 
 - [x] Add regression coverage for B1–B5 and S1–S9 contracts, including fixture imports.
