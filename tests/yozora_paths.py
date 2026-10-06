@@ -341,6 +341,7 @@ YOZORA_S8_PATHS = (
     "tasks/handoffs/2026-10-05-yozora-s8-c-client.md",
     "tasks/handoffs/2026-10-05-yozora-s8-codex-orchestration.md",
     "tasks/handoffs/2026-10-05-yozora-s8-orchestration.md",
+    "tasks/handoffs/2026-10-06-yozora-s8-fix-pass.md",
     "tasks/todo.md",
     "tests/test_design_lint.py",
     "tests/test_aws_evidence.py",
