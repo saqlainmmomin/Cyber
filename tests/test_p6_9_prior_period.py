@@ -337,9 +337,9 @@ def test_scenario_6_comparison_section_renders_between_frameworks_and_sign_off(d
     engagement = new_engagement(db)
     first, _ = _issued_period(db, http, gate, monkeypatch, engagement, period=PERIOD_1)
     first_html = board.render_html(build(db, first), embed_fonts=False)
-    # P6-8 V3-B (D-P6-8-V3-G): the v3 deck has no comparison slide without a prior period; the empty
-    # text stays in the document (notes), which the sidecar and the XLSX carry.
-    assert 'data-slide="comparison"' not in first_html
+    # V3-C2 keeps the comparison slide as an explicit baseline even without a prior period.
+    assert 'data-slide="comparison"' in first_html
+    assert "baseline" in first_html.lower()
     assert build(db, first)["prior_period"]["notes"] == [prior.NO_PRIOR_TEXT]
 
     p2 = _current(db, http, gate, monkeypatch, engagement)
@@ -351,11 +351,11 @@ def test_scenario_6_comparison_section_renders_between_frameworks_and_sign_off(d
         html.index('data-slide="sign-off"'),
     ]
     assert positions == sorted(positions)
-    section = html[positions[1]:positions[2]]
+    section = html[positions[1]:html.index('data-slide="limits"', positions[1])]
     # P6-8 V3-B: one card per framework with the current and prior score and the change counts.
-    assert section.count('<div class="card">') == len(document["prior_period"]["frameworks"]) == 2
+    assert section.count('class="card"') == len(document["prior_period"]["frameworks"]) == 2
     for framework in document["prior_period"]["frameworks"]:
-        assert f"<h2>{framework['name']}</h2>" in section
+        assert framework["name"] in section
         assert f"Current {framework['current_score']}% \u00b7 Prior {framework['prior_score']}%" in section
         counts = framework["counts"]
         assert f"Improved {counts['improved']} \u00b7 Regressed {counts['regressed']} \u00b7 New {counts['new']}" in section

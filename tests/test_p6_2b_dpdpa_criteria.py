@@ -602,7 +602,7 @@ from tests.yozora_paths import YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8
 
 P6_8_V3B_EXTRA = (
     "tests/golden/p6_8_v3_deck_document.json", "tests/p6_8_v3b_paths.py", "tests/test_p6_8_v3b_file_set.py",
-    "tasks/todo.md", *V3B_APP_PATHS,
+    "tasks/todo.md", "tasks/handoffs/2026-10-06-v3c2-deck-build.md", "tasks/handoffs/2026-10-06-v3c3-pptx-xlsx-parity.md", *V3B_APP_PATHS,
     # existing tests that V3-B edits or that gain a scoped V3-B allowance
     "tests/p6_10_support.py", "tests/test_p6_9_roadmap.py", "tests/test_p6_9_soa.py", "tests/test_p6_9_prior_period.py",
     "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py", "tests/test_p6_8_v3a_data_capture.py",

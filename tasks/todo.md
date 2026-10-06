@@ -1,5 +1,12 @@
 # CyberAssess implementation tracker
 
+## V3-C2 approved board deck build (2026-10-06)
+
+- [x] Port the approved V3-C presenter into `board_view.py`, including slide map, action titles, charts, prior-domain dumbbell data, and sparse-layout rhythm.
+- [x] Rebuild `board_report.html` against the approved mockup while preserving existing semantic hooks and provenance.
+- [x] Update V3-B slide-contract expectations and add V3-C2 extra render/layout/data tests plus file-set allowances.
+- [x] Render golden and thin documents to dense/sparse PDF page images, compare to the approved mockup, run focused tests and the full suite, and fill the handoff Results.
+
 ## Yozora S7 orchestration (2026-10-05)
 
 - [x] Integrate and contract-test the analysis, cards, pages, findings, report, and narrative groups.

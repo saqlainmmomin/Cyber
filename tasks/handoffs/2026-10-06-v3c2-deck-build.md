@@ -45,4 +45,29 @@ The existing V3-B tests are the functional contract. Slide names and count chang
 3. Paste the full `pytest` summary line.
 
 ## Results
-(Codex fills this in: files changed, test edits with reasons, differences from the mockup, anything that forced a deviation. If the code forces a deviation from a decision, stop and report it here; do not pick an alternative.)
+
+Implemented and verified in this worktree; no commit was created.
+
+### Files and behavior
+
+- Ported the V3-C presenter into `app/services/board_view.py`: deterministic action titles, per-framework posture/domain/risk views, waffle and bullet-bar data, roadmap lanes, effort-benefit grid, comparison dumbbells, sparse-layout rhythm, dynamic framework names, and the 30-slide dense / 24-slide thin page map.
+- Rebuilt `app/templates/reports/board_report.html` to the approved 16:9 visual system with embedded Noto/Barlow fonts, cover SVG art, provenance footer, conditional framework copy, narrative hooks, observations, roadmap, comparison, registers, and conditional SoA content. Body/table computed floors are 11pt/9pt.
+- Updated `app/services/board_report.py` with the presenter filters and dynamic observation/register page rendering.
+- Added `tests/test_p6_8_v3c2_extra.py` for page-count parity, bottom-third occupancy, computed font floors, compared-domain-only dumbbells, all six framework IDs, Devanagari PDF glyphs, and document-backed action-title numbers.
+- Updated V3-B contract expectations for the deliberate V3-C2 slide/page changes: new `how-to-read`, `posture`, and `effort-benefit` slides; `domain-status`/`risk-profile` names; 4 observation pages; 9 requirement-register pages; section badges; baseline comparison; and dynamic observation pagination. Updated the related P6-9 and file-set guard assertions to reflect the new baseline slide and scoped V3-C2 test/hand-off files.
+- Updated `tasks/todo.md` in the same change and saved final render artifacts under `docs/product/2026-10-06-v3c2-renders/{dense,sparse}/`.
+
+### Verification
+
+- Focused deck suite: `71 passed in 51.59s`.
+- Full suite: `1558 passed, 30 skipped, 458 warnings in 224.70s (0:03:44)`.
+- Dense render: 30 PDF pages and 30 PNG pages. Thin render: 24 PDF pages and 24 PNG pages. The new pixel smoke test found no empty bottom third on either document; the computed-style test passed the 11pt body / 9pt table floors.
+- The mockup `pages/` PNG directories are not present in this checkout. I rendered the approved `deck.pdf` and `deck-sparse.pdf` to temporary PNGs and compared all 30/24 pages side by side against the final application renders. The final mean RGB difference across pages was 7.28 (dense) and 6.72 (thin); representative pages were inspected at full resolution.
+
+### Deliberate differences and deviation
+
+- The real report cover says “compliance assessment” while the mockup says “gap assessment”; the functional report contract already asserts the former, so the real report keeps that approved client-facing wording.
+- The real footer carries full provenance and `Page X of N`, including the cover. The mockup footer is shorter; this preserves the existing report provenance contract.
+- The golden document has framework-level prior scores but no per-domain prior entries. The comparison slide therefore shows only current domain dots labelled `new`; no mock prior values were copied from the design prototype. Compared per-domain entries render grey prior dots when present.
+- Framework labels remain document/registry-driven rather than using the mockup’s hardcoded short-name map. The final A3 page also retains the real deck frame and conditional SoA totals summary so the output remains auditable and framework-aware.
+- Although PPTX/XLSX parity is out of scope for V3-C2, `app/services/board_exports.py` received one minimal compatibility guard: the existing comparison export now handles the always-present no-prior baseline without indexing `None`. No exporter redesign or schema change was made.
