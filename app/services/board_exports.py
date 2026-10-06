@@ -1350,17 +1350,20 @@ def render_pptx(document: dict, *, document_sha256: str) -> bytes:
                 text_box(slide, board_view.EMPTY_ROADMAP_TEXT, 18, 58, 295, 20, size=15, color=primary)
         elif name == "comparison":
             prior = document["prior_period"]["prior"]
-            text_box(
-                slide,
-                f"Compared with {prior['version_label']} (snapshot {prior['snapshot_id'][:8]}) for the assessment period "
-                f"{prior['period_label']}, evidence cut-off {prior['cutoff_label']}, generated {prior['generated_on']}.",
-                18,
-                30,
-                300,
-                12,
-                size=9,
-                color=primary,
-            )
+            if prior:
+                text_box(
+                    slide,
+                    f"Compared with {prior['version_label']} (snapshot {prior['snapshot_id'][:8]}) for the assessment period "
+                    f"{prior['period_label']}, evidence cut-off {prior['cutoff_label']}, generated {prior['generated_on']}.",
+                    18,
+                    30,
+                    300,
+                    12,
+                    size=9,
+                    color=primary,
+                )
+            else:
+                text_box(slide, "First report baseline; no prior period is available for comparison.", 18, 30, 300, 12, size=9, color=primary)
             comparison_rows = []
             for framework in document["prior_period"]["frameworks"]:
                 if framework["compared"]:

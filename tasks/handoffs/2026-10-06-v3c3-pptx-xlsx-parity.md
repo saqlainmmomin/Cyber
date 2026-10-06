@@ -1,0 +1,34 @@
+# V3-C3: PPTX and XLSX parity with the V3-C deck
+
+**Written:** 6 Oct 2026. **For:** one Codex run, branch `claude/v3c3-exports` from `origin/main` (worktree `/Users/saqlainmomin/cyberassess-v3c3`). **Owner:** Claude reviews; Saqlain merges. No attribution lines in commits or PR bodies. Codex cannot write `.git`; the orchestrator commits.
+
+## Two parts, different triggers
+| Part | Depends on | Files |
+|---|---|---|
+| **A. XLSX** | nothing (can start now, parallel with V3-C2) | `app/services/board_exports.py` (`_render_xlsx_v3`, its helpers) and `tests/test_p6_8_v3c3_*` |
+| **B. PPTX** | **V3-C2 merged.** `render_pptx` builds one slide per entry of `board_view.view(document)["slides"]` (`board_exports.py:1263`) and the V3-B test asserts that equality, so the slide set changes when V3-C2 lands. Merge `origin/main` into the branch first (never rebase). | `render_pptx` |
+
+Out of scope: `board_view.py`, the HTML template, `build_document`, schema version, migrations, DOCX/legacy XLSX paths (frozen, v1/v2 sidecars), `validation/`.
+
+## Part A: XLSX
+Keep `XLSX_SHEETS_V3` names and order, every sheet's A1/A2/A3 title block, header rows and column lists exactly as `tests/test_p6_8_v3b_deck.py` scenarios 14 to 14d pin them. Improve the finish only:
+- **Executive Summary:** per-framework posture block with rating, score, delta arrow text (`▲ 18.2`, `▼`, `–`, never the string `None`), and the same outcome palette as the deck (compliant `#0E8F86`, partial `#E39A1F`, non-compliant `#C0392B`, not concluded `#9AA3B5`, not applicable `#D5D9E3`). Keep the native stacked bar and pie; add a per-framework requirement-outcome table the charts read from. No score combined across frameworks (`NEVER_COMBINED_NOTE` stays).
+- **Observation Register, Remediation Tracker, Detailed Assessment:** conditional fills for severity (critical `#9B1C1C` white text, high `#D9481E`, medium `#F0A030`, low `#3C9D6B`) and outcome; every colour cell also carries its text label (never colour alone). Frozen header rows, auto-filters, sensible column widths and wrap, print setup (landscape, fit to width, repeat header row).
+- **Definitions:** add the rating bands (0-40 Non-compliant, 40-60 Needs significant improvement, 60-80 Partially compliant, 80-100 Compliant) and the how-to-read terms the deck's "How to read the ratings" slide uses, plus a legend of the fills.
+- **Prior period:** where `prior_period.frameworks[i]["domains"]` exists (read with `.get("domains", [])`), add a per-domain prior/current/delta table to the comparison sheet or Executive Summary. Only rows with `compared` true get a delta; others show `New` or `Not compared`.
+- Formula-injection guard stays on every new text cell (scenario 14d). No new dependency.
+
+## Part B: PPTX (after V3-C2)
+Mirror the V3-C2 slide set one for one, same order and titles (action titles come from the presenter's `slides[i]["title"]`; do not recompute). Keep: native tables and charts (>=5 tables, >=2 charts), provenance label in every slide's notes, theme colours from `document["theme"]`, v3-only (older schemas still raise `UnsupportedDocument`), no `Priority 1-4` text. Charts: native bar for domain status with the rating bands; native stacked bar for outcomes per framework; waffle as a grid of small squares (shapes) per framework; dumbbell as native line/scatter or paired shapes, compared domains only; effort-benefit matrix as a 3x3 grid of shapes; roadmap as lane-by-horizon grid. Minimum text 11pt body, 9pt tables. Cover shows framework chips and the Draft badge when applicable.
+
+## Rules (unchanged house rules)
+Approved content only; scores deterministic; no cross-framework score; framework copy conditional; no mock prior values anywhere; snapshots write-once. Never open `validation/` or any `answer_key.json` (D-P5-9-C).
+
+## Tests
+Existing V3-B export scenarios (14 to 15b) are the contract; do not weaken them. Part B edits `len(deck.slides) == 25` to follow `len(view(document)["slides"])` and says so in Results. New tests in `tests/test_p6_8_v3c3_extra.py`: delta strings never contain `None`; every colour fill has an adjacent label; the dumbbell/prior table shows only compared domains; Definitions contains the four rating bands; six-framework document exports without error; PPTX slide titles equal the presenter titles. Add per-PR guard allowances (never delete a guard). Full `pytest` passes.
+
+## Verification (required)
+Export XLSX and PPTX from the golden document and from a thin document. Open the XLSX in LibreOffice (`soffice --headless --convert-to pdf`) and the PPTX likewise, `pdftoppm -png -r 60`, save under `docs/product/2026-10-06-v3c3-renders/`, and compare the PPTX pages with the V3-C2 deck pages. Paste the `pytest` summary line.
+
+## Results
+(Codex fills in: files changed, test edits with reasons, deviations.)
