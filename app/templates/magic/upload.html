@@ -90,6 +90,7 @@
         </li>
         {% endfor %}
       </ul>
+      <datalist id="client-requested-items">{% for item in shown_items %}<option value="{{ item.key }}">{{ item.title }}</option>{% endfor %}</datalist>
       {% if remaining <= 0 %}
       <p class="client-limit">This link has reached its upload limit.</p>
       {% endif %}
