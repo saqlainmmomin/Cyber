@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from collections.abc import Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -263,6 +264,7 @@ def _consultant_context(
     error: str | None = None,
     error_title: str | None = None,
     new_link_url: str | None = None,
+    adhoc_open: bool = False,
 ) -> dict:
     summaries = request_summary.engagement_summaries(db, engagement_id)
     engagement = db.get(Engagement, engagement_id)
@@ -278,6 +280,7 @@ def _consultant_context(
         "error": error,
         "error_title": error_title,
         "new_link_url": new_link_url,
+        "adhoc_open": adhoc_open,
     }
 
 
@@ -292,6 +295,7 @@ def _render_consultant(
     new_link_url: str | None = None,
     toast_message: str | None = None,
     toast_type: str = "success",
+    adhoc_open: bool = False,
 ):
     headers = dict(_CONSULTANT_HEADERS)
     if toast_message:
@@ -306,6 +310,7 @@ def _render_consultant(
             error=error,
             error_title=error_title,
             new_link_url=new_link_url,
+            adhoc_open=adhoc_open,
         ),
         status_code=status_code,
         headers=headers,
@@ -343,6 +348,15 @@ def _form_text(form, name: str) -> str:
     return value if isinstance(value, str) else ""
 
 
+_RFI_LINK_FORM_DEFAULTS = {
+    "contact_name": "",
+    "contact_email": "",
+    "expires_in_days": 7,
+    "max_uploads": 20,
+    "max_total_mb": 100,
+}
+
+
 def _render_rfi_links(
     request: Request,
     db: Session,
@@ -353,6 +367,8 @@ def _render_rfi_links(
     status_code: int = 200,
     toast_message: str | None = None,
     toast_type: str = "success",
+    selected_item_ids: Sequence[str] = (),
+    link_form: dict | None = None,
 ):
     try:
         context = rfi_requests.page_context(db, assessment)
@@ -367,6 +383,7 @@ def _render_rfi_links(
             "current_items": [],
             "links": [],
             "coverage": {},
+            "coverage_labels": {},
             "received": {},
             "reviewer_name": "",
         }
@@ -376,6 +393,8 @@ def _render_rfi_links(
             "request": request,
             "error": error,
             "new_link_url": new_link_url,
+            "selected_item_ids": list(selected_item_ids),
+            "link_form": {**_RFI_LINK_FORM_DEFAULTS, **(link_form or {})},
         }
     )
     headers = dict(_CONSULTANT_HEADERS)
@@ -554,10 +573,13 @@ async def create_magic_link(
             engagement_id,
             status_code=404,
             error=exc.message,
+            adhoc_open=True,
         )
     except magic_service.MagicLinkError as exc:
         db.rollback()
-        return _render_consultant(request, db, engagement_id, error=exc.message)
+        return _render_consultant(
+            request, db, engagement_id, error=exc.message, adhoc_open=True
+        )
 
     new_link_url = str(request.base_url).rstrip("/") + "/magic/" + created.token
     return _render_consultant(
@@ -593,6 +615,11 @@ async def create_rfi_magic_link(
         )
     form = await request.form()
     item_ids = [value for value in form.getlist("item_ids") if isinstance(value, str)]
+    link_form = {
+        name: _form_text(form, name)
+        for name in _RFI_LINK_FORM_DEFAULTS
+        if name in form
+    }
     try:
         contact_name, contact_email = magic_service.validated_contact(
             _form_text(form, "contact_name"), _form_text(form, "contact_email")
@@ -635,6 +662,8 @@ async def create_rfi_magic_link(
             assessment,
             status_code=status,
             error=exc.message,
+            selected_item_ids=item_ids,
+            link_form=link_form,
         )
     except magic_service.MagicLinkNotFound as exc:
         db.rollback()
@@ -644,6 +673,8 @@ async def create_rfi_magic_link(
             assessment,
             status_code=404,
             error=exc.message,
+            selected_item_ids=item_ids,
+            link_form=link_form,
         )
     except report_snapshots.SnapshotIntegrityError as exc:
         db.rollback()
@@ -653,6 +684,8 @@ async def create_rfi_magic_link(
             assessment,
             status_code=500,
             error=exc.message,
+            selected_item_ids=item_ids,
+            link_form=link_form,
         )
     except magic_service.MagicLinkError as exc:
         db.rollback()
@@ -661,6 +694,8 @@ async def create_rfi_magic_link(
             db,
             assessment,
             error=exc.message,
+            selected_item_ids=item_ids,
+            link_form=link_form,
         )
     except Exception:
         db.rollback()
@@ -670,6 +705,8 @@ async def create_rfi_magic_link(
             assessment,
             status_code=500,
             error="The client link could not be created. Try again.",
+            selected_item_ids=item_ids,
+            link_form=link_form,
         )
 
     new_link_url = str(request.base_url).rstrip("/") + "/magic/" + created.token

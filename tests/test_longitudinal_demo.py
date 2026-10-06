@@ -38,7 +38,7 @@ from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links, remediation_rollup, report_content
 from app.services.report_snapshots import generated_event
 from app.services.evidence_reuse import AUDIT_METADATA_KEYS
-from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS  # Yozora S3/S5/S8/S9 per-PR allowance
+from tests.yozora_paths import YOZORA_S3_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora S3/S5/S8/S9 per-PR allowance
 
 from scripts.seed_test_companies import (
     DEMO_CLIENT_A,
@@ -594,5 +594,5 @@ def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
         text=True,
         check=True,
     ).stdout.splitlines()
-    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS)]
+    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS)]
     assert changed == []

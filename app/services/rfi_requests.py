@@ -567,13 +567,19 @@ def page_context(db: Session, assessment: Assessment) -> dict:
     links, link_items = _link_rows(db, assessment)
     current_items = current_document["items"] if current_document else []
     coverage: dict[str, list[str]] = {item["item_id"]: [] for item in current_items}
+    coverage_labels: dict[str, list[str]] = {}
     for row in links:
         if row.snapshot_id != (current_issue.id if current_issue else None):
             continue
         if row.status != "active":
             continue
+        label = (
+            f"{row.contact_name or row.contact_email or 'Client contact'}, "
+            f"expires {row.expires_at.strftime('%d %b %Y')}"
+        )
         for item_id, _title in row.items:
             coverage.setdefault(item_id, []).append(row.id_prefix)
+            coverage_labels.setdefault(item_id, []).append(label)
 
     received: dict[tuple[str, str], list[dict]] = {}
     link_ids = list(link_items)
@@ -639,6 +645,7 @@ def page_context(db: Session, assessment: Assessment) -> dict:
         "current_items": current_items,
         "links": links,
         "coverage": coverage,
+        "coverage_labels": coverage_labels,
         "received": received,
         "reviewer_name": reviewer_name,
     }

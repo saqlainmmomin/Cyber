@@ -461,5 +461,50 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+# Per-PR allowance: RFI and Requests consolidation (tasks/2026-10-06-rfi-requests-consolidation.md).
+RFI_REQUESTS_PATHS = (
+    "app/routers/firm_settings.py",
+    "app/routers/magic.py",
+    "app/routers/retention.py",
+    "app/routers/snapshots.py",
+    "app/services/rfi_requests.py",
+    "app/static/js/app.js",
+    "app/templates/pages/assessment.html",
+    "app/templates/pages/engagement_detail.html",
+    "app/templates/pages/engagement_purge.html",
+    "app/templates/pages/firm_settings.html",
+    "app/templates/pages/requests.html",
+    "app/templates/pages/rfi.html",
+    "app/templates/partials/document_list.html",
+    "app/templates/partials/engagement_retention.html",
+    "app/templates/partials/magic_links.html",
+    "app/templates/partials/rfi_links.html",
+    "app/templates/partials/scope_complete.html",
+    "docs/product/yozora-design-system.md",
+    "docs/product/yozora-migration-map.md",
+    "tasks/2026-10-06-rfi-requests-consolidation.md",
+    "tasks/2026-10-06-status-log.md",
+    "tasks/handoffs/2026-10-06-rfi-requests-cloud-kickoff.md",
+    "tests/p6_10_support.py",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_magic_links.py",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_requests_hub.py",
+    "tests/test_retention.py",
+    "tests/test_rfi_link_picker.py",
+    "tests/test_scope_complete_layout.py",
+    "tests/test_settings_archive.py",
+    "tests/test_yozora_firm_settings.py",
+    "tests/test_yozora_s4.py",
+    "tests/test_yozora_s5.py",
+    "tests/yozora_paths.py",
+)
+
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]

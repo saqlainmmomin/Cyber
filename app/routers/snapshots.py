@@ -75,7 +75,9 @@ def _success(snapshot, assessment_id: str, message: str) -> JSONResponse:
     return response
 
 
-def _rfi_success(snapshot, assessment_id: str, message: str) -> JSONResponse:
+def _rfi_success(
+    snapshot, assessment_id: str, message: str, tab: str | None = None
+) -> JSONResponse:
     response = JSONResponse(
         {
             "snapshot_id": snapshot.id,
@@ -84,7 +86,10 @@ def _rfi_success(snapshot, assessment_id: str, message: str) -> JSONResponse:
         },
         status_code=200,
     )
-    response.headers["HX-Redirect"] = f"/assessments/{assessment_id}/rfi"
+    redirect = f"/assessments/{assessment_id}/rfi"
+    if tab:
+        redirect += f"?tab={tab}"
+    response.headers["HX-Redirect"] = redirect
     response.headers["X-Toast-Message"] = message
     response.headers["X-Toast-Type"] = "success"
     return response
@@ -220,7 +225,9 @@ def generate_rfi_version(
             getattr(report_snapshots.snapshot_path(snapshot), "unlink")(missing_ok=True)
             getattr(report_snapshots.rfi_document_path(snapshot), "unlink")(missing_ok=True)
         return _error(500, "The report version could not be saved. Try again.")
-    return _rfi_success(snapshot, assessment_id, "Draft RFI version generated")
+    return _rfi_success(
+        snapshot, assessment_id, "Draft RFI version generated", tab="versions"
+    )
 
 
 @router.post("/{assessment_id}/rfi/versions/{snapshot_id}/issue")
@@ -251,7 +258,7 @@ def issue_rfi_version(
     except Exception:
         db.rollback()
         return _error(500, "The report version could not be saved. Try again.")
-    return _rfi_success(snapshot, assessment_id, "RFI version issued")
+    return _rfi_success(snapshot, assessment_id, "RFI version issued", tab="links")
 
 
 @router.get("/{assessment_id}/rfi/versions/{snapshot_id}/docx")

@@ -1,4 +1,29 @@
 {% from "components/ui.html" import alert, button, icon, pill %}
+{% set labels = coverage_labels if coverage_labels is defined else {} %}
+{% set selected = selected_item_ids if selected_item_ids is defined else [] %}
+{% set form = link_form if link_form is defined else {"contact_name": "", "contact_email": "", "expires_in_days": 7, "max_uploads": 20, "max_total_mb": 100} %}
+{% set groups = namespace(unassigned=[], covered=[], covered_selected=false, older=false) %}
+{% for item in current_items %}
+{% if coverage.get(item.item_id) %}
+{% set groups.covered = groups.covered + [item] %}
+{% if item.item_id in selected %}{% set groups.covered_selected = true %}{% endif %}
+{% else %}
+{% set groups.unassigned = groups.unassigned + [item] %}
+{% endif %}
+{% endfor %}
+{% for link in links %}
+{% if link.status == "active" and link.snapshot_id != current_issue.id %}{% set groups.older = true %}{% endif %}
+{% endfor %}
+{% macro pick_row(item, is_covered) -%}
+<label class="choice req-pick">
+  <input type="checkbox" name="item_ids" value="{{ item.item_id }}"{% if item.item_id in selected %} checked{% endif %}>
+  <span class="grow">
+    <b>{{ item.title }}</b>
+    <span class="help"><span class="num">{{ item.item_id }}</span> · <span data-rfi-coverage="{{ item.item_id }}">{% if is_covered %}In a link to {{ labels.get(item.item_id, []) | join("; ") }}{% else %}<span data-rfi-unsent>Not yet in an active client link</span>{% endif %}</span></span>
+    {% for received_item in received.get((current_issue.id, item.item_id), []) %}<span data-rfi-received class="sub" style="display:block;margin-top:var(--s-2)"><a href="/evidence/{{ received_item.evidence_id }}">{{ received_item.filename }}</a> · {{ received_item.status }}</span>{% endfor %}
+  </span>
+</label>
+{%- endmacro %}
 
 <section id="rfi-links" data-rfi-links class="stack">
   {% if error %}
@@ -8,38 +33,55 @@
   {% if new_link_url %}
   <div class="alert c-ok" data-rfi-new-link>
     {{ icon("circle-check") }}
-    <div class="grow"><b>Copy this link now</b><span>It will not be shown again.</span><label class="field" style="margin-top:var(--s-3)"><input data-rfi-new-link readonly aria-label="New link" value="{{ new_link_url }}"></label></div>
+    <div class="grow"><b>Copy this link now</b><span>It will not be shown again.</span><label class="field" style="margin-top:var(--s-3)"><input data-rfi-new-link readonly aria-label="New link" value="{{ new_link_url }}"></label>{{ button("Copy link", "secondary", "", "copy", false, copy_trigger="input[data-rfi-new-link]") }}</div>
   </div>
   {% endif %}
 
-  <div class="solid card">
+  <form class="solid card" data-rfi-link-form hx-post="/assessments/{{ assessment.id }}/rfi/versions/{{ current_issue.id }}/magic-links" hx-target="#rfi-links" hx-swap="outerHTML" hx-include="#reviewer-name">
     <div class="between">
-      <div><h2>Client links</h2><p class="help">Issue selected RFI items to a client through a secure upload link.</p></div>
+      <div><h2>Send items to the client</h2><p class="help">Select the items for one client contact. A link can include up to 20 items.</p></div>
+      <span class="sub num" data-rfi-selected-count aria-live="polite">No items selected</span>
     </div>
-    <form data-rfi-link-form hx-post="/assessments/{{ assessment.id }}/rfi/versions/{{ current_issue.id }}/magic-links" hx-target="#rfi-links" hx-swap="outerHTML" hx-include="#reviewer-name" style="margin-top:var(--s-5)">
-      <div class="form-grid">
-        <div><label class="label" for="rfi-contact-name">Client contact</label><label class="field"><input id="rfi-contact-name" name="contact_name" maxlength="200" placeholder="Name"></label></div>
-        <div><label class="label" for="rfi-contact-email">Contact email</label><label class="field"><input id="rfi-contact-email" type="email" name="contact_email" maxlength="254" placeholder="name@company.example"></label></div>
-        <div><label class="label" for="rfi-expires-in-days">Expires in (days)</label><label class="field"><input id="rfi-expires-in-days" name="expires_in_days" type="number" value="7" min="1" max="30"></label></div>
-      </div>
-      <div class="form-grid" style="margin-top:var(--s-5)">
-        <div><label class="label" for="rfi-max-uploads">Maximum uploads</label><label class="field"><input id="rfi-max-uploads" name="max_uploads" type="number" value="20" min="1" max="100"></label></div>
-        <div><label class="label" for="rfi-max-total-mb">Maximum total size (MB)</label><label class="field"><input id="rfi-max-total-mb" name="max_total_mb" type="number" value="100" min="1" max="500"></label></div>
-      </div>
-      <p class="help" style="margin-top:var(--s-4)">Select the items this client should receive. A link can include up to 20 items.</p>
-      <div class="solid rows" style="margin-top:var(--s-3)">
-        {% for item in current_items %}
-        <label class="choice">
-          <input type="checkbox" name="item_ids" value="{{ item.item_id }}">
-          <span class="txt"><b>{{ item.title }}</b><span class="sub" data-rfi-coverage="{{ item.item_id }}">{% if coverage.get(item.item_id) %}Covered by {{ coverage[item.item_id] | join(", ") }}{% else %}<span data-rfi-unsent>Not yet in an active client link</span>{% endif %}</span>{% for received_item in received.get((current_issue.id, item.item_id), []) %}<span data-rfi-received class="sub" style="display:block;margin-top:var(--s-2)"><a href="/evidence/{{ received_item.evidence_id }}">{{ received_item.filename }}</a> · {{ received_item.status }}</span>{% endfor %}</span>
-        </label>
-        {% endfor %}
-      </div>
-      <div style="margin-top:var(--s-5)">{{ button("Create client link", "primary", "", "link", true, button_type="submit") }}</div>
-    </form>
-  </div>
+    {% if groups.older %}
+    <p class="help" data-rfi-older-links>Active links from earlier RFI versions are not counted here.</p>
+    {% endif %}
 
-  <div class="sec" style="margin-top:var(--s-8)"><h2>Existing links</h2></div>
+    <h3 style="margin-top:var(--s-6)">Not yet sent <span class="sub num">{{ groups.unassigned | length }}</span></h3>
+    {% if groups.unassigned %}
+    <div class="req-picks" data-rfi-unassigned-items style="margin-top:var(--s-3)">
+      {% for item in groups.unassigned %}{{ pick_row(item, false) }}{% endfor %}
+    </div>
+    {% else %}
+    <p class="sub" data-rfi-all-covered>Every item is in an active client link.</p>
+    {% endif %}
+
+    {% if groups.covered %}
+    <details class="disclose" data-rfi-covered-items style="margin-top:var(--s-6)"{% if groups.covered_selected %} open{% endif %}>
+      <summary>{{ groups.covered | length }} items already in an active link</summary>
+      <div class="req-picks" style="margin-top:var(--s-3)">
+        {% for item in groups.covered %}{{ pick_row(item, true) }}{% endfor %}
+      </div>
+    </details>
+    {% endif %}
+
+    <div data-rfi-link-details style="margin-top:var(--s-6)"{% if not selected %} hidden{% endif %}>
+      <div class="form-grid">
+        <div><label class="label" for="rfi-contact-name">Client contact</label><label class="field"><input id="rfi-contact-name" name="contact_name" maxlength="200" placeholder="Name" value="{{ form.contact_name }}"></label></div>
+        <div><label class="label" for="rfi-contact-email">Contact email</label><label class="field"><input id="rfi-contact-email" type="email" name="contact_email" maxlength="254" placeholder="name@company.example" value="{{ form.contact_email }}"></label></div>
+        <div><label class="label" for="rfi-expires-in-days">Expires in (days)</label><label class="field"><input id="rfi-expires-in-days" name="expires_in_days" type="number" value="{{ form.expires_in_days }}" min="1" max="30"></label></div>
+      </div>
+      <details class="disclose">
+        <summary>Upload limits</summary>
+        <div class="form-grid" style="margin-top:var(--s-3)">
+          <div><label class="label" for="rfi-max-uploads">Maximum uploads</label><label class="field"><input id="rfi-max-uploads" name="max_uploads" type="number" value="{{ form.max_uploads }}" min="1" max="100"></label></div>
+          <div><label class="label" for="rfi-max-total-mb">Maximum total size (MB)</label><label class="field"><input id="rfi-max-total-mb" name="max_total_mb" type="number" value="{{ form.max_total_mb }}" min="1" max="500"></label></div>
+        </div>
+      </details>
+      <div style="margin-top:var(--s-5)">{{ button("Create client link", "primary", "", "link", true, button_type="submit") }}</div>
+    </div>
+  </form>
+
+  <div class="sec"><h2>Links for this RFI</h2><a class="btn ghost sm" href="/engagements/{{ assessment.engagement_id }}/requests" data-rfi-requests-link>Track receipts in Requests</a></div>
   {% if links %}
   <div class="solid rows">
     {% for link in links %}
