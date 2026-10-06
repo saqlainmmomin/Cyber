@@ -873,3 +873,33 @@ document.body.addEventListener('htmx:xhr:progress', function(event) {
     }
   }
 });
+
+// ── RFI link picker ─────────────────────────────
+
+function syncRfiLinkForm(form) {
+  const n = form.querySelectorAll('input[name="item_ids"]:checked').length;
+  const details = form.querySelector('[data-rfi-link-details]');
+  if (details) details.hidden = n === 0;
+  const count = form.querySelector('[data-rfi-selected-count]');
+  if (count) {
+    let text = n === 0 ? 'No items selected' : n === 1 ? '1 item selected' : `${n} items selected`;
+    if (n > 20) text += ' · A link can include up to 20 items';
+    count.textContent = text;
+  }
+  const submit = form.querySelector('button[type="submit"]');
+  if (submit) submit.disabled = n > 20;
+}
+
+document.addEventListener('change', (event) => {
+  const form = event.target.closest && event.target.closest('[data-rfi-link-form]');
+  if (form) syncRfiLinkForm(form);
+});
+
+document.body.addEventListener('htmx:load', (event) => {
+  const root = event.detail && event.detail.elt;
+  if (!root || !root.querySelectorAll) return;
+  if (root.matches && root.matches('[data-rfi-link-form]')) syncRfiLinkForm(root);
+  root.querySelectorAll('[data-rfi-link-form]').forEach(syncRfiLinkForm);
+});
+
+document.querySelectorAll('[data-rfi-link-form]').forEach(syncRfiLinkForm);
