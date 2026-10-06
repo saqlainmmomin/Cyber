@@ -11,3 +11,7 @@ Spec: `tasks/2026-10-06-rfi-requests-consolidation.md`. Built on `main` at `9cf6
 - **WP-E.** `RFI_REQUESTS_PATHS` allowance added to `tests/yozora_paths.py` and the enumerating guards; migration map and design-system docs updated.
 
 Pixel gates for `b6-rfi`, `b6-magic_links`, `b3-scope-complete`, `engagement_detail` and `b1-firm_settings` diverge on purpose and wait for Saqlain's human gate.
+
+## Assessment Evidence tab (branch `codex/assessment-evidence-tab`)
+
+Spec: `tasks/handoffs/2026-10-06-assessment-evidence-tab.md`. The assessment shell now exposes Overview, Scope, Evidence, Questionnaire, Review and Report. The assessment Evidence inventory and RFI Requests page keep the assessment header and tab bar, with an Inventory | Requests toggle; engagement Evidence and Requests remain valid. The shared inventory renderer preserves engagement behavior, keeps assessment scope through HTMX archive/version fragments, and treats assessment scope as separate from user filters for empty-state copy. Pixel gates for the assessment Evidence and Requests states diverge from the earlier engagement-only mockup by decision.

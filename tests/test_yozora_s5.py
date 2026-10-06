@@ -27,7 +27,7 @@ def _assessment_nav(page: str) -> str:
     return match.group(1)
 
 
-def test_assessment_overview_has_five_tabs_and_real_stepper(db, http):
+def test_assessment_overview_has_six_tabs_and_real_stepper(db, http):
     _client, _engagement, assessment = seed_engagement(
         db,
         client_name="Meridian Ledger Technologies",
@@ -46,6 +46,7 @@ def test_assessment_overview_has_five_tabs_and_real_stepper(db, http):
     assert [label for label in re.findall(r">([^<>]+)</a>", nav)] == [
         "Overview",
         "Scope",
+        "Evidence",
         "Questionnaire",
         "Review",
         "Report",
@@ -86,7 +87,7 @@ def test_documents_url_redirects_to_evidence_without_documents_tab(db, http):
     redirect = http.get(f"/assessments/{assessment.id}?tab=documents", follow_redirects=False)
 
     assert redirect.status_code == 303
-    assert redirect.headers["location"] == f"/engagements/{engagement.id}/evidence?assessment={assessment.id}"
+    assert redirect.headers["location"] == f"/assessments/{assessment.id}/evidence"
     page = http.get(f"/assessments/{assessment.id}?tab=overview")
     assert "Documents" not in _assessment_nav(page.text)
 

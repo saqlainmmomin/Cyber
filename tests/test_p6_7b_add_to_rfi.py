@@ -845,7 +845,7 @@ P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
 from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
 
 
 def _changed(*args: str) -> set[str]:
@@ -873,6 +873,7 @@ def test_scenario_12_p6_7b_touches_only_its_files():
     changed -= set(YOZORA_S8_PATHS)  # Yozora S8 Requests/RFI slice
     changed -= set(YOZORA_S9_PATHS)  # Yozora S9 system slice
     changed -= set(RFI_REQUESTS_PATHS)  # RFI and Requests consolidation
+    changed -= set(ASSESSMENT_EVIDENCE_TAB_PATHS)  # assessment Evidence tab
     assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
     p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
     # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.

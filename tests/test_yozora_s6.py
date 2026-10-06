@@ -50,7 +50,7 @@ def test_inventory_and_documents_redirect_are_http_surfaces(db, http, monkeypatc
 
     redirect = http.get(f"/assessments/{assessment.id}?tab=documents", follow_redirects=False)
     assert redirect.status_code == 303
-    assert redirect.headers["location"] == f"/engagements/{engagement.id}/evidence?assessment={assessment.id}"
+    assert redirect.headers["location"] == f"/assessments/{assessment.id}/evidence"
 
     uploaded = http.post(
         f"/assessments/{assessment.id}/upload",

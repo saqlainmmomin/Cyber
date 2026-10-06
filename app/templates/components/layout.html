@@ -29,13 +29,14 @@
 {% set framework_query = "?framework=" ~ framework if framework else "" %}
 {% set questionnaire_query = "?tab=questionnaire" ~ ("&framework=" ~ framework if framework else "") %}
 {% set report_query = "?tab=report" ~ ("&framework=" ~ framework if framework else "") %}
-{{ tabs([
+<div style="overflow-x:auto">{{ tabs([
   {"label": "Overview", "href": base ~ overview_query, "current": current == "overview"},
   {"label": "Scope", "href": base ~ "/scope" ~ framework_query, "current": current == "scope"},
+  {"label": "Evidence", "href": base ~ "/evidence" ~ framework_query, "current": current == "evidence"},
   {"label": "Questionnaire", "href": base ~ questionnaire_query, "current": current == "questionnaire"},
   {"label": "Review", "href": base ~ "/review-queue" ~ framework_query, "current": current == "review"},
   {"label": "Report", "href": base ~ "/report" ~ framework_query, "current": current == "report"}
-], "Assessment") }}
+], "Assessment") }}</div>
 {%- endmacro %}
 
 {% macro seg(items, current) -%}

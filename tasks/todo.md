@@ -1,5 +1,13 @@
 # CyberAssess implementation tracker
 
+## Assessment Evidence tab (2026-10-06)
+
+- [x] WP-A: add the Evidence assessment tab, responsive tab scrolling, and dated Yozora documentation notes.
+- [x] WP-B: add the assessment-scoped inventory route, shared rendering, scope-aware empty state, and focused inventory tests.
+- [x] WP-C: move the RFI page under assessment chrome with the Inventory | Requests toggle while preserving all existing hooks.
+- [x] WP-D: verify entry-point, legacy, archive, mobile, and copy contracts; keep stepper and existing hrefs unchanged.
+- [x] WP-E: add Yozora path allowances, status log and handoff Results; run focused/full tests, smoke test, and Chromium screenshots when available.
+
 ## Yozora S7 orchestration (2026-10-05)
 
 - [x] Integrate and contract-test the analysis, cards, pages, findings, report, and narrative groups.

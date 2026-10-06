@@ -78,5 +78,5 @@
 {% elif cross_engagement %}
 <div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Evidence appears here once it is added to an engagement.</p></div>
 {% else %}
-<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Upload documents or send the client a request.</p><div class="acts2"><button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% if request_assessment_id %}<a class="btn ghost lead" href="/assessments/{{ request_assessment_id }}/rfi?tab=links">{{ icon("link") }}Ask the client</a>{% endif %}</div></div>
+<div class="glass empty" data-empty-evidence>{{ icon("folder", "", "width:24px;height:24px;color:var(--muted)") }}<h3>No evidence yet</h3><p>Upload documents or send the client a request.</p>{% if not read_only %}<div class="acts2"><button class="btn primary lead" type="button" data-upload-open>{{ icon("upload") }}Upload evidence</button>{% if request_assessment_id %}<a class="btn ghost lead" href="/assessments/{{ request_assessment_id }}/rfi?tab=links">{{ icon("link") }}Ask the client</a>{% endif %}</div>{% endif %}</div>
 {% endif %}

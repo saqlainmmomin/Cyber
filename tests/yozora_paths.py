@@ -503,5 +503,35 @@ RFI_REQUESTS_PATHS = (
     "tests/yozora_paths.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS
+# Per-PR allowance: assessment Evidence tab and assessment-scoped Requests view.
+ASSESSMENT_EVIDENCE_TAB_PATHS = (
+    "app/routers/web.py",
+    "app/templates/components/layout.html",
+    "app/templates/pages/evidence_inventory.html",
+    "app/templates/pages/rfi.html",
+    "app/templates/partials/document_list.html",
+    "docs/product/2026-10-01-app-design-mockups/flow-map.html",
+    "docs/product/2026-10-01-app-design-mockups/screens/IA-SPEC.md",
+    "docs/product/yozora-design-system.md",
+    "docs/product/yozora-migration-map.md",
+    "tasks/2026-10-06-status-log.md",
+    "tasks/handoffs/2026-10-06-assessment-evidence-tab.md",
+    "tasks/todo.md",
+    "tests/p6_10_support.py",
+    "tests/test_assessment_evidence_tab.py",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_retention.py",
+    "tests/test_yozora_s5.py",
+    "tests/test_yozora_s6.py",
+    "tests/yozora_paths.py",
+)
+
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS + ASSESSMENT_EVIDENCE_TAB_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]
