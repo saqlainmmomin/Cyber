@@ -421,6 +421,7 @@ YOZORA_S9_PATHS = (
     "tailwind.config.js",
     "tasks/handoffs/2026-10-06-yozora-s9-orchestration.md",
     "tasks/handoffs/2026-10-06-yozora-s9-fix-pass.md",
+    ".gitignore",
     "tasks/handoffs/2026-10-06-yozora-s9-a-errors.md",
     "tasks/handoffs/2026-10-06-yozora-s9-b-system.md",
     "tasks/handoffs/2026-10-06-yozora-s9-c-cleanup.md",
