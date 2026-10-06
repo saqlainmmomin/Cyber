@@ -26,55 +26,7 @@
   </div>
   {% endif %}
 
-  <form id="new-link-form" class="solid card" hx-post="/engagements/{{ engagement_id }}/magic-links" hx-target="#magic-links" hx-swap="outerHTML">
-    <div class="between">
-      <div>
-        <h2>New link</h2>
-        <p class="help">Ask a client to upload the evidence you need.</p>
-      </div>
-    </div>
-
-    <fieldset id="requested-items" style="margin-top:var(--s-4)">
-      <legend class="label">Requested items</legend>
-      <label class="field area" style="margin-top:var(--s-2)">
-        <textarea name="items" rows="4" placeholder="One item per line" required></textarea>
-      </label>
-      <p class="help">Add one requested item per line. A link can include up to 20 items.</p>
-    </fieldset>
-
-    <div class="form-grid" style="margin-top:var(--s-5)">
-      <div>
-        <label class="label" for="contact-name">Client contact</label>
-        <label class="field"><input id="contact-name" name="contact_name" maxlength="200" placeholder="Name"></label>
-      </div>
-      <div>
-        <label class="label" for="contact-email">Contact email</label>
-        <label class="field"><input id="contact-email" name="contact_email" type="email" maxlength="254" placeholder="name@company.example"></label>
-      </div>
-      <div>
-        <label class="label" for="expires-in-days">Expires in (days)</label>
-        <label class="field"><input id="expires-in-days" name="expires_in_days" type="number" value="7" min="1" max="30"></label>
-      </div>
-    </div>
-
-    <details class="disclose">
-      <summary>Upload limits</summary>
-      <div class="form-grid" style="margin-top:var(--s-3)">
-        <div>
-          <label class="label" for="max-uploads">Maximum uploads</label>
-          <label class="field"><input id="max-uploads" name="max_uploads" type="number" value="20" min="1" max="100"></label>
-        </div>
-        <div>
-          <label class="label" for="max-total-mb">Maximum total size (MB)</label>
-          <label class="field"><input id="max-total-mb" name="max_total_mb" type="number" value="100" min="1" max="500"></label>
-        </div>
-      </div>
-    </details>
-
-    <div style="margin-top:var(--s-5)">{{ button("Create link", "primary", "", "link", true, button_type="submit") }}</div>
-  </form>
-
-  <div class="sec"><h2>Links</h2></div>
+  <div class="sec" style="margin-top:var(--s-8)"><h2>Links</h2></div>
   {% if magic_links %}
   <div class="stack-s">
     {% for link in magic_links %}
@@ -121,8 +73,53 @@
   <div class="glass empty">
     {{ icon("link", "", "width:24px;height:24px;color:var(--muted)") }}
     <h3>No client links yet</h3>
-    <p>Create a link to request evidence from a client.</p>
+    <p>Issue an RFI for an assessment above, then send its items from the Client links tab.</p>
   </div>
   {% endif %}
+
+  <details class="disclose" id="request-something-else" data-request-something-else style="margin-top:var(--s-8)"{% if adhoc_open is defined and adhoc_open %} open{% endif %}>
+    <summary>Request something else</summary>
+    <p class="help">For items outside an issued RFI. The client sees each line exactly as you type it.</p>
+    <form id="new-link-form" class="solid card" hx-post="/engagements/{{ engagement_id }}/magic-links" hx-target="#magic-links" hx-swap="outerHTML" style="margin-top:var(--s-4)">
+      <fieldset id="requested-items" style="margin-top:var(--s-4)">
+        <legend class="label">Requested items</legend>
+        <label class="field area" style="margin-top:var(--s-2)">
+          <textarea name="items" rows="4" placeholder="One item per line" required></textarea>
+        </label>
+        <p class="help">Add one requested item per line. A link can include up to 20 items.</p>
+      </fieldset>
+
+      <div class="form-grid" style="margin-top:var(--s-5)">
+        <div>
+          <label class="label" for="contact-name">Client contact</label>
+          <label class="field"><input id="contact-name" name="contact_name" maxlength="200" placeholder="Name"></label>
+        </div>
+        <div>
+          <label class="label" for="contact-email">Contact email</label>
+          <label class="field"><input id="contact-email" name="contact_email" type="email" maxlength="254" placeholder="name@company.example"></label>
+        </div>
+        <div>
+          <label class="label" for="expires-in-days">Expires in (days)</label>
+          <label class="field"><input id="expires-in-days" name="expires_in_days" type="number" value="7" min="1" max="30"></label>
+        </div>
+      </div>
+
+      <details class="disclose">
+        <summary>Upload limits</summary>
+        <div class="form-grid" style="margin-top:var(--s-3)">
+          <div>
+            <label class="label" for="max-uploads">Maximum uploads</label>
+            <label class="field"><input id="max-uploads" name="max_uploads" type="number" value="20" min="1" max="100"></label>
+          </div>
+          <div>
+            <label class="label" for="max-total-mb">Maximum total size (MB)</label>
+            <label class="field"><input id="max-total-mb" name="max_total_mb" type="number" value="100" min="1" max="500"></label>
+          </div>
+        </div>
+      </details>
+
+      <div style="margin-top:var(--s-5)">{{ button("Create link", "primary", "", "link", true, button_type="submit") }}</div>
+    </form>
+  </details>
   {% endif %}
 </section>
