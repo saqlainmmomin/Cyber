@@ -537,6 +537,7 @@ P6_8_V3_FILES = (
     "tasks/handoffs/2026-10-01-board-report-v3-deck.md", "tests/p6_8_v3_support.py",
     "tests/p6_8_v3a_paths.py", "tests/test_p6_8_v3a_data_capture.py", "tests/test_p6_8_v3a_purge.py", "tests/test_p6_8_v3b_deck.py",
     "tests/test_p6_8_v3b_document.py", "tests/test_p6_8_v3b_extra.py", "tests/test_p6_8_v3a_extra.py", *V3A_APP_PATHS,
+    "tests/test_p6_8_v3c3_extra.py", "tests/v3c3_paths.py",
     # existing tests: the "Alembic head" pins and the per-PR guard allowances
     "tests/test_p6_6_report_foundations.py", "tests/test_retention.py", "tests/test_p5_6_rfi_rebuild.py",
     "tests/test_startup_invariants.py", "tests/test_p5_3_framework_desk_review.py",
@@ -598,11 +599,12 @@ YOZORA_DESIGN_FILES = (
 # P6-8 V3-B: the synthetic v3 deck document (golden).
 from tests.p6_8_v3b_paths import V3B_APP_PATHS, is_v3b_path  # noqa: E402
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # noqa: E402  # V3-C prior domains per-PR allowance
+from tests.v3c3_paths import V3C3_RENDER_PREFIXES, V3C3_XLSX_PATHS  # noqa: E402  # V3-C3 XLSX/PPTX per-PR allowance
 from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # noqa: E402  # Yozora S7-S9/assessment Evidence per-PR allowance
 
 P6_8_V3B_EXTRA = (
     "tests/golden/p6_8_v3_deck_document.json", "tests/p6_8_v3b_paths.py", "tests/test_p6_8_v3b_file_set.py",
-    "tasks/todo.md", *V3B_APP_PATHS,
+    "tasks/todo.md", "tests/test_p6_8_v3c2_extra.py", "tasks/handoffs/2026-10-06-v3c2-deck-build.md", "tasks/handoffs/2026-10-06-v3c3-pptx-xlsx-parity.md", *V3B_APP_PATHS,
     # existing tests that V3-B edits or that gain a scoped V3-B allowance
     "tests/p6_10_support.py", "tests/test_p6_9_roadmap.py", "tests/test_p6_9_soa.py", "tests/test_p6_9_prior_period.py",
     "tests/test_p6_10a_remediation_draft.py", "tests/test_p6_10b_narrative.py", "tests/test_p6_8_v3a_data_capture.py",
@@ -632,5 +634,7 @@ def test_scenario_11_only_p6_2b_files_change():
         and f not in RFI_REQUESTS_PATHS  # RFI and Requests consolidation allowance
         and f not in ASSESSMENT_EVIDENCE_TAB_PATHS  # assessment Evidence tab allowance
         and f not in V3C_PRIOR_DOMAINS_PATHS
+        and f not in V3C3_XLSX_PATHS and not f.startswith(V3C3_RENDER_PREFIXES)
+        and not f.startswith("docs/product/2026-10-06-v3c2-renders/")  # V3-C2 per-PR allowance: render artefacts
     ]
     assert offenders == [], offenders

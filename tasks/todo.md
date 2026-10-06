@@ -8,6 +8,13 @@
 - [x] WP-D: verify entry-point, legacy, archive, mobile, and copy contracts; keep stepper and existing hrefs unchanged.
 - [x] WP-E: add Yozora path allowances, status log and handoff Results; run focused/full tests, smoke test, and Chromium screenshots when available.
 
+## V3-C2 approved board deck build (2026-10-06)
+
+- [x] Port the approved V3-C presenter into `board_view.py`, including slide map, action titles, charts, prior-domain dumbbell data, and sparse-layout rhythm.
+- [x] Rebuild `board_report.html` against the approved mockup while preserving existing semantic hooks and provenance.
+- [x] Update V3-B slide-contract expectations and add V3-C2 extra render/layout/data tests plus file-set allowances.
+- [x] Render golden and thin documents to dense/sparse PDF page images, compare to the approved mockup, run focused tests and the full suite, and fill the handoff Results.
+
 ## Yozora S7 orchestration (2026-10-05)
 
 - [x] Integrate and contract-test the analysis, cards, pages, findings, report, and narrative groups.
@@ -26,6 +33,18 @@
 - [x] Review scoped diff, commit only the report group files, and report misses/exceptions.
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
+
+## V3-C3 XLSX parity (2026-10-06)
+
+- [x] Implement Part A XLSX parity from `tasks/handoffs/2026-10-06-v3c3-pptx-xlsx-parity.md`.
+- [x] Add focused XLSX regression coverage and per-PR guard allowances without touching Part B PPTX work.
+- [x] Run the focused/full verification that the available `.venv` supports and record the evidence in the handoff Results.
+
+## V3-C3 PPTX parity (2026-10-06)
+
+- [x] Mirror the V3-C2 presenter slide set one for one in `render_pptx`, including exact action titles, native evidence objects, theme colours, provenance notes, and v3-only export behavior.
+- [x] Add PPTX structure/title regression coverage and extend the existing per-PR guard allowances for Part B artifacts.
+- [x] Export golden and thin PPTX smoke artifacts, verify them with `python-pptx`, run the focused/export regressions and full suite, and record the LibreOffice limitation in the handoff.
 
 ## S6 adversarial review fixes (2026-10-04)
 
