@@ -33,16 +33,21 @@
 {% if request_summaries %}
 <div class="solid" style="margin-bottom:var(--s-8)">
   <table>
-    <thead><tr><th>Assessment</th><th class="hide-sm">Version</th><th>Items</th><th class="hide-sm"></th></tr></thead>
+    <thead><tr><th>Assessment</th><th class="hide-sm">RFI</th><th>Received</th><th class="hide-sm">Next step</th><th class="hide-sm"></th></tr></thead>
     <tbody>
       {% for summary in request_summaries %}
+      {% if summary.latest_version is none %}{% set next_label, next_tab = "Prepare RFI", "items" %}
+      {% elif summary.version is none or summary.latest_version > summary.version %}{% set next_label, next_tab = "Review draft version " ~ summary.latest_version, "versions" %}
+      {% elif summary.active_links == 0 %}{% set next_label, next_tab = "Create client link", "links" %}
+      {% else %}{% set next_label, next_tab = "View links", "links" %}{% endif %}
       <tr data-request-summary data-href="/assessments/{{ summary.assessment_id }}/rfi">
         <td>
           <a class="t-title" href="/assessments/{{ summary.assessment_id }}/rfi">{{ summary.assessment_name }}</a>
-          <div class="t-sub show-sm">{% if summary.version %}RFI version {{ summary.version }}{% else %}No issued RFI{% endif %}</div>
+          <div class="t-sub show-sm">{% if summary.version %}RFI version {{ summary.version }}{% else %}No issued RFI{% endif %} · <a class="btn ghost sm" href="/assessments/{{ summary.assessment_id }}/rfi?tab={{ next_tab }}">{{ next_label }}</a></div>
         </td>
         <td class="hide-sm">{% if summary.version %}RFI version {{ summary.version }}{% else %}No issued RFI{% endif %}</td>
         <td>{% if summary.items is not none %}{{ summary.received }} of {{ summary.items }} received{% else %}No issued requests{% endif %}</td>
+        <td class="hide-sm"><a class="btn ghost sm" href="/assessments/{{ summary.assessment_id }}/rfi?tab={{ next_tab }}" data-request-next-step="{{ next_tab }}">{{ next_label }}</a></td>
         <td class="go hide-sm"><a href="/assessments/{{ summary.assessment_id }}/rfi" aria-label="Open {{ summary.assessment_name }}"><svg class="i"><use href="#i-chev-r"/></svg></a></td>
       </tr>
       {% endfor %}

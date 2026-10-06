@@ -18,13 +18,12 @@
 {% set engagement_context = assessment_engagement_context(request) %}
 {% set engagement = engagement_context.get("engagement") %}
 {% set engagement_id = engagement_context.get("engagement_id") %}
-{% set retention = engagement_context.get("retention") %}
 {% set period = engagement_period(engagement) if engagement else none %}
 
 {% if engagement_archived %}
 <div data-archived-banner class="alert c-medium" role="status" style="margin-bottom:var(--s-4)">
   {{ icon("lock") }}
-  <div><b>This assessment is read-only</b>Its engagement is archived. Unarchive the engagement to make changes.</div>
+  <div><b>This assessment is read-only</b>Its engagement is archived. Unarchive it in <a href="/settings#engagement-archive" data-archive-settings-link><u>Settings</u></a> to make changes.</div>
 </div>
 {% endif %}
 
@@ -43,12 +42,6 @@
   {% set framework = active_framework_definition %}
   {% set finding_count = active_framework_finding_count %}
   {% include "partials/framework_hub_panel.html" %}
-</div>
-{% endif %}
-{% if engagement %}
-{# Engagement retention remains available from Overview; evidence collection lives under Evidence. #}
-<div data-visual-mask class="stack" style="margin-top:var(--s-8)">
-  {% include "partials/engagement_retention.html" %}
 </div>
 {% endif %}
 {% elif tab == "scope" %}

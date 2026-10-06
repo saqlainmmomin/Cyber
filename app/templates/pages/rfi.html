@@ -18,6 +18,7 @@
     <p class="meta-line">{{ assessment.company_name }}{% if period %} · Period {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% endif %}</p>
   </div>
   <div class="acts">
+    {% if engagement %}<a class="btn ghost" href="/engagements/{{ engagement.id }}/requests" data-rfi-back-link>All requests</a>{% endif %}
     {% if preview_state == "loading" %}
     {% elif not scope_recorded %}
     {{ link_button("Record scope", "/assessments/" ~ assessment.id ~ "?tab=scope", "primary") }}
@@ -135,7 +136,7 @@
     {% if current_issue %}
     {% include "partials/rfi_links.html" %}
     {% else %}
-    <div class="glass empty"><h3>No issued RFI yet</h3><p>Issue an RFI version before creating a client link.</p></div>
+    <div class="glass empty"><h3>No issued RFI yet</h3><p>Issue an RFI version before creating a client link.</p><a class="btn secondary sm" href="/assessments/{{ assessment.id }}/rfi?tab=versions">Go to versions</a></div>
     {% endif %}
   </section>
   {% if preview_state == "issue" %}

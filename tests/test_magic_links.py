@@ -436,7 +436,7 @@ def test_requests_view_owns_consultant_links_and_renders_cards(db, http):
     assert "Client evidence links" not in overview.text
     assert "data-aws-evidence-link" not in overview.text
     assert "data-assessment-identity" in overview.text
-    assert "retention" in overview.text.lower()
+    assert "data-retention-section" not in overview.text
 
     assert response.headers.get("x-toast-message") is None
 
