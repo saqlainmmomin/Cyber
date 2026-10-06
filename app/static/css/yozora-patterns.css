@@ -613,3 +613,7 @@ p.cc-ack{margin-top:var(--s-2)}
 .invalid-card{padding-left:var(--s-4);padding-right:var(--s-4)}
 }
 /* S8 gate: client-pages end */
+
+/* S9 errors */
+.error-page h1{font-size:var(--t-lg);font-weight:600;letter-spacing:-.014em}
+.error-page .refline{margin-top:var(--s-3)}

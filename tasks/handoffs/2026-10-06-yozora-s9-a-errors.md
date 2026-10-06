@@ -32,5 +32,26 @@
 - Run what you can: focused tests, `tests/test_design_lint.py`, `python -m design.tokens_tool check`, Jinja parse of every template you change, `node --check` for JS.
 
 ## Results
-(Codex fills in.)
 
+Implemented the S9 group-A error and empty-state work.
+
+- Added browser HTML exception handlers in `app/main.py` for 404, explicit 500, and unhandled exceptions. API paths and `Accept: application/json` retain JSON responses; validation errors remain unchanged.
+- Added random `xxxx-xxxx-xxxx` reference codes, rendered them in `pages/error.html`, and logged each reference with request path and exception class. Exception messages and tracebacks are never included in the response body.
+- Engagement-scoped 404s use the same generic response for existing and missing IDs and link only to `/engagements`; they do not disclose engagement existence.
+- Added `app/templates/pages/error.html` with one primary action per state and reused existing Yozora shell/component styles. Added the delimited `/* S9 errors */` source CSS block and regenerated `app/static/css/yozora-patterns.css`.
+- Added `app/routers/design_s9_errors.py` and `design/harness/seed_s9_errors.py` for `b7-404`, `b7-500`, and `b7-empty-states`. `down` and `upstream` remain preview-only, as no clean existing runtime exception types were available.
+- Verified the six requested empty states (`engagements`, `evidence`, `review`, `search`, `findings`, `report`) already existed in the S3-S8 live templates; previews reuse those routes and no finished state was rebuilt.
+- The `pages/error.html` migration-map row was already present in `docs/product/yozora-migration-map.md` before this change, so no duplicate edit was made.
+- Added focused S9 tests and retained the S9 path allow-list entry. `tasks/todo.md` was not changed.
+
+Verification:
+
+- `.venv/bin/pytest -q --no-header -p no:cacheprovider tests/test_yozora_s9_errors.py` — 7 passed.
+- `.venv/bin/pytest -q --no-header -p no:cacheprovider tests/test_yozora_s3.py tests/test_yozora_s6.py tests/test_yozora_s7_findings.py tests/test_yozora_s9_errors.py` — 44 passed.
+- `.venv/bin/pytest -q --no-header -p no:cacheprovider tests/test_design_lint.py tests/test_design_tokens_in_sync.py` — 9 passed.
+- `.venv/bin/python -m design.tokens_tool check` — generated files match `tokens.json`.
+- Jinja parse of `app/templates/pages/error.html` — passed.
+- `.venv/bin/python -m design.harness.seed_s9 --list` — lists all 11 required S9 states.
+- `.venv/bin/pytest -q --no-header -p no:cacheprovider` — 1542 passed, 30 skipped, 458 warnings in 3:16.
+
+The default system Python lacks `boto3`; verification used the repository `.venv`, where `boto3` is installed. The pixel gate was not run because the handoff explicitly prohibits localhost binding in this sandbox; the orchestrator should run it once. Changes remain uncommitted.

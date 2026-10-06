@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon %}
+
+{% block title %}{{ heading }}{% endblock %}
+
+{% block crumbs %}
+  <b>{{ crumb }}</b>
+{% endblock %}
+
+{% block content %}
+<div class="glass empty tall error-page" data-error-variant="{{ variant }}">
+  <svg class="i big"><use href="#i-{{ icon_id }}"/></svg>
+  <h1>{{ heading }}</h1>
+  <p>{{ message }}</p>
+  {% if reference_code %}
+  <div class="refline"><span>Reference</span><span class="chip num">{{ reference_code }}</span></div>
+  {% endif %}
+  <div class="acts2">
+    {% if primary_onclick %}
+    <button class="btn primary lead" type="button" onclick="{{ primary_onclick }}">{{ icon(primary_icon_id) }}{{ primary_label }}</button>
+    {% else %}
+    <a class="btn primary lead" href="{{ primary_href }}">{{ icon(primary_icon_id) }}{{ primary_label }}</a>
+    {% endif %}
+    {% if secondary_label %}<a class="btn ghost" href="{{ secondary_href }}">{{ secondary_label }}</a>{% endif %}
+  </div>
+</div>
+{% endblock %}
