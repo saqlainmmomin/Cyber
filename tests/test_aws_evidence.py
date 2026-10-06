@@ -777,7 +777,7 @@ def test_scenario_11_routes_page_origin_and_escaping(db, http, monkeypatch):
     assert routes == {("GET", "/engagements/{engagement_id}/aws-evidence"), ("POST", "/engagements/{engagement_id}/aws-evidence/pull")}
     assert not inspect.iscoroutinefunction(aws_router.aws_evidence_page)
     assert not inspect.iscoroutinefunction(aws_router.aws_evidence_pull)
-    assert f'href="/engagements/{engagement.id}/aws-evidence"' in http.get(f"/engagements/{engagement.id}").text
+    assert f'href="/engagements/{engagement.id}/aws-evidence"' not in http.get(f"/engagements/{engagement.id}").text
 
 
 def test_scenario_12_structural_guards_and_protected_files():

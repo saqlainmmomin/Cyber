@@ -72,7 +72,7 @@ EXPECTED_SECURITY_HEADERS = {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
     "content-security-policy": (
-        "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; "
+        "default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; form-action 'self'; "
         "frame-ancestors 'none'; base-uri 'none'"
     ),
 }
@@ -394,11 +394,11 @@ def test_consultant_create_route_shows_token_once(db, http):
     assert link.token_digest == m.token_digest(token)
     assert [i["title"] for i in json.loads(link.scope_json)["items"]] == ITEMS
 
-    page = http.get(f"/engagements/{engagement.id}")
+    page = http.get(f"/engagements/{engagement.id}/requests")
     assert page.status_code == 200
     assert token not in page.text
     assert link.id[:8] in page.text
-    assert "0 of 20 uploads" in page.text
+    assert "0 of 2 received" in page.text
     assert "Active" in page.text
 
     invalid = http.post(
@@ -412,6 +412,48 @@ def test_consultant_create_route_shows_token_once(db, http):
         "/engagements/missing/magic-links",
         data={"items": "X", "expires_in_days": "7", "max_uploads": "20", "max_total_mb": "100"},
     ).status_code == 404
+
+
+def test_requests_view_owns_consultant_links_and_renders_cards(db, http):
+    """The engagement Requests view is the only consultant link surface."""
+    m = ml()
+    _client, engagement, assessment = _seed(db, client_name="Meridian Ledger Technologies", engagement_name="FY2026 privacy readiness")
+    created = _create(db, engagement)
+    m.set_contact(db, created.link, contact_name="Ananya Rao", contact_email="ananya@example.com")
+    db.commit()
+
+    response = http.get(f"/engagements/{engagement.id}/requests")
+    assert response.status_code == 200, response.text
+    assert "Requests by assessment" in response.text
+    assert "Ananya Rao" in response.text
+    assert "ananya@example.com" in response.text
+    assert "0 of 2 received" in response.text
+    assert "Information security policy" in response.text
+    assert f"/assessments/{assessment.id}/rfi" in response.text
+
+    overview = http.get(f"/assessments/{assessment.id}?tab=overview")
+    assert overview.status_code == 200
+    assert "Client evidence links" not in overview.text
+    assert "data-aws-evidence-link" not in overview.text
+    assert "data-assessment-identity" in overview.text
+    assert "retention" in overview.text.lower()
+
+    assert response.headers.get("x-toast-message") is None
+
+
+def test_consultant_link_mutations_return_toast_headers(db, http):
+    """HTMX link mutations expose a non-empty toast contract."""
+    _client, engagement, _assessment = _seed(db)
+    created = http.post(
+        f"/engagements/{engagement.id}/magic-links",
+        data={"items": "Information security policy", "expires_in_days": "7", "max_uploads": "20", "max_total_mb": "100"},
+    )
+    assert created.headers.get("x-toast-type") == "success"
+    assert created.headers.get("x-toast-message")
+    link = db.query(MagicLink).one()
+    revoked = http.post(f"/engagements/{engagement.id}/magic-links/{link.id}/revoke")
+    assert revoked.headers.get("x-toast-type") == "success"
+    assert revoked.headers.get("x-toast-message")
 
 
 # --------------------------------------------------------------------------- #
@@ -450,10 +492,9 @@ def test_resolve_token_rules(db, engine, monkeypatch):
     assert m.resolve_token(db, created.token) is None
 
 
-def test_invalid_tokens_are_indistinguishable(db, http, texts, monkeypatch):
-    """Scenario 6: malformed, unknown, expired, revoked and inactive-engagement
-    tokens all get the same 404 with a byte-identical body, on GET and POST,
-    with the full security header set."""
+def test_invalid_tokens_render_the_issued_state_without_context_leaks(db, http, texts, monkeypatch):
+    """Scenario 6: invalid links share the status and security headers, while
+    issued expired and revoked links get app-driven copy without client context."""
     m = ml()
     _c1, engagement, _a1 = _seed(db)
     _c2, other_engagement, _a2 = _seed(db, client_name="Other Co", engagement_name="Other gap")
@@ -469,14 +510,25 @@ def test_invalid_tokens_are_indistinguishable(db, http, texts, monkeypatch):
     db.commit()
 
     tokens = ["A" * 21 + "*", "short", m.generate_token(), expired.token, revoked.token, inactive.token]
-    bodies = set()
+    expected_states = {
+        tokens[0]: "unknown",
+        tokens[1]: "unknown",
+        tokens[2]: "unknown",
+        expired.token: "expired",
+        revoked.token: "revoked",
+        inactive.token: "unknown",
+    }
     for token in tokens:
         for response in (http.get(f"/magic/{token}"), _post_file(http, token, content=_pdf(token))):
             assert response.status_code == 404, (token, response.status_code)
             _assert_security_headers(response)
             assert INVALID_LINK in response.text
-            bodies.add(response.content)
-    assert len(bodies) == 1
+            heading = {
+                "expired": "This link has expired",
+                "revoked": "This link was turned off",
+                "unknown": "We could not find this link",
+            }[expected_states[token]]
+            assert heading in response.text
     assert _counts(db)[0] == 0
 
 
@@ -515,8 +567,11 @@ def test_valid_page_is_scoped_to_the_link(db, http, texts):
         client.id, engagement.id, assessment.id, consultant_upload.evidence.id, link.token,
     ):
         assert forbidden not in body, forbidden
-    for external in ("<script", "<link", "src=", "http://", "https://", " action="):
-        assert external not in body, external
+    assert not re.search(r"<script\b(?![^>]*\bsrc=)", body, re.IGNORECASE)
+    for _tag, source in re.findall(r"<(script|link)\b[^>]*?\b(?:src|href)=[\"']([^\"']+)", body, re.IGNORECASE):
+        assert source.startswith("/static/"), source
+    assert "http://" not in body and "https://" not in body
+    assert " action=" not in body
 
 
 # --------------------------------------------------------------------------- #
@@ -586,9 +641,9 @@ def test_client_upload_creates_engagement_level_evidence(db, http, texts):
     page = http.get(f"/magic/{created.token}")
     assert "ISMS Policy.pdf" in page.text and "Received" in page.text
 
-    detail = http.get(f"/engagements/{engagement.id}")
-    assert f"/evidence/{evidence.id}" in detail.text
-    assert "1 of 20 uploads" in detail.text
+    requests = http.get(f"/engagements/{engagement.id}/requests")
+    assert f"/evidence/{evidence.id}" in requests.text
+    assert "1 of 2 received" in requests.text
 
 
 def test_upload_must_name_one_of_the_links_items(db, http, texts):
@@ -786,6 +841,7 @@ def test_revocation(db, http, texts):
     again = http.post(f"/engagements/{engagement.id}/magic-links/{created.link.id}/revoke")
     assert again.status_code == 200
     assert "Magic link is already revoked." in again.text
+    assert "The link was not created" not in again.text
     with pytest.raises(m.MagicLinkConflict):
         m.revoke_link(db, engagement_id=engagement.id, link_id=created.link.id, actor="consultant")
     with pytest.raises(m.MagicLinkNotFound) as info:

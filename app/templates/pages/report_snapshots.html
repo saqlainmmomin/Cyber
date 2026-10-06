@@ -1,96 +1,122 @@
 {% extends "base.html" %}
-{% block title %}Report versions — {{ assessment.company_name }}{% endblock %}
+{% from "components/layout.html" import assessment_tabs %}
+{% from "components/seg_rows.html" import report_seg %}
+{% from "components/ui.html" import alert, empty_state, icon, pill, skeleton %}
 
-{% block content %}
-<nav class="text-xs text-gray-400 dark:text-gray-500 mb-2">
-  <a href="/" class="hover:text-brand dark:hover:text-navy-300 transition-colors">Assessments</a>
-  <span class="mx-1.5">/</span>
-  <a href="/assessments/{{ assessment.id }}" class="hover:text-brand dark:hover:text-navy-300 transition-colors">{{ assessment.company_name }}</a>
-  <span class="mx-1.5">/</span>
-  <span class="text-gray-600 dark:text-gray-300">Report versions</span>
-</nav>
+{% set basis = report_basis %}
+{% set preview = preview_state|default("") %}
+{% set show_generate = release.released and preview != "loading" %}
+{% set panel = report_panel|default("gap") %}
 
-<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Report versions</h1>
-    <p class="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">Generating creates a new draft version and never overwrites an earlier one. Issuing releases the newest draft for delivery to the client and makes it permanent.</p>
-  </div>
-  <div class="flex flex-wrap gap-3">
-    <a href="/assessments/{{ assessment.id }}?tab=report" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Live report →</a>
-    <a href="/assessments/{{ assessment.id }}/workpaper" class="text-sm font-medium text-brand dark:text-navy-300 hover:underline">Workpaper (live) →</a>
-  </div>
+{% macro snapshot_status(row) -%}
+  {% if row.state == "issued" %}
+    {{ pill("Issued (current)" if row.is_current_issue else "Issued", "accent" if row.is_current_issue else "neutral") }}
+  {% elif row.state == "superseded_draft" %}
+    {{ pill("Draft (superseded)", "neutral") }}
+  {% else %}
+    {{ pill("Draft", "neutral") }}
+  {% endif %}
+{%- endmacro %}
+
+{% macro snapshot_actions(row) -%}
+<div class="s8-version-actions">
+  <a class="btn ghost sm lead" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file">{{ icon("download") }}{{ "PDF" if row.snapshot.format == "pdf" else "View" }}</a>
+  {% if row.snapshot.type == "board_report" %}
+    {% if row.document_schema_version == 3 %}
+      <a data-board-export="xlsx" class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/xlsx">XLSX</a>
+      <a data-board-export="pptx" class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/pptx">PPTX</a>
+    {% else %}
+      <a data-board-export="docx" class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/docx">DOCX</a>
+      <a data-board-export="xlsx" class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/xlsx">XLSX</a>
+    {% endif %}
+  {% endif %}
+  {% if row.issuable %}
+  <form data-issue-control hx-post="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-confirm="Issue this version? Issued versions are permanent and cannot be changed or withdrawn.">
+    <button type="submit" class="btn secondary sm">Issue</button>
+  </form>
+  {% endif %}
 </div>
+{%- endmacro %}
 
-<div class="mb-6 max-w-sm">
-  <label for="reviewer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Consultant name</label>
-  <input id="reviewer-name" name="reviewer_name" placeholder="Your name" value="{{ reviewer_name }}"
-         class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-</div>
-
-{% for type, rows in groups.items() %}
-<section data-snapshot-type="{{ type }}" class="mb-10">
-  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+{% macro snapshot_group(type, rows) -%}
+<section data-snapshot-type="{{ type }}" class="s8-version-group{% if type == 'workpaper' %} s8-workpaper-group{% endif %}">
+  <div class="s8-group-head">
     <div>
-      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">{{ type_labels[type] }}</h2>
-      {% if type == 'gap_report' and not release.released %}
-      <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Generating a gap report requires the report to be released.</p>
+      <h2>{{ {"gap_report": "Gap report", "board_report": "Board report", "workpaper": "Workpaper"}.get(type, type_labels[type]) }}</h2>
+      {% if type == "gap_report" and not release.released %}
+      <p class="help">Generating a gap report requires the report to be released.</p>
       {% endif %}
-      {% if type == 'board_report' %}
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% if release.released %}<a data-board-report-preview href="/api/assessments/{{ assessment.id }}/board-report/preview" class="font-medium text-brand dark:text-navy-300 hover:underline">Preview the board report →</a>{% else %}Generating a board report requires the report to be released.{% endif %}</p>
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><a data-narrative-link href="/assessments/{{ assessment.id }}/narrative" class="font-medium text-brand dark:text-navy-300 hover:underline">Review the report narrative</a></p>
-      {% if 'iso27001' in assessment.frameworks %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><a data-soa-link href="/assessments/{{ assessment.id }}/soa" class="font-medium text-brand dark:text-navy-300 hover:underline">Statement of Applicability justifications →</a></p>{% endif %}
+      {% if type == "board_report" %}
+      <div class="s8-group-links">
+        {% if release.released %}<a data-board-report-preview href="/api/assessments/{{ assessment.id }}/board-report/preview">Preview the board report</a>{% else %}<span>Generating a board report requires the report to be released.</span>{% endif %}
+        <a data-narrative-link href="/assessments/{{ assessment.id }}/narrative">Review the report narrative</a>
+        {% if "iso27001" in assessment.frameworks %}<a data-soa-link href="/assessments/{{ assessment.id }}/soa">Statement of Applicability justifications</a>{% endif %}
+      </div>
       {% endif %}
     </div>
-    <form hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name">
-      <input type="hidden" name="type" value="{{ type }}">
-      <button type="submit" class="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-light dark:bg-navy-600 dark:hover:bg-navy-500">Generate new version</button>
-    </form>
   </div>
-
   {% if not rows %}
-  <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No versions generated yet.</div>
+    <div class="glass empty s8-inline-empty"><h3>No versions generated yet.</h3><p>Generate a version to see it here. Earlier versions are never overwritten.</p></div>
   {% else %}
-  <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-    <table class="min-w-full text-left text-xs">
-      <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400">
-        <tr>
-          <th class="px-3 py-2">Version</th>
-          <th class="px-3 py-2">State</th>
-          <th class="px-3 py-2">Generated</th>
-          <th class="px-3 py-2">Issued</th>
-          <th class="px-3 py-2">SHA-256</th>
-          <th class="px-3 py-2">Size</th>
-          <th class="px-3 py-2">Source</th>
-          <th class="px-3 py-2">File</th>
-          <th class="px-3 py-2">Release</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
-        {% for row in rows %}
-        <tr data-snapshot-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}">
-          <td class="px-3 py-3 font-mono">v{{ row.sequence }}</td>
-          <td class="px-3 py-3 font-medium">
-            {% if row.state == 'issued' %}{{ 'Issued (current)' if row.is_current_issue else 'Issued' }}{% elif row.state == 'superseded_draft' %}Draft (superseded){% else %}Draft{% endif %}
-          </td>
-          <td class="px-3 py-3"><div>{{ row.snapshot.generated_at }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.generated_by or '' }}</div></td>
-          <td class="px-3 py-3"><div>{{ row.issued_at or '' }}</div><div class="text-gray-400 dark:text-gray-500">{{ row.issued_by or '' }}</div></td>
-          <td class="px-3 py-3 font-mono"{% if row.sha256 %} title="{{ row.sha256 }}"{% endif %}>{{ row.sha256[:12] if row.sha256 else '' }}</td>
-          <td class="px-3 py-3">{{ '%.1f'|format(row.size_bytes / 1024) if row.size_bytes is not none else '' }} KB</td>
-          <td class="px-3 py-3">{% if row.source_changed %}<span class="text-amber-700 dark:text-amber-300">Source data changed since generation</span>{% endif %}</td>
-          <td class="px-3 py-3"><a href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file" class="font-medium text-brand dark:text-navy-300 hover:underline">{{ 'Download' if row.snapshot.format == 'pdf' else 'View' }}</a>{% if row.snapshot.type == 'board_report' %}{% if row.document_schema_version == 3 %}<span class="mx-1 text-gray-400">·</span><a data-board-export="xlsx" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/xlsx" class="font-medium text-brand dark:text-navy-300 hover:underline">XLSX</a><span class="mx-1 text-gray-400">·</span><a data-board-export="pptx" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/pptx" class="font-medium text-brand dark:text-navy-300 hover:underline">PPTX</a>{% else %}<span class="mx-1 text-gray-400">·</span><a data-board-export="docx" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/docx" class="font-medium text-brand dark:text-navy-300 hover:underline">DOCX</a><span class="mx-1 text-gray-400">·</span><a data-board-export="xlsx" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/xlsx" class="font-medium text-brand dark:text-navy-300 hover:underline">XLSX</a>{% endif %}{% endif %}</td>
-          <td class="px-3 py-3">
-            {% if row.issuable %}
-            <form data-issue-control hx-post="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-confirm="Issue this version? Issued versions are permanent and cannot be changed or withdrawn.">
-              <button type="submit" class="rounded-md border border-brand px-2.5 py-1.5 font-medium text-brand hover:bg-blue-50 dark:border-navy-400 dark:text-navy-300 dark:hover:bg-navy-900/40">Issue</button>
-            </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <div class="solid rows s8-version-list"><table><tbody>
+    {% for row in rows %}
+    <tr data-snapshot-row data-snapshot-id="{{ row.snapshot.id }}" data-snapshot-state="{{ row.state }}"><td><div class="s8-version-row"><div class="s8-version-copy"><b>Version {{ row.sequence }}</b><span class="sub">{% if row.state == "issued" %}Issued {{ row.issued_at|display_date }}{% else %}Generated {{ row.snapshot.generated_at|display_date }}{% endif %}{% if row.generated_by %} by {{ row.generated_by }}{% endif %}{% if row.size_bytes %} · {{ "%.0f"|format(row.size_bytes / 1024) }} KB{% endif %}</span>{% if row.source_changed %}<span class="warn">{{ icon("alert") }}Source data changed since generation</span>{% endif %}</div><div class="s8-version-right">{{ snapshot_status(row) }}{{ snapshot_actions(row) }}</div></div></td></tr>
+    {% endfor %}
+  </tbody></table></div>
   {% endif %}
 </section>
-{% endfor %}
+{%- endmacro %}
+
+{% block title %}Report versions · {{ assessment.company_name }}{% endblock %}
+
+{% block crumbs %}
+<a class="hide-sm" href="/">{{ assessment.company_name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/assessments/{{ assessment.id }}/report">Report</a><svg class="i sl"><use href="#i-slash"/></svg><b>Versions</b>
+{% endblock %}
+
+{% block content %}
+{% set design_preview = request.url.path.startswith("/design/pages/") %}
+{% set active_report_type = "board_report" if panel == "board" else "gap_report" %}
+{% set active_report_label = "board report" if panel == "board" else "gap report" %}
+<div class="page-head"><div><h1>Report versions</h1><p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p></div><div class="acts">{% if not design_preview %}<a class="btn ghost sm" href="/assessments/{{ assessment.id }}/workpaper">Workpaper (live) →</a>{% endif %}{% if show_generate %}<form data-report-generate hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name"><input type="hidden" name="type" value="{{ active_report_type }}" data-report-type><button type="submit" class="btn primary" data-report-generate-label>Generate {{ active_report_label }}</button></form>{% elif preview == "error" %}<button class="btn primary" type="button" data-report-generate-label>Generate {{ active_report_label }}</button>{% endif %}</div></div>
+{{ assessment_tabs(assessment, "report") }}
+<div class="s8-report-seg">{{ report_seg(assessment, "versions") }}</div>
+
+<div class="s8-reviewer"><label class="label" for="reviewer-name">Consultant name</label><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" autocomplete="name"></label></div>
+
+{% if preview == "unreleased" or not release.released %}{{ alert("The report is not released", "Release the report before generating a gap report or a board report.", "medium", extra_class="s8-page-alert") }}{% endif %}
+{% if preview == "error" %}{{ alert("The version was not generated", "The report service did not respond. Try again in a moment.", "noncompliant", extra_class="s8-page-alert") }}{% endif %}
+
+{% if preview == "loading" %}
+<div class="solid s8-loading" role="status" aria-label="Loading report versions">{{ skeleton("30%") }}{{ skeleton("85%", margin_top="14px") }}{{ skeleton("60%", margin_top="14px") }}</div>
+{% else %}
+<div class="s8-report-panels" data-scope>
+  <nav class="tabs" aria-label="Report version types"><a href="#" data-tab="gap" aria-selected="{{ 'true' if panel != 'board' else 'false' }}">Gap report</a><a href="#" data-tab="board" aria-selected="{{ 'true' if panel == 'board' else 'false' }}">Board report</a></nav>
+  <div data-panel="gap"{% if panel == "board" %} hidden{% endif %}>{{ snapshot_group("gap_report", groups.get("gap_report", [])) }}</div>
+  <div data-panel="board"{% if panel != "board" %} hidden{% endif %}>{{ snapshot_group("board_report", groups.get("board_report", [])) }}</div>
+</div>
+{% if not design_preview %}{{ snapshot_group("workpaper", groups.get("workpaper", [])) }}{% endif %}
+{% endif %}
+
+{% if preview == "issue" %}
+<div class="scrim-modal" role="dialog" aria-modal="true"><div class="modal"><h2>Issue gap report version 2?</h2><p>Issued versions are permanent. You cannot change or withdraw them, and the client can receive this report.</p><div class="foot"><button class="btn ghost" type="button">Cancel</button><button class="btn secondary" type="button">Issue version 2</button></div></div></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-scope]').forEach((scope) => {
+  scope.addEventListener('click', (event) => {
+    const tab = event.target.closest('[data-tab]');
+    if (!tab) return;
+    event.preventDefault();
+    scope.querySelectorAll('[data-tab]').forEach((item) => item.setAttribute('aria-selected', item === tab ? 'true' : 'false'));
+    scope.querySelectorAll('[data-panel]').forEach((panel) => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; });
+    const form = document.querySelector('[data-report-generate]');
+    const type = form?.querySelector('[data-report-type]');
+    const label = form?.querySelector('[data-report-generate-label]');
+    if (type) type.value = tab.dataset.tab === 'board' ? 'board_report' : 'gap_report';
+    if (label) label.textContent = `Generate ${tab.dataset.tab} report`;
+  });
+});
+</script>
 {% endblock %}

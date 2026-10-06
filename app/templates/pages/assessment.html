@@ -18,8 +18,6 @@
 {% set engagement_context = assessment_engagement_context(request) %}
 {% set engagement = engagement_context.get("engagement") %}
 {% set engagement_id = engagement_context.get("engagement_id") %}
-{% set magic_links = engagement_context.get("magic_links", []) %}
-{% set client_uploads = engagement_context.get("client_uploads", []) %}
 {% set retention = engagement_context.get("retention") %}
 {% set period = engagement_period(engagement) if engagement else none %}
 
@@ -48,11 +46,9 @@
 </div>
 {% endif %}
 {% if engagement %}
-{# S4 engagement context (AWS link, retention, magic links): no Overview mockup counterpart; S8 owns the magic links. #}
+{# Engagement retention remains available from Overview; evidence collection lives under Evidence. #}
 <div data-visual-mask class="stack" style="margin-top:var(--s-8)">
-  <a href="/engagements/{{ engagement.id }}/aws-evidence" data-aws-evidence-link>Open AWS evidence</a>
   {% include "partials/engagement_retention.html" %}
-  {% include "partials/magic_links.html" %}
 </div>
 {% endif %}
 {% elif tab == "scope" %}

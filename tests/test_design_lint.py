@@ -47,6 +47,16 @@ MIGRATED_TEMPLATES = {
     "partials/report_summary.html",
     "partials/report_tab.html",
     "partials/review_finding_card.html",
+    # Yozora per-PR allowance (S8)
+    "magic/invalid.html",
+    "magic/upload.html",
+    "pages/comparison.html",
+    "pages/report_snapshots.html",
+    "pages/rfi.html",
+    "pages/soa.html",
+    "pages/requests.html",
+    "partials/magic_links.html",
+    "partials/rfi_links.html",
 }
 
 

@@ -1,90 +1,109 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js" data-theme="light" data-accent="midnight">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>{{ firm_name }} · Evidence upload</title>
-  <style>
-    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-    body { margin: 0; background: #f8fafc; color: #172033; }
-    main { width: min(42rem, calc(100% - 2rem)); margin: 3rem auto; }
-    h1 { font-size: 1.6rem; margin-bottom: 0.35rem; }
-    h2 { font-size: 1.05rem; margin: 2rem 0 0.75rem; }
-    p, li { line-height: 1.5; }
-    .muted { color: #526071; font-size: 0.92rem; }
-    .card { background: #fff; border: 1px solid #dbe2ea; border-radius: 0.75rem; padding: 1.25rem; margin-top: 1.25rem; }
-    .notice { border-radius: 0.5rem; padding: 0.8rem 1rem; margin: 1rem 0; }
-    .success { background: #ecfdf3; border: 1px solid #a7f3c3; color: #166534; }
-    .error { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
-    label { display: block; font-weight: 600; margin: 1rem 0 0.4rem; }
-    select, .file-input, button { width: 100%; box-sizing: border-box; font: inherit; }
-    select, .file-input { border: 1px solid #b8c3d1; border-radius: 0.45rem; padding: 0.65rem; background: #fff; }
-    button { margin-top: 1rem; border: 0; border-radius: 0.45rem; padding: 0.7rem 1rem; background: #1d4ed8; color: #fff; font-weight: 700; cursor: pointer; }
-    ul { padding-left: 1.25rem; }
-    @media (prefers-color-scheme: dark) {
-      body { background: #0f172a; color: #e5e7eb; }
-      .muted { color: #aab6c5; }
-      .card { background: #111827; border-color: #334155; }
-      select, .file-input { background: #1f2937; color: #e5e7eb; border-color: #475569; }
-      .success { background: #052e16; border-color: #166534; color: #bbf7d0; }
-      .error { background: #4c0519; border-color: #9f1239; color: #fecdd3; }
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/src/fonts.css">
+  <link rel="stylesheet" href="/static/css/yozora-tokens.css">
+  <link rel="stylesheet" href="/static/css/yozora-components.css">
+  <link rel="stylesheet" href="/static/css/yozora-patterns.css">
 </head>
 <body>
-  <main>
-    <h1>{{ firm_name }} evidence upload</h1>
-    {% if contact_first_name %}<p data-contact-greeting>{{ contact_first_name }}, {{ firm_name }} needs these items.</p>{% endif %}
-    <p class="muted">Upload the requested evidence securely through this link.</p>
+  {% set words = firm_name.split() %}
+  {% set initials = words[0][0] | upper %}
+  {% if words | length > 1 %}{% set initials = initials ~ words[-1][0] | upper %}{% endif %}
+  {% set state = preview_state | default("default") %}
+  {% set shown_items = preview_items | default(items) %}
+  {% set shown_received_count = preview_received_count | default(received_count) %}
+  <main class="client-page">
+    <div class="brand client-brand">
+      <span class="mark">{{ initials }}</span>{{ firm_name }}
+    </div>
 
-    {% if success_filename %}
-    <div class="notice success">File received: {{ success_filename }}</div>
+    {% if contact_first_name %}
+    <p class="client-lede" data-contact-greeting>{{ contact_first_name }}, {{ firm_name }} needs these items. Send them in any order.</p>
+    {% else %}
+    <p class="client-lede">{{ firm_name }} needs these items. Send them in any order.</p>
     {% endif %}
+
     {% if error %}
-    <div class="notice error">{{ error }}</div>
+    <div class="alert c-non client-alert" role="alert">
+      <svg class="i"><use href="#i-alert"></use></svg>
+      <div><b>The file was not uploaded</b>{{ error }}</div>
+    </div>
+    {% elif success_filename %}
+    <div class="alert c-ok client-alert" role="status">
+      <svg class="i"><use href="#i-check"></use></svg>
+      <div><b>File received: {{ success_filename }}</b></div>
+    </div>
     {% endif %}
 
-    <section class="card">
-      <h2>Requested items</h2>
-      <ul>
-        {% for item in items %}
-        <li>{{ item.title }}</li>
+    {% if state == "done" %}
+    <div class="center-block client-complete">
+      <span class="mk on" aria-hidden="true"><svg class="i"><use href="#i-check"></use></svg></span>
+      <h1>All {{ shown_items | length }} items sent</h1>
+      <p>Thank you. {{ firm_name }} has your files and will be in touch if anything else is needed.</p>
+    </div>
+    {% else %}
+    <h1>Upload your evidence</h1>
+    {% endif %}
+
+    <section class="req solid client-request">
+      <div class="req-prog">
+        <span class="num" aria-live="polite">{{ shown_received_count }} of {{ shown_items | length }} sent</span>
+        <div class="progress-bar"><i style="width:{{ ((shown_received_count / (shown_items | length)) * 100) | round(0) | int }}%"></i></div>
+        <span class="sr-only">{{ remaining }} of {{ max_uploads }} uploads remaining</span>
+      </div>
+      <ul class="req-items">
+        {% for item in shown_items %}
+        <li>
+          <span class="mk{% if item.received %} on{% endif %}" aria-hidden="true"><svg class="i"><use href="#i-check"></use></svg></span>
+          <div class="body">
+            <b>{{ item.title }}</b>
+            <input type="hidden" value="{{ item.key }}" data-requested-item>
+            {% if item.received %}
+            <span>{{ item.filename }}</span><span class="sr-only">Received</span>
+            {% elif item.uploading %}
+            <span>{{ item.filename }}</span>
+            <div class="progress-bar" role="progressbar" aria-label="Uploading {{ item.title }}" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"><i style="width:62%"></i></div>
+            {% else %}
+            <span>{{ item.description | default("") }}</span>
+            {% endif %}
+          </div>
+          {% if not item.received and state != "done" and remaining > 0 %}
+          <div class="end">
+            {% if item.uploading %}<span class="num client-upload-percent">62%</span>{% else %}
+            {% set upload_id = "file-upload" if loop.first else "file-upload-" ~ loop.index0 %}
+            {% set item_id = "item-key" if loop.first else "item-key-" ~ loop.index0 %}
+            <form method="post" enctype="multipart/form-data" data-upload-form data-item="{{ item.key }}" class="client-upload-form">
+              <input type="hidden" id="{{ item_id }}" name="item_key" value="{{ item.key }}">
+              <input type="file" id="{{ upload_id }}" name="file" class="sr-only" data-upload-input tabindex="-1" aria-label="Choose a file to upload for {{ item.title }}">
+              <label for="{{ upload_id }}" class="btn secondary touch lead"><svg class="i"><use href="#i-upload"></use></svg>Choose file</label>
+              <button type="submit" class="btn secondary touch client-upload-submit">Upload file</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+        </li>
         {% endfor %}
       </ul>
-
-      {% if remaining > 0 %}
-      <p><strong>{{ remaining }} of {{ max_uploads }} uploads remaining</strong></p>
-      <p class="muted">Link expires {{ expires_at }} UTC</p>
-      <form method="post" enctype="multipart/form-data">
-        <label for="item-key">Requested item</label>
-        <select id="item-key" name="item_key" required>
-          {% for item in items %}
-          <option value="{{ item.key }}">{{ item.title }}</option>
-          {% endfor %}
-        </select>
-        <label for="file-upload">File</label>
-        <input id="file-upload" class="file-input" type="file" name="file" required>
-        <button type="submit">Upload evidence</button>
-      </form>
-      {% else %}
-      <p><strong>This link has reached its upload limit.</strong></p>
+      <datalist id="client-requested-items">{% for item in shown_items %}<option value="{{ item.key }}">{{ item.title }}</option>{% endfor %}</datalist>
+      {% if remaining <= 0 %}
+      <p class="client-limit">This link has reached its upload limit.</p>
       {% endif %}
+      <div class="req-foot"><span>PDF, Word, Excel or image, up to 25 MB each</span><span>Expires {{ expires_on }}</span></div>
     </section>
 
-    <section class="card">
-      <h2>Files received through this link</h2>
-      {% if uploads %}
-      <ul>
-        {% for upload in uploads %}
-        <li>{{ upload.filename }} — {% if upload.status == "rejected" %}Rejected{% else %}Received{% endif %}</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p class="muted">No files have been received through this link.</p>
-      {% endif %}
-    </section>
+    <p class="help client-powered">Powered by Yozora</p>
   </main>
+  <svg class="icon-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  </svg>
+  <script src="/static/js/magic-client.js"></script>
 </body>
 </html>

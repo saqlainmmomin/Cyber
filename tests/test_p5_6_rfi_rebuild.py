@@ -945,6 +945,7 @@ def test_scenario_20_rfi_page_preview_versions_and_mapping_hints(db, http):
     assert _issue(http, assessment, snapshot_id).status_code == 200
     page = http.get(f"/assessments/{assessment.id}/rfi")
     assert "data-rfi-links" in page.text and "data-rfi-issue-control" not in page.text
+    assert page.text.count("data-rfi-item=") == len(preview["items"])
     for template in (REPO_ROOT / "app/templates/pages/rfi.html", REPO_ROOT / "app/templates/partials/rfi_links.html"):
         source = template.read_text()
         assert "|safe" not in source and "CyberAssess" not in source and "'" not in source

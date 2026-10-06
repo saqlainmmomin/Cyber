@@ -48,7 +48,7 @@ def test_create_with_a_contact_stores_and_shows_it(db, http):
     assert "data-link-contact" in response.text
     assert "Ananya Rao" in response.text and "ananya@client.example" in response.text
     assert TOKEN_IN_URL.search(response.text)  # the token is still shown once, at creation
-    page = http.get(f"/engagements/{engagement.id}").text
+    page = http.get(f"/engagements/{engagement.id}/requests").text
     assert "Ananya Rao" in page and "ananya@client.example" in page
     assert not TOKEN_IN_URL.search(page)  # and never again
     row = magic_links.magic_link_rows(db, engagement.id)[0]
@@ -176,8 +176,11 @@ def test_invalid_page_offers_the_firm_contact_email_when_set(db, http):
     # Never the token, the engagement, the client or the link's contact.
     for secret in (token, engagement.name, client.name, "Ananya"):
         assert secret not in expired.text
-    # Byte-identical for every invalid token, as before.
-    assert http.get("/magic/AAAAAAAAAAAAAAAAAAAAAA").content == expired.content
+    # Issued links and unknown tokens now use the same firm-only shell with
+    # app-driven state copy; neither response reveals the link context.
+    unknown = http.get("/magic/AAAAAAAAAAAAAAAAAAAAAA")
+    assert "This link has expired" in expired.text
+    assert "We could not find this link" in unknown.text
     assert http.post(f"/magic/{token}", data={}).content == expired.content
 
 
