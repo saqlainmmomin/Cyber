@@ -22,6 +22,7 @@ from app.database import Base
 from app.models.assessment import Assessment
 from app.models.firm_settings import FirmSettings
 from app.services import firm_settings, retention
+from app.template_config import display_date
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     PREVIOUS_REVISION,
     REPO_ROOT,
@@ -284,14 +285,23 @@ def test_settings_change_is_audited(db, http):
     }
 
 
-def test_engagement_page_reads_the_firm_retention(db, http):
+def test_settings_lists_engagement_with_archive_control(db, http):
     _client, engagement, _assessment = seed_engagement(db)
-    assert "Retention: 7 years after archive (firm setting" in http.get(f"/engagements/{engagement.id}").text
-    _save(http, archived_retention_years="15")
+    settings_page = http.get("/settings").text
+    row = settings_page[settings_page.index(f'data-engagement-archive-row="{engagement.id}"'):]
+    row = row[:row.index("</li>")]
+    assert f'hx-post="/api/engagements/{engagement.id}/archive"' in row
+    assert 'hx-include="#reviewer-name"' in row
     page = http.get(f"/engagements/{engagement.id}").text
-    assert "Retention: 15 years after archive (firm setting" in page
-    assert "client setting" not in page
-    assert "data-archive-control" in page
+    assert "data-retention-section" not in page
+    assert "data-archive-control" not in page
+    _save(http, archived_retention_years="15")
+    http.post(f"/api/engagements/{engagement.id}/archive", data={"reviewer_name": "Priya"})
+    record = retention.archive_record(db, engagement.id)
+    settings_page = http.get("/settings").text
+    row = settings_page[settings_page.index(f'data-engagement-archive-row="{engagement.id}"'):]
+    row = row[:row.index("</li>")]
+    assert "Eligible for purge from " + display_date(retention.add_years(record.archived_at, 15)) in row
 
 
 def test_new_archive_snapshots_the_firm_value(db, http):

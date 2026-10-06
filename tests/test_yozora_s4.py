@@ -244,13 +244,12 @@ def test_integrated_report_versions_have_visible_download_issue_and_name(db, htt
     _assert_no_display_none(page)
 
 
-def test_engagement_overview_archive_unarchive_and_tools_are_visible(db, http):
+def test_engagement_overview_archive_unarchive_and_tools_links_archive_to_settings(db, http):
     _client, engagement, first = _two_assessment_engagement(db)
     page = http.get(f"/engagements/{engagement.id}").text
-    assert _visible(page, "button", data_archive_engagement=True)
-    (archive,) = [attrs for attrs, _ in _elements(page, "form", data_archive_control=True)]
-    assert archive["hx-post"] == f"/api/engagements/{engagement.id}/archive" and archive["hx-include"] == "#reviewer-name"
-    assert _visible(page, "input", id="reviewer-name")
+    assert not _elements(page, "button", data_archive_engagement=True)
+    assert not _elements(page, "form", data_archive_control=True)
+    assert "reviewer-name" not in _main(page)
     assert not _visible(page, "a", href=f"/engagements/{engagement.id}/aws-evidence")
     assert _visible(page, "a", href=f"/engagements/{engagement.id}/evidence")
     assert _visible(page, "a", href=f"/assessments/{first.id}")
@@ -258,16 +257,25 @@ def test_engagement_overview_archive_unarchive_and_tools_are_visible(db, http):
     requests_page = http.get(f"/engagements/{engagement.id}/requests")
     assert any(attrs.get("hx-post") == f"/engagements/{engagement.id}/magic-links" for attrs in _visible(requests_page.text, "form"))
     _assert_no_display_none(page)
+    settings_page = http.get("/settings").text
+    assert _visible(settings_page, "input", id="reviewer-name")
+    (archive,) = [attrs for attrs, _ in _elements(settings_page, "form", data_archive_control=True)]
+    assert archive["hx-post"] == f"/api/engagements/{engagement.id}/archive" and archive["hx-include"] == "#reviewer-name"
+    _assert_no_display_none(settings_page)
 
     assert http.post(f"/api/engagements/{engagement.id}/archive", data={"reviewer_name": "Priya"}).status_code == 200
     archived = http.get(f"/engagements/{engagement.id}").text
-    assert _visible(archived, "button", data_modal_open="unarchive-modal")
-    (unarchive,) = [attrs for attrs, _ in _elements(archived, "form", data_unarchive_control=True)]
-    assert unarchive["hx-post"] == f"/api/engagements/{engagement.id}/unarchive" and unarchive["hx-include"] == "#reviewer-name"
-    purge_links = _visible(archived, "a", data_purge_preview_link=True)
-    assert purge_links and all(a["href"] == f"/engagements/{engagement.id}/purge" for a in purge_links)
+    assert "This engagement is archived and read-only" in archived
+    assert _visible(archived, "a", data_archive_settings_link=True)
     assert "by Priya" in archived
+    assert not _elements(archived, "button", data_modal_open="unarchive-modal")
     _assert_no_display_none(archived)
+    settings_page = http.get("/settings").text
+    (unarchive,) = [attrs for attrs, _ in _elements(settings_page, "form", data_unarchive_control=True)]
+    assert unarchive["hx-post"] == f"/api/engagements/{engagement.id}/unarchive" and unarchive["hx-include"] == "#reviewer-name"
+    purge_links = _visible(settings_page, "a", data_purge_preview_link=True)
+    assert purge_links and all(a["href"] == f"/engagements/{engagement.id}/purge" for a in purge_links)
+    _assert_no_display_none(settings_page)
 
 
 def test_purge_page_shows_counts_reasons_and_the_typed_name_form(db, http):

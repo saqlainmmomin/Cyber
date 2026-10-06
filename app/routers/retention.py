@@ -95,6 +95,7 @@ def _preview_reason_messages(
 def archive_engagement_route(
     engagement_id: str,
     reviewer_name: str = Form(""),
+    return_to: str = Form(""),
     db: Session = Depends(get_db),
 ):
     try:
@@ -109,7 +110,7 @@ def archive_engagement_route(
     return _success(
         {"engagement_id": engagement.id, "status": engagement.status},
         "Engagement archived",
-        redirect=f"/engagements/{engagement.id}",
+        redirect="/settings" if return_to == "/settings" else f"/engagements/{engagement.id}",
     )
 
 
@@ -117,6 +118,7 @@ def archive_engagement_route(
 def unarchive_engagement_route(
     engagement_id: str,
     reviewer_name: str = Form(""),
+    return_to: str = Form(""),
     db: Session = Depends(get_db),
 ):
     try:
@@ -131,7 +133,7 @@ def unarchive_engagement_route(
     return _success(
         {"engagement_id": engagement.id, "status": engagement.status},
         "Engagement restored",
-        redirect=f"/engagements/{engagement.id}",
+        redirect="/settings" if return_to == "/settings" else f"/engagements/{engagement.id}",
     )
 
 

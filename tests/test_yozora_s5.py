@@ -55,7 +55,7 @@ def test_assessment_overview_has_five_tabs_and_real_stepper(db, http):
     assert all(label in page.text for label in ("Scope", "Evidence", "Questionnaire", "Review", "Report"))
     assert f'href="/assessments/{assessment.id}?tab=overview&amp;framework=dpdpa"' in page.text
     assert f'href="/assessments/{assessment.id}?tab=documents"' in page.text
-    assert "data-visual-mask" in page.text
+    assert "data-retention-section" not in page.text
     assert 'data-assessment-identity' in page.text
     assert 'id="desk-review-area"' not in page.text
 
@@ -72,11 +72,11 @@ def test_engagement_linked_overview_renders_context_block(db, http):
     page = http.get(f"/assessments/{assessment.id}?tab=overview")
 
     assert page.status_code == 200
-    assert "Retention" in page.text
+    assert "data-retention-section" not in page.text
     assert "Client evidence links" not in page.text
     assert f"/engagements/{engagement.id}/aws-evidence" not in page.text
     requests_page = http.get(f"/engagements/{engagement.id}/requests")
-    assert requests_page.status_code == 200 and "New link" in requests_page.text
+    assert requests_page.status_code == 200 and "Request something else" in requests_page.text
 
 
 def test_documents_url_redirects_to_evidence_without_documents_tab(db, http):

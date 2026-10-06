@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "components/layout.html" import page_header %}
-{% from "components/ui.html" import icon, link_button %}
+{% from "components/ui.html" import button, icon, link_button %}
 
 {% block title %}Settings{% endblock %}
 {% block content %}
@@ -16,11 +16,36 @@
   {% if saved %}<div data-settings-saved class="toast" style="width:fit-content">{{ icon("check") }}{{ saved }}</div>{% endif %}</div></div>
 
   <section class="sec"><h2>Data housekeeping</h2></section>
-  <div class="glass card narrow"><h3>Archived engagements</h3><div data-retention-form class="form-row" style="margin-top:var(--s-4)"><div class="grow"><label class="label" for="retention-years">Keep archived engagements for</label><label class="field{% if errors.archived_retention_years %} invalid{% endif %}"><select id="retention-years" name="archived_retention_years">{% for year in range(retention_range[0], retention_range[1] + 1) %}<option value="{{ year }}"{% if values.archived_retention_years|string == year|string %} selected{% endif %}>{{ year }} years</option>{% endfor %}</select></label>{% if errors.archived_retention_years %}<p class="err">{{ errors.archived_retention_years }}</p>{% else %}<p class="help">Archived engagements become eligible for permanent deletion after this period. Applies to engagements archived from now on.</p>{% endif %}</div></div></div>
+  <div class="glass card narrow"><h3>Retention period</h3><div data-retention-form class="form-row" style="margin-top:var(--s-4)"><div class="grow"><label class="label" for="retention-years">Keep archived engagements for</label><label class="field{% if errors.archived_retention_years %} invalid{% endif %}"><select id="retention-years" name="archived_retention_years">{% for year in range(retention_range[0], retention_range[1] + 1) %}<option value="{{ year }}"{% if values.archived_retention_years|string == year|string %} selected{% endif %}>{{ year }} years</option>{% endfor %}</select></label>{% if errors.archived_retention_years %}<p class="err">{{ errors.archived_retention_years }}</p>{% else %}<p class="help">Archived engagements become eligible for permanent deletion after this period. Applies to engagements archived from now on.</p>{% endif %}</div></div></div>
+</form>
+<div class="glass card narrow" id="engagement-archive" data-engagement-archive>
+  <h3>Archive and purge</h3><p class="sub tight">Archiving makes an engagement read-only and removes it from active views. Purge is available once the retention period has passed and every check passes.</p>
+  <label class="label" for="reviewer-name" style="margin-top:var(--s-4)">Your name</label><label class="field"><input id="reviewer-name" name="reviewer_name" form="settings-form" maxlength="200" autocomplete="name" placeholder="Recorded on settings changes, archive and unarchive"></label>
+  {% if not engagement_archive %}
+  <p class="muted tight" style="margin-top:var(--s-4)">No engagements yet.</p>
+  {% else %}
+  <ul class="line-list" style="margin-top:var(--s-4)">
+    {% for row in engagement_archive %}
+    {% set e = row.engagement %}
+    <li data-engagement-archive-row="{{ e.id }}" data-archive-state="{{ 'archived' if row.archived else 'active' }}">
+      {% if not row.archived %}
+      <div class="txt"><b><a href="/engagements/{{ e.id }}">{{ e.name }}</a></b><span class="sub" style="display:block">{{ row.client_name }} · {{ "Closed" if e.status == "closed" else "Active" }}</span></div>
+      <form data-archive-control hx-post="/api/engagements/{{ e.id }}/archive" hx-include="#reviewer-name" hx-swap="none" hx-confirm="Archive {{ e.name }}? It becomes read-only and leaves active views. You can unarchive it later."><input type="hidden" name="return_to" value="/settings">{{ button("Archive", "secondary", "sm", button_type="submit") }}</form>
+      {% else %}
+      {% set state = row.retention %}
+      <div class="txt"><b><a href="/engagements/{{ e.id }}">{{ e.name }}</a></b><span class="sub" style="display:block">{{ row.client_name }} · {% if state.record %}Archived {{ state.record.archived_at | display_date }} by {{ state.archived_by_display }} · {% if state.elapsed %}Eligible for purge now{% elif state.eligible_at %}Eligible for purge from {{ state.eligible_at | display_date }}{% else %}Retention setting is not valid{% endif %}{% else %}No archive record was found{% endif %}</span></div>
+      <div class="hrow">
+        <form data-unarchive-control hx-post="/api/engagements/{{ e.id }}/unarchive" hx-include="#reviewer-name" hx-swap="none" hx-confirm="Unarchive {{ e.name }}? It becomes editable again. Archiving it again starts a new retention period."><input type="hidden" name="return_to" value="/settings">{{ button("Unarchive", "secondary", "sm", button_type="submit") }}</form>
+        <a class="btn ghost sm" data-purge-preview-link href="/engagements/{{ e.id }}/purge">Review purge</a>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
   <div data-unmigrated-assessments class="glass card narrow"><h3>Unmigrated assessments</h3>{% if unmigrated_assessments %}<p class="sub tight">These assessments predate clients and engagements. Run scripts/migrate_legacy.py to file them under a client.</p><ul class="line-list" style="margin-top:var(--s-4)">{% for assessment in unmigrated_assessments %}<li data-unmigrated-assessment><span class="txt"><b>{{ assessment.display_name }}</b><span class="sub">Created {{ assessment.created_at.strftime('%-d %b %Y') }}</span></span><a class="btn secondary sm" href="/assessments/{{ assessment.id }}">Open assessment</a></li>{% endfor %}</ul>{% else %}<p class="muted tight">Every assessment is filed under a client.</p>{% endif %}</div>
 
   <section class="sec"><h2>Users and roles</h2></section>
   <div class="glass card narrow"><div class="empty" style="padding:var(--s-6) 0">{{ icon("users", "", "width:24px;height:24px;color:var(--muted)") }}<h3>Users and roles arrive with sign-in</h3><p>Until then, everyone who opens this workspace has full access.</p><button type="button" class="btn secondary" disabled>Invite a user</button></div></div>
-  <input id="reviewer-name" name="reviewer_name" value="" class="sr-only" aria-label="Reviewer name">
-</form>
 {% endblock %}

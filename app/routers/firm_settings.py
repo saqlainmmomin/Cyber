@@ -1,5 +1,6 @@
 """Firm settings page (Yozora): contact email for clients, accent theme, archived-engagement retention,
-and the data-housekeeping list of assessments that are not filed under an engagement."""
+the archive and purge list of every active, closed and archived engagement, and the data-housekeeping
+list of assessments that are not filed under an engagement."""
 
 from __future__ import annotations
 
@@ -9,8 +10,10 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
+from app.models.client import Client
+from app.models.engagement import Engagement
 from app.routers.web import templates
-from app.services import firm_settings
+from app.services import firm_settings, retention
 from app.services.conclusion_review import reviewer_actor
 
 router = APIRouter(tags=["settings"])
@@ -30,6 +33,35 @@ def unmigrated_assessments(db: Session) -> list[Assessment]:
         .order_by(Assessment.created_at.desc())
         .all()
     )
+
+
+def engagement_archive_rows(db: Session) -> list[dict]:
+    """Every archivable or archived engagement for the Archive and purge card, archived last."""
+    rows = (
+        db.query(Engagement, Client)
+        .join(Client, Engagement.client_id == Client.id)
+        .filter(
+            Engagement.status.in_(
+                retention.ARCHIVABLE_STATUSES + (retention.ARCHIVED_STATUS,)
+            )
+        )
+        .order_by(Client.name, Engagement.name)
+        .all()
+    )
+    result = []
+    for engagement, client in rows:
+        archived = engagement.status == retention.ARCHIVED_STATUS
+        result.append(
+            {
+                "engagement": engagement,
+                "client_name": client.name,
+                "archived": archived,
+                "retention": retention.retention_state(db, engagement) if archived else None,
+            }
+        )
+    return [row for row in result if not row["archived"]] + [
+        row for row in result if row["archived"]
+    ]
 
 
 def _render(
@@ -80,6 +112,7 @@ def _render(
             "custom_accent": firm_settings.CUSTOM_ACCENT,
             "retention_range": firm_settings.RETENTION_YEARS_RANGE,
             "unmigrated_assessments": [] if preview_state == "nodata" else unmigrated_assessments(db),
+            "engagement_archive": [] if preview_state == "nodata" else engagement_archive_rows(db),
             "preview_state": preview_state,
             "logo_filename": "northgate-logo.png" if current.contact_email == "engagements@northgate.example" else "No logo uploaded",
             "contrast_error": (
