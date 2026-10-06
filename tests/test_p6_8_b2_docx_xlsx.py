@@ -969,7 +969,7 @@ from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS  # Yozora per-PR allowance
+from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
 
 P6_8_B2_APP_ALLOWLIST = (
     "app/services/board_exports.py",
@@ -1068,6 +1068,7 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     changed_app -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
     changed_app -= set(YOZORA_S8_PATHS)  # Yozora S8 Requests/RFI slice
     changed_app -= set(YOZORA_S9_PATHS)  # Yozora S9 system slice
+    changed_app -= set(RFI_REQUESTS_PATHS)  # RFI and Requests consolidation
     changed_app -= set(V3C_PRIOR_DOMAINS_PATHS)  # V3-C prior domains
     outside = sorted(path for path in changed_app if not path.startswith(P6_8_B2_APP_ALLOWLIST))
     assert outside == [], outside
