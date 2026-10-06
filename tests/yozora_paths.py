@@ -307,8 +307,11 @@ YOZORA_S7_PATHS = (
 # Guard-only allowance: this existing path guard was updated to recognize S7.
 # It is intentionally separate from the S7 product-test paths.
 YOZORA_S7_GUARD_PATHS = (
-    "tests/test_p6_2b_dpdpa_criteria.py",
     "tests/test_p6_4_cap_upload_limit.py",
+    # V3-C3 XLSX parity: scoped per-PR allowances in existing file-set guards.
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_8_v3b_file_set.py",
+    "tests/test_p6_2b_dpdpa_criteria.py",
 )
 
 # Yozora per-PR allowance (S8 scaffold and planned slice files).

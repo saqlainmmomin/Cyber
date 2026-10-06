@@ -31,4 +31,11 @@ Existing V3-B export scenarios (14 to 15b) are the contract; do not weaken them.
 Export XLSX and PPTX from the golden document and from a thin document. Open the XLSX in LibreOffice (`soffice --headless --convert-to pdf`) and the PPTX likewise, `pdftoppm -png -r 60`, save under `docs/product/2026-10-06-v3c3-renders/`, and compare the PPTX pages with the V3-C2 deck pages. Paste the `pytest` summary line.
 
 ## Results
-(Codex fills in: files changed, test edits with reasons, deviations.)
+
+### Part A — XLSX (Codex, 6 Oct 2026)
+
+- Updated `app/services/board_exports.py` only for the v3 XLSX renderer/helpers: per-framework posture and outcome-source tables, safe score/domain deltas, fixed deck palettes, labeled severity/outcome fills with conditional-format rules, print/freeze/filter/wrap setup, rating/how-to-read definitions, and prior-domain comparison. The summary layout remains safe for thin and six-framework documents, and the existing `NEVER_COMBINED_NOTE` remains in the workbook.
+- Added `tests/test_p6_8_v3c3_extra.py` for delta-label safety, labeled fills and print setup, prior-domain states, and six-framework export. Added `tests/v3c3_paths.py` plus scoped allowances in the existing guard files; `tests/yozora_paths.py` carries those guard-only edits through the repository's existing retention allowance. No guard was removed.
+- Updated `tasks/todo.md` and generated the requested smoke artifacts: `docs/product/2026-10-06-v3c3-renders/golden.xlsx` and `docs/product/2026-10-06-v3c3-renders/thin.xlsx`. Both reopen with openpyxl and pass ZIP package integrity checks.
+- Focused V3-B plus V3-C3 XLSX tests: `31 passed`. Full suite: `1555 passed, 30 skipped, 458 warnings` with `OPENROUTER_KEY="" .venv/bin/pytest -q`.
+- Deviation: `soffice` is not installed in this environment, so LibreOffice PDF conversion and `pdftoppm` PNG renders could not be produced. Part B PPTX implementation and comparison remain deferred until V3-C2 merges, as instructed. No commit made.

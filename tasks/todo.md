@@ -19,6 +19,12 @@
 
 **Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
+## V3-C3 XLSX parity (2026-10-06)
+
+- [x] Implement Part A XLSX parity from `tasks/handoffs/2026-10-06-v3c3-pptx-xlsx-parity.md`.
+- [x] Add focused XLSX regression coverage and per-PR guard allowances without touching Part B PPTX work.
+- [x] Run the focused/full verification that the available `.venv` supports and record the evidence in the handoff Results.
+
 ## S6 adversarial review fixes (2026-10-04)
 
 - [x] Add regression coverage for B1–B5 and S1–S9 contracts, including fixture imports.

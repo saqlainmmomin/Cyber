@@ -1023,7 +1023,7 @@ def _render_xlsx_legacy(document: dict, *, document_sha256: str) -> bytes:
 
 
 def _v3_title_block(sheet, document: dict, title: str, purpose: str) -> None:
-    from openpyxl.styles import Font, PatternFill
+    from openpyxl.styles import Font
 
     _set_xlsx_cell(sheet["A1"], title)
     _set_xlsx_cell(sheet["A2"], purpose)
@@ -1074,6 +1074,168 @@ V3_TRACKER_HEADERS = (
     "Horizon", "Target date", "Complexity", "Benefit", "Status", "Client update", "Evidence of closure",
 )
 
+V3_OUTCOME_LABELS = {
+    "compliant": "Compliant",
+    "partially_compliant": "Partially compliant",
+    "non_compliant": "Non-compliant",
+    "insufficient_evidence": "Not concluded",
+    "not_applicable": "Not applicable",
+}
+V3_OUTCOME_COLORS = {
+    "compliant": "#0E8F86",
+    "partially_compliant": "#E39A1F",
+    "non_compliant": "#C0392B",
+    "insufficient_evidence": "#9AA3B5",
+    "not_applicable": "#D5D9E3",
+}
+V3_SEVERITY_COLORS = {
+    "critical": "#9B1C1C",
+    "high": "#D9481E",
+    "medium": "#F0A030",
+    "low": "#3C9D6B",
+}
+V3_RATING_COLORS = {
+    "Compliant": V3_OUTCOME_COLORS["compliant"],
+    "Partially Compliant": V3_OUTCOME_COLORS["partially_compliant"],
+    "Needs Significant Improvement": V3_SEVERITY_COLORS["high"],
+    "Non-Compliant": V3_OUTCOME_COLORS["non_compliant"],
+}
+V3_RATING_BANDS = (
+    ("0-40 Non-compliant", "Scores from 0 up to 40 are Non-compliant."),
+    ("40-60 Needs significant improvement", "Scores from 40 up to 60 need significant improvement."),
+    ("60-80 Partially compliant", "Scores from 60 up to 80 are Partially compliant."),
+    ("80-100 Compliant", "Scores from 80 up to 100 are Compliant."),
+)
+V3_OUTCOME_TEXT_COLORS = {
+    V3_OUTCOME_COLORS["compliant"]: "FFFFFF",
+    V3_OUTCOME_COLORS["non_compliant"]: "FFFFFF",
+    V3_OUTCOME_COLORS["insufficient_evidence"]: "FFFFFF",
+}
+V3_SEVERITY_TEXT_COLORS = {
+    V3_SEVERITY_COLORS["critical"]: "FFFFFF",
+    V3_SEVERITY_COLORS["high"]: "FFFFFF",
+}
+
+
+def _v3_outcome_key(value) -> str:
+    value = str(value or "").strip().lower().replace(" ", "_").replace("-", "_")
+    if value == "not_concluded":
+        return "insufficient_evidence"
+    return value
+
+
+def _v3_outcome_label(row: dict) -> str:
+    key = _v3_outcome_key(row.get("outcome"))
+    return V3_OUTCOME_LABELS.get(key, row.get("outcome_label") or "Not concluded")
+
+
+def _v3_delta_text(delta, *, compared: bool = True) -> str:
+    if not compared or not isinstance(delta, (int, float)) or isinstance(delta, bool) or delta == 0:
+        return "–"
+    return f"{'▲' if delta > 0 else '▼'} {abs(delta):.1f}"
+
+
+def _v3_fill_and_label(cell, color: str, *, white_text: bool = False) -> None:
+    from openpyxl.styles import PatternFill
+
+    cell.fill = PatternFill(fill_type="solid", fgColor=color.lstrip("#"))
+    font = copy(cell.font)
+    font.color = "FFFFFF" if white_text else "000000"
+    cell.font = font
+
+
+def _v3_apply_color_rules(sheet, column: str, start_row: int, end_row: int, colors: dict[str, str], *, value_keys=None) -> None:
+    if end_row < start_row:
+        return
+    from openpyxl.formatting.rule import FormulaRule
+    from openpyxl.styles import Font, PatternFill
+
+    value_keys = value_keys or tuple(colors)
+    for key in value_keys:
+        color = colors[key]
+        text_color = (
+            V3_OUTCOME_TEXT_COLORS.get(color)
+            or V3_SEVERITY_TEXT_COLORS.get(color)
+            or "000000"
+        )
+        labels = [key.replace("_", " ")]
+        if key == "insufficient_evidence":
+            labels.append("not concluded")
+        formula = "OR(" + ",".join(
+            f'LOWER(TRIM(${column}{start_row}))="{label}"' for label in labels
+        ) + ")"
+        sheet.conditional_formatting.add(
+            f"{column}{start_row}:{column}{end_row}",
+            FormulaRule(
+                formula=[formula],
+                fill=PatternFill(fill_type="solid", fgColor=color.lstrip("#")),
+                font=Font(color=text_color),
+            ),
+        )
+
+
+def _v3_style_status_column(sheet, column: str, start_row: int, values, colors: dict[str, str]) -> None:
+    end_row = start_row + len(values) - 1
+    for row_number, value in enumerate(values, start=start_row):
+        key = _v3_outcome_key(value)
+        color = colors.get(key)
+        if color:
+            _v3_fill_and_label(
+                sheet.cell(row=row_number, column=ord(column) - ord("A") + 1),
+                color,
+                white_text=(
+                    color in V3_OUTCOME_TEXT_COLORS or color in V3_SEVERITY_TEXT_COLORS
+                ),
+            )
+    _v3_apply_color_rules(sheet, column, start_row, end_row, colors)
+
+
+def _v3_write_secondary_header(sheet, row_number: int, headers) -> None:
+    from openpyxl.styles import Font, PatternFill
+
+    _write_xlsx_row(sheet, row_number, headers)
+    fill = PatternFill(fill_type="solid", fgColor="66708B")
+    for cell in sheet[row_number][:len(headers)]:
+        cell.fill = fill
+        cell.font = Font(bold=True, color="FFFFFF")
+
+
+def _v3_finalize_sheet(
+    sheet,
+    *,
+    header_row: int | None,
+    column_count: int,
+    widths: dict[str, float],
+    filter_last_row: int | None = None,
+    print_end_column: str | None = None,
+) -> None:
+    from openpyxl.utils import get_column_letter
+
+    for column, width in widths.items():
+        sheet.column_dimensions[column].width = width
+    max_row = max(sheet.max_row, header_row or 1)
+    max_column = max(column_count, max((ord(column) - ord("A") + 1) for column in widths) if widths else column_count)
+    for row in sheet.iter_rows(min_row=1, max_row=max_row, min_col=1, max_col=max_column):
+        for cell in row:
+            if cell.value is None:
+                continue
+            alignment = copy(cell.alignment)
+            alignment.wrap_text = True
+            alignment.vertical = "top"
+            cell.alignment = alignment
+    if header_row is not None:
+        last_column = get_column_letter(column_count)
+        sheet.freeze_panes = f"A{header_row + 1}"
+        sheet.auto_filter.ref = f"A{header_row}:{last_column}{filter_last_row or max_row}"
+        sheet.print_title_rows = f"{header_row}:{header_row}"
+    sheet.sheet_view.showGridLines = False
+    sheet.page_setup.orientation = "landscape"
+    sheet.page_setup.fitToWidth = 1
+    sheet.page_setup.fitToHeight = 0
+    sheet.sheet_properties.pageSetUpPr.fitToPage = True
+    end_column = print_end_column or get_column_letter(column_count)
+    sheet.print_area = f"A1:{end_column}{max_row}"
+
 
 def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     from openpyxl import Workbook
@@ -1103,24 +1265,110 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             framework["name"], framework["score"], framework["rating"], coverage["in_scope"],
             coverage["partially_compliant"] + coverage["non_compliant"], coverage["insufficient_evidence"],
         ])
-    _set_xlsx_cell(summary["A10"], board_report.board_view.NEVER_COMBINED_NOTE)
+    summary_last_row = 6 + len(document["summary"]["frameworks"])
+    note_row = max(10, summary_last_row + 2)
+    _set_xlsx_cell(summary.cell(row=note_row, column=1), board_report.board_view.NEVER_COMBINED_NOTE)
+
+    prior_frameworks = {
+        row.get("framework_id"): row
+        for row in document.get("prior_period", {}).get("frameworks", [])
+        if isinstance(row, dict) and row.get("framework_id")
+    }
+    posture_title_row = note_row + 2
+    _set_xlsx_cell(summary.cell(row=posture_title_row, column=1), "Framework posture")
+    posture_header_row = posture_title_row + 1
+    posture_headers = ("Framework", "Score (%)", "Rating", "Delta")
+    _v3_write_secondary_header(summary, posture_header_row, posture_headers)
+    for row_number, framework in enumerate(document["summary"]["frameworks"], start=posture_header_row + 1):
+        prior = prior_frameworks.get(framework.get("framework_id"), {})
+        compared = bool(prior.get("compared"))
+        rating = framework.get("rating") or "Not concluded"
+        _write_xlsx_row(summary, row_number, [
+            framework.get("name"),
+            framework.get("score"),
+            rating,
+            _v3_delta_text(prior.get("score_delta"), compared=compared),
+        ])
+        _v3_fill_and_label(
+            summary.cell(row=row_number, column=3),
+            V3_RATING_COLORS.get(rating, V3_OUTCOME_COLORS["insufficient_evidence"]),
+            white_text=rating in V3_RATING_COLORS,
+        )
+        summary.cell(row=row_number, column=2).number_format = "0.0"
+
+    outcome_title_row = posture_header_row + max(len(document["summary"]["frameworks"]), 1) + 3
+    _set_xlsx_cell(summary.cell(row=outcome_title_row, column=1), "Requirement outcomes by framework")
+    outcome_header_row = outcome_title_row + 1
+    outcome_headers = (
+        "Framework", "Compliant", "Partially compliant", "Non-compliant", "Not concluded", "Not applicable"
+    )
+    _v3_write_secondary_header(summary, outcome_header_row, outcome_headers)
+    for row_number, framework in enumerate(document["summary"]["frameworks"], start=outcome_header_row + 1):
+        coverage = framework.get("coverage", {})
+        _write_xlsx_row(summary, row_number, [
+            framework.get("name"),
+            coverage.get("compliant", 0),
+            coverage.get("partially_compliant", 0),
+            coverage.get("non_compliant", 0),
+            coverage.get("insufficient_evidence", 0),
+            coverage.get("not_applicable", 0),
+        ])
+
+    outcome_last_row = outcome_header_row + len(document["summary"]["frameworks"])
     chart = BarChart()
     chart.type = "bar"
     chart.grouping = "stacked"
     chart.overlap = 100
     chart.title = "Per-framework outcomes"
-    chart.add_data(Reference(summary, min_col=5, max_col=6, min_row=6, max_row=6 + len(document["summary"]["frameworks"])), titles_from_data=True)
-    chart.set_categories(Reference(summary, min_col=1, min_row=7, max_row=6 + len(document["summary"]["frameworks"])))
+    chart.add_data(
+        Reference(summary, min_col=2, max_col=6, min_row=outcome_header_row, max_row=outcome_last_row),
+        titles_from_data=True,
+    )
+    chart.set_categories(Reference(summary, min_col=1, min_row=outcome_header_row + 1, max_row=outcome_last_row))
+    for series, color in zip(chart.ser, V3_OUTCOME_COLORS.values()):
+        series.graphicalProperties.solidFill = color.lstrip("#")
+        series.graphicalProperties.line.solidFill = color.lstrip("#")
     summary.add_chart(chart, "H6")
+
+    severity_title_row = outcome_last_row + 3
+    _set_xlsx_cell(summary.cell(row=severity_title_row, column=1), "Approved gaps by severity")
+    severity_header_row = severity_title_row + 1
     pie = PieChart()
     pie.title = "Approved gaps by severity"
-    _set_xlsx_cell(summary["A13"], "Severity")
-    _set_xlsx_cell(summary["B13"], "Count")
-    for number, severity in enumerate(("critical", "high", "medium", "low"), start=14):
+    _v3_write_secondary_header(summary, severity_header_row, ("Severity", "Count"))
+    for number, severity in enumerate(("critical", "high", "medium", "low"), start=severity_header_row + 1):
         _write_xlsx_row(summary, number, [severity.title(), document["severity_dashboard"][severity]["total"]])
-    pie.add_data(Reference(summary, min_col=2, min_row=13, max_row=17), titles_from_data=True)
-    pie.set_categories(Reference(summary, min_col=1, min_row=14, max_row=17))
+        _v3_fill_and_label(summary.cell(row=number, column=1), V3_SEVERITY_COLORS[severity], white_text=severity in {"critical", "high"})
+    pie.add_data(Reference(summary, min_col=2, min_row=severity_header_row, max_row=severity_header_row + 4), titles_from_data=True)
+    pie.set_categories(Reference(summary, min_col=1, min_row=severity_header_row + 1, max_row=severity_header_row + 4))
     summary.add_chart(pie, "H20")
+
+    prior_domain_rows = []
+    prior_period = document.get("prior_period", {})
+    for prior_framework in prior_period.get("frameworks", []):
+        for domain in prior_framework.get("domains", []):
+            if not isinstance(domain, dict):
+                continue
+            compared = bool(domain.get("compared"))
+            if compared:
+                delta = _v3_delta_text(domain.get("score_delta"), compared=True)
+            elif domain.get("prior_score") is None and domain.get("current_score") is not None:
+                delta = "New"
+            else:
+                delta = "Not compared"
+            prior_domain_rows.append([
+                prior_framework.get("name"), domain.get("title"), domain.get("prior_score"),
+                domain.get("current_score"), delta,
+            ])
+    if prior_domain_rows:
+        prior_title_row = severity_header_row + 7
+        _set_xlsx_cell(summary.cell(row=prior_title_row, column=1), "Prior-period domain comparison")
+        prior_header_row = prior_title_row + 1
+        _v3_write_secondary_header(summary, prior_header_row, ("Framework", "Domain", "Prior score", "Current score", "Delta"))
+        for row_number, values in enumerate(prior_domain_rows, start=prior_header_row + 1):
+            _write_xlsx_row(summary, row_number, values)
+            for column in (3, 4):
+                summary.cell(row=row_number, column=column).number_format = "0.0"
 
     names = _framework_name_map(document)
     linked = {(observation["framework_name"], observation["requirement_id"]): observation["ref"] for observation in document["observations"]}
@@ -1129,9 +1377,22 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     for row_number, row in enumerate(document["appendices"]["requirement_register"], start=7):
         _write_xlsx_row(detail, row_number, [
             row["requirement_id"], names.get(row["framework_id"], row["framework_id"]), row["domain_title"].split(" — ", 1)[-1],
-            row["requirement_title"], row["outcome_label"], row["risk_level"], "Yes" if row.get("citation") else "No",
+            row["requirement_title"], _v3_outcome_label(row), row["risk_level"] or "Not recorded", "Yes" if row.get("citation") else "No",
             row["decision_label"], linked.get((names.get(row["framework_id"], row["framework_id"]), row["requirement_id"])),
         ])
+    _v3_style_status_column(
+        detail, "E", 7,
+        [
+            _v3_outcome_label(row)
+            for row in document["appendices"]["requirement_register"]
+        ],
+        V3_OUTCOME_COLORS,
+    )
+    _v3_style_status_column(
+        detail, "F", 7,
+        [row.get("risk_level") or "Not recorded" for row in document["appendices"]["requirement_register"]],
+        V3_SEVERITY_COLORS,
+    )
     _v3_header(book["Observation Register"], V3_OBSERVATION_HEADERS)
     observation_sheet = book["Observation Register"]
     for row_number, observation in enumerate(document["observations"], start=7):
@@ -1141,10 +1402,16 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             observation["risk"] or "Not recorded", observation["rating"], observation["recommendation"] or "Not recorded",
             refs, observation["responsibility"] or "Not recorded",
         ])
+    _v3_style_status_column(
+        observation_sheet, "F", 7,
+        [observation.get("rating") or "Not recorded" for observation in document["observations"]],
+        V3_SEVERITY_COLORS,
+    )
 
     tracker = book["Remediation Tracker"]
     _v3_header(tracker, V3_TRACKER_HEADERS)
     row_number = 7
+    action_rows = []
     priority_label = {"high": "High", "medium": "Medium", "low": "Low"}
     horizon_label = {"short": "Short term", "medium": "Medium term", "long": "Long term", "unscheduled": "Not scheduled"}
     for initiative in document["initiatives"]:
@@ -1163,6 +1430,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
                 horizon_label[initiative["horizon"]], action["target_date"], initiative["complexity"] or "Not recorded", initiative["benefit"] or "Not recorded",
                 action["status_label"], None, None,
             ], date_columns=(9,))
+            action_rows.append((row_number, priority_label[initiative["priority"]]))
             row_number += 1
     status_validation = DataValidation(type="list", formula1='"Open,In progress,Done,Blocked"', allow_blank=True)
     tracker.add_data_validation(status_validation)
@@ -1177,6 +1445,12 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         f"E7:E{max(row_number, 7)}",
         FormulaRule(formula=['$E7="Unassigned"'], fill=red, font=Font(color="C0392B")),
     )
+    for action_row, priority in action_rows:
+        priority_key = priority.lower()
+        color = V3_SEVERITY_COLORS.get(priority_key)
+        if color:
+            _v3_fill_and_label(tracker.cell(row=action_row, column=7), color, white_text=priority_key == "high")
+    _v3_apply_color_rules(tracker, "G", 7, max(row_number - 1, 7), V3_SEVERITY_COLORS, value_keys=("high", "medium", "low"))
 
     if document.get("soa"):
         soa_sheet = book["Statement of Applicability"]
@@ -1197,10 +1471,38 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     definitions = book["Definitions"]
     _v3_header(definitions, ("Term", "Meaning"))
     definitions_rows = [
-        ("Compliant", "Requirement outcome is supported and implemented."),
-        ("Partially compliant", "Some implementation or evidence remains incomplete."),
-        ("Non-compliant", "The approved conclusion identifies a material gap."),
-        ("Insufficient evidence", "The requirement could not be concluded from submitted evidence."),
+        *V3_RATING_BANDS,
+        ("How to read outcomes", "Every requirement gets one outcome. Not concluded requirements are left out of scores, not counted as a failure."),
+        ("Compliant", "Met, and the evidence shows it."),
+        ("Partially compliant", "Met in part; a gap remains."),
+        ("Non-compliant", "Not met."),
+        ("Not concluded", "The evidence does not support a conclusion either way."),
+        ("Not applicable", "Does not apply within the assessed scope."),
+        ("How to read risk levels", "Every gap gets a risk level. Critical means material regulatory or breach exposure; High means significant exposure; Medium means moderate exposure; Low means limited exposure."),
+        ("Critical", "Material regulatory or breach exposure. Act now."),
+        ("High", "Significant exposure. Act this quarter."),
+        ("Medium", "Moderate exposure. Plan within six months."),
+        ("Low", "Limited exposure. Fix in the normal course."),
+        ("How to read ratings", "A framework score is a weighted average of its domain scores. A met requirement counts in full and a partly met one counts half. Scores are deterministic and never combined across frameworks."),
+        ("Priority", "Set by the most serious gap the fix closes."),
+        ("Effort", "High is over 40 person-hours or a cross-team change."),
+        ("Benefit", "How much exposure the fix removes."),
+        ("Short term", "Within 90 days."),
+        ("Medium term", "91 to 180 days."),
+        ("Long term", "After 180 days."),
+        ("Not scheduled", "No target date."),
+        ("Client", "Responsibility recorded against the client."),
+        ("Consultant", "Responsibility recorded against the firm."),
+        ("Shared", "Responsibility recorded against both the client and the firm."),
+        ("Fill legend · Compliant", "Outcome fill #0E8F86"),
+        ("Fill legend · Partially compliant", "Outcome fill #E39A1F"),
+        ("Fill legend · Non-compliant", "Outcome fill #C0392B"),
+        ("Fill legend · Not concluded", "Outcome fill #9AA3B5"),
+        ("Fill legend · Not applicable", "Outcome fill #D5D9E3"),
+        ("Fill legend · Critical", "Severity fill #9B1C1C"),
+        ("Fill legend · High", "Severity fill #D9481E"),
+        ("Fill legend · Medium", "Severity fill #F0A030"),
+        ("Fill legend · Low", "Severity fill #3C9D6B"),
         ("Critical / High / Medium / Low", "Risk rating scale used in the report."),
         ("Complexity", "High, Medium or Low consultant assessment of implementation effort."),
         ("Benefit", "High, Medium or Low expected risk-reduction benefit."),
@@ -1209,6 +1511,19 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     ]
     for row_number, values in enumerate(definitions_rows, start=7):
         _write_xlsx_row(definitions, row_number, values)
+        label = str(values[0])
+        color = None
+        if label.startswith("Fill legend · "):
+            legend_label = label.removeprefix("Fill legend · ")
+            color = next((
+                candidate for key, candidate in {
+                    **{V3_OUTCOME_LABELS[key]: value for key, value in V3_OUTCOME_COLORS.items()},
+                    **{key.title(): value for key, value in V3_SEVERITY_COLORS.items()},
+                }.items()
+                if legend_label.lower() == key.lower()
+            ), None)
+        if color:
+            _v3_fill_and_label(definitions.cell(row=row_number, column=1), color, white_text=color in V3_OUTCOME_TEXT_COLORS or color in V3_SEVERITY_TEXT_COLORS)
     extra_row = 7 + len(definitions_rows)
     for initiative in document["initiatives"]:
         _write_xlsx_row(definitions, extra_row, ["Initiative title", initiative["title"]])
@@ -1216,6 +1531,52 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     for ask in document["board_asks"].get("consultant", []):
         _write_xlsx_row(definitions, extra_row, ["Board ask", ask])
         extra_row += 1
+
+    _v3_finalize_sheet(
+        summary,
+        header_row=6,
+        column_count=len(summary_headers),
+        filter_last_row=6 + len(document["summary"]["frameworks"]),
+        print_end_column="Q",
+        widths={"A": 34, "B": 15, "C": 32, "D": 16, "E": 20, "F": 22, "G": 3, "H": 14, "I": 14, "J": 14, "K": 14, "L": 14, "M": 14, "N": 14, "O": 14, "P": 14, "Q": 14},
+    )
+    _v3_finalize_sheet(
+        detail,
+        header_row=6,
+        column_count=len(V3_DETAILED_HEADERS),
+        widths={"A": 20, "B": 22, "C": 32, "D": 58, "E": 22, "F": 16, "G": 15, "H": 18, "I": 22},
+    )
+    _v3_finalize_sheet(
+        observation_sheet,
+        header_row=6,
+        column_count=len(V3_OBSERVATION_HEADERS),
+        widths={"A": 12, "B": 30, "C": 22, "D": 58, "E": 58, "F": 16, "G": 62, "H": 48, "I": 22},
+    )
+    _v3_finalize_sheet(
+        tracker,
+        header_row=6,
+        column_count=len(V3_TRACKER_HEADERS),
+        filter_last_row=max((row for row, _priority in action_rows), default=6),
+        widths={"A": 24, "B": 14, "C": 30, "D": 58, "E": 24, "F": 22, "G": 14, "H": 16, "I": 15, "J": 16, "K": 14, "L": 16, "M": 28, "N": 28},
+    )
+    _v3_finalize_sheet(
+        book["Statement of Applicability"],
+        header_row=6 if document.get("soa") else None,
+        column_count=10,
+        widths={"A": 16, "B": 20, "C": 52, "D": 30, "E": 20, "F": 26, "G": 58, "H": 24, "I": 24, "J": 15},
+    )
+    _v3_finalize_sheet(
+        evidence,
+        header_row=6,
+        column_count=5,
+        widths={"A": 40, "B": 12, "C": 15, "D": 18, "E": 16},
+    )
+    _v3_finalize_sheet(
+        definitions,
+        header_row=6,
+        column_count=2,
+        widths={"A": 36, "B": 100},
+    )
 
     generated_at = _generated_at(document)
     book.properties.creator = _clean(document["firm_name"])
