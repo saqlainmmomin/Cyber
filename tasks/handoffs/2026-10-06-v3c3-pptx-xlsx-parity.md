@@ -31,4 +31,19 @@ Existing V3-B export scenarios (14 to 15b) are the contract; do not weaken them.
 Export XLSX and PPTX from the golden document and from a thin document. Open the XLSX in LibreOffice (`soffice --headless --convert-to pdf`) and the PPTX likewise, `pdftoppm -png -r 60`, save under `docs/product/2026-10-06-v3c3-renders/`, and compare the PPTX pages with the V3-C2 deck pages. Paste the `pytest` summary line.
 
 ## Results
-(Codex fills in: files changed, test edits with reasons, deviations.)
+
+### Part A — XLSX (Codex, 6 Oct 2026)
+
+- Updated `app/services/board_exports.py` only for the v3 XLSX renderer/helpers: per-framework posture and outcome-source tables, safe score/domain deltas, fixed deck palettes, labeled severity/outcome fills with conditional-format rules, print/freeze/filter/wrap setup, rating/how-to-read definitions, and prior-domain comparison. The summary layout remains safe for thin and six-framework documents, and the existing `NEVER_COMBINED_NOTE` remains in the workbook.
+- Added `tests/test_p6_8_v3c3_extra.py` for delta-label safety, labeled fills and print setup, prior-domain states, and six-framework export. Added `tests/v3c3_paths.py` plus scoped allowances in the existing guard files; `tests/yozora_paths.py` carries those guard-only edits through the repository's existing retention allowance. No guard was removed.
+- Updated `tasks/todo.md` and generated the requested smoke artifacts: `docs/product/2026-10-06-v3c3-renders/golden.xlsx` and `docs/product/2026-10-06-v3c3-renders/thin.xlsx`. Both reopen with openpyxl and pass ZIP package integrity checks.
+- Focused V3-B plus V3-C3 XLSX tests: `31 passed`. Full suite: `1555 passed, 30 skipped, 458 warnings` with `OPENROUTER_KEY="" .venv/bin/pytest -q`.
+- Deviation: `soffice` is not installed in this environment, so LibreOffice PDF conversion and `pdftoppm` PNG renders could not be produced. Part B PPTX implementation and comparison remain deferred until V3-C2 merges, as instructed. No commit made.
+
+### Part B — PPTX (Codex, 6 Oct 2026)
+
+- Rebuilt `render_pptx` from the V3-C2 presenter view: one slide per `board_view.view(document)["slides"]` entry, exact presenter action titles in order, conditional framework chips and draft badge on the cover, theme colours from `document["theme"]`, provenance notes on every slide, and v3-only schema enforcement. The renderer now carries the V3-C2 native evidence set: tables, a domain-status bar chart with rating bands, an outcomes stacked bar chart, per-framework waffle squares, compared-domain dumbbells, a 3x3 effort-benefit matrix, and roadmap lane/horizon grids. No `Priority 1-4` text or mock prior values are emitted.
+- Added the PPTX title/chart regression to `tests/test_p6_8_v3c3_extra.py`; extended the existing per-PR guard allowances for Part B and its smoke artifacts without deleting a guard. Thin documents, six-framework exports, route-level XLSX/PPTX exports, and the stored prior-period comparison content all pass.
+- Generated and structurally reopened with `python-pptx`: `docs/product/2026-10-06-v3c3-renders/golden.pptx` (31 slides, 32 tables, 2 charts) and `thin.pptx` (25 slides, 25 tables, 2 charts). Titles match the presenter, notes carry provenance on every slide, and both packages pass ZIP/package parsing.
+- Focused V3-B/V3-C2/V3-C3/export regressions: `40 passed`. Full suite: `1562 passed, 30 skipped, 458 warnings` with `OPENROUTER_KEY="" .venv/bin/pytest -q`.
+- Deviation: `soffice` is not installed, so no PPTX PDF conversion, `pdftoppm` render, or pixel comparison was produced, per the requested “converting nothing” check. No commit made; the orchestrator commits.

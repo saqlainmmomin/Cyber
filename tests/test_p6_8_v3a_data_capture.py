@@ -58,6 +58,7 @@ from tests.p6_8_v3_support import (  # noqa: F401 - fixtures are used by name
 from tests.p6_8_v3a_paths import V3A_APP_PATHS
 from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
 from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
+from tests.v3c3_paths import V3C3_XLSX_PATHS  # V3-C3 XLSX per-PR allowance
 from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES, YOZORA_BACKEND_FILES  # Yozora backend per-PR allowance
 from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
 from tests.test_p6_8_board_report_v2 import _require_renderer
@@ -894,6 +895,7 @@ V3_TEST_FILES = {
     # P6-8 V3-B contract and support files
     "tests/p6_8_v3b_paths.py", "tests/test_p6_8_v3b_file_set.py", "tests/golden/p6_8_board_document.json",
     "tests/golden/p6_8_v3_deck_document.json",
+    "tests/v3c3_paths.py", "tests/test_p6_8_v3c3_extra.py",  # V3-C3 XLSX parity
 }
 
 
@@ -918,7 +920,7 @@ def test_scenario_12_v3a_touches_only_its_files_and_calls_no_llm():
     changed_tests = set(git("diff", "--name-only", "main...HEAD", "--", "tests").split())
     changed_tests |= set(git("diff", "--name-only", "HEAD", "--", "tests").split())
     changed_tests |= set(git("ls-files", "--others", "--exclude-standard", "tests").split())
-    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES - set(YOZORA_BACKEND_FILES) - set(YOZORA_S1_PATHS) - set(YOZORA_S2_PATHS) - set(YOZORA_S3_PATHS) - set(YOZORA_S4_PATHS) - set(YOZORA_S5_PATHS) - set(YOZORA_S6_PATHS) - set(YOZORA_S7_PATHS) - set(YOZORA_S8_PATHS) - set(YOZORA_S9_PATHS) - set(RFI_REQUESTS_PATHS) - set(V3C_PRIOR_DOMAINS_PATHS))  # Yozora allowances (backend, S1-S9), V3-C prior domains
+    unexpected = sorted(changed_tests - V3A_EXISTING_TEST_EDITS - GUARD_TEST_FILES - V3_TEST_FILES - set(V3C3_XLSX_PATHS) - set(YOZORA_BACKEND_FILES) - set(YOZORA_S1_PATHS) - set(YOZORA_S2_PATHS) - set(YOZORA_S3_PATHS) - set(YOZORA_S4_PATHS) - set(YOZORA_S5_PATHS) - set(YOZORA_S6_PATHS) - set(YOZORA_S7_PATHS) - set(YOZORA_S8_PATHS) - set(YOZORA_S9_PATHS) - set(RFI_REQUESTS_PATHS) - set(V3C_PRIOR_DOMAINS_PATHS))  # Yozora allowances (backend, S1-S9), RFI, V3-C prior domains, V3-C3 XLSX
     assert unexpected == [], unexpected
 
     for relative in ("app/services/board_inputs.py", "app/routers/board_inputs.py", "app/services/firm_theme.py"):
