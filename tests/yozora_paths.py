@@ -378,6 +378,65 @@ YOZORA_S8_PATHS = (
     "tests/yozora_paths.py",
 )
 
+# Yozora per-PR allowance (S9 scaffold and planned slice files).
+YOZORA_S9_PATHS = (
+    "app/main.py",
+    "app/routers/design.py",
+    "app/routers/design_s9_errors.py",
+    "app/routers/design_s9_system.py",
+    "app/static/css/yozora-components.css",
+    "app/static/css/yozora-patterns.css",
+    "app/static/css/tailwind.css",
+    "app/static/css/style.css",
+    "app/static/js/app.js",
+    "app/templates/base.html",
+    "app/templates/pages/error.html",
+    "app/templates/pages/assessment.html",
+    "app/templates/pages/clients.html",
+    "app/templates/pages/evidence_reuse.html",
+    "app/templates/pages/integrated_reports.html",
+    "app/templates/partials/client_picker.html",
+    "app/templates/partials/context_complete.html",
+    "app/templates/partials/followup_questions.html",
+    "app/templates/partials/questionnaire_sections.html",
+    "app/templates/partials/questionnaire_tab.html",
+    "app/templates/partials/scope_complete.html",
+    "app/templates/partials/scope_form.html",
+    "app/templates/partials/section_questions.html",
+    "design/harness/gate_s9.py",
+    "design/harness/seed_s9.py",
+    "design/harness/seed_s9_errors.py",
+    "design/harness/seed_s9_system.py",
+    "design/yozora-components.css",
+    "design/yozora-patterns.css",
+    "docs/product/yozora-migration-map.md",
+    "package.json",
+    "tailwind.config.js",
+    "tasks/handoffs/2026-10-06-yozora-s9-orchestration.md",
+    "tasks/handoffs/2026-10-06-yozora-s9-a-errors.md",
+    "tasks/handoffs/2026-10-06-yozora-s9-b-system.md",
+    "tasks/handoffs/2026-10-06-yozora-s9-c-cleanup.md",
+    "tasks/todo.md",
+    "tests/design_lint_allowlist.txt",
+    "tests/p6_10_support.py",
+    "tests/test_design_lint.py",
+    "tests/test_longitudinal_demo.py",
+    "tests/test_p6_2b_dpdpa_criteria.py",
+    "tests/test_p6_4_cap_upload_limit.py",
+    "tests/test_p6_4_whats_missing.py",
+    "tests/test_p6_7_requirement_card.py",
+    "tests/test_p6_7b_add_to_rfi.py",
+    "tests/test_p6_8_b2_docx_xlsx.py",
+    "tests/test_p6_8_board_report_v2.py",
+    "tests/test_p6_8_v3a_data_capture.py",
+    "tests/test_p6_9_file_set.py",
+    "tests/test_retention.py",
+    "tests/test_yozora_s9_cleanup.py",
+    "tests/test_yozora_s9_errors.py",
+    "tests/test_yozora_s9_system.py",
+    "tests/yozora_paths.py",
+)
+
 # Per-PR allowance: V3-C board deck design pass (mockup, scope, dumbbell backend handoff).
 V3C_MOCKUP_PATHS = (
     "docs/product/2026-10-04-board-deck-v3c-mockup/deck_template.html",
@@ -389,5 +448,5 @@ V3C_MOCKUP_PATHS = (
     "tests/test_p6_8_v3b_file_set.py",
 )
 
-YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
+YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS
 YOZORA_EXCLUDES = [f":(exclude){path}" for path in YOZORA_ALL_PATHS]
