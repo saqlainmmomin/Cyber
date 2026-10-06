@@ -1,6 +1,6 @@
 # CyberAssess
 
-CyberAssess is a multi-framework compliance maturity platform. Its FastAPI, Jinja2, HTMX, and Tailwind portal supports desk-review pre-fill, deterministic scoring, reports, RFIs, and UCC de-duplication.
+CyberAssess is a multi-framework compliance maturity platform. Its FastAPI, Jinja2, HTMX, and Yozora-token portal supports desk-review pre-fill, deterministic scoring, reports, RFIs, and UCC de-duplication.
 
 ## Current Plan (source of truth)
 
@@ -11,8 +11,7 @@ CyberAssess is a multi-framework compliance maturity platform. Its FastAPI, Jinj
 
 Older plans are historical only; do not use them for implementation decisions.
 
-**Current:** Phase 1 — Schema & Hierarchy. P1-1/P1-2/P1-3/P1-6 merged; P1-4/P1-5 handoffs written, not started.
-**Pre-work:** Complete.
+**Current:** Phase 6 deliverables done; Yozora UI redesign S1-S9 merged (PRs #100-#115); v2 analysis pipeline parked. Next: Track 4 (auth, hosting). Status: `tasks/2026-10-06-status-log.md`.
 **Progress tracking:** Update `tasks/todo.md` in the same change as each completed task.
 
 ## Running

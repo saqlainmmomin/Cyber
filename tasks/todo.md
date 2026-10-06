@@ -1,5 +1,11 @@
 # CyberAssess implementation tracker
 
+## Yozora S8 and S9 (2026-10-06)
+
+- [x] S8 merged (#114): requests, RFI, report versions, applicability, comparison, client pages.
+- [x] S9 merged (#115): error pages, global behaviour, allow-list deleted, Tailwind retired.
+- [ ] Next: Track 4 (auth, hosting); known follow-ups in `tasks/2026-10-06-status-log.md`.
+
 ## Yozora S7 orchestration (2026-10-05)
 
 - [x] Integrate and contract-test the analysis, cards, pages, findings, report, and narrative groups.
@@ -17,7 +23,7 @@
 - [x] Add focused report contract tests and run template lint plus focused regressions.
 - [x] Review scoped diff, commit only the report group files, and report misses/exceptions.
 
-**Updated:** 2026-10-04 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
+**Updated:** 2026-10-06 · **Source:** `2026-09-21-002-revised-implementation-plan.md` · **Current focus:** Phase 6
 
 ## S6 adversarial review fixes (2026-10-04)
 

@@ -1,6 +1,6 @@
 # CyberAssess
 
-AI-powered multi-framework compliance maturity platform with a Jinja2 + HTMX + Tailwind web portal. Desk-review pre-fill, adaptive tiering, domain screening, two-call Claude gap analysis, deterministic scoring, and board-ready PDF/RFI reports — controls de-duplicated across frameworks via Unified Control Clusters (UCC).
+AI-powered multi-framework compliance maturity platform with a Jinja2 + HTMX web portal (Yozora design tokens). Desk-review pre-fill, adaptive tiering, domain screening, two-call Claude gap analysis, deterministic scoring, and board-ready PDF/RFI reports — controls de-duplicated across frameworks via Unified Control Clusters (UCC).
 
 ## Supported Frameworks
 
@@ -27,7 +27,7 @@ Controls that overlap across frameworks are mapped to shared **Unified Control C
 ## Architecture
 
 ```
-FastAPI · Jinja2 + HTMX + Tailwind (web portal) · SQLite via SQLAlchemy · Claude API (Anthropic) · fpdf2
+FastAPI · Jinja2 + HTMX (web portal, Yozora design tokens) · SQLite via SQLAlchemy · Claude API (Anthropic) · fpdf2
 ```
 
 **Assessment flow (web portal):**
@@ -105,7 +105,7 @@ The scoring engine, PDF export, initiative clustering, and report endpoints are 
 ## Stack
 
 - Python 3.13 + FastAPI
-- Jinja2 + HTMX + Tailwind — server-rendered web portal
+- Jinja2 + HTMX — server-rendered web portal styled with Yozora design tokens
 - SQLite via SQLAlchemy (JSON stored as TEXT columns)
 - [Anthropic Claude API](https://docs.anthropic.com) with prompt caching
 - pdfplumber + python-docx — document text extraction
