@@ -102,6 +102,7 @@ _templates = Jinja2Templates(
 )
 configure_templates(_templates)
 _templates.env.filters["display_date"] = lambda value: display_date(value)
+_templates.env.filters["cap"] = lambda value: (value or "").replace("_", " ").capitalize()
 
 
 def _iso(value) -> str | None:
@@ -677,14 +678,8 @@ def render_html(document: dict, *, embed_fonts: bool) -> str:
             "p1": document.get("theme", {}).get("primary", "#161A5C"),
             "p2": document.get("theme", {}).get("secondary", "#2D3FD3"),
             "acc": document.get("theme", {}).get("accent", "#12B3A6"),
-            "obs_pages": [
-                document.get("observations", [])[start : start + 4]
-                for start in range(0, presentation["observation_pages"] * 4, 4)
-            ] or [[]],
-            "reg_pages": [
-                document.get("appendices", {}).get("requirement_register", [])[start : start + 21]
-                for start in range(0, presentation["register_pages"] * 21, 21)
-            ] or [[]],
+            "obs_pages": presentation["obs_pages"],
+            "reg_pages": presentation["reg_pages"],
             "ref_by_finding": {
                 observation.get("finding_id"): observation.get("ref")
                 for observation in document.get("observations", [])
