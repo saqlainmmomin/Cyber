@@ -28,5 +28,21 @@ Empty the lint allow-list as far as is honest, convert residual Tailwind utility
 - Run what you can: focused tests, `tests/test_design_lint.py`, `python -m design.tokens_tool check`, Jinja parse of every template you change, `node --check` for JS.
 
 ## Results
-(Codex fills in.)
 
+### Implemented
+
+- Re-scanned the allow-listed templates. The 12 named S9 candidates contain no Tailwind utility classes; `mt-lg`, `form-grid`, `grow`, `inline`, `ring`, `sr-only`, `static`, and similar names are existing Yozora classes/tokens. No residual template class conversion was needed, so no ids, `hx-*`, `data-*`, or layout behavior changed.
+- Removed `tests/design_lint_allowlist.txt` and adapted `tests/test_design_lint.py` minimally: print templates under `app/templates/reports/` remain excluded, every non-print template is explicit in `MIGRATED_TEMPLATES`, and the guard now asserts complete non-print migration.
+- Fixed the one remaining non-print lint exception in `pages/firm_settings.html`: the custom-accent fallback now reads `accent_presets.get('midnight')` instead of hard-coding the same Midnight token. Existing migration-map coverage already includes this template; no new migration row was needed.
+- Retired the Tailwind link, `tailwind.config.js`, and the `css:build`/`css:watch` package scripts and dependency. The pre-retirement `npm run css:build` completed successfully. `style.css` and its base link remain because live HTMX indicator/swap behavior and the Evidence inventory drop-zone use it; no print template loads either stylesheet. The base `h-full` class remains as an inert legacy marker because this handoff limits `base.html` edits to stylesheet links.
+- No print templates were edited. No guard files, `tasks/todo.md`, backend code, services, prompts, scoring, PDF, models, migrations, or validation answer keys were touched. No migration-map rows were added because no template was converted in this pass.
+
+### Verification
+
+- Focused: `OPENROUTER_KEY="" .venv/bin/pytest -q tests/test_design_lint.py tests/test_yozora_firm_settings.py tests/test_p6_9_file_set.py tests/test_p6_7b_add_to_rfi.py tests/test_p6_8_b2_docx_xlsx.py --no-header -p no:cacheprovider -W ignore` — **57 passed**.
+- Full suite: `OPENROUTER_KEY="" .venv/bin/pytest -q --no-header -p no:cacheprovider -W ignore` — **1535 passed, 30 skipped** in 201.33s.
+- `python -m design.tokens_tool check` — generated design files match `tokens.json`.
+- `node --check app/static/js/app.js` — passed.
+- Jinja parse of all **92** templates — passed.
+- `git diff --check` and `package.json` JSON parse — passed.
+- Pixel gate was not run, as required by the sandbox rule; the orchestrator runs the single gate pass. Print-template differences remain intentionally out of scope.
