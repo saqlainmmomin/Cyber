@@ -5,7 +5,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -1569,6 +1569,14 @@ def _inventory_query_context(request: Request) -> dict:
     }
 
 
+def _inventory_path_for_fragment(request: Request, assessment: Assessment) -> str | None:
+    # htmx sends the absolute page URL; only the path decides which inventory page asked.
+    current_path = urlparse(request.headers.get("HX-Current-URL", "")).path
+    if current_path == f"/assessments/{assessment.id}/evidence":
+        return current_path
+    return None
+
+
 def _inventory_fragment_context(
     db: Session,
     assessment: Assessment | None = None,
@@ -1578,6 +1586,7 @@ def _inventory_fragment_context(
     source: str | None = None,
     status: str | None = None,
     search: str | None = None,
+    inventory_path: str | None = None,
 ) -> dict:
     engagement_id = engagement_id or (assessment.engagement_id if assessment else None)
     owner_assessments = (
@@ -1635,8 +1644,10 @@ def _inventory_fragment_context(
         "legacy_inventory_rows": [] if (source or status or search) else legacy_documents,
         "inventory_display_dates": display_dates,
         "fragment_query": urlencode(fragment_params),
-        "inventory_filtered": bool(fragment_params),
-        "inventory_path": f"/engagements/{engagement_id}/evidence" if engagement_id else "/evidence",
+        "inventory_filtered": bool(source or status or search),
+        "inventory_path": inventory_path or (
+            f"/engagements/{engagement_id}/evidence" if engagement_id else "/evidence"
+        ),
         "request_assessment_id": (
             scope_assessment_id
             or (assessment.id if assessment else None)
@@ -1702,15 +1713,15 @@ def evidence_inventory_page(
     )
 
 
-@router.get("/engagements/{engagement_id}/evidence", response_class=HTMLResponse)
-def engagement_evidence_inventory_page(
+def _render_evidence_inventory_page(
     request: Request,
-    engagement_id: str,
-    db: Session = Depends(get_db),
+    db: Session,
+    engagement: Engagement,
+    *,
+    selected_assessment: Assessment | None = None,
+    assessment_chrome: bool = False,
 ):
-    engagement = db.get(Engagement, engagement_id)
-    if engagement is None:
-        raise HTTPException(404, "Engagement not found")
+    engagement_id = engagement.id
     client = db.get(Client, engagement.client_id)
     assessments = (
         db.query(Assessment)
@@ -1720,13 +1731,19 @@ def engagement_evidence_inventory_page(
     )
     query = request.query_params
     preview_state = query.get("state", "default")
-    selected_assessment = next(
-        (item for item in assessments if item.id == query.get("assessment")),
-        None,
-    )
+    if selected_assessment is None:
+        selected_assessment = next(
+            (item for item in assessments if item.id == query.get("assessment")),
+            None,
+        )
     upload_assessment = selected_assessment or (assessments[0] if assessments else None)
     source = query.get("source") if query.get("source") in evidence_inventory.SOURCES else None
     status = query.get("status") if query.get("status") in evidence_inventory.STATUS_LABELS else None
+    inventory_path = (
+        f"/assessments/{selected_assessment.id}/evidence"
+        if assessment_chrome and selected_assessment
+        else f"/engagements/{engagement_id}/evidence"
+    )
     fragment = _inventory_fragment_context(
         db,
         upload_assessment,
@@ -1735,6 +1752,7 @@ def engagement_evidence_inventory_page(
         source=source,
         status=status,
         search=query.get("search") or None,
+        inventory_path=inventory_path,
     )
     freshness = (
         prefill_freshness.freshness(db, selected_assessment)
@@ -1747,12 +1765,17 @@ def engagement_evidence_inventory_page(
         item_freshness = freshness if item is selected_assessment else prefill_freshness.freshness(db, item)
         if item_freshness.last_prefill_at and item_freshness.new_since_last_prefill:
             prefill_notes.append({"assessment": item, "freshness": item_freshness})
-    filtered = bool(selected_assessment or source or status or query.get("search"))
-    engagement_total = (
-        len(evidence_inventory.inventory_rows(db, engagement_id))
-        if filtered
-        else len(fragment["inventory_rows"])
+    unfiltered_rows = evidence_inventory.inventory_rows(
+        db,
+        engagement_id,
+        assessment_id=selected_assessment.id if selected_assessment else None,
     )
+    engagement_rows = (
+        unfiltered_rows
+        if assessment_chrome
+        else evidence_inventory.inventory_rows(db, engagement_id)
+    )
+    inventory_filtered = bool(source or status or query.get("search"))
     return templates.TemplateResponse(
         "pages/evidence_inventory.html",
         {
@@ -1769,14 +1792,56 @@ def engagement_evidence_inventory_page(
             "selected_status": status,
             "search": query.get("search", ""),
             "view_state": preview_state,
-            "upload_assessment_id": upload_assessment.id if upload_assessment else None,
+            "upload_assessment_id": (
+                upload_assessment.id if upload_assessment and engagement.status != "archived" else None
+            ),
+            "document_actions": {} if engagement.status == "archived" else fragment["document_actions"],
             "freshness": freshness,
             "prefill_notes": prefill_notes,
-            "inventory_filtered": filtered,
-            "engagement_total": engagement_total,
+            "inventory_filtered": inventory_filtered,
+            "engagement_total": len(engagement_rows),
+            "inventory_empty": not unfiltered_rows,
+            "engagement_archived": engagement.status == "archived",
+            "read_only": engagement.status == "archived",
+            "assessment_chrome": assessment_chrome,
             "doc_categories": [item.value for item in DocumentCategory],
             "cross_engagement": False,
         },
+    )
+
+
+@router.get("/engagements/{engagement_id}/evidence", response_class=HTMLResponse)
+def engagement_evidence_inventory_page(
+    request: Request,
+    engagement_id: str,
+    db: Session = Depends(get_db),
+):
+    engagement = db.get(Engagement, engagement_id)
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    return _render_evidence_inventory_page(request, db, engagement)
+
+
+@router.get("/assessments/{assessment_id}/evidence", response_class=HTMLResponse)
+def assessment_evidence_inventory_page(
+    request: Request,
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise HTTPException(404, "Assessment not found")
+    if assessment.engagement_id is None:
+        return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
+    engagement = db.get(Engagement, assessment.engagement_id)
+    if engagement is None:
+        return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
+    return _render_evidence_inventory_page(
+        request,
+        db,
+        engagement,
+        selected_assessment=assessment,
+        assessment_chrome=True,
     )
 
 
@@ -1821,7 +1886,7 @@ def render_assessment_detail(
     if request.query_params.get("tab") == "documents":
         if assessment.engagement_id:
             return RedirectResponse(
-                f"/engagements/{assessment.engagement_id}/evidence?assessment={assessment.id}",
+                f"/assessments/{assessment.id}/evidence",
                 status_code=303,
             )
         return RedirectResponse(f"/assessments/{assessment.id}", status_code=303)
@@ -2226,7 +2291,12 @@ async def upload_document_web(
         "partials/document_list.html",
         {
             "request": request,
-            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+            **_inventory_fragment_context(
+                db,
+                assessment,
+                inventory_path=_inventory_path_for_fragment(request, assessment),
+                **_inventory_query_context(request),
+            ),
         },
     )
     return _with_toast(response, "Document uploaded")
@@ -2249,7 +2319,12 @@ def _evidence_action_response(request: Request, db: Session, assessment: Assessm
         "partials/document_list.html",
         {
             "request": request,
-            **_inventory_fragment_context(db, assessment, **_inventory_query_context(request)),
+            **_inventory_fragment_context(
+                db,
+                assessment,
+                inventory_path=_inventory_path_for_fragment(request, assessment),
+                **_inventory_query_context(request),
+            ),
         },
     )
     return _with_toast(response, toast) if toast else response

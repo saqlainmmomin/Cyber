@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/layout.html" import assessment_tabs, seg %}
 {% from "components/ui.html" import alert, button, icon, link_button, pill %}
 
 {% block title %}{{ assessment.display_name }} request{% endblock %}
 
 {% block crumbs %}
   {% if client %}<a class="hide-sm" href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}
-  {% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/evidence">Evidence</a><svg class="i sl"><use href="#i-slash"/></svg><a href="/engagements/{{ engagement.id }}/requests">Requests</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}
-  <b>{{ assessment.display_name }} request</b>
+  {% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}
+  <a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Requests</b>
 {% endblock %}
 
 {% block content %}
@@ -30,9 +30,12 @@
   </div>
 </header>
 
-{% if engagement %}
-<div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
-{% endif %}
+<div style="margin-bottom:var(--s-5)">{{ assessment_tabs(assessment, "evidence") }}</div>
+{% set evidence_sections = [
+  {"label": "Inventory", "key": "inventory", "href": "/assessments/" ~ assessment.id ~ "/evidence"},
+  {"label": "Requests", "key": "requests", "href": "/assessments/" ~ assessment.id ~ "/rfi"}
+] %}
+<div style="margin-bottom:var(--s-6)">{{ seg(evidence_sections, "requests") }}</div>
 
 {% if preview_state == "loading" %}
 <div class="solid card"><span class="skel" style="width:40%"></span><span class="skel" style="width:90%;margin-top:14px"></span><span class="skel" style="width:70%;margin-top:14px"></span><span class="skel" style="width:85%;margin-top:14px"></span></div>

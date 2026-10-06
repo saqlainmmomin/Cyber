@@ -25,7 +25,7 @@ Binding spec: `screens/IA-SPEC.md`; picture: `flow-map.html`. Summary:
 
 - **Side menu** (every staff screen, Settings at the bottom): Home, Clients, Engagements, Review (count badge), Evidence, Reports. `aria-current="page"` marks the section; anything inside an engagement or assessment marks Engagements, except the cross-engagement views (Review, Evidence with `?state=all`, Reports).
 - **Engagement tabs** (`<nav class="tabs" aria-label="Engagement">`): Overview, Evidence, Findings and actions, Reports.
-- **Assessment tabs** (`<nav class="tabs" aria-label="Assessment">`): Overview, Scope, Questionnaire, Review, Report.
+- **Assessment tabs** (`<nav class="tabs" aria-label="Assessment">`): Overview, Scope, Evidence, Questionnaire, Review, Report.
 - **Stepper**: one five-stage stepper (Scope, Evidence, Questionnaire, Review, Report), on the assessment Overview only. The engagement Overview has none; its assessments table shows Stage and Next step columns.
 - **Sub-views** use one `.seg` row under the tab row, never a second `.tabs` row: Evidence (Inventory, Requests), Review (Queue, Conclusions, Findings, Workpaper), Report (Report, Versions, Applicability, ISO 27001 only). A request page shows only its own seg (Items, Versions, Client links).
 - **Detail pages** keep the parent tab row with that tab selected and add the page name as the last crumb.

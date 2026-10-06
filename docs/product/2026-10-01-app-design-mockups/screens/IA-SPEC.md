@@ -2,10 +2,12 @@
 
 Approved by Saqlain from `../flow-map.html`. Every screen follows this. Sample data: client **Meridian Ledger Technologies**, engagement **FY2026 privacy readiness** (review period 1 Apr 2025 to 31 Mar 2026, evidence cut-off 15 Mar 2026), assessments **Head office** (DPDPA 2023, ISO 27001:2022) and **Payments subsidiary** (ISO 27001:2022).
 
+**Revision 2026-10-06:** The live assessment shell now includes an Evidence tab between Scope and Questionnaire. The Evidence tab owns the assessment-scoped Inventory and Requests sub-views; the five-stage stepper remains unchanged.
+
 ## Levels and tabs
 - **Side menu** (same on every staff screen, Settings at the bottom): Home (`b1-home.html`), Clients (`b1-clients.html`), Engagements (`b2-engagement_list.html`), Review (`b5-review-queue.html`, count badge), Evidence (`b4-evidence.html?state=all`), Reports (`b6-report_snapshots.html`). `aria-current="page"` on the section the page belongs to: Engagements for anything inside an engagement or assessment, except the cross-engagement views.
 - **Engagement tabs** (`<nav class="tabs" aria-label="Engagement">`): Overview `b2-engagement_detail.html`, Evidence `b4-evidence.html`, Findings and actions `b2-remediation_tracker.html`, Reports `b2-integrated_reports.html`.
-- **Assessment tabs** (`<nav class="tabs" aria-label="Assessment">`): Overview `b3-hub.html`, Scope `b3-scope.html`, Questionnaire `b3-questionnaire.html`, Review `b5-review-queue.html`, Report `b5-report.html`.
+- **Assessment tabs** (`<nav class="tabs" aria-label="Assessment">`): Overview `b3-hub.html`, Scope `b3-scope.html`, Evidence `b4-evidence.html`, Questionnaire `b3-questionnaire.html`, Review `b5-review-queue.html`, Report `b5-report.html`.
 - There is no Documents tab, no AWS evidence tab, no Remediation tab, no Integrated reports tab any more.
 - Pages below a tab (detail pages, sub-views) keep the parent tab row with that tab selected, and add the page name as the last breadcrumb.
 

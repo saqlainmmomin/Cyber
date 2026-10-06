@@ -1,11 +1,15 @@
 {% extends "base.html" %}
-{% from "components/layout.html" import engagement_tabs, seg %}
+{% from "components/layout.html" import assessment_tabs, engagement_tabs, seg %}
 {% from "components/ui.html" import alert, button, icon, link_button, skeleton, status %}
 
-{% block title %}Evidence{% if engagement %} — {{ engagement.name }}{% endif %}{% endblock %}
+{% block title %}Evidence{% if assessment_chrome and assessment %} — {{ assessment.display_name }}{% elif engagement %} — {{ engagement.name }}{% endif %}{% endblock %}
 
 {% block crumbs %}
-  {% if engagement %}
+  {% if assessment_chrome and assessment %}
+  {% if client %}<a href="/clients/{{ client.id }}" class="hide-sm">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>{% endif %}
+  {% if engagement %}<a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg>{% endif %}
+  <a href="/assessments/{{ assessment.id }}">{{ assessment.display_name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Evidence</b>
+  {% elif engagement %}
   <a href="/clients/{{ client.id }}">{{ client.name }}</a><svg class="i sl hide-sm"><use href="#i-slash"/></svg>
   <a href="/engagements/{{ engagement.id }}" class="hide-sm">{{ engagement.name }}</a><svg class="i sl"><use href="#i-slash"/></svg><b>Evidence</b>
   {% else %}<b>Evidence</b>{% endif %}
@@ -15,20 +19,21 @@
 {% set state = view_state or "default" %}
 {% set action_query = "?" ~ fragment_query if fragment_query else "" %}
 {% set period = engagement_period(engagement) if engagement else none %}
-{% set engagement_empty = engagement and not engagement_total and not inventory_filtered %}
+{% set engagement_empty = engagement and inventory_empty and not inventory_filtered %}
+{% set read_only = engagement_archived|default(false) %}
 <header class="page-head">
   <div>
-    <h1>{% if engagement %}{{ engagement.name }}{% else %}Evidence{% endif %}</h1>
-    {% if engagement %}<p class="meta-line">{{ client.name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence inventory{% endif %}</p>{% else %}<p class="meta-line">Every file across your engagements</p>{% endif %}
+    <h1>{% if assessment_chrome and assessment %}{{ assessment.display_name }}{% elif engagement %}{{ engagement.name }}{% else %}Evidence{% endif %}</h1>
+    {% if assessment_chrome and assessment %}<p class="meta-line">{{ assessment.company_name }}{% if engagement %} · {{ engagement.name }}{% endif %}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence inventory{% endif %}</p>{% elif engagement %}<p class="meta-line">{{ client.name }}{% if period %} · {{ period.period }} · Evidence cut-off {{ period.cutoff }}{% else %} · Evidence inventory{% endif %}</p>{% else %}<p class="meta-line">Every file across your engagements</p>{% endif %}
   </div>
-  {% if engagement and state != "loading" %}
+  {% if engagement and state != "loading" and not read_only %}
   <div class="acts">
     <div class="anchor">
       <button class="btn secondary lead" type="button" id="add-from" aria-haspopup="menu" aria-expanded="false">{{ icon("plus") }}Add from{{ icon("chev-d") }}</button>
       <div class="menu" id="add-from-menu" role="menu" aria-label="Add evidence from">
         <a href="/engagements/{{ engagement.id }}/aws-evidence" role="menuitem">{{ icon("cloud") }}Pull from AWS</a>
         {% set menu_assessment = assessment or (assessment_options[0] if assessment_options else none) %}
-        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("history") }}Reuse from another assessment</a><a href="/engagements/{{ engagement.id }}/requests" role="menuitem">{{ icon("link") }}Ask the client</a>{% endif %}
+        {% if menu_assessment %}<a href="/assessments/{{ menu_assessment.id }}/evidence-reuse" role="menuitem" data-evidence-reuse-link>{{ icon("history") }}Reuse from another assessment</a><a href="{% if assessment_chrome %}/assessments/{{ menu_assessment.id }}/rfi?tab=links{% else %}/engagements/{{ engagement.id }}/requests{% endif %}" role="menuitem">{{ icon("link") }}Ask the client</a>{% endif %}
       </div>
     </div>
     {% if upload_assessment_id and not engagement_empty %}<button class="btn primary lead" type="button" data-upload-open data-head-upload>{{ icon("upload") }}Upload evidence</button>{% endif %}
@@ -36,7 +41,18 @@
   {% endif %}
 </header>
 
-{% if engagement %}
+{% if read_only %}
+<div data-archived-banner class="alert c-medium" role="status" style="margin-bottom:var(--s-4)">{{ icon("lock") }}<div><b>This evidence inventory is read-only</b>Its engagement is archived. Unarchive it in <a href="/settings#engagement-archive"><u>Settings</u></a> to make changes.</div></div>
+{% endif %}
+
+{% if assessment_chrome and assessment %}
+<div style="margin-bottom:var(--s-5)">{{ assessment_tabs(assessment, "evidence") }}</div>
+{% set evidence_sections = [
+  {"label": "Inventory", "key": "inventory", "href": "/assessments/" ~ assessment.id ~ "/evidence"},
+  {"label": "Requests", "key": "requests", "href": "/assessments/" ~ assessment.id ~ "/rfi"}
+] %}
+<div style="margin-bottom:var(--s-6)">{{ seg(evidence_sections, "inventory") }}</div>
+{% elif engagement %}
 <div>
 <div style="overflow-x:auto;margin-bottom:var(--s-5)">{{ engagement_tabs(engagement, "evidence") }}</div>
 {% set evidence_sections = [{"label": "Inventory", "key": "inventory", "href": "/engagements/" ~ engagement.id ~ "/evidence"}] %}
@@ -63,7 +79,7 @@
       <label class="btn secondary" for="file-input">Choose files</label><input id="file-input" type="file" name="file" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp" required hidden data-upload-file>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,320px));gap:var(--s-4);margin-top:var(--s-4)">
-      {% if assessment_options %}<div><label class="label" for="upload-assessment">Applies to</label><label class="field"><select id="upload-assessment" name="upload_assessment_id" aria-label="Applies to" data-upload-assessment>{% for option in assessment_options %}<option value="{{ option.id }}"{% if option.id == upload_assessment_id %} selected{% endif %}>{{ option.display_name }}</option>{% endfor %}</select></label></div>{% endif %}
+      {% if assessment_options and not assessment_chrome %}<div><label class="label" for="upload-assessment">Applies to</label><label class="field"><select id="upload-assessment" name="upload_assessment_id" aria-label="Applies to" data-upload-assessment>{% for option in assessment_options %}<option value="{{ option.id }}"{% if option.id == upload_assessment_id %} selected{% endif %}>{{ option.display_name }}</option>{% endfor %}</select></label></div>{% endif %}
       <div><label class="label" for="upload-category">Category</label><label class="field"><select id="upload-category" name="category" aria-label="Category">{% for category in doc_categories %}<option value="{{ category }}">{{ category|replace("_", " ")|capitalize }}</option>{% endfor %}</select></label></div>
     </div>
     <div id="upload-progress" style="margin-top:var(--s-5);visibility:hidden" data-upload-progress><div class="hrow" style="justify-content:space-between;margin-bottom:var(--s-2)"><span class="status"><span class="st prog"></span>Uploading <span id="file-name-display" data-file-name></span></span><span class="sub num" data-upload-percent>0%</span></div><div class="progress-bar"><i id="upload-progress-bar"></i></div></div>
@@ -79,9 +95,9 @@
   <label class="field">{{ icon("search") }}<input name="search" value="{{ search }}" placeholder="Search evidence" aria-label="Search evidence"></label>
   <label class="field sel"><select name="source" aria-label="Source"><option value="">Source</option>{% for key, label in [("upload", "Upload"), ("aws", "AWS"), ("client_link", "Client link"), ("reused", "Reused")] %}<option value="{{ key }}"{% if selected_source == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
   <label class="field sel"><select name="status" aria-label="Status"><option value="">Status</option>{% for key, label in EVIDENCE_STATUS_LABELS.items() %}<option value="{{ key }}"{% if selected_status == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-  {% if engagement and assessment %}
+  {% if engagement and assessment and not assessment_chrome %}
   <input type="hidden" name="assessment" value="{{ assessment.id }}">
-  {% elif engagement %}
+  {% elif engagement and not assessment_chrome %}
   <label class="field sel"><select name="assessment" aria-label="Assessment"><option value="">Assessment</option>{% for option in assessment_options %}<option value="{{ option.id }}">{{ option.display_name }}</option>{% endfor %}</select></label>
   {% else %}
   <label class="field sel"><select name="engagement" aria-label="Engagement"><option value="">Engagement</option>{% for option in engagements %}<option value="{{ option.id }}"{% if selected_engagement_id == option.id %} selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
@@ -89,7 +105,7 @@
   <span class="sp"></span>
   <button class="sr-only" type="submit">Filter</button>
 </form>
-{% if engagement and assessment %}
+{% if engagement and assessment and not assessment_chrome %}
 {% set clear_params = [] %}
 {% for key, value in [("source", selected_source), ("status", selected_status), ("search", search)] %}{% if value %}{% set _ = clear_params.append(key ~ "=" ~ value|urlencode) %}{% endif %}{% endfor %}
 <div class="hrow" style="margin:calc(var(--s-1) * -1) 0 var(--s-4);gap:var(--s-3)"><span class="sub">Showing</span><a class="chip" style="gap:6px" href="{{ request.url.path }}{% if clear_params %}?{{ clear_params|join('&') }}{% endif %}" aria-label="Remove {{ assessment.display_name }} filter">{{ assessment.display_name }}{{ icon("x", "", "width:12px;height:12px") }}</a><span class="sub">{{ inventory_counts.get("total", 0) }} of {{ engagement_total }} items</span></div>
