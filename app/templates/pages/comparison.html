@@ -6,7 +6,7 @@
 {% set preview = preview_state|default("") %}
 
 {% macro status_label(value) -%}
-  {% if value %}{{ value|replace("_", " ")|title }}{% else %}Not present{% endif %}
+  {% if value %}{{ value|replace("_", " ")|capitalize }}{% else %}Not present{% endif %}
 {%- endmacro %}
 
 {% macro status_tone(value) -%}

@@ -72,7 +72,7 @@ EXPECTED_SECURITY_HEADERS = {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
     "content-security-policy": (
-        "default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; "
+        "default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; form-action 'self'; "
         "frame-ancestors 'none'; base-uri 'none'"
     ),
 }
@@ -567,8 +567,11 @@ def test_valid_page_is_scoped_to_the_link(db, http, texts):
         client.id, engagement.id, assessment.id, consultant_upload.evidence.id, link.token,
     ):
         assert forbidden not in body, forbidden
-    for external in ("http://", "https://", " action="):
-        assert external not in body, external
+    assert not re.search(r"<script\b(?![^>]*\bsrc=)", body, re.IGNORECASE)
+    for _tag, source in re.findall(r"<(script|link)\b[^>]*?\b(?:src|href)=[\"']([^\"']+)", body, re.IGNORECASE):
+        assert source.startswith("/static/"), source
+    assert "http://" not in body and "https://" not in body
+    assert " action=" not in body
 
 
 # --------------------------------------------------------------------------- #
@@ -838,6 +841,7 @@ def test_revocation(db, http, texts):
     again = http.post(f"/engagements/{engagement.id}/magic-links/{created.link.id}/revoke")
     assert again.status_code == 200
     assert "Magic link is already revoked." in again.text
+    assert "The link was not created" not in again.text
     with pytest.raises(m.MagicLinkConflict):
         m.revoke_link(db, engagement_id=engagement.id, link_id=created.link.id, actor="consultant")
     with pytest.raises(m.MagicLinkNotFound) as info:

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-accent="midnight">
+<html lang="en" class="no-js" data-theme="light" data-accent="midnight">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,14 +22,6 @@
     <div class="brand client-brand">
       <span class="mark">{{ initials }}</span>{{ firm_name }}
     </div>
-
-    {% if remaining > 0 %}<form id="client-upload" method="post" enctype="multipart/form-data">
-      <input type="hidden" id="item-key" name="item_key" value="">
-      <input type="file" id="file-upload" name="file" class="sr-only" tabindex="-1" aria-label="Choose a file to upload">
-      <select id="requested-items" class="sr-only" tabindex="-1" aria-hidden="true">
-        {% for item in items %}<option value="{{ item.key }}">{{ item.title }}</option>{% endfor %}
-      </select>
-    </form>{% endif %}
 
     {% if contact_first_name %}
     <p class="client-lede" data-contact-greeting>{{ contact_first_name }}, {{ firm_name }} needs these items. Send them in any order.</p>
@@ -83,7 +75,16 @@
           </div>
           {% if not item.received and state != "done" and remaining > 0 %}
           <div class="end">
-            {% if item.uploading %}<span class="num client-upload-percent">62%</span>{% else %}<button type="button" class="btn secondary touch lead" data-item="{{ item.key }}"><svg class="i"><use href="#i-upload"></use></svg>Choose file</button>{% endif %}
+            {% if item.uploading %}<span class="num client-upload-percent">62%</span>{% else %}
+            {% set upload_id = "file-upload" if loop.first else "file-upload-" ~ loop.index0 %}
+            {% set item_id = "item-key" if loop.first else "item-key-" ~ loop.index0 %}
+            <form method="post" enctype="multipart/form-data" data-upload-form data-item="{{ item.key }}" class="client-upload-form">
+              <input type="hidden" id="{{ item_id }}" name="item_key" value="{{ item.key }}">
+              <input type="file" id="{{ upload_id }}" name="file" class="sr-only" data-upload-input tabindex="-1" aria-label="Choose a file to upload for {{ item.title }}">
+              <label for="{{ upload_id }}" class="btn secondary touch lead"><svg class="i"><use href="#i-upload"></use></svg>Choose file</label>
+              <button type="submit" class="btn secondary touch client-upload-submit">Upload file</button>
+            </form>
+            {% endif %}
           </div>
           {% endif %}
         </li>
@@ -102,18 +103,6 @@
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
   </svg>
-  <script>
-    const root = document.documentElement;
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('dark')) root.dataset.theme = 'dark';
-    const upload = document.getElementById('file-upload');
-    if (upload) {
-      document.querySelectorAll('[data-item]').forEach((button) => button.addEventListener('click', () => {
-        document.getElementById('item-key').value = button.dataset.item;
-        upload.click();
-      }));
-      upload.addEventListener('change', () => { if (upload.files.length) document.getElementById('client-upload').submit(); });
-    }
-  </script>
+  <script src="/static/js/magic-client.js"></script>
 </body>
 </html>

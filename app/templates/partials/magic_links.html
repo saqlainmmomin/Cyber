@@ -9,7 +9,7 @@
   <div class="solid req"><div class="req-head"><div class="grow"><span class="skel" style="width:160px;height:16px"></span><span class="skel" style="width:260px;margin-top:var(--s-3)"></span></div><span class="skel pill-s" style="width:64px"></span></div><div class="req-prog"><span class="skel" style="width:90px"></span><div class="progress-bar"><i style="width:0"></i></div></div><div class="skel-stack" style="padding:var(--s-3) var(--s-6) var(--s-5)"><span class="skel" style="width:60%"></span><span class="skel" style="width:48%"></span><span class="skel" style="width:54%"></span></div></div>
   {% else %}
   {% if error %}
-  {{ alert("The link was not created", error, "noncompliant") }}
+  {{ alert(error_title|default("The link was not created"), error, "noncompliant") }}
   {% endif %}
 
   {% if new_link_url %}

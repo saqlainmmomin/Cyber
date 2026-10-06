@@ -20,7 +20,6 @@
 
 {% macro snapshot_actions(row) -%}
 <div class="s8-version-actions">
-  {% if row.state != "issued" %}<a class="btn ghost sm" href="/assessments/{{ assessment.id }}/compare/{{ assessment.id }}">Compare</a>{% endif %}
   <a class="btn ghost sm lead" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file">{{ icon("download") }}{{ "PDF" if row.snapshot.format == "pdf" else "View" }}</a>
   {% if row.snapshot.type == "board_report" %}
     {% if row.document_schema_version == 3 %}
@@ -75,7 +74,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-head"><div><h1>Report versions</h1><p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p></div><div class="acts">{% if show_generate %}<form hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name"><input type="hidden" name="type" value="gap_report"><button type="submit" class="btn primary">Generate gap report</button></form>{% elif preview == "error" %}<button class="btn primary" type="button">Generate gap report</button>{% endif %}</div></div>
+{% set design_preview = request.url.path.startswith("/design/pages/") %}
+{% set active_report_type = "board_report" if panel == "board" else "gap_report" %}
+{% set active_report_label = "board report" if panel == "board" else "gap report" %}
+<div class="page-head"><div><h1>Report versions</h1><p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p></div><div class="acts">{% if not design_preview %}<a class="btn ghost sm" href="/assessments/{{ assessment.id }}/workpaper">Workpaper (live) →</a>{% endif %}{% if show_generate %}<form data-report-generate hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name"><input type="hidden" name="type" value="{{ active_report_type }}" data-report-type><button type="submit" class="btn primary" data-report-generate-label>Generate {{ active_report_label }}</button></form>{% elif preview == "error" %}<button class="btn primary" type="button" data-report-generate-label>Generate {{ active_report_label }}</button>{% endif %}</div></div>
 {{ assessment_tabs(assessment, "report") }}
 <div class="s8-report-seg">{{ report_seg(assessment, "versions") }}</div>
 
@@ -92,7 +94,7 @@
   <div data-panel="gap"{% if panel == "board" %} hidden{% endif %}>{{ snapshot_group("gap_report", groups.get("gap_report", [])) }}</div>
   <div data-panel="board"{% if panel != "board" %} hidden{% endif %}>{{ snapshot_group("board_report", groups.get("board_report", [])) }}</div>
 </div>
-{{ snapshot_group("workpaper", groups.get("workpaper", [])) }}
+{% if not design_preview %}{{ snapshot_group("workpaper", groups.get("workpaper", [])) }}{% endif %}
 {% endif %}
 
 {% if preview == "issue" %}
@@ -109,6 +111,11 @@ document.querySelectorAll('[data-scope]').forEach((scope) => {
     event.preventDefault();
     scope.querySelectorAll('[data-tab]').forEach((item) => item.setAttribute('aria-selected', item === tab ? 'true' : 'false'));
     scope.querySelectorAll('[data-panel]').forEach((panel) => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; });
+    const form = document.querySelector('[data-report-generate]');
+    const type = form?.querySelector('[data-report-type]');
+    const label = form?.querySelector('[data-report-generate-label]');
+    if (type) type.value = tab.dataset.tab === 'board' ? 'board_report' : 'gap_report';
+    if (label) label.textContent = `Generate ${tab.dataset.tab} report`;
   });
 });
 </script>

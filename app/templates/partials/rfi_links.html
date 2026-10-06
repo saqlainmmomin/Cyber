@@ -2,7 +2,7 @@
 
 <section id="rfi-links" data-rfi-links class="stack">
   {% if error %}
-  {{ alert("The link was not created", error, "noncompliant") }}
+  <div data-rfi-link-error class="alert c-non">{{ icon("alert") }}<div><b>{{ error_title|default("The link was not created") }}</b>{{ error }}</div></div>
   {% endif %}
 
   {% if new_link_url %}
@@ -29,9 +29,9 @@
       <p class="help" style="margin-top:var(--s-4)">Select the items this client should receive. A link can include up to 20 items.</p>
       <div class="solid rows" style="margin-top:var(--s-3)">
         {% for item in current_items %}
-        <label class="choice" data-rfi-item="{{ item.item_id }}">
+        <label class="choice">
           <input type="checkbox" name="item_ids" value="{{ item.item_id }}">
-          <span class="txt"><b>{{ item.title }}</b><span class="sub" data-rfi-coverage="{{ item.item_id }}">{% if coverage.get(item.item_id) %}Covered by {{ coverage[item.item_id] | join(", ") }}{% else %}<span data-rfi-unsent>Not yet in an active client link</span>{% endif %}</span></span>
+          <span class="txt"><b>{{ item.title }}</b><span class="sub" data-rfi-coverage="{{ item.item_id }}">{% if coverage.get(item.item_id) %}Covered by {{ coverage[item.item_id] | join(", ") }}{% else %}<span data-rfi-unsent>Not yet in an active client link</span>{% endif %}</span>{% for received_item in received.get((current_issue.id, item.item_id), []) %}<span data-rfi-received class="sub" style="display:block;margin-top:var(--s-2)"><a href="/evidence/{{ received_item.evidence_id }}">{{ received_item.filename }}</a> · {{ received_item.status }}</span>{% endfor %}</span>
         </label>
         {% endfor %}
       </div>

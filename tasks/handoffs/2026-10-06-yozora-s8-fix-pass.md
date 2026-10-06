@@ -24,4 +24,20 @@ Branch `codex/yozora-s8` (merged A+B+C). Scope: fix the review findings below. D
 Game the gate (no magic padding or hard-coded mockup copy). The orchestrator re-runs the pixel gate (sandbox cannot bind localhost); you run the suite and design lint.
 
 ## Results
-(Codex fills in.)
+
+Implemented and left uncommitted for the orchestrator.
+
+- Report versions now submit `board_report` when the Board tab is active, update the button label with the tab, remove the invalid same-assessment Compare link, and restore the live Workpaper link/group. The design preview keeps its default without the live-only Workpaper affordance.
+- RFI issue confirmation is restored verbatim; the Client links tab demotes header generation to secondary; link errors expose `data-rfi-link-error`; receipt markers are present beside link items; and the RFI regression checks `data-rfi-item` count both before and after issue.
+- Client upload rows are independent multipart forms carrying `file` and `item_key`. JavaScript moved to `/static/js/magic-client.js`; no-JS users see a real submit control. The client response CSP is now exactly same-origin for scripts, styles, and fonts, and external asset checks are restored.
+- SoA save now reports no-op/success/error results at page level, counts saved justifications, scrolls to the first failed row, maps network failures to readable copy, leaves the primary enabled with `aria-busy`/label state, and wires All/Applicable/Excluded to `data-applicability`. Preview copy says 1000 characters.
+- Comparison labels are sentence case; revoke conflicts use a revoke-specific title; and rejected upload events no longer overwrite earlier accepted receipts.
+- Invalid-link layout uses the mockup’s 520px width and reduced top offset. No arbitrary height compensation was added: remaining client-links/comparison/upload height differences need the orchestrator’s pixel gate, while the full real RFI/SoA catalog height remains an expected data-size exception.
+
+Verification:
+
+- Passed: `pytest -q tests/test_yozora_s8_versions.py tests/test_design_lint.py tests/test_p6_9_file_set.py` — 9 passed.
+- Passed: Python compilation, Jinja parsing for all changed templates, `node --check app/static/js/magic-client.js`, and `git diff --check`.
+- Blocked at collection: the app-backed S8/RFI/magic-link suite cannot import `app.main` because pinned `boto3==1.43.101` is absent; the sandbox cannot reach package indexes to install it.
+- Pixel gate not run here because the sandbox cannot bind the local server/Chromium; orchestrator rerun required.
+- Validation answer keys were not read. Git changes remain uncommitted.

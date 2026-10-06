@@ -330,6 +330,7 @@ YOZORA_S8_PATHS = (
     "app/templates/pages/requests.html",
     "app/templates/partials/magic_links.html",
     "app/templates/partials/rfi_links.html",
+    "app/static/js/magic-client.js",
     "design/harness/gate_s8.py",
     "design/harness/seed_s8.py",
     "design/harness/seed_s8_requests.py",

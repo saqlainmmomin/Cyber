@@ -23,8 +23,11 @@ def test_s8_versions_templates_keep_report_seg_and_page_contracts():
     comparison = (ROOT / "app/templates/pages/comparison.html").read_text()
 
     assert '{{ report_seg(assessment, "versions") }}' in snapshots
+    assert 'data-report-type' in snapshots and 'board_report' in snapshots
+    assert 'Workpaper (live)' in snapshots and 'href="/assessments/{{ assessment.id }}/compare/{{ assessment.id }}"' not in snapshots
     assert '{{ report_seg(assessment, "applicability") }}' in soa
     assert 'data-soa-save' in soa and 'fetch(form.getAttribute(' in soa
+    assert 'No changes to save' in soa and 'data-applicability-filter' in soa
     assert 'data-current-report-link' in comparison
     assert "Framework Scores" in comparison
     assert "Overall Score" not in comparison

@@ -30,10 +30,10 @@ _CONSULTANT_HEADERS = {
 
 
 def _client_headers() -> dict[str, str]:
-    """Allow the standalone client page to load the vendored Yozora styles and script."""
+    """Allow the standalone client page to load only same-origin assets."""
     headers = dict(magic_service.SECURITY_HEADERS)
     headers["Content-Security-Policy"] = headers["Content-Security-Policy"].replace(
-        "style-src 'unsafe-inline'", "style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'"
+        "style-src 'unsafe-inline'", "style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'"
     )
     return headers
 
@@ -170,6 +170,8 @@ def _consultant_link_cards(
         evidence = db.get(Evidence, evidence_id) if evidence_id else None
         if not isinstance(item_key, str) or evidence is None:
             continue
+        if evidence.status == "rejected":
+            continue
         received[event.entity_id][item_key] = {
             "evidence_id": evidence.id,
             "filename": evidence.original_filename,
@@ -259,6 +261,7 @@ def _consultant_context(
     engagement_id: str,
     *,
     error: str | None = None,
+    error_title: str | None = None,
     new_link_url: str | None = None,
 ) -> dict:
     summaries = request_summary.engagement_summaries(db, engagement_id)
@@ -273,6 +276,7 @@ def _consultant_context(
         "magic_links": _consultant_link_cards(db, engagement_id, summaries),
         "client_uploads": magic_service.client_upload_rows(db, engagement_id),
         "error": error,
+        "error_title": error_title,
         "new_link_url": new_link_url,
     }
 
@@ -284,6 +288,7 @@ def _render_consultant(
     *,
     status_code: int = 200,
     error: str | None = None,
+    error_title: str | None = None,
     new_link_url: str | None = None,
     toast_message: str | None = None,
     toast_type: str = "success",
@@ -299,6 +304,7 @@ def _render_consultant(
             db,
             engagement_id,
             error=error,
+            error_title=error_title,
             new_link_url=new_link_url,
         ),
         status_code=status_code,
@@ -701,7 +707,13 @@ def revoke_magic_link(
         )
     except magic_service.MagicLinkConflict as exc:
         db.rollback()
-        return _render_consultant(request, db, engagement_id, error=exc.message)
+        return _render_consultant(
+            request,
+            db,
+            engagement_id,
+            error=exc.message,
+            error_title="The link could not be revoked",
+        )
     return _render_consultant(
         request,
         db,

@@ -23,7 +23,7 @@
     {{ link_button("Record scope", "/assessments/" ~ assessment.id ~ "?tab=scope", "primary") }}
     {% else %}
     <form data-rfi-generate-form hx-post="/api/assessments/{{ assessment.id }}/rfi/versions" hx-include="#reviewer-name, [data-rfi-omit]" hx-swap="none">
-      {{ button("Generate new RFI version", "secondary" if preview_state == "issue" else "primary", "", "", false, button_type="submit") }}
+      {{ button("Generate new RFI version", "secondary" if rfi_tab == "links" or preview_state == "issue" else "primary", "", "", false, button_type="submit") }}
     </form>
     {% endif %}
   </div>
@@ -119,7 +119,7 @@
           <a class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/snapshots/{{ row.snapshot.id }}/file">PDF</a>
           <a class="btn ghost sm" href="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/docx">DOCX</a>
           {% if row.issuable %}
-          <form data-rfi-issue-control hx-post="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-swap="none">
+          <form data-rfi-issue-control hx-post="/api/assessments/{{ assessment.id }}/rfi/versions/{{ row.snapshot.id }}/issue" hx-include="#reviewer-name" hx-swap="none" hx-confirm="Issue this RFI version? Issued versions are permanent and cannot be changed or withdrawn.">
             {{ button("Issue", "secondary", "sm", button_type="submit") }}
           </form>
           {% endif %}
