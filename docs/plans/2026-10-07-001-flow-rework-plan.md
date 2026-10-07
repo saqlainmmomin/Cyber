@@ -46,7 +46,7 @@ What they show:
 6. **About a third of the questions are about the engagement, not the client's controls:** will the consultant draft the policies, run training, do VAPT, run a phishing simulation, coordinate the certification body, the UAR sample size, the timeline, who does remediation. Under the principle "never ask what we won't use", these don't belong in the built-in bank. Consultants can add them as **custom questions** (text, exported, not used by the engine).
 7. **Some answers should seed the evidence RFI:** "existing certification? share the certificate and its scope", "existing policies? list them", "risk methodology and last assessment date", "tools deployed (PAM, SIEM, EDR, DLP)". A "Yes" there pre-selects the matching RFI item in S4.
 
-### Decided from the samples (please confirm in review)
+### Decided from the samples (owner confirmed 2026-10-07)
 | # | Decision | Slice |
 |---|---|---|
 | P13 | Scope question types: single, multi, text. No number type. Every scope answer can be left pending ("TBD") without blocking. | S3 |
