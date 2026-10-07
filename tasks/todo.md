@@ -1,5 +1,9 @@
 # CyberAssess implementation tracker
 
+## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
+
+- [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.
+
 ## Assessment Evidence tab (2026-10-06)
 
 - [x] WP-A: add the Evidence assessment tab, responsive tab scrolling, and dated Yozora documentation notes.

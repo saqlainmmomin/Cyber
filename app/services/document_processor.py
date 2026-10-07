@@ -1,18 +1,25 @@
 """
-Document text extraction for PDF, DOCX, and image files.
+Document text extraction for PDF, DOCX, spreadsheets, and image files.
 
 Supported:
 - PDF: text extraction via pdfplumber
 - DOCX: text extraction via python-docx
+- XLSX / CSV: tabular text extraction with bounded row sampling
 - PNG / JPG / JPEG / WEBP: content description via Claude vision API
 """
 
 import base64
+import codecs
+import csv
+import io
 import os
+import logging
 import re
+from pathlib import Path
 
 import pdfplumber
 from docx import Document
+from openpyxl import load_workbook
 
 from app.config import settings
 from app.services import llm_client
@@ -25,13 +32,29 @@ _IMAGE_MEDIA_TYPES = {
     "webp": "image/webp",
 }
 
+# Keep spreadsheet extraction below the document word budget while preserving
+# the beginning and shape of large evidence registers.
+SPREADSHEET_MAX_DATA_ROWS = 200
+SPREADSHEET_INITIAL_DATA_ROWS = 100
+PDF_OCR_TEXT_THRESHOLD = 20
+PDF_OCR_MAX_PAGES = 10
+PDF_OCR_RESOLUTION = 150
+PDF_OCR_MAX_EDGE_PX = 2500
+SPREADSHEET_MAX_CELL_CHARS = 2000
+
+logger = logging.getLogger(__name__)
+
 
 def extract_text(file_path: str, file_type: str) -> str:
-    """Extract text from a PDF, DOCX, or image file."""
+    """Extract text from a PDF, DOCX, spreadsheet, or image file."""
     if file_type == "pdf":
         return _extract_pdf(file_path)
     elif file_type == "docx":
         return _extract_docx(file_path)
+    elif file_type == "xlsx":
+        return _extract_xlsx(file_path)
+    elif file_type == "csv":
+        return _extract_csv(file_path)
     elif file_type in _IMAGE_MEDIA_TYPES:
         return _extract_image(file_path, file_type)
     else:
@@ -41,11 +64,15 @@ def extract_text(file_path: str, file_type: str) -> str:
 def _extract_pdf(file_path: str) -> str:
     """Extract text from PDF using pdfplumber (handles tables well)."""
     pages = []
+    skipped_pages = []
+    ocr_enabled = bool(settings.openrouter_key.strip())
+    ocr_count = 0
     with pdfplumber.open(file_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                pages.append(text)
+        for page_number, page in enumerate(pdf.pages, start=1):
+            page_parts = []
+            text = page.extract_text() or ""
+            if text.strip():
+                page_parts.append(text)
             # Also extract tables as text
             for table in page.extract_tables():
                 rows = []
@@ -53,9 +80,168 @@ def _extract_pdf(file_path: str) -> str:
                     cells = [str(c) if c else "" for c in row]
                     rows.append(" | ".join(cells))
                 if rows:
-                    pages.append("\n".join(rows))
+                    page_parts.append("\n".join(rows))
+            page_text = "\n".join(page_parts).strip()
+            if page_text:
+                pages.append(page_text)
+            if len(page_text) >= PDF_OCR_TEXT_THRESHOLD or not ocr_enabled:
+                continue
+            if ocr_count >= PDF_OCR_MAX_PAGES:
+                skipped_pages.append(page_number)
+                continue
+            ocr_count += 1
+            try:
+                image_data = _pdf_page_png_base64(page)
+                description = _call_claude_vision(image_data, "image/png")
+            except Exception:
+                logger.exception("OCR failed for page %s of %s", page_number, file_path)
+                pages.append(f"[OCR failed for page {page_number}]")
+                continue
+            if description.strip():
+                pages.append(f"[OCR page {page_number}]\n\n{description.strip()}")
+
+    if skipped_pages:
+        pages.append(f"[{_format_skipped_ocr_pages(skipped_pages)}]")
+
     full_text = "\n\n".join(pages)
     return _truncate(full_text)
+
+
+def _pdf_page_png_base64(page) -> str:
+    """Rasterise one PDF page for the existing vision request shape."""
+    longest_edge_pt = max(float(page.width), float(page.height), 1.0)
+    resolution = min(PDF_OCR_RESOLUTION, PDF_OCR_MAX_EDGE_PX * 72 / longest_edge_pt)
+    rendered = page.to_image(resolution=resolution).original
+    buffer = io.BytesIO()
+    rendered.save(buffer, format="PNG")
+    return base64.standard_b64encode(buffer.getvalue()).decode("utf-8")
+
+
+def _format_skipped_ocr_pages(page_numbers: list[int]) -> str:
+    ranges = []
+    start = previous = page_numbers[0]
+    for page_number in page_numbers[1:]:
+        if page_number == previous + 1:
+            previous = page_number
+            continue
+        ranges.append(str(start) if start == previous else f"{start}-{previous}")
+        start = previous = page_number
+    ranges.append(str(start) if start == previous else f"{start}-{previous}")
+    return f"OCR skipped for pages {', '.join(ranges)}"
+
+
+def _extract_xlsx(file_path: str) -> str:
+    """Extract cached worksheet values without loading a workbook into memory."""
+    workbook = load_workbook(file_path, read_only=True, data_only=True, keep_links=False)
+    try:
+        parts = []
+        for worksheet in workbook.worksheets:
+            rendered = _render_tabular_sheet(
+                worksheet.title,
+                lambda worksheet=worksheet: _worksheet_rows(worksheet),
+            )
+            if rendered:
+                parts.append(rendered)
+        return _truncate("\n\n".join(parts))
+    finally:
+        workbook.close()
+
+
+def _extract_csv(file_path: str) -> str:
+    """Extract a CSV as one named worksheet using the same tabular format."""
+    return _truncate(
+        _render_tabular_sheet(
+            Path(file_path).stem,
+            lambda: _csv_rows(file_path),
+        )
+    )
+
+
+def _worksheet_rows(worksheet):
+    return _normalized_rows(worksheet.iter_rows(values_only=True))
+
+
+def _csv_rows(file_path: str):
+    text = _decode_csv_bytes(Path(file_path).read_bytes())
+    try:
+        dialect = csv.Sniffer().sniff(text[:4096], delimiters=",;\t|")
+    except csv.Error:
+        dialect = csv.excel
+    previous_limit = csv.field_size_limit()
+    csv.field_size_limit(max(previous_limit, len(text) + 1))
+    try:
+        yield from _normalized_rows(csv.reader(io.StringIO(text, newline=""), dialect))
+    finally:
+        csv.field_size_limit(previous_limit)
+
+
+def _decode_csv_bytes(data: bytes) -> str:
+    """Decode UTF-16 (BOM), UTF-8, or fall back to Windows-1252 (Excel's CSV export)."""
+    if data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        return data.decode("utf-16", errors="replace")
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return data.decode("cp1252", errors="replace")
+
+
+def _normalized_rows(rows):
+    for row in rows:
+        values = [_cell_text(value) for value in row]
+        while values and not values[-1]:
+            values.pop()
+        if values:
+            yield values
+
+
+def _cell_text(value) -> str:
+    if value is None:
+        return ""
+    text = str(value).replace("\r", " ").replace("\n", " ").strip()
+    if len(text) > SPREADSHEET_MAX_CELL_CHARS:
+        return text[:SPREADSHEET_MAX_CELL_CHARS] + " [cell truncated]"
+    return text
+
+
+def _render_tabular_sheet(sheet_name: str, rows_factory) -> str:
+    rows = rows_factory()
+    try:
+        header = next(rows)
+    except StopIteration:
+        return ""
+
+    data_rows = sum(1 for _row in rows)
+    selected_indices = _sampled_row_indices(data_rows)
+    selected = []
+    rows = rows_factory()
+    next(rows, None)
+    for index, row in enumerate(rows, start=1):
+        if index in selected_indices:
+            selected.append(row)
+
+    lines = [f"Sheet: {sheet_name}", " | ".join(header)]
+    lines.extend(" | ".join(row) for row in selected)
+    if data_rows > SPREADSHEET_MAX_DATA_ROWS:
+        lines.append(f"[sampled {len(selected)} of {data_rows:,} rows]")
+    return "\n".join(lines)
+
+
+def _sampled_row_indices(total_rows: int) -> set[int]:
+    if total_rows <= SPREADSHEET_MAX_DATA_ROWS:
+        return set(range(1, total_rows + 1))
+    initial = min(SPREADSHEET_INITIAL_DATA_ROWS, SPREADSHEET_MAX_DATA_ROWS)
+    sample_count = SPREADSHEET_MAX_DATA_ROWS - initial
+    indices = set(range(1, initial + 1))
+    start = initial + 1
+    end = total_rows
+    if sample_count == 1:
+        indices.add(end)
+    else:
+        indices.update(
+            start + ((end - start) * offset // (sample_count - 1))
+            for offset in range(sample_count)
+        )
+    return indices
 
 
 def _extract_docx(file_path: str) -> str:
@@ -231,6 +417,8 @@ def detect_file_type(filename: str) -> str | None:
         return "pdf"
     elif ext == "docx":
         return "docx"
+    elif ext in {"xlsx", "csv"}:
+        return ext
     elif ext in _IMAGE_MEDIA_TYPES:
         return ext
     return None

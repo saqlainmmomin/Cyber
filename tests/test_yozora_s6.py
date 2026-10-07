@@ -167,7 +167,7 @@ def test_inventory_counts_use_display_labels_and_upload_contract(db, http, monke
     page = http.get(f"/engagements/{engagement.id}/evidence?state=upload")
     assert '<span class="sub">1 item</span>' in page.text
     assert "1 available" in page.text
-    assert 'accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"' in page.text
+    assert 'accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.webp"' in page.text
     assert 'value="privacy_policy"' in page.text
     filtered_upload = http.get(
         f"/engagements/{engagement.id}/evidence?state=upload&source=upload&status=active&search=Privacy"

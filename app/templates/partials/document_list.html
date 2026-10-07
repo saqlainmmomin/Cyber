@@ -46,7 +46,7 @@
             <summary class="link">New version</summary>
             <form hx-post="/assessments/{{ action_assessment_id }}/evidence/{{ row.evidence_id }}/versions{% if fragment_query %}?{{ fragment_query }}{% endif %}"
                   hx-target="#document-list" hx-swap="innerHTML" hx-encoding="multipart/form-data">
-              <label class="field"><input type="file" name="file" required></label>
+              <label class="field"><input type="file" name="file" accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.webp" required></label>
               <label class="field"><input type="text" name="change_reason" required placeholder="Change reason"></label>
               <button class="btn secondary sm" type="submit">Upload</button>
             </form>

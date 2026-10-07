@@ -77,7 +77,7 @@ EXPECTED_SECURITY_HEADERS = {
     ),
 }
 INVALID_LINK = "This link is invalid or has expired. Contact your consultant for a new link."
-UNSUPPORTED = "Unsupported file type. Upload PDF, DOCX, PNG, JPG, JPEG, or WEBP files."
+UNSUPPORTED = "Unsupported file type. Upload PDF, DOCX, Excel/CSV, PNG, JPG, JPEG, or WEBP files."
 SCAN_REJECTED = "File failed the malware scan and was not released from quarantine."
 ITEMS = ["Information security policy", "Access review evidence"]
 

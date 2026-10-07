@@ -80,7 +80,7 @@
             {% set item_id = "item-key" if loop.first else "item-key-" ~ loop.index0 %}
             <form method="post" enctype="multipart/form-data" data-upload-form data-item="{{ item.key }}" class="client-upload-form">
               <input type="hidden" id="{{ item_id }}" name="item_key" value="{{ item.key }}">
-              <input type="file" id="{{ upload_id }}" name="file" class="sr-only" data-upload-input tabindex="-1" aria-label="Choose a file to upload for {{ item.title }}">
+              <input type="file" id="{{ upload_id }}" name="file" class="sr-only" data-upload-input tabindex="-1" accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.webp" aria-label="Choose a file to upload for {{ item.title }}">
               <label for="{{ upload_id }}" class="btn secondary touch lead"><svg class="i"><use href="#i-upload"></use></svg>Choose file</label>
               <button type="submit" class="btn secondary touch client-upload-submit">Upload file</button>
             </form>
@@ -94,7 +94,7 @@
       {% if remaining <= 0 %}
       <p class="client-limit">This link has reached its upload limit.</p>
       {% endif %}
-      <div class="req-foot"><span>PDF, Word, Excel or image, up to 25 MB each</span><span>Expires {{ expires_on }}</span></div>
+      <div class="req-foot"><span>PDF, DOCX, Excel/CSV or image, up to 25 MB each</span><span>Expires {{ expires_on }}</span></div>
     </section>
 
     <p class="help client-powered">Powered by Yozora</p>
