@@ -175,15 +175,15 @@ const STAGES = [
   },
   {
     id:"followups", name:"5. Follow-ups",
-    goal:"Close the gaps and contradictions that remain, with the client.",
-    knows:"Which answers conflict with evidence or lack evidence.",
-    cta:"Send follow-up request",
-    shows:["Targeted follow-up questions per gap or contradiction, with the evidence that triggered each one","Which can go to the client as a short request and which the consultant answers","Status per follow-up"],
-    never:["Generic follow-ups unrelated to a finding","Follow-ups that cannot affect the result"],
-    done:"Every gap is either closed, accepted as a finding, or waived with a reason.",
+    goal:"Clarify answers that need more detail, right where they are given.",
+    knows:"Which answers triggered a follow-up and which are still open.",
+    cta:"Answer follow-up",
+    shows:["The follow-up question under the answer that triggered it","Status per follow-up"],
+    never:["Generic follow-ups unrelated to the triggering answer","Follow-ups that cannot affect the result"],
+    done:"Every triggered follow-up is answered or marked not needed.",
     today:"Follow-ups are generated inline while answering the questionnaire. After analysis, the only follow-up is an RFI item for 'insufficient evidence'. It is unverified that follow-up answers reach the multi-framework analysis.",
     rows:[
-      "Follow-ups are created from gaps and contradictions found after analysis. (Open decision B below.)",
+      "Follow-ups stay inline in the questionnaire. They are generated when an answer triggers them and answered in place (decision B).",
       "Follow-up answers verifiably change the analysis result.",
       "Follow-ups are exportable as a client-friendly request."
     ]
@@ -222,7 +222,7 @@ const STAGES = [
 
 const DECISIONS = [
   {id:"A", q:"Design vs operating effectiveness: do you want a real split in the data model (each control gets a design result and an operating result, shown and scored separately), or is 'documents pre-fill, questionnaire confirms' enough?"},
-  {id:"B", q:"Follow-ups: should they be generated after analysis from the gaps found, or stay inline while answering the questionnaire, or both?"},
+  {id:"B", q:"Follow-ups: DECIDED (7 Oct): stay inline in the questionnaire, generated when an answer triggers them, answered in place."},
   {id:"C", q:"Should Step 2 also promote RFI to its own stage and add GDPR, HIPAA and PCI to the setup picker, or should those be separate steps?"},
   {id:"D", q:"Is the stage order right? Specifically: is Scoping before RFI always true, or do you sometimes send a generic RFI first and scope afterwards?"},
   {id:"E", q:"What do you do today in a real engagement that this flow leaves out? (kickoff call, interviews, walkthrough of systems, sampling, client review of draft findings...)"}
