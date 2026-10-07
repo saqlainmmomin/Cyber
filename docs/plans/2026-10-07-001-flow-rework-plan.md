@@ -112,6 +112,8 @@ S0a = guard retirement only (first). S0b = everything else.
 - **Delete** the context wizard: `routers/questionnaire.py` context routes, `context_profiler` LLM call, `context_complete`, `question_step`, and status `context_gathered` (stop writing it; old rows still render). `Assessment.context_answers/context_profile` columns stay as dead data, with no migration.
 - Remove the questionnaire gate (`questionnaire_tab.html:27-40,69`).
 - Scope gets: question types single, multi (rendered as checkboxes; today `scope_form.html:19` renders radios even for multi) and text, with pending allowed (P13); a note per question (P14); custom questions (P16); XLSX export for the client (P15); a **Common information** block asked once (from the samples: legal entity, entities and locations in scope, headcount per site, business functions in scope, existing certifications and their scope, existing documentation status, security tools deployed, cloud providers and hosting locations, data centres and DR sites, outsourced IT/third parties, timeline and driver) followed by per-framework blocks (privacy block = one block for DPDPA); human labels; **assessment period + evidence cut-off** moved here from Conclusions (`report_basis_panel.html:117`).
+- **Every built-in scope question shows what it is used for** (applicability, an RFI item, or a questionnaire pre-fill). A question that drives nothing is cut. This answers the owner's "unsure what influence they have".
+- **"Likely not applicable": confirm/reject for every framework, on the scope page.** Today DPDPA has full exclusions, ISO 27001 has 4 proposals, **NIST CSF has none** (`scope_profiler.py`, `applicability_proposals`), and proposals can only be acted on later, in review. Add NIST proposals and a confirm/reject per proposal at scope time. A confirmed one becomes the Not applicable conclusion with the scope answer as the reason.
 - Duplicates removed: DPDPA SCP.1/2/3 vs CTX.DATA.4/CTX.RISK.1. Budget question (CTX.INIT.3) goes.
 - `risk_tier` stops being an input. Deep-review badges come from desk review "deepened" only.
 - After "Start assessment", land on Scoping (`web.py:1339`).
@@ -124,6 +126,8 @@ S0a = guard retirement only (first). S0b = everything else.
 - Item list: suggested items pre-selected, consultant ticks/unticks; each item shows what it is and why it's requested (`EvidenceRequest.reason`; wording improves in S9).
 - **Send RFI** = generate + issue a version, then Download (PDF/DOCX) or Create client link (P3). The button reads "Send RFI" until sent, then "Upload evidence".
 - New tables: `rfi_item_status` (requested / received / insufficient / waived) and an evidence ↔ RFI-item link. The consultant links evidence manually; there is no auto-mapping (D8). Both tables go on the purge list (`retention.py`) and the FK-order test.
+- **Scope edited after the RFI was sent:** the RFI page lists what changed (items added/removed by the edit) and offers "Send update". Today it only says "Source data changed since generation".
+- **Who the ball is with:** dashboard rows and the Overview show "Waiting on client" while scope or RFI items are out, and "With you" otherwise.
 - Evidence tab after sending: received / pending / "request more". "Run desk review" moves to Evidence.
 - Issued snapshots stay immutable; old versions still render.
 - **Exit:** scope → send RFI (both ways) → mark items → evidence tab shows status; owner walkthrough.
@@ -161,6 +165,17 @@ S0a = guard retirement only (first). S0b = everything else.
   - **DPDPA (privacy block):** functions processing personal data; third parties processing personal data, and how many; countries data is collected from; processing or sharing outside India; transfer mechanisms; where personal data is hosted and backed up; number of applications processing personal data; privacy tooling; data mapping done or not; prior privacy assessments.
   - **NIST CSF:** PAM tool and how many apps are integrated; how user access reviews run (frequency, method, owners, systems covered); SOC tooling and operating model (in-house, hybrid, outsourced); any framework already used to run the security programme; recent SOC/PAM/resilience assessments; third-party risk framework and recent vendor assessments. Check against NIST.SCP.* to avoid repeats.
 - Evidence RFI wording: what each item is and why it's asked (S2 rule), plus the P17 seed mapping.
+
+## Coverage check against the owner's comments (2026-10-07)
+Every row and note in `2026-10-07-consultant-journey-comments.md` maps to a slice. Deliberately deferred: adding/removing frameworks after setup ("not my priority"), GDPR/HIPAA/PCI (decision C), board status decks (E7). To verify in the S1 walkthrough rather than build blind: whether pre-fills already show source + quote (the template has citation blocks), and whether follow-up generation on every answer change is acceptable.
+
+**Not covered by this plan:** the quality of the analysis itself on real documents (desk-review accuracy, long-policy handling, finding wording). This plan fixes the flow and readability. Quality is tested separately on realistic data (see Testing with company data).
+
+## Testing with company data
+- **Realistic test company (no real client data), two tracks:**
+  1. *Analysis quality:* starts as soon as S6-F1 merges (Excel/scanned files readable). Upload a realistic document set and run desk review + analysis on today's flow. Desk review and analysis code don't change in this plan, so findings here hold.
+  2. *Flow:* after S3 + S4 merge, run the company end to end (scope → RFI → evidence → questionnaire → report). Earlier than that, you'd be testing screens that are about to be replaced.
+- **Real client data:** not until hosting/LLM routing is settled (Track 4: Bedrock Mumbai) and the engagement allows it. Today every LLM call goes through OpenRouter, so documents leave to third-party model providers.
 
 ## What gets smaller
 Context wizard + profiler LLM call + `context_complete`/`question_step` templates; `context_gathered` status; the questionnaire gate; scope checklist + its PDF/DOCX; ~16 file-path guard tests and `yozora_paths.py`; Queue/Conclusions duplication; 13 reviewer-name fields; greyed roadmap cards. Left alone on purpose: legacy DPDPA-only questionnaire path, the parked v2 pipeline, design preview routers/pixel gates (frozen; no new ones).
