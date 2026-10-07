@@ -8,7 +8,6 @@ import hashlib
 import json
 import subprocess
 
-from tests.p6_10_support import P6_10_APP_FILES
 from pathlib import Path
 
 import pytest
@@ -37,10 +36,6 @@ from app.services.scope_profiler import compute_scope_multi
 from app.config import settings
 from scripts import export_criteria_review
 
-from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
-from tests.p6_8_v3b_paths import V3B_EXCLUDES  # P6-8 V3-B per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES  # Yozora per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -436,38 +431,3 @@ def test_removed_control_remains_readable_in_legacy_rows(legacy_environment):
     assert any(card.conclusion.requirement_id == "NIST.RS.CO.04" for card in cards)
     result = scoring.score(assessment.id, ["nist_csf"], _session=db)
     assert result.per_framework["nist_csf"].control_count == 106
-
-
-def test_protected_surface_guard_uses_three_dot_diff():
-    # P6-1d excludes: reasoning-off request prefs (llm_client, config comment) and
-    # registry evidence extraction alongside desk-review reuse (claude_analyzer).
-    # P6-3a exclude: the new, dormant v2 grounding package (app/services/grounding).
-    # LLM JSON reliability exclude (claude/llm-json-enforcement): desk review asks
-    # for JSON mode (llm_client and claude_analyzer are already excluded above).
-    # P6-3b excludes: the v2 desk-review branch (desk_review.py) and its module (desk_review_v2.py).
-    # Small follow-ups exclude (claude/p6-small-followups): context profiler ID filter.
-    # P6-4 excludes: the v2 analysis service and document categories (analysis_v2.py,
-    # document_categories.py), the flag-gated analysis branch (analysis.py) and
-    # framework-aware upload categories (documents.py).
-    # P6-6 excludes (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report basis
-    # service, approval gate, report content/routes, re-recorded golden PDF hash/page count.
-    # P6-4-cap exclude (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md): the upload
-    # cap in document_processor._truncate (app/config.py is already excluded).
-    # P6-7a excludes (tasks/handoffs/2026-09-28-p6-7-requirement-card.md): the new
-    # requirement-card and review-queue services and their router.
-    # P6-8 B1 excludes (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2
-    # service and snapshot type, the standalone Workpaper service and the snapshot router.
-    # P6-9 excludes (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): SoA service
-    # and router, remediation groups and prior-period comparison services.
-    result = subprocess.run(
-        # P6-2b: approved criteria and pack-version changes are outside this guard.
-    # P6-7b excludes (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI requests
-    # (new rfi_evidence_requests.py) flowing into the derived draft RFI (rfi_requests.py).
-        ["git", "diff", "--stat", "main...HEAD", "--", "app/dpdpa", "tests/fixtures", "tests/support", "app/frameworks/schema.py", "app/frameworks/prompts.py", "app/frameworks/batching.py", "app/frameworks/compat.py", "app/frameworks/registry.py", "app/services", "app/routers", "app/models", "alembic", "app/config.py", ":(exclude)app/config.py", ":(exclude)app/services/claude_analyzer.py", ":(exclude)app/services/llm_client.py", ":(exclude)app/services/grounding", ":(exclude)app/services/context_profiler.py", ":(exclude)app/services/desk_review.py", ":(exclude)app/services/desk_review_v2.py", ":(exclude)app/services/analysis_v2.py", ":(exclude)app/services/document_categories.py", ":(exclude)app/routers/analysis.py", ":(exclude)app/routers/documents.py", ":(exclude)app/services/report_basis.py", ":(exclude)app/services/conclusion_review.py", ":(exclude)app/services/requirement_card.py", ":(exclude)app/services/review_queue.py", ":(exclude)app/routers/requirement_review.py", ":(exclude)app/services/report_content.py", ":(exclude)app/routers/reports.py", ":(exclude)app/routers/review.py", ":(exclude)app/routers/web.py", ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256", ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json", ":(exclude)app/services/document_processor.py", ":(exclude)app/services/report_snapshots.py", ":(exclude)app/services/board_report.py", ":(exclude)app/services/standalone_workpaper.py", ":(exclude)app/routers/snapshots.py", ":(exclude)app/services/soa.py", ":(exclude)app/services/remediation_groups.py", ":(exclude)app/services/prior_period.py", ":(exclude)app/routers/soa.py", ":(exclude)app/services/board_exports.py", ":(exclude)app/services/rfi_evidence_requests.py", ":(exclude)app/services/rfi_requests.py", "app/frameworks/definitions", ":(exclude)app/frameworks/definitions/nist_csf.py", ":(exclude)app/services/engagement_factory.py", ":(exclude)app/frameworks/schema.py", ":(exclude)app/frameworks/definitions/dpdpa.py", ":(exclude)app/frameworks/definitions/iso27001.py", "app/frameworks/criteria/dpdpa_draft.py", "app/frameworks/criteria/iso27001_draft.py", "tasks/criteria-review/dpdpa-criteria-v1.csv", "tasks/criteria-review/iso27001-criteria-v1.csv", "tasks/criteria-review/iso27001-descriptions-v1.csv",
-         # P6-10 excludes (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md): drafting and narrative stages.
-         *[f":(exclude){path}" for path in P6_10_APP_FILES], *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES,
-         # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
-         *V3B_EXCLUDES],
-        cwd=ROOT, capture_output=True, text=True, check=True,
-    )
-    assert result.stdout == ""

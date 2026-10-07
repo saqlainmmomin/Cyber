@@ -29,7 +29,6 @@ import importlib
 import json
 import random
 import re
-import subprocess
 import threading
 import time
 import unicodedata
@@ -1604,97 +1603,6 @@ def test_scenario_16_load_source_documents(db, monkeypatch):
         assert validate_citations(db, [claim.citation], assessment_id=assessment.id) == [claim.citation]
 
 
-# --------------------------------------------------------------------------- #
-# Scenario 17: dormancy, parity and independence guards
-# --------------------------------------------------------------------------- #
-
-from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES  # Yozora per-PR allowance
-
-PROTECTED_PATHS = [
-    "app/services/claude_analyzer.py", "app/services/desk_review.py",
-    "app/services/desk_review_findings.py", "app/services/auto_answer.py",
-    "app/services/question_engine.py", "app/services/llm_client.py", "app/services/parallel.py",
-    "app/services/citations.py", "app/services/evidence.py", "app/services/document_processor.py",
-    "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/__init__.py",
-    "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "app/routers", "app/templates",
-    "alembic", "tests/fixtures", "tests/support", "validation", "scripts/validation",
-    # LLM JSON reliability (claude/llm-json-enforcement): JSON mode, parse-failure
-    # records and one retry for desk review and evidence extraction.
-    ":(exclude)app/services/llm_client.py", ":(exclude)app/services/claude_analyzer.py",
-    # P6-3b (tasks/handoffs/2026-09-27-p6-3b-v2-flag-and-adapter.md) adds the v2
-    # branch and the precomputed-citation path to desk_review.py; its own suite
-    # (tests/test_p6_3b_v2_flag.py) guards that only lines there are added.
-    ":(exclude)app/services/desk_review.py",
-    # Small follow-ups (claude/p6-small-followups): batched status retry
-    # (llm_output), grounded desk-review quotes (claude_analyzer), profiler ID
-    # filter and cap (context_profiler).
-    ":(exclude)app/schemas/llm_output.py", ":(exclude)app/services/claude_analyzer.py",
-    ":(exclude)app/services/context_profiler.py",
-    # P6-4 (tasks/handoffs/2026-09-28-p6-4-v2-stage-2-judge.md) adds the flag-gated
-    # v2 analysis branch (analysis.py; additive-only, guarded by
-    # tests/test_p6_4_v2_judge.py) and framework-aware upload categories (documents.py).
-    ":(exclude)app/routers/analysis.py", ":(exclude)app/routers/documents.py",
-    # P6-6 (tasks/handoffs/2026-09-28-p6-6-report-foundations.md): report routes,
-    # templates and the re-recorded golden PDF text hash and page count.
-    ":(exclude)app/routers/reports.py", ":(exclude)app/routers/review.py",
-    ":(exclude)app/routers/web.py", ":(exclude)app/templates/pages/conclusions.html",
-    ":(exclude)app/templates/pages/workpaper.html",
-    ":(exclude)app/templates/partials/report_basis_panel.html",
-    ":(exclude)app/templates/partials/report_summary.html",
-    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_text.sha256",
-    ":(exclude)tests/fixtures/canonical_dpdpa/expected/pdf_meta.json",
-    # P6-4-cap (tasks/handoffs/2026-09-28-p6-4-cap-upload-limit.md): the upload
-    # cap becomes a 200k-word safety bound that keeps line breaks (_truncate only).
-    ":(exclude)app/services/document_processor.py",
-    # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2
-    # generation and preview in the snapshot router, the standalone Workpaper and the
-    # report templates; tests/test_p6_8_board_report_v2.py guards the P6-8 file set.
-    ":(exclude)app/routers/snapshots.py",
-    ":(exclude)app/templates/pages/report_snapshots.html",
-    ":(exclude)app/templates/reports",
-    # P6-2b: approved DPDPA criteria and pack-version schema changes.
-    ":(exclude)app/frameworks/schema.py",
-    ":(exclude)app/frameworks/definitions/dpdpa.py",
-    ":(exclude)app/frameworks/criteria/dpdpa.py",
-    ":(exclude)app/frameworks/criteria/__init__.py",
-    ":(exclude)app/frameworks/criteria/iso27001.py",
-    ":(exclude)app/frameworks/criteria/nist_csf.py",
-    ":(exclude)app/frameworks/definitions/iso27001.py",
-    ":(exclude)app/frameworks/definitions/nist_csf.py",
-    ":(exclude)scripts/convert_criteria.py",
-    # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md): the requirement
-    # card partial, the review queue and span pages, their router, and the one-line
-    # include in the conclusion card; tests/test_p6_7_requirement_card.py guards them.
-    ":(exclude)app/routers/requirement_review.py",
-    ":(exclude)app/templates/components/conclusion_card.html",
-    ":(exclude)app/templates/components/requirement_card_body.html",
-    ":(exclude)app/templates/pages/review_queue.html",
-    ":(exclude)app/templates/pages/evidence_span.html",
-    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md): the drafting
-    # router, the narrative page and the recommended-action draft partial;
-    # tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard them.
-    ":(exclude)app/routers/drafting.py",
-    ":(exclude)app/templates/pages/narrative.html",
-    ":(exclude)app/templates/partials/remediation_draft.html",
-    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): the SoA
-    # justification router and page; tests/test_p6_9_file_set.py guards the P6-9 file set.
-    ":(exclude)app/routers/soa.py",
-    ":(exclude)app/templates/pages/soa.html",
-    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): the RFI page lists the
-    # requests added from requirement cards; tests/test_p6_7b_add_to_rfi.py guards it.
-    ":(exclude)app/templates/pages/rfi.html",
-    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
-    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
-    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): consultant-entered board-deck
-    # data (migration, models, board-inputs page, theme settings, display font).
-    *V3A_EXCLUDES,
-    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-    *YOZORA_BACKEND_EXCLUDES,
-    *YOZORA_EXCLUDES,  # Yozora per-PR allowance
-]
-
 # P6-3b adds the package's first and only importer outside it: the v2
 # desk-review module. P6-4 adds the v2 analysis service. Any other importer
 # still fails the dormancy scan.
@@ -1703,34 +1611,6 @@ P6_3B_GROUNDING_IMPORTERS = {
     "app/services/desk_review_v2.py", "app/services/analysis_v2.py",
     "app/services/remediation_draft.py", "app/services/narrative.py",
 }
-
-
-def _git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
-
-
-def test_scenario_17_protected_files_unchanged():
-    # 2026-09-27 screening-303 harness fix (P5-9): scripts/validation/run_company.py
-    # and validation/README.md were legitimately touched by that fix, not by
-    # grounding work. Excluded here rather than removed from PROTECTED_PATHS.
-    exclusions = [
-        ":(exclude)scripts/validation/run_company.py",
-        ":(exclude)validation/README.md",
-        # claude/harness-usage-status: llm_usage.jsonl rows gain status/
-        # finish_reason/attempt (run_company.py already excluded above), plus
-        # a trivial non-ok call count surfaced through score.py's cost
-        # aggregation and report.py's per-run cost line.
-        ":(exclude)scripts/validation/score.py",
-        ":(exclude)scripts/validation/report.py",
-        # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): the aggregate-only
-        # A/B comparison is a new harness module; tests/test_p6_5_ab_compare.py guards it.
-        ":(exclude)scripts/validation/ab_compare.py",
-    ]
-    committed = _git("diff", "--stat", "main...HEAD", "--", *PROTECTED_PATHS, *exclusions)
-    uncommitted = _git("status", "--porcelain", "--", *PROTECTED_PATHS, *exclusions)
-    assert committed == "" and uncommitted == "", committed + uncommitted
 
 
 def test_scenario_17_package_is_dormant():

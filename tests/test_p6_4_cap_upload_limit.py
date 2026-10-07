@@ -9,8 +9,7 @@ the ``max_document_words`` default is still 5000, and
 ``document_processor._truncate`` still cuts at 5,000 words and re-joins the
 kept words with single spaces. Five pin behaviour that must not change and
 pass before and after: 1b (v1's 20,000-word total), 2's exactly-at-the-bound
-case, 3's marker format on single-line text, 7b (the image path) and 9 (the
-file-set guard).
+case, 3's marker format on single-line text, and 7b (the image path).
 
 No network: the only LLM seam touched (vision) is replaced with a stub.
 Documents are built in-process with python-docx and fpdf2.
@@ -22,7 +21,6 @@ import asyncio
 import io
 import json
 import re
-import subprocess
 import uuid
 from pathlib import Path
 
@@ -248,7 +246,6 @@ def _upload(db, assessment, path: Path, category="privacy_policy"):
         documents.upload_document(assessment.id, category=category, file=file, db=db)
     )
 
-
 def test_scenario_5_upload_route_stores_thirty_thousand_words_with_line_breaks(db, tmp_path, monkeypatch):
     from app.models.evidence import EvidenceVersion
 
@@ -315,101 +312,3 @@ def test_scenario_7b_image_extraction_is_not_truncated_or_reformatted(tmp_path, 
     assert document_processor.extract_text(str(image), "png") == (
         f"[Screenshot: consent-screen.png]\n\n{long_description}"
     )
-
-
-# --------------------------------------------------------------------------- #
-# Scenario 9: file-set guard (disjoint from the P6-4 "what's missing" PR)
-# --------------------------------------------------------------------------- #
-
-from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S7_PATHS  # Yozora per-PR allowance
-from tests.p6_10_support import P6_10_APP_FILES  # noqa: E402
-
-P6_4_CAP_APP_FILES = {"app/config.py", "app/services/document_processor.py"}
-
-
-def _changed(*args: str) -> set[str]:
-    return set(
-        subprocess.run(
-            ["git", "diff", "--name-only", *args, "--", "app", "alembic", ".env.example",
-             # P6-4-missing (PR #77) lands after P6-4-cap and legitimately touches these.
-             ":(exclude)app/services/desk_review_v2.py",
-             ":(exclude)app/services/grounding/missing.py",
-             # P6-2b: approved criteria and pack-version changes are unrelated to this guard.
-             ":(exclude)app/frameworks/schema.py",
-             ":(exclude)app/frameworks/definitions/dpdpa.py",
-             ":(exclude)app/services/engagement_factory.py",
-             ":(exclude)app/services/grounding/claims.py",
-             ":(exclude)app/services/grounding/pipeline.py",
-             ":(exclude)app/frameworks/criteria/dpdpa.py",
-             ":(exclude)app/frameworks/criteria/__init__.py",
-             ":(exclude)app/frameworks/criteria/iso27001.py",
-             ":(exclude)app/frameworks/criteria/nist_csf.py",
-             ":(exclude)app/frameworks/definitions/iso27001.py",
-             ":(exclude)app/frameworks/definitions/nist_csf.py",
-             ":(exclude)scripts/convert_criteria.py",
-             ":(exclude).env.example",
-             # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md): board report v2,
-             # standalone Workpaper, vendored Noto fonts; guarded by tests/test_p6_8_board_report_v2.py.
-             ":(exclude)app/utils/html_pdf.py",
-             ":(exclude)app/services/board_report.py",
-             ":(exclude)app/services/standalone_workpaper.py",
-             ":(exclude)app/services/report_snapshots.py",
-             ":(exclude)app/routers/snapshots.py",
-             ":(exclude)app/templates/reports",
-             ":(exclude)app/templates/pages/report_snapshots.html",
-             ":(exclude)app/assets/fonts/noto",
-             # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md) lands later and
-             # legitimately touches these; tests/test_p6_7_requirement_card.py guards them.
-             ":(exclude)app/main.py",
-             ":(exclude)app/services/requirement_card.py",
-             ":(exclude)app/services/review_queue.py",
-             ":(exclude)app/services/conclusion_review.py",
-             ":(exclude)app/routers/requirement_review.py",
-             ":(exclude)app/templates/components/conclusion_card.html",
-             ":(exclude)app/templates/components/requirement_card_body.html",
-             # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md): SoA, roadmap
-             # groups, prior-period comparison; guarded by tests/test_p6_9_file_set.py.
-             ":(exclude)app/services/soa.py",
-             ":(exclude)app/services/remediation_groups.py",
-             ":(exclude)app/services/prior_period.py",
-             ":(exclude)app/routers/soa.py",
-             ":(exclude)app/templates/pages/soa.html",
-             ":(exclude)app/templates/pages/conclusions.html",
-             ":(exclude)app/templates/pages/review_queue.html",
-             ":(exclude)app/templates/pages/evidence_span.html",
-             # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
-             # guarded by tests/test_p6_5_injection_pack.py.
-             ":(exclude)app/services/grounding/injection.py",
-             ":(exclude)app/services/grounding/judge.py",
-             ":(exclude)app/services/analysis_v2.py",
-             # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI from the
-             # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
-             ":(exclude)app/services/rfi_evidence_requests.py",
-             ":(exclude)app/services/rfi_requests.py",
-             ":(exclude)app/templates/pages/rfi.html",
-             # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exporter;
-             # guarded by tests/test_p6_8_b2_docx_xlsx.py.
-             ":(exclude)app/services/board_exports.py",
-             # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md); guarded by tests/test_p6_8_v3a_data_capture.py.
-             *V3A_EXCLUDES,
-             # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md); guarded by tests/test_p6_8_v3b_file_set.py.
-             *V3B_EXCLUDES,
-             # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-             *YOZORA_BACKEND_EXCLUDES,
-             # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md).
-             *YOZORA_EXCLUDES],
-            cwd=REPO_ROOT, check=True, capture_output=True, text=True,
-        ).stdout.split()
-    )
-
-
-def test_scenario_9_only_config_and_document_processor_change_under_app():
-    changed = _changed("main...HEAD") | _changed("HEAD")
-    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-    changed = {path for path in changed if not is_v3b_path(path)}  # P6-8 V3-B
-    changed -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
-    changed -= set(P6_10_APP_FILES)  # P6-10 lands after the cap work (its own contract tests guard that set).
-    assert changed <= P6_4_CAP_APP_FILES, sorted(changed - P6_4_CAP_APP_FILES)

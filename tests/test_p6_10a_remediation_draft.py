@@ -22,7 +22,6 @@ from tests.p6_10_support import (  # noqa: F401 - fixtures are used by name
     _no_network_llm,
     _register_frameworks,
     analysed_assessment,
-    assert_p6_10_file_set,
     db,
     db_path,
     engine,
@@ -348,6 +347,30 @@ def test_scenario_8_card_shows_the_draft_control_on_open_cards_only_v1_and_v2(db
     assert html.count("data-remediation-draft-button") == len(conclusions) - 1
 
 
-def test_scenario_9_p6_10_file_set_and_llm_call_sites():
-    """P6-10 touches only its listed files, adds exactly two LLM call-site modules, and no migration."""
-    assert_p6_10_file_set()
+LLM_MODULES = {
+    "app/services/claude_analyzer.py",
+    "app/services/context_profiler.py",
+    "app/services/desk_review.py",
+    "app/services/document_processor.py",
+    "app/services/followup_engine.py",
+    "app/services/grounding/judge.py",
+    "app/services/grounding/metadata_fallback.py",
+    "app/services/grounding/missing.py",
+    "app/services/grounding/pipeline.py",
+    "app/services/llm_client.py",
+    "app/services/screening.py",
+    "app/services/remediation_draft.py",
+    "app/services/narrative.py",
+}
+
+
+def test_every_module_calling_the_llm_is_registered():
+    """A new app module that calls call_llm must be added here deliberately."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    llm_modules = {
+        str(path.relative_to(root)) for path in (root / "app").rglob("*.py")
+        if "call_llm" in path.read_text(encoding="utf-8")
+    }
+    assert llm_modules <= LLM_MODULES, sorted(llm_modules - LLM_MODULES)

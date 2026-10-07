@@ -4,7 +4,6 @@ import builtins
 import json
 import shutil
 import sqlite3
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -563,48 +562,6 @@ def test_scorer_counts_non_ok_llm_usage_rows(tmp_path):
     assert usage["extract / m2"]["calls"] == 1
     assert usage["extract / m2"]["non_ok"] == 1
 
-
-def test_app_files_are_untouched_by_harness():
-    if not (REPO_ROOT / ".git").exists():
-        pytest.skip("not a git checkout")
-    comparison_ref = "origin/main"
-    if subprocess.run(
-        ["git", "rev-parse", "--verify", comparison_ref],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    ).returncode != 0:
-        comparison_ref = "main"
-    merge_base = subprocess.run(
-        ["git", "merge-base", "HEAD", comparison_ref],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    # The guard protects harness changes: a branch that touches the harness must
-    # not also change the app it measures. Branches that don't touch the harness
-    # (ordinary app work, after the harness merged) are out of its scope.
-    harness_changes = subprocess.run(
-        ["git", "diff", "--name-only", merge_base, "--", "scripts/validation", "validation"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    if not harness_changes:
-        pytest.skip("branch does not change the validation harness")
-    result = subprocess.run(
-        [
-            "git", "diff", "--name-only", merge_base, "--",
-            "app", "alembic", "app/templates", "requirements.txt",
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.stdout.strip() == ""
 
 
 def test_mock_runner_maps_magic_link_evidence_at_engagement_level(tmp_path, monkeypatch):

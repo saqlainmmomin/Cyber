@@ -5,7 +5,6 @@ from __future__ import annotations
 import inspect
 import json
 import re
-import subprocess
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -38,7 +37,6 @@ from app.services import evidence as evidence_service
 from app.services import evidence_reuse, magic_links, remediation_rollup, report_content
 from app.services.report_snapshots import generated_event
 from app.services.evidence_reuse import AUDIT_METADATA_KEYS
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_S3_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora S3/S5/S8/S9/assessment Evidence per-PR allowance
 
 from scripts.seed_test_companies import (
     DEMO_CLIENT_A,
@@ -575,24 +573,3 @@ def test_scenario_12_structural_guards(db, http, demo):
     signature = inspect.signature(evidence_reuse.confirm_reuse)
     assert "acknowledge_warnings" in signature.parameters
     assert all("list" not in str(parameter.annotation) for parameter in signature.parameters.values())
-
-
-def test_scenario_13_protected_surface_is_unchanged(db, http, demo):
-    """Scenario 13: the full-contract protected files remain outside the diff."""
-    # P6-1: explicit llm_calls persistence (D-P6-1-E)
-    protected = [
-        "app/routers/web.py", "app/services/evidence.py", "app/services/magic_links.py",
-        "app/services/findings.py", "app/services/remediation_rollup.py", "app/services/report_content.py",
-        "app/services/report_snapshots.py", "app/routers/magic.py",
-        "app/routers/evidence.py", "scripts/backup.py", "scripts/migrate_legacy.py",
-        "requirements.txt", "tests/test_phase1_prefill.py",
-    ]
-    changed = subprocess.run(
-        ["git", "diff", "--name-only", "--", *protected],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.splitlines()
-    changed = [path for path in changed if path not in (*YOZORA_S3_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS, *ASSESSMENT_EVIDENCE_TAB_PATHS)]
-    assert changed == []

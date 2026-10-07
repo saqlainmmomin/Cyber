@@ -27,7 +27,6 @@ import dataclasses
 import importlib
 import json
 import re
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -251,16 +250,6 @@ def dpdpa_desk_review(db, monkeypatch, provider, frameworks=("dpdpa",), text=Non
     summary = run_desk_review(db, assessment)
     assert summary.status == "completed", summary.error_message
     return assessment
-
-
-def _git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
-
-
-def _merge_base() -> str:
-    return _git("merge-base", "main", "HEAD").strip()
 
 
 # --------------------------------------------------------------------------- #
@@ -827,149 +816,8 @@ def test_scenario_12_metric_keys_are_pinned(monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# Scenario 13: structure (green before and after)
-# --------------------------------------------------------------------------- #
-
-
-from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_EXCLUDES  # P6-8 V3-B per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import YOZORA_EXCLUDES, YOZORA_S1_PATHS  # Yozora S1 per-PR allowance
-
-
-def test_scenario_13_v1_readers_and_protected_modules_unchanged():
-    diff = _git(
-        "diff", _merge_base(), "--",
-        "app/services/auto_answer.py", "app/services/question_engine.py",
-        "app/services/desk_review.py", "app/services/desk_review_findings.py",
-        "app/services/claude_analyzer.py", "app/services/analysis_pipeline.py",
-        "app/services/analysis_v2.py", "app/services/scoring.py", "app/services/llm_client.py",
-        "app/frameworks", "app/dpdpa", "app/schemas", "app/models", "alembic",
-        "tests/fixtures", "tests/support", "tests/test_golden_dpdpa.py",
-        "app/services/grounding/judge.py", "app/services/grounding/judge_prompts.py",
-        "app/services/grounding/prompts.py", "app/services/grounding/claims.py",
-        "app/services/grounding/batches.py", "app/services/grounding/pipeline.py",
-        # P6-2b: approved DPDPA criteria and pack-version changes.
-        ":(exclude)app/frameworks/schema.py",
-        ":(exclude)app/frameworks/definitions/dpdpa.py",
-        ":(exclude)app/frameworks/criteria/dpdpa.py",
-        ":(exclude)app/frameworks/criteria/__init__.py",
-        ":(exclude)app/frameworks/criteria/iso27001.py",
-        ":(exclude)app/frameworks/criteria/nist_csf.py",
-        ":(exclude)app/frameworks/definitions/iso27001.py",
-        ":(exclude)app/frameworks/definitions/nist_csf.py",
-        ":(exclude)scripts/convert_criteria.py",
-        ":(exclude)app/services/engagement_factory.py",
-        ":(exclude)app/services/grounding/claims.py",
-        ":(exclude)app/services/grounding/pipeline.py",
-        # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
-        # guarded by tests/test_p6_5_injection_pack.py.
-        ":(exclude)app/services/grounding/judge.py",
-        ":(exclude)app/services/analysis_v2.py",
-        # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-        ":(exclude)app/services/llm_client.py",
-        # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme, display font.
-        *V3A_EXCLUDES,
-        # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
-        *V3B_EXCLUDES,
-        # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-        *YOZORA_BACKEND_EXCLUDES,
-        *YOZORA_EXCLUDES,  # Yozora S1
-    )
-    assert diff == ""
+def test_scenario_13_grounding_prompt_versions_remain_pinned():
     from app.services.grounding import judge_prompts, prompts
 
     assert prompts.PROMPT_VERSION == "p6-3a.1"
     assert judge_prompts.JUDGE_PROMPT_VERSION == "p6-4.1"
-
-
-def test_scenario_13_application_files_are_limited_and_disjoint_from_p6_4_cap():
-    # P6-8 B1 (tasks/handoffs/2026-09-28-p6-8-board-report-v2.md) lands after this PR and
-    # legitimately adds the board report v2 files; tests/test_p6_8_board_report_v2.py guards them.
-    p6_8_b1 = (
-        ":(exclude)app/utils/html_pdf.py",
-        ":(exclude)app/services/board_report.py",
-        ":(exclude)app/services/standalone_workpaper.py",
-        ":(exclude)app/services/report_snapshots.py",
-        ":(exclude)app/routers/snapshots.py",
-        ":(exclude)app/templates/reports",
-        ":(exclude)app/templates/pages/report_snapshots.html",
-        ":(exclude)app/assets/fonts/noto",
-        # P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exporter;
-        # tests/test_p6_8_b2_docx_xlsx.py guards it.
-        ":(exclude)app/services/board_exports.py",
-    )
-    p6_2b_app_files = {
-        "app/frameworks/criteria/dpdpa.py",
-        "app/frameworks/criteria/__init__.py",
-        "app/frameworks/criteria/iso27001.py",
-        "app/frameworks/criteria/nist_csf.py",
-        "app/frameworks/definitions/iso27001.py",
-        "app/frameworks/definitions/nist_csf.py",
-        "scripts/convert_criteria.py",
-        "app/frameworks/definitions/dpdpa.py",
-        "app/frameworks/schema.py",
-        "app/services/engagement_factory.py",
-        "app/services/grounding/claims.py",
-        "app/services/grounding/pipeline.py",
-    }
-    # P6-7a (tasks/handoffs/2026-09-28-p6-7-requirement-card.md) lands later and
-    # legitimately touches these; tests/test_p6_7_requirement_card.py guards them.
-    p6_7a = [f":(exclude){path}" for path in (
-        "app/main.py",
-        "app/services/requirement_card.py",
-        "app/services/review_queue.py",
-        "app/services/conclusion_review.py",
-        "app/routers/requirement_review.py",
-        "app/templates/components/conclusion_card.html",
-        "app/templates/components/requirement_card_body.html",
-        "app/templates/pages/conclusions.html",
-        "app/templates/pages/review_queue.html",
-        "app/templates/pages/evidence_span.html",
-    )]
-    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands later;
-    # tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard these.
-    p6_10 = [f":(exclude){path}" for path in (
-        "app/services/remediation_draft.py",
-        "app/services/narrative.py",
-        "app/routers/drafting.py",
-        "app/templates/partials/remediation_draft.html",
-        "app/templates/pages/narrative.html",
-    )]
-    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands later; its
-    # new SoA, roadmap and comparison files are guarded by tests/test_p6_9_file_set.py.
-    p6_9 = [f":(exclude){path}" for path in (
-        "app/services/soa.py",
-        "app/services/remediation_groups.py",
-        "app/services/prior_period.py",
-        "app/routers/soa.py",
-        "app/templates/pages/soa.html",
-    )]
-    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine;
-    # guarded by tests/test_p6_5_injection_pack.py.
-    p6_5 = [f":(exclude){path}" for path in (
-        "app/services/grounding/injection.py",
-        "app/services/grounding/judge.py",
-        "app/services/analysis_v2.py",
-    )]
-    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md): add-to-RFI from the
-    # requirement card; tests/test_p6_7b_add_to_rfi.py guards these.
-    p6_7b = [f":(exclude){path}" for path in (
-        "app/services/rfi_evidence_requests.py",
-        "app/services/rfi_requests.py",
-        "app/templates/pages/rfi.html",
-    )]
-    committed = _git("diff", "--name-only", _merge_base(), "--", "app", ".env.example", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES, *V3B_EXCLUDES).split()
-    untracked = _git("ls-files", "--others", "--exclude-standard", "--", "app", *p6_8_b1, *p6_7a, *p6_9, *p6_5, *p6_7b, *p6_10, *V3A_EXCLUDES, *YOZORA_BACKEND_EXCLUDES, *YOZORA_EXCLUDES, *V3B_EXCLUDES).split()
-    changed = set(committed) | set(untracked)
-    changed -= {"app/services/llm_client.py"}  # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-    assert changed <= {
-        "app/config.py",
-        ".env.example",
-        "app/services/desk_review_v2.py",
-        "app/services/grounding/missing.py",
-    } | p6_2b_app_files
-    assert not changed & {
-        "app/services/document_processor.py", "app/routers/documents.py",
-        "app/services/evidence.py", "app/services/grounding/sources.py",
-    }

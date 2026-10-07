@@ -8,7 +8,6 @@ same data. Nothing here calls a model.
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -57,12 +56,6 @@ def load_deck_document() -> dict:
         cached = json.loads(DECK_FIXTURE.read_text(encoding="utf-8"))
         load_deck_document._cache = cached
     return copy.deepcopy(cached)
-
-
-def git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
 
 
 def events(db, action: str, entity_id: str | None = None) -> list[AuditEvent]:
