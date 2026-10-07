@@ -308,10 +308,14 @@ def test_new_engagement_new_client_fields_and_roadmap_frameworks_are_visible(db,
     for field_id in ("company_name", "industry", "company_size"):
         assert _visible(page, "input" if field_id == "company_name" else "select", id=field_id), field_id
     roadmap = _visible(page, "label", data_roadmap_framework=True)
-    assert len(roadmap) == 3
-    assert all(label["title"] == "Roadmap — control data present, analysis pipeline coming" for label in roadmap)
+    assert roadmap == []
     disabled = {attrs["value"] for attrs in _visible(page, "input", name="selected_frameworks") if "disabled" in attrs}
-    assert disabled == {"gdpr", "hipaa", "pci_dss"}
+    assert disabled == set()
+    visible_frameworks = {
+        attrs["value"]
+        for attrs in _visible(page, "input", name="selected_frameworks")
+    }
+    assert visible_frameworks == {"dpdpa", "iso27001", "nist_csf"}
     existing = http.get("/engagements/new").text
     client_options = [attrs.get("value") for attrs, _ in _elements(existing, "option") if attrs.get("value")]
     assert client_options and all(value.count("-") == 4 for value in client_options if value not in {"gap_assessment", "audit", "readiness"})

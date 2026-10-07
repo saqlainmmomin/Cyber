@@ -99,7 +99,8 @@ def stage(db: Session, assessment: Assessment) -> Stage:
 
     responses = db.execute(
         select(func.count()).select_from(QuestionnaireResponse).where(
-            QuestionnaireResponse.assessment_id == assessment.id
+            QuestionnaireResponse.assessment_id == assessment.id,
+            ~QuestionnaireResponse.question_id.like("FU.%"),
         )
     ).scalar_one()
     if not responses:

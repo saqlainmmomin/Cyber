@@ -3,7 +3,8 @@
   {% for fu in followups %}
   <div class="qgroup">
     <label class="label" for="followup-input-{{ fu.id }}">{{ fu.text }}</label>
-    <label class="field area"><textarea id="followup-input-{{ fu.id }}" name="followup_{{ fu.id }}" placeholder="Your answer"></textarea></label>
+    <input type="hidden" name="followup_question_{{ fu.id }}" value="{{ fu.text }}">
+    <label class="field area"><textarea id="followup-input-{{ fu.id }}" name="followup_{{ fu.id }}" placeholder="Your answer">{{ fu.answer or '' }}</textarea></label>
     {% if fu.reason %}<p class="help">{{ fu.reason }}</p>{% endif %}
   </div>
   {% endfor %}

@@ -106,7 +106,12 @@
             <p class="err" data-question-error hidden>Choose an answer to continue.</p>
 
             <div id="followup-indicator-{{ q.id }}" class="htmx-indicator help" aria-live="polite">Reading your answer…</div>
-            <div id="followup-{{ q.id }}"></div>
+            <div id="followup-{{ q.id }}">
+              {% set saved_followups = followups_by_parent.get(q.id, []) if followups_by_parent is defined else [] %}
+              {% if saved_followups %}
+              {% with followups=saved_followups %}{% include "partials/followup_questions.html" %}{% endwith %}
+              {% endif %}
+            </div>
 
             {% if not inferred or has_notes %}
             <details><summary class="disclose">Add notes or evidence reference</summary>

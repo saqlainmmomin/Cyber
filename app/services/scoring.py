@@ -484,19 +484,6 @@ _REQ_ROOT_CAUSE_FALLBACK: dict[str, str] = {
 _EFFORT_RANK = {"low": 1, "medium": 2, "high": 3}
 _EFFORT_FROM_RANK = {1: "low", 2: "medium", 3: "high"}
 
-_BUDGET_BANDS = {
-    ("low", "low"): "under_10k",
-    ("low", "medium"): "10k_to_50k",
-    ("low", "high"): "10k_to_50k",
-    ("medium", "low"): "10k_to_50k",
-    ("medium", "medium"): "50k_to_150k",
-    ("medium", "high"): "50k_to_150k",
-    ("high", "low"): "50k_to_150k",
-    ("high", "medium"): "above_150k",
-    ("high", "high"): "above_150k",
-}
-
-
 def _get_root_cause(assessment: dict) -> str:
     """Get root cause from Claude output or fall back to prefix mapping."""
     root = assessment.get("root_cause_category")
@@ -537,10 +524,6 @@ def generate_initiatives(assessments: list[dict]) -> list[dict]:
         max_timeline = max(a.get("timeline_weeks", 8) for a in items)
         effort = _EFFORT_FROM_RANK[max_effort_rank]
 
-        # Determine budget band from effort + timeline
-        timeline_band = "low" if max_timeline <= 4 else "medium" if max_timeline <= 12 else "high"
-        budget = _BUDGET_BANDS.get((effort, timeline_band), "50k_to_150k")
-
         cluster_info = ROOT_CAUSE_CLUSTERS.get(cluster, {})
         title = _name_initiative(cluster, req_ids, cluster_info.get("title", cluster))
 
@@ -553,7 +536,6 @@ def generate_initiatives(assessments: list[dict]) -> list[dict]:
             "combined_effort": effort,
             "combined_timeline_weeks": max_timeline,
             "priority": max_priority,
-            "budget_estimate_band": budget,
             "suggested_approach": _build_approach(cluster, req_ids),
         })
 
@@ -761,9 +743,6 @@ def generate_multi_framework_initiatives(
         max_effort_rank = max(_EFFORT_RANK.get(a.get("remediation_effort", "medium"), 2) for a in items)
         max_timeline = max(a.get("timeline_weeks", 8) for a in items)
         effort = _EFFORT_FROM_RANK[max_effort_rank]
-        timeline_band = "low" if max_timeline <= 4 else "medium" if max_timeline <= 12 else "high"
-        budget = _BUDGET_BANDS.get((effort, timeline_band), "50k_to_150k")
-
         initiatives.append({
             "initiative_id": f"INIT-{idx:03d}",
             "title": f"{cluster.title()} Remediation — {', '.join(fw_ids)}",
@@ -774,7 +753,6 @@ def generate_multi_framework_initiatives(
             "combined_effort": effort,
             "combined_timeline_weeks": max_timeline,
             "priority": max_priority,
-            "budget_estimate_band": budget,
             "suggested_approach": _build_approach(cluster, req_ids),
         })
 

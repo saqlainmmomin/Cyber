@@ -7,6 +7,7 @@ Supports two-call architecture:
 """
 
 from app.dpdpa.framework import DPDPA_FRAMEWORK, get_all_requirements
+from app.services.followup_responses import decode as decode_followup
 
 
 def _build_requirements_text() -> str:
@@ -535,8 +536,11 @@ def build_user_prompt(
         prompt += "\n### Follow-up Clarifications\n"
         prompt += "_These are auditor follow-up responses probing deeper into specific answers:_\n"
         for r in followup_responses:
-            parent_note = f" (follow-up to {r['notes'].replace('Follow-up to ', '')})" if r.get("notes", "").startswith("Follow-up to") else ""
-            prompt += f"- **{r['question_id']}**{parent_note}: {r['answer']}\n"
+            stored = decode_followup(r["question_id"], r.get("notes"), r.get("answer", ""))
+            parent_note = f" (follow-up to {stored['parent_question_id']})" if stored.get("parent_question_id") else ""
+            question = stored.get("text") or r["question_id"]
+            answer = stored.get("answer") or r.get("answer", "")
+            prompt += f"- **{question}**{parent_note}: {answer}\n"
 
     prompt += "\n"
 

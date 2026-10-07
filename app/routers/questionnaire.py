@@ -309,6 +309,7 @@ def get_responses(assessment_id: str, db: Session = Depends(get_db)):
     return (
         db.query(QuestionnaireResponse)
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
+        .filter(~QuestionnaireResponse.question_id.like("FU.%"))
         .all()
     )
 

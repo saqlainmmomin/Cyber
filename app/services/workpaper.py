@@ -20,6 +20,7 @@ from app.models.questionnaire import QuestionnaireResponse
 from app.services import analysis_pipeline, conclusion_review
 from app.services.citations import resolve_citations
 from app.services.conclusion_review import REVIEWER_ACTOR_PREFIX, ConclusionCard
+from app.services.followup_responses import decode as decode_followup
 
 STALE_RUNNING_AFTER = timedelta(hours=1)
 CONTENT_CHANGING_ACTIONS = ("proposed", "edited")
@@ -65,6 +66,15 @@ class ClientResponse:
     na_reason: str | None
     confidence: str | None
     answer_source: str | None
+    submitted_at: datetime
+    followups: tuple["FollowUpResponse", ...] = ()
+
+
+@dataclass(frozen=True)
+class FollowUpResponse:
+    question_id: str
+    question: str
+    answer: str
     submitted_at: datetime
 
 
@@ -204,6 +214,27 @@ def _client_response(card: ConclusionCard, rows: dict[str, QuestionnaireResponse
     if match is None:
         return None
     row, matched_on = match
+    followups = []
+    response_keys = set(key for key, _ in candidates)
+    for followup in rows.values():
+        if not followup.question_id.startswith("FU."):
+            continue
+        stored = decode_followup(
+            followup.question_id,
+            followup.notes,
+            followup.answer,
+        )
+        if stored.get("parent_question_id") not in response_keys:
+            continue
+        followups.append(
+            FollowUpResponse(
+                question_id=followup.question_id,
+                question=stored.get("text") or followup.question_id,
+                answer=stored.get("answer") or followup.answer,
+                submitted_at=followup.submitted_at,
+            )
+        )
+    followups.sort(key=lambda item: item.submitted_at)
     return ClientResponse(
         question_id=row.question_id,
         matched_on=matched_on,
@@ -214,6 +245,7 @@ def _client_response(card: ConclusionCard, rows: dict[str, QuestionnaireResponse
         confidence=row.confidence,
         answer_source=row.answer_source,
         submitted_at=row.submitted_at,
+        followups=tuple(followups),
     )
 
 

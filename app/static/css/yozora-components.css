@@ -1,6 +1,6 @@
 /* Yozora components. Uses only variables from generated app/static/css/yozora-tokens.css. New components are added here first. */
 *{box-sizing:border-box;margin:0;padding:0}
-html{min-height:100%;background:var(--canvas-mid) linear-gradient(180deg,var(--canvas-top) 0,var(--canvas-mid) var(--canvas-mid-at),var(--canvas-bottom) 100%) no-repeat}
+html{min-height:100%;background:var(--canvas-mid) linear-gradient(180deg,var(--canvas-top) 0,var(--canvas-mid) var(--canvas-mid-at),var(--canvas-bottom) 100%) no-repeat;background-attachment:fixed}
 body{color:var(--text);font-family:var(--font);font-size:var(--t-base);line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:'cv11','ss03';min-height:100vh}
 .num,td.n{font-variant-numeric:tabular-nums}
 a{color:inherit;text-decoration:none}

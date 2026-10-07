@@ -10,5 +10,4 @@ class InitiativeOut(BaseModel):
     combined_effort: str
     combined_timeline_weeks: int
     priority: int
-    budget_estimate_band: str | None
     suggested_approach: str

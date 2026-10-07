@@ -13,7 +13,7 @@
     {% if tab == "overview" and workflow.action_href and not engagement_archived and preview_state != "loading" %}
     <a class="btn primary" href="{{ workflow.action_href }}">{{ workflow.stage.next_label }}{{ icon("arrow-r") }}</a>
     {% endif %}
-    {% if assessment.status == 'completed' %}
+    {% if release is defined and release.released %}
     {{ link_button("Live PDF", "/api/assessments/" ~ assessment.id ~ "/report/pdf", "secondary", "sm", "download", true) }}
     {{ link_button("Report versions", "/assessments/" ~ assessment.id ~ "/snapshots", "secondary", "sm") }}
     {% endif %}
