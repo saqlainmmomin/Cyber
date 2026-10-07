@@ -55,12 +55,24 @@
   <div class="nav" id="nav"></div>
 </div>
 
+<div id="storewarn" class="card" style="display:none;border-color:var(--chg)"><b>Autosave is not available in this viewer.</b> Your answers live only on this page. Do not reload or close it. Use "Show my comments" often and paste the text somewhere safe.</div>
 <div id="root"></div>
 
 </div>
 
+<div id="exp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;padding:16px">
+  <div class="card" style="max-width:860px;margin:0 auto;height:calc(100% - 32px);display:flex;flex-direction:column">
+    <b>Your comments (select all, copy, paste into the chat)</b>
+    <textarea id="exptext" readonly style="flex:1;min-height:0;margin:10px 0"></textarea>
+    <div style="display:flex;gap:10px">
+      <button id="expsel" class="ghost" style="font:inherit;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:6px 14px;cursor:pointer">Select all</button>
+      <button id="expclose" style="font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="bar">
-  <button id="dl">Download comments (.md)</button>
+  <button id="dl">Show my comments (copy from here)</button>
   <button id="cp" class="ghost">Copy to clipboard</button>
   <button id="clr" class="ghost">Clear all</button>
   <span id="count"></span>
@@ -310,15 +322,20 @@ function buildMd(){
   const g = S['general']; if(g && (g.t||'').trim()) out.push('', '## Anything else', g.t.trim());
   return out.join('\n');
 }
+const expEl = document.getElementById('exp'), expText = document.getElementById('exptext');
 document.getElementById('dl').onclick = () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([buildMd()], {type:'text/markdown'}));
-  a.download = 'journey-comments.md'; a.click();
+  expText.value = buildMd(); expEl.style.display = 'block'; expText.focus(); expText.select();
 };
+document.getElementById('expsel').onclick = () => { expText.focus(); expText.select(); };
+document.getElementById('expclose').onclick = () => { expEl.style.display = 'none'; };
 document.getElementById('cp').onclick = async () => {
-  try { await navigator.clipboard.writeText(buildMd()); document.getElementById('count').textContent = 'Copied'; }
-  catch(e){ document.getElementById('count').textContent = 'Copy blocked: use Download'; }
+  const md = buildMd();
+  try { await navigator.clipboard.writeText(md); document.getElementById('count').textContent = 'Copied'; return; } catch(e){}
+  expText.value = md; expEl.style.display = 'block'; expText.focus(); expText.select();
+  try { document.execCommand('copy'); } catch(e){}
 };
+try { localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }
+catch(e){ document.getElementById('storewarn').style.display = 'block'; }
 document.getElementById('clr').onclick = () => {
   if(!confirm('Clear every mark and comment?')) return;
   S = {}; save(); location.reload();
