@@ -95,6 +95,10 @@ section{position:relative;padding:104px 0}
 .eyebrow{font-size:14px;color:var(--accent);margin:0 0 14px;font-weight:500}
 h2{font-size:clamp(28px,3.6vw,40px);line-height:1.12;letter-spacing:-.028em;font-weight:600;margin:0 0 18px;max-width:720px}
 .sub{color:var(--ink2);font-size:17px;max-width:620px;margin:0}
+.issues{margin-top:56px;border-top:1px solid var(--line2)}
+.issue{display:grid;grid-template-columns:1fr 1.25fr;gap:48px;align-items:baseline;padding:34px 0;border-bottom:1px solid var(--line);transition:background .2s}
+.issue h3{margin:0;font-size:clamp(21px,2.3vw,26px);line-height:1.2;letter-spacing:-.022em;font-weight:600}
+.issue p{margin:0;color:var(--ink2);font-size:16px;max-width:560px}
 .cols{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:56px}
 .card{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:28px;transition:border-color .2s,background .2s,transform .2s var(--ease)}
 .card:hover{border-color:var(--line2);background:var(--glass2);transform:translateY(-2px)}
@@ -177,6 +181,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.sky i{animation:none}html{scroll-behavior:auto}}
 
 @media(max-width:960px){
+  .issue{grid-template-columns:1fr;gap:10px;padding:26px 0}
   .hero .grid,.split,.principles{grid-template-columns:1fr;gap:48px}
   .ba{grid-template-columns:1fr}
   .fgrid{grid-template-columns:1fr 1fr}
@@ -267,11 +272,11 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
     <p class="eyebrow rv">Why Yozora</p>
     <h2 class="rv">Assessments take a team, vary by reviewer, and leak into personal AI tools.</h2>
     <p class="sub rv">Each of these is a cost today. Together they are why assessments are slower, riskier and harder to trust than they should be.</p>
-    <div class="cols">
-      <div class="card rv"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 19c.5-3 2.7-4.7 5.5-4.7s5 1.7 5.5 4.7M16 14.5c2.3 0 4 1.3 4.5 3.8"/></svg></div><h3>Too many people to coordinate</h3><p>Chasing evidence, mapping controls, drafting findings, reviewing and writing up each need a different person, plus someone to keep it all in step.</p></div>
-      <div class="card rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"/></svg></div><h3>Quality depends on who did the work</h3><p>Findings, scoring and report quality shift between reviewers, which makes results hard to compare, repeat or defend.</p></div>
-      <div class="card rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><h3>No single view</h3><p>Evidence, answers and findings sit in folders, spreadsheets and email, so nobody can see where each engagement actually stands.</p></div>
-      <div class="card rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v5.5c0 4.5-3.2 8-8 9.5-4.8-1.5-8-5-8-9.5V6z"/><path d="M12 8.5v4M12 15.5v.01"/></svg></div><h3>Sensitive documents in personal AI tools</h3><p>Teams already use AI to speed this work up, often through personal accounts outside any controlled environment. The benefit is real, but so is the exposure.</p></div>
+    <div class="issues">
+      <div class="issue rv"><h3>Five roles, one assessment.</h3><p>Evidence chasers, analysts, reviewers and report writers each hold a piece, and someone has to keep them in step. A lot of the calendar time goes on handoffs, not analysis.</p></div>
+      <div class="issue rv"><h3>Two reviewers, two answers.</h3><p>Findings and scoring shift with whoever did the work, so results are hard to compare between clients, repeat next year, or defend to an auditor.</p></div>
+      <div class="issue rv"><h3>Status lives in someone's head.</h3><p>Evidence is in a shared folder, answers are in a spreadsheet, findings are in email. Asking where an engagement stands means asking a person.</p></div>
+      <div class="issue rv"><h3>The shortcut nobody approved.</h3><p>Because it is faster, people paste client documents into personal AI accounts to get the work done. The benefit is real, and so is the exposure.</p></div>
     </div>
   </div>
 </section>
