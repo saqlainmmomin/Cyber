@@ -1,6 +1,6 @@
 # Flow rework plan (S0-S9)
 
-Status: **draft for owner approval. No code until approved.** Date: 2026-10-07. Base: main at 00f3300, plus the flow doc, owner comments and the review handoff on `claude/stress-test-demo-company-yx20b1`.
+Status: **approved in principle by the owner 2026-10-07; final copy.** Implementation starts with wave 1. Date: 2026-10-07. Base: main at 00f3300, plus the flow doc, owner comments and the review handoff on `claude/stress-test-demo-company-yx20b1`.
 
 Inputs: `docs/product/2026-10-06-consultant-journey-flow.html`, `docs/product/2026-10-07-consultant-journey-comments.md`, `tasks/handoffs/2026-10-07-flow-rework-plan-review.md`. If a line reference in the handoff conflicts with this plan, this plan wins. Each slice re-checks its line refs before starting, because main moves.
 
@@ -55,10 +55,40 @@ What they show:
 | P16 | Consultants can add custom scope questions (text). They are exported and stored, never fed to scoring or prompts. | S3 |
 | P17 | Certain scope answers pre-select RFI items (certificate, policy list, risk methodology, tool list). A mapping table in the framework definitions; no LLM. | S4 |
 
+## Design pass: part of every slice that touches a screen
+The owner's top concern: content has to be easy to read, with the important information standing out. Text hierarchy is a deliverable in every slice, not a later polish pass.
+
+- **S2 writes the rules once:** a one-page checklist (below), plus macros. S2 is the only slice that is purely design.
+- **Every slice that changes a screen ends with a design pass** on each screen it touches, before the PR opens. The PR includes before/after screenshots (taken on the S1 demo company) and a filled-in checklist for each screen.
+- **Checklist (S2 finalises the wording):**
+  1. In 3 seconds, can you tell where you are, what's done and what to do next? There's one clearly primary action.
+  2. The most important information (status, counts, what's missing) comes first and is the most prominent. Supporting text is smaller and lighter.
+  3. No walls of text: lists are scannable, long explanations are collapsed, ids and codes are secondary to human labels.
+  4. Completed steps show as done (checkmark / done state). Nothing finishes silently.
+  5. Only the frameworks in this assessment appear in the wording.
+- This is the "design pass at build" in the two-pass rule. The second pass is the owner's walkthrough before exposure. **No extra polish rounds between them**, and no new pixel-gate tests.
+- Screens no slice touches (dashboard, engagement page, settings) get their design pass in S8.
+
+## Who does what (three accounts)
+| Lane | Account | Does |
+|---|---|---|
+| **Orchestrator** | Claude, desktop app (this account) | Writes the handoff for each slice, dispatches Codex, verifies each diff (re-runs tests, reads the change), runs **one** review pass per PR in a Sonnet subagent, opens PRs. Owns the Claude-side design of S3 (wizard deletion, scope model), S4 (stage machine, the two new tables and their purge rules) and S7 (LLM module, unconfirmed-answer gating, prompt safety). |
+| **Design + spec** | Claude, second account, run from the terminal | Writes S2 (rules + checklist + macros), the S1 demo company spec (narrative, which documents, which states), and S9 wording. Also reviews Claude-built code, so the builder never reviews their own work. |
+| **Builder** | Codex | Implements from handoffs: S0, S1 (seed script + demo files), S6, then S3/S4/S5/S7/S8 builds. Model: `gpt-5.6-luna` at xhigh by default, several runs in parallel in separate worktrees; `gpt-5.6-sol` for S3 and S4 (the riskiest builds) when quota allows. On a usage-limit error: don't retry in a loop. Finish what's done or wait for the reset. |
+
+Demo files (xlsx, a scanned-looking PDF, an image) are generated with plain Python (openpyxl, Pillow), with no image-generation model needed.
+
+## Testing: keep it lean
+- Keep: the existing suite, scoring determinism/golden scores, data retention and purge, LLM call-site registration, answer-key isolation, unconfirmed answers never reaching analysis.
+- Each slice adds tests only for behaviour that could lose data or change a score silently. No new pixel gates, no file-path guards, no snapshot tests of templates.
+- One review pass per PR (Sonnet subagent). A second pass only if the first finds a real bug.
+- The owner's click-through is the final gate.
+
 ## Slices
-Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both touch `web.py` and the scope partials, so in sequence). S5 after S2+S4. S7 after S5. S8 after the S1 walkthrough. S9 after S3 (samples received).
+Order: **S0a first** (retire the guard tests, a small PR, so later slices don't carry guard allowances). Then S0b, S1, S2 and S6-F1 in parallel (disjoint files). S1's follow-up screens need S0b's follow-up fix merged first; the rest of S1 doesn't wait. Then S3, then S4 (both touch `web.py` and the scope partials, so in sequence). S5 after S2+S4. S7 after S5. S8 after the S1 walkthrough. S9 after S3 (samples received).
 
 ### S0 Hotfixes + guard retirement
+S0a = guard retirement only (first). S0b = everything else.
 - **Follow-up storage (verified bug).** The follow-up textarea posts free text into `QuestionnaireResponse.answer`, which has a CHECK constraint allowing only the 5 answer values (`web.py:2671-2695`, `models/questionnaire.py:13-16`). Every follow-up save fails. Fix: store the free text in `notes` with an empty answer, or a dedicated nullable column; pick whichever needs no CHECK change. Set `cluster_id` for `FU.<cluster>` rows. Follow-ups should survive a reload once answered.
 - Gradient: `yozora-components.css:3`, the gradient stretches over document height. Fix with a fixed pseudo-element or `background-attachment: fixed`.
 - First-RFI copy (`rfi.html:62`); hide "Live PDF" until released (`assessment_header.html:16-17`); hide greyed-out GDPR/HIPAA/PCI cards (`new_engagement.html`).
@@ -76,7 +106,7 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - A one-page hierarchy rule: type scale, one obvious next action per screen, a done state for every step (checkmark/toast + stepper tick), how an evidence/RFI item is written (what it is, why it's requested).
 - Macros for the done state and the "next step" banner in `app/templates/components/`.
 - Rewrite the flow doc's Follow-ups rows to match decision B.
-- **Exit:** owner signs off the rule page. Later slices apply it to their own screens only, so there's no app-wide restyle pass.
+- **Exit:** owner signs off the rule page and checklist. Later slices apply it to the screens they touch (see Design pass), so there's no app-wide restyle pass.
 
 ### S3 One scoping flow
 - **Delete** the context wizard: `routers/questionnaire.py` context routes, `context_profiler` LLM call, `context_complete`, `question_step`, and status `context_gathered` (stop writing it; old rows still render). `Assessment.context_answers/context_profile` columns stay as dead data, with no migration.
@@ -122,6 +152,7 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - Framework-conditional section refs on conclusions/review queue (today DPDPA refs are hard-coded).
 - Report: demote Narrative/Board inputs/Applicability sub-tabs; one primary action per screen.
 - Comparison: human labels; match the prior assessment by engagement, not the `company_name` string; add a "Re-assess" entry at setup.
+- Design pass on the screens no other slice touched (dashboard, engagement page, settings).
 - Exact list comes from the owner's S1 comments.
 
 ### S9 KPMG content

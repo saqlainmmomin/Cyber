@@ -541,6 +541,7 @@ FLOW_REWORK_PLAN_PATHS = (
     "docs/product/2026-10-06-consultant-journey-flow.html",
     "docs/product/2026-10-07-consultant-journey-comments.md",
     "tasks/handoffs/2026-10-07-flow-rework-plan-review.md",
+    "tasks/handoffs/2026-10-07-flow-rework-wave1-kickoff.md",
 )
 
 YOZORA_ALL_PATHS = YOZORA_S1_PATHS + YOZORA_S2_PATHS + YOZORA_S3_PATHS + YOZORA_S4_PATHS + YOZORA_S5_PATHS + YOZORA_S6_PATHS + YOZORA_S7_PATHS + YOZORA_S8_PATHS + YOZORA_S9_PATHS + YOZORA_DESIGN_FILES + V3C_MOCKUP_PATHS + RFI_REQUESTS_PATHS + ASSESSMENT_EVIDENCE_TAB_PATHS + FLOW_REWORK_PLAN_PATHS
