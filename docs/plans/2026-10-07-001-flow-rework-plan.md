@@ -34,13 +34,29 @@ The owner is right that the old companies don't matter as product data. One thin
 
 Plan: no mapping work. Gaps that trace only to context answers stop being detectable, and that's accepted. The validation scripts only get fixed where they would crash. Run the remaining set once before and once after S3 and S6-F2 as a smoke check, never to tune against it. A new held-out company (written by someone other than whoever changes the prompts) is a **separate item, not in this plan**, and replaces the old set when it exists.
 
-### Still open (owner)
-| # | Question | Default if no answer |
+### KPMG samples (received 2026-10-07): what they change
+Three real pre-engagement sheets (photos; client names withheld, not stored in the repo): one multi-standard sheet (ISO 27001, ISO 42001, ISO 20000, ISO 9001, CMMI, privacy) and two shorter ones (a cyber assessment, and ISO 27001 + 9001), about 75 questions in all.
+
+What they show:
+1. **KPMG's "RFI" is our Scope, not our evidence request.** Every row is a question for the client to answer in words ("~1,000", "Yes", "TBD", a cloud provider name, a list of departments). Documents come later. So the flow is: scope questionnaire **sent to the client**, then the evidence RFI. Today our scope is filled in-app by the consultant only.
+2. **The shape fits the plan:** a "Common Information" block asked once, then one block per standard. Privacy is one block across GDPR/DPDPA/CCPA, not one per law. This removes the plan's riskiest assumption.
+3. **Columns: No. / Track / Question / Client response / Notes from the kickoff meeting (dated).** So each scope answer needs a consultant note beside it.
+4. **Answers are often partial:** "TBD", "WIP", "As per scope", approximations like "~10". Scope must allow unanswered/pending items and must not block on them.
+5. **Almost everything is free text.** Strict number or structured fields wouldn't survive "~1,000 across sites". This simplifies S3: single-select, multi-select and text only, no `number` type.
+6. **About a third of the questions are about the engagement, not the client's controls:** will the consultant draft the policies, run training, do VAPT, run a phishing simulation, coordinate the certification body, the UAR sample size, the timeline, who does remediation. Under the principle "never ask what we won't use", these don't belong in the built-in bank. Consultants can add them as **custom questions** (text, exported, not used by the engine).
+7. **Some answers should seed the evidence RFI:** "existing certification? share the certificate and its scope", "existing policies? list them", "risk methodology and last assessment date", "tools deployed (PAM, SIEM, EDR, DLP)". A "Yes" there pre-selects the matching RFI item in S4.
+
+### Decided from the samples (please confirm in review)
+| # | Decision | Slice |
 |---|---|---|
-| O3 | 5-10 redacted KPMG scope questions and one RFI. Owner is sending them; not received yet. | S3 builds the structure only. S9 fills the wording when samples arrive. If the samples arrive before S3 starts, S3 checks its question types and shared-facts block against them first. |
+| P13 | Scope question types: single, multi, text. No number type. Every scope answer can be left pending ("TBD") without blocking. | S3 |
+| P14 | Each scope question has a consultant note field ("notes from kickoff"). | S3 |
+| P15 | **Scope can be sent to the client** the same way as the RFI: XLSX export with columns No. / Section / Question / Response / Notes, or the client link. The consultant can also fill it in-app. Importing a filled XLSX back is **not** in this plan; the consultant types the answers in (revisit after S1). | S3 (export), S4 (shares the send mechanism) |
+| P16 | Consultants can add custom scope questions (text). They are exported and stored, never fed to scoring or prompts. | S3 |
+| P17 | Certain scope answers pre-select RFI items (certificate, policy list, risk methodology, tool list). A mapping table in the framework definitions; no LLM. | S4 |
 
 ## Slices
-Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both touch `web.py` and the scope partials, so in sequence). S5 after S2+S4. S7 after S5. S8 after the S1 walkthrough. S9 when samples arrive.
+Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both touch `web.py` and the scope partials, so in sequence). S5 after S2+S4. S7 after S5. S8 after the S1 walkthrough. S9 after S3 (samples received).
 
 ### S0 Hotfixes + guard retirement
 - **Follow-up storage (verified bug).** The follow-up textarea posts free text into `QuestionnaireResponse.answer`, which has a CHECK constraint allowing only the 5 answer values (`web.py:2671-2695`, `models/questionnaire.py:13-16`). Every follow-up save fails. Fix: store the free text in `notes` with an empty answer, or a dedicated nullable column; pick whichever needs no CHECK change. Set `cluster_id` for `FU.<cluster>` rows. Follow-ups should survive a reload once answered.
@@ -65,7 +81,7 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 ### S3 One scoping flow
 - **Delete** the context wizard: `routers/questionnaire.py` context routes, `context_profiler` LLM call, `context_complete`, `question_step`, and status `context_gathered` (stop writing it; old rows still render). `Assessment.context_answers/context_profile` columns stay as dead data, with no migration.
 - Remove the questionnaire gate (`questionnaire_tab.html:27-40,69`).
-- Scope gets: question types `text`, `number`, `multi_select` rendered as checkboxes (today `scope_form.html:19` renders radios even for multi); a **shared facts** block asked once (headcount, sites, cloud providers, timeline, driver) followed by per-framework blocks; human labels; **assessment period + evidence cut-off** moved here from Conclusions (`report_basis_panel.html:117`).
+- Scope gets: question types single, multi (rendered as checkboxes; today `scope_form.html:19` renders radios even for multi) and text, with pending allowed (P13); a note per question (P14); custom questions (P16); XLSX export for the client (P15); a **Common information** block asked once (from the samples: legal entity, entities and locations in scope, headcount per site, business functions in scope, existing certifications and their scope, existing documentation status, security tools deployed, cloud providers and hosting locations, data centres and DR sites, outsourced IT/third parties, timeline and driver) followed by per-framework blocks (privacy block = one block for DPDPA); human labels; **assessment period + evidence cut-off** moved here from Conclusions (`report_basis_panel.html:117`).
 - Duplicates removed: DPDPA SCP.1/2/3 vs CTX.DATA.4/CTX.RISK.1. Budget question (CTX.INIT.3) goes.
 - `risk_tier` stops being an input. Deep-review badges come from desk review "deepened" only.
 - After "Start assessment", land on Scoping (`web.py:1339`).
@@ -109,12 +125,16 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - Exact list comes from the owner's S1 comments.
 
 ### S9 KPMG content
-- Scope and RFI wording from the owner's samples (O3), inside the S3/S4 structure. Content only.
+- Scope wording from the samples, inside the S3 structure. Content only. Candidate per-framework items (paraphrased):
+  - **ISO 27001:** functions, departments, processes, applications and infrastructure in scope; on-prem vs cloud applications, the cloud provider, deployment model; risk methodology, when last reviewed, last risk assessment date and scope; existing ISMS policies and procedures; certification target date. Merge in CTX.ISO.1-5 from closed #121 where they don't duplicate.
+  - **DPDPA (privacy block):** functions processing personal data; third parties processing personal data, and how many; countries data is collected from; processing or sharing outside India; transfer mechanisms; where personal data is hosted and backed up; number of applications processing personal data; privacy tooling; data mapping done or not; prior privacy assessments.
+  - **NIST CSF:** PAM tool and how many apps are integrated; how user access reviews run (frequency, method, owners, systems covered); SOC tooling and operating model (in-house, hybrid, outsourced); any framework already used to run the security programme; recent SOC/PAM/resilience assessments; third-party risk framework and recent vendor assessments. Check against NIST.SCP.* to avoid repeats.
+- Evidence RFI wording: what each item is and why it's asked (S2 rule), plus the P17 seed mapping.
 
 ## What gets smaller
 Context wizard + profiler LLM call + `context_complete`/`question_step` templates; `context_gathered` status; the questionnaire gate; scope checklist + its PDF/DOCX; ~16 file-path guard tests and `yozora_paths.py`; Queue/Conclusions duplication; 13 reviewer-name fields; greyed roadmap cards. Left alone on purpose: legacy DPDPA-only questionnaire path, the parked v2 pipeline, design preview routers/pixel gates (frozen; no new ones).
 
 ## Risks
-1. **KPMG material may not fit** the shared-facts + per-framework-block shape. S3 builds the types generically (text/number/single/multi); S9 is content only. Ask for samples now (O3).
+1. **Sending scope to the client (P15) is new** and widens S3. If S3 gets too big, ship the XLSX export first and the client link in S4 alongside the RFI link. (The earlier risk, that KPMG material wouldn't fit the shape, is retired: the samples match it.)
 2. **Removing the context profile changes LLM input** with no held-out set we care about. Mitigation: before/after smoke run on the old set; a new held-out company later.
 3. **The stage machine change (S4) touches many consumers.** Done in one slice, with behaviour tests updated in the same PR.
