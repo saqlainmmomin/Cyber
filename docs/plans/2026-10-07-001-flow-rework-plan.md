@@ -17,6 +17,10 @@ Inputs: `docs/product/2026-10-06-consultant-journey-flow.html`, `docs/product/20
 | P6 | **Retire the per-PR file-path guards** (explained below). Behaviour tests stay. | S0 |
 | P7 | Follow-ups stay inline (comment decision B). The flow doc's "generated after analysis" rows get rewritten to match. | S2 |
 | P8 | Only DPDPA, ISO 27001 and NIST CSF. GDPR/HIPAA/PCI are hidden, not greyed out. | S0 |
+| P9 | **Remove budget from the report.** The remediation budget band ("under 10k" ... "above 150k") leaves the PDF and is no longer computed. Effort and timeline stay. | S0 |
+| P10 | **The RFI stage is skippable** ("Skip RFI, go to evidence"). | S4 |
+| P11 | **Meeting notes are per domain: one meeting per domain.** The consultant uploads or pastes the notes for a domain, and suggested answers map onto that domain's questions only. | S7 |
+| P12 | **PR #121 closed** as superseded (closed 2026-10-07). | S0, S3 |
 
 ### P6 explained: which tests get retired
 Two kinds of tests live in `tests/`:
@@ -33,10 +37,7 @@ Plan: no mapping work. Gaps that trace only to context answers stop being detect
 ### Still open (owner)
 | # | Question | Default if no answer |
 |---|---|---|
-| O1 | **Budget band in the PDF.** The owner said "we're not talking money, so keep it." It does print money ranges: "under 10k", "10k to 50k", "50k to 150k", "above 150k" (no currency), worked out from effort × timeline (`scoring.py:487-542`, `pdf_export.py:1394`). Keep, or show effort + timeline only? | Keep as is (owner's answer), pending a look at the printed page. |
-| O2 | Can the consultant **skip** the RFI stage entirely (e.g. evidence already in hand)? | Yes, skippable ("Skip RFI, go to evidence"). The review said the stage must be skippable. |
-| O3 | 5-10 redacted KPMG scope questions and one RFI. | S3 builds the structure only. S9 fills the wording when samples arrive. |
-| O4 | Meeting notes: one per domain-owner session, or one per questionnaire section? | Per session: one Evidence item (source "interview") per meeting, which can fill any question. |
+| O3 | 5-10 redacted KPMG scope questions and one RFI. Owner is sending them; not received yet. | S3 builds the structure only. S9 fills the wording when samples arrive. If the samples arrive before S3 starts, S3 checks its question types and shared-facts block against them first. |
 
 ## Slices
 Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both touch `web.py` and the scope partials, so in sequence). S5 after S2+S4. S7 after S5. S8 after the S1 walkthrough. S9 when samples arrive.
@@ -45,8 +46,9 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - **Follow-up storage (verified bug).** The follow-up textarea posts free text into `QuestionnaireResponse.answer`, which has a CHECK constraint allowing only the 5 answer values (`web.py:2671-2695`, `models/questionnaire.py:13-16`). Every follow-up save fails. Fix: store the free text in `notes` with an empty answer, or a dedicated nullable column; pick whichever needs no CHECK change. Set `cluster_id` for `FU.<cluster>` rows. Follow-ups should survive a reload once answered.
 - Gradient: `yozora-components.css:3`, the gradient stretches over document height. Fix with a fixed pseudo-element or `background-attachment: fixed`.
 - First-RFI copy (`rfi.html:62`); hide "Live PDF" until released (`assessment_header.html:16-17`); hide greyed-out GDPR/HIPAA/PCI cards (`new_engagement.html`).
+- **Remove the budget band (P9):** drop it from the PDF initiative line (`pdf_export.py:1358,1394`) and stop computing it (`_BUDGET_BANDS`, `scoring.py:487-497,540-556,765-777`; `analysis.py:506,821`). The `Initiative.budget_estimate_band` column stays as nullable dead data, with no migration. Old snapshots still render. Check golden/scoring tests for the field and update them in the same PR.
 - Retire file-path guards (P6).
-- PR #121: close as superseded. Note CTX.ISO.1-5 as candidate ISO scope items for S3/S9. Its NIST questions repeat NIST.SCP.*.
+- PR #121: closed as superseded (P12). Note CTX.ISO.1-5 as candidate ISO scope items for S3/S9. Its NIST questions repeat NIST.SCP.*.
 - **Exit:** one follow-up saves, survives a reload and shows in the workpaper; full suite green.
 
 ### S1 Demo company
@@ -71,7 +73,7 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - **Exit:** create → scope → questionnaire opens with no gate; same scope answers drive the RFI; owner walkthrough.
 
 ### S4 RFI as a stage
-- `assessment_stage.py`: add `rfi` between Scope and Evidence; skippable (O2). Update stepper, hub, dashboard rows, engagement table and Overview action to point at it.
+- `assessment_stage.py`: add `rfi` between Scope and Evidence; skippable (P10). Update stepper, hub, dashboard rows, engagement table and Overview action to point at it.
 - Post-scope page: **Prepare RFI** is the primary button; PDF/DOCX downloads sit below it. The scope checklist + checklist exports are replaced by "N items suggested → Prepare RFI".
 - Item list: suggested items pre-selected, consultant ticks/unticks; each item shows what it is and why it's requested (`EvidenceRequest.reason`; wording improves in S9).
 - **Send RFI** = generate + issue a version, then Download (PDF/DOCX) or Create client link (P3). The button reads "Send RFI" until sent, then "Upload evidence".
@@ -92,9 +94,10 @@ Order: S0, S1, S2 and S6-F1 in parallel (disjoint files). Then S3, then S4 (both
 - **Exit:** the demo's xlsx and image are read; the stale file is labelled.
 
 ### S7 Meeting notes → questionnaire
-- Paste notes = an Evidence item, source "interview" (citations, purge, versioning, workpaper trace for free).
+- One meeting per domain (P11). On each questionnaire domain: "Add meeting notes" (upload a file or paste text). The notes are stored as an Evidence item, source "interview", tagged with that domain, which gives citations, purge, versioning and workpaper trace for free. A domain can get further notes later (a follow-up meeting) as a new version.
+- Suggestions only target that domain's questions.
 - New LLM module suggests answers with quotes. Answers land with a new `answer_source` in `UNCONFIRMED_ANSWER_SOURCES`, so nothing reaches analysis until the consultant confirms it (D-P5-F). Registered in the LLM call-site list; covered by the prompt-injection pack.
-- **Exit:** paste demo notes → suggestions with quotes → confirm → shows as operating answer in S5's view.
+- **Exit:** upload one domain's demo notes → suggestions with quotes for that domain's questions → confirm → shows as operating answer in S5's view.
 
 ### S8 Review, release and report fixes (from the S1 walkthrough)
 - Merge Queue + Conclusions (P4); workpaper becomes a link; auto-draft findings (P5).
