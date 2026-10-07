@@ -282,4 +282,45 @@ One file, lean, no snapshots, no pixel checks.
 Never write the literal string `answer_key` anywhere under `scripts/` or in tests, not even in a comment or a "we never read this" note: `tests/test_answer_key_isolation.py` scans `.md` and `.py` files for it. No em dashes in anything you write (code comments, README, handoff results). Plain short sentences. No network. Do not install packages (Pillow is in `requirements-dev.txt`; if missing, skip the PNG with a note). Do not commit or push. No Claude or Codex attribution anywhere.
 
 ## Results
-(Codex fills in: files created, acceptance-check evidence from section 14, which skips ran (xlsx, follow-ups, gap_report), deviations from this spec with reasons.)
+
+Files created:
+
+- `scripts/demo/__init__.py`
+- `scripts/demo/seed_demo.py`
+- `scripts/demo/files.py`
+- `scripts/demo/README.md`
+- `tests/test_demo_seed.py`
+
+Acceptance evidence:
+
+- Fresh seed completed with exit 0 and printed the database line, manifest, URL list, stages, and Skipped block.
+- Second seed completed with exit 0. It purged only the Veldhara client and engagements. An unrelated client survived and Veldhara still had one client and four assessments.
+- Prior: 15 conclusions, 1 release event, and issued workpaper plus gap-report snapshots.
+- Current: 15 conclusions, 2 not applicable outcomes, 3 findings, 1 release event, and issued workpaper plus gap-report snapshots.
+- Interim: 6 conclusions, 3 approved and 3 pending, with no release event. Its printed stage was `review` with `3 of 6 approved`.
+- NIST: 0 conclusions and 23 of 106 questionnaire responses, which is within the required partial range. It has 2 evidence rows.
+- Every Veldhara evidence version had non-empty extracted text. Answer sources were within the known values.
+- `assessment_stage.stage()` printed prior and current as report, interim as review, and NIST as questionnaire.
+- Comparison returned 200. Both versions pages returned 200.
+- All 17 README URL patterns returned 200 through an in-process TestClient smoke check. A live uvicorn bind on 127.0.0.1 was blocked by the sandbox with operation not permitted, so curl could not be run.
+- `pytest tests/test_demo_seed.py tests/test_answer_key_isolation.py -q` passed: 3 passed.
+- The full `pytest -q` run reached collection but was blocked by missing environment dependencies: `boto3` for the AWS test module and `python-pptx` for the PowerPoint test module. No new-test failure was reported.
+- The forbidden-string scan and em-dash scan were clean. `git diff -- app` was empty. Git status showed the five new files above plus this required Results edit.
+
+Skips:
+
+- XLSX upload was rejected as expected by the pre-S6-F1 build. The exact intentional skip note was printed.
+- Follow-up storage was rejected by the current CHECK constraint as expected before S0b. The exact S0b skip note was printed, followed by the stored-follow-up visibility note.
+- Pillow was available, so the consent PNG was generated and uploaded.
+- The gap-report renderer worked offline, so no gap-report skip ran.
+
+Deviation:
+
+- The current UCC questionnaire had no non-full DPDPA weak-domain parent under the generic deterministic answer cycle. To preserve the requested two follow-up walkthrough states, the seed makes the first eligible DPDPA weak parent partially implemented before using the real follow-up route. This is deterministic and is reported in the implementation rather than changing application code.
+
+No files were committed or pushed.
+
+### Orchestrator verification and fix pass
+- Seed from a clean DB: exit 0 in ~4 s. Stages: prior report (released), current report (released), interim review (3 of 6 approved), NIST questionnaire (23 of 106). Comparison 200.
+- Live server on the demo DB: all 17 walkthrough URLs return 200 with seeded content; no errors in the server log; repo tree stays clean.
+- Review fixes: the DB guard now refuses any file named `dpdpa.db` or without "demo" in its name (the old guard only covered this worktree's `data/dpdpa.db`); `OPENROUTER_KEY` is blanked in the environment before any `app` import, and the stub check now fails closed (key empty and the three stubs active); the purge refuses to remove the upload root itself; demo uploads move to `<db dir>/uploads/demo` (README updated) so they never mix with other uploads.
