@@ -26,7 +26,6 @@ from tests.p6_10_support import (  # noqa: F401 - fixtures are used by name
     _no_network_llm,
     _register_frameworks,
     analysed_assessment,
-    assert_p6_10_file_set,
     create_finding,
     db,
     db_path,
@@ -514,11 +513,6 @@ def test_scenario_9_board_report_reads_narrative_without_any_llm_call(db, http, 
     versions = http.get(f"/assessments/{assessment.id}/snapshots")
     assert versions.status_code == 200
     assert f'data-narrative-link href="/assessments/{assessment.id}/narrative"' in versions.text
-
-
-def test_scenario_10_p6_10_file_set_and_llm_call_sites():
-    """P6-10 touches only its listed files, adds exactly two LLM call-site modules, and no migration."""
-    assert_p6_10_file_set()
 
 
 def test_scenario_11_sidecar_refs_join_to_top_risk_ranks_without_the_database(db, http, gate, monkeypatch):

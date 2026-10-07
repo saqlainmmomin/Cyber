@@ -6,7 +6,6 @@ import ast
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import subprocess
 import threading
 import time
 
@@ -219,7 +218,7 @@ def _guard_flags(source: str, filename: str = "<source>") -> list[str]:
     return flags
 
 
-def test_guard_meta_test_rejects_stale_git_and_venv_invocations():
+def test_guard_meta_test_rejects_stale_venv_and_baseline_invocations():
     flags: list[str] = []
     for path in sorted((REPO_ROOT / "tests").rglob("*.py")):
         if path == Path(__file__).resolve():

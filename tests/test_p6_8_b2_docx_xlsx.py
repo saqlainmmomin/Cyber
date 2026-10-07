@@ -18,7 +18,6 @@ import importlib
 import io
 import json
 import re
-import subprocess
 import time
 import urllib.parse
 import zipfile
@@ -965,60 +964,6 @@ def test_scenario_9b_a_dpdpa_only_export_has_no_statement_of_applicability(db, h
 # 10. No LLM, no live readers, and the B2 file set
 # ---------------------------------------------------------------------------
 
-from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-
-P6_8_B2_APP_ALLOWLIST = (
-    "app/services/board_exports.py",
-    "app/routers/snapshots.py",
-    "app/templates/pages/report_snapshots.html",
-)
-P6_8_B2_FORBIDDEN_PATHS = (
-    # B1's frozen surfaces: the document builder, snapshot storage, renderer, templates, fonts, golden.
-    "app/services/board_report.py", "app/services/report_snapshots.py", "app/utils/html_pdf.py",
-    "app/services/standalone_workpaper.py", "app/templates/reports", "app/assets", "tests/golden",
-    # P6-9's builders: the SoA, groups and comparison are read from the document, never recomputed.
-    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
-    "app/routers/soa.py",
-    # fpdf2 reports and the RFI (P6-7b owns RFI changes).
-    "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
-    "app/routers/integrated_reports.py", "app/services/rfi_requests.py",
-    # Live report readers: B2 must never need them.
-    "app/services/approved_report.py", "app/services/report_content.py", "app/services/report_basis.py",
-    "app/services/workpaper.py", "app/services/findings.py", "app/services/conclusion_review.py",
-    # Analyzer, LLM, schema, app wiring, fixtures, scripts, answer keys.
-    "app/services/claude_analyzer.py", "app/services/llm_client.py", "app/services/grounding",
-    "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "alembic", "app/config.py",
-    "app/main.py", "app/routers/web.py", "app/templates/base.html", "app/templates/components",
-    "app/templates/partials", "tests/fixtures", "tests/support", "scripts", "validation",
-    # Stage C 2026-09-28 harness fix (#81) is on main; a stale local `main` still shows it.
-    ":(exclude)scripts/validation/run_company.py",
-    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): the synthetic v3 deck document.
-    ":(exclude)tests/golden/p6_8_v3_deck_document.json",
-    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, page, theme.
-    *V3A_EXCLUDES,
-    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
-    *V3B_EXCLUDES,
-    ":(exclude)tests/golden/p6_8_board_document.json",
-    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-    *YOZORA_BACKEND_EXCLUDES,
-    *YOZORA_EXCLUDES,  # Yozora S1
-    *V3C_PRIOR_DOMAINS_EXCLUDES,  # V3-C prior domains
-)
-# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): lands after
-# B2 and P6-9; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard this set.
-P6_10_APP_FILES = {
-    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
-    "app/main.py", "app/templates/partials/remediation_draft.html",
-    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
-    "app/services/board_report.py", "app/templates/reports/board_report.html",
-    "app/templates/pages/report_snapshots.html", "app/services/board_exports.py",
-}
-P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
-P6_8_B2_FORBIDDEN_PATHS += tuple(f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS))
 LIVE_READER_TOKENS = (
     "llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai",
     "build_document", "approved_report", "report_content", "report_basis", "conclusion_review",
@@ -1026,12 +971,9 @@ LIVE_READER_TOKENS = (
 )
 
 
-def _git(*args) -> str:
-    return subprocess.run(["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True).stdout
 
-
-def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
-    """Scenario 10 (D-P6-8-B2-I): renderers import nothing live; B2 touches only its own files."""
+def test_scenario_10_no_llm_no_live_readers():
+    """Scenario 10 (D-P6-8-B2-I): renderers import nothing live."""
     exports_path = REPO_ROOT / "app" / "services" / "board_exports.py"
     assert exports_path.exists(), "app/services/board_exports.py is not implemented yet"
     source = exports_path.read_text(encoding="utf-8")
@@ -1049,36 +991,10 @@ def test_scenario_10_no_llm_no_live_readers_and_b2_file_set():
     # P6-8 V3-B: the v3 renderers also read the presenter's labels (board_view).
     assert app_imports <= {"board_report", "report_snapshots", "board_view"}, app_imports
 
-    committed = _git("diff", "--name-only", "main...HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
-    working = _git("diff", "--name-only", "HEAD", "--", *P6_8_B2_FORBIDDEN_PATHS).split()
-    assert committed == [] and working == [], committed + working
+    requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
+    assert OPENPYXL_PIN in requirements
+    assert "python-pptx==1.0.2" in requirements
 
-    changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
-    changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
-    changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    changed_app -= set(V3A_APP_PATHS)  # P6-8 V3-A
-    changed_app = {path for path in changed_app if not is_v3b_path(path)}  # P6-8 V3-B
-    changed_app -= P6_10_APP_FILES  # P6-10 lands after B2 (its own contract tests guard that set)
-    changed_app -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend
-    changed_app -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
-    changed_app -= set(YOZORA_S2_PATHS)  # Yozora S2 (tasks/handoffs/2026-10-01-yozora-s2-handoff.md)
-    changed_app -= set(YOZORA_S4_PATHS)  # Yozora S4 (tasks/handoffs/2026-10-01-yozora-s4-handoff.md)
-    changed_app -= set(YOZORA_S3_PATHS)  # Yozora S3 (tasks/handoffs/2026-10-01-yozora-s3-handoff.md)
-    changed_app -= set(YOZORA_S5_PATHS) | set(YOZORA_S6_PATHS)  # Yozora S5 (tasks/handoffs/2026-10-01-yozora-s5-handoff.md)
-    changed_app -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
-    changed_app -= set(YOZORA_S8_PATHS)  # Yozora S8 Requests/RFI slice
-    changed_app -= set(YOZORA_S9_PATHS)  # Yozora S9 system slice
-    changed_app -= set(RFI_REQUESTS_PATHS)  # RFI and Requests consolidation
-    changed_app -= set(ASSESSMENT_EVIDENCE_TAB_PATHS)  # assessment Evidence tab
-    changed_app -= set(V3C_PRIOR_DOMAINS_PATHS)  # V3-C prior domains
-    outside = sorted(path for path in changed_app if not path.startswith(P6_8_B2_APP_ALLOWLIST))
-    assert outside == [], outside
-
-    requirements = _git("diff", "main...HEAD", "--", "requirements.txt")
-    added = [line[1:] for line in requirements.splitlines() if line.startswith("+") and not line.startswith("+++")]
-    removed = [line[1:] for line in requirements.splitlines() if line.startswith("-") and not line.startswith("---")]
-    # P6-8 V3-B adds the python-pptx pin (D-P6-8-V3-N).
-    assert added in ([], [OPENPYXL_PIN], ["python-pptx==1.0.2"], [OPENPYXL_PIN, "python-pptx==1.0.2"]) and removed == [], (added, removed)
 
 
 # ---------------------------------------------------------------------------

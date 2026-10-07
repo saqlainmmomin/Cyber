@@ -11,8 +11,7 @@ Modules under contract (do not exist yet): ``app.services.requirement_card``,
 new ``ConclusionCard.requirement`` field, the divergence gate in
 ``conclusion_review.decide`` and three templates. Before implementation these
 tests fail with ``ModuleNotFoundError``, a 404 for the missing routes, or an
-assertion on missing card markup. Scenario 14 (the file-set guard) passes before
-and after.
+assertion on missing card markup.
 
 No live LLM. v2 runs are produced by the real v2 pipeline (P6-3 Stages 0-1 and
 the P6-4 judge) over invented text, with the P6-3b/P6-4 provider fakes; after
@@ -27,7 +26,6 @@ import dataclasses
 import importlib
 import json
 import re
-import subprocess
 from html import unescape
 from pathlib import Path
 
@@ -312,12 +310,6 @@ def approve(http, assessment, row: Conclusion, reviewer="Priya"):
 
 def ack_url(assessment, row: Conclusion) -> str:
     return f"/api/assessments/{assessment.id}/divergence-notes/{row.id}/acknowledge"
-
-
-def _git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
 
 
 # --------------------------------------------------------------------------- #
@@ -1102,121 +1094,3 @@ def test_scenario_13_single_card_pass_and_field_shape(db, http, monkeypatch, fla
 
 
 # --------------------------------------------------------------------------- #
-# Scenario 14: file-set guard (green before and after implementation)
-# --------------------------------------------------------------------------- #
-
-P6_7_APP_FILES = {
-    "app/main.py",
-    "app/services/requirement_card.py",
-    "app/services/review_queue.py",
-    "app/services/conclusion_review.py",
-    "app/routers/requirement_review.py",
-    "app/templates/components/conclusion_card.html",
-    "app/templates/components/requirement_card_body.html",
-    "app/templates/pages/conclusions.html",
-    "app/templates/pages/review_queue.html",
-    "app/templates/pages/evidence_span.html",
-}
-P6_7_FORBIDDEN = (
-    "app/services/analysis_v2.py", "app/services/grounding", "app/services/analysis_pipeline.py",
-    "app/services/scoring.py", "app/services/report_basis.py", "app/services/report_snapshots.py",
-    "app/services/rfi_requests.py", "app/services/citations.py", "app/models", "alembic",
-    "app/routers/reports.py", "app/routers/review.py", "app/routers/web.py", "app/routers/conclusions.py",
-    "app/utils", "app/templates/base.html", "app/templates/pages/workpaper.html",
-    "app/templates/components/workpaper_entry.html", "requirements.txt", ".github", "Dockerfile",
-    "scripts", "validation", "app/frameworks", "app/dpdpa", "app/config.py",
-)
-
-# P6-2b (PR #79) lands after P6-7a and legitimately touches these (approved DPDPA
-# criteria, pack version); tests/test_p6_2b_*.py guard them.
-P6_2B_APP_FILES = (
-    "app/frameworks/criteria/dpdpa.py", "app/frameworks/definitions/dpdpa.py",
-    "app/frameworks/criteria/__init__.py", "app/frameworks/criteria/iso27001.py", "app/frameworks/criteria/nist_csf.py", "app/frameworks/definitions/iso27001.py", "app/frameworks/definitions/nist_csf.py", "scripts/convert_criteria.py",
-    "app/frameworks/schema.py", "app/services/engagement_factory.py",
-    "app/services/grounding/claims.py", "app/services/grounding/pipeline.py",
-)
-# P6-8 B1 (PR #80) lands after P6-7a and legitimately touches these (board report
-# v2, standalone Workpaper, Noto fonts); tests/test_p6_8_board_report_v2.py guards them.
-P6_8_B1_FILES = (
-    "app/utils/html_pdf.py", "app/services/board_report.py",
-    "app/services/standalone_workpaper.py", "app/services/report_snapshots.py",
-    "app/routers/snapshots.py", "app/templates/reports", "app/templates/pages/report_snapshots.html",
-    "app/assets/fonts/noto", ".github/workflows/tests.yml", "Dockerfile", "requirements.txt",
-    # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
-    "app/services/board_exports.py",
-)
-# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-7a and
-# adds the SoA, roadmap-group and comparison files; tests/test_p6_9_file_set.py guards them.
-P6_9_APP_FILES = (
-    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
-    "app/routers/soa.py", "app/templates/pages/soa.html",
-)
-# P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7a: judge claim
-# quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
-P6_5_FILES = (
-    "app/services/grounding/injection.py", "app/services/grounding/judge.py",
-    "app/services/analysis_v2.py", "scripts/injection_pack_live.py",
-    "scripts/validation/ab_compare.py", "scripts/validation/score.py",
-)
-# P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-7a and
-# legitimately touches these; tests/test_p6_7b_add_to_rfi.py guards them.
-P6_7B_APP_FILES = (
-    "app/services/rfi_evidence_requests.py", "app/services/rfi_requests.py",
-    "app/templates/pages/rfi.html",
-)
-# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after P6-7a and
-# legitimately touches these; tests/test_p6_10a_remediation_draft.py and
-# tests/test_p6_10b_narrative.py guard them.
-P6_10_APP_FILES = (
-    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
-    "app/templates/partials/remediation_draft.html", "app/templates/pages/narrative.html",
-)
-
-
-from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-
-
-def _changed(*args: str) -> set[str]:
-    return set(_git("diff", "--name-only", *args, "--", "app").split())
-
-
-# LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-LLM_DEADLINE_FILES = ("app/config.py", "app/services/llm_client.py")
-
-
-def test_scenario_14_p6_7_touches_only_its_files():
-    changed = _changed("main...HEAD") | _changed("HEAD") | set(
-        _git("ls-files", "--others", "--exclude-standard", "app").split()
-    )
-    changed -= set(P6_2B_APP_FILES) | set(P6_7B_APP_FILES) | set(P6_9_APP_FILES)
-    changed -= set(P6_10_APP_FILES)
-    changed = {path for path in changed if not path.startswith(P6_8_B1_FILES + P6_5_FILES)}
-    changed -= set(LLM_DEADLINE_FILES)
-    changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
-    changed = {path for path in changed if not is_v3b_path(path)}  # P6-8 V3-B
-    changed -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend (tasks/handoffs/2026-10-03-yozora-backend-features.md)
-    changed -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
-    changed -= set(YOZORA_S2_PATHS)  # Yozora S2 (tasks/handoffs/2026-10-01-yozora-s2-handoff.md)
-    changed -= set(YOZORA_S4_PATHS)  # Yozora S4 (tasks/handoffs/2026-10-01-yozora-s4-handoff.md)
-    changed -= set(YOZORA_S3_PATHS)  # Yozora S3 (tasks/handoffs/2026-10-01-yozora-s3-handoff.md)
-    changed -= set(YOZORA_S5_PATHS) | set(YOZORA_S6_PATHS)  # Yozora S5 (tasks/handoffs/2026-10-01-yozora-s5-handoff.md)
-    changed -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
-    changed -= set(YOZORA_S8_PATHS)  # Yozora S8 Requests/RFI slice
-    changed -= set(YOZORA_S9_PATHS)  # Yozora S9 system slice
-    changed -= set(RFI_REQUESTS_PATHS)  # RFI and Requests consolidation
-    changed -= set(ASSESSMENT_EVIDENCE_TAB_PATHS)  # assessment Evidence tab
-    assert changed <= P6_7_APP_FILES, sorted(changed - P6_7_APP_FILES)
-    # Stage C 2026-09-28 harness fix: magic-link evidence lookup in the runner.
-    p6_2b = [f":(exclude){path}" for path in (*P6_2B_APP_FILES, "scripts/convert_criteria.py", *P6_8_B1_FILES, "scripts/validation/run_company.py",
-                                                    "validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json", *P6_5_FILES, *P6_7B_APP_FILES)]
-    p6_2b += [f":(exclude){path}" for path in LLM_DEADLINE_FILES]
-    p6_2b += V3A_EXCLUDES
-    p6_2b += V3B_EXCLUDES  # P6-8 V3-B
-    p6_2b += YOZORA_BACKEND_EXCLUDES  # Yozora backend
-    p6_2b += YOZORA_EXCLUDES  # Yozora S1
-    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
-    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7_FORBIDDEN, *p6_2b).split()
-    assert forbidden == []

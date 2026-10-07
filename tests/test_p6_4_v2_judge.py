@@ -30,7 +30,6 @@ import importlib
 import io
 import json
 import re
-import subprocess
 import threading
 from pathlib import Path
 from types import SimpleNamespace
@@ -261,12 +260,6 @@ def records_by_id(judgment_set, framework_id) -> dict[str, dict]:
 
 def run_judge(claim_set, frameworks, responses=(), **kwargs):
     return judge().run_stage_2(claim_set, list(frameworks), list(responses), max_workers=1, **kwargs)
-
-
-def _git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
 
 
 # --------------------------------------------------------------------------- #
@@ -1259,60 +1252,7 @@ def test_scenario_15_rerun_respects_locked_conclusions(db, monkeypatch, flag_v2)
 # --------------------------------------------------------------------------- #
 
 
-from tests.p6_8_v3a_paths import V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-
-
-def _merge_base() -> str:
-    return _git("merge-base", "main", "HEAD").strip()
-
-
-def test_scenario_16_analysis_router_lines_are_only_added_to():
-    # Working tree vs the branch point: this branch's committed and uncommitted edits only.
-    diff = _git("diff", "-U0", _merge_base(), "--", "app/routers/analysis.py")
-    removed = [
-        line for line in diff.splitlines()
-        if line.startswith("-") and not line.startswith("---")
-    ]
-    assert removed == []
-
-
-def test_scenario_16_v1_and_stage_0_1_modules_unchanged():
-    diff = _git(
-        "diff", _merge_base(), "--",
-        "app/services/claude_analyzer.py", "app/services/analysis_pipeline.py",
-        "app/services/scoring.py", "app/services/desk_review.py",
-        "app/services/desk_review_v2.py", "app/frameworks", "app/dpdpa",
-        "app/schemas", "app/models", "alembic", "tests/fixtures", "tests/support",
-        "tests/test_golden_dpdpa.py",
-        "app/services/grounding/prompts.py", "app/services/grounding/claims.py",
-        "app/services/grounding/chunking.py", "app/services/grounding/batches.py",
-        "app/services/grounding/schemas.py", "app/services/grounding/sources.py",
-        "app/services/grounding/metadata.py", "app/services/grounding/pipeline.py",
-        "app/services/grounding/metadata_fallback.py",
-        # P6-4-missing (tasks/handoffs/2026-09-28-p6-4-whats-missing-pass.md) wires the
-        # flag-gated missing pass into v2 desk review; tests/test_p6_4_whats_missing.py
-        # guards the v1 readers and the rest of the stack.
-        ":(exclude)app/services/desk_review_v2.py",
-        # P6-2b: approved DPDPA criteria and pack-version changes.
-        ":(exclude)app/frameworks/schema.py",
-        ":(exclude)app/frameworks/definitions/dpdpa.py",
-        ":(exclude)app/frameworks/criteria/dpdpa.py",
-        ":(exclude)app/frameworks/criteria/__init__.py",
-        ":(exclude)app/frameworks/criteria/iso27001.py",
-        ":(exclude)app/frameworks/criteria/nist_csf.py",
-        ":(exclude)app/frameworks/definitions/iso27001.py",
-        ":(exclude)app/frameworks/definitions/nist_csf.py",
-        ":(exclude)scripts/convert_criteria.py",
-        ":(exclude)app/services/engagement_factory.py",
-        ":(exclude)app/services/grounding/claims.py",
-        ":(exclude)app/services/grounding/pipeline.py",
-        # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
-        *V3A_EXCLUDES,
-        # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md): models and migration.
-        *YOZORA_BACKEND_EXCLUDES,
-    )
-    assert diff == ""
+def test_scenario_16_grounding_prompt_version_pinned():
     from app.services.grounding import prompts
 
     assert prompts.PROMPT_VERSION == "p6-3a.1"

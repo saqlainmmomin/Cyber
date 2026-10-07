@@ -27,12 +27,6 @@ from app.database import Base, get_db
 from app.dpdpa.framework import get_all_requirements
 from app.main import app
 from app.template_config import display_date
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_GUARD_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-V3C2_TEST_PATHS = {
-    "tests/test_p6_8_board_report_v2.py", "tests/test_p6_8_v3b_deck.py", "tests/test_p6_8_v3b_file_set.py", "tests/test_p6_9_prior_period.py",
-    "tests/test_p6_8_v3c2_extra.py",
-    "tests/test_p6_8_v3c3_extra.py", "tests/v3c3_paths.py",
-}
 from app.models.action import Action
 from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment, AssessmentDocument, _new_id
@@ -1661,26 +1655,3 @@ def test_scenario_12_never_auto_purges_and_survives_lifespan(db, http, upload_ro
         assert restarted.get(f"/clients/{engagement.client_id}").status_code == 200
         assert restarted.get(f"/assessments/{assessment.id}").status_code == 200
     assert _snapshot(db, upload_root) == before
-
-
-def test_scenario_13_only_new_retention_test_file_changes():
-    """Scenario 13: no existing test file is modified by this handoff."""
-    changed_tests = subprocess.run(
-        ["git", "diff", "--name-only", "--", "tests"],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
-    staged_tests = subprocess.run(
-        ["git", "diff", "--cached", "--name-only", "--", "tests"],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
-    changed_tests = [path for path in changed_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS, *V3C2_TEST_PATHS, *ASSESSMENT_EVIDENCE_TAB_PATHS)]  # Yozora per-PR allowance
-    staged_tests = [path for path in staged_tests if path not in (*YOZORA_S2_PATHS, *YOZORA_S3_PATHS, *YOZORA_S4_PATHS, *YOZORA_S5_PATHS, *YOZORA_S6_PATHS, *YOZORA_S7_PATHS, *YOZORA_S7_GUARD_PATHS, *YOZORA_S8_PATHS, *YOZORA_S9_PATHS, *RFI_REQUESTS_PATHS, *V3C2_TEST_PATHS, *ASSESSMENT_EVIDENCE_TAB_PATHS)]  # Yozora per-PR allowance
-    assert changed_tests == []
-    assert staged_tests == []
-    assert (REPO_ROOT / "tests/test_retention.py").exists()

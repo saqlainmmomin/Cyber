@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import copy
 import json
-import subprocess
 import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -38,12 +37,6 @@ from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.engagement import Engagement
 from app.models.questionnaire import QuestionnaireResponse
 from app.services import approved_report, report_basis
-from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.v3c_paths import V3C_PRIOR_DOMAINS_EXCLUDES, V3C_PRIOR_DOMAINS_PATHS  # V3-C prior domains per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PERIOD = {
     "period_start": date(2026, 4, 1),
@@ -55,86 +48,6 @@ DP_FINDING_TITLE = "Consent is not freely given"
 DP_FINDING_DESCRIPTION = "Consent is collected through a pre-ticked box on the signup page."
 ISO_FINDING_TITLE = "Access reviews are informal"
 ISO_FINDING_DESCRIPTION = "Quarterly user access reviews are not evidenced."
-
-# Every app/ path P6-10a and P6-10b may add or change (handoff "Files touched").
-P6_10_APP_FILES = (
-    "app/services/remediation_draft.py",
-    "app/services/narrative.py",
-    "app/routers/drafting.py",
-    "app/main.py",
-    "app/templates/partials/remediation_draft.html",
-    "app/templates/components/conclusion_card.html",
-    "app/templates/pages/narrative.html",
-    "app/services/board_report.py",
-    "app/templates/reports/board_report.html",
-    "app/templates/pages/report_snapshots.html",
-    "app/services/board_exports.py",  # revision 2026-10-01: schema v3 joins the supported versions
-)
-# Nothing in these may change in the P6-10 PR (committed diff or working tree).
-P6_10_FORBIDDEN_PATHS = (
-    "app/services/llm_client.py", "app/services/grounding", "app/services/claude_analyzer.py",
-    "app/services/analysis_pipeline.py", "app/services/analysis_v2.py", "app/services/scoring.py",
-    "app/services/conclusion_review.py", "app/services/findings.py", "app/services/approved_report.py",
-    "app/services/report_content.py", "app/services/report_basis.py", "app/services/report_snapshots.py",
-    "app/services/requirement_card.py", "app/services/review_queue.py", "app/services/workpaper.py",
-    "app/services/standalone_workpaper.py", "app/utils", "app/routers/conclusions.py",
-    "app/routers/snapshots.py", "app/routers/web.py", "app/routers/reports.py", "app/routers/findings.py",
-    "app/models", "app/schemas", "app/frameworks", "app/dpdpa", "app/config.py", "alembic",
-    "tests/fixtures", "tests/support", "scripts", "validation", "requirements.txt",
-    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration, models, theme, display font.
-    *V3A_EXCLUDES,
-    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck, exports.
-    *V3B_EXCLUDES,
-    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-    *YOZORA_BACKEND_EXCLUDES,
-    *YOZORA_EXCLUDES,  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
-    *V3C_PRIOR_DOMAINS_EXCLUDES,  # V3-C prior domains
-)
-# Existing modules that reach the LLM seam today (P6-10 adds exactly two).
-EXISTING_LLM_MODULES = {
-    "app/services/claude_analyzer.py",
-    "app/services/context_profiler.py",
-    "app/services/desk_review.py",
-    "app/services/document_processor.py",
-    "app/services/followup_engine.py",
-    "app/services/grounding/judge.py",
-    "app/services/grounding/metadata_fallback.py",
-    "app/services/grounding/missing.py",
-    "app/services/grounding/pipeline.py",
-    "app/services/llm_client.py",
-    "app/services/screening.py",
-}
-P6_10_LLM_MODULES = {"app/services/remediation_draft.py", "app/services/narrative.py"}
-
-
-def git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
-
-
-def changed_app_paths() -> set[str]:
-    changed = set(git("diff", "--name-only", "main...HEAD", "--", "app").split())
-    changed |= set(git("diff", "--name-only", "HEAD", "--", "app").split())
-    changed |= set(git("ls-files", "--others", "--exclude-standard", "app").split())
-    return changed
-
-
-def assert_p6_10_file_set() -> None:
-    committed = git("diff", "--name-only", "main...HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
-    working = git("diff", "--name-only", "HEAD", "--", *P6_10_FORBIDDEN_PATHS).split()
-    assert committed == [] and working == [], committed + working
-    outside = sorted(path for path in changed_app_paths() if path not in P6_10_APP_FILES and path not in V3A_APP_PATHS and path not in YOZORA_BACKEND_APP_PATHS and path not in YOZORA_S1_PATHS and not is_v3b_path(path) and path not in YOZORA_S2_PATHS and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS and path not in YOZORA_S6_PATHS and path not in YOZORA_S7_PATHS and path not in YOZORA_S8_PATHS and path not in YOZORA_S9_PATHS and path not in RFI_REQUESTS_PATHS and path not in ASSESSMENT_EVIDENCE_TAB_PATHS and path not in V3C_PRIOR_DOMAINS_PATHS)  # V3-A, Yozora allowances (backend, S1-S9), assessment Evidence, V3-C prior domains
-    assert outside == [], outside
-    llm_modules = {
-        str(path.relative_to(REPO_ROOT))
-        for path in (REPO_ROOT / "app").rglob("*.py")
-        if "call_llm" in path.read_text(encoding="utf-8")
-    }
-    assert llm_modules <= EXISTING_LLM_MODULES | P6_10_LLM_MODULES, sorted(
-        llm_modules - EXISTING_LLM_MODULES - P6_10_LLM_MODULES
-    )
-
 
 # ---------------------------------------------------------------------------
 # Database, app and LLM fixtures

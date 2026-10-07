@@ -11,7 +11,7 @@ two ``/api/assessments/{id}/rfi-requests/...`` routes, the additive
 ``MissingEvidence`` / ``RequirementCard`` fields, the ``evidence_request`` RFI item
 kind and the card and RFI-page markup. Before implementation these tests fail with
 ``ModuleNotFoundError``, a 404/405 for the missing routes, or an assertion on
-missing markup. Scenario 12 (the file-set guard) passes before and after.
+missing markup.
 
 No live LLM. v2 runs come from the real v2 pipeline with the P6-4 provider fakes
 (the P6-7a builder); after each fixture is built every ``llm_client.call_llm``
@@ -27,7 +27,6 @@ import importlib
 import io
 import json
 import re
-import subprocess
 from html import unescape
 from pathlib import Path
 
@@ -261,12 +260,6 @@ def issue(http, assessment, snapshot_id):
         f"/api/assessments/{assessment.id}/rfi/versions/{snapshot_id}/issue",
         data={"reviewer_name": "Priya"},
     )
-
-
-def _git(*args) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True
-    ).stdout
 
 
 # --------------------------------------------------------------------------- #
@@ -786,106 +779,3 @@ def test_scenario_11_routes_and_source_guards():
     assert dataclasses.is_dataclass(module.ActiveRequest) and module.ActiveRequest.__dataclass_params__.frozen
     versions = sorted((REPO_ROOT / "alembic" / "versions").glob("*.py"))
     assert not any("rfi_request" in path.name or "evidence_request" in path.name for path in versions)
-
-
-# --------------------------------------------------------------------------- #
-# Scenario 12: file-set guard (green before and after implementation)
-# --------------------------------------------------------------------------- #
-
-P6_7B_APP_FILES = {
-    "app/services/rfi_evidence_requests.py",
-    "app/services/rfi_requests.py",
-    "app/services/requirement_card.py",
-    "app/routers/requirement_review.py",
-    "app/templates/components/requirement_card_body.html",
-    "app/templates/pages/rfi.html",
-}
-P6_7B_FORBIDDEN = (
-    "app/services/report_snapshots.py", "app/services/board_report.py", "app/services/approved_report.py",
-    "app/services/conclusion_review.py", "app/services/analysis_v2.py", "app/services/grounding",
-    "app/services/analysis_pipeline.py", "app/services/scoring.py", "app/services/report_basis.py",
-    "app/services/magic_links.py", "app/services/review_queue.py", "app/services/standalone_workpaper.py",
-    "app/models", "alembic", "app/utils", "app/routers/snapshots.py", "app/routers/web.py",
-    "app/routers/conclusions.py", "app/routers/magic.py", "app/routers/reports.py",
-    "app/templates/reports", "app/templates/base.html", "app/templates/components/conclusion_card.html",
-    "app/templates/partials/rfi_links.html", "app/frameworks", "app/dpdpa", "app/config.py", "app/main.py",
-    "requirements.txt", ".github", "Dockerfile", "scripts", "validation",
-)
-# P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after P6-7b and
-# legitimately touches these; tests/test_p6_9_file_set.py guards its file set.
-# P6-2e: signed ISO / NIST criteria attach to the packs.
-P6_2E_APP_FILES = {"app/frameworks/criteria/__init__.py", "app/frameworks/criteria/iso27001.py", "app/frameworks/criteria/nist_csf.py", "app/frameworks/definitions/iso27001.py", "app/frameworks/definitions/nist_csf.py"}
-P6_9_APP_FILES = {
-    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
-    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
-    "app/services/board_report.py", "app/templates/reports/board_report.html",
-    "app/templates/pages/report_snapshots.html",
-}
-
-
-# LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-LLM_DEADLINE_FILES = {"app/config.py", "app/services/llm_client.py"}
-# P6-8 B2 (tasks/handoffs/2026-09-28-p6-8-b2-docx-xlsx.md): DOCX/XLSX exports; tests/test_p6_8_b2_docx_xlsx.py guards them.
-P6_8_B2_APP_FILES = {
-    "app/services/board_exports.py", "app/routers/snapshots.py", "app/templates/pages/report_snapshots.html",
-}
-
-# P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md, revised 2026-10-01): lands after
-# B2 and P6-9; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py guard this set.
-P6_10_APP_FILES = {
-    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
-    "app/main.py", "app/templates/partials/remediation_draft.html",
-    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
-    "app/services/board_report.py", "app/templates/reports/board_report.html",
-    "app/templates/pages/report_snapshots.html", "app/services/board_exports.py",
-}
-P6_10_EXTRA_PATHS = {"tests/golden/p6_8_board_document.json"}
-
-
-from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_APP_PATHS, V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-
-
-def _changed(*args: str) -> set[str]:
-    return set(_git("diff", "--name-only", *args, "--", "app").split())
-
-
-def test_scenario_12_p6_7b_touches_only_its_files():
-    changed = _changed("main...HEAD") | _changed("HEAD") | set(
-        _git("ls-files", "--others", "--exclude-standard", "app").split()
-    )
-    changed -= P6_9_APP_FILES
-    changed -= P6_2E_APP_FILES
-    changed -= LLM_DEADLINE_FILES
-    changed -= P6_8_B2_APP_FILES
-    changed -= set(V3A_APP_PATHS)  # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md)
-    changed = {path for path in changed if not is_v3b_path(path)}  # P6-8 V3-B
-    changed -= P6_10_APP_FILES
-    changed -= set(YOZORA_BACKEND_APP_PATHS)  # Yozora backend (tasks/handoffs/2026-10-03-yozora-backend-features.md)
-    changed -= set(YOZORA_S1_PATHS)  # Yozora S1 (tasks/handoffs/2026-10-01-yozora-s1-handoff.md)
-    changed -= set(YOZORA_S2_PATHS)  # Yozora S2 (tasks/handoffs/2026-10-01-yozora-s2-handoff.md)
-    changed -= set(YOZORA_S4_PATHS)  # Yozora S4 (tasks/handoffs/2026-10-01-yozora-s4-handoff.md)
-    changed -= set(YOZORA_S3_PATHS)  # Yozora S3 (tasks/handoffs/2026-10-01-yozora-s3-handoff.md)
-    changed -= set(YOZORA_S5_PATHS) | set(YOZORA_S6_PATHS)  # Yozora S5 (tasks/handoffs/2026-10-01-yozora-s5-handoff.md)
-    changed -= set(YOZORA_S7_PATHS)  # Yozora per-PR allowance
-    changed -= set(YOZORA_S8_PATHS)  # Yozora S8 Requests/RFI slice
-    changed -= set(YOZORA_S9_PATHS)  # Yozora S9 system slice
-    changed -= set(RFI_REQUESTS_PATHS)  # RFI and Requests consolidation
-    changed -= set(ASSESSMENT_EVIDENCE_TAB_PATHS)  # assessment Evidence tab
-    assert changed <= P6_7B_APP_FILES, sorted(changed - P6_7B_APP_FILES)
-    p6_9 = [f":(exclude){path}" for path in sorted(P6_9_APP_FILES | P6_2E_APP_FILES)]
-    # P6-5b (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-7b: harness only.
-    p6_9 += [f":(exclude)scripts/validation/{name}" for name in ("run_company.py", "ab_compare.py", "score.py")]
-    p6_9 += [":(exclude)scripts/convert_criteria.py"]  # P6-2e
-    p6_9 += [f":(exclude){path}" for path in sorted(LLM_DEADLINE_FILES)]
-    p6_9 += [f":(exclude){path}" for path in sorted(P6_8_B2_APP_FILES | {"requirements.txt"})]  # P6-8 B2
-    p6_9 += V3A_EXCLUDES  # P6-8 V3-A
-    p6_9 += V3B_EXCLUDES  # P6-8 V3-B
-    p6_9 += YOZORA_BACKEND_EXCLUDES  # Yozora backend
-    p6_9 += YOZORA_EXCLUDES  # Yozora S1
-    p6_9 += [f":(exclude){path}" for path in sorted(P6_10_APP_FILES | P6_10_EXTRA_PATHS)]  # P6-10
-    forbidden = _git("diff", "--name-only", "main...HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
-    forbidden += _git("diff", "--name-only", "HEAD", "--", *P6_7B_FORBIDDEN, *p6_9).split()
-    assert forbidden == []

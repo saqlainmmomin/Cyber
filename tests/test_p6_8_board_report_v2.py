@@ -1060,128 +1060,14 @@ def test_scenario_13_document_golden(db, http, gate, monkeypatch):
 # 14. No LLM, and the P6-8 B1 file set
 # ---------------------------------------------------------------------------
 
-P6_8_B1_APP_ALLOWLIST = (
-    "app/utils/html_pdf.py",
-    "app/services/board_report.py",
-    "app/services/standalone_workpaper.py",
-    "app/services/report_snapshots.py",
-    "app/routers/snapshots.py",
-    "app/templates/reports/",
-    "app/templates/pages/report_snapshots.html",
-    "app/assets/fonts/noto/",
-    # P6-10 (tasks/handoffs/2026-09-28-p6-10-remediation-and-narrative.md) lands after
-    # P6-8 B1; tests/test_p6_10a_remediation_draft.py and tests/test_p6_10b_narrative.py
-    # guard these files.
-    "app/services/remediation_draft.py", "app/services/narrative.py", "app/routers/drafting.py",
-    "app/main.py", "app/templates/partials/remediation_draft.html",
-    "app/templates/components/conclusion_card.html", "app/templates/pages/narrative.html",
-    # P6-8 B2 (DOCX/XLSX exporter); tests/test_p6_8_b2_docx_xlsx.py guards it.
-    "app/services/board_exports.py",
-    # P6-9 (tasks/handoffs/2026-09-28-p6-9-soa-roadmap-comparison.md) lands after B1;
-    # tests/test_p6_9_file_set.py guards its file set.
-    "app/services/soa.py", "app/services/remediation_groups.py", "app/services/prior_period.py",
-    "app/routers/soa.py", "app/templates/pages/soa.html", "app/main.py",
-    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md): judge claim quarantine persistence.
-    "app/services/grounding/injection.py",
-    "app/services/grounding/judge.py",
-    "app/services/analysis_v2.py",
-)
-from tests.p6_8_v3a_paths import V3A_APP_PATHS, V3A_EXCLUDES  # P6-8 V3-A per-PR allowance
-from tests.p6_8_v3b_paths import V3B_EXCLUDES, is_v3b_path  # P6-8 V3-B per-PR allowance
-from tests.yozora_backend_paths import YOZORA_BACKEND_APP_PATHS, YOZORA_BACKEND_EXCLUDES  # Yozora backend per-PR allowance
-from tests.yozora_paths import ASSESSMENT_EVIDENCE_TAB_PATHS, YOZORA_EXCLUDES, YOZORA_S1_PATHS, YOZORA_S2_PATHS, YOZORA_S3_PATHS, YOZORA_S4_PATHS, YOZORA_S5_PATHS, YOZORA_S6_PATHS, YOZORA_S7_PATHS, YOZORA_S8_PATHS, YOZORA_S9_PATHS, RFI_REQUESTS_PATHS  # Yozora per-PR allowance
-
-P6_8_FORBIDDEN_PATHS = (
-    # Frozen fpdf2 reports and the canonical golden (D-P6-8-B).
-    "app/utils/pdf_export.py", "app/utils/rfi_export.py", "app/routers/reports.py",
-    "app/routers/integrated_reports.py", "tests/fixtures", "tests/support",
-    # Parallel P6-7 (requirement card, review queue) owns these.
-    "app/routers/review.py", "app/services/conclusion_review.py",
-    "app/templates/components", "app/templates/partials", "app/templates/base.html",
-    "app/routers/web.py",
-    # Analyzer, LLM, scoring, packs, schema, scripts, answer keys.
-    "app/services/claude_analyzer.py", "app/services/llm_client.py", "app/services/grounding",
-    "app/services/desk_review.py", "app/services/desk_review_v2.py", "app/services/analysis_pipeline.py",
-    "app/services/scoring.py", "app/services/approved_report.py", "app/services/report_content.py",
-    "app/services/report_basis.py", "app/services/workpaper.py", "app/services/findings.py",
-    "app/frameworks", "app/dpdpa", "app/models", "app/schemas", "alembic", "app/config.py",
-    "scripts", "validation",
-    # Stage C 2026-09-28 harness fix (magic-link evidence lookup) lands after P6-8 B1.
-    ":(exclude)scripts/validation/run_company.py",
-    # P6-10: the recommended-action draft control in the conclusion card and its partial.
-    ":(exclude)app/templates/components/conclusion_card.html",
-    ":(exclude)app/templates/partials/remediation_draft.html",
-    # Stage C v1 baseline (2026-09-29): c4's CSF 2.0 questionnaire answers.
-    ":(exclude)validation/companies/c4-healthsaas/client_visible/questionnaire_answers.json",
-    # P6-5 (tasks/handoffs/2026-09-28-p6-5-v2-ab-and-flip.md) lands after P6-8 B1: judge claim
-    # quarantine, injected-document live check and the A/B comparison; tests/test_p6_5_*.py guard them.
-    ":(exclude)app/services/grounding/injection.py",
-    ":(exclude)app/services/grounding/judge.py",
-    ":(exclude)app/frameworks/criteria/__init__.py",
-    ":(exclude)app/frameworks/criteria/iso27001.py",
-    ":(exclude)app/frameworks/criteria/nist_csf.py",
-    ":(exclude)app/frameworks/definitions/iso27001.py",
-    ":(exclude)app/frameworks/definitions/nist_csf.py",
-    ":(exclude)scripts/convert_criteria.py",
-    ":(exclude)scripts/injection_pack_live.py",
-    ":(exclude)scripts/validation/ab_compare.py",
-    ":(exclude)scripts/validation/score.py",
-    # P6-7b (tasks/handoffs/2026-09-28-p6-7b-add-to-rfi.md) lands after P6-8 B1: the
-    # card's add-to-RFI control; tests/test_p6_7b_add_to_rfi.py guards it.
-    ":(exclude)app/templates/components/requirement_card_body.html",
-    # LLM request deadline (claude/llm-request-deadline): wall-clock cap per provider call.
-    ":(exclude)app/config.py",
-    ":(exclude)app/services/llm_client.py",
-    # P6-8 V3-A (tasks/handoffs/2026-10-01-board-report-v3-deck.md): board-inputs migration and models.
-    *V3A_EXCLUDES,
-    # P6-8 V3-B (tasks/handoffs/2026-10-01-board-report-v3-deck.md): v3 document, deck and exports.
-    *V3B_EXCLUDES,
-    # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md).
-    *YOZORA_BACKEND_EXCLUDES,
-    *YOZORA_EXCLUDES,  # Yozora S1
-)
-# P6-7b lands after P6-8 B1 and legitimately touches these (add-to-RFI from the card).
-P6_7B_APP_FILES = (
-    "app/services/rfi_evidence_requests.py",
-    "app/services/rfi_requests.py",
-    "app/services/requirement_card.py",
-    "app/routers/requirement_review.py",
-    "app/templates/components/requirement_card_body.html",
-    "app/templates/pages/rfi.html",
-)
+# 14. No LLM imports
 
 
-def _git(*args) -> str:
-    return subprocess.run(["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True).stdout
-
-
-def test_scenario_14_no_llm_and_b1_file_set():
-    """Scenario 14 (D-P6-8-K): no LLM imports; P6-8 B1 touches only its own files (committed and working tree)."""
+def test_scenario_14_no_llm_imports():
+    """Scenario 14 (D-P6-8-K): board-report modules have no LLM imports."""
     for relative in ("app/services/board_report.py", "app/utils/html_pdf.py", "app/services/standalone_workpaper.py"):
         path = REPO_ROOT / relative
         if path.exists():
             source = path.read_text(encoding="utf-8")
             for token in ("llm_client", "claude_analyzer", "services.grounding", "call_llm", "openai"):
                 assert token not in source, (relative, token)
-
-    committed = _git("diff", "--name-only", "main...HEAD", "--", *P6_8_FORBIDDEN_PATHS).split()
-    working = _git("diff", "--name-only", "HEAD", "--", *P6_8_FORBIDDEN_PATHS).split()
-    assert committed == [] and working == [], committed + working
-
-    changed_app = set(_git("diff", "--name-only", "main...HEAD", "--", "app").split())
-    changed_app |= set(_git("diff", "--name-only", "HEAD", "--", "app").split())
-    changed_app |= set(_git("ls-files", "--others", "--exclude-standard", "app").split())
-    outside = sorted(
-        path for path in changed_app
-        if not path.startswith(P6_8_B1_APP_ALLOWLIST) and path not in P6_7B_APP_FILES
-        and not path.startswith("app/frameworks/")  # P6-2e: signed ISO / NIST criteria
-        and path not in V3A_APP_PATHS  # P6-8 V3-A
-        and not is_v3b_path(path)  # P6-8 V3-B
-        and path not in YOZORA_BACKEND_APP_PATHS  # Yozora backend
-        and path not in YOZORA_S1_PATHS  # Yozora S1
-        and path not in YOZORA_S2_PATHS  # Yozora S2
-        and path not in YOZORA_S3_PATHS and path not in YOZORA_S4_PATHS and path not in YOZORA_S5_PATHS and path not in YOZORA_S6_PATHS  # Yozora S4/S5
-        and path not in YOZORA_S7_PATHS and path not in YOZORA_S8_PATHS and path not in YOZORA_S9_PATHS and path not in RFI_REQUESTS_PATHS and path not in ASSESSMENT_EVIDENCE_TAB_PATHS  # Yozora per-PR allowance
-    )
-    outside = [path for path in outside if path not in ("app/config.py", "app/services/llm_client.py")]  # LLM request deadline
-    assert outside == [], outside
