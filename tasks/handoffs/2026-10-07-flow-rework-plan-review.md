@@ -2,6 +2,17 @@
 
 Read-only review by an Opus subagent, 2026-10-07, against main at ebc34a9. Everything comes from reading code; the app and tests were not run. No `answer_key.json` was opened.
 
+## Owner direction (read this first; it overrides anything below that conflicts)
+- **Next session is PLANNING only; implementation follows in later sessions.** The plan should cover all the slices below (S0-S9), with the owner approving the plan before any code.
+- **Design vs operating-effectiveness split is OPEN FOR DISCUSSION, and it may not be required at all.** The owner's only reason for it is to have that *view*. Because the data-model split touches scoring, prompts, pre-fill, tiers, exports and snapshots (see section b), the planning session must first ask whether it is needed, and if so, find the least intrusive way to get the view. Candidate paths to weigh, from least to most intrusive:
+  1. No split. Keep one result per control. Show the desk-review design coverage and the confirmed questionnaire answer side by side on the control card, as a display only (the data already exists: `DeskReviewSummary.coverage_summary` and findings vs the questionnaire answer).
+  2. A derived view: label each requirement as design-type or operating-type in the framework definitions, and group or filter the existing results by that label in the UI and report. No new columns, no scoring change.
+  3. A real split in the data model (two stored results per control). Only if 1 and 2 cannot give the owner the view they need. Needs the pre-fill decision (open question 1) first.
+  Do not build path 3 by default. Slice S5 in the plan below should be re-scoped accordingly.
+- **Owner is the final validator.** The owner reviews and approves every PR before it goes out, after the normal test run. Do not add new pixel gates, per-PR guard allowances beyond what the existing suite forces, or new test scaffolding for its own sake. Keep tests to what protects real behaviour (scoring determinism, data loss, the existing suite). Each slice ends with the owner's manual walkthrough.
+- **Goal of the whole effort: simplify.** Make the code smaller and the app more intuitive. Prefer deleting and merging over adding (see section d).
+- Decisions already made: demo company and the revised slice order are agreed. Follow-ups stay inline (decision B), so the flow doc's Follow-ups rows that say "generated after analysis" are stale and should be rewritten to match B.
+
 Inputs: `docs/product/2026-10-06-consultant-journey-flow.html`, `docs/product/2026-10-07-consultant-journey-comments.md` (owner decisions are fixed), `tasks/2026-10-06-status-log.md`.
 
 ## Headline findings
@@ -105,7 +116,7 @@ Every exit ends with the owner clicking through against the flow doc.
 - **S2 Rules + split decision** (docs and macros only): type scale, done state, one primary action, completion toast/checkmarks; owner signs off split shape.
 - **S3 Scope merge + remove gate** (structure only): question types, shared facts, per-framework blocks; delete wizard; human labels; period/cut-off at Scope; land on Scoping after create; validation id mapping. Exit: `lint_pack` clean on counts; held-out validation re-run.
 - **S4 RFI stage** (after S3): stage machine (skippable); suggested + selected items; Send = generate + issue; item status + evidence link tables; post-send received/pending/request-more on Evidence; "Run desk review" moves to Evidence.
-- **S5 Questionnaire layout + split UI + split model** (after S2, S4).
+- **S5 Questionnaire layout + design/operating view** (after S2, S4). Layout is certain. The design/operating view is OPEN (see Owner direction): start from path 1 or 2, not the data-model split.
 - **S6 Evidence engine:** F1 XLSX/CSV + OCR (parallel from S2); F2 dates/stale (after S3); F3 re-map (after S4).
 - **S7 MoM** (after S5).
 - **S8 Unseen-screen fixes** from the S1 walkthrough (review/release/findings consolidation).
@@ -114,7 +125,7 @@ Every exit ends with the owner clicking through against the flow doc.
 **Parallelism:** S0, S1, S2 and S6-F1 run together on disjoint files. S3 and S4 both touch `web.py` and scope partials: run in sequence.
 
 ## (f) Open questions for the owner
-1. After the split, do documents still pre-fill the operating answer, or only the design result (more questions for the consultant to answer)?
+1. Is the split needed at all, or is a side-by-side / derived view enough (see Owner direction)? Only if a real split is chosen: do documents still pre-fill the operating answer, or only the design result?
 2. Can you share 5-10 KPMG scope questions and one RFI now, even redacted?
 3. Held-out validation: retire gaps that trace to context answers, or map those answers into scope?
 4. Can the first RFI be sent as export only (no client link), and can the RFI stage be skipped?
