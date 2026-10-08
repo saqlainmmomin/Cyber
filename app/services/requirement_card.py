@@ -48,7 +48,6 @@ CRITERION_SYMBOLS = {"met": "✓", "not_met": "✗", "no_evidence": "?"}
 CLAIM_KINDS = ("design", "operating", "context")
 DATE_FIELDS = ("effective_date", "document_date")
 SPAN_CONTEXT_CHARS = 1500
-WHOLE_PREVIEW_CHARS = 3000
 SPAN_INVALID_MESSAGE = "Citation span not found in this evidence version."
 VERSION_NOT_FOUND_MESSAGE = "Evidence version not found"
 _SPAN_REF = re.compile(r"^chars:(0|[1-9]\d*)-(0|[1-9]\d*)$")
@@ -836,8 +835,8 @@ def span_view(db: Session, version_id: str, ref: str) -> SpanView:
         return SpanView(
             evidence_id=evidence.id, version_id=version.id, filename=version.original_filename,
             version_number=version.version_number, is_current=current, location_ref=ref,
-            whole=True, available=True, before=text[:WHOLE_PREVIEW_CHARS], span="", after="",
-            truncated_before=False, truncated_after=len(text) > WHOLE_PREVIEW_CHARS,
+            whole=True, available=True, before=text, span="", after="",
+            truncated_before=False, truncated_after=False,
         )
     match = _SPAN_REF.fullmatch(ref)
     start, end = (int(value) for value in match.groups())

@@ -1,5 +1,12 @@
 # CyberAssess implementation tracker
 
+## Evidence fixes Part B: viewer (2026-10-08)
+
+- [x] Add guarded original-file delivery, full extracted text and spreadsheet tables, stored catalog entries, citation links, and category labels.
+- [x] Add behavior tests and verify the supplied workbook against an isolated demo via in-process HTTP.
+- [ ] Browser click-through at desktop/mobile widths: blocked by sandbox server-bind and Chromium-launch permissions; see Part B Results.
+- [x] Complete full-suite verification (1605 passed, 29 skipped) and record Part B Results/PR body.
+
 ## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
 
 - [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.

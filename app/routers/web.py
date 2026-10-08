@@ -8,12 +8,13 @@ from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dpdpa.context_questions import CONTEXT_BLOCKS
 from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
@@ -22,7 +23,8 @@ from app.models.assessment import Assessment, AssessmentDocument
 from app.models.audit_event import AuditEvent
 from app.models.client import Client
 from app.models.engagement import Engagement
-from app.models.evidence import Evidence
+from app.models.evidence import Evidence, EvidenceVersion
+from app.services import evidence_viewer
 from app.models.questionnaire import QuestionnaireResponse
 from app.services.followup_engine import generate_followups
 from app.services.followup_responses import (
@@ -1499,6 +1501,30 @@ def framework_tab(
     )
 
 
+@router.get("/evidence-versions/{version_id}/file")
+def evidence_original_file(
+    version_id: str,
+    download: int = 0,
+    db: Session = Depends(get_db),
+):
+    version = db.get(EvidenceVersion, version_id)
+    evidence = db.get(Evidence, version.evidence_id) if version else None
+    if not version or not evidence or version.status != "active" or evidence.status != "active":
+        raise HTTPException(404, "Evidence file unavailable")
+    root = Path(settings.upload_dir).resolve()
+    path = evidence_service.blob_path(version.storage_path).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise HTTPException(404, "Evidence file unavailable")
+    disposition = "inline" if not download and version.mime_type in evidence_viewer.INLINE_MIMES else "attachment"
+    return FileResponse(
+        path,
+        media_type=version.mime_type,
+        filename=evidence_viewer.safe_filename(version.original_filename),
+        content_disposition_type=disposition,
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
+
+
 @router.get("/evidence/{evidence_id}", response_class=HTMLResponse)
 def evidence_detail_page(
     request: Request,
@@ -1561,6 +1587,7 @@ def evidence_detail_page(
             "uploader_name": uploader_name,
             "type_label": evidence_inventory.type_label(evidence["mime_type"], evidence["original_filename"], origin),
             "span_version": span_version,
+            **evidence_viewer.viewer_context(db, evidence),
         },
     )
 
