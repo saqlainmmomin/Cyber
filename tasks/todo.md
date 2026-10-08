@@ -1,12 +1,19 @@
 # CyberAssess implementation tracker
 
+## Evidence fixes Part B: viewer (2026-10-08)
+
+- [x] Add guarded original-file delivery, full extracted text and spreadsheet tables, stored catalog entries, citation links, and category labels.
+- [x] Add behavior tests and verify the supplied workbook against an isolated demo via in-process HTTP.
+- [x] Browser click-through at desktop and 375px (Claude, then Saqlain); fix pass for sheet headers, empty cells, wrapping, citation labels.
+- [x] Complete full-suite verification (1605 passed, 29 skipped) and record Part B Results/PR body.
+
 ## Evidence fixes Part A (2026-10-08)
 
 - [x] Map released RFI client uploads to the issued snapshot's assessment and requested controls; keep manual links engagement-level.
 - [x] Show the unmapped record note and link to the existing inventory/reuse action.
 - [x] Run focused/full behavior tests and the isolated demo receipt flow; record results and browser limitations (113 focused; 1600 passed, 29 skipped full).
 - [x] Prepare Part A results and PR body.
-- [ ] Commit owned files only: sandbox blocks the external worktree Git metadata, including staging. Browser click-through and unscoped reuse limitation remain recorded in Part A results.
+- [x] Committed and merged (#131). Unscoped reuse limitation remains recorded in Part A results.
 
 ## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
 

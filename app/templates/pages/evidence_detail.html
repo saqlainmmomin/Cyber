@@ -16,7 +16,7 @@
 {% set relevance_labels = {"primary": "Direct", "supporting": "Supporting", "contextual": "Context only"} %}
 {% set first_version = evidence.versions[0] if evidence.versions else none %}
 <div class="page-head">
-  <div><h1>{{ evidence.original_filename }}</h1><p class="meta-line">Received {{ evidence.created_at|display_date }}{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>
+  <div style="min-width:0"><h1 style="overflow-wrap:anywhere">{{ evidence.original_filename }}</h1><p class="meta-line">Received {{ evidence.created_at|display_date }}{% if period %} · Evidence cut-off {{ period.cutoff }}{% endif %}</p></div>
   <div class="acts">
     {% if action_assessment and evidence.status != "archived" %}
     <button class="btn danger lead" type="button" hx-delete="/assessments/{{ action_assessment.id }}/documents/{{ evidence.id }}" hx-target="#detail-action-status" hx-swap="innerHTML" hx-confirm="Archive {{ evidence.original_filename }}? It will be retained but excluded from analysis.">{{ icon("archive") }}Archive</button>
@@ -38,26 +38,60 @@
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">
     <div><span class="sub">Source</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ source_label }}</div></div>
     <div><span class="sub">Assessment</span><div class="t-title" style="margin-top:2px;font-weight:400">{% if originating_assessment %}{{ originating_assessment.display_name }}{% else %}Unmapped{% endif %}</div></div>
-    <div><span class="sub">Category</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ category_labels.get(evidence.document_category, "Other") }}</div></div>
+    <div><span class="sub">Category</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ category_labels.get(evidence.document_category, evidence.document_category|replace("_", " ")|capitalize if evidence.document_category else "Other") }}</div></div>
     <div><span class="sub">Uploaded by</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ uploader_name or source_label }}</div></div>
     <div><span class="sub">Received</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ evidence.created_at|display_date }}</div></div>
-    <div><span class="sub">Format</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ type_label }}, {{ evidence.mime_type }}</div></div>
+    <div style="min-width:0"><span class="sub">Format</span><div class="t-title" style="margin-top:2px;font-weight:400;overflow-wrap:anywhere">{{ type_label }}, {{ evidence.mime_type }}</div></div>
   </div>
   <div style="margin-top:var(--s-5)"><span class="sub">Original SHA-256{% if first_version %} (v{{ first_version.version_number }}){% endif %}</span><div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:nowrap;margin-top:2px"><span class="num" style="font-size:var(--t-sm);word-break:break-all;color:var(--text-2)" data-copy-target="evidence-sha256">{{ evidence.file_hash_sha256 }}</span>{{ button("", "ghost", "sm", icon_id="copy", aria_label="Copy SHA-256", copy_trigger="evidence-sha256") }}</div></div>
 </div>
 
+<section aria-labelledby="original-heading">
+<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2 id="original-heading">Original file</h2></div>
+{% if file_available %}
+<div class="acts" style="margin-bottom:var(--s-4)"><a class="btn secondary" style="max-width:100%;white-space:normal;overflow-wrap:anywhere;height:auto" href="/evidence-versions/{{ viewer_version.id }}/file?download=1">{{ icon("download") }}Download {{ viewer_version.original_filename }}</a></div>
+{% if inline_file and viewer_version.mime_type == "application/pdf" %}
+<iframe title="Original {{ viewer_version.original_filename }}" src="/evidence-versions/{{ viewer_version.id }}/file" style="width:100%;height:65vh;border:0"></iframe>
+{% elif inline_file %}
+<img src="/evidence-versions/{{ viewer_version.id }}/file" alt="Original {{ viewer_version.original_filename }}" style="max-width:100%;height:auto">
+{% endif %}
+{% else %}{{ empty_state("Original file unavailable", "Only active, available versions can be downloaded.", icon_id="file") }}{% endif %}
+</section>
+<section aria-labelledby="read-heading">
+<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2 id="read-heading">What the AI read</h2></div>
+<p class="sub">Stored extracted text of the current version. Analysis may apply a separate size limit.</p>
+<div class="solid" style="max-height:65vh;overflow:auto;padding:var(--s-5)" data-extracted-text>
+{% for block in text_blocks %}
+{% if block.kind == "sheet" %}
+<h3>{{ block.name }}</h3>{% if block.preamble %}<table data-sheet-preamble style="margin-bottom:var(--s-4)"><tbody>{% for row in block.preamble %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>{% endif %}<table data-sheet-table>{% if block.header %}<thead><tr>{% for cell in block.header %}<th>{{ cell }}</th>{% endfor %}</tr></thead>{% endif %}<tbody>{% for row in block.rows %}<tr data-sheet-row>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+{% elif block.kind == "note" %}<p class="sub" data-extraction-note>{{ block.text }}</p>
+{% else %}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit">{{ block.text }}</pre>{% endif %}
+{% else %}<p class="sub">No extracted text available.</p>{% endfor %}
+</div>
+</section>
+<section aria-labelledby="catalog-heading">
+<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2 id="catalog-heading">What the AI made of it</h2></div>
+{% if catalog_entries %}
+<p class="sub">Catalog matched by current filename. {% if catalog_entries|length > 1 %}Multiple matches: these entries may refer to different files with the same name.{% else %}Files with the same name cannot be distinguished in the stored catalog.{% endif %}</p>
+{% for match in catalog_entries %}<div class="glass" style="padding:var(--s-5);margin-bottom:var(--s-3)"><p class="sub">{{ match.assessment }} · {{ match.entry.document_type }}</p><p>{{ match.entry.summary }}</p><div style="display:flex;gap:var(--s-2);flex-wrap:wrap">{% for area in match.entry.coverage_areas or [] %}{{ chip(area) }}{% endfor %}</div></div>{% endfor %}
+{% else %}<p>Desk review hasn't read this file yet.</p>{% endif %}
+</section>
+<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Where it's used</h2></div>
+<h3>Supports</h3>
+
+{% if evidence.uses %}
+<div class="solid" style="overflow-x:auto"><table><thead><tr><th>Assessment</th><th>Framework</th><th>Requirement</th><th>Relevance</th><th></th></tr></thead><tbody>
+{% for use in evidence.uses %}{% set use_assessment = use_assessments.get(use.assessment_id) %}{% set span_href = "/evidence-versions/" ~ span_version.id ~ "/span?ref=whole" if span_version else "" %}<tr{% if span_href %} data-href="{{ span_href }}"{% endif %}><td>{{ use_assessment.display_name if use_assessment else "Assessment" }}</td><td>{{ chip(framework_label(use.framework_id)) }}</td><td><div class="t-title">{{ requirement_titles.get((use.framework_id, use.requirement_id), use.requirement_id) }}</div><div class="t-sub">{{ use.requirement_id }}</div></td><td>{{ relevance_labels.get(use.relevance, use.relevance|replace("_", " ")|capitalize) }}</td><td>{% if span_href %}<a href="{{ span_href }}" aria-label="Open {{ evidence.original_filename }} text">Open text</a>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+{% else %}
+{{ empty_state("Not used yet", "This file is not mapped to any requirement. It is mapped when the pre-fill or gap analysis cites it.", icon_id="link") }}
+{% endif %}
+<h3 style="margin-top:var(--s-5)">Citations</h3>
+{% for citation in viewer_citations %}<div class="glass" style="padding:var(--s-5);margin-bottom:var(--s-3)"><div class="t-title">{{ citation.label }}</div><p class="sub">{{ citation.assessment }} · <a href="{{ citation.href }}">{{ citation.location }}</a></p>{% if citation.excerpt %}<blockquote>{{ citation.excerpt }}</blockquote>{% endif %}</div>{% else %}<p class="sub">No citations of this evidence yet.</p>{% endfor %}
 <div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Versions</h2></div>
 <div class="solid" style="overflow-x:auto"><table><thead><tr><th>Version</th><th>Status</th><th>File</th><th class="hide-sm">Received</th><th class="hide-sm">Change reason</th></tr></thead><tbody>
 {% for version in evidence.versions|reverse %}<tr><td class="t-title num" title="SHA-256 {{ version.file_hash_sha256 }}">v{{ version.version_number }}{% if version.status == "active" %} <span class="muted" style="font-weight:400">current</span>{% endif %}</td><td>{{ evidence_dot(version.status) }}</td><td>{{ version.original_filename }}<div class="t-sub">{{ version.file_size_bytes|filesizeformat }}</div></td><td class="hide-sm">{{ version.created_at|display_date }}</td><td class="hide-sm">{{ version.change_reason or "—" }}</td></tr>
 {% endfor %}</tbody></table></div>
 
-<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Supports</h2></div>
-{% if evidence.uses %}
-<div class="solid" style="overflow-x:auto"><table><thead><tr><th>Assessment</th><th>Framework</th><th>Requirement</th><th class="hide-sm">Relevance</th><th class="hide-sm"></th></tr></thead><tbody>
-{% for use in evidence.uses %}{% set use_assessment = use_assessments.get(use.assessment_id) %}{% set span_href = "/evidence-versions/" ~ span_version.id ~ "/span?ref=whole" if span_version else "" %}<tr{% if span_href %} data-href="{{ span_href }}"{% endif %}><td>{{ use_assessment.display_name if use_assessment else "Assessment" }}</td><td>{{ chip(framework_label(use.framework_id)) }}</td><td><div class="t-title">{{ requirement_titles.get((use.framework_id, use.requirement_id), use.requirement_id) }}</div><div class="t-sub">{{ use.requirement_id }}</div></td><td class="hide-sm">{{ relevance_labels.get(use.relevance, use.relevance|replace("_", " ")|capitalize) }}</td><td class="go hide-sm">{% if span_href %}<a href="{{ span_href }}" aria-label="Open {{ evidence.original_filename }} text">{{ icon("chev-r") }}</a>{% endif %}</td></tr>
-{% endfor %}</tbody></table></div>
-{% else %}
-{{ empty_state("Not used yet", "This file is not mapped to any requirement. It is mapped when the pre-fill or gap analysis cites it.", icon_id="link") }}
-{% endif %}
 {% include "partials/yozora_page_controls.html" %}
 {% endblock %}
