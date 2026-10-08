@@ -631,11 +631,18 @@ def test_client_upload_creates_engagement_level_evidence(db, http, texts):
     # Engagement-level: invisible to the assessment until a consultant maps it.
     assert e.analysis_documents(db, assessment.id) == []
     assert db.get(Assessment, assessment.id).status == "created"
+    detail = http.get(f"/evidence/{evidence.id}")
+    assert detail.status_code == 200
+    assert "Not used by any assessment&#39;s analysis yet" in detail.text or "Not used by any assessment's analysis yet" in detail.text
+    assert f'/engagements/{engagement.id}/evidence' in detail.text
+    inventory = http.get(f"/engagements/{engagement.id}/evidence")
+    assert "Reuse from another assessment" in inventory.text
     e.map_evidence(
         db, evidence_id=evidence.id, assessment_id=assessment.id, framework_id="dpdpa",
         requirement_id="CH2.CONSENT.1", relevance="primary", actor="consultant",
     )
     db.commit()
+    assert "Not used by any assessment" not in http.get(f"/evidence/{evidence.id}").text
     assert [d["id"] for d in e.analysis_documents(db, assessment.id)] == [evidence.id]
 
     page = http.get(f"/magic/{created.token}")
