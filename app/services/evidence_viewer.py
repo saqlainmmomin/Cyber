@@ -25,6 +25,28 @@ def _json_list(value):
     return decoded if isinstance(decoded, list) else []
 
 
+_CELL_SEPARATOR = re.compile(r' ?\| ?')
+HEADER_SCAN_ROWS = 10
+_NUMBER = re.compile(r'[-+]?[\d,.]+%?')
+
+
+def _finish_sheet(sheet):
+    """Pick the header row: the first early row as wide as the widest, with no empty or numeric cells.
+
+    Workbooks often put a title or metadata rows above the real column names; those
+    rows go to a preamble shown above the table instead of becoming its header.
+    """
+    rows = [[cell.strip() for cell in _CELL_SEPARATOR.split(line)] for line in sheet.pop('lines')]
+    width = max((len(row) for row in rows), default=0)
+    start = next((index for index, row in enumerate(rows[:HEADER_SCAN_ROWS])
+                  if width > 1 and len(row) == width and all(row) and not any(_NUMBER.fullmatch(cell) for cell in row)), None)
+    if start is None:
+        sheet['preamble'], sheet['header'], body = [], None, rows
+    else:
+        sheet['preamble'], sheet['header'], body = rows[:start], rows[start], rows[start + 1:]
+    sheet['rows'] = [row + [''] * (width - len(row)) for row in body]
+
+
 def text_blocks(text, tabular):
     """Preserve every stored row; extraction markers are notes outside tables."""
     blocks = []
@@ -34,14 +56,10 @@ def text_blocks(text, tabular):
         if marker or line.strip() == '[cell truncated]':
             blocks.append({'kind': 'note', 'text': line})
         elif tabular and line.startswith('Sheet: '):
-            sheet = {'kind': 'sheet', 'name': line[7:], 'header': None, 'rows': []}
+            sheet = {'kind': 'sheet', 'name': line[7:], 'lines': []}
             blocks.append(sheet)
         elif tabular and sheet is not None and line:
-            cells = line.split(' | ')
-            if sheet['header'] is None:
-                sheet['header'] = cells
-            else:
-                sheet['rows'].append(cells)
+            sheet['lines'].append(line)
             if '[cell truncated]' in line:
                 blocks.append({'kind': 'note', 'text': f"Sheet {sheet['name']}: [cell truncated]"})
         else:
@@ -49,7 +67,18 @@ def text_blocks(text, tabular):
                 blocks[-1]['text'] += '\n' + line
             else:
                 blocks.append({'kind': 'text', 'text': line})
+    for block in blocks:
+        if block['kind'] == 'sheet':
+            _finish_sheet(block)
     return blocks
+
+
+def _control_title(framework_id, requirement_id):
+    from app.frameworks.registry import FrameworkRegistry
+
+    framework = FrameworkRegistry.get_or_none(framework_id)
+    control = framework.get_control(requirement_id) if framework else None
+    return f'{control.title} ({requirement_id})' if control else requirement_id
 
 
 def viewer_context(db: Session, evidence: dict) -> dict:
@@ -77,8 +106,8 @@ def viewer_context(db: Session, evidence: dict) -> dict:
     rows = db.query(ConclusionRevision, Conclusion).join(
         Conclusion, ConclusionRevision.conclusion_id == Conclusion.id,
     ).filter(mentions(ConclusionRevision.citations_json)).all() if version_ids else []
-    sources = [(rev.citations_json, f'Conclusion: {con.requirement_id}', con.assessment_id)
-               for rev, con in rows]
+    sources = [(rev.citations_json, f'Conclusion: {_control_title(con.framework_id, con.requirement_id)}',
+                con.assessment_id) for rev, con in rows]
     sources += [(row.citations_json, row.content, row.assessment_id)
                 for row in db.query(DeskReviewFinding).filter(mentions(DeskReviewFinding.citations_json)).all()] if version_ids else []
     for payload, label, assessment_id in sources:

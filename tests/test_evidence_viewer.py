@@ -102,6 +102,20 @@ def test_spreadsheet_all_rows_notes_and_no_catalog(db, http, monkeypatch):
     assert '<iframe' not in page.text
 
 
+
+def test_sheet_title_rows_become_preamble_and_empty_cells_stay_empty():
+    from app.services.evidence_viewer import text_blocks
+    text = ('Sheet: Detail\nAccess Review Detail\nExported records | 220 | Expected population | 200\n'
+            'Record # | Employee ID | Role | Notes\n131 | E131 | Admin | access still enabled\n132 | E132 | | \n'
+            'Sheet: Summary\nReview date | 2026-09-30 | | Coverage statement')
+    detail, summary = [block for block in text_blocks(text, True) if block['kind'] == 'sheet']
+    assert detail['header'] == ['Record #', 'Employee ID', 'Role', 'Notes']
+    assert detail['preamble'] == [['Access Review Detail'], ['Exported records', '220', 'Expected population', '200']]
+    assert detail['rows'] == [['131', 'E131', 'Admin', 'access still enabled'], ['132', 'E132', '', '']]
+    assert summary['header'] is None
+    assert summary['rows'] == [['Review date', '2026-09-30', '', 'Coverage statement']]
+
+
 @pytest.mark.parametrize('mime', ['image/png', 'image/jpeg', 'image/webp'])
 def test_image_preview_and_current_version_filename(db, http, monkeypatch, mime):
     _, evidence, version = upload(db, http, monkeypatch)
@@ -147,7 +161,7 @@ def test_conclusion_citations_and_supports_link_visible(db, http, monkeypatch):
                               citations_json=json.dumps([{'evidence_version_id': version.id, 'location_ref': 'chars:0-14', 'excerpt': 'Quoted passage'}])))
     db.commit()
     page = http.get(f'/evidence/{evidence.id}')
-    assert 'Conclusion: CH2.CONSENT.1' in page.text
+    assert 'Conclusion: ' in page.text and '(CH2.CONSENT.1)' in page.text
     assert 'Characters 0–14' in page.text
     assert f'<td><a href="/evidence-versions/{version.id}/span?ref=whole"' in page.text
     span = http.get(f'/evidence-versions/{version.id}/span?ref=chars:0-14')
