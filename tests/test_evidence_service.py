@@ -74,7 +74,7 @@ EXTRACTION_FAILED = (
     "Could not extract text from this document. If it is a scanned PDF, "
     "try uploading it as a PNG or JPEG screenshot instead."
 )
-UNSUPPORTED = "Unsupported file type. Upload PDF, DOCX, PNG, JPG, JPEG, or WEBP files."
+UNSUPPORTED = "Unsupported file type. Upload PDF, DOCX, Excel/CSV, PNG, JPG, JPEG, or WEBP files."
 SCAN_REJECTED = "File failed the malware scan and was not released from quarantine."
 ENGAGEMENT_REQUIRED = (
     "This assessment is not linked to an engagement. "

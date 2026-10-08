@@ -35,6 +35,8 @@ SCAN_REJECTED_MESSAGE = "File failed the malware scan and was not released from 
 FILE_TYPE_TO_MIME = {
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "csv": "text/csv",
     "png": "image/png",
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
@@ -148,7 +150,7 @@ def _file_type(filename: str, supplied: str | None) -> str:
     file_type = detect_file_type(filename) if supplied is None else supplied.lower()
     if file_type not in FILE_TYPE_TO_MIME:
         raise UnsupportedFileType(
-            "Unsupported file type. Upload PDF, DOCX, PNG, JPG, JPEG, or WEBP files."
+            "Unsupported file type. Upload PDF, DOCX, Excel/CSV, PNG, JPG, JPEG, or WEBP files."
         )
     return file_type
 

@@ -1,5 +1,10 @@
 # CyberAssess implementation tracker
 
+## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
+
+- [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.
+- [x] Fix pass (2026-10-08): store every spreadsheet row instead of sampling 200; cut only at row boundaries with a stored-rows marker (`tasks/handoffs/2026-10-08-flow-s6-f1-keep-every-row.md`).
+
 ## Flow rework S0b hotfixes (2026-10-07)
 
 - [x] Fix follow-up storage, reload rendering, multi-framework cluster handling, and regression coverage.

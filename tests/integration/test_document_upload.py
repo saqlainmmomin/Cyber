@@ -3,6 +3,8 @@
 import io
 from unittest.mock import patch
 
+import pytest
+
 from app.config import settings
 from app.models.evidence import Evidence
 from tests.integration.conftest import create_test_assessment
@@ -37,3 +39,28 @@ def test_upload_unsupported_file_type(client, db_session):
     )
     assert response.status_code == 200  # returns error partial, not HTTP error
     assert "Unsupported" in response.text
+
+
+@pytest.mark.parametrize(
+    ("filename", "content_type"),
+    [
+        ("access-review.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        ("asset-register.csv", "text/csv"),
+    ],
+)
+def test_upload_spreadsheet_types(client, db_session, monkeypatch, filename, content_type):
+    assessment_id = create_test_assessment(client)
+    monkeypatch.setattr(
+        "app.services.evidence.extract_text",
+        lambda *_args: "Extracted spreadsheet text",
+    )
+
+    response = client.post(
+        f"/assessments/{assessment_id}/upload",
+        data={"category": "other"},
+        files={"file": (filename, io.BytesIO(b"spreadsheet bytes"), content_type)},
+    )
+
+    assert response.status_code == 200
+    document = db_session.query(Evidence).filter(Evidence.assessment_id == assessment_id).one()
+    assert document.original_filename == filename

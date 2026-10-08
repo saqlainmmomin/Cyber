@@ -45,7 +45,7 @@ RFI_INTRODUCTION = (
 RFI_RESPONSE_INSTRUCTIONS = (
     "Please provide each item and quote its RFI item number (for example, RFI-001) when you send it. "
     "If your consultant has given you a secure upload link, upload each file against the matching item. "
-    "Documents may be provided in PDF, DOCX or image format. If an item does not apply to your "
+    "Documents may be provided in PDF, DOCX, Excel/CSV or image format. If an item does not apply to your "
     "organisation, reply with a short written explanation instead of a document."
 )
 
