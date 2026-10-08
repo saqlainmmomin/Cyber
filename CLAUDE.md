@@ -11,7 +11,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase:** Phase 6 (plan `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md`): v1 pipeline live, v2 parked (`tasks/2026-09-30-p6-5c-decision-park-v2.md`). **Yozora UI redesign** in progress: S1-S2 merged, next S3 + S4. Status: `tasks/2026-10-04-status-log.md`; next step: `tasks/handoffs/2026-10-04-yozora-s3-s4-orchestration.md`. Local-only until Track 4.
+**Current phase (2026-10-08):** evidence fixes A-C (`tasks/handoffs/2026-10-08-evidence-fixes.md`), then Saqlain's decisions on test criteria and access-review checks, then flow-plan S3+ (`docs/plans/2026-10-07-001-flow-rework-plan.md`). Every PR must pass the AI-coherence test and the path rules in `tasks/2026-10-08-session-record.md`. v2 analysis parked (P6-5c). Local-only until Track 4.
 
 ## Running
 ```bash
