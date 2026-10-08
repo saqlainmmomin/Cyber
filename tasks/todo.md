@@ -1,5 +1,13 @@
 # CyberAssess implementation tracker
 
+## Evidence fixes Part A (2026-10-08)
+
+- [x] Map released RFI client uploads to the issued snapshot's assessment and requested controls; keep manual links engagement-level.
+- [x] Show the unmapped record note and link to the existing inventory/reuse action.
+- [x] Run focused/full behavior tests and the isolated demo receipt flow; record results and browser limitations (113 focused; 1600 passed, 29 skipped full).
+- [x] Prepare Part A results and PR body.
+- [ ] Commit owned files only: sandbox blocks the external worktree Git metadata, including staging. Browser click-through and unscoped reuse limitation remain recorded in Part A results.
+
 ## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
 
 - [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.
