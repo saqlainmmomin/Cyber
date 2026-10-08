@@ -4,7 +4,7 @@ Document text extraction for PDF, DOCX, spreadsheets, and image files.
 Supported:
 - PDF: text extraction via pdfplumber
 - DOCX: text extraction via python-docx
-- XLSX / CSV: tabular text extraction with bounded row sampling
+- XLSX / CSV: tabular text extraction with row-boundary size guards
 - PNG / JPG / JPEG / WEBP: content description via Claude vision API
 """
 
@@ -15,6 +15,7 @@ import io
 import os
 import logging
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pdfplumber
@@ -32,10 +33,6 @@ _IMAGE_MEDIA_TYPES = {
     "webp": "image/webp",
 }
 
-# Keep spreadsheet extraction below the document word budget while preserving
-# the beginning and shape of large evidence registers.
-SPREADSHEET_MAX_DATA_ROWS = 200
-SPREADSHEET_INITIAL_DATA_ROWS = 100
 PDF_OCR_TEXT_THRESHOLD = 20
 PDF_OCR_MAX_PAGES = 10
 PDF_OCR_RESOLUTION = 150
@@ -134,27 +131,23 @@ def _extract_xlsx(file_path: str) -> str:
     """Extract cached worksheet values without loading a workbook into memory."""
     workbook = load_workbook(file_path, read_only=True, data_only=True, keep_links=False)
     try:
-        parts = []
+        renderer = _SpreadsheetRenderer(settings.max_document_words)
         for worksheet in workbook.worksheets:
-            rendered = _render_tabular_sheet(
+            _render_tabular_sheet(
                 worksheet.title,
                 lambda worksheet=worksheet: _worksheet_rows(worksheet),
+                renderer=renderer,
             )
-            if rendered:
-                parts.append(rendered)
-        return _truncate("\n\n".join(parts))
+        return _truncate(renderer.render())
     finally:
         workbook.close()
 
 
 def _extract_csv(file_path: str) -> str:
     """Extract a CSV as one named worksheet using the same tabular format."""
-    return _truncate(
-        _render_tabular_sheet(
-            Path(file_path).stem,
-            lambda: _csv_rows(file_path),
-        )
-    )
+    renderer = _SpreadsheetRenderer(settings.max_document_words)
+    _render_tabular_sheet(Path(file_path).stem, lambda: _csv_rows(file_path), renderer=renderer)
+    return _truncate(renderer.render())
 
 
 def _worksheet_rows(worksheet):
@@ -203,45 +196,134 @@ def _cell_text(value) -> str:
     return text
 
 
-def _render_tabular_sheet(sheet_name: str, rows_factory) -> str:
-    rows = rows_factory()
-    try:
-        header = next(rows)
-    except StopIteration:
-        return ""
-
-    data_rows = sum(1 for _row in rows)
-    selected_indices = _sampled_row_indices(data_rows)
-    selected = []
-    rows = rows_factory()
-    next(rows, None)
-    for index, row in enumerate(rows, start=1):
-        if index in selected_indices:
-            selected.append(row)
-
-    lines = [f"Sheet: {sheet_name}", " | ".join(header)]
-    lines.extend(" | ".join(row) for row in selected)
-    if data_rows > SPREADSHEET_MAX_DATA_ROWS:
-        lines.append(f"[sampled {len(selected)} of {data_rows:,} rows]")
-    return "\n".join(lines)
+def _word_count(text: str) -> int:
+    return len(text.split())
 
 
-def _sampled_row_indices(total_rows: int) -> set[int]:
-    if total_rows <= SPREADSHEET_MAX_DATA_ROWS:
-        return set(range(1, total_rows + 1))
-    initial = min(SPREADSHEET_INITIAL_DATA_ROWS, SPREADSHEET_MAX_DATA_ROWS)
-    sample_count = SPREADSHEET_MAX_DATA_ROWS - initial
-    indices = set(range(1, initial + 1))
-    start = initial + 1
-    end = total_rows
-    if sample_count == 1:
-        indices.add(end)
-    else:
-        indices.update(
-            start + ((end - start) * offset // (sample_count - 1))
-            for offset in range(sample_count)
+@dataclass
+class _RenderedTabularSheet:
+    sheet_name: str
+    title_line: str | None = None
+    header_line: str | None = None
+    data_lines: list[str] = field(default_factory=list)
+    data_word_counts: list[int] = field(default_factory=list)
+    total_data_rows: int = 0
+    truncated: bool = False
+    not_stored: bool = False
+
+
+class _SpreadsheetRenderer:
+    """Build spreadsheet text while only admitting complete rows into the budget."""
+
+    def __init__(self, max_words: int):
+        self.max_words = max_words
+        self.sheets: list[_RenderedTabularSheet] = []
+        self.word_count = 0
+        self.size_limit_reached = False
+
+    def add_sheet(self, sheet_name: str, rows_factory) -> None:
+        rows = rows_factory()
+        header = next(rows, None)
+        if header is None:
+            return
+
+        sheet = _RenderedTabularSheet(sheet_name=sheet_name)
+        self.sheets.append(sheet)
+        if self.size_limit_reached:
+            sheet.not_stored = True
+            return
+
+        title_line = f"Sheet: {sheet_name}"
+        header_line = " | ".join(header)
+        header_words = _word_count(title_line) + _word_count(header_line)
+        if self.word_count + header_words > self.max_words:
+            sheet.not_stored = True
+            self.size_limit_reached = True
+            return
+
+        sheet.title_line = title_line
+        sheet.header_line = header_line
+        self.word_count += header_words
+
+        for row in rows:
+            sheet.total_data_rows += 1
+            row_line = " | ".join(row)
+            row_words = _word_count(row_line)
+            if sheet.truncated:
+                continue
+            if self.word_count + row_words <= self.max_words:
+                sheet.data_lines.append(row_line)
+                sheet.data_word_counts.append(row_words)
+                self.word_count += row_words
+            else:
+                sheet.truncated = True
+                self.size_limit_reached = True
+
+    def _partial_marker(self, sheet: _RenderedTabularSheet) -> str:
+        return (
+            f'[stored rows 1-{len(sheet.data_lines):,} of {sheet.total_data_rows:,} '
+            f'in sheet "{sheet.sheet_name}"; the remaining rows were not stored]'
         )
-    return indices
+
+    def _not_stored_marker(self, sheet: _RenderedTabularSheet) -> str:
+        return f'[sheet "{sheet.sheet_name}" not stored: size limit reached]'
+
+    def _marker_word_count(self, sheet: _RenderedTabularSheet) -> int:
+        if sheet.not_stored:
+            return _word_count(self._not_stored_marker(sheet))
+        if sheet.truncated:
+            return _word_count(self._partial_marker(sheet))
+        return 0
+
+    def _word_count_with_markers(self) -> int:
+        return self.word_count + sum(self._marker_word_count(sheet) for sheet in self.sheets)
+
+    def _trim_to_marker_budget(self) -> None:
+        """Trim only trailing data rows if marker lines need additional room."""
+        while self._word_count_with_markers() > self.max_words:
+            target = next(
+                (
+                    sheet
+                    for sheet in reversed(self.sheets)
+                    if sheet.truncated and sheet.data_lines
+                ),
+                None,
+            )
+            if target is None:
+                target = next(
+                    (
+                        sheet
+                        for sheet in reversed(self.sheets)
+                        if not sheet.not_stored and sheet.data_lines
+                    ),
+                    None,
+                )
+                if target is None:
+                    return
+                target.truncated = True
+
+            target.data_lines.pop()
+            row_words = target.data_word_counts.pop()
+            self.word_count -= row_words
+
+    def render(self) -> str:
+        self._trim_to_marker_budget()
+        parts = []
+        for sheet in self.sheets:
+            if sheet.not_stored:
+                parts.append(self._not_stored_marker(sheet))
+                continue
+            lines = [sheet.title_line, sheet.header_line, *sheet.data_lines]
+            if sheet.truncated:
+                lines.append(self._partial_marker(sheet))
+            parts.append("\n".join(line for line in lines if line is not None))
+        return "\n\n".join(parts)
+
+
+def _render_tabular_sheet(sheet_name: str, rows_factory, *, renderer=None) -> str:
+    active_renderer = renderer or _SpreadsheetRenderer(settings.max_document_words)
+    active_renderer.add_sheet(sheet_name, rows_factory)
+    return "" if renderer is not None else active_renderer.render()
 
 
 def _extract_docx(file_path: str) -> str:

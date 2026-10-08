@@ -59,3 +59,4 @@ Commit on this branch with plain messages. **No `Co-Authored-By` or any AI attri
 - Client checklist PDF copy now says "PDF, DOCX, Excel/CSV or image".
 - Tests added: OCR failure keeps the document; cp1252 semicolon CSV decodes.
 - Verified in the running app: a 3,000-row xlsx uploaded through `POST /api/assessments/{id}/documents` stored `Sheet: UAR Q2` + header + `[sampled 200 of 3,000 rows]`. One live vision call on a generated image-only PDF returned the page's text under `[OCR page 1]`.
+- 2026-10-08: Sampling replaced by full spreadsheet row storage with row-boundary size markers; see `tasks/handoffs/2026-10-08-flow-s6-f1-keep-every-row.md`.

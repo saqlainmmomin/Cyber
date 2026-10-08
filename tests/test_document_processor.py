@@ -26,7 +26,43 @@ def _write_large_workbook(path):
     workbook.save(path)
 
 
-def test_xlsx_extraction_includes_sheet_headers_and_samples_large_sheets(tmp_path):
+def _write_size_limited_workbook(path):
+    workbook = Workbook()
+    records = workbook.active
+    records.title = "Records"
+    records.append(["Record"])
+    for row_number in range(1, 101):
+        records.append([f"record-{row_number}"])
+
+    later = workbook.create_sheet("Later")
+    later.append(["Record"])
+    later.append(["later-1"])
+    workbook.save(path)
+
+
+def _write_access_review_workbook(path):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Access Review Detail"
+    sheet.append(["Record", "Employee", "Status", "Role", "Note"])
+    exceptions = {120, 131, 203, 208, 214, 219}
+    for record_number in range(1, 221):
+        if record_number in exceptions:
+            sheet.append(
+                [
+                    record_number,
+                    f"E{record_number}",
+                    "terminated",
+                    "Admin",
+                    "access still enabled",
+                ]
+            )
+        else:
+            sheet.append([record_number, f"E{record_number}", "active", "User", ""])
+    workbook.save(path)
+
+
+def test_xlsx_extraction_includes_every_row_and_sheet_headers(tmp_path):
     path = tmp_path / "access-reviews.xlsx"
     _write_large_workbook(path)
 
@@ -36,9 +72,41 @@ def test_xlsx_extraction_includes_sheet_headers_and_samples_large_sheets(tmp_pat
     assert "Sheet: Asset register" in text
     assert "User | Status" in text
     assert "user-1 | Active" in text
-    assert "[sampled 200 of 5,000 rows]" in text
+    assert "user-5000 | Active" in text
+    assert text.count(" | Active") == 5000
+    assert "[sampled" not in text
+    assert "not stored" not in text
     assert "[... truncated" not in text
     assert len(text.split()) < settings.max_document_words
+
+
+def test_xlsx_extraction_stops_at_row_boundary_and_marks_later_sheets(tmp_path, monkeypatch):
+    path = tmp_path / "size-limited.xlsx"
+    _write_size_limited_workbook(path)
+    monkeypatch.setattr(settings, "max_document_words", 35)
+
+    text = document_processor.extract_text(str(path), "xlsx")
+
+    assert "record-10" in text
+    assert "record-12" not in text
+    assert '[stored rows 1-11 of 100 in sheet "Records"; the remaining rows were not stored]' in text
+    assert '[sheet "Later" not stored: size limit reached]' in text
+    assert len(text.split()) <= settings.max_document_words
+    assert "[... truncated" not in text
+
+
+def test_xlsx_extraction_keeps_exception_rows_outside_the_old_sample(tmp_path):
+    path = tmp_path / "access-review-detail.xlsx"
+    _write_access_review_workbook(path)
+
+    text = document_processor.extract_text(str(path), "xlsx")
+
+    for record_number in range(1, 221):
+        assert f"{record_number} | E{record_number}" in text
+    for record_number in (120, 131, 203, 208, 214, 219):
+        assert f"{record_number} | E{record_number} | terminated | Admin | access still enabled" in text
+    assert "[sampled" not in text
+    assert "not stored" not in text
 
 
 def test_csv_extraction_round_trips_rows(tmp_path):
