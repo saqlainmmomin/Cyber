@@ -24,9 +24,9 @@
 2. **One thing in flight.** At most one handoff being implemented (two only if their files are disjoint). Nothing new starts until the current PR is clicked through and merged.
 3. **Saqlain clicks through every PR before merging** using the PR's Click-through section (10 minutes). No click-through, no merge. This is the step that was skipped before.
 4. **New ideas go to the parking lot, not a handoff.** Add a line under "Parking lot" below with the date. They get scoped only when the current sequence is done, and only if they pass rule 1.
-5. **The sequence is fixed until Saqlain changes it here:** A + B → C → decide E4 → flow-plan S3, S4, S5, S7, S8, S9 → Track 4. Changing the order means editing this file, on purpose.
+5. **The sequence is fixed until Saqlain changes it here:** A + B (+ demo depth, read-only E4/E5 prep) → C → decide E4 → flow-plan S3, S4, S5, S7, S8, S9 → Track 4. Changing the order means editing this file, on purpose.
 
 ## Parking lot
-- 2026-10-08: Veldhara demo needs realistic documents (stubs are 130-300 characters).
+- 2026-10-08: ~~Veldhara demo needs realistic documents~~ Moved up by Saqlain the same day: runs alongside A + B in his Codex app (`tasks/handoffs/2026-10-08-veldhara-demo-depth.md` on `codex/demo-veldhara-depth`). Scripts/demo only, disjoint from A-C files; it keeps the demo files and mappings A-C click-throughs rely on.
 - 2026-10-08: NIST questions all read "Has your organization implemented …?"; NIST assessment shows DPDPA-sounding section names.
 - 2026-10-08: RFI items are one line per document type, with no period, cycles or samples (overlaps E4/5 and flow-plan S9).
