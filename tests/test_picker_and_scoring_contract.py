@@ -162,10 +162,10 @@ def test_new_assessment_rejects_roadmap_framework(client):
 def test_picker_disables_roadmap_frameworks_and_submit(client):
     response = client.get("/assessments/new")
     assert response.status_code == 200
-    assert response.text.count('title="Roadmap — control data present, analysis pipeline coming"') == 3
-    assert 'value="gdpr" disabled' in response.text
-    assert 'value="hipaa" disabled' in response.text
-    assert 'value="pci_dss" disabled' in response.text
+    assert response.text.count('name="selected_frameworks"') == 3
+    assert 'value="gdpr"' not in response.text
+    assert 'value="hipaa"' not in response.text
+    assert 'value="pci_dss"' not in response.text
     assert 'id="create-assessment"' not in response.text
 
 

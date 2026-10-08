@@ -891,6 +891,7 @@ def questionnaire_progress(questionnaire: dict, assessment_id: str, db: Session)
         .filter(
             QuestionnaireResponse.assessment_id == assessment_id,
             confirmed_response_clause(),
+            ~QuestionnaireResponse.question_id.like("FU.%"),
         )
         .all()
     )

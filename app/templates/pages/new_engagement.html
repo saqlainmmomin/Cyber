@@ -10,7 +10,7 @@
 {% set name_error = specimen_error or error == 'Engagement name is required.' %}
 {% set framework_error = specimen_error or (error and error.startswith('Select at least one framework')) %}
 {% set selected = form_values.selected_frameworks if form_values else [] %}
-{% set display_order = ['dpdpa', 'iso27001', 'gdpr', 'nist_csf', 'hipaa', 'pci_dss'] %}
+{% set display_order = ['dpdpa', 'iso27001', 'nist_csf'] %}
 <div class="page-head"><h1>New engagement</h1></div>
 <div class="solid" style="padding:var(--s-8);max-width:640px">
 {% if error or specimen_error %}<div class="alert c-non" role="alert" style="margin-bottom:var(--s-5)"><svg class="i"><use href="#i-alert"/></svg><div><b>The engagement was not created</b>{% if error %}{{ error }}{% else %}Fix the highlighted fields and try again.{% endif %}</div></div>{% endif %}

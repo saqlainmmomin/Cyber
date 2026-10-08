@@ -59,7 +59,7 @@
   <div style="margin-bottom:var(--s-6)">{{ seg(rfi_tabs, rfi_tab) }}</div>
 
   <section data-panel="items" data-rfi-preview{% if rfi_tab != "items" %} hidden{% endif %}>
-    <p class="sub" style="margin-bottom:var(--s-4)">Only conclusions you have individually approved as insufficient evidence are included. AI proposals, scores and findings are never sent.</p>
+    <p class="sub" style="margin-bottom:var(--s-4)">{{ "Pick the items to request from the client." if not current_issue else "Only conclusions you have individually approved as insufficient evidence are included. AI proposals, scores and findings are never sent." }}</p>
     {% if evidence_requests %}<p data-rfi-requests-note class="sub" style="margin-bottom:var(--s-4)">{{ evidence_requests_note }}</p>{% endif %}
     <div class="solid rows">
       {% for item in preview["items"] %}
