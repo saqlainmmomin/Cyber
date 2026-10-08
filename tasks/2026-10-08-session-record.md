@@ -16,6 +16,7 @@
 | E2 | Spreadsheets are stored whole; no sampling at extraction (reverses the flow plan's S6-F1 "sampled" line). |
 | E3 | Evidence fixes A (client-link scope), B (evidence viewer), C (checkable conclusion card) come before flow-plan S3. |
 | E4 | Open for Saqlain: (4) send signed test criteria to the analysis and show them (touches the P6-5c-parked prompt); (5) deterministic access-review checks (needs his auditor design). |
+| E4/E5 inputs | Decision brief for (4): `tasks/2026-10-08-e4-test-criteria-decision-brief.md` (recommends show-only first, then deterministic RFI drafting). Draft checks for (5): `tasks/2026-10-08-e5-access-review-checks-draft.md` (9 candidate checks run against the 220-row workbook, 12 design questions). |
 | E5 | Later: flesh out the Veldhara demo company; fresh context update once A-C land. |
 
 ## Path rules (how not to stray)
