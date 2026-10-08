@@ -1355,7 +1355,6 @@ def generate_pdf(
             effort = getattr(init, "combined_effort", "")
             timeline = getattr(init, "combined_timeline_weeks", 0)
             priority = getattr(init, "priority", 3)
-            budget = getattr(init, "budget_estimate_band", "") or ""
             init_id = getattr(init, "initiative_id", "")
 
             # Card left color bar
@@ -1391,7 +1390,7 @@ def generate_pdf(
             bw = pdf.get_string_width(priority_label)
             pdf.text(badge_x + 24 + (12 - bw) / 2, init_y + 4.2, priority_label)
 
-            meta_str = f"{effort} effort  |  ~{timeline}w  |  {budget.replace('_', ' ')}"
+            meta_str = f"{effort} effort  |  ~{timeline}w"
             pdf.set_font("Helvetica", "", 7)
             pdf.set_text_color(*LIGHT_TEXT)
             pdf.text(inner_x, init_y + 10, S(meta_str))

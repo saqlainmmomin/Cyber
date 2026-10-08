@@ -144,6 +144,14 @@
 <div class="drop"><span class="tile">{{ icon(icon_id) }}</span><span class="txt"><b>{{ title }}</b>{% if body %}<span class="help">{{ body }}</span>{% endif %}</span>{{ button(action_label, "secondary", "sm", "upload", false) }}</div>
 {%- endmacro %}
 
+{% macro done_state(label, detail=None) -%}
+<span class="status done-state">{{ icon("circle-check", "Done", "color:var(--accent-text)") }}<b>{{ label }}</b>{% if detail %}<span class="sub">{{ detail }}</span>{% endif %}</span>
+{%- endmacro %}
+
+{% macro next_step(title, href, button_label, detail=None) -%}
+<div class="rows solid next-step"><div><span class="ico accent">{{ icon("arrow-r") }}</span><div class="txt"><b>{{ title }}</b>{% if detail %}<span class="sub">{{ detail }}</span>{% endif %}</div>{{ link_button(button_label, href, "primary") }}</div></div>
+{%- endmacro %}
+
 {% macro request_marker(received=false) -%}<span class="mk{% if received %} on{% endif %}">{{ icon("check") }}</span>{%- endmacro %}
 
 {% macro request_picker(items) -%}

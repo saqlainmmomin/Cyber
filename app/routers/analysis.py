@@ -503,7 +503,6 @@ def _persist_single_analysis(
             combined_effort=init_data["combined_effort"],
             combined_timeline_weeks=init_data["combined_timeline_weeks"],
             priority=init_data["priority"],
-            budget_estimate_band=init_data.get("budget_estimate_band"),
             suggested_approach=init_data["suggested_approach"],
         )
         db.add(initiative)
@@ -818,7 +817,6 @@ def _persist_multi_framework_analysis(
             combined_effort=init_data["combined_effort"],
             combined_timeline_weeks=init_data["combined_timeline_weeks"],
             priority=init_data["priority"],
-            budget_estimate_band=init_data.get("budget_estimate_band"),
             suggested_approach=init_data["suggested_approach"],
         )
         db.add(initiative)

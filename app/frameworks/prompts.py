@@ -13,10 +13,45 @@ from collections.abc import Sequence
 from app.frameworks.registry import FrameworkRegistry
 from app.frameworks.schema import FrameworkDefinition, RedFlagPattern
 from app.services.desk_review_findings import LEGACY_FINDING_FRAMEWORK_ID
+from app.services.followup_responses import decode as decode_followup
 
 
 CURATED_PROMPT_FRAMEWORK_ID = "dpdpa"  # keeps its hand-curated desk-review and evidence-extraction prompts (P5-3 D-P5-3-A)
 UNCLASSIFIED_FLAG_TYPE = "unclassified"
+
+
+def _followup_applies_to_framework(
+    response: dict,
+    framework_id: str,
+    fw_control_ids: set[str],
+    scope: set[str] | None = None,
+) -> bool:
+    stored = decode_followup(
+        response["question_id"],
+        response.get("notes"),
+        response.get("answer", ""),
+    )
+    parent_id = stored.get("parent_question_id", "")
+    if parent_id.startswith("CLUSTER_"):
+        from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
+
+        cluster = next(
+            (item for item in CONTROL_CLUSTERS if item["cluster_id"] == parent_id),
+            None,
+        )
+        return bool(
+            cluster
+            and any(
+                control["framework"] == framework_id
+                and control["control"] in fw_control_ids
+                and (scope is None or control["control"] in scope)
+                for control in cluster["controls"]
+            )
+        )
+    if parent_id.startswith("SINGLE."):
+        control_id = parent_id.removeprefix("SINGLE.")
+        return control_id in fw_control_ids and (scope is None or control_id in scope)
+    return parent_id in fw_control_ids and (scope is None or parent_id in scope)
 
 
 # ── Per-framework persona templates ───────────────────────────────────────
@@ -97,6 +132,9 @@ def _expand_cluster_responses(
                 for mc in cdef.get("controls", []):
                     if mc.get("framework") == framework_id and mc.get("control") in fw_control_ids:
                         expanded.append({**resp, "question_id": mc["control"]})
+
+        elif qid.startswith("FU."):
+            expanded.append(resp)
 
         else:
             # Legacy DPDPA control ID or direct control reference
@@ -520,6 +558,26 @@ def build_framework_user_prompt(
             prompt += f"- **{r['question_id']}**: {r['answer']}{notes_str}{confidence_str}\n"
     else:
         prompt += "_No questionnaire responses for this framework._\n"
+
+    followup_responses = [
+        response
+        for response in responses
+        if response.get("question_id", "").startswith("FU.")
+        and _followup_applies_to_framework(response, framework_id, fw_control_ids, scope)
+    ]
+    if followup_responses:
+        prompt += "### Follow-up Clarifications\n"
+        for response in followup_responses:
+            stored = decode_followup(
+                response["question_id"],
+                response.get("notes"),
+                response.get("answer", ""),
+            )
+            prompt += (
+                f"- **{stored.get('text') or response['question_id']}** "
+                f"(follow-up to {stored.get('parent_question_id', '')}): "
+                f"{stored.get('answer') or response.get('answer', '')}\n"
+            )
     prompt += "\n"
 
     # Evidence (filtered to this framework and, for batches, to this scope)

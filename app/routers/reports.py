@@ -204,6 +204,7 @@ def _download_pdf_response(
     responses = (
         db.query(QuestionnaireResponse)
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
+        .filter(~QuestionnaireResponse.question_id.like("FU.%"))
         .all()
     )
     for response in responses:

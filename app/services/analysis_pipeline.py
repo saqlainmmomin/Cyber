@@ -141,6 +141,7 @@ def _envelope(
     questionnaire_response_count = db.query(QuestionnaireResponse).filter(
         QuestionnaireResponse.assessment_id == assessment_id,
         confirmed_response_clause(),
+        ~QuestionnaireResponse.question_id.like("FU.%"),
     ).count()
     return {
         "schema_version": CLAIMS_SCHEMA_VERSION,

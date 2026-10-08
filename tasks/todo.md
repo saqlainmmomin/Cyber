@@ -4,6 +4,13 @@
 
 - [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.
 
+## Flow rework S0b hotfixes (2026-10-07)
+
+- [x] Fix follow-up storage, reload rendering, multi-framework cluster handling, and regression coverage.
+- [x] Fix the fixed gradient, first-RFI copy, release-gated Live PDF, and new-engagement framework cards.
+- [x] Remove remediation budget-band computation/rendering while retaining the nullable legacy column.
+- [x] Run focused/full verification and record the handoff Results.
+
 ## Assessment Evidence tab (2026-10-06)
 
 - [x] WP-A: add the Evidence assessment tab, responsive tab scrolling, and dated Yozora documentation notes.

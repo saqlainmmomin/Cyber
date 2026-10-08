@@ -25,6 +25,12 @@ from app.models.engagement import Engagement
 from app.models.evidence import Evidence
 from app.models.questionnaire import QuestionnaireResponse
 from app.services.followup_engine import generate_followups
+from app.services.followup_responses import (
+    FOLLOWUP_ANSWER_PLACEHOLDER,
+    cluster_id_for,
+    decode as decode_followup,
+    encode_notes as encode_followup_notes,
+)
 from app.services.engagement_factory import add_assessment_to_engagement, create_engagement_with_assessment
 from app.services.portfolio import (
     build_client_card,
@@ -2013,6 +2019,7 @@ def render_assessment_detail(
         )
 
     prefill = prefill_freshness.freshness(db, assessment)
+    release = approved_report.release_state(db, assessment)
     workflow = {"stage": None, "hub_state": None, "action_href": None}
     stepper_stages = []
     if tab == "overview":
@@ -2041,6 +2048,7 @@ def render_assessment_detail(
             "documents": documents,
             "analysable_document_count": analysable_document_count,
             "report": report,
+            "release": release,
             "tab": tab,
             "response_count": response_count,
             "context_done": context_done,
@@ -2575,6 +2583,7 @@ def get_section_questions(
 
     # Load existing responses
     existing = {}
+    followups_by_parent = {}
     live_document_prefill_ids = _live_document_prefill_ids(result["sections"])
     responses = (
         db.query(QuestionnaireResponse)
@@ -2589,6 +2598,9 @@ def get_section_questions(
             "notes": r.notes,
             "evidence_reference": r.evidence_reference,
         }
+        if r.question_id.startswith("FU."):
+            followup = decode_followup(r.question_id, r.notes, r.answer)
+            followups_by_parent.setdefault(followup["parent_question_id"], []).append(followup)
 
     return templates.TemplateResponse(
         "partials/section_questions.html",
@@ -2600,6 +2612,7 @@ def get_section_questions(
             "chapter_title": target_section["chapter_title"],
             "questions": target_section["questions"],
             "existing": existing,
+            "followups_by_parent": followups_by_parent,
             "prefill_available": len(analysis_documents(db, assessment_id)),
         },
     )
@@ -2682,17 +2695,27 @@ async def save_questionnaire_responses(
                 )
                 .first()
             )
+            previous = decode_followup(
+                fu_id,
+                existing_fu.notes if existing_fu else None,
+                existing_fu.answer if existing_fu else "",
+            )
+            question_text = form.get(f"followup_question_{fu_id}", "").strip()
+            question_text = question_text or previous["text"] or fu_id
+            notes = encode_followup_notes(fu_id, question_text, fu_answer)
             if existing_fu:
-                existing_fu.answer = fu_answer
+                existing_fu.answer = FOLLOWUP_ANSWER_PLACEHOLDER
+                existing_fu.notes = notes
+                existing_fu.cluster_id = cluster_id_for(fu_id)
+                existing_fu.answer_source = "human"
             else:
-                # Extract parent question ID from FU ID: FU.{parent_id}.{n}
-                parts = fu_id.split(".")
-                parent_id = ".".join(parts[1:-1]) if len(parts) > 2 else ""
                 db.add(QuestionnaireResponse(
                     assessment_id=assessment_id,
                     question_id=fu_id,
-                    answer=fu_answer,
-                    notes=f"Follow-up to {parent_id}",
+                    answer=FOLLOWUP_ANSWER_PLACEHOLDER,
+                    notes=notes,
+                    cluster_id=cluster_id_for(fu_id),
+                    answer_source="human",
                 ))
 
     if assessment.status not in ("analyzing", "completed"):
