@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models.assessment import _new_id
+from app.models.assessment import Assessment, _new_id
 from app.models.audit_event import AuditEvent
 from app.models.evidence import Evidence, EvidenceVersion
 from app.models.engagement import Engagement
@@ -454,6 +454,41 @@ def check_upload_allowed(db: Session, link: MagicLink) -> LinkUsage:
     return usage
 
 
+def _requested_requirements(
+    db: Session, link: MagicLink, item: dict
+) -> tuple[str | None, list[list[str]]]:
+    """Use the issued request's frozen controls, not today's RFI preview."""
+    from app.services import report_snapshots
+
+    rfi = json.loads(link.scope_json).get("rfi")
+    if not rfi:
+        return None, []
+    assessment_id = rfi["assessment_id"]
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None or assessment.engagement_id != link.engagement_id:
+        raise MagicLinkValidationError("The requested assessment is no longer available.")
+    try:
+        snapshot = report_snapshots.load_snapshot(
+            db, assessment_id=assessment_id, snapshot_id=rfi["snapshot_id"]
+        )
+        document = report_snapshots.read_rfi_document(db, snapshot)
+    except report_snapshots.SnapshotError as exc:
+        raise MagicLinkValidationError(exc.message) from exc
+    requested = next(
+        (row for row in document["items"] if row["item_id"] == item["rfi_item_id"]),
+        None,
+    )
+    if requested is None:
+        raise MagicLinkValidationError(RFI_UNKNOWN_ITEM_TEXT)
+    # A removed framework cannot accept the issued request's mappings.
+    for framework_id, _requirement_id in requested["requirements"]:
+        if framework_id not in assessment.frameworks:
+            raise evidence_service.EvidenceValidationError(
+                f"Framework '{framework_id}' is not selected for this assessment."
+            )
+    return assessment_id, requested["requirements"]
+
+
 def receive_client_upload(
     db: Session,
     *,
@@ -488,6 +523,7 @@ def receive_client_upload(
     if duplicate is not None:
         raise MagicLinkConflict("You have already uploaded this file through this link.")
 
+    assessment_id, requirements = _requested_requirements(db, link, item)
     evidence_id = _new_id()
     actor = client_actor(link)
     _audit(
@@ -503,17 +539,42 @@ def receive_client_upload(
             "size_bytes": len(content),
         },
     )
-    return evidence_service.ingest_engagement_upload(
-        db,
-        engagement_id=link.engagement_id,
-        filename=filename,
-        content=content,
-        category=None,
-        uploaded_by=actor,
-        change_reason=f"Client upload via magic link for requested item: {item['title']}",
-        evidence_id=evidence_id,
-        allow_duplicate=True,
-    )
+    result = None
+    try:
+        result = evidence_service.ingest_engagement_upload(
+            db,
+            engagement_id=link.engagement_id,
+            filename=filename,
+            content=content,
+            category=None,
+            uploaded_by=actor,
+            change_reason=f"Client upload via magic link for requested item: {item['title']}",
+            evidence_id=evidence_id,
+            allow_duplicate=True,
+            commit=False,
+        )
+        if not result.released:
+            return result
+        if assessment_id is not None:
+            result.evidence.assessment_id = assessment_id
+            for framework_id, requirement_id in requirements:
+                evidence_service.map_evidence(
+                    db,
+                    evidence_id=result.evidence.id,
+                    assessment_id=assessment_id,
+                    framework_id=framework_id,
+                    requirement_id=requirement_id,
+                    relevance="supporting",
+                    actor=actor,
+                )
+        db.commit()
+        return result
+    except Exception:
+        path = evidence_service.blob_path(result.version.storage_path) if result else None
+        db.rollback()
+        if path is not None:
+            path.unlink(missing_ok=True)
+        raise
 
 
 def magic_link_rows(db: Session, engagement_id: str) -> list[dict]:

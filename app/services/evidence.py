@@ -727,8 +727,9 @@ def ingest_engagement_upload(
     change_reason: str | None = None,
     evidence_id: str | None = None,
     allow_duplicate: bool = False,
+    commit: bool = True,
 ) -> IngestResult:
-    """Ingest an engagement-level receipt without changing an assessment."""
+    """Ingest a receipt; callers may commit it together with assessment mappings."""
     engagement = db.get(Engagement, engagement_id)
     if engagement is None:
         raise EvidenceNotFound("Engagement not found")
@@ -764,7 +765,8 @@ def ingest_engagement_upload(
                 "try uploading it as a PNG or JPEG screenshot instead."
             )
         released_version.extracted_text = extracted
-        db.commit()
+        if commit:
+            db.commit()
         return IngestResult(evidence, released_version, True)
     except Exception:
         db.rollback()

@@ -28,6 +28,9 @@
 <div id="detail-action-status" aria-live="polite"></div>
 
 <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-bottom:var(--s-5)" data-evidence-status><span>{{ evidence_dot(evidence.status) }}</span><span class="sub">Source: {{ source_label }}{% if uploader_name %} by {{ uploader_name }}{% endif %}</span>{% if originating_assessment %}{{ chip(originating_assessment.display_name) }}{% endif %}</div>
+{% if not originating_assessment and not evidence.uses %}
+<p style="margin-bottom:var(--s-5)">Not used by any assessment's analysis yet. <a href="/engagements/{{ engagement.id }}/evidence">Open evidence inventory</a></p>
+{% endif %}
 {% set scanning = evidence.status == "quarantined" or (evidence.versions and evidence.versions[-1].status == "quarantined") %}
 {% if scanning %}<div style="margin-bottom:var(--s-5)">{{ alert("This file is still being scanned", "It is left out of the pre-fill and the gap analysis until the scan clears.") }}</div>{% endif %}
 

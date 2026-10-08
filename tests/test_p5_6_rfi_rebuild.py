@@ -726,13 +726,21 @@ def test_scenario_13_current_issue_creates_exact_v2_link(db, http):
     assert token not in link.scope_json and token not in event.metadata_json
 
 
-def test_scenario_14_client_sees_only_scoped_titles_and_uploads_without_mapping(db, http):
-    """Scenario 14: the client sees only item titles and uploads do not create EvidenceUse mappings."""
-    assessment = _seed(db, frameworks=("iso27001",), company_name="Client secret")
+@pytest.mark.parametrize("frameworks", [("iso27001",), ("iso27001", "nist_csf")])
+@pytest.mark.parametrize("has_controls", [True, False])
+def test_scenario_14_client_upload_maps_only_the_requested_item(db, http, frameworks, has_controls):
+    """Client titles stay private; every requested control reaches analysis scope."""
+    assessment = _seed(db, frameworks=frameworks, company_name="Client secret")
     snapshot_id = _generate(http, assessment).json()["snapshot_id"]
     assert _issue(http, assessment, snapshot_id).status_code == 200
     document = _document(db, db.get(ReportSnapshot, snapshot_id))
-    ids = [item["item_id"] for item in document["items"][:3]]
+    requested = (
+        max(document["items"], key=lambda item: len(item["requirements"]))
+        if has_controls
+        else next(item for item in document["items"] if not item["requirements"])
+    )
+    other_items = [item for item in document["items"] if item != requested][:2]
+    ids = [item["item_id"] for item in other_items] + [requested["item_id"]]
     response = _create_rfi_link(http, assessment, snapshot_id, ids)
     link = db.query(MagicLink).one()
     body = http.get(f"/magic/{response.text.split('/magic/')[-1].split('"')[0]}")
@@ -755,9 +763,134 @@ def test_scenario_14_client_sees_only_scoped_titles_and_uploads_without_mapping(
     assert set(metadata) == {"evidence_id", "item_key", "magic_link_id", "sha256", "size_bytes"}
     evidence = db.get(Evidence, metadata["evidence_id"])
     assert evidence is not None
-    assert db.query(EvidenceUse).count() == before_uses
+    uses = db.query(EvidenceUse).filter_by(evidence_id=evidence.id).all()
+    assert {(use.framework_id, use.requirement_id) for use in uses} == {
+        tuple(pair) for pair in requested["requirements"]
+    }
+    assert db.query(EvidenceUse).count() == before_uses + len(requested["requirements"])
+    assert all(use.assessment_id == assessment.id and use.relevance == "supporting" for use in uses)
+    assert evidence.assessment_id == assessment.id
+    assert evidence.id in {row.id for row, _version in evidence_service.active_versions_in_scope(db, assessment.id)}
+    other = _seed(db, frameworks=frameworks, company_name="Other assessment")
+    other.engagement_id = assessment.engagement_id
+    db.commit()
+    assert evidence_service.active_versions_in_scope(db, other.id) == []
+    inventory = http.get(f"/assessments/{assessment.id}/evidence")
+    assert inventory.status_code == 200 and "received.pdf" in inventory.text
+    assert "received.pdf" not in http.get(f"/assessments/{other.id}/evidence").text
+    detail = http.get(f"/evidence/{evidence.id}")
+    assert detail.status_code == 200
+    for _framework_id, requirement_id in requested["requirements"]:
+        assert requirement_id in detail.text
+    context = rfi_requests.page_context(db, assessment)
+    assert context["mapped_hints"][requested["document_type"]] == (len(uses), len(uses))
+    assert context["received"][(snapshot_id, requested["item_id"])][0]["evidence_id"] == evidence.id
+    db.expire_all()
+    assert db.query(EvidenceUse).filter_by(evidence_id=evidence.id).count() == len(uses)
     version = db.query(EvidenceVersion).filter_by(evidence_id=evidence.id).one()
     assert version.change_reason == "Client upload via magic link for requested item: " + json.loads(link.scope_json)["items"][2]["title"]
+
+
+@pytest.mark.parametrize("scan_ok", [True, False])
+def test_rfi_upload_uses_original_snapshot_and_only_maps_released_files(db, http, monkeypatch, scan_ok):
+    assessment = _seed(db, frameworks=("iso27001",))
+    _report(db, assessment)
+    control = FrameworkRegistry.get_all_controls("iso27001")[0]
+    conclusion = _conclusion(db, assessment, "iso27001", control.id)
+    _decide(db, assessment, conclusion)
+    original = _generate(http, assessment).json()["snapshot_id"]
+    assert _issue(http, assessment, original).status_code == 200
+    document = _document(db, db.get(ReportSnapshot, original))
+    requested = next(item for item in document["items"] if item["kind"] == "requirement")
+    created = _create_rfi_link(http, assessment, original, [requested["item_id"]])
+    token = created.text.split("/magic/")[-1].split('"')[0]
+    newer = _generate(http, assessment, omit=["security_policy"]).json()["snapshot_id"]
+    assert _issue(http, assessment, newer).status_code == 200
+    monkeypatch.setattr(evidence_service, "scan_blob", lambda _path: scan_ok)
+    response = http.post(
+        f"/magic/{token}", data={"item_key": "item-1"},
+        files={"file": ("conclusion-evidence.pdf", b"requested evidence", "application/pdf")},
+    )
+    assert response.status_code == (200 if scan_ok else 422)
+    evidence = db.query(Evidence).one()
+    uses = db.query(EvidenceUse).all()
+    assert {(use.framework_id, use.requirement_id) for use in uses} == (
+        {("iso27001", control.id)} if scan_ok else set()
+    )
+    assert evidence.status == ("active" if scan_ok else "rejected")
+    assert len(evidence_service.analysis_documents(db, assessment.id)) == (1 if scan_ok else 0)
+
+
+def test_rfi_snapshot_integrity_failure_stores_no_upload(db, http):
+    assessment = _seed(db, frameworks=("iso27001",))
+    snapshot_id = _generate(http, assessment).json()["snapshot_id"]
+    assert _issue(http, assessment, snapshot_id).status_code == 200
+    created = _create_rfi_link(http, assessment, snapshot_id, ["RFI-001"])
+    token = created.text.split("/magic/")[-1].split('"')[0]
+    report_snapshots.rfi_document_path(db.get(ReportSnapshot, snapshot_id)).write_bytes(b"{}")
+    response = http.post(
+        f"/magic/{token}", data={"item_key": "item-1"},
+        files={"file": ("evidence.pdf", b"evidence", "application/pdf")},
+    )
+    assert response.status_code == 422
+    assert db.query(Evidence).count() == db.query(EvidenceUse).count() == 0
+    assert db.query(AuditEvent).filter_by(action="magic_link.upload_received").count() == 0
+
+
+def test_rfi_upload_after_framework_removal_stores_no_orphan_receipt(db, http):
+    assessment = _seed(db, frameworks=("iso27001",))
+    snapshot_id = _generate(http, assessment).json()["snapshot_id"]
+    assert _issue(http, assessment, snapshot_id).status_code == 200
+    document = _document(db, db.get(ReportSnapshot, snapshot_id))
+    requested = next(item for item in document["items"] if item["requirements"])
+    created = _create_rfi_link(http, assessment, snapshot_id, [requested["item_id"]])
+    token = created.text.split("/magic/")[-1].split('"')[0]
+    assessment.selected_frameworks = json.dumps(["nist_csf"])
+    db.commit()
+    response = http.post(
+        f"/magic/{token}", data={"item_key": "item-1"},
+        files={"file": ("evidence.pdf", b"evidence", "application/pdf")},
+    )
+    assert response.status_code == 422
+    assert db.query(Evidence).count() == db.query(EvidenceUse).count() == 0
+    assert db.query(AuditEvent).filter_by(action="magic_link.upload_received").count() == 0
+
+
+def test_rfi_mapping_failure_rolls_back_receipt_and_blob(db, http, monkeypatch):
+    assessment = _seed(db, frameworks=("iso27001",))
+    snapshot_id = _generate(http, assessment).json()["snapshot_id"]
+    assert _issue(http, assessment, snapshot_id).status_code == 200
+    document = _document(db, db.get(ReportSnapshot, snapshot_id))
+    requested = max(document["items"], key=lambda item: len(item["requirements"]))
+    created = _create_rfi_link(http, assessment, snapshot_id, [requested["item_id"]])
+    token = created.text.split("/magic/")[-1].split('"')[0]
+    original_map = evidence_service.map_evidence
+    calls = 0
+
+    def failing_map(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise evidence_service.EvidenceConflict("Mapping failed")
+        return original_map(*args, **kwargs)
+
+    monkeypatch.setattr(evidence_service, "map_evidence", failing_map)
+    response = http.post(
+        f"/magic/{token}", data={"item_key": "item-1"},
+        files={"file": ("retry.pdf", b"evidence retry", "application/pdf")},
+    )
+    assert response.status_code == 409
+    assert db.query(Evidence).count() == db.query(EvidenceUse).count() == 0
+    assert db.query(EvidenceVersion).count() == 0
+    assert db.query(AuditEvent).filter_by(action="magic_link.upload_received").count() == 0
+    assert not list((Path(settings.upload_dir) / "evidence").rglob("v1.pdf"))
+    monkeypatch.setattr(evidence_service, "map_evidence", original_map)
+    retry = http.post(
+        f"/magic/{token}", data={"item_key": "item-1"},
+        files={"file": ("retry.pdf", b"evidence retry", "application/pdf")},
+    )
+    assert retry.status_code == 200
+    assert db.query(EvidenceUse).count() == len(requested["requirements"])
 
 
 def test_scenario_15_link_limits_and_current_issue_binding(db, http):
