@@ -87,7 +87,8 @@ def test_linked_evidence_status_counts_scope_and_skipped_notice(db, http):
     _, _, other_assessment = seed_engagement(db, frameworks=('iso27001',), client_name='Other client')
     add_file(db, other_assessment, 'Other assessment.docx')
     db.add(DeskReviewSummary(assessment_id=assessment.id, status='completed', raw_ai_response=json.dumps(
-        {'budget_skipped_filenames': ['Export.xlsx', 'Other control.docx']})))
+        {'budget_skipped_filenames': ['Export.xlsx', 'Other control.docx'],
+         'budget_partial_filenames': ['Q2 review.docx']})))
     conclusion = add_conclusion(db, assessment, [{'evidence_version_id': version.id,
         'location_type': 'text_span', 'location_ref': 'chars:2-18', 'excerpt': version.extracted_text[2:18]}])
     html = card_html(http, assessment, conclusion)
@@ -99,6 +100,7 @@ def test_linked_evidence_status_counts_scope_and_skipped_notice(db, http):
     assert re.search(r'data-control-evidence="' + evidence.id + r'".*?Cited', html, re.S)
     assert re.search(r'data-control-evidence="' + unused.id + r'".*?Not cited by the analysis', html, re.S)
     assert 'Not read by the analysis (size limit): Export.xlsx' in html
+    assert 'Partly read by the analysis (size limit): Q2 review.docx' in html
     assert 'Other control.docx' not in html
     assert 'Other assessment.docx' not in html
 

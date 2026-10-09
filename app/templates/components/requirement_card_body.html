@@ -14,6 +14,7 @@
       </ul>
       {% else %}<p class="sub">No files linked.</p>{% endif %}
       {% if requirement.budget_skipped_filenames %}<p class="sub" data-budget-skipped>Not read by the analysis (size limit): {{ requirement.budget_skipped_filenames|join(", ") }}</p>{% endif %}
+      {% if requirement.budget_partial_filenames %}<p class="sub" data-budget-partial>Partly read by the analysis (size limit): {{ requirement.budget_partial_filenames|join(", ") }}</p>{% endif %}
     </div>
     {% if requirement.source == "none" %}
     <div class="block"><p class="muted">No analysis run is linked to this conclusion.</p></div>

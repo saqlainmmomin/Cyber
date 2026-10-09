@@ -116,6 +116,9 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     # Truncate documents for prompt
     truncated = _truncate_documents(documents)
     skipped_filenames = [doc["filename"] for doc in documents[len(truncated):]]
+    partial_filenames = [
+        sent["filename"] for sent, doc in zip(truncated, documents) if sent["text"] != doc["text"]
+    ]
 
     framework_ids = assessment.frameworks
     results: dict[str, dict] = {}
@@ -204,7 +207,8 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
             summary.error_message = DESK_REVIEW_ALL_FAILED_MESSAGE.format(names=names)
         summary.raw_ai_response = _raw_response(
             framework_ids, results, errors, llm_calls=llm_calls,
-            budget_skipped_filenames=skipped_filenames
+            budget_skipped_filenames=skipped_filenames,
+            budget_partial_filenames=partial_filenames,
         )
         assessment.desk_review_status = "error"
         db.commit()
@@ -241,7 +245,8 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
         summary.coverage_summary = json.dumps(merged_coverage)
         summary.raw_ai_response = _raw_response(
             framework_ids, results, errors, llm_calls=llm_calls,
-            budget_skipped_filenames=skipped_filenames
+            budget_skipped_filenames=skipped_filenames,
+            budget_partial_filenames=partial_filenames,
         )
         summary.status = "completed"
         summary.error_message = None
@@ -484,6 +489,7 @@ def _raw_response(
     *,
     llm_calls: list[dict] | None = None,
     budget_skipped_filenames: list[str] | None = None,
+    budget_partial_filenames: list[str] | None = None,
 ) -> str:
     """Serialize the versioned per-framework raw desk-review response."""
     response = {
@@ -501,6 +507,8 @@ def _raw_response(
         response["llm_calls"] = llm_calls
     if budget_skipped_filenames is not None:
         response["budget_skipped_filenames"] = budget_skipped_filenames
+    if budget_partial_filenames is not None:
+        response["budget_partial_filenames"] = budget_partial_filenames
     return json.dumps(response)
 
 
@@ -715,6 +723,16 @@ def _parse_json_response(text: str) -> dict:
 
 
 def budget_skipped_filenames(summary: DeskReviewSummary | None) -> list[str]:
+    """Files desk review didn't send at all because of the word budget."""
+    return _budget_filenames(summary, "budget_skipped_filenames")
+
+
+def budget_partial_filenames(summary: DeskReviewSummary | None) -> list[str]:
+    """Files desk review sent only in part because the word budget ran out mid-file."""
+    return _budget_filenames(summary, "budget_partial_filenames")
+
+
+def _budget_filenames(summary: DeskReviewSummary | None, key: str) -> list[str]:
     """Read local size-limit metadata from the stored desk-review response."""
     if not summary:
         return []
@@ -722,5 +740,5 @@ def budget_skipped_filenames(summary: DeskReviewSummary | None) -> list[str]:
         raw = json.loads(summary.raw_ai_response or "{}")
     except (json.JSONDecodeError, TypeError):
         return []
-    filenames = raw.get("budget_skipped_filenames", []) if isinstance(raw, dict) else []
+    filenames = raw.get(key, []) if isinstance(raw, dict) else []
     return [name for name in filenames if isinstance(name, str)] if isinstance(filenames, list) else []

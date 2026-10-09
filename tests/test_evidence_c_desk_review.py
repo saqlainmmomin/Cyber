@@ -40,6 +40,9 @@ def test_budget_skipped_files_persist_and_render(db, http, monkeypatch):
     assert page.status_code == 200
     assert 'Not read by the analysis (size limit): Skipped.pdf, Also_skipped.pdf' in page.text
     assert 'Not read by the analysis (size limit): Partial.pdf' not in page.text
+    assert desk_review.budget_partial_filenames(summary) == ['Partial.pdf']
+    assert 'Partly read by the analysis (size limit): Partial.pdf' in page.text
+    assert 'Partly read by the analysis (size limit): First.pdf' not in page.text
 
 
 def test_new_evidence_finding_names_use_cited_version(db, http, monkeypatch):

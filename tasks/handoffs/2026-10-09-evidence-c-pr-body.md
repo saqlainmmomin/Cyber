@@ -3,7 +3,8 @@ Part C of `tasks/handoffs/2026-10-08-evidence-fixes.md`: the conclusion card bec
 - Every citation shows a human location ("Characters 37–93", "Page 3", "Whole document") that opens the highlighted passage. The filename opens the evidence record.
 - New "Evidence on this control" block lists every file linked to the control, each marked "Cited" or "Not cited by the analysis".
 - When files are linked, "N files linked, M cited" replaces the AI's missing-evidence suggestions. Requests already on the draft RFI stay visible. With nothing linked, the suggestions show as before.
-- Desk review records which files it didn't send because of the 20,000-word limit, in the existing summary JSON. The desk-review page and affected cards say "Not read by the analysis (size limit): ...".
+- Desk review records which files it didn't send because of the 20,000-word limit, and which file it cut off part-way, in the existing summary JSON. The desk-review page and affected cards say "Not read by the analysis (size limit): ..." and "Partly read by the analysis (size limit): ...".
+- Citation locations and filenames on the card are underlined so they read as links.
 - Desk-review citations show real filenames for new uploads instead of "Document".
 
 No prompt change, no new LLM call, no migration. Evidence links load in one query per page.
@@ -28,9 +29,8 @@ Demo-depth hadn't merged, so this ran on the current demo. Access rights citatio
 
 ## Open questions
 - The Dec 2023 review isn't listed because the seed doesn't link it to A.5.18. That is a seed question, not a card bug.
-- Citation and filename links look like plain text (existing `.cite-head` style). Worth a design call.
-- A file cut mid-way by the word limit is partly read and isn't flagged. Flag it as "Partly read"?
-- The size-limit notice and filename fix aren't visible on the demo (no desk-review findings); covered by tests.
+- Pre-existing design-system bug: in dark mode, `--accent-text` keeps its light value for every accent except graphite, so links coloured with it are dark navy on dark. The card links use the normal text colour plus an underline to avoid it.
+- The size-limit notices and filename fix aren't visible on the demo (no desk-review findings); covered by tests.
 
 ## Tests
-1627 passed, 29 skipped (baseline 1614 passed, 29 skipped). 13 new tests in `tests/test_evidence_c_card.py` and `tests/test_evidence_c_desk_review.py`.
+1627 passed, 29 skipped (baseline 1614 passed, 29 skipped). 13 new tests, plus partly-read checks added to two of them, in `tests/test_evidence_c_card.py` and `tests/test_evidence_c_desk_review.py`.

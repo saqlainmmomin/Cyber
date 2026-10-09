@@ -20,6 +20,7 @@
 {%- endmacro %}
 <div class="dr-findings">
   {% if budget_skipped_filenames %}<p class="sub" data-budget-skipped>Not read by the analysis (size limit): {{ budget_skipped_filenames | join(", ") }}</p>{% endif %}
+  {% if budget_partial_filenames %}<p class="sub" data-budget-partial>Partly read by the analysis (size limit): {{ budget_partial_filenames | join(", ") }}</p>{% endif %}
   {% if questionnaire_surface %}
   <div class="between">
     <div>

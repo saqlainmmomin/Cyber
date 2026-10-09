@@ -3707,7 +3707,7 @@ def desk_review_status_view(
         requirement_id: {"title": control.title, "reference": control.reference}
         for requirement_id, control in controls.items()
     }
-    from app.services.desk_review import budget_skipped_filenames
+    from app.services.desk_review import budget_partial_filenames, budget_skipped_filenames
 
     document_names = evidence_service.document_names_in_scope(db, assessment_id)
     for finding in evidence:
@@ -3751,6 +3751,7 @@ def desk_review_status_view(
         "requirement_details": requirement_details,
         "document_names": document_names,
         "budget_skipped_filenames": budget_skipped_filenames(summary),
+        "budget_partial_filenames": budget_partial_filenames(summary),
         "catalog": catalog,
         "failed_framework_names": failed_framework_names,
         "failed_framework_text": _framework_list_text(failed_framework_names),

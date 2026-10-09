@@ -28,9 +28,12 @@ Demo-depth (`codex/demo-veldhara-depth`) had not merged, so this used the curren
 - "Evidence on this control": "2 files linked, 1 cited". Q2 review Cited, user access review export Not cited by the analysis. No Missing evidence box.
 - 375px: no sideways scroll; long filenames wrap inside the card.
 
+## Follow-up after Saqlain's review
+- Card links (citation location, filenames) are underlined. They keep the normal text colour because `--accent-text` is unreadable in dark mode for most accents (pre-existing token bug).
+- Desk review also records `budget_partial_filenames`: files the word budget cut part-way. Shown as "Partly read by the analysis (size limit): ..." on the desk-review page and on affected cards.
+- Full suite: 1627 passed, 29 skipped.
+
 ## Open questions
 - **Dec 2023 review is not on the list.** The spec expected three files. In the current seed the Dec 2023 review has no link to A.5.18, so it correctly isn't listed. If it should be, that is a seed change (demo-depth branch), not this PR.
-- **Links look like plain text.** The citation label and filenames have no underline and use body colour; only the cursor changes. The auditor may not see that they can click. This uses the existing `.cite-head` style; changing it is a design call.
-- **Partly read files.** The word budget can cut the last document mid-way. That file is sent in part, so it is not listed as "Not read". Should it say "Partly read (size limit)"?
 - **Items 4 and 5 not visible on the demo.** The seed has no desk-review findings, so the size-limit notice and the filename fix are covered by tests only.
 - Pre-existing: the conclusions page breadcrumb overflows by about 18px at desktop width. Not touched here.

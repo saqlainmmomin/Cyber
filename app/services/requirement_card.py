@@ -167,6 +167,7 @@ class CardContext:
     rfi_states: dict = field(default_factory=dict)
     linked_evidence: dict = field(default_factory=dict)
     budget_skipped_filenames: tuple[str, ...] = ()
+    budget_partial_filenames: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -207,6 +208,7 @@ class RequirementCard:
     divergence: DivergenceNote | None
     linked_evidence: tuple[LinkedEvidence, ...] = ()
     budget_skipped_filenames: tuple[str, ...] = ()
+    budget_partial_filenames: tuple[str, ...] = ()
     other_rfi_requests: tuple = ()
 
     @property
@@ -327,6 +329,7 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
         rfi_states=rfi_evidence_requests.request_states(db, assessment, ids),
         linked_evidence=linked_evidence,
         budget_skipped_filenames=tuple(desk_review.budget_skipped_filenames(summary)),
+        budget_partial_filenames=tuple(desk_review.budget_partial_filenames(summary)),
     )
 
 
@@ -640,6 +643,10 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
         "budget_skipped_filenames": tuple(
             dict.fromkeys(item.filename for item in linked
                           if item.filename in context.budget_skipped_filenames)
+        ),
+        "budget_partial_filenames": tuple(
+            dict.fromkeys(item.filename for item in linked
+                          if item.filename in context.budget_partial_filenames)
         ),
     }
     entry = _entry_for(context, proposal)
