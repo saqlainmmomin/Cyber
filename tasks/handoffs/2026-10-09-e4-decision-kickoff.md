@@ -44,4 +44,4 @@ Append a `## Results` section to this file: the decision in two lines, files cha
 
 **Files:** `tasks/2026-10-08-session-record.md` (E6 row, sequence line), `tasks/handoffs/2026-10-09-e4-show-checklist-and-rfi-examples.md` (new, starts after C merges), `tasks/handoffs/2026-10-09-e4-decision-form.html` (the decision form), this file.
 
-**PR:** see below.
+**PR:** https://github.com/saqlainmmomin/Cyber/pull/132
