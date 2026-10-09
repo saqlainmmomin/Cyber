@@ -91,3 +91,32 @@ Rule behind it (`tasks/2026-10-08-ai-coherence-map.md`): every AI step must prod
 
 ## Report back
 Append a `## Results` section to this file: PR link, test counts, review findings (what you changed), live-run plan or results with costs, open questions for Saqlain.
+
+## Results (2026-10-09)
+
+**PR:** https://github.com/saqlainmmomin/Cyber/pull/135 (branch `codex/demo-veldhara-depth-pr`). Not merged. The old remote branch `codex/demo-veldhara-depth` still sits at 7375075; I did not force-push over it. Delete it after merge.
+
+**Tests:** full suite on the rebased branch with `OPENROUTER_KEY=""`: 1638 passed, 29 skipped (1634 baseline plus 4 new demo tests).
+
+**Review findings (no code changes needed):**
+- No `answer_key` reads or references in demo code or tests. The only mention in the diff is the prohibition line in the handoff file. No em dashes in code or docs. No attribution. Diff touches only `scripts/demo/`, `tests/`, `.gitignore`, `tasks/`.
+- `pack.py` run twice gives identical bytes, and runs with an invalid DB URL and an empty key. 58 originals present.
+- Content spot check (access review summary, 220-row export, internal audit, policy PDF, one workbook): numbers agree across documents (9 of 11 systems, 220 rows, 4 enabled terminated accounts, 8 open removals, July and August unsigned, 4 of 6 supplier files). Gaps are stated as facts in the audit and review documents, not announced. No "planted" or "demo" wording in originals, except "demo" and "synthetic" in the SoA workbook and "synthetic" in the app security test report. Open question below.
+- Fresh seed on the rebased code: all 17 walkthrough URLs return 200. Evidence page shows full text with File details collapsed. At 375px the evidence page is 414px wide (the known breadcrumb overflow).
+- I did not check by eye the PNGs or the visual rendering of PDFs; Codex's own render checks are unverified by me.
+
+**Merge handling:** I cherry-picked onto a fresh worktree (`/Users/saqlainmomin/dpdpa-demo-depth-pr`) from `origin/main`, because the untracked copies of the coherence map and session record would block a rebase and I did not delete them. Main had deleted the handoff file; I kept Codex's version with its Results. `todo.md` keeps both sides. The old worktree `/Users/saqlainmomin/dpdpa-demo-depth` still has its untracked files and `data/demo/` untouched. Citation offsets: the old A.5.18 Q2 quote offsets changed; Part C was behaviour-based, so I made no doc edits.
+
+**Live-run plan (nothing spent, nothing run).** `.env` has `OPENROUTER_KEY` set (not printed). Models: extract, judge and synthesize all `deepseek/deepseek-v4-flash`; vision `anthropic/claude-sonnet-4`. Drivers: 58 files, about 22,500 words (about 30k tokens), 93 controls.
+Steps, with rough cost guesses (my estimates, not measured; deadline 600 s with one retry per call):
+1. Upload 58 files by hand from `evidence/`, enter the questionnaire from `questionnaire-entry.json`. No LLM cost, except vision OCR on the 11 PNGs and any scanned PDF: well under $0.50.
+2. Desk review pre-fill per batch of documents, flash model: about $0.05 to $0.30.
+3. Tiered gap analysis over 93 controls with the evidence in context, flash model: about $0.50 to $3, the main cost and the main timeout risk.
+4. Follow-up question generation, context wizard, RFI drafting: pennies each.
+Total guess: roughly $1 to $5. Run 1 with `MAX_TOTAL_DOCUMENT_WORDS=30000`. Optional run 2 at the 20,000 default to see size-limit notices. v2 pipeline stays off.
+Checklist for the outputs and the table of planted gaps (access review coverage, supplier assurance, incident exercise, training, restore tests) is in step 2.5 above; to be filled after the run, observation only.
+
+**Open questions for Saqlain:**
+1. Do you approve the roughly $1 to $5 live run, and the first-run setting `MAX_TOTAL_DOCUMENT_WORDS=30000`?
+2. The SoA workbook and the app security test report contain the words "demo" or "synthetic". An auditor-facing original probably should not. OK to strip them in a follow-up commit?
+3. Merge #135 when you are ready; then remove the old remote branch and worktrees listed in the carry-forward section.
