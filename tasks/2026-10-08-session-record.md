@@ -17,6 +17,7 @@
 | E3 | Evidence fixes A (client-link scope), B (evidence viewer), C (checkable conclusion card) come before flow-plan S3. |
 | E4 | Open for Saqlain: (4) send signed test criteria to the analysis and show them (touches the P6-5c-parked prompt); (5) deterministic access-review checks (needs his auditor design). |
 | E4/E5 inputs | Decision brief for (4): `tasks/2026-10-08-e4-test-criteria-decision-brief.md` (recommends show-only first, then deterministic RFI drafting). Draft checks for (5): `tasks/2026-10-08-e5-access-review-checks-draft.md` (9 candidate checks run against the 220-row workbook, 12 design questions). |
+| E6 | **E4 decided 2026-10-09 (Saqlain).** Q1: "Show-only (a) first. No prompt change." The v1 prompt stays frozen (P6-5c); a criteria-to-judge experiment is a later, separate decision. Q2: "Evidence request only. Scoring and Decision 1 unchanged; v2 stays parked." Missing operating evidence becomes an RFI request; it never lowers a score by itself. Q3: "Every scoped RFI request lists the signed statements and hints. Period and sample are free text." Plus his addition: each RFI request should also show the consultant and the client an example of what to send (e.g. firewall review -> firewall rule export). Because the set of document types is finite, write that catalogue once per document type. Why: "access review evidence" alone lets the client send anything; the consultant needs enough to know exactly what to ask for. Build: `tasks/handoffs/2026-10-09-e4-show-checklist-and-rfi-examples.md`, starts only after Evidence fix C merges. |
 | E5 | Later: flesh out the Veldhara demo company; fresh context update once A-C land. |
 
 ## Path rules (how not to stray)
@@ -25,7 +26,7 @@
 2. **One thing in flight.** At most one handoff being implemented (two only if their files are disjoint). Nothing new starts until the current PR is clicked through and merged.
 3. **Saqlain clicks through every PR before merging** using the PR's Click-through section (10 minutes). No click-through, no merge. This is the step that was skipped before.
 4. **New ideas go to the parking lot, not a handoff.** Add a line under "Parking lot" below with the date. They get scoped only when the current sequence is done, and only if they pass rule 1.
-5. **The sequence is fixed until Saqlain changes it here:** A + B (+ demo depth, read-only E4/E5 prep) → C → decide E4 → flow-plan S3, S4, S5, S7, S8, S9 → Track 4. Changing the order means editing this file, on purpose.
+5. **The sequence is fixed until Saqlain changes it here:** A + B (+ demo depth, read-only E4/E5 prep) → C → E4 build (show checklist + RFI examples; decided 2026-10-09, E6) → flow-plan S3, S4, S5, S7, S8, S9 → Track 4. Changing the order means editing this file, on purpose.
 
 ## Parking lot
 - 2026-10-08: ~~Veldhara demo needs realistic documents~~ Moved up by Saqlain the same day: runs alongside A + B in his Codex app (`tasks/handoffs/2026-10-08-veldhara-demo-depth.md` on `codex/demo-veldhara-depth`). Scripts/demo only, disjoint from A-C files; it keeps the demo files and mappings A-C click-throughs rely on.

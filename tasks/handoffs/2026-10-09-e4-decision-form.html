@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E4 Decision Form</title>
+<style>
+:root{--bg:#fafaf7;--fg:#1c1c1a;--mut:#62625c;--card:#fff;--bd:#dcdcd2;--ac:#2f5d8a;--ok:#2d6a3e}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--fg:#ececE6;--mut:#a3a39a;--card:#1f1f1c;--bd:#3a3a35;--ac:#7ab0e0;--ok:#7ccb92}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 -apple-system,system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:32px 0 8px}
+.mut{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid var(--bd);padding:8px;text-align:left;vertical-align:top}
+code{background:var(--card);border:1px solid var(--bd);padding:1px 5px;border-radius:4px;font-size:13px}
+label.opt{display:block;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin:8px 0;cursor:pointer}
+label.opt:has(input:checked){border-color:var(--ac);outline:2px solid var(--ac)}
+label.opt b{display:block}label.opt span{color:var(--mut);font-size:14px}
+input[type=text],textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg);font:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin-right:8px}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.rec{color:var(--ok);font-weight:600;font-size:13px}
+pre{white-space:pre-wrap;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>E4: test criteria decision</h1>
+<p class="mut">About 10 minutes. Answer the three questions at the bottom, press Export, and paste the result back into the Claude session.</p>
+
+<h2>What this session is</h2>
+<p>CyberAssess has a list of "test criteria" for each control. They are short checks an auditor would run, such as "Access reviews were completed at the defined frequency, with inappropriate access removed." You already signed these off (approve, edit, reject) in the criteria review sheets. This session records one decision about them, called <b>E4</b>. <b>No code is written in this session.</b></p>
+<p>The result is: a dated decision row in <code>tasks/2026-10-08-session-record.md</code>, and, if you choose to build something, a handoff file for Codex. Any build waits until Evidence fix C is merged (path rule 2: at most two things in flight).</p>
+
+<h2>What exists today</h2>
+<div class="card">
+<table>
+<tr><th>Framework</th><th>Controls with signed criteria</th><th>Criteria</th></tr>
+<tr><td>DPDPA</td><td>41 of 41</td><td>150</td></tr>
+<tr><td>ISO 27001</td><td>93 of 93</td><td>230</td></tr>
+<tr><td>NIST CSF</td><td>106 of 106</td><td>348</td></tr>
+<tr><td>GDPR, HIPAA, PCI DSS</td><td>0</td><td>0</td></tr>
+</table>
+<p style="margin-bottom:0"><b>The gap:</b> the AI judge never receives these criteria, and the conclusion card hides them. So the auditor cannot see the checklist you signed while reviewing an AI conclusion.</p>
+</div>
+<p><b>A real example</b> (ISO A.5.18, test 3, kind: operating): "Access reviews were completed at the defined frequency for in-scope systems, with inappropriate access removed." Evidence hint: <code>access_control_policy (user access review records)</code>.</p>
+
+<h2>The three options</h2>
+<table>
+<tr><th></th><th>What the auditor sees</th><th>Size</th><th>Risk</th></tr>
+<tr><td><b>(a) Show only</b></td><td>The signed checklist on the card, next to the existing AI proposal. The AI does not use it.</td><td>Small</td><td>Low. No prompt change.</td></tr>
+<tr><td><b>(b) Send to the AI judge</b></td><td>The proposal may change. The card still hides the checklist.</td><td>Medium</td><td>High. About 38,500 extra input tokens per full three-framework run. Reopens a frozen prompt.</td></tr>
+<tr><td><b>(c) Both</b></td><td>Checklist and a changed proposal. Still no pass/fail per criterion.</td><td>Medium</td><td>Same as (b).</td></tr>
+</table>
+<p><b>Why a freeze exists:</b> on 30 Sept (P6-5c) you parked the "v2" pipeline. When v2 was given operating-evidence criteria, it answered "insufficient evidence" on about 76% of requirements and failed the false-positive gate. The suspected cause is that the documents may not contain operating evidence (logs, samples) at all. The analysis prompt is frozen until you decide otherwise in writing.</p>
+<p><b>My recommendation:</b> do (a) first, then draft RFI requests from the evidence hints with plain code (no AI). Consider (b) or (c) only after a small validation experiment passes. This follows your coherence rule: every AI step visible, checkable in one click, actionable. (b) breaks it, because the AI changes its output and the auditor cannot see why.</p>
+
+<h2>Your questions</h2>
+
+<div class="card">
+<b>Q1. Show the checklist first, or run a prompt experiment now?</b>
+<label class="opt"><input type="radio" name="q1" value="Show-only (a) first. No prompt change."><b>Show-only (a) first <span class="rec">Recommended</span></b><span>Checklist on the card, no prompt change. Revisit (b)/(c) later after an experiment.</span></label>
+<label class="opt"><input type="radio" name="q1" value="Show-only now, and write the experiment as a later handoff. No production prompt change until it passes."><b>Show-only now, plus a scheduled experiment</b><span>Build (a). Also write the "criteria-v1 vs unchanged-v1" experiment (4 companies x 3 runs) as a later handoff.</span></label>
+<label class="opt"><input type="radio" name="q1" value="Authorise a v1 prompt experiment now as an E4 exception to P6-5c, option (c)."><b>Authorise the prompt experiment now (c)</b><span>An explicit exception to the P6-5c freeze. Criteria go to the judge and onto the card in one build.</span></label>
+</div>
+
+<div class="card">
+<b>Q2. If operating evidence is missing, should compliance go down?</b>
+<p class="mut" style="margin:4px 0">Scoring stays in code, never the AI. Today "insufficient evidence" already counts as flagged (Decision 1).</p>
+<label class="opt"><input type="radio" name="q2" value="Evidence request only. Scoring and Decision 1 unchanged; v2 stays parked."><b>Evidence request only <span class="rec">Recommended</span></b><span>Missing operating evidence becomes an RFI request. The score changes only after the auditor reviews.</span></label>
+<label class="opt"><input type="radio" name="q2" value="Unmet operating criteria lower the score automatically. Needs a Decision 1 revisit and written sign-off."><b>Lower compliance automatically</b><span>Needs a written Decision 1 revisit and reopens the v2 question.</span></label>
+<label class="opt"><input type="radio" name="q2" value="Auditor chooses per control: treat as gap or request evidence."><b>Auditor chooses per control</b><span>A new button on the card. Needs its own scoped build.</span></label>
+</div>
+
+<div class="card">
+<b>Q3. How should evidence hints reach the RFI (the request list sent to the client)?</b>
+<p class="mut" style="margin:4px 0">Hints are free text like "user access review records". They do not say which dates or how many samples.</p>
+<label class="opt"><input type="radio" name="q3" value="Only requests the auditor adds from the card. Auditor fills period and sample size; no defaults."><b>Auditor-selected only <span class="rec">Recommended</span></b><span>Hints enrich only requests the auditor adds from the card. Period and sample size are blank fields the auditor fills in. No invented defaults.</span></label>
+<label class="opt"><input type="radio" name="q3" value="Every scoped RFI request lists the signed statements and hints. Period and sample are free text."><b>Every scoped request, no defaults</b><span>All document requests list the signed criteria and hints. Period and sample stay free text.</span></label>
+<label class="opt"><input type="radio" name="q3" value="Every scoped RFI request, with defaults named below."><b>Every scoped request, with defaults</b><span>Name them here:</span></label>
+<input type="text" id="q3defaults" placeholder="e.g. last 12 months, sample of 25">
+</div>
+
+<div class="card">
+<b>Anything else (optional)</b>
+<textarea id="notes" rows="3" placeholder="Questions, objections, things I got wrong"></textarea>
+</div>
+
+<button onclick="exp()">Export answers</button>
+<button class="sec" onclick="copyIt()">Copy to clipboard</button>
+<button class="sec" onclick="dl()">Download .md</button>
+<pre id="out" hidden></pre>
+</main>
+<script>
+function build(){
+  const g=n=>{const e=document.querySelector('input[name='+n+']:checked');return e?e.value:'(not answered)'};
+  let q3=g('q3'); const d=document.getElementById('q3defaults').value.trim();
+  if(d) q3+=' Defaults: '+d;
+  const notes=document.getElementById('notes').value.trim();
+  return '# E4 decision answers (2026-10-09)\n\nQ1: '+g('q1')+'\nQ2: '+g('q2')+'\nQ3: '+q3+'\nNotes: '+(notes||'(none)')+'\n';
+}
+function exp(){const o=document.getElementById('out');o.textContent=build();o.hidden=false}
+function copyIt(){exp();try{navigator.clipboard.writeText(build())}catch(e){}}
+function dl(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([build()],{type:'text/markdown'}));a.download='e4-answers.md';a.click();exp()}
+</script>
+</body>
+</html>

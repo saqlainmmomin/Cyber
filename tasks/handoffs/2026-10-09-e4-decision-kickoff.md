@@ -38,3 +38,10 @@ Before reporting done: the session record's new row quotes his actual answers (n
 
 ## Report back
 Append a `## Results` section to this file: the decision in two lines, files changed, PR link.
+
+## Results
+**Decision (E6, 2026-10-09):** Show-only first, no prompt change (v1 frozen, v2 parked). Missing operating evidence is an RFI request, never an automatic score cut. Every scoped RFI request lists the signed statements and hints, with free-text period/sample, plus a one-time catalogue of example evidence per document type (Saqlain's addition).
+
+**Files:** `tasks/2026-10-08-session-record.md` (E6 row, sequence line), `tasks/handoffs/2026-10-09-e4-show-checklist-and-rfi-examples.md` (new, starts after C merges), `tasks/handoffs/2026-10-09-e4-decision-form.html` (the decision form), this file.
+
+**PR:** see below.
