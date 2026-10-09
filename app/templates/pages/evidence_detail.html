@@ -27,15 +27,27 @@
 <div class="page-tabs">{{ engagement_tabs(engagement, "evidence") }}</div>
 <div id="detail-action-status" aria-live="polite"></div>
 
-<div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-bottom:var(--s-5)" data-evidence-status><span>{{ evidence_dot(evidence.status) }}</span><span class="sub">Source: {{ source_label }}{% if uploader_name %} by {{ uploader_name }}{% endif %}</span>{% if originating_assessment %}{{ chip(originating_assessment.display_name) }}{% endif %}</div>
+<div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap;margin-bottom:var(--s-5)" data-evidence-status><span>{{ evidence_dot(evidence.status) }}</span><span class="sub">Source: {{ source_label }}{% if uploader_name %} by {{ uploader_name }}{% endif %}</span>{% if originating_assessment %}{{ chip(originating_assessment.display_name) }}{% endif %}{% if not catalog_entries %}<span class="sub" data-no-desk-review>Desk review hasn't read this file yet.</span>{% endif %}</div>
 {% if not originating_assessment and not evidence.uses %}
 <p style="margin-bottom:var(--s-5)">Not used by any assessment's analysis yet. <a href="/engagements/{{ engagement.id }}/evidence">Open evidence inventory</a></p>
 {% endif %}
 {% set scanning = evidence.status == "quarantined" or (evidence.versions and evidence.versions[-1].status == "quarantined") %}
 {% if scanning %}<div style="margin-bottom:var(--s-5)">{{ alert("This file is still being scanned", "It is left out of the pre-fill and the gap analysis until the scan clears.") }}</div>{% endif %}
 
+{% if catalog_entries %}
+<section aria-labelledby="summary-heading" data-ai-summary>
+<div class="sec" style="flex-wrap:wrap"><h2 id="summary-heading">Summary</h2></div>
+<p class="sub">From desk review.{% if catalog_entries|length > 1 %} More than one desk-review entry matches this filename. If different files share the name, some entries may describe another file.{% endif %}</p>
+{% for match in catalog_entries %}<div class="glass" style="padding:var(--s-5);margin-bottom:var(--s-3)"><p class="sub">{{ match.assessment }}{% if match.entry.document_type %} · {{ match.entry.document_type }}{% endif %}</p>{% if match.entry.summary %}<p style="overflow-wrap:anywhere">{{ match.entry.summary }}</p>{% endif %}
+{% if match.controls %}<h3 style="margin-top:var(--s-3)">Controls it covers</h3><div class="chips wrap" data-covered-controls>{% for control in match.controls %}{{ chip(control.title ~ " · " ~ control.id if control.title else control.id) }}{% endfor %}</div>{% endif %}</div>{% endfor %}
+{% if key_passages %}<h3 style="margin-top:var(--s-5)">Key passages</h3>
+{% for group in key_passages %}<div class="cite solid" style="margin-bottom:var(--s-3)" data-key-passage><div class="cite-head">{{ icon("file") }}<span style="overflow-wrap:anywhere">{% if group.title %}{{ group.title }} · {% endif %}{{ group.id }}</span></div>
+{% for passage in group.passages %}<div class="cite-text">{% if passage.excerpt %}<span data-passage-excerpt>{{ passage.excerpt }}</span><br>{% endif %}<a class="sub" href="{{ passage.href }}">{{ passage.location }}</a></div>{% endfor %}</div>{% endfor %}
+{% endif %}
+</section>
+{% endif %}
 <section aria-labelledby="read-heading">
-<div class="sec" style="flex-wrap:wrap"><h2 id="read-heading">Document text</h2></div>
+<div class="sec" style="flex-wrap:wrap{% if catalog_entries %};margin-top:var(--s-10){% endif %}"><h2 id="read-heading">Document text</h2></div>
 {% if cited %}
 {% set current = evidence.current_version %}
 {% if not cited.is_current and current and current.version_number != cited.version_number %}
@@ -76,13 +88,6 @@
 {% endif %}
 {% else %}{{ empty_state("Original file unavailable", "Only active, available versions can be downloaded.", icon_id="file") }}{% endif %}
 </section>
-<section aria-labelledby="catalog-heading">
-<div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2 id="catalog-heading">What the AI made of it</h2></div>
-{% if catalog_entries %}
-<p class="sub">Catalog matched by current filename. {% if catalog_entries|length > 1 %}Multiple matches: these entries may refer to different files with the same name.{% else %}Files with the same name cannot be distinguished in the stored catalog.{% endif %}</p>
-{% for match in catalog_entries %}<div class="glass" style="padding:var(--s-5);margin-bottom:var(--s-3)"><p class="sub">{{ match.assessment }} · {{ match.entry.document_type }}</p><p>{{ match.entry.summary }}</p><div style="display:flex;gap:var(--s-2);flex-wrap:wrap">{% for area in match.entry.coverage_areas or [] %}{{ chip(area) }}{% endfor %}</div></div>{% endfor %}
-{% else %}<p>Desk review hasn't read this file yet.</p>{% endif %}
-</section>
 <div class="sec" style="margin-top:var(--s-10);flex-wrap:wrap"><h2>Where it's used</h2></div>
 <h3>Supports</h3>
 
@@ -118,10 +123,3 @@
 
 {% include "partials/yozora_page_controls.html" %}
 {% endblock %}
-{% block scripts %}{% if cited and not cited.whole %}<script>
-// The browser puts the anchor at the top edge; centre it so the text before the quote is visible too.
-window.addEventListener('load', function () {
-  var mark = document.getElementById('cited-span');
-  if (mark) mark.scrollIntoView({block: 'center'});
-});
-</script>{% endif %}{% endblock %}

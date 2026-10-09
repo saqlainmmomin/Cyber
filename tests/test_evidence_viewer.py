@@ -142,7 +142,7 @@ def test_catalog_scope_duplicate_matches_and_current_name(db, http, monkeypatch)
         {'filename': 'Current.pdf', 'summary': 'Unrelated catalog'}])))
     db.commit()
     page = http.get(f'/evidence/{evidence.id}')
-    assert 'Multiple matches' in page.text
+    assert 'More than one desk-review entry matches this filename' in page.text
     assert 'First matching entry' in page.text and 'Second matching entry' in page.text
     assert 'Old version' not in page.text and 'Unrelated catalog' not in page.text
 
