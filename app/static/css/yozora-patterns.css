@@ -237,6 +237,8 @@ button.item .txt{color:inherit}
 .cite.solid{background:var(--solid)}
 .cite-text{white-space:pre-wrap;word-break:break-word;font-size:var(--t-base);line-height:1.75;padding:var(--s-5) var(--s-6);margin:0;color:var(--text)}
 .cite-note{padding:var(--s-4) var(--s-6) 0}
+.doc-text{max-height:70vh;overflow:auto;overscroll-behavior:contain}
+.doc-text mark{scroll-margin-block:var(--s-10)}
 .reuse-intro{color:var(--text-2);margin-bottom:var(--s-5);max-width:70ch}
 .reuse-list{display:flex;flex-direction:column;gap:var(--s-4)}
 .reuse-card{padding:var(--s-5) var(--s-6);display:flex;flex-direction:column;gap:var(--s-4)}

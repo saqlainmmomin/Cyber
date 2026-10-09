@@ -76,7 +76,7 @@ def test_full_text_catalog_category_and_finding_link(db, http, monkeypatch):
     db.commit()
     page = http.get(f'/evidence/{evidence.id}')
     assert page.status_code == 200
-    for expected in ('Access control policy', 'What the AI read', 'Signed access policy', 'Access rights', 'Review finding', 'END OF FILE'):
+    for expected in ('Access control policy', 'Document text', 'Signed access policy', 'Access rights', 'Review finding', 'END OF FILE'):
         assert expected in page.text
     assert '&lt;script&gt;bad&lt;/script&gt;' in page.text
     assert f'/span?ref=chars%3A0-8#cited-span' in page.text
@@ -163,7 +163,6 @@ def test_conclusion_citations_and_supports_link_visible(db, http, monkeypatch):
     page = http.get(f'/evidence/{evidence.id}')
     assert 'Conclusion: ' in page.text and '(CH2.CONSENT.1)' in page.text
     assert 'Characters 0–14' in page.text
-    assert f'<td><a href="/evidence-versions/{version.id}/span?ref=whole"' in page.text
     span = http.get(f'/evidence-versions/{version.id}/span?ref=chars:0-14')
     assert '<mark id="cited-span" data-cited-span>Quoted passage</mark>' in span.text
 

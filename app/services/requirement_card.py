@@ -873,7 +873,9 @@ def acknowledge_divergence(
     return event, True
 
 
-def span_view(db: Session, version_id: str, ref: str) -> SpanView:
+def span_view(db: Session, version_id: str, ref: str,
+              context_chars: int | None = SPAN_CONTEXT_CHARS) -> SpanView:
+    """Split a version's text around the cited span; context_chars=None keeps the whole text."""
     version = db.get(EvidenceVersion, version_id)
     evidence = db.get(Evidence, version.evidence_id) if version is not None else None
     if version is None or evidence is None:
@@ -903,8 +905,8 @@ def span_view(db: Session, version_id: str, ref: str) -> SpanView:
         )
     match = _SPAN_REF.fullmatch(ref)
     start, end = (int(value) for value in match.groups())
-    before_start = max(0, start - SPAN_CONTEXT_CHARS)
-    after_end = min(len(text), end + SPAN_CONTEXT_CHARS)
+    before_start = 0 if context_chars is None else max(0, start - context_chars)
+    after_end = len(text) if context_chars is None else min(len(text), end + context_chars)
     return SpanView(
         evidence_id=evidence.id, version_id=version.id, filename=version.original_filename,
         version_number=version.version_number, is_current=current, location_ref=ref,

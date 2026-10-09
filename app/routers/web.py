@@ -1529,6 +1529,8 @@ def evidence_original_file(
 def evidence_detail_page(
     request: Request,
     evidence_id: str,
+    version: str | None = None,
+    ref: str | None = None,
     db: Session = Depends(get_db),
 ):
     try:
@@ -1571,7 +1573,24 @@ def evidence_detail_page(
         uploader_name = link.contact_name if link else None
     elif evidence["uploaded_by"].startswith("consultant:"):
         uploader_name = evidence["uploaded_by"].removeprefix("consultant:") or None
-    span_version = evidence["current_version"] or (evidence["versions"][-1] if evidence["versions"] else None)
+    viewer = evidence_viewer.viewer_context(db, evidence)
+    cited = None
+    if ref:
+        from app.services import requirement_card
+
+        latest = evidence["current_version"] or (evidence["versions"][-1] if evidence["versions"] else None)
+        version_id = version or (latest["id"] if latest else "")
+        try:
+            cited = requirement_card.span_view(db, version_id, ref, context_chars=None)
+        except requirement_card.RequirementCardError as exc:
+            raise HTTPException(exc.status_code, exc.message) from exc
+        if cited.evidence_id != evidence_id:
+            raise HTTPException(404, "Evidence version not found")
+        if cited.whole:
+            cited_version = db.get(EvidenceVersion, cited.version_id)
+            viewer["text_blocks"] = evidence_viewer.text_blocks(
+                cited.before, cited_version.mime_type in evidence_viewer.TABULAR_MIMES
+            )
     return templates.TemplateResponse(
         "pages/evidence_detail.html",
         {
@@ -1586,8 +1605,8 @@ def evidence_detail_page(
             "source_label": evidence_inventory.SOURCE_LABELS[origin],
             "uploader_name": uploader_name,
             "type_label": evidence_inventory.type_label(evidence["mime_type"], evidence["original_filename"], origin),
-            "span_version": span_version,
-            **evidence_viewer.viewer_context(db, evidence),
+            "cited": cited,
+            **viewer,
         },
     )
 
