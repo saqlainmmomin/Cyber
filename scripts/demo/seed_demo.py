@@ -24,6 +24,19 @@ CURRENT_DESCRIPTION = "FY2026-27 reassessment (DPDPA + ISO 27001)"
 PRIOR_DESCRIPTION = "FY2025-26 baseline (DPDPA + ISO 27001)"
 INTERIM_DESCRIPTION = "Interim ISO 27001 check"
 NIST_DESCRIPTION = "NIST CSF 2.0 baseline"
+ANCHOR = date(2026, 10, 7)
+_CLOCK = datetime(2026, 10, 7, 9, tzinfo=timezone.utc)
+
+
+class _DemoDateTime(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return _CLOCK.astimezone(tz) if tz is not None else _CLOCK.replace(tzinfo=None)
+
+
+def _set_clock(day: date) -> None:
+    global _CLOCK
+    _CLOCK = datetime.combine(day, datetime.min.time(), tzinfo=timezone.utc).replace(hour=9)
 
 PRIOR_IDS = [
     "CH2.CONSENT.1",
@@ -137,55 +150,57 @@ def _na_item(requirement_id: str, rationale: str) -> dict:
     )
 
 
+# Baseline fact rows retain the original stage shape. _configure_scenario assigns
+# current-period facts and exact source quotations before any analysis runs.
 ITEMS = {
     PRIOR_DESCRIPTION: {
         "dpdpa": [
-            _item("CH2.CONSENT.1", "partially_compliant", "medium", "Consent language is present in core workflows but not consistently recorded.", "The records of processing describe consent and operational collection points.", "Consent records are incomplete for mobile collection.", "Document consent records for every mobile collection flow."),
+            _item("CH2.CONSENT.1", "partially_compliant", "medium", "Consent language is present in core workflows but not consistently recorded.", "", "Consent records are incomplete for mobile collection.", "Document consent records for every mobile collection flow."),
             _item("CH2.CONSENT.3", "non_compliant", "high", "The driver app offers no way to withdraw consent once given.", "", "There is no consent withdrawal mechanism.", "Ship an in-app consent withdrawal flow that is as easy as giving consent."),
-            _item("CH2.NOTICE.1", "partially_compliant", "medium", "Processing purposes and retention are recorded, but the notice set is not consistently linked to each channel.", "The records of processing list driver KYC, consignee contacts, and payroll purposes.", "Notice evidence is not linked to every collection channel.", "Map each collection channel to its current privacy notice."),
-            _item("CH2.SECURITY.1", "non_compliant", "high", "Security safeguards exist, but backup encryption evidence was not available.", "The information security policy requires MFA for remote access.", "Backup encryption evidence is missing.", "Obtain and file the hosting provider backup encryption attestation."),
-            _item("CH3.GRIEVANCE.1", "partially_compliant", "medium", "A named grievance officer handles complaints, but response records are not consistently retained.", "The privacy officer maintains the grievance register.", "Grievance response evidence is incomplete.", "Retain a complete grievance response record for each case."),
+            _item("CH2.NOTICE.1", "partially_compliant", "medium", "Processing purposes and retention are recorded, but the notice set is not consistently linked to each channel.", "", "Notice evidence is not linked to every collection channel.", "Map each collection channel to its current privacy notice."),
+            _item("CH2.SECURITY.1", "non_compliant", "high", "Security safeguards exist, but backup encryption evidence was not available.", "", "Backup encryption evidence is missing.", "Obtain and file the hosting provider backup encryption attestation."),
+            _item("CH3.GRIEVANCE.1", "partially_compliant", "medium", "A named grievance officer handles complaints, but response records are not consistently retained.", "", "Grievance response evidence is incomplete.", "Retain a complete grievance response record for each case."),
             _na_item("CH4.CHILD.1", "Scope answer SCP.2 = No: the company does not process children's data."),
         ],
         "iso27001": [
-            _item("ISO.A5.1", "compliant", "low", "An approved information security policy is reviewed annually.", "Owner: Chief Information Security Officer. Approved by the board risk committee."),
-            _item("ISO.A5.18", "non_compliant", "high", "Quarterly access reviews skipped two production systems.", "The quarterly review covered 9 of 11 production systems.", "Two production systems were left out of the quarterly access review.", "Extend the quarterly access review to every production system."),
+            _item("ISO.A5.1", "compliant", "low", "An approved information security policy is reviewed annually.", ""),
+            _item("ISO.A5.18", "non_compliant", "high", "Quarterly access reviews skipped two production systems.", "", "Two production systems were left out of the quarterly access review.", "Extend the quarterly access review to every production system."),
             _item("ISO.A5.19", "non_compliant", "high", "Supplier security reviews are ad hoc and are not recorded consistently.", "", "Supplier security reviews are not performed on a repeatable schedule.", "Introduce a risk-based supplier security review calendar."),
-            _item("ISO.A5.24", "non_compliant", "high", "An incident response plan exists but has never been tested.", "The plan exists but has not yet been tested.", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
-            _item("ISO.A5.30", "partially_compliant", "medium", "A DR failover test was run but missed its recovery time objective.", "Failover completed in 3h 10m against a 4h RTO.", "The prior test record did not demonstrate an accepted recovery result.", "Retest failover and record the agreed recovery objective."),
-            _item("ISO.A6.3", "compliant", "low", "Security awareness training was completed on the annual cycle.", "Training records were reviewed for the prior cycle."),
-            _item("ISO.A8.5", "partially_compliant", "medium", "Remote access uses MFA, but privileged access evidence is incomplete.", "The information security policy requires MFA for remote access.", "Privileged access evidence is not complete for every system.", "Complete privileged access evidence for all production systems."),
+            _item("ISO.A5.24", "non_compliant", "high", "An incident response plan exists but has never been tested.", "", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
+            _item("ISO.A5.30", "partially_compliant", "medium", "A DR failover test was run but missed its recovery time objective.", "", "The prior test record did not demonstrate an accepted recovery result.", "Retest failover and record the agreed recovery objective."),
+            _item("ISO.A6.3", "compliant", "low", "Security awareness training was completed on the annual cycle.", ""),
+            _item("ISO.A8.5", "partially_compliant", "medium", "Remote access uses MFA, but privileged access evidence is incomplete.", "", "Privileged access evidence is not complete for every system.", "Complete privileged access evidence for all production systems."),
             _item("ISO.A8.13", "partially_compliant", "medium", "Backups run, but restore testing is not evidenced.", "", "Backup restore has not been tested.", "Run and record a backup restore test."),
             _na_item("ISO.A8.25", "Scope answer ISO.SCP.3 = No software development."),
         ],
     },
     CURRENT_DESCRIPTION: {
         "dpdpa": [
-            _item("CH2.CONSENT.1", "compliant", "low", "Consent language is recorded for the main collection workflows.", "The records of processing describe the collection purposes and retention periods."),
-            _item("CH2.CONSENT.3", "non_compliant", "high", "The driver app still has no way to withdraw consent once given.", "I agree to location tracking", "There is no consent withdrawal mechanism in the driver app.", "Ship an in-app consent withdrawal flow that is as easy as giving consent."),
-            _item("CH2.NOTICE.1", "partially_compliant", "medium", "Processing purposes are documented, but channel-level notice evidence is incomplete.", "The records of processing list driver KYC, consignee contacts, and payroll.", "Notice evidence is not linked to every collection channel.", "Map each collection channel to its current privacy notice."),
-            _item("CH2.SECURITY.1", "partially_compliant", "medium", "Core security safeguards are documented, while backup encryption evidence remains outstanding.", "MFA is required for remote access.", "Backup encryption evidence is still missing.", "Obtain and file the hosting provider backup encryption attestation."),
-            _item("CH3.GRIEVANCE.1", "compliant", "low", "A named grievance officer handles complaints and maintains a response process.", "The privacy officer maintains the grievance register."),
+            _item("CH2.CONSENT.1", "compliant", "low", "Consent language is recorded for the main collection workflows.", ""),
+            _item("CH2.CONSENT.3", "non_compliant", "high", "The driver app still has no way to withdraw consent once given.", "", "There is no consent withdrawal mechanism in the driver app.", "Ship an in-app consent withdrawal flow that is as easy as giving consent."),
+            _item("CH2.NOTICE.1", "partially_compliant", "medium", "Processing purposes are documented, but channel-level notice evidence is incomplete.", "", "Notice evidence is not linked to every collection channel.", "Map each collection channel to its current privacy notice."),
+            _item("CH2.SECURITY.1", "partially_compliant", "medium", "Core security safeguards are documented, while backup encryption evidence remains outstanding.", "", "Backup encryption evidence is still missing.", "Obtain and file the hosting provider backup encryption attestation."),
+            _item("CH3.GRIEVANCE.1", "compliant", "low", "A named grievance officer handles complaints and maintains a response process.", ""),
             _na_item("CH4.CHILD.1", "Scope answer SCP.2 = No: the company does not process children's data."),
         ],
         "iso27001": [
-            _item("ISO.A5.1", "compliant", "low", "The approved information security policy is reviewed every 12 months.", "Owner: Chief Information Security Officer. Approved by the board risk committee."),
-            _item("ISO.A5.18", "partially_compliant", "medium", "The quarterly access review now covers most systems but still skips two systems.", "The quarterly review covered 9 of 11 production systems.", "Two production systems remain outside the quarterly review.", "Extend the quarterly access review to every production system."),
+            _item("ISO.A5.1", "compliant", "low", "The approved information security policy is reviewed every 12 months.", ""),
+            _item("ISO.A5.18", "partially_compliant", "medium", "The quarterly access review now covers most systems but still skips two systems.", "", "Two production systems remain outside the quarterly review.", "Extend the quarterly access review to every production system."),
             _item("ISO.A5.19", "non_compliant", "high", "Supplier security reviews remain ad hoc.", "", "Supplier security reviews are not performed on a repeatable schedule.", "Introduce a risk-based supplier security review calendar."),
-            _item("ISO.A5.24", "partially_compliant", "medium", "An incident response plan exists but has never been tested.", "The plan exists but has not yet been tested.", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
-            _item("ISO.A5.30", "compliant", "low", "DR failover completed within the recovery time objective.", "Failover completed in 3h 10m against a 4h RTO."),
+            _item("ISO.A5.24", "partially_compliant", "medium", "An incident response plan exists but has never been tested.", "", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
+            _item("ISO.A5.30", "compliant", "low", "DR failover completed within the recovery time objective.", ""),
             _item("ISO.A6.3", "partially_compliant", "medium", "Awareness training lapsed this year after being completed in the prior cycle.", "", "Annual awareness training was not completed this year.", "Restart annual awareness training and track completion."),
-            _item("ISO.A8.5", "compliant", "low", "MFA and access controls are operating for remote and privileged access.", "MFA is required for remote access."),
+            _item("ISO.A8.5", "compliant", "low", "MFA and access controls are operating for remote and privileged access.", ""),
             _item("ISO.A8.13", "partially_compliant", "medium", "Backups run, but restore testing is not evidenced.", "", "Backup restore has not been tested.", "Run and record a backup restore test."),
             _na_item("ISO.A8.25", "Scope answer ISO.SCP.3 = No software development."),
         ],
     },
     INTERIM_DESCRIPTION: {
         "iso27001": [
-            _item("ISO.A5.1", "compliant", "low", "The approved information security policy is reviewed every 12 months.", "Owner: Chief Information Security Officer. Approved by the board risk committee."),
-            _item("ISO.A5.18", "partially_compliant", "medium", "The quarterly access review still skips two systems.", "The quarterly review covered 9 of 11 production systems.", "Two production systems remain outside the quarterly review.", "Extend the quarterly access review to every production system."),
-            _item("ISO.A5.24", "partially_compliant", "medium", "The incident response plan exists but has never been tested.", "The plan exists but has not yet been tested.", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
-            _item("ISO.A5.30", "compliant", "low", "DR failover completed within the recovery time objective.", "Failover completed in 3h 10m against a 4h RTO."),
+            _item("ISO.A5.1", "compliant", "low", "The approved information security policy is reviewed every 12 months.", ""),
+            _item("ISO.A5.18", "partially_compliant", "medium", "The quarterly access review still skips two systems.", "", "Two production systems remain outside the quarterly review.", "Extend the quarterly access review to every production system."),
+            _item("ISO.A5.24", "partially_compliant", "medium", "The incident response plan exists but has never been tested.", "", "The incident response plan has not been exercised.", "Run and document an incident response tabletop exercise."),
+            _item("ISO.A5.30", "compliant", "low", "DR failover completed within the recovery time objective.", ""),
             _item("ISO.A6.3", "partially_compliant", "medium", "Awareness training lapsed this year.", "", "Annual awareness training was not completed this year.", "Restart annual awareness training and track completion."),
             _item("ISO.A8.13", "partially_compliant", "medium", "Backups run, but restore testing is not evidenced.", "", "Backup restore has not been tested.", "Run and record a backup restore test."),
         ],
@@ -244,6 +259,77 @@ FINDINGS = {
         "target": 30,
     },
 }
+
+
+def _dpdpa_facts() -> dict[str, dict]:
+    return {
+        "CH2.CONSENT.1": {"answer": "partially_implemented", "notes": "Processing purposes and initial consent are recorded. The supplied evidence does not demonstrate a complete consent ledger across collection channels."},
+        "CH2.CONSENT.3": {"answer": "not_implemented", "notes": "The driver consent screen has no withdrawal option. No later withdrawal implementation was supplied."},
+        "CH2.NOTICE.1": {"answer": "partially_implemented", "notes": "The processing register records activities and retention. Channel-specific delivery of each notice is not evidenced."},
+        "CH2.SECURITY.1": {"answer": "partially_implemented", "notes": "Security policy and safeguards exist. Current access exceptions and missing restore tests remain unresolved."},
+        "CH3.GRIEVANCE.1": {"answer": "partially_implemented", "notes": "A privacy owner is assigned. The limited supplied register does not establish complete grievance handling over the period."},
+        "CH4.CHILD.1": {"answer": "not_applicable", "notes": "No children's data processing is in the supplied company scope."},
+    }
+
+
+def _configure_scenario() -> list[str]:
+    from scripts.demo.pack import native_controls
+    from scripts.demo.scenario import CONTROLS, DOCUMENTS
+
+    ids = sorted(native_controls())
+    ITEMS[CURRENT_DESCRIPTION]["iso27001"] = [
+        _item(control_id, CONTROLS[control_id]["outcome"], CONTROLS[control_id]["risk"], CONTROLS[control_id]["notes"], CONTROLS[control_id]["quote"], CONTROLS[control_id]["gap"], CONTROLS[control_id]["action"])
+        for control_id in ids
+    ]
+    facts = _dpdpa_facts()
+    for item in ITEMS[CURRENT_DESCRIPTION]["dpdpa"]:
+        record = facts[item["requirement_id"]]
+        if item["compliance_status"] != "not_applicable":
+            item["compliance_status"] = "non_compliant" if record["answer"] == "not_implemented" else "partially_compliant"
+            item["maturity_level"] = 2 if record["answer"] == "not_implemented" else 3
+        item["current_state"] = record["notes"]
+        item["evidence_quote"] = "I agree to location tracking" if item["requirement_id"] == "CH2.CONSENT.3" else ""
+        if item["requirement_id"] in {"CH2.CONSENT.1", "CH3.GRIEVANCE.1"}:
+            item["risk_level"] = "medium"
+            item["remediation_priority"] = 2
+            if item["requirement_id"] == "CH2.CONSENT.1":
+                item["gap_description"] = "A complete consent ledger across collection channels was not supplied."
+                item["remediation_action"] = "Reconcile collection channels and retain the corresponding consent records."
+            else:
+                item["gap_description"] = "The supplied register does not establish complete grievance handling over the assessment period."
+                item["remediation_action"] = "Reconcile the request population and retain response and closure records."
+        if item["requirement_id"] == "CH2.SECURITY.1":
+            item["gap_description"] = "Access remediation and backup restore testing remain incomplete."
+            item["remediation_action"] = "Close access exceptions and run an evidenced backup restore test."
+    for item in ITEMS[INTERIM_DESCRIPTION]["iso27001"]:
+        record = CONTROLS[item["requirement_id"]]
+        item.update(_item(item["requirement_id"], record["outcome"], record["risk"], record["notes"], record["quote"], record["gap"], record["action"]))
+    for framework_items in ITEMS[PRIOR_DESCRIPTION].values():
+        for item in framework_items:
+            item["evidence_quote"] = ""
+            if item["requirement_id"] in {"ISO.A5.1", "ISO.A6.3"}:
+                item["compliance_status"] = "partially_compliant"
+                item["maturity_level"] = 3
+                item["risk_level"] = "medium"
+                if item["requirement_id"] == "ISO.A5.1":
+                    item["current_state"] = "The 2025 policy was approved and distributed; two depot acknowledgements remained outstanding."
+                    item["gap_description"] = "The historical policy acknowledgement population was incomplete."
+                    item["remediation_action"] = "Obtain the remaining depot acknowledgements."
+                else:
+                    item["current_state"] = "The 2025 refresher reached 31 depot supervisors; no full annual completion list was supplied."
+                    item["gap_description"] = "The historical training sample did not establish completion for all personnel."
+                    item["remediation_action"] = "Reconcile the annual completion population and retain the complete register."
+    # The baseline is supported by a separate historical record, not current files.
+    dr = next(item for item in ITEMS[PRIOR_DESCRIPTION]["iso27001"] if item["requirement_id"] == "ISO.A5.30")
+    dr["current_state"] = "The 2025 failover took 5h 20m against the 4h recovery objective."
+    dr["gap_description"] = "The historical failover exceeded its recovery objective."
+    for key, control_id, title, owner, target in (
+        ("current_access", "ISO.A5.18", "Monthly access review cycles and remediation are incomplete", "Arjun Mehta", -7),
+        ("current_incident", "ISO.A5.24", "Incident response plan has not been exercised", "Arjun Mehta", 30),
+        ("current_restore", "ISO.A8.13", "Backup restore testing is missing", "Arjun Mehta", 21),
+    ):
+        FINDINGS[key] = {"description": CURRENT_DESCRIPTION, "framework": "iso27001", "requirement": control_id, "title": title, "severity": CONTROLS[control_id]["risk"], "action_title": CONTROLS[control_id]["action"], "owner": owner, "target": target}
+    return ids
 
 
 def _at(anchor: date, offset: int) -> datetime:
@@ -398,8 +484,23 @@ def _save_bulk_questionnaire(db, http, assessment, *, prior: bool = False, follo
     from app.services.question_engine import build_adaptive_questionnaire
 
     questionnaire = build_adaptive_questionnaire(assessment.id, db)
-    responses, counts = _answer_questions(questionnaire, prior=prior)
-    if followup_ready:
+    if assessment.description in {CURRENT_DESCRIPTION, INTERIM_DESCRIPTION}:
+        from scripts.demo.pack import question_response
+        from scripts.demo.scenario import CONTROLS
+
+        records = {**CONTROLS, **_dpdpa_facts()}
+        responses, counts = [], defaultdict(Counter)
+        for section in questionnaire["sections"]:
+            for question in section["questions"]:
+                if question.get("status") == "skipped":
+                    continue
+                response = question_response(question, records)
+                response.pop("controls")
+                responses.append(response)
+                counts[section["section_id"]][response["answer"]] += 1
+    else:
+        responses, counts = _answer_questions(questionnaire, prior=prior)
+    if followup_ready and assessment.description != CURRENT_DESCRIPTION:
         questions_by_id = {
             question["id"]: question
             for section in questionnaire["sections"]
@@ -510,11 +611,11 @@ def _seed_followups(db, http, assessment, responses: list[dict]) -> list[str]:
         }
 
     dpdpa_question = next(
-        (question for question in candidates if "dpdpa" in framework_ids(question)),
+        (question for question in candidates if "CH2.CONSENT.3" in question.get("maps_to", [])),
         None,
     )
     iso_question = next(
-        (question for question in candidates if "iso27001" in framework_ids(question)),
+        (question for question in candidates if "ISO.A5.19" in question.get("maps_to", [])),
         None,
     )
     if dpdpa_question is None or iso_question is None:
@@ -526,13 +627,14 @@ def _seed_followups(db, http, assessment, responses: list[dict]) -> list[str]:
         fields = {
             "section_id": question["section"],
             f"answer_{qid}": next(response["answer"] for response in responses if response["question_id"] == qid),
-            f"notes_{qid}": "Follow-up answer recorded for the walkthrough.",
+            f"notes_{qid}": next(response["notes"] for response in responses if response["question_id"] == qid),
+            f"followup_question_FU.{qid}.1": "What evidence shows the driver can withdraw the initial consent?" if "dpdpa" in framework_ids(question) else "Which supplier assurance reviews were completed by the evidence cut-off?",
             f"followup_FU.{qid}.1": (
                 "The driver app consent screen currently records the initial choice but does not expose withdrawal. "
-                "The vendor roadmap has a consent settings item planned for the next release."
+                "No completed withdrawal implementation or confirmed release date was supplied by the evidence cut-off."
                 if "dpdpa" in framework_ids(question)
-                else "The supplier review owner is collecting current assurance records from the TMS vendor. "
-                "The next quarterly review will use a documented checklist and escalation path."
+                else "Two critical supplier assurance packages remain outstanding and requests were ad hoc. "
+                "There is no complete recurring assurance cycle by the 5 October 2026 evidence cut-off."
             ),
         }
         try:
@@ -572,11 +674,23 @@ def _content_type(path: Path) -> str:
 
 
 def _upload_bytes(db, http, assessment_id: str, path: Path, category: str, received: int | None, anchor: date, *, allow_skip: bool = False, skipped: list[str]) -> str | None:
-    response = http.post(
-        f"/api/assessments/{assessment_id}/documents",
-        data={"category": category},
-        files={"file": (path.name, path.read_bytes(), _content_type(path))},
-    )
+    from contextlib import nullcontext
+    from app.services import document_processor
+    from app.services import evidence as evidence_service
+    from scripts.demo.files import source_text
+    from scripts.demo.scenario import DOCUMENTS
+
+    key = next(key for key, spec in DOCUMENTS.items() if spec["filename"] == path.name)
+    spec = DOCUMENTS[key]
+    # Offline screen inspection uses a faithful transcription, not a live OCR claim.
+    transcription = path.suffix == ".png" or spec.get("scanned") or spec.get("render_as_scan")
+    extraction = patch.object(evidence_service, "extract_text", return_value=source_text(key)) if transcription else nullcontext()
+    with extraction:
+        response = http.post(
+            f"/api/assessments/{assessment_id}/documents",
+            data={"category": category},
+            files={"file": (path.name, path.read_bytes(), _content_type(path))},
+        )
     if allow_skip and 400 <= response.status_code < 500:
         message = "xlsx skipped: not accepted by this build (S6-F1 not merged); this gap is intentional"
         print(message)
@@ -617,16 +731,9 @@ def _map(http, evidence_id: str, assessment_id: str, framework_id: str, requirem
 
 
 def _upload_set(db, http, assessment, paths: dict[str, Path], anchor: date, received: int, skipped: list[str]) -> dict[str, str]:
-    specs = {
-        "policy": ("security_policy", received, False),
-        "ropa": ("processing_records", received, False),
-        "access_q2": ("access_control_policy", received, False),
-        "incident_plan": ("breach_procedure", received, False),
-        "dr_report": ("business_continuity", received, False),
-        "consent_screen": ("consent_form", received, False),
-        "access_export": ("access_control_policy", received, True),
-        "stale_access": ("access_control_policy", None, False),
-    }
+    from scripts.demo.scenario import DOCUMENTS
+
+    specs = {key: (DOCUMENTS[key]["category"], (date.fromisoformat(DOCUMENTS[key]["date"]) - anchor).days if key in {"stale_access", "prior_baseline"} else received, False) for key in paths}
     evidence_ids = {}
     for key, (category, file_date, allow_skip) in specs.items():
         path = paths.get(key)
@@ -887,17 +994,18 @@ def _seed(db, http, anchor: date) -> dict[str, str]:
     skipped: list[str] = []
     print("Generated deterministic demo files")
 
+    _set_clock(date(2025, 10, 6))
     client, engagement_a, prior, _ = _create_hierarchy(
         db,
         http,
         name=DEMO_NAME,
         industry="other",
-        size="large",
+        size="sme",
         engagement_name="FY2026-27 privacy and security assessment",
         frameworks=["dpdpa", "iso27001"],
         description=PRIOR_DESCRIPTION,
     )
-    _backdate_hierarchy(db, client, engagement_a, prior, _at(anchor, -330))
+    _backdate_hierarchy(db, client, engagement_a, prior, _at(anchor, -463))
     print(f"Created client and engagement A: {client.id} {engagement_a.id}")
 
     common_scope = {
@@ -913,18 +1021,21 @@ def _seed(db, http, anchor: date) -> dict[str, str]:
         "ISO.SCP.4": "yes_datacenter",
     }
     _save_scope(db, http, prior, common_scope, PRIOR_IDS)
-    prior_files = _upload_set(db, http, prior, paths, anchor, -325, skipped)
-    _map_common(http, prior, prior_files)
+    prior_files = _upload_set(db, http, prior, {key: paths[key] for key in ("prior_baseline", "stale_access")}, anchor, -372, skipped)
+    for requirement_id in PRIOR_IDS:
+        if requirement_id not in {"CH4.CHILD.1", "ISO.A8.25"}:
+            _map(http, prior_files["prior_baseline"], prior.id, "dpdpa" if requirement_id.startswith("CH") else "iso27001", requirement_id, "primary")
     _save_bulk_questionnaire(db, http, prior, prior=True)
     _expect(
         http.post(f"/api/assessments/{prior.id}/analyze", json={"reason": "document_led", "reviewer_name": REVIEWER}),
         200,
         "analyze prior",
     )
-    _set_basis(db, prior, anchor, -485, -395, -320)
+    _set_basis(db, prior, anchor, (date(2025, 7, 1) - anchor).days, (date(2025, 9, 30) - anchor).days, -367)
     _approve(db, http, prior, PRIOR_IDS)
     for key in ("prior_consent", "prior_supplier"):
-        _create_finding(db, http, prior, FINDINGS[key], anchor)
+        _create_finding(db, http, prior, FINDINGS[key], date(2025, 10, 7))
+    _set_clock(date(2025, 10, 7))
     _release_and_snapshot(db, http, prior, skipped)
     from app.models.audit_event import AuditEvent
     from app.models.report_snapshot import ReportSnapshot
@@ -936,23 +1047,26 @@ def _seed(db, http, anchor: date) -> dict[str, str]:
         .first()
     )
     if release_event:
-        release_event.created_at = _at(anchor, -290)
+        release_event.created_at = _at(anchor, -365)
     for snapshot in db.query(ReportSnapshot).filter(ReportSnapshot.assessment_id == prior.id).all():
-        snapshot.generated_at = _at(anchor, -290)
+        snapshot.generated_at = _at(anchor, -365)
     db.commit()
     print(f"Seeded and released PRIOR: {prior.id}")
 
+    _set_clock(date(2026, 10, 6))
     current = _add_assessment_to_engagement(
         db,
         engagement=engagement_a,
         client=client,
         description=CURRENT_DESCRIPTION,
         framework_ids=["dpdpa", "iso27001"],
-        created_at=_at(anchor, -45),
+        created_at=_at(anchor, -98),
     )
     current_scope = dict(common_scope)
-    _save_scope(db, http, current, current_scope, PRIOR_IDS)
-    current_files = _upload_set(db, http, current, paths, anchor, -40, skipped)
+    current_scope["ISO.SCP.3"] = "both"
+    current_ids = _configure_scenario() + [item["requirement_id"] for item in ITEMS[CURRENT_DESCRIPTION]["dpdpa"]]
+    _save_scope(db, http, current, current_scope, current_ids)
+    current_files = _upload_set(db, http, current, {key: path for key, path in paths.items() if key != "prior_baseline"}, anchor, -2, skipped)
     _map_common(http, current, current_files)
     for key, framework_id, requirement_id, relevance in (
         ("incident_plan", "iso27001", "ISO.A5.24", "primary"),
@@ -962,22 +1076,27 @@ def _seed(db, http, anchor: date) -> dict[str, str]:
     ):
         if key in current_files:
             _map(http, current_files[key], current.id, framework_id, requirement_id, relevance)
+    from scripts.demo.scenario import CONTROLS
+
+    for requirement_id in sorted(set(current_ids) & CONTROLS.keys()):
+        entry = CONTROLS[requirement_id]
+        for key in dict.fromkeys([entry["primary"]] + entry["design"] + entry["operating"]):
+            if (key, requirement_id) in {("policy", "ISO.A5.1"), ("access_q2", "ISO.A5.18"), ("incident_plan", "ISO.A5.24"), ("dr_report", "ISO.A5.30"), ("access_export", "ISO.A5.18")}:
+                continue
+            _map(http, current_files[key], current.id, "iso27001", requirement_id, "primary" if key == entry["primary"] else "supporting")
     current_responses = _save_bulk_questionnaire(db, http, current, followup_ready=True)
     print("Attempting real follow-up save route")
     followup_ids = _seed_followups(db, http, current, current_responses)
-    note = "follow-ups are stored but visible only if S0b also renders stored follow-ups"
-    print(note)
-    if note not in skipped:
-        skipped.append(note)
     _expect(
         http.post(f"/api/assessments/{current.id}/analyze", json={"reason": "document_led", "reviewer_name": REVIEWER}),
         200,
         "analyze current",
     )
-    _set_basis(db, current, anchor, -120, -30, -20)
-    _approve(db, http, current, PRIOR_IDS)
-    for key in ("current_consent", "current_supplier", "current_training"):
+    _set_basis(db, current, anchor, -98, -7, -2)
+    _approve(db, http, current, current_ids)
+    for key in ("current_consent", "current_supplier", "current_training", "current_access", "current_incident", "current_restore"):
         _create_finding(db, http, current, FINDINGS[key], anchor)
+    _set_clock(ANCHOR)
     _release_and_snapshot(db, http, current, skipped)
     print(f"Seeded and released CURRENT: {current.id}")
 
@@ -987,17 +1106,23 @@ def _seed(db, http, anchor: date) -> dict[str, str]:
         client=client,
         description=INTERIM_DESCRIPTION,
         framework_ids=["iso27001"],
-        created_at=_at(anchor, -10),
+        created_at=_at(anchor, -1),
     )
     interim_scope = {key: value for key, value in common_scope.items() if key.startswith("ISO.")}
     _save_scope(db, http, interim, interim_scope, INTERIM_IDS)
+    interim_files = _upload_set(db, http, interim, {key: paths[key] for key in ("policy", "access_q2", "incident_plan", "dr_report")}, anchor, -1, skipped)
+    for requirement_id in INTERIM_IDS:
+        key = CONTROLS[requirement_id]["primary"]
+        if key not in interim_files:
+            interim_files.update(_upload_set(db, http, interim, {key: paths[key]}, anchor, -1, skipped))
+        _map(http, interim_files[key], interim.id, "iso27001", requirement_id, "primary")
     _save_bulk_questionnaire(db, http, interim)
     _expect(
         http.post(f"/api/assessments/{interim.id}/analyze", json={"reason": "document_led", "reviewer_name": REVIEWER}),
         200,
         "analyze interim",
     )
-    _set_basis(db, interim, anchor, -90, -15, -10)
+    _set_basis(db, interim, anchor, -98, -7, -1)
     _approve(db, http, interim, ["ISO.A5.1", "ISO.A5.30", "ISO.A8.13"])
     print(f"Seeded INTERIM review queue: {interim.id}")
 
@@ -1116,7 +1241,9 @@ def main(argv: list[str] | None = None) -> int:
     from app.config import settings
     from app.database import SessionLocal, get_db
     from app.main import app
-    from app.services import document_processor, llm_client
+    from app.services import document_processor, llm_client, analysis_pipeline, findings, workpaper
+    from app.models import assessment as assessment_model
+    from app.utils import pdf_export
     from app.routers import analysis
 
     if settings.openrouter_key:
@@ -1130,9 +1257,9 @@ def main(argv: list[str] | None = None) -> int:
         return "VISIBLE TEXT: I agree to location tracking. SUMMARY: The screen shows an initial consent button and no withdrawal option."
 
     db = SessionLocal()
-    anchor = date.today()
+    anchor = ANCHOR
     try:
-        with patch.object(llm_client, "_get_client", no_llm), patch.object(document_processor, "_call_claude_vision", vision_stub), patch.object(analysis, "run_multi_framework_analysis", _fake_analysis):
+        with patch.object(llm_client, "_get_client", no_llm), patch.object(document_processor, "_call_claude_vision", vision_stub), patch.object(analysis, "run_multi_framework_analysis", _fake_analysis), patch.object(assessment_model, "datetime", _DemoDateTime), patch.object(analysis_pipeline, "_utcnow", lambda: _CLOCK), patch.object(findings, "datetime", _DemoDateTime), patch.object(workpaper, "datetime", _DemoDateTime), patch.object(pdf_export, "datetime", _DemoDateTime):
             if settings.openrouter_key or llm_client._get_client is not no_llm or document_processor._call_claude_vision is not vision_stub or analysis.run_multi_framework_analysis is not _fake_analysis:
                 print("refusing to run: LLM stub not active")
                 return 2
@@ -1143,6 +1270,7 @@ def main(argv: list[str] | None = None) -> int:
             app.dependency_overrides[get_db] = override_get_db
             try:
                 with TestClient(app) as http:
+                    _configure_scenario()
                     _check_registry()
                     _purge_existing(db, upload_root)
                     _seed(db, http, anchor)
