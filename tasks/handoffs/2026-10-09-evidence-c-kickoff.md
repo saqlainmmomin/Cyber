@@ -42,3 +42,17 @@ Rule behind it (from `tasks/2026-10-08-ai-coherence-map.md`): every AI step must
 
 ## Report back
 Append a `## Results` section to this file (on branch `claude/c-and-e4-kickoffs` or in the PR body if that branch has merged): PR link, test counts, browser findings, open questions.
+
+## Results
+- **PR:** https://github.com/saqlainmmomin/Cyber/pull/133 (`codex/evidence-c-card`, commit 06e5c2e). CI was pending when opened. Not merged.
+- **Build:** Codex built items 1-5 and 12 tests, then hit its usage limit before the full suite and write-up. Claude finished the review, fixes, browser check and PR. Full detail: `tasks/handoffs/2026-10-09-evidence-c-results.md` on the PR branch.
+- **Review fixes:** (1) linked files hid requests already on the draft RFI and their Remove button; now only unrequested suggestions drop, with a new test; (2) hand-edited generated CSS moved to `design/yozora-patterns.css` and rebuilt (token sync test); (3) `RequirementCard` field order restored for the P6-7b shape test; "1 files" plural fixed.
+- **Tests:** baseline 1614 passed, 29 skipped. Branch 1627 passed, 29 skipped (`OPENROUTER_KEY=""`).
+- **Browser (current demo; demo-depth not merged):** A.5.18 citation reads "Characters 37–93" and opens the matching highlighted passage. Filename opens the evidence record. "2 files linked, 1 cited": Q2 review Cited, access review export Not cited. No Missing evidence box. No sideways scroll at 375px.
+- **Open questions:**
+  - The Dec 2023 review isn't listed because the seed doesn't link it to A.5.18 (seed question).
+  - Citation and filename links look like plain text (existing `.cite-head` style).
+  - A file cut mid-way by the word budget isn't flagged as partly read.
+  - Items 4-5 aren't visible on the demo (no desk-review findings); tests cover them.
+  - The conclusions breadcrumb overflows about 18px at desktop width. This predates the PR.
+- **Cleanup:** the temporary launch entry in this checkout is reverted. An `cyberassess-evidence-c` entry (port 8007) remains in `/Users/saqlainmomin/dpdpa-gap-tool/.claude/launch.json`. Worktree `/Users/saqlainmomin/dpdpa-evidence-c` kept for follow-ups.
