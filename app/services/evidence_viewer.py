@@ -11,6 +11,8 @@ from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 from app.models.evidence import EvidenceVersion
 
+from app.services.evidence_locations import location_label
+
 INLINE_MIMES = frozenset({'application/pdf', 'image/png', 'image/jpeg', 'image/webp'})
 TABULAR_MIMES = frozenset({
     'text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -115,13 +117,10 @@ def viewer_context(db: Session, evidence: dict) -> dict:
             if not isinstance(citation, dict) or citation.get('evidence_version_id') not in version_ids:
                 continue
             ref = citation.get('location_ref', 'whole')
-            location = ('Whole document' if ref == 'whole' else
-                        'Characters ' + ref[6:].replace('-', '–') if ref.startswith('chars:') else
-                        'Page ' + ref[5:] if ref.startswith('page:') else ref)
             assessment = db.get(Assessment, assessment_id)
             citations.append({
                 'label': label, 'assessment': assessment.display_name if assessment else 'Assessment',
-                'location': location, 'excerpt': citation.get('excerpt', ''),
+                'location': location_label(ref), 'excerpt': citation.get('excerpt', ''),
                 'href': '/evidence-versions/' + citation['evidence_version_id'] + '/span?' +
                         urlencode({'ref': ref}) + '#cited-span',
             })

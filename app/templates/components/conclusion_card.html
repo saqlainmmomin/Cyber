@@ -65,7 +65,7 @@
       {% else %}<p class="muted">No supporting citation (explicit evidence absence)</p>{% endif %}
       {% else %}
       {% for citation in card.citations %}
-      <div class="cite{% if not loop.first %} cc-more{% endif %}"><div class="cite-head">{{ icon("file") }}<span>{% if citation.resolved %}<a href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or "Unresolved evidence" }}{% endif %}{% if citation.location_ref %}, <span class="pg">{{ citation.location_ref }}</span>{% endif %}</span><span class="sp"></span>{% if not citation.is_current %}<span class="warn">{{ icon("alert") }}Superseded version</span>{% endif %}</div><blockquote class="cc-pre">{{ citation.excerpt }}</blockquote></div>
+      <div class="cite{% if not loop.first %} cc-more{% endif %}"><div class="cite-head">{{ icon("file") }}<span>{% if citation.resolved %}<a href="/evidence/{{ citation.evidence_id }}">{{ citation.filename }}</a>{% else %}{{ citation.filename or "Unresolved evidence" }}{% endif %}{% if citation.location_ref %}, <a class="pg" href="/evidence-versions/{{ citation.evidence_version_id }}/span?ref={{ citation.location_ref|urlencode }}#cited-span">{{ evidence_location_label(citation.location_ref) }}</a>{% endif %}</span><span class="sp"></span>{% if not citation.is_current %}<span class="warn">{{ icon("alert") }}Superseded version</span>{% endif %}</div><blockquote class="cc-pre">{{ citation.excerpt }}</blockquote></div>
       {% endfor %}
       {% endif %}
     </div>

@@ -287,8 +287,12 @@ button.item .txt{color:inherit}
 .followup-host{max-width:820px}
 .screening-run .htmx-indicator:not(.htmx-request){display:none}
 .screening-run:has(.htmx-indicator.htmx-request) [type=submit]{display:none}
+.dr-findings [data-budget-skipped],.dr-findings [data-budget-partial]{overflow-wrap:anywhere}
 /* s7-cards */
-.cc-card{margin:0}
+.cc-card{margin:0;min-width:0;overflow-wrap:anywhere}
+.cc-card .cite-head{flex-wrap:wrap}
+.cc-card .cite-head>span{min-width:0}
+.cc-card .cite-head a,.cc-card [data-control-evidence] a{text-decoration:underline;text-underline-offset:2px}
 .cc-requirement{display:flex;flex-direction:column;gap:var(--s-5)}
 .cc-remediation{display:flex;flex-direction:column;gap:var(--s-3)}
 .cc-pre{white-space:pre-line}
