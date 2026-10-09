@@ -76,7 +76,6 @@ MIGRATED_TEMPLATES = {
     "pages/engagement_purge.html",
     "pages/engagements.html",
     "pages/evidence_detail.html",
-    "pages/evidence_span.html",
     "pages/firm_settings.html",
     "pages/login.html",
     "pages/new_assessment.html",

@@ -83,6 +83,22 @@ def _control_title(framework_id, requirement_id):
     return f'{control.title} ({requirement_id})' if control else requirement_id
 
 
+def _span_href(version_id, ref):
+    return '/evidence-versions/' + version_id + '/span?' + urlencode({'ref': ref}) + '#cited-span'
+
+
+def _control(framework_ids, control_id):
+    """Title and id for a coverage area; areas that are not control ids keep the raw id."""
+    from app.frameworks.registry import FrameworkRegistry
+
+    for framework_id in framework_ids:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        control = framework.get_control(control_id) if framework else None
+        if control:
+            return {'id': control_id, 'title': control.title}
+    return {'id': control_id, 'title': None}
+
+
 def viewer_context(db: Session, evidence: dict) -> dict:
     current = evidence['current_version']
     version = db.get(EvidenceVersion, current['id']) if current else None
@@ -99,7 +115,10 @@ def viewer_context(db: Session, evidence: dict) -> dict:
             assessment = db.get(Assessment, summary.assessment_id)
             for entry in _json_list(summary.document_catalog):
                 if isinstance(entry, dict) and entry.get('filename') == version.original_filename:
-                    catalog.append({'entry': entry, 'assessment': assessment.display_name})
+                    areas = entry.get('coverage_areas')
+                    controls = [_control(assessment.frameworks, area) for area in areas
+                                if isinstance(area, str) and area] if isinstance(areas, list) else []
+                    catalog.append({'entry': entry, 'assessment': assessment.display_name, 'controls': controls})
     citations = []
     version_ids = {item['id'] for item in evidence['versions']}
     # Include historical revisions: citations refer to immutable versions.
@@ -110,8 +129,31 @@ def viewer_context(db: Session, evidence: dict) -> dict:
     ).filter(mentions(ConclusionRevision.citations_json)).all() if version_ids else []
     sources = [(rev.citations_json, f'Conclusion: {_control_title(con.framework_id, con.requirement_id)}',
                 con.assessment_id) for rev, con in rows]
-    sources += [(row.citations_json, row.content, row.assessment_id)
-                for row in db.query(DeskReviewFinding).filter(mentions(DeskReviewFinding.citations_json)).all()] if version_ids else []
+    findings = db.query(DeskReviewFinding).filter(
+        mentions(DeskReviewFinding.citations_json)).all() if version_ids else []
+    sources += [(row.citations_json, row.content, row.assessment_id) for row in findings]
+    passages = {}
+    for row in findings:
+        if row.finding_type != 'evidence' or not row.requirement_id:
+            continue
+        for citation in _json_list(row.citations_json):
+            if not isinstance(citation, dict) or citation.get('evidence_version_id') not in version_ids:
+                continue
+            if row.framework_id:
+                framework_ids = [row.framework_id]
+            else:
+                finding_assessment = db.get(Assessment, row.assessment_id)
+                framework_ids = finding_assessment.frameworks if finding_assessment else []
+            group = passages.setdefault(row.requirement_id,
+                                        {**_control(framework_ids, row.requirement_id), 'passages': []})
+            ref = citation.get('location_ref', 'whole')
+            href = _span_href(citation['evidence_version_id'], ref)
+            if any(passage['href'] == href for passage in group['passages']):
+                continue
+            group['passages'].append({
+                'excerpt': citation.get('excerpt') or row.source_quote or '',
+                'location': location_label(ref), 'href': href,
+            })
     for payload, label, assessment_id in sources:
         for citation in _json_list(payload):
             if not isinstance(citation, dict) or citation.get('evidence_version_id') not in version_ids:
@@ -121,8 +163,7 @@ def viewer_context(db: Session, evidence: dict) -> dict:
             citations.append({
                 'label': label, 'assessment': assessment.display_name if assessment else 'Assessment',
                 'location': location_label(ref), 'excerpt': citation.get('excerpt', ''),
-                'href': '/evidence-versions/' + citation['evidence_version_id'] + '/span?' +
-                        urlencode({'ref': ref}) + '#cited-span',
+                'href': _span_href(citation['evidence_version_id'], ref),
             })
     return {
         'viewer_version': version,
@@ -131,6 +172,7 @@ def viewer_context(db: Session, evidence: dict) -> dict:
         'text_blocks': text_blocks(version.extracted_text or '', version.mime_type in TABULAR_MIMES)
                        if version else [],
         'catalog_entries': catalog, 'viewer_citations': citations,
+        'key_passages': sorted(passages.values(), key=lambda group: group['id']) if catalog else [],
     }
 
 

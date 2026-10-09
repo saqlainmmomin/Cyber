@@ -1001,6 +1001,10 @@ def test_scenario_11_span_viewer_highlights_the_cited_span(db, http, monkeypatch
     citation = claim["citation"]
     href = claim_href(claim).split("#", 1)[0]
 
+    redirect = http.get(href, follow_redirects=False)
+    assert redirect.status_code == 303
+    assert redirect.headers["location"].startswith("/evidence/")
+    assert redirect.headers["location"].endswith("#cited-span")
     page = http.get(href)
     assert page.status_code == 200
     mark = re.search(r'<mark id="cited-span" data-cited-span>(.*?)</mark>', page.text, re.S)
@@ -1008,8 +1012,7 @@ def test_scenario_11_span_viewer_highlights_the_cited_span(db, http, monkeypatch
     assert "policy.pdf" in page.text and "Version 1" in page.text
     assert "Current version" in page.text
     assert citation["location_ref"] in page.text
-    for token in ("<form", "hx-post", "hx-put", "hx-delete"):
-        assert token not in page.text.lower()
+    assert page.text.count('id="cited-span"') == 1
 
     vid = citation["evidence_version_id"]
     for ref in ("chars:5-1", "chars:0-999999", "page:3", ""):
@@ -1018,7 +1021,7 @@ def test_scenario_11_span_viewer_highlights_the_cited_span(db, http, monkeypatch
     assert http.get("/evidence-versions/nope/span", params={"ref": "chars:0-5"}).status_code == 404
     whole = http.get(f"/evidence-versions/{vid}/span", params={"ref": "whole"})
     assert whole.status_code == 200 and "Whole document cited" in whole.text
-    assert "cited-span" not in whole.text
+    assert 'id="cited-span"' not in whole.text
 
     version = db.get(EvidenceVersion, vid)
     version.status = "superseded"

@@ -4,16 +4,15 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.assessment import Assessment
-from app.models.client import Client
 from app.models.engagement import Engagement
-from app.models.evidence import Evidence, EvidenceVersion
 from app.services import conclusion_review, requirement_card, review_queue, rfi_evidence_requests
+from app.services.evidence_locations import cited_href
 from app.template_config import configure_templates
 
 router = APIRouter(tags=["requirement-review"])
@@ -196,34 +195,15 @@ def withdraw_rfi_request(
     return response
 
 
-@router.get("/evidence-versions/{version_id}/span", response_class=HTMLResponse)
+@router.get("/evidence-versions/{version_id}/span")
 def evidence_span(
-    request: Request,
     version_id: str,
     ref: str = "",
     db: Session = Depends(get_db),
 ):
+    """Citation links land on the evidence record, with the cited passage highlighted."""
     try:
         view = requirement_card.span_view(db, version_id, ref)
     except requirement_card.RequirementCardError as exc:
         raise HTTPException(exc.status_code, exc.message) from exc
-    evidence = db.get(Evidence, view.evidence_id)
-    engagement = db.get(Engagement, evidence.engagement_id) if evidence else None
-    client = db.get(Client, engagement.client_id) if engagement else None
-    current_version = (
-        db.query(EvidenceVersion)
-        .filter(EvidenceVersion.evidence_id == view.evidence_id, EvidenceVersion.status == "active")
-        .order_by(EvidenceVersion.version_number.desc())
-        .first()
-    )
-    return _templates.TemplateResponse(
-        request=request,
-        name="pages/evidence_span.html",
-        context={
-            "request": request,
-            "view": view,
-            "engagement": engagement,
-            "client": client,
-            "current_version": current_version,
-        },
-    )
+    return RedirectResponse(cited_href(view.evidence_id, version_id, ref), status_code=303)
