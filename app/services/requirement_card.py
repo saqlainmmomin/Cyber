@@ -15,8 +15,9 @@ from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
-from app.models.evidence import Evidence, EvidenceVersion
-from app.services import desk_review_v2, report_basis, rfi_evidence_requests
+from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
+from app.models.desk_review import DeskReviewSummary
+from app.services import desk_review, desk_review_v2, report_basis, rfi_evidence_requests
 from app.services.citations import resolve_citations
 
 FALLBACK_CRITERIA_LABEL = "Judged against the control description; no approved test criteria yet"
@@ -148,6 +149,13 @@ class DivergenceNote:
 
 
 @dataclass(frozen=True)
+class LinkedEvidence:
+    evidence_id: str
+    filename: str
+    cited: bool = False
+
+
+@dataclass(frozen=True)
 class CardContext:
     assessment: object
     runs: dict[str, AnalysisRun]
@@ -157,6 +165,8 @@ class CardContext:
     claim_set_id: str | None
     acks: dict[tuple[str, str, str], AuditEvent]
     rfi_states: dict = field(default_factory=dict)
+    linked_evidence: dict = field(default_factory=dict)
+    budget_skipped_filenames: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -195,7 +205,13 @@ class RequirementCard:
     missing_evidence: tuple[MissingEvidence, ...]
     missing_evidence_label: str | None
     divergence: DivergenceNote | None
+    linked_evidence: tuple[LinkedEvidence, ...] = ()
+    budget_skipped_filenames: tuple[str, ...] = ()
     other_rfi_requests: tuple = ()
+
+    @property
+    def cited_file_count(self) -> int:
+        return sum(item.cited for item in self.linked_evidence)
 
 
 class RequirementCardError(Exception):
@@ -281,6 +297,25 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
                 continue
             acknowledgement_by_key.setdefault((event.entity_id, run_id, cluster_id), event)
 
+    # Load all active control mappings once for the assessment, never once per card.
+    linked_evidence: dict[tuple[str, str], list[LinkedEvidence]] = {}
+    rows = db.execute(
+        select(EvidenceUse.framework_id, EvidenceUse.requirement_id,
+               Evidence.id, EvidenceVersion.original_filename)
+        .join(Evidence, Evidence.id == EvidenceUse.evidence_id)
+        .join(EvidenceVersion, EvidenceVersion.evidence_id == Evidence.id)
+        .where(EvidenceUse.assessment_id == assessment.id,
+               Evidence.status == "active", EvidenceVersion.status == "active")
+        .order_by(EvidenceVersion.original_filename, Evidence.id)
+    ).all()
+    for framework_id, requirement_id, evidence_id, filename in rows:
+        linked_evidence.setdefault((framework_id, requirement_id), []).append(
+            LinkedEvidence(evidence_id, filename)
+        )
+    summary = db.execute(
+        select(DeskReviewSummary).where(DeskReviewSummary.assessment_id == assessment.id)
+    ).scalar_one_or_none()
+
     return CardContext(
         assessment=assessment,
         runs=runs,
@@ -290,6 +325,8 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
         claim_set_id=claim_set.claim_set_id if claim_set is not None else None,
         acks=acknowledgement_by_key,
         rfi_states=rfi_evidence_requests.request_states(db, assessment, ids),
+        linked_evidence=linked_evidence,
+        budget_skipped_filenames=tuple(desk_review.budget_skipped_filenames(summary)),
     )
 
 
@@ -414,8 +451,10 @@ def _rfi_missing_evidence(
 ) -> tuple[tuple[MissingEvidence, ...], tuple]:
     states = context.rfi_states.get(conclusion.id, {})
     visible_keys: set[str] = set()
+    # Linked files replace the suggestions; requests already on the draft RFI stay.
+    linked = bool(context.linked_evidence.get((conclusion.framework_id, conclusion.requirement_id)))
     if source != "v2":
-        return missing, tuple(states.values())
+        return (() if linked else missing), tuple(states.values())
 
     rendered = []
     for entry in missing:
@@ -446,6 +485,8 @@ def _rfi_missing_evidence(
     orphans = tuple(
         state for key, state in states.items() if key not in visible_keys
     )
+    if linked:
+        rendered = [entry for entry in rendered if entry.rfi_state != "available"]
     return tuple(rendered), orphans
 
 
@@ -589,12 +630,25 @@ def _quality_v1(envelope: dict, item: dict, citations: list[dict], conclusion: C
 
 
 def build_card(context: CardContext, conclusion: Conclusion, proposal: ConclusionRevision | None, citations) -> RequirementCard:
+    cited_evidence_ids = {citation.get("evidence_id") for citation in citations if citation.get("resolved")}
+    linked = tuple(
+        LinkedEvidence(item.evidence_id, item.filename, item.evidence_id in cited_evidence_ids)
+        for item in context.linked_evidence.get((conclusion.framework_id, conclusion.requirement_id), ())
+    )
+    evidence_context = {
+        "linked_evidence": linked,
+        "budget_skipped_filenames": tuple(
+            dict.fromkeys(item.filename for item in linked
+                          if item.filename in context.budget_skipped_filenames)
+        ),
+    }
     entry = _entry_for(context, proposal)
     if entry is None:
         missing_evidence, other_rfi_requests = _rfi_missing_evidence(
             context, conclusion, "none", ()
         )
         return RequirementCard(
+            **evidence_context,
             source="none", analysis_run_id=None, proposed_outcome=None, reason=None,
             criteria_source=None, criteria_label=None, criteria=(), claims=(),
             response=None, contradictions=(), unsupported_assertion=False,
@@ -616,6 +670,7 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
             _missing_evidence_v1(conclusion.framework_id, conclusion.requirement_id, outcome),
         )
         return RequirementCard(
+            **evidence_context,
             source="v1", analysis_run_id=run_id, proposed_outcome=outcome,
             reason=item.get("gap_description") or None, criteria_source=None,
             criteria_label=V1_SOURCE_LABEL, criteria=(), claims=(), response=None,
@@ -662,6 +717,7 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
         _missing_evidence_v2(conclusion.framework_id, item),
     )
     return RequirementCard(
+        **evidence_context,
         source="v2", analysis_run_id=run_id, proposed_outcome=outcome, reason=reason,
         criteria_source=criteria_source, criteria_label=criteria_label,
         criteria=_criterion_rows(item, set(cited_ids)), claims=claim_views,

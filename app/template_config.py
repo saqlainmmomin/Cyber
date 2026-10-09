@@ -284,6 +284,9 @@ def _branding_context(templates, request):
 def configure_templates(templates):
     """Set template globals. Safe to call multiple times (idempotent)."""
     from app.services.report_basis import basis_for
+    from app.services.evidence_locations import location_label
+
+    templates.env.globals["evidence_location_label"] = location_label
 
     templates.env.globals["branding"] = {
         "firm_name": settings.firm_name,

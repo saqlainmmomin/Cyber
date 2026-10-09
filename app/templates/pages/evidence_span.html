@@ -15,7 +15,7 @@
 <div class="page-note" data-span-unavailable data-location-ref="{{ view.location_ref }}">{{ alert("The extracted text of this version is no longer available", "Open the evidence record to download the original file.", "noncompliant") }}</div>
 {% else %}
 <section class="cite solid citation-view" data-location-ref="{{ view.location_ref }}">
-  <div class="cite-head">{{ icon("file") }}<span>{{ view.filename }}</span><span class="pg">{% if view.location_ref.startswith("page:") %}Page {{ view.location_ref[5:] }}{% elif view.whole %}Whole document{% elif view.location_ref.startswith("chars:") %}Characters {{ view.location_ref[6:]|replace("-", "–", 1) }}{% else %}{{ view.location_ref }}{% endif %}</span><span class="sp"></span>{% if view.is_current %}{{ status("Current version", tone="accent") }}{% else %}<span class="warn">{{ icon("alert") }}Older version</span>{% endif %}</div>
+  <div class="cite-head">{{ icon("file") }}<span>{{ view.filename }}</span><span class="pg">{{ evidence_location_label(view.location_ref) }}</span><span class="sp"></span>{% if view.is_current %}{{ status("Current version", tone="accent") }}{% else %}<span class="warn">{{ icon("alert") }}Older version</span>{% endif %}</div>
   {% if view.whole %}
   <p class="sub cite-note">Whole document cited.</p>
   <div class="cite-text" data-evidence-span-text>{{ view.before }}{% if view.truncated_after %}…{% endif %}</div>

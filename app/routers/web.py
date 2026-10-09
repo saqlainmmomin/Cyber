@@ -3707,11 +3707,17 @@ def desk_review_status_view(
         requirement_id: {"title": control.title, "reference": control.reference}
         for requirement_id, control in controls.items()
     }
-    document_names = dict(
-        db.query(AssessmentDocument.id, AssessmentDocument.filename)
-        .filter(AssessmentDocument.assessment_id == assessment_id)
-        .all()
-    )
+    from app.services.desk_review import budget_skipped_filenames
+
+    document_names = evidence_service.document_names_in_scope(db, assessment_id)
+    for finding in evidence:
+        finding.display_filename = evidence_service.finding_document_name(
+            finding.document_id, finding.citations_json, document_names
+        )
+    for signal in signals:
+        signal["display_filename"] = evidence_service.finding_document_name(
+            signal["document_id"], signal["citations_json"], document_names
+        )
     catalog = json.loads(summary.document_catalog) if summary.document_catalog else []
     failed_ids = failed_desk_review_frameworks(summary)
     failed_framework_names = [framework_label(framework_id) for framework_id in failed_ids]
@@ -3744,6 +3750,7 @@ def desk_review_status_view(
         "coverage_framework_text": _framework_list_text(coverage_framework_names),
         "requirement_details": requirement_details,
         "document_names": document_names,
+        "budget_skipped_filenames": budget_skipped_filenames(summary),
         "catalog": catalog,
         "failed_framework_names": failed_framework_names,
         "failed_framework_text": _framework_list_text(failed_framework_names),

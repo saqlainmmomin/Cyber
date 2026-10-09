@@ -1061,3 +1061,42 @@ def evidence_detail(db: Session, evidence_id: str) -> dict:
             for use in uses
         ],
     }
+
+
+def document_names_in_scope(db: Session, assessment_id: str) -> dict[str, str]:
+    """Resolve legacy IDs, evidence IDs and immutable version IDs in one scope."""
+    names = dict(
+        db.query(AssessmentDocument.id, AssessmentDocument.filename)
+        .filter(AssessmentDocument.assessment_id == assessment_id)
+        .all()
+    )
+    used = select(EvidenceUse.evidence_id).where(EvidenceUse.assessment_id == assessment_id)
+    versions = (
+        db.query(EvidenceVersion.id, EvidenceVersion.evidence_id,
+                 EvidenceVersion.original_filename, EvidenceVersion.status)
+        .join(Evidence, Evidence.id == EvidenceVersion.evidence_id)
+        .filter(or_(Evidence.assessment_id == assessment_id, Evidence.id.in_(used)))
+        .order_by(EvidenceVersion.version_number)
+        .all()
+    )
+    for version in versions:
+        names[version.id] = version.original_filename
+        if version.status == "active":
+            names[version.evidence_id] = version.original_filename
+    return names
+
+
+def finding_document_name(document_id: str | None, citations_json: str | None,
+                          names: dict[str, str]) -> str | None:
+    """Prefer the filename of the cited version over a legacy document label."""
+    try:
+        citations = json.loads(citations_json or "[]")
+    except (json.JSONDecodeError, TypeError):
+        citations = []
+    if isinstance(citations, list):
+        for citation in citations:
+            if isinstance(citation, dict):
+                filename = names.get(citation.get("evidence_version_id"))
+                if filename:
+                    return filename
+    return names.get(document_id)

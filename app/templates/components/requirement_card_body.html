@@ -3,6 +3,18 @@
   {% set requirement = card.requirement %}
   {% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "not_applicable": "Not applicable", "insufficient_evidence": "Insufficient evidence"} %}
   <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or "" }}" class="cc-requirement">
+    <div class="block" data-control-evidence-list>
+      <h3>Evidence on this control</h3>
+      {% if requirement.linked_evidence %}
+      <p class="sub" data-linked-evidence-count>{{ requirement.linked_evidence|length }} file{{ "s" if requirement.linked_evidence|length != 1 }} linked, {{ requirement.cited_file_count }} cited</p>
+      <ul class="cc-claims">
+        {% for evidence in requirement.linked_evidence %}
+        <li data-control-evidence="{{ evidence.evidence_id }}"><a href="/evidence/{{ evidence.evidence_id }}">{{ evidence.filename }}</a><p class="sub">{{ "Cited" if evidence.cited else "Not cited by the analysis" }}</p></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="sub">No files linked.</p>{% endif %}
+      {% if requirement.budget_skipped_filenames %}<p class="sub" data-budget-skipped>Not read by the analysis (size limit): {{ requirement.budget_skipped_filenames|join(", ") }}</p>{% endif %}
+    </div>
     {% if requirement.source == "none" %}
     <div class="block"><p class="muted">No analysis run is linked to this conclusion.</p></div>
     {% else %}
