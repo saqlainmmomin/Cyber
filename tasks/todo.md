@@ -15,6 +15,14 @@
 - [x] Prepare Part A results and PR body.
 - [x] Committed and merged (#131). Unscoped reuse limitation remains recorded in Part A results.
 
+## Veldhara demo depth approved 2026-10-09
+
+- [x] Generate the independent upload pack, substantive fictional originals, archive, and explicit full-scope coverage matrix.
+- [x] Write the consultant entry guide against the actual questionnaire, including shared mappings and follow-up facts.
+- [x] Align the optional four-stage seed with fixed dates, full registered ISO scope, historical evidence, and true quotations.
+- [x] Verify deterministic bytes, all extracted artifacts, workbook exceptions, visual rendering, quotation integrity, clean seed, manual routes, and full tests.
+- [x] Record delivery paths, citation changes, app scope limitations, and review instructions. Do not merge.
+
 ## Flow rework S6-F1: XLSX/CSV extraction and scanned-PDF OCR (2026-10-07)
 
 - [x] Implement spreadsheet extraction, scanned-PDF OCR fallback, upload acceptance, and focused regression coverage from `tasks/handoffs/2026-10-07-flow-s6-f1-xlsx-ocr.md`.
