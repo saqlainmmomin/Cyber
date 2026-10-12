@@ -53,7 +53,7 @@ Append `## Results` to this file: recommendation first (three sentences), then t
 
 ## Results
 
-Revision 4, 2026-10-12 (revision 3 plus the changes required by Codex review 2, listed under "Revision 4 changes"; where they differ, revision 4 wins). Revision 3: Replaces revision 1 (2026-10-10, chunked batch) and revision 2 (2026-10-11, read on arrival with stale-only re-judging). Revision 2 was reviewed by Codex: **NO-GO as written**, 29 findings (`tasks/handoffs/2026-10-11-document-reads-codex-review.md`). This revision answers those findings within the narrower scope Saqlain approved. Status: **design for Codex's second review. Nothing is built.**
+Revision 5, 2026-10-12 (revision 4 plus the pre-implementation check, listed under "Revision 5 changes"; where they differ, revision 5 wins). Revision 4: revision 3 plus the changes required by Codex review 2, listed under "Revision 4 changes". Revision 3: Replaces revision 1 (2026-10-10, chunked batch) and revision 2 (2026-10-11, read on arrival with stale-only re-judging). Revision 2 was reviewed by Codex: **NO-GO as written**, 29 findings (`tasks/handoffs/2026-10-11-document-reads-codex-review.md`). This revision answers those findings within the narrower scope Saqlain approved. Status: **design for Codex's second review. Nothing is built.**
 
 ### Recommendation
 
@@ -274,6 +274,38 @@ Review: `tasks/handoffs/2026-10-12-document-reads-codex-review-2.md`. Claude con
   - A one-part file across six frameworks needs seven calls, so two waves at concurrency 4 or 6.
   - A combined extraction call across frameworks would cut 910 calls to 260 (3.5 times, not 6).
   - The six-framework end-of-assessment cost includes one cross-framework synthesis call at about 8k input and 2k output.
+
+### Revision 5 changes (2026-10-12, pre-implementation check; Saqlain: "all defaults")
+
+Source: `tasks/handoffs/2026-10-12-implementation-kickoff.md`, Results, Part 1. Nothing here changes a stage's order or what it delivers. Each change is binding for the stage it names.
+
+**Decided by Saqlain (defaults accepted 2026-10-12)**
+
+| # | Decision | Stage |
+|---|---|---|
+| M1 | A "Mark not readable" action records who, when and why, and the file shows as "excluded by consultant" on the card and in the report. This is the only way a file becomes "explicitly unreadable" for the readiness contract (N5). | 4 |
+| M2 | The evidence record shows the reader's type, period and owner as well as the summary. The reader's type is a suggestion beside the consultant's upload category, not a second truth. | 4 |
+| M3 | A re-read caused by a fingerprint change (model, prompt, part settings) shows a cost preview and needs an explicit confirm. New uploads queue without asking. `reads_max_concurrency` respects the provider's rate limit. | 3 |
+| M8 | Released reports name unread and excluded files in one additive line in the evidence basis ("N files read, M not read", with names). Additive-only PDF rule applies. | 1 |
+| C3 | Reads are created only for document-source evidence. Interview evidence (flow-plan S7) is excluded from document reads. | 3 |
+| C5 | Flow-plan S6-F2 is rescoped: the as-of date is an `EvidenceVersion` column set at upload or read, and appears in the stage 5 catalog line. No separate desk-review prompt edit. The reader's "period" is the source of that column or is dropped. | S6-F2, 4 |
+| M6 | Stage 1 uses upload order for registry frameworks. The curated DPDPA path keeps its legacy priority list so its goldens stay byte for byte. | 1 |
+
+**Technical changes (no product-visible effect)**
+
+- **C2, stage 3.** The dispatcher sweeps reconciliation on a short interval, and a post-commit nudge keeps latency low. The wanted set is `active_versions_in_scope` crossed with the assessment's frameworks. The "every path in Codex's path table" instrumentation is replaced by the sweep, so later write paths need no instrumentation. Startup and backfill calls stay. One test lists every writer of `Evidence.assessment_id` and `EvidenceUse`.
+- **C4, flow-plan S5.** The side-by-side card reads `citations_json` (versioned), never `document_id`.
+- **C6, stage 2c.** Framework-conditional section refs live in one service helper, not in the two templates, so S8's merged review screen reuses them.
+- **C7, stage 6.** The gate compares setting off versus on at the same commit only. It is never compared against the stage 2 baseline, because S3 changes prompt input between the two.
+- **M5, stage 1.** Manifests live in the existing JSON: the gap-analysis manifest in the `AnalysisRun.claims_json` envelope (`app/services/analysis_pipeline.py:179-215`) and the desk-review manifest beside its budget lists in `raw_ai_response`. No new table and no Alembic revision in stage 1.
+- **M6 detail, stage 1.** Desk review today takes upload order (`app/services/desk_review.py:692-708`). Gap analysis sorts by the legacy DPDPA list (`app/services/claude_analyzer.py:419-456`). One selection function takes an ordering argument. The existing order test (`tests/test_remaining_llm_call_sites.py`) and the fingerprint test (`tests/test_p6_1b_framework_batching.py:152`) are updated deliberately.
+- **M7, stage 1.** `analysis_documents` (`app/services/evidence.py:879-915`) gains `evidence_version_id`. Manifests and links key by it, never by filename.
+- **M4, stage 4.** An env-gated deterministic fake reader at the reader seam, as `tests/support/analyzer_mock.py` does for analysis, so click-throughs for stages 3 to 5 cost nothing.
+
+**Cost correction.** The UI enables three frameworks (`app/routers/web.py:86`; flow-plan P8). The six-framework case in the cost table is not reachable through the product today.
+- Estimate for 100 files and 100k words with three frameworks: 130 reader plus 390 extraction calls, 520 in all. About $0.5 and about 22 minutes at concurrency 6 and 15 s a call (33 minutes at 4). Same inputs as the table above. Not measured.
+- The Veldhara case is unchanged.
+- The first live run (2026-10-12, `tasks/handoffs/2026-10-12-implementation-kickoff.md` Results, Part 2b) replaces these with measurements.
 
 ### Questions for Saqlain
 

@@ -111,3 +111,121 @@ Do it yourself or through a Sonnet subagent in a worktree. Either way it gets Co
 
 ## Report back
 Append `## Results` to this file, with Part 1, Part 2a, Part 2b and Part 3 subsections: what was done, PR links, run folder path, spend, and open questions. Commit this file's Results on the relevant PR branch.
+
+## Results
+
+### Part 1. Pre-implementation check (2026-10-12)
+
+**Verdict: GO, with six small changes to revision 4 that cost nothing now and would cost rework later.** Nothing blocks Part 2. Nothing in revision 4 needs to be re-done. I read the plan, both Codex reviews, the session record, flow-plan S3 to S9 and the E4 handoff, and checked each claim below in the code on `main` at d50cc61. Line numbers are from today; several in the plan have drifted by a few lines.
+
+**Setup facts.**
+- The kickoff was only on the unmerged branch `claude/document-reads-design`. #136 has since merged, so I fast-forwarded this worktree to `origin/main`.
+- #137 (strip "synthetic" from two Veldhara originals) is still open.
+- `scripts/demo/seed_intake.py` is untracked in this worktree and not mine. I will not touch or commit it.
+
+#### 1. Is revision 4 the right approach?
+
+Yes. The simpler alternative fails a decision Saqlain already made.
+
+- **Simplest alternative:** remove the cap, batch desk review, and cache the existing per-framework extraction by file hash, framework and prompt fingerprint. A later run then pays only for new files. It needs no queue, no dispatcher, no reconciliation and no readiness gate.
+- **Why it loses:** the work happens when the consultant clicks Run, not on arrival. That is the 20 to 30 minute end-of-assessment run Saqlain rejected on 2026-10-11 (plan Decisions table). So reading on arrival stays.
+- **The design is right in shape.** The size comes from three things that are optional:
+  - stage 6b (retire the setting and the off branches);
+  - one extraction call per framework per part;
+  - generation ids with re-read history.
+  
+  None of them has to be built to reach the goal. Stage 6b is already last. The other two are cheap to keep.
+- **Cost model correction.** The UI enables three frameworks, not six (`app/routers/web.py:86`, `ENABLED_ASSESSMENT_FRAMEWORKS = ("dpdpa", "iso27001", "nist_csf")`; flow-plan P8). The plan's six-framework case is not reachable through the product today.
+  - Estimate for 100 files, 100k words, three frameworks: 130 reader + 390 extraction = 520 read calls. That is about $0.5 and about 22 minutes at concurrency 6 and 15 s a call (33 minutes at 4).
+  - Inputs: the plan's 1.6 tokens a word, $0.14 and $0.28 per million tokens, about 5k tokens of control text per extraction call (Codex review 2, N7). Not measured.
+  - The Veldhara case (122 calls, about $0.08) is unchanged.
+- **Where to look first:** the live run decides combined versus per-framework extraction and the part size. Stage 3 is fifth in the sequence, so those measurements arrive in time. Keep both choices open until the run's numbers are in.
+
+#### 2. Does the edited sequence avoid rework? Conflicts still present
+
+| # | Where | What conflicts | Fix (cheap, now) |
+|---|---|---|---|
+| C1 | Stage 1 and E4 | Same files: `app/services/requirement_card.py` (budget lists at `:169-170`, `:210-211`, `:331-332`, `:643-649`; E4 at `:660`, `:683`, `:806`), `app/templates/components/requirement_card_body.html` (`:17`), `tests/test_p6_7_requirement_card.py`. | Already handled: stage 1 waits for E4 to merge (kickoff Part 3). Keep it that way. Rule 2 would otherwise forbid it. |
+| C2 | Stage 3 `reconcile_reads` and S3, S4, S7 | The plan calls `reconcile_reads` "after commit on every path in Codex's path table". That table was drawn on 2026-10-11 code. S4 adds an evidence-to-RFI-item link and a client-link scope path. S7 adds interview evidence. A path table rots the day the next slice lands. | Make the dispatcher sweep the reconciliation on a short interval (and nudge it after commit). The wanted set is already one query, `active_versions_in_scope` (`app/services/evidence.py:843-865`), crossed with the assessment's frameworks. Future write paths then need no instrumentation. Keep the startup and backfill calls. Add one test that lists every writer of `Evidence.assessment_id` and `EvidenceUse`. |
+| C3 | Stage 4/5 and S7 | S7 stores meeting notes as Evidence with source "interview" (flow plan S7). `Evidence` has no source field today (`app/models/evidence.py:10-29`). Today every in-scope evidence row reaches desk review (`analysis_documents`, `evidence.py:879-915`). Under reads, interview notes would be read by the framework reader and enter judge passages. That puts the operating side (interviews) into the design side (documents), against P1. | Add one rule to stage 3: reads are created only for document-source evidence. S7 sets its source and is excluded, or included knowingly. State it in the plan now. |
+| C4 | Stage 5 and S5 | S5 (side-by-side card, built before stage 5) shows "the cited document". Stage 5 keeps `document_id` empty for new-mode findings. Consumers of `document_id`: `app/routers/desk_review.py:97`, `:121`, `app/services/desk_review_findings.py:65`, `app/routers/web.py:3734`. | Build S5 against `citations_json` (versioned), never `document_id`. Add one line to the S5 scope. |
+| C5 | Stage 5 and S6-F2 | S6-F2 stores an as-of date on `EvidenceVersion` and feeds it into desk-review prompts. Stage 5 replaces that input with a catalog line per file. The reader also extracts "period". Two sources for one fact, and a prompt edit against input that is about to change. | Rescope S6-F2 now: the date is an `EvidenceVersion` column, set at upload or read, and appears in the stage 5 catalog line. No separate prompt edit. Drop "period" from the reader or make it the source of that column. |
+| C6 | Stage 2c and S8 | Stage 2c adds framework-conditional section refs on conclusions and the review queue. S8 later merges Queue and Conclusions into one screen (P4). If the refs are written in the two templates, S8 redoes them. | Write the refs in one service helper, not in templates. S8 then reuses it. |
+| C7 | Stage 6 gate and S3 | Revision 3 says the stage 2 A/B baseline "stands alone" for stage 6. S3 removes the context-profile header from the analysis prompt (flow plan S3, P2) and changes input between the two. Comparing stage 6 to the stage 2 baseline confounds the two changes. | Stage 6 compares setting off versus on at the same commit only. Never against the stage 2 baseline. |
+
+**Checked and fine:**
+- Stage 2a/2b/2c against S3: 2a edits `_get_selected_frameworks` (`app/routers/questionnaire.py:321-327`), which the questionnaire routes use (`:167`, `:204`), not the context routes S3 deletes. 2b is already trimmed to the follow-up engine. S3 and S4 migrations form one linear Alembic chain behind 2a's new revision.
+- S3 deletes `context_profiler`. 2a/2b/2c do not touch it.
+- S4's new tables go on the purge list with stage 3's read tables (`app/services/retention.py`); the FK-order test covers both.
+- S6-F3 (re-map to another RFI item) does not change read identity.
+- S9 is content only.
+
+#### 3. What is missing
+
+| # | Gap | Evidence | Add to |
+|---|---|---|---|
+| M1 | **No way for a file to become "explicitly unreadable".** Readiness (N5) refuses a framework run while any read is queued or failed. The plan lists "not readable" as a settled state but gives no action that sets it. One corrupt scan would block the whole framework. | plan Contracts, Readiness | Stage 4: a "Mark not readable" button that stores who, when and why, and shows on the card and the report as "excluded by consultant". This is also how "nothing dropped silently" holds when the consultant chooses to drop. |
+| M2 | **Reader fields that nobody sees.** The reader returns type, period, owner and summary; stage 4 displays only the summary and passages. That is the "stored, never rendered" failure the coherence map found at step 4 (`tasks/2026-10-08-ai-coherence-map.md`). | plan Stage 4 | Stage 4: show type, period and owner on the evidence record, or drop them from the reader prompt. Treat the reader's type as a suggestion beside the consultant's upload category, not a second truth. |
+| M3 | **Silent bulk re-read on a settings change.** Fingerprints include model id and prompt fingerprint. A model switch (Track 4, Bedrock Mumbai) or a prompt edit makes every read stale and the sweep queues them all. That is a surprise spend and a long background job. | plan Stage 3 read identity | Stage 3: re-reads caused by a fingerprint change need a cost preview and an explicit confirm. New uploads queue without asking. Also make `reads_max_concurrency` respect the provider's rate limit, since Bedrock quotas differ. |
+| M4 | **Click-throughs for stages 3 to 5 need real reads.** `scripts/demo/seed_demo.py` stubs the LLM (`:1240-1263`). "Drop the Veldhara pack and watch files fill in" would cost money each time, or show nothing. | plan Stage 4 click-through | Stage 4: an env-gated deterministic fake reader at the reader seam, as `tests/support/analyzer_mock.py` does for analysis. The live run's captures can seed its fixtures (private folder, so it is Saqlain's call). |
+| M5 | **Stage 1 manifest has a home, and it needs no migration.** The plan does not say where manifests live. | `app/models/analysis_run.py:10-21` (`claims_json` envelope per framework, created in `app/services/analysis_pipeline.py:179-215`, called at `app/routers/analysis.py:280`, `:539`); desk review keeps its budget lists in `raw_ai_response` (`app/services/desk_review.py:490-511`) | Put the gap-analysis manifest in the run envelope and the desk-review manifest in the same JSON. No new table, no Alembic revision in stage 1. |
+| M6 | **Stage 1's selection function has two callers with different orders.** Desk review does not sort: it takes documents in upload order (`app/services/desk_review.py:692-708`). Gap analysis sorts by the legacy DPDPA category list (`app/services/claude_analyzer.py:419-456`, `:426` priority list), in the multi-framework path (`:521`) and in the curated DPDPA path (`:89`). The two stages drop different files today, and the plan's "both sort" is wrong for desk review. | | Stage 1: one function with an ordering argument. Registry frameworks use upload order (no DPDPA list in shared code). The curated DPDPA path keeps its priority list so the goldens stay byte for byte. The existing test `tests/test_remaining_llm_call_sites.py` ("truncation preserves document order") and the fingerprint test (`tests/test_p6_1b_framework_batching.py:152`) are updated deliberately. |
+| M7 | **`analysis_documents` carries no version id.** Manifests are "by evidence version id" but the dict has `id` = evidence id (`app/services/evidence.py:895-903`). Duplicate filenames collide in `doc_id_by_filename` (`desk_review.py:82`). | | Stage 1: add `evidence_version_id` to the dict and key manifests and links by it, not by filename. |
+| M8 | **Report coverage.** The plan says reports are untouched. Reports do not name unread or excluded files today (no `budget_` or "not read" reference in `app/utils/pdf_export.py`, `app/services/narrative.py`, `app/services/approved_report.py`). A released report can therefore hide a dropped file even after stage 1. | grep, no hits | Stage 1 or 5: one line in the report's evidence basis, "N files read, M not read (names)". Additive-only PDF rule applies: add a section, do not rewrite pages. Saqlain to confirm. |
+
+Also checked and found fine: retention of read text (stage 3 purges reads before versions), the validation runner (settle-wait is in stage 6), the injection pack (stage 4 adds one for the reader), the coherence test wording for stage 5.
+
+#### 4. Is stage 1 the right next code change after E4? Do its files avoid E4's?
+
+- **Right change, right time.** The card says "Partly read by the analysis" from desk review's list alone (`app/services/desk_review.py:725-740`, `requirement_card.py:331-332`). Gap analysis cuts a different set (M6). Until stage 6 flips, which is after S3, S4 and stages 3 to 5, the cap is live and the card is wrong for the judge stage. Stage 1 is the cheapest fix.
+- **Files:** `desk_review.py`, `claude_analyzer.py`, `evidence.py`, `analysis_pipeline.py` (envelope), `requirement_card.py`, `requirement_card_body.html`, `desk_review_findings.html`, `web.py:3729-3773` and their tests. Once E4 has merged, only the card files overlap E4's, and that is a rebase, not a conflict. Disjoint from the live run (no app change).
+- **Keep it small.** The selection unification is the one throwaway part: stage 6 deletes `_truncate_documents`. The manifests, the card change and the version-id key are the durable parts. Build the selection function as thin as M6 describes.
+- **Optional, after the run:** if the live run at 30,000 words shows acceptable latency and cost, raising `max_total_document_words` (`app/config.py:21`) is a one-line interim that removes most real cuts now. It does not replace stage 1. Decide after the numbers.
+
+#### 5. Capture design for the live run (no app change)
+
+**Seam.** Every LLM call, including vision OCR (`app/services/document_processor.py:449-457`) and the parked grounding client (`app/services/grounding/pipeline.py:45`), goes through `llm_client.call_llm`, which calls `_send(request_kwargs, tier, model, stream, attempt)` (`app/services/llm_client.py:237`, `:346`). A launcher that patches `llm_client._send` captures the full request body and the assembled response text. It runs in the caller's thread, so the `_tags` context variable (stage, framework, batch) is still visible there (the provider interaction runs in a worker thread that does not inherit it; `_send` is the last place that does). Parallel batches carry the tags through `app/services/parallel.py:6-34` (`copy_context`).
+
+**What each call file holds** (`calls/NNNN.json`, one per `_send`):
+- timestamp, stage, framework_id, batch, tier, model, attempt;
+- request: system (string or blocks), messages, `max_tokens`, `temperature`, `response_format`, and whether it streamed;
+- images replaced by a placeholder with sha256, byte size and media type, with the decoded image saved beside it in the same private folder so the report can show it;
+- response: full text, `finish_reason`, usage (input, output, cache read, reasoning), latency in ms;
+- status (ok, error, JSON parse failure computed with `is_json_text`) and the error type.
+
+**What it does not hold:** API key or headers. `_send` sees only the body, and the client holds the key.
+
+**Reconciliation.** The launcher also wraps `_record_call` (`llm_client.py:152`) and counts calls. The report shows both counts, so "captured files equal usage records" is checked in the run itself, not by me afterwards.
+
+**Spend.** Tokens times the plan's price assumptions is the live meter, with a hard stop: when the running estimate passes $5, or one call fails twice, the next `_send` raises and the run stops. The actual spend comes from the provider's key-usage endpoint, read before and after the run (key never printed). `_usage_dict` drops the provider's own cost field (`llm_client.py:205-232`), so the endpoint delta is the ground truth. Reasoning tokens: the run records them (`reasoning_tokens` in usage) to confirm the `enabled: False` setting holds (`llm_client.py:79-82`).
+
+**Where files go (all new, in `scripts/live/`, no app change):**
+- `capture.py`: the patch and the file writer. Refuses an output folder inside the repo.
+- `serve.py`: sets `DATABASE_URL` and `UPLOAD_DIR` to the run folder, `MAX_TOTAL_DOCUMENT_WORDS=30000`, `ANALYSIS_PIPELINE_VERSION=v1`, installs capture, starts the app in-process on 127.0.0.1. Saqlain can click through the real UI if he wants.
+- `drive.py`: an HTTP driver (upload with `upload-manifest.csv` categories, enter `questionnaire-entry.json`, run desk review, run analysis). It reads only `evidence/`, the manifest and the entry file, never `scenario.json` or `coverage-matrix.csv`.
+- `report.py`: writes `report.html` in the run folder.
+
+**Showing it:** serve the run folder with a local static server and open it in the browser pane (not an Artifact, it holds document text).
+
+**Reuse:** the same wrapper is what stage 6's runner needs ("captures read calls, retries, cost"). Built once, under `scripts/live/`, it saves that work later.
+
+#### 6. The E4 handoff has drifted (for Codex)
+
+`tasks/handoffs/2026-10-09-e4-show-checklist-and-rfi-examples.md` was written before #134 and #135 and its line references are stale:
+- the v1 `criteria=()` is now at `app/services/requirement_card.py:660` and `:683` (not near 610);
+- the guard that refuses v1 is `if card.source != "v2" or match is None` in `add_rfi_request` (`:781-818`, check at about `:806`), not at 418-419 and 743-746;
+- `tests/test_p6_7b_add_to_rfi.py:413-463` currently asserts that v1 cards show no add control and the route refuses. E4 part 2c reverses that on purpose, so that test is updated deliberately, not worked around.
+
+I will give Codex the corrected references in the dispatch prompt. The scope itself is unchanged.
+
+#### Plan edits I will fold in on "go" (edit file: the plan, one revision, no redesign)
+
+C2 (periodic sweep), C3 (interview rule), C4 and C5 (S5 and S6-F2 scope lines), C6 (section-ref helper), C7 (gate comparison), M1 to M3 (stage 3 and 4 lines), M5 to M8 (stage 1 lines), and the three-framework cost line. None changes a stage's order or what it delivers.
+
+#### Questions for Saqlain (only these)
+
+1. **Go for Part 2a and 2b as designed?** E4 to Codex in its own worktree. The live run with the capture above, a $5 hard stop, run 1 at `MAX_TOTAL_DOCUMENT_WORDS=30000`, v2 off.
+2. **#137 (strip "synthetic") first?** The run uses the generated pack. If #137 merges first the pack matches what an auditor would see; if not, two files still carry the word and the run notes that. Your call; it does not change any measurement.
+3. **Report coverage (M8):** do you want released reports to name unread and excluded files? Default is yes, as an additive line. Say no if you want the card only.
+
+Everything else above is a plan edit I will make without asking, unless you object.
