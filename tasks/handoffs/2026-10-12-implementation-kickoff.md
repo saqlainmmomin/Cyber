@@ -247,6 +247,7 @@ Everything else above is a plan edit I will make without asking, unless you obje
   - PDF orphan and widow pagination;
   - DOCX control characters and a leftover truncation.
 - **Click-through done by me** on the live run's data (93 v1 ISO conclusions) against the E4 branch: A.5.18 shows 4 criteria with kinds, hints, basis, the label, no tick marks and an add control; the RFI page shows 30 requests with the guidance as separate lines, including the firewall example and the blank Period and Sample lines.
+- **Update after your click-through feedback (same day).** You found the RFI text unreadable and asked why one access request carried so many lines. Cause: the RFI is organised by document type, which maps to many controls (access control policy: 7 controls, 20 criteria), and E4 printed every criterion of every mapped control under it. You chose Option A. Now the request lists "What to send" grouped by artifact (12 lines for access, down from about 60), with the per-criterion checks behind a fold on the RFI page and in a "Why We Ask" appendix in the PDF and DOCX. Source basis is kept off client documents because the signed strings contain auditor notes. Final full suite: **1,743 passed, 29 skipped**. PR #138 body was rewritten.
 - **Left for you:** catalogue wording sign-off (table in the PR body) and your own click-through. The RFI page shows each request in full (380 to 5,900 characters). Say if you want it collapsed after the first paragraph.
 
 ### Part 2b. Live-API Veldhara run with full capture (2026-10-12)
