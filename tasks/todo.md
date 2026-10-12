@@ -278,3 +278,24 @@ Plan: `docs/plans/2026-09-25-001-grounded-analysis-and-deliverables-plan.md` (de
 - [x] Restore the P6-6 reporting-basis contract and make the workpaper entry fixture render inside a page shell.
 - [x] Match the supplied S6 geometry/content fixture, including compact workpaper conclusions and the upload disclosure behavior.
 - [x] Run focused tests, the relevant regression suite, and static collision checks; record verified results in the S6 handoff. Full suite: 1463 passed, 30 skipped.
+
+# E4 checklist and RFI examples (2026-10-12)
+
+- [x] Show signed criteria on v1 cards and enable idempotent card requests.
+- [x] Draft a complete document example catalogue and enrich scoped and card-added RFI requests.
+- [x] Verify behaviour and prompt fingerprints; record results and catalogue review material in the handoff. Full suite: 1702 passed, 29 skipped; focused suite after the review wording fix: 139 passed. Catalogue sign-off, Claude review and Veldhara click-through remain external gates.
+
+- [x] E4 review fixes (2026-10-12): preserve RFI guidance lines, handle stored unknown types, strengthen checklist/export/no-run tests, improve PDF pagination and sanitise DOCX request text. Focused: 155 passed; full: 1716 passed, 29 skipped. Results and PR-body notes appended to the E4 handoff; uncommitted.
+
+## E4 Option A (2026-10-12)
+
+- [x] Group signed evidence hints into artifact lines and retain structured checks and source fingerprints.
+- [x] Show checks in the closed HTML fold and final PDF/DOCX appendix.
+- [x] Verify focused/full tests and record output and length comparisons in the E4 handoff (170 focused; 1731 passed, 29 skipped full).
+
+## E4 Option A readability acceptance (2026-10-12)
+
+- [x] Extend grouped artifact data and readable plain-text fallback.
+- [x] Render structured HTML, PDF hanging bullets and DOCX bullet styles with legacy fallback.
+- [x] Inspect the 33-page ISO PDF and DOCX styles/determinism, run focused/full tests and record revised Results (175 focused; 1736 passed, 29 skipped full).
+- [ ] Inspect actual HTML at 375px: Chromium launch denied by sandbox Mach port registration; no connected browser available. DOM structure checks pass; visual/overflow acceptance remains pending.

@@ -148,8 +148,22 @@ def _requirement_pairs(item: dict) -> list[list[str]]:
 
 def current_source(db: Session, assessment: Assessment) -> dict:
     checklist = _checklist(db, assessment)
+    requests = rfi_evidence_requests.active_requests(db, assessment.id)
+    guidance = [
+        rfi_evidence_requests.document_request_fields(
+            item["reason"], item["document_type"], _requirement_pairs(item)
+        )
+        for item in checklist
+    ]
+    guidance.extend(
+        rfi_evidence_requests.document_request_fields(
+            request.request, request.document_type,
+            [[request.framework_id, request.requirement_id]],
+        )
+        for request in sorted(requests, key=lambda item: (item.conclusion_id, item.request_key))
+    )
     checklist_bytes = json.dumps(
-        checklist,
+        {"checklist": checklist, "guidance": guidance},
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),
@@ -164,7 +178,6 @@ def current_source(db: Session, assessment: Assessment) -> dict:
             for row in sorted(rows, key=lambda item: item.conclusion_id)
         ],
     }
-    requests = rfi_evidence_requests.active_requests(db, assessment.id)
     if requests:
         source["schema_version"] = RFI_REQUESTS_SCHEMA_VERSION
         source["evidence_requests"] = sorted(
@@ -232,6 +245,12 @@ def build_rfi_document(
         items.append(item)
         next_number += 1
 
+    for item in items:
+        if item["kind"] in ("document", rfi_evidence_requests.ITEM_KIND):
+            item.update(rfi_evidence_requests.document_request_fields(
+                item["request"], item["document_type"], item["requirements"]
+            ))
+
     documents = sum(item["kind"] == "document" for item in items)
     requirements = sum(item["kind"] == "requirement" for item in items)
     source = current_source(db, assessment)
@@ -298,6 +317,10 @@ def render_items(document: dict) -> list[dict]:
                         else RFI_DOCUMENT_STATUS
                     ),
                     "requirements": ids,
+                    "why_we_ask": item.get("why_we_ask") or [],
+                    **{key: item[key] for key in (
+                        "summary", "what_to_send", "example", "good_looks_like"
+                    ) if key in item},
                 }
             )
         else:

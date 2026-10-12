@@ -63,15 +63,61 @@
     {% if evidence_requests %}<p data-rfi-requests-note class="sub" style="margin-bottom:var(--s-4)">{{ evidence_requests_note }}</p>{% endif %}
     <div class="solid rows">
       {% for item in preview["items"] %}
-      <div data-rfi-item="{{ item.item_id }}" data-rfi-kind="{{ item.kind }}">
-        <div class="txt">
+      <div data-rfi-item="{{ item.item_id }}" data-rfi-kind="{{ item.kind }}" style="flex-wrap:wrap">
+        <div class="txt" style="flex:1 1 280px;min-width:0">
           <div class="hrow">
             <b>{{ item.title }}</b>
             {{ pill("Required" if item.required else "Recommended", "accent" if item.required else "neutral") }}
           </div>
-          <span class="sub">{{ item.request }}</span>
+          {% if item.get("what_to_send") or item.get("summary") %}
+          <div data-rfi-request-text style="overflow-wrap:anywhere">
+            {% if item.get("summary") %}<p style="margin:var(--s-3) 0 0;max-width:70ch">{{ item.get("summary") }}</p>{% endif %}
+            {% if item.get("what_to_send") %}
+            <div style="margin-top:var(--s-3)">
+              <div class="sub">What to send</div>
+              <ul style="margin:0;padding-left:var(--s-5)">
+                {% for artifact in item.get("what_to_send") or [] %}
+                <li>{{ artifact.name }}{% if artifact.controls %} <span class="sub">({{ artifact.controls | join(", ") }})</span>{% endif %}
+                  {% if artifact.specifics %}
+                  <ul style="margin:0;padding-left:var(--s-5)">
+                    {% for detail in artifact.specifics %}<li>{{ detail.text }} <span class="sub">({{ detail.controls | join(", ") }})</span></li>{% endfor %}
+                  </ul>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+            <div style="margin-top:var(--s-3);max-width:70ch;display:grid;grid-template-columns:12ch minmax(0,1fr);column-gap:var(--s-2)">
+              <span class="sub">Example</span><span>{{ item.get("example") or "" }}</span>
+              <span class="sub">Good looks like</span><span>{{ item.get("good_looks_like") or "" }}</span>
+            </div>
+            <div style="margin-top:var(--s-3);display:flex;flex-wrap:wrap;gap:var(--s-3)">
+              <span class="sub">Period (auditor): ________</span>
+              <span class="sub">Sample size (auditor): ________</span>
+            </div>
+          </div>
+          {% else %}
+          <div class="sub cc-pre" data-rfi-request-text>{{ item.request }}</div>
+          {% endif %}
+          {% set why_we_ask = item.get("why_we_ask") or [] %}
+          {% if why_we_ask %}
+          {% set checks = namespace(count=0) %}
+          {% for control in why_we_ask %}{% set checks.count = checks.count + control.criteria | length %}{% endfor %}
+          <details data-rfi-why style="margin-top:var(--s-3);overflow-wrap:anywhere">
+            <summary class="sub">Why we ask: {{ checks.count }} checks across {{ why_we_ask | length }} controls</summary>
+            {% for control in why_we_ask %}
+            <div style="margin-top:var(--s-3)"><b>{{ control.requirement_id }} {{ control.title }}</b></div>
+            {% for criterion in control.criteria %}
+            <div style="margin-top:var(--s-3)"><span class="chip">{{ "Design" if criterion.kind == "design" else "Operating" }}</span> {{ criterion.statement }}</div>
+            <div class="sub cc-pre">Evidence hint: {{ criterion.get("evidence_hint_label") or criterion.evidence_hint }}</div>
+            <div class="sub cc-pre">Source basis: {{ criterion.source_basis }}</div>
+            {% endfor %}
+            {% endfor %}
+          </details>
+          {% endif %}
           <div class="chips" style="margin-top:var(--s-3)">
-            {% for framework_id, requirement_id in item.requirements %}{{ pill(framework_label(framework_id), "neutral") }}{% endfor %}
+            {% for framework_id in item.requirements | map("first") | unique %}{{ pill(framework_label(framework_id), "neutral") }}{% endfor %}
             <span class="sub">{{ item.group }}</span>
           </div>
           {% if item.kind == "document" %}

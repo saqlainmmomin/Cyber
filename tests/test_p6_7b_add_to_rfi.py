@@ -21,6 +21,7 @@ call fails the test. Approvals record a report basis first
 
 from __future__ import annotations
 
+from app.services.rfi_evidence_requests import display_hint
 import dataclasses
 import hashlib
 import importlib
@@ -355,17 +356,39 @@ def test_scenario_2_add_records_one_event_updates_the_draft_and_is_idempotent(db
     assert after["source"]["schema_version"] == 2
     assert set(after["source"]) == V1_SOURCE_KEYS | {"evidence_requests"}
     assert after["source"]["evidence_requests"] == [[row.id, key]]
-    assert {k: v for k, v in after["source"].items() if k not in ("schema_version", "evidence_requests")} == {
-        k: v for k, v in before["source"].items() if k != "schema_version"
+    assert {k: v for k, v in after["source"].items() if k not in ("schema_version", "evidence_requests", "checklist_sha256")} == {
+        k: v for k, v in before["source"].items() if k not in ("schema_version", "checklist_sha256")
     }
+    # The draft fingerprints the signed guidance for card-added requests too.
+    assert after["source"]["checklist_sha256"] != before["source"]["checklist_sha256"]
     items = requested_items(after)
     assert len(items) == 1
     item = items[0]
+    original_request = expected_text("dpdpa", DPDPA_RID, detail)
+    assert item["summary"] == original_request
+    assert " ".join(item["request"].split("\n\n", 1)[0].splitlines()) == original_request
+    assert item["what_to_send"]
+    assert "What to send\n" in item["request"]
+    assert len(item["why_we_ask"]) == 1
+    control = FrameworkRegistry.get("dpdpa").get_control(DPDPA_RID)
+    for criterion in control.test_criteria:
+        assert criterion.statement not in item["request"]
+        assert dict(kind=criterion.kind, statement=criterion.statement,
+                    evidence_hint=criterion.evidence_hint, evidence_hint_label=display_hint(criterion.evidence_hint), source_basis=criterion.source_basis) in item["why_we_ask"][0]["criteria"]
+    assert "Example of what to send:" in item["request"]
+    assert "Good looks like:" in item["request"]
+    assert "Period (auditor): __________" in item["request"]
+    assert "Sample size (auditor): __________" in item["request"]
     assert item == {
         "item_id": item["item_id"],
         "kind": ITEM_KIND,
         "title": json.loads(event.metadata_json)["title"],
-        "request": expected_text("dpdpa", DPDPA_RID, detail),
+        "request": item["request"],
+        "why_we_ask": item["why_we_ask"],
+        "summary": original_request,
+        "what_to_send": item["what_to_send"],
+        "example": item["example"],
+        "good_looks_like": item["good_looks_like"],
         "required": True,
         "requirements": [["dpdpa", DPDPA_RID]],
         "document_type": "privacy_policy",
@@ -410,7 +433,7 @@ def test_scenario_2_add_records_one_event_updates_the_draft_and_is_idempotent(db
 # --------------------------------------------------------------------------- #
 
 
-def test_scenario_3_stale_foreign_and_v1_requests_are_refused(db, http, monkeypatch, flag_v2):
+def test_scenario_3_stale_foreign_refused_and_v1_requests_are_idempotent(db, http, monkeypatch, flag_v2):
     from app.services import analysis_pipeline
     assessment = build(db, monkeypatch)
     row = conclusion(db, assessment, "dpdpa", DPDPA_RID)
@@ -439,7 +462,10 @@ def test_scenario_3_stale_foreign_and_v1_requests_are_refused(db, http, monkeypa
     )
     assert unknown.status_code == 404 and unknown.json() == {"detail": CONCLUSION_NOT_FOUND}
 
-    # v1 cards list suggested documents but offer no add control, and the route refuses them.
+    assert rfi_events(db) == []
+    assert rfi_requests.canonical_bytes(draft(db, assessment)) == before
+
+    # Historical v1 cards offer the same deterministic, idempotent add control.
     v1 = seed_assessment(db, ("iso27001",))
     add_evidence(db, v1, filename="policy.pdf", text=policy_text(Q_CONSENT))
     context = analysis_pipeline.start_runs(db, assessment_id=v1.id, framework_ids=["iso27001"])
@@ -459,18 +485,61 @@ def test_scenario_3_stale_foreign_and_v1_requests_are_refused(db, http, monkeypa
         item for item in FrameworkRegistry.get("iso27001").evidence_requests if "ISO.A5.2" in item.maps_to
     )
     assert open_tag(v1_html, "data-missing-evidence", request.document_type)
-    assert "data-rfi-add-form" not in v1_html and "data-rfi-request-key" not in v1_html
+    assert "data-rfi-add-form" in v1_html and "data-rfi-request-key" in v1_html
     v1_key = expected_key("iso27001", "ISO.A5.2", request.document_type, request.reason)
-    refused = add(http, v1, v1_row, v1_key)
-    assert refused.status_code == 409 and refused.json() == {"detail": STALE_MESSAGE}
-
-    assert rfi_events(db) == []
+    added = add(http, v1, v1_row, v1_key)
+    assert added.status_code == 200, added.text
+    assert added.headers["X-Toast-Message"] == ADDED_TOAST
+    repeated = add(http, v1, v1_row, v1_key)
+    assert repeated.status_code == 200
+    assert repeated.headers["X-Toast-Message"] == ALREADY_TOAST
+    assert len(rfi_events(db)) == 1
+    assert rfi_events(db)[0].entity_id == v1_row.id
+    saved_request = json.loads(rfi_events(db)[0].metadata_json)["request"]
+    v1_item = requested_items(draft(db, v1))[0]
+    assert v1_item["summary"] == saved_request
+    assert v1_item["what_to_send"]
+    assert "What to send\n" in v1_item["request"]
+    assert len(v1_item["why_we_ask"]) == 1
+    for criterion in FrameworkRegistry.get("iso27001").get_control("ISO.A5.2").test_criteria:
+        assert criterion.statement not in v1_item["request"]
+        assert dict(kind=criterion.kind, statement=criterion.statement,
+                    evidence_hint=criterion.evidence_hint, evidence_hint_label=display_hint(criterion.evidence_hint), source_basis=criterion.source_basis) in v1_item["why_we_ask"][0]["criteria"]
+    assert "Example of what to send:" in v1_item["request"]
+    assert add(http, v1, v1_row, "0" * 16).status_code == 409
+    assert withdraw(http, v1, v1_row, v1_key).status_code == 200
+    assert "data-rfi-add-form" in card_html(conclusions_page(http, v1), v1_row.id)
     assert rfi_requests.canonical_bytes(draft(db, assessment)) == before
 
 
 # --------------------------------------------------------------------------- #
 # Scenario 4: withdraw, re-add, idempotent withdraw, unknown withdraw
 # --------------------------------------------------------------------------- #
+
+
+def test_no_linked_run_card_refuses_add(db, http, monkeypatch):
+    forbid_llm(monkeypatch)
+    assessment = seed_assessment(db, ("iso27001",))
+    row = Conclusion(
+        assessment_id=assessment.id, framework_id="iso27001", requirement_id="ISO.A5.2",
+        outcome="insufficient_evidence", rationale="Migrated.", evidence_summary="",
+        gaps_identified="Missing roles.", risk_level="medium", recommended_action="Collect records.",
+        ai_proposed=True, version=1,
+    )
+    db.add(row)
+    db.flush()
+    db.add(ConclusionRevision(conclusion_id=row.id, actor="system:migration", action="proposed"))
+    db.commit()
+    html = card_html(conclusions_page(http, assessment), row.id)
+    assert 'data-requirement-source="none"' in open_tag(html, "data-requirement-card")
+    assert "data-rfi-add-form" not in html
+    request = next(request for request in FrameworkRegistry.get("iso27001").evidence_requests
+                   if row.requirement_id in request.maps_to)
+    key = expected_key("iso27001", row.requirement_id, request.document_type, request.reason)
+    response = add(http, assessment, row, key)
+    assert response.status_code == 409
+    assert response.json() == {"detail": STALE_MESSAGE}
+    assert rfi_events(db) == []
 
 
 def test_scenario_4_withdraw_restores_the_prior_draft_and_history_is_append_only(db, http, monkeypatch, flag_v2):
@@ -586,14 +655,14 @@ def test_scenario_6_requests_merge_by_document_type_across_frameworks(db, http, 
     # Ordered by the first active request; the document is asked for once.
     assert privacy["requirements"] == [["iso27001", ISO_RID], ["dpdpa", DPDPA_RID]]
     assert privacy["request_refs"] == [[iso.id, iso_privacy], [dpdpa.id, dpdpa_privacy]]
-    assert privacy["request"] == " ".join((
+    assert privacy["summary"] == " ".join((
         expected_text("iso27001", ISO_RID, ISO_PRIVACY),
         expected_text("dpdpa", DPDPA_RID, DPDPA_PRIVACY),
     ))
     assert privacy["title"] == expected_title("iso27001", "privacy_policy")
     assert other["title"] == OTHER_TITLE
     assert other["requirements"] == [["dpdpa", DPDPA_RID]]
-    assert other["request"] == expected_text("dpdpa", DPDPA_RID, DPDPA_OTHER)
+    assert other["summary"] == expected_text("dpdpa", DPDPA_RID, DPDPA_OTHER)
     assert document["source"]["evidence_requests"] == sorted(
         [[iso.id, iso_privacy], [dpdpa.id, dpdpa_other], [dpdpa.id, dpdpa_privacy]]
     )
