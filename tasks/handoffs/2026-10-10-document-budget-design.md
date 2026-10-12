@@ -70,6 +70,8 @@ Read each in-scope file once, as it arrives, with small calls whose results are 
 | 2026-10-12 | **Narrower first version approved.** No stale-only re-judging, no live desk-review view, no pre-fill rule changes, no release-policy changes in this work. |
 | 2026-10-12 | **Strip DPDPA assumptions from framework-agnostic code; keep everything DPDPA assessments use.** "I don't want you to delete code that is being used by DPDPA assessment. I only want you to delete things or remove things that are supposed to be framework agnostic, but are using DPDPA-specific plumbing." (Corrects Claude's first reading, which would have deleted the curated DPDPA path and screening.) |
 | 2026-10-12 | Finish this plan first, then return to the original action list. |
+| 2026-10-12 | **Initiative grouping:** one framework-neutral root-cause map shared by ISO, NIST, GDPR, HIPAA and PCI gaps. DPDPA keeps its own clusters for DPDPA gaps. (Was Q1.) |
+| 2026-10-12 | **DPDPA goldens:** re-record them deliberately in the stage 6 flip PR, after the gate passes, with the old recordings kept in git history. (Was Q2.) |
 
 Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wording only (P6-5c; E6; CLAUDE.md). The desk-review prompt is not frozen. `tests/test_p6_1b_framework_batching.py:152` pins desk-review fingerprints and must be updated deliberately where the desk-review input changes.
 
@@ -88,7 +90,7 @@ Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wo
 | F14 to F18 (live view, pre-fill, issues, RFI) | Out of scope. Desk review keeps its stored fields and finding rows, so every consumer is unchanged. |
 | F19, F26 (truthful cut) | Stage 1 records what each stage actually received, per run, and fixes the two inaccurate claims. |
 | F20 (empty evidence, small frameworks) | In saved-passage mode every registry framework uses the existing batched builder; small frameworks are one batch. The existing "no extracted quotes" line covers empty batches. No raw documents. |
-| F21 (curated DPDPA path) | Kept, because DPDPA assessments use it. In stage 5 it takes saved passages through the same adapter, into the quote input it already accepts. Its goldens stay as the setting-off characterization, and a new setting-on fixture is added. Re-baselining the goldens when the setting is removed is Q2. |
+| F21 (curated DPDPA path) | Kept, because DPDPA assessments use it. In stage 5 it takes saved passages through the same adapter, into the quote input it already accepts. Its goldens stay as the setting-off characterization, and a new setting-on fixture is added. They are re-recorded deliberately in the stage 6 flip PR, after the gate (decided 2026-10-12). |
 | F22 (A/B runner) | Queue settlement, reader identity and isolated caches are prerequisites for the stage 5 gate. |
 | F23 (seeds) | Offline seeds and loaders disable the dispatcher or write deterministic read fixtures. |
 | F24 (reports) | Untouched. Reports and narrative read conclusions and approved findings as today. |
@@ -142,7 +144,7 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
   - Framework fallbacks raise or use the assessment's real framework list instead of `["dpdpa"]`. Assessments with no stored frameworks are migrated once (Alembic). Every live row already has a list; Codex is to confirm.
   - Null `framework_id` on findings, gap items and remediation rows is backfilled (extending `app/legacy_migrations.py:230-245` to every affected table). The read-time "null means DPDPA" fallbacks are then removed.
   - Upload categories offered for an assessment come from its own frameworks plus "other". The legacy DPDPA categories are offered only when DPDPA is in scope.
-  - Initiative grouping uses a framework-neutral root-cause map, or the framework's own map when one exists. DPDPA keeps its clusters for DPDPA gaps.
+  - Initiative grouping uses one framework-neutral root-cause map for every non-DPDPA framework (decided 2026-10-12). DPDPA keeps its clusters for DPDPA gaps.
   - The context interview and the scope profiler: fixed only if Codex confirms a DPDPA dependency in shared code. Otherwise they are left alone and recorded as checked.
 - Kept: everything in the "Kept" list above, unchanged.
 - Gate: run the full suite, including the DPDPA goldens, which must pass byte for byte. Then an A/B on all validation companies with `scripts/validation/ab_compare.py`, before versus after, aggregate numbers only (catch not lower, decoy and clean false positives not higher, stability not lower, cost reported). The gate stands alone, so stage 6 is measured against this baseline.
@@ -235,8 +237,8 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 
 ### Questions for Saqlain
 
-1. **Initiative grouping (stage 2).** For ISO, NIST, GDPR, HIPAA and PCI gaps: one framework-neutral root-cause map shared by all five, or a map per framework? Recommended: one neutral map now, so cross-framework initiatives group together.
-2. **DPDPA goldens after the flip (stage 6).** When `evidence_reads_mode` is removed, the curated DPDPA path always takes saved passages, so its golden requests change. Re-record them deliberately in the flip PR, after the gate, with the old recordings kept in git history? Recommended: yes.
+Questions 1 and 2 were answered on 2026-10-12 (see Decisions).
+
 3. **Sequence slot.** The fixed sequence (`tasks/2026-10-08-session-record.md`, path rule 5) has to be edited on purpose. Proposed: stages 1 and 2 right after the E4 build; stages 3 to 6 before flow-plan S3.
 
 Unverified until the live run: current provider price, the model's context window, prompt cache effect, read and judge latency.
