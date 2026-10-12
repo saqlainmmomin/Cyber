@@ -1,8 +1,8 @@
 # CyberAssess frontend migration: Next.js + Tailwind + shadcn/ui
 
-Status: approved by Saqlain on 12 Oct 2026 for the audit and handoff steps only. Nothing is built. Sections 4, 6 and 7 are provisional until the audit's second half lands.
+Status: approved by Saqlain on 12 Oct 2026 for the audit and handoff steps only. Nothing is built. The audit is complete (12 Oct 2026) and sections 4, 6 and 7 are revised from it. The build waits for Saqlain's approval of this revision.
 
-**What approval of this plan starts:** only Step 1 below, the UI audit on Codex (docs only). The migration build (sections 3 to 12) starts after the audit is reviewed and PRs #137 to #140 are merged. Sections 4 and 7 (design system, page templates, per-screen layout) are provisional until the audit lands; sections 3, 5, 6 and 8 (architecture, behaviours, phases, tests) do not depend on it.
+**What approval of this plan starts:** only Step 1 below, the UI audit on Codex (docs only). The migration build (sections 3 to 12) starts after the audit is reviewed and PRs #137 to #140 are merged. Sections 4, 6 and 7 (design system, page archetypes, phases, per-screen work) now follow the audit; sections 3, 5 and 8 (architecture, behaviours, tests) did not depend on it.
 
 ## Step 1. UI audit on Codex (do this first)
 
@@ -49,11 +49,12 @@ Saqlain supplied the audit prompt (15 phases, output in `docs/ui-audit/`). It go
 - Spot-check five contrast ratios and three column widths against the running app.
 - `git diff --stat origin/main...HEAD` shows only `docs/ui-audit/` and `tasks/`.
 
-## Step 1 status (12 Oct 2026): first half done
+## Step 1 status (12 Oct 2026): audit complete
 
 - Codex ran audit phases 1 to 12. Output is committed locally on `codex/ui-audit` (commit `1d7d67b`, worktree `/Users/saqlainmomin/dpdpa-ui-audit`, not pushed): `docs/ui-audit/` with 24 issues, 12 root causes, measurements, 97 live captures.
 - Claude ran the captures on the host (399 of 421) because Codex's sandbox cannot launch a browser.
 - Saqlain reviewed the annotated page (https://claude.ai/artifact/KtVkvypbF5FsmB6g9thZyh) and answered every decision. His notes are below.
+- Second half (same day): Codex produced the design system, page archetypes, migration UI spec, component inventory and seven prototypes; Claude fixed the failed captures, captured the client upload page at 390, screenshotted and measured the prototypes, and revised sections 4, 6 and 7 below. Results: `tasks/handoffs/2026-10-12-ui-audit-second-run-kickoff.md`.
 - The demo app is still running on port 8011 against `data/demo/ui-audit-demo.db`.
 
 ## Step 2. Hand off to a fresh session (approving this plan does only this)
@@ -111,7 +112,9 @@ Several of these change what screens show and how data is shaped (findings title
 - Token gaps: no z-index tokens, literal radii (3, 7, 12px) beside the scale, heading rules defined twice, `--surface-2` used but never defined, no line-length rule for prose.
 - Pixel baselines cover only the shell and the gallery. No screen has a visual check, so drift was never caught.
 
-**Outcome.** A Next.js app in `web/` that owns every consultant screen, built from one component library whose layout primitives own all spacing and type. FastAPI stays as the JSON API and keeps scoring, the LLM pipeline and report generation. Decided 12 Oct: the gradient canvas and glass surfaces are retired, the 8 accents stay for interaction and branding, status colours are rebuilt as four families, and layout and typography are rebuilt. Inter stays.
+**What the audit added (12 Oct 2026).** 35 issues (9 P0) and 16 root causes, of which one is caused by the stack; the rest are design decisions, shortcuts or things never designed, so a framework change alone fixes almost nothing. Measured at 1440: the question column is 576px inside a 1040px page; questionnaire guidance is 12px at about 100 characters a line; the RFI page is 20,005px tall; the applicability page 17,481px; up to three navigation levels are stacked. Saqlain's review added that findings are titled by control instead of by gap, the recommendation is boxed small, evidence is shown twice, and the content itself is not written for its reader.
+
+**Outcome.** A Next.js app in `web/` that owns every consultant screen, built from one component library whose layout primitives own all spacing and type. FastAPI stays as the JSON API and keeps scoring, the LLM pipeline and report generation. The Yozora gradient canvas and glass surfaces are retired for opaque surfaces on a neutral background; the 8 accents stay for interaction and branding; status colours are four typed families; layout, width and typography are rebuilt; navigation never stacks two bars. Inter stays. Five screens also change what they show (Questionnaire, Review, RFI, Scope applicability, Report); those changes are separate backend and content work (sections 6.2 and 6.3), not part of a restyle.
 
 **Rules this changes on purpose.** The session record says "no rebuild" (E1) and fixes the sequence (rule 5). Step 0a records a new decision (E9) that edits both. Nothing here touches the judge prompt, the v2 park, scoring or the held-out answer keys.
 
@@ -157,74 +160,80 @@ Template globals that run queries during render (`engagement_period`, `latest_is
 
 ## 4. Design system: how the components translate and how the mistakes stay fixed
 
-Provisional. Sections 4.1 to 4.5 are revised from `docs/ui-audit/NEXTJS_MIGRATION_UI_SPEC.md` once the audit lands. Section 4.6 (guard rails) holds either way.
+Revised 12 Oct 2026 from the audit's second half. The detail lives in `docs/ui-audit/DESIGN_SYSTEM.md`, `PAGE_ARCHETYPES.md`, `NEXTJS_MIGRATION_UI_SPEC.md` and `COMPONENT_INVENTORY.md`; where this section and those files differ, the audit files win. Seven static prototypes in `docs/ui-audit/prototypes/` show the system on real Veldhara content.
 
 ### 4.1 Tokens
 
-- `design/tokens.json` stays the single source. `design/tokens_tool.py` gains a fourth output, `web/app/tokens.css` (CSS variables for light, dark and the 8 accents).
-- Tailwind's `@theme` maps to those variables. The default Tailwind colour, spacing, radius and font-size scales are switched off, so only Yozora values exist as utilities.
-- Fill the gaps: z-index scale, one mono font token, weights, `--t-score`, define or remove `--surface-2`, fold the stray radii into the scale.
-- Status colours stay fixed across themes and accents (principle P7).
+- `design/tokens.json` stays the single source. `design/tokens_tool.py` gains an output, `web/app/tokens.css` (CSS variables for light, dark and the 8 accents).
+- The gradient canvas and the glass and blur tokens are removed. Surfaces are opaque steps on a neutral background, with borders for separation and elevation only for things that overlap (menus, dialogs).
+- The 8 accents keep today's hues and are used for interaction, selection and branding only. The seven dark-theme accent text pairs that fail contrast are corrected. An accent never carries status.
+- Status colours are four typed families: severity, outcome, progress, provenance. Each member has one label, one icon and one measured foreground and background pair (all 144 target pairs pass AA; `docs/ui-audit/target-contrast.json`). A status is always shown in words.
+- Tailwind's `@theme` maps to these variables. The default Tailwind colour, spacing, radius and font-size scales are switched off, so only system values exist as utilities.
+- Gaps filled: z-index scale, one mono font token, weights, the stray radii folded into the scale, `--surface-2` removed.
 - Per-firm accent: wire the stored firm setting through `/api/ui/shell` (today only the env var works).
 
 ### 4.2 Layout and type primitives (the fix for gutters and text)
 
 Screens are built only from these. A screen file may not set margin, padding, font size or colour.
 
-| Primitive | Owns |
-|---|---|
-| `AppShell`, `Sidebar`, `TopBar` | Frame, nav, breadcrumb, user menu, mobile drawer |
-| `Page`, `PageHeader` | Page width, outer gutters, title row, meta line, actions |
-| `Section`, `Card` | Vertical rhythm between blocks; surface padding |
-| `Stack`, `Cluster`, `Grid`, `Split` | All gaps, from the spacing scale only |
-| `Heading`, `Text`, `Prose` | Type scale, weights, line height; `Prose` caps line length near 70 characters |
-| `DataTable`, `KeyValue`, `Toolbar` | Table density, numeric alignment, filter rows |
-
-### 4.3 Page templates
-
-Seven templates cover all 31 screens. Each is built once in the gallery with real seeded data and signed by Saqlain before any screen uses it. This is the single design pass at build (two-pass rule); the second pass is before exposure.
-
-| Template | Used by |
-|---|---|
-| T1 List | Clients, Engagements, Review, Reports, Evidence inventory, Remediation tracker |
-| T2 Detail | Client, Engagement overview, Requests, AWS evidence, Purge, Integrated reports, Versions, Comparison |
-| T3 Workspace | Assessment shell with tabs and stepper |
-| T4 Two-pane review | Review queue, Conclusions |
-| T5 Form | New engagement, New assessment, Scope, Settings, Board inputs, SoA |
-| T6 Wizard / run | Context wizard, Screening, Questionnaire sections, Desk review, Analysis states |
-| T7 Document | Evidence record and viewer, Workpaper, Narrative |
-
-### 4.4 Base components (shadcn, restyled with Yozora tokens)
-
-| Yozora today | shadcn base | Note |
+| Primitive | Owns | Ruling on the earlier list |
 |---|---|---|
-| `.btn` (primary, secondary, ghost, danger, destructive; sm, icon, touch; loading) | `Button` | cva variants, `loading` prop |
-| `.field` input, textarea, select, date, file | `Input`, `Textarea`, `Select`, `Label`, `Form` | One `Field` wrapper for label, help, error |
-| `.choice`, `.switch` | `Checkbox`, `RadioGroup`, `Switch` | |
-| `.pill`, `.chip`, `.warn`, `.ai` | `Badge` | Tone variants; outcome and severity helpers |
-| `.glass`, `.solid`, `.card` | `Card` | |
-| `table` | `Table` | Row link and hover chevron in `DataTable` |
-| `.tabs` (links) | Link tab bar | Route navigation, not panels |
-| `.seg` | `ToggleGroup` or link group | Links when it navigates |
-| `.modal`, `hx-confirm`, typed confirm | `Dialog`, `AlertDialog` | `ConfirmDialog` with optional typed value |
-| Mobile drawer | `Sheet` | |
-| `.toasts` | Sonner | Max 4, errors persist |
-| `.alert`, `.skel`, `[data-tip]` | `Alert`, `Skeleton`, `Tooltip` | |
-| `.menu` | `DropdownMenu`, `Popover` | Removes hand-written flip code |
-| `.crumb`, `.pager`, `.progress-bar` | `Breadcrumb`, `Pagination`, `Progress` | |
-| `details.disclose` | `Collapsible`, `Accordion` | |
-| SVG sprite (37 icons) | `lucide-react` | |
+| `AppShell`, `Sidebar` | Frame, 224px sidebar, 24px gutters, user menu, mobile drawer | Agree |
+| `PageHeader`, `Breadcrumb` | Title row (the task name, never the client name repeated), period and cut-off line, actions | `TopBar` is dropped; it would be a second bar |
+| `Page(mode)` | Width mode: inventory and task 1168px at 1440 and 1008px at 1280; document 880px | Changed: one width for every page caused the 576px question column |
+| `Section` | Vertical rhythm; a bounded surface only when a region is a distinct work area | `Card` is dropped as a default wrapper |
+| `Stack`, `Cluster`, `Grid`, `Split` | All gaps, from the spacing scale only | Agree |
+| `Heading`, `Text`, `Prose` | Type roles. Audit content (questions, gaps, conclusions, quotes, criteria, recommendations, guidance) is 14px or more; body and recommendations 16px. Only identifiers, timestamps and table meta may be 12px. `Prose` caps lines at 72ch | Changed: roles, not sizes |
+| `DataTable`, `KeyValue`, `Toolbar` | Table density, numeric alignment, sort and filter rows | Agree |
 
-### 4.5 Domain components (custom, built on the above)
+### 4.3 Page archetypes (replace templates T1 to T7)
 
-`StatusIndicator`, `OutcomeBadge`, `SeverityBadge`, `EvidenceStatusBadge`, `ScoreRing`, `Distribution`, `Stepper`, `CitationBlock`, `EvidenceViewer` (highlighted span), `ConclusionCard` (decide, edit, conflict diff), `RequirementBody` (criteria checklist, claims, RFI add/remove), `FindingCard` (action state machine), `WorkpaperEntry`, `RequestCard`, `QuestionCard`, `UploadDropzone` (react-dropzone, progress), `RunStatus` (ready, running, done, error, blocked), `CodeBlock` with copy.
+Seven archetypes cover all 31 screens. Each is built once in the gallery with real seeded data and signed by Saqlain before any screen uses it. This is the single design pass at build (two-pass rule); the second pass is before exposure.
+
+| Archetype | Used by | Replaces |
+|---|---|---|
+| Inventory | Home, Clients, Engagements, Reports, Evidence inventory (3 scopes), Evidence reuse, Requests, RFI, Remediation, Findings, Conclusions, Versions, Comparison | T1 (agree); takes Conclusions from T4 and Versions and Comparison from T2 |
+| Entity | Client, Engagement overview, Assessment overview | T2 (changed: no generic card pages) |
+| Task | Questionnaire, Desk review, run states | T3 and T6 (changed: one stage bar, no stepper on every stage; the questionnaire is a workspace, not a forced wizard) |
+| Queue | Review queue, Portfolio review | T4 (changed: only the queue needs a permanent selection pane) |
+| Form | New engagement, New assessment, Scope with applicability, Settings, Board inputs, AWS evidence, Purge, Client upload | T5 (changed: SoA becomes a panel in Scope) |
+| Document | Evidence record, Workpaper, Narrative, Report (board and auditor views), Integrated reports | T7 (agree) |
+| Recovery | Error pages, invalid and expired client links | New |
+
+### 4.4 Navigation
+
+- One sidebar, one breadcrumb, one horizontal stage bar inside an assessment (Overview, Scope, Evidence, Questionnaire, Review, Report). Entering an assessment replaces the engagement's navigation.
+- **Never a second bar under the stage bar.** Sub-sections (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Inventory, Requests, Desk review, Reuse; Report: Versions, Comparison, Narrative, Board inputs) use one of two patterns, both prototyped. **Saqlain chooses before P0d:**
+  - Option A: one labelled "Section" select in the content toolbar (`review-queue.html`).
+  - Option B: the sections listed as nested links in the sidebar under the open assessment (`review-queue-sidebar.html`).
+- Report board summary and auditor detail are two views of one page, switched by a two-option toggle, not navigation.
+- Stage links are links with `aria-current`. Section, framework, domain and selected finding are in the URL, so Back, reload and copied links restore them.
+- The shell Search field is not ported until it has a result contract.
+
+### 4.5 Components
+
+The component inventory is `docs/ui-audit/COMPONENT_INVENTORY.md` (40 contracts with variants, states and where used). Rulings against the earlier lists are in the spec, "Component rulings". The changes that matter:
+
+| Earlier | Now | Why |
+|---|---|---|
+| `Card` | `Section` | Cards everywhere flattened the hierarchy |
+| `ToggleGroup` as sub-navigation | Section pattern from 4.4 | No stacked bars |
+| `OutcomeBadge`, `SeverityBadge`, `EvidenceStatusBadge`, `StatusIndicator` | `StatusBadge(family, member)` | One typed mapping; a caller cannot pass an arbitrary colour |
+| `ConclusionCard`, `RequirementBody`, `FindingCard`, `WorkpaperEntry` | `FindingDetail` with `ReviewDecision` | One data hierarchy for every screen under Review (spec, "Review hierarchy") |
+| `RequestCard` | `RequestRow` | Tight sortable list with guidance on demand |
+| `ScoreRing`, `Distribution` | Text score, `DomainSummary` | Labelled numbers, no decoration |
+| `Stepper` | `Progress` on Overview only | Not a second navigation |
+| `Form` | `Field` | Field-level label, help, error and draft state |
+
+Unchanged from the earlier list: `Button`, `Field` inputs, `Choice`, `DataTable`, `Dialog`, `Sheet` (as `Inspector`), Sonner, `Alert`, `Skeleton`, `Tooltip`, `DropdownMenu`, `Breadcrumb`, `Pagination`, `Disclosure`, `CitationBlock`, `EvidenceViewer`, `QuestionCard`, `UploadDropzone`, `RunStatus`, `CodeBlock`, `lucide-react` icons.
 
 ### 4.6 Guard rails (so it does not drift again)
 
 - ESLint, failing CI: no `style` prop; no Tailwind arbitrary values (`p-[13px]`, `text-[#...]`); no raw hex; no spacing, colour or font-size utilities in `web/app/**` (only inside `web/components/**`).
 - Gallery route `/design` in Next: every component and every state (loading, empty, error, saving, locked, conflict), light and dark. The 44 existing preview fixtures in `app/routers/design*.py` are the state checklist.
-- Pixel baselines for every screen at 1440, 1024 and 390, both themes, reusing `design/harness/screenshot.py`. A PR that changes a screen updates its baseline in the same PR.
-- A new screen must name its page template. A new template needs a decision.
+- Pixel baselines for every screen at 1440, 1280 and 390 (client upload), both themes, reusing `design/harness/screenshot.py`. A PR that changes a screen updates its baseline in the same PR.
+- Measured checks per screen, from the spec's P0 table: audit content at 14px or more; prose lines 60 to 80 characters; no horizontal overflow at 1280; exactly one horizontal navigation bar inside an assessment; every status visible in words; keyboard reaches every control.
+- A new screen must name its archetype. A new archetype needs a decision.
 - Framework-specific copy stays conditional (`has_dpdpa`), checked in review.
 
 ## 5. Client behaviours to re-implement
@@ -248,105 +257,147 @@ Seven templates cover all 31 screens. Each is built once in the gallery with rea
 | Polling every 3 s | `usePoll` |
 | Dead code (dashboard filter, review filter, old shortcut help) | Not ported |
 
-## 6. Phases (about 29 PRs; one in flight; Saqlain clicks through each)
+## 6. Phases (Saqlain clicks through each PR)
+
+Revised 12 Oct 2026. The audit showed that five areas are more than a restyle: Questionnaire, Review, RFI, Scope applicability and Report change what the screen shows and how the data is shaped. So the work is split into three tracks that must not be mixed in one PR.
+
+- **Track A, presentation ports.** The data exists today in the shape needed. A port changes layout and components only. Where a new slot has no data yet (for example a gap title), the screen shows the existing field or an honest "not recorded" state; it never invents text.
+- **Track B, product changes.** A new field, data shape, endpoint or stored state. Each one is backend work with its own tests and lands before or after the port of its screen, never inside it.
+- **Track C, content.** Writing and prompt work: what the tool says, to whom. It gets its own plan (section 6.3). The UI leaves the slots; the redesign does not claim to fill them well.
+
+### 6.1 Track A: presentation ports (about 27 PRs)
 
 | Phase | PRs | Content |
 |---|---|---|
-| P0 Foundations | 5 | Decision record; scaffold and proxy; tokens and base components; primitives, shell and templates; API conventions |
-| P1 Portfolio | 3 | Home, Clients, Client, Engagements, Review, Reports, error pages |
+| P0 Foundations | 5 | Decision record; scaffold and proxy; tokens and base components; primitives, shell and the seven archetypes; API conventions |
+| P1 Portfolio | 3 | Home, Clients, Client, Engagements, Portfolio review, Reports, error pages |
 | P2 Engagement and firm | 4 | New engagement, Engagement, New assessment, Remediation, Integrated reports, Requests, AWS, Purge, Settings |
-| P3 Evidence | 3 | Inventory, Evidence record, Reuse, Desk review |
-| P4 Assessment workspace | 4 | Shell and overview, Scope, Questionnaire, Report tab |
-| P5 Review | 4 | Queue, Conclusions, Findings, Workpaper |
-| P6 Reporting | 4 | Versions, Comparison, Narrative, Board inputs, SoA, RFI |
-| P7 Decommission | 2 | Remove Jinja UI, HTMX, old CSS, design routers, old tests; docs |
+| P3 Evidence | 3 | Inventory (3 scopes), Evidence record, Reuse, Desk review |
+| P4 Assessment workspace | 4 | Shell and overview, Scope, Questionnaire (two PRs), Report |
+| P5 Review | 3 | Queue, Conclusions with Findings (one table component), Workpaper |
+| P6 Reporting | 3 | Versions and Comparison, Narrative and Board inputs, RFI |
+| P7 Decommission | 2 | Remove Jinja UI, HTMX, old CSS, design routers, old tests; restyle the client upload page with the new tokens and fix its keyboard path; docs |
 
 ### P0 steps
 
-- **0a** Decision E9 in `tasks/2026-10-08-session-record.md` (sequence edit, no new Jinja screens, rule 2 exception for backend-only work). Copy this plan to `docs/plans/2026-10-12-001-nextjs-frontend-migration-plan.md`. Fix `CLAUDE.md` (Tailwind line, `tests/yozora_paths.py` line). Add `.claude/rules/web.md` scoped to `web/**`.
+- **0a** Decision E9 in `tasks/2026-10-08-session-record.md` (sequence edit, no new Jinja screens, rule 2 exception for backend-only work). Fix `CLAUDE.md` (Tailwind line, `tests/yozora_paths.py` line). Add `.claude/rules/web.md` scoped to `web/**`.
 - **0b** Scaffold `web/`; fallback rewrites; remove `hx-boost`; CI job (lint, typecheck, build); `/run` skill starts both servers.
-- **0c** Tokens output, Tailwind theme, shadcn base components, gallery page.
-- **0d** Layout and type primitives, `AppShell`, seven page templates in the gallery, ESLint rules, screenshot harness pointed at Next. **Saqlain signs the templates here.**
+- **0c** Tokens output (opaque surfaces, four status families), Tailwind theme, shadcn base components, gallery page.
+- **0d** Layout and type primitives, `AppShell`, the seven archetypes in the gallery, ESLint rules, measured checks, screenshot harness pointed at Next. **Saqlain signs the archetypes and picks the section pattern (4.4) here.**
 - **0e** `/api/ui` conventions, error envelope, `GET /api/ui/shell` (nav, review count, branding, accent), OpenAPI type generation, `response_model` guard test.
+
+### 6.2 Track B: product changes (9 backend PRs)
+
+The audit classified 60 requirement parts: 32 presentation, 14 backend, 14 content (`docs/ui-audit/requirements.json`; spec, "Requirement classification"). The 14 backend parts group into these PRs.
+
+| # | Product change | Backend work (checked against the code) | Needed by | Content it waits on |
+|---|---|---|---|---|
+| B1 | Questionnaire drafts save as you type; completing a section is a separate act | New `PATCH /api/assessments/{id}/questionnaire/drafts` (partial upsert, version check, 409 with diff). Today both save routes mark the questionnaire done (`app/routers/questionnaire.py`) | P4 Questionnaire | None |
+| B2 | Questionnaire navigation by the framework's own domains; unified domains for multi-framework | Ordered domain tree from the registry (`app/frameworks/definitions/`); for multi-framework, one master list from `UnifiedControlCluster.domain_group` and `DOMAIN_GROUP_ORDER` (`cluster_engine.py`, `mapping.py`), with a check that each in-scope requirement is covered once | P4 Questionnaire | None |
+| B3 | Per question: what the control requires, why it is asked, how to put it to the client | `why_asked` and `client_prompt_hint` on `QuestionDef` (`app/frameworks/schema.py`) and in the serializers | P4 Questionnaire | C1 |
+| B4 | A finding is titled by its gap and carries impact and the reason for the recommendation | `gap_title`, `impact_statement`, `recommendation_reason` on `Conclusion` (today: `rationale`, `evidence_summary`, `gaps_identified`, `risk_level`, `recommended_action`); carried into the existing `Finding.title` and `Finding.business_impact` on approval. Analyzer output schema gains the three fields; **the v1 prompt path and the parked v2 pipeline are not retuned without a decision** | P5 Queue, Conclusions, Findings, Workpaper; P4 Report | C2 |
+| B5 | "Where this finding came from": what was reviewed and who was spoken to | Interview record (who, role, date, notes, linked evidence) as a new model, service and router; `provenance_narrative` on `Conclusion` built from revision citations and interview records. No interview is ever inferred | P5 Review | C2 |
+| B6 | One typed `FindingDetail` read model for every Review screen | `/api/ui` DTO with the ordered field list in the spec; optional new fields have an explicit missing state | P5 | None |
+| B7 | RFI: an item already in an RFI is not offered again | Common artifact identity across checklist items, conclusion requests and added requests; `included_ids`, issued and received state in JSON (`app/models/rfi.py`, RFI services) | P6 RFI | None |
+| B8 | Applicability asks only for exclusions | Exclusion state (control, reason, actor, version) in Scope; `build_soa` uses a standard justification for the rest. Today justifications are audit-event metadata and do not change applicability | P4 Scope | C3 |
+| B9 | Report opens with written context and has board and auditor views | Report JSON exposes engagement context, accepted narrative sections and their freshness (reuse `app/services/narrative.py` and `board_report.build_document`); board read model ordered weakest to strongest. `approved_report._summary_text` is a string of counts and is not the executive summary | P4 Report | C4 |
+
+Order: B1, B2 and B6 have no content dependency and go first. B4 is the largest and gates the Review ports reading well; the Review screens can port against existing fields before it lands. Analysis must also stop blocking the request (background task and polling) before the Questionnaire cut-over; that was already in this plan and stays in P4.
+
+### 6.3 Track C: content (its own plan, not written here)
+
+Saqlain flagged this separately: the content is not shaped for its reader. The redesign gives each piece a slot and a reader; it does not make the words good. A content plan must cover at least:
+
+| # | Content | Authored once or per assessment | Reader |
+|---|---|---|---|
+| C1 | "Why we ask" and "how to put it to the client" for every question; control wording | Once per control | Consultant |
+| C2 | Gap titles, impact statements, recommendation reasoning, provenance narrative | Generated per assessment, reviewed by the auditor | Auditor, then client |
+| C3 | Standard applicability justification | Once | Auditor, certification body |
+| C4 | Executive summary and domain narrative, board wording against auditor wording | Generated per assessment, accepted by the auditor | Board and executives |
+| C5 | Unified control framework: domain names and structure | Once | Consultant |
+| C6 | RFI request wording, examples and "good looks like" | Once per artifact | Client |
+
+C2 and C4 touch prompts. They need a decision record before any prompt changes, and they are evaluated on the held-out set without reading the answer keys.
 
 ## 7. Every screen
 
-Legend: API "new" means a `/api/ui` read model must be added; "json" means a JSON endpoint already exists.
+Revised 12 Oct 2026. The per-screen regions, states and changes are in the spec ("Per-screen replacement for plan section 7"). This table keeps the routes and says, for each screen, which archetype it uses and whether it is a presentation port only or also waits on a product change (Track B) or content (Track C).
+
+Legend: "API new" means a `/api/ui` read model must be added; "json" means a JSON endpoint already exists. "Port" means presentation only.
 
 ### P1 Portfolio
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| Home | `pages/dashboard.html`, `partials/engagement_list.html` | `/` | T1 | API new (attention rows, engagement rows). Empty and legacy-client states. |
-| Clients | `pages/clients.html` | `/clients` | T1 | API new. Search and industry filter in the URL. |
-| Client | `pages/client_detail.html` | `/clients/[id]` | T2 | API new. Engagements, retention and purge records. |
-| Engagements | `pages/engagements.html` | `/engagements` | T1 | API new. Status filter, search. |
-| Review (all engagements) | `pages/review.html` | `/review` | T1 | API new. Feeds the sidebar count. |
-| Reports (issued) | `pages/reports.html` | `/reports` | T1 | API new from `_issued_report_rows`. |
-| Errors | `pages/error.html` | `not-found.tsx`, `error.tsx` | T2 | Three variants, reference code. FastAPI keeps JSON errors. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| Home | `pages/dashboard.html`, `partials/engagement_list.html` | `/` | Inventory | API new (attention rows, engagement rows). Empty and legacy-client states. | Port |
+| Clients | `pages/clients.html` | `/clients` | Inventory | API new. Search and industry filter in the URL. | Port |
+| Client | `pages/client_detail.html` | `/clients/[id]` | Entity | API new. Engagements, retention and purge records. | Port |
+| Engagements | `pages/engagements.html` | `/engagements` | Inventory | API new. Status filter, search. | Port |
+| Review (all engagements) | `pages/review.html` | `/review` | Queue | API new. Feeds the sidebar count. Rows gain gap titles when B4 lands. | Port; B4 |
+| Reports (issued) | `pages/reports.html` | `/reports` | Inventory | API new from `_issued_report_rows`. | Port |
+| Errors | `pages/error.html` | `not-found.tsx`, `error.tsx` | Recovery | Three variants, reference code, one safe next step. FastAPI keeps JSON errors. | Port |
 
 ### P2 Engagement and firm
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| New engagement | `pages/new_engagement.html`, `partials/client_picker.html` | `/engagements/new` | T5 | JSON create with field errors (replaces 120 lines of re-render validation). New or existing client toggle. Drop legacy `POST /assessments`. |
-| Engagement overview | `pages/engagement_detail.html` | `/engagements/[id]` | T2 | API new. Stage, next step, assessments, links summary. |
-| New assessment | `pages/new_assessment.html` | `/engagements/[id]/assessments/new` | T5 | Framework multi-select; json create exists. |
-| Findings and actions | `pages/remediation_tracker.html` | `/engagements/[id]/remediation` | T1 | API new. XLSX export stays a FastAPI download. |
-| Integrated reports | `pages/integrated_reports.html` | `/engagements/[id]/integrated-reports` | T2 | Generate and issue (confirm dialog); json exists, drop `HX-Redirect`. |
-| Requests | `pages/requests.html`, `partials/magic_links.html` | `/engagements/[id]/requests` | T2 | JSON for create and revoke link. Token shown once with copy. Claude-owned (security boundary). |
-| AWS evidence | `pages/aws_evidence.html`, `partials/aws_evidence_panel.html` | `/engagements/[id]/aws-evidence` | T2 | JSON for pull result. |
-| Purge | `pages/engagement_purge.html` | `/engagements/[id]/purge` | T2 | Typed confirm. Claude-owned (destructive). 409 guard states. |
-| Settings | `pages/firm_settings.html` | `/settings` | T5 | Firm identity, accent picker with the contrast rule from `firm_settings.accent_contrast_problem`, retention years, archive and unarchive. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| New engagement | `pages/new_engagement.html`, `partials/client_picker.html` | `/engagements/new` | Form | JSON create with field errors. The create button stays visible with its prerequisite stated (UI-018). Drop legacy `POST /assessments`. | Port |
+| Engagement overview | `pages/engagement_detail.html` | `/engagements/[id]` | Entity | API new. Stage, next step, assessments, links summary. | Port |
+| New assessment | `pages/new_assessment.html` | `/engagements/[id]/assessments/new` | Form | Framework multi-select; json create exists. | Port |
+| Findings and actions | `pages/remediation_tracker.html` | `/engagements/[id]/remediation` | Inventory | API new. XLSX export stays a FastAPI download. | Port; B4 |
+| Integrated reports | `pages/integrated_reports.html` | `/engagements/[id]/integrated-reports` | Document | Generate and issue (confirm dialog); json exists, drop `HX-Redirect`. | Port; B9, C4 |
+| Requests | `pages/requests.html`, `partials/magic_links.html` | `/engagements/[id]/requests` | Inventory | JSON for create and revoke link. Token shown once with copy. Claude-owned (security boundary). | Port |
+| AWS evidence | `pages/aws_evidence.html`, `partials/aws_evidence_panel.html` | `/engagements/[id]/aws-evidence` | Form | JSON for pull result. | Port |
+| Purge | `pages/engagement_purge.html` | `/engagements/[id]/purge` | Form | Typed confirm. Claude-owned (destructive). 409 guard states. | Port |
+| Settings | `pages/firm_settings.html` | `/settings` | Form | Firm identity, accent picker with the contrast rule, retention years, archive and unarchive. | Port |
 
 ### P3 Evidence
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| Evidence inventory (3 scopes) | `pages/evidence_inventory.html`, `partials/document_list.html`, `upload_status.html` | `/evidence`, `/engagements/[id]/evidence`, `/assessments/[id]/evidence` | T1 | One component, three scopes. Upload dropzone with progress, new version, archive, filters. Uploads post straight to FastAPI. Read status per file ("read", "nothing relevant", "not read: reason") from the reads plan lands here. |
-| Evidence record | `pages/evidence_detail.html` | `/evidence/[id]` | T7 | New JSON for viewer blocks and cited span (`services/evidence_viewer.py`). Summary, key passages, highlighted citation, versions, original file link. `/evidence-versions/{id}/span` redirect kept, target updated. |
-| Evidence reuse | `pages/evidence_reuse.html` | `/assessments/[id]/evidence-reuse` | T1 | Bulk confirm as one action. |
-| Desk review | `pages/desk_review.html`, `partials/desk_review_{ready,running,prefilling,findings,error}.html` | `/assessments/[id]/desk-review` | T6 | `RunStatus` plus `usePoll` on the existing JSON status. Move the logic in `run_desk_review_web` (3834) into a service. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| Evidence inventory (3 scopes) | `pages/evidence_inventory.html`, `partials/document_list.html`, `upload_status.html` | `/evidence`, `/engagements/[id]/evidence`, `/assessments/[id]/evidence` | Inventory | One component, three scopes. Upload dropzone, new version, archive, filters. The "supports" count opens the full mapping (UI-014). Read status per file from the reads plan lands here. | Port |
+| Evidence record | `pages/evidence_detail.html` | `/evidence/[id]` | Document | New JSON for viewer blocks and cited span. An ambiguous filename match is shown as unresolved, not as a summary (UI-015). `/evidence-versions/{id}/span` redirect kept. | Port |
+| Evidence reuse | `pages/evidence_reuse.html` | `/assessments/[id]/evidence-reuse` | Inventory | Bulk confirm as one action. | Port |
+| Desk review | `pages/desk_review.html`, `partials/desk_review_*.html` | `/assessments/[id]/desk-review` | Task | `RunStatus` plus `usePoll` on the existing JSON status. Move the logic in `run_desk_review_web` into a service. | Port |
 
 ### P4 Assessment workspace
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| Workspace shell and Overview | `pages/assessment.html`, `partials/assessment_header.html`, `framework_tabs.html`, `framework_hub_panel.html`, `framework_panel.html` | `/assessments/[id]` (layout) | T3 | Layout holds header, tabs and stepper. API new from `render_assessment_detail`. Tabs become real routes; old `?tab=` URLs redirect. |
-| Scope | `partials/scope_tab.html`, `scope_form.html`, `scope_complete.html` | `/assessments/[id]/scope` | T5 | Scope form; complete state with checklist PDF and DOCX links. |
-| Questionnaire | `partials/questionnaire_tab.html`, `question_step.html`, `context_complete.html`, `screening_form.html`, `questionnaire_sections.html`, `section_questions.html`, `section_saved.html`, `followup_questions.html`, `analysis_{running,complete,error,gate_blocked}.html` | `/assessments/[id]/questionnaire` | T6 | Context wizard, screening, sections with validation, AI follow-ups, run analysis with the completion-gate override. json exists for most of the questionnaire. **Analysis must stop blocking the request:** start it as a background task like desk review, then poll. Largest single screen; split into two PRs. |
-| Report tab | `partials/report_tab.html`, `report_summary.html`, `no_report.html`, `remediation_panel.html`, `remediation_summary.html` | `/assessments/[id]/report` | T2 | API new from `report_summary` (about 35 context keys). `ScoreRing`, distribution, chapter counts, top findings, compare link. PDF download stays FastAPI. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| Workspace shell and Overview | `pages/assessment.html`, `partials/assessment_header.html`, `framework_tabs.html`, `framework_hub_panel.html`, `framework_panel.html` | `/assessments/[id]` (layout) | Entity | Layout holds header and the one stage bar. Title is the task, not the client name. Stages become real routes; old `?tab=` URLs redirect. | Port |
+| Scope, with applicability | `partials/scope_tab.html`, `scope_form.html`, `scope_complete.html`, `pages/soa.html` | `/assessments/[id]/scope` | Form | Scope form; complete state with checklist links. Applicability becomes "controls that do not apply, and why" inside Scope; the SoA tab and its 17,481px page go. | Port; B8, C3 |
+| Questionnaire | `partials/questionnaire_tab.html`, `question_step.html`, `context_complete.html`, `screening_form.html`, `questionnaire_sections.html`, `section_questions.html`, `section_saved.html`, `followup_questions.html`, `analysis_*.html` | `/assessments/[id]/questionnaire` | Task | Full-width question surface with a domain rail. Per question: requirement, why asked, how to ask, answer, notes. Answered state redesigned. **Analysis must stop blocking the request:** background task, then poll. Two PRs. | Port; B1, B2, B3, C1 |
+| Report | `partials/report_tab.html`, `report_summary.html`, `no_report.html`, `remediation_panel.html`, `remediation_summary.html` | `/assessments/[id]/report` | Document | Opens with the written executive summary, then domains weakest to strongest, then recommendations with their logic. Board summary and auditor detail toggle. PDF download stays FastAPI. | Port; B4, B9, C4 |
 
 ### P5 Review
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| Review queue | `pages/review_queue.html`, `components/conclusion_card.html`, `requirement_card_body.html`, `partials/remediation_draft.html` | `/assessments/[id]/review` | T4 | `ConclusionCard`, `RequirementBody` with the E4 signed checklist, RFI add and withdraw, divergence acknowledge, AI action draft. `j`/`k`. |
-| Conclusions | `pages/conclusions.html`, `partials/report_basis_panel.html`, `release_panel.html` | `/assessments/[id]/review/conclusions` | T4 | Approve, edit, reject, reopen with `expected_version`; conflict diff from JSON. Report basis and release with blockers list. |
-| Findings | `pages/findings.html`, `components/finding_card.html` | `/assessments/[id]/review/findings` | T1 | `FindingCard` action states with `expected_history_length`. |
-| Workpaper | `pages/workpaper.html`, `components/workpaper_entry.html` | `/assessments/[id]/review/workpaper` | T7 | Read only. The standalone workpaper HTML for PDF stays in Python. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| Review queue | `pages/review_queue.html`, `components/conclusion_card.html`, `requirement_card_body.html`, `partials/remediation_draft.html` | `/assessments/[id]/review` | Queue | Findings titled by the gap; outcome and risk in words in the list; decision bar attached to the selected finding; one provenance block; pending first, then evidence issues, switchable. `j`/`k`. | Port; B4, B5, B6, C2 |
+| Conclusions | `pages/conclusions.html`, `partials/report_basis_panel.html`, `release_panel.html` | `/assessments/[id]/review/conclusions` | Inventory | Assessment-sheet table: domain, control ID, gap, risk, status; a row expands to the full finding. Report basis and release with blockers list. Conflict diff from JSON. | Port; B4, B6 |
+| Findings | `pages/findings.html`, `components/finding_card.html` | `/assessments/[id]/review/findings` | Inventory | Same table and `FindingDetail`, with ownership and action states (`expected_history_length`). | Port; B6 |
+| Workpaper | `pages/workpaper.html`, `components/workpaper_entry.html` | `/assessments/[id]/review/workpaper` | Document | Read only; same field order with the method and revision trace. The standalone workpaper HTML for PDF stays in Python. | Port; B5, B6 |
 
 ### P6 Reporting
 
-| Screen | Jinja today | Next route | Tpl | Work |
-|---|---|---|---|---|
-| Versions | `pages/report_snapshots.html` | `/assessments/[id]/report/versions` | T2 | Generate, issue (confirm), downloads (PDF, DOCX, XLSX, PPTX from FastAPI), checksum copy. Claude-owned (immutable snapshots). |
-| Comparison | `pages/comparison.html` | `/assessments/[id]/report/compare/[otherId]` | T2 | json exists (`reports.py` compare). |
-| Narrative | `pages/narrative.html` | `/assessments/[id]/report/narrative` | T7 | Generate, accept, discard AI sections; blockers when released. |
-| Board inputs | `pages/board_inputs.html` | `/assessments/[id]/report/board-inputs` | T5 | Observations, owners, initiatives, asks. json exists. |
-| Applicability (SoA) | `pages/soa.html` | `/assessments/[id]/report/soa` | T5 | ISO 27001 only. Filter, character count, bulk save. |
-| RFI | `pages/rfi.html`, `partials/rfi_links.html` | `/assessments/[id]/rfi` | T2 | Items, versions, client links; 20-item limit on a link. |
+| Screen | Jinja today | Next route | Archetype | Work | Track |
+|---|---|---|---|---|---|
+| Versions | `pages/report_snapshots.html` | `/assessments/[id]/report/versions` | Inventory | Generate, issue (confirm), downloads from FastAPI, checksum copy. Report type is in the URL. Claude-owned (immutable snapshots). | Port |
+| Comparison | `pages/comparison.html` | `/assessments/[id]/report/compare/[otherId]` | Inventory | json exists (`reports.py` compare). | Port |
+| Narrative | `pages/narrative.html` | `/assessments/[id]/report/narrative` | Document | Generate, accept, discard AI sections; a draft saves without being accepted (UI-019). | Port; C4 |
+| Board inputs | `pages/board_inputs.html` | `/assessments/[id]/report/board-inputs` | Form | Observations, owners, initiatives, asks. json exists. | Port |
+| RFI | `pages/rfi.html`, `partials/rfi_links.html` | `/assessments/[id]/evidence/requests` | Inventory | One tight sortable list, guidance on demand, items already in the RFI grouped and not offered again; versions and client links as sections, not a third bar; 20-item limit on a link. | Port; B7, C6 |
 
 ### Stays in FastAPI and Jinja
 
 | Item | Why |
 |---|---|
-| `magic/upload.html`, `magic/invalid.html` | Strict CSP, no-store headers, token redaction, works without JS. Restyled with the new tokens in P7. |
+| `magic/upload.html`, `magic/invalid.html` | Strict CSP, no-store headers, token redaction, works without JS. In P7: new tokens, a keyboard path to the file control (UI-011), the error placed on the item that failed, heading before the intro, one brand name. |
 | `reports/board_report.html`, `reports/workpaper_standalone.html` | Input to WeasyPrint. PDF sections are additive-only. |
 
 ### Removed, not ported
 
-`pages/login.html` (no login until Track 4), `pages/design*.html` and `app/routers/design*.py` (replaced by the Next gallery), `partials/status_timeline.html`, `partials/review_finding_card.html` (endpoint returns 410), the three unused `*_status_badge.html` files, `partials/yozora_page_controls.html`, the dead `documents_tab` include, legacy `POST /assessments`.
+`pages/login.html` (no login until Track 4), `pages/design*.html` and `app/routers/design*.py` (replaced by the Next gallery), `pages/soa.html` as its own page, `partials/status_timeline.html`, `partials/review_finding_card.html` (endpoint returns 410), the three unused `*_status_badge.html` files, `partials/yozora_page_controls.html`, the dead `documents_tab` include, legacy `POST /assessments`, the shell Search field until it has a result contract.
 
 ## 8. Tests
 
@@ -378,7 +429,7 @@ Measured size of what would have to be rewritten in TypeScript:
 
 Also replaced: SQLAlchemy and Alembic, `fpdf2`, WeasyPrint, `python-docx`, `python-pptx`, `openpyxl`, `pdfplumber`, `boto3`.
 
-- **Effort (my estimate, not measured):** about 29 PRs for this plan. A full port adds roughly 90 to 120 more, so four to five times the work.
+- **Effort (my estimate, not measured):** about 27 presentation PRs and 9 backend PRs for this plan, with the content track planned separately. A full port adds roughly 90 to 120 more, so four to five times the work.
 - **Risk:** the approved board deck, PPTX, XLSX and PDF formats would be regenerated by different libraries and would not match. Deterministic scoring, the frozen v1 prompt path and the golden recordings would all need re-validation.
 - **Benefit to the auditor:** none visible. The problems named (spacing, text, components) are all in the frontend.
 - **Recommendation:** do not port. If one language is still wanted later, decide it after P7, when the API boundary is clean and the frontend no longer depends on Python templates.
@@ -393,8 +444,10 @@ Also replaced: SQLAlchemy and Alembic, `fpdf2`, WeasyPrint, `python-docx`, `pyth
 
 | Risk | Handling |
 |---|---|
-| Two shells look different mid-migration | Move the highest-traffic areas in order (P1 to P6); P0 shell matches Yozora colours. |
+| Two shells look different mid-migration | Accepted: the new shell is opaque and neutral, the old one is glass on a gradient. Move the highest-traffic areas in order (P1 to P6) so the overlap is short. |
 | Analysis request blocks for minutes behind the proxy | Background task plus polling in P4, before the questionnaire cut-over. |
 | Hidden behaviour lost in a port | Parity checklist from the migration map; adversarial review. |
 | Test count drops as HTML tests retire | Each retired test is replaced by a JSON test or a Playwright check in the same PR. |
-| Scope creep into redesigning features | Screen PRs change presentation only; feature changes go to the parking lot. |
+| Scope creep into redesigning features | Track A PRs change presentation only. The product changes the audit found are named in Track B (section 6.2), each its own backend PR; anything else goes to the parking lot. |
+| A port ships a slot with no data and it gets filled with invented text | Slots show the existing field or "not recorded". New text arrives only through Track B fields and Track C content. |
+| Content quality is assumed solved by the redesign | It is not. Track C has its own plan; C2 and C4 need a decision record before any prompt change. |
