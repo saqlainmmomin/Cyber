@@ -39,3 +39,22 @@ Do not change the tokens, the status families, the conclusions table, the conten
 ## Report back
 
 Append `## Results` here: what changed per fix number, in one line each, and anything you could not do.
+
+## Results
+
+1. Changed prose to 56ch, including bold requirements, 14px guidance, expanded findings and recommendation roles; design system and spec explain why Inter’s zero glyph made 72ch hold too many characters.
+2. Withdrawn fix left unchanged: sidebar remains sticky at full viewport height.
+3. Removed prototype commentary from all five screens, replaced state text with user-facing copy, and moved source/demo limitations into prototypes/README.md.
+4. RFI now has 40 one-line collapsed rows, a 45px static row-height calculation, sortable column headers, chevron guidance, and a separate In this RFI group with no add controls or duplicate candidates.
+5. Queue now uses an unbordered divided list with a two-line gap title, one-line control/name, one-line outcome/risk, and quieter decided rows.
+6. Finding outcome/risk join the title block; gap, impact, strong Recommendation, Why this recommendation and provenance follow in order, with the sticky decision bar retained.
+7. Removed questionnaire applicability and added scope-applicability.html with Scope active, two illustrative exclusion reasons, an exclusion picker, and the standard justification shown once.
+8. Added the top-right Board summary/Auditor detail toggle, executive summary/posture/domain risk table, 25 visible high/medium board gaps in two columns, and filters over all 93 auditor controls; the three-screen height target remains unverified and may be exceeded with all primary content visible.
+9. Added review-queue-sidebar.html with nested assessment links and aria-current; design system and spec describe both options, recommend B for visible one-click destinations, and mark the choice pending Saqlain without changing the five original screens to B.
+10. Retained Order choices for pending, evidence issues, risk and control order; counts are plain text: 3 pending, 3 decided.
+
+Updated requirements.json, README coverage, component/archetype guidance, prototypes/README.md, illustrative-content.json and tools/verify_audit.py. The manifest now matches 208 screen/ID pairs across seven prototypes; existing IDs stay intact except the moved Scope element and the eight removed low-risk board elements, with new Scope exclusions, posture and sidebar copies registered.
+
+Verification: python docs/ui-audit/tools/verify_audit.py passes; all interactive inline scripts pass node --check; static document fixtures exercised report toggle/filter and both queue sort functions, and RFI sort/add movement checks passed. git diff --check passes. Existing tokens are unchanged except the requested prose measure. All prose role caps are 56ch, audit text remains at least 14px, and changed paths are confined to docs/ui-audit/ and this handoff with no em dashes.
+
+Limits: inspected all ten supplied pre-fix host captures at 1440 and 1280. No browser, server, commit, application mutation, AI spend or answer-key read occurred. Fresh rendered line lengths, overflow, sticky behavior and report height cannot be proved by this static-only pass; screenshots and measurements.json remain the original evidence. The board keeps all 25 high/medium impacts and recommendations visible, so fitting about three screens is not claimed. Issued/Received RFI state labels are specified but not fabricated as live row states; this prototype demonstrates Not requested and In draft RFI.

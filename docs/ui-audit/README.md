@@ -7,8 +7,8 @@ The interface needs a shared reading and decision system before its Next.js cuto
 | Issue | Problem | Target |
 | --- | --- | --- |
 | UI-001 | Question pane is576px inside a1040px page at 1440. | Wide task workspace with a196px domain rail and no permanent third pane. |
-| UI-002 / UI-013 | Guidance is12px, substantive text13px, report prose reaches138 characters per line. | Audit text >=14px; primary reading16px; prose72ch target. |
-| UI-025 / UI-008 | Stage tabs stack above changing subnavigation; RFI adds a third level. | One stage bar and one flattened Section selector; stable URL state. |
+| UI-002 / UI-013 | Guidance is12px, substantive text13px, report prose reaches138 characters per line. | Audit text >=14px; primary reading16px; prose56ch target. |
+| UI-025 / UI-008 | Stage tabs stack above changing subnavigation; RFI adds a third level. | One stage bar; Option A flattened Section selector or Option B nested sidebar links, pending Saqlain; stable URL state. |
 | UI-003 / UI-009 / UI-012 | Queue dots hide outcomes; status meanings collide; seven dark accent-text pairs fail modeled contrast. | Four labelled status families and validated theme pairs. |
 | UI-004 | Section validation prevents draft saving and navigation can discard work. | Partial autosave and separate explicit completion. |
 | UI-027 / UI-028 / UI-029 | Control-name titles, duplicate evidence and demoted recommendation obscure the finding. | Gap title, outcome, impact, recommendation/logic and one provenance narrative. |
@@ -27,15 +27,15 @@ Retire gradient canvas, glass surfaces, stacked segmented navigation, universal 
 
 ## Core principles
 
-Information follows the auditor's decision. A table is for scanning, a workspace for comparing, and a document for reading. All audit content is at least14px. Prose targets60 to 80 characters per full line. Status has words and a semantic family. Surface, spacing and typography come from shared tokens. Greyscale preserves title, gap and next action. One stage navigation bar is enough; a labelled Section selector handles sub-sections. Good writing remains a separate track.
+Information follows the auditor's decision. A table is for scanning, a workspace for comparing, and a document for reading. All audit content is at least14px. Prose targets60 to 80 characters per full line. Status has words and a semantic family. Surface, spacing and typography come from shared tokens. Greyscale preserves title, gap and next action. One stage navigation bar is enough; Option A uses a labelled Section selector; Option B exposes nested sidebar links. Choice pending Saqlain; B is recommended for frequent switching. Good writing remains a separate track.
 
 ## P0 migration gates
 
 UI-001, UI-002, UI-003, UI-008, UI-009, UI-011, UI-012, UI-013 and UI-025 must pass the measured checks in the spec's P0 table before the migrated UI is viable. These cover usable width, reading size/measure, explicit status, navigation/history, theme contrast and keyboard file access. Source/math checks in this run do not replace runtime geometry and keyboard tests of a future implementation.
 
-## First five screens and components
+## Prototype screens and components
 
-Build Questionnaire, Review queue, Conclusions, RFI and Report first. Their [static prototypes](prototypes/README.md) test distinct work patterns with real Veldhara GET content. The first primitives are AppShell, Page width modes, Header/StageNav/SectionSelect, Text/Prose roles, Field, StatusBadge and DataTable. Then compose QuestionCard, FindingDetail/ReviewDecision, RequestRow and DomainSummary. The component inventory rules on every provisional plan component; no generic Card or decorative score ring is required.
+Build Questionnaire, Review queue, Conclusions, RFI and Report first. Scope applicability and a second queue navigation option bring the total to seven files. Their [static prototypes](prototypes/README.md) test distinct work patterns with real Veldhara GET content. The first primitives are AppShell, Page width modes, Header/StageNav/SectionSelect, Text/Prose roles, Field, StatusBadge and DataTable. Then compose QuestionCard, FindingDetail/ReviewDecision, RequestRow and DomainSummary. The component inventory rules on every provisional plan component; no generic Card or decorative score ring is required.
 
 ## Requirements coverage
 
@@ -44,18 +44,18 @@ Each of Saqlain's decisions and per-screen requirements is linked below. Split r
 | ID | Decision / requirement | Prototype or reason | Spec section | Classification |
 | --- | --- | --- | --- | --- |
 | D01 | FastAPI remains JSON API; cut over screen by screen | No static API execution: spec only | Delivery | Backend |
-| D02 | Retire gradient canvas and glass | All five | Foundation | Presentation |
-| D03 | Keep eight accents for interaction and branding only | All five, graphite shown; other presets in token table | Foundation | Presentation |
-| D04 | Four status families | All five | Status | Presentation |
+| D02 | Retire gradient canvas and glass | All seven | Foundation | Presentation |
+| D03 | Keep eight accents for interaction and branding only | All seven, graphite shown; other presets in token table | Foundation | Presentation |
+| D04 | Four status families | All seven | Status | Presentation |
 | D05 | Control codes allowed beside titles | questionnaire.html, review-queue.html, conclusions.html | Review hierarchy | Presentation |
 | D06a | Single framework uses its own master domains | questionnaire.html (target ISO focus) | Questionnaire | Backend |
 | D06b | Multi-framework covers each requirement once in unified domains | Not shown: ISO focus prototype; multi-framework is specified | Questionnaire | Backend |
 | D07a | Drafts save automatically while typing | questionnaire.html (static saved state) | Draft contract | Backend |
 | D07b | Draft saving feedback and explicit completion act | questionnaire.html | Draft contract | Presentation |
 | D08 | Pending first, then missing or contradictory evidence; sort and switch anytime | review-queue.html | Review queue | Presentation |
-| D09 | Laptop 1440 with 1280 support | All five | Foundation | Presentation |
-| D10 | Never stack secondary or tertiary navigation bars | All five | Navigation | Presentation |
-| D11 | Inter stays | All five | Foundation | Presentation |
+| D09 | Laptop 1440 with 1280 support | All seven | Foundation | Presentation |
+| D10 | Never stack secondary or tertiary navigation bars | All seven; review-queue-sidebar.html compares option B | Navigation | Presentation |
+| D11 | Inter stays | All seven | Foundation | Presentation |
 | Q01 | Question area uses available width, no blank side | questionnaire.html | Questionnaire | Presentation |
 | Q02 | Control requirement is primary | questionnaire.html | Questionnaire | Presentation |
 | Q03 | Explain why asked | questionnaire.html | Content track | Content |
@@ -93,10 +93,10 @@ Each of Saqlain's decisions and per-screen requirements is linked below. Split r
 | P05 | Each domain gap has non-compliance impact risk for board | report.html | Content track | Content |
 | P06 | Board summary and auditor/technical detail | report.html | Report | Presentation |
 | P07 | Recommendations and logic follow exported report flow | report.html | Report | Presentation |
-| S01a | Ask only non-applicable controls and reasons | questionnaire.html (clearly marked Scope panel) | Scope and SoA | Presentation |
-| S01b | Everything else applicable with standard justification | questionnaire.html (Scope panel) | Scope and SoA | Backend |
-| S01c | Author standard applicability justification | questionnaire.html (Scope panel) | Content track | Content |
-| S02 | SoA lives under Scope, no own tab | questionnaire.html (Scope panel) | Navigation | Presentation |
+| S01a | Ask only non-applicable controls and reasons | scope-applicability.html | Scope and SoA | Presentation |
+| S01b | Everything else applicable with standard justification | scope-applicability.html | Scope and SoA | Backend |
+| S01c | Author standard applicability justification | scope-applicability.html | Content track | Content |
+| S02 | SoA lives under Scope, no own tab | scope-applicability.html | Navigation | Presentation |
 | T01 | Content quality is separate, reader-specific track | Not solved by static prototype: examples expose slots only | Content track | Content |
 | T02 | Useful consultant AI output and good reports with less effort | Not measured: needs consultant task testing | Content track | Content |
 | D06c | Unified taxonomy and requirement wording | Not shown: requires content track beyond ISO focus | Content track | Content |
@@ -130,6 +130,6 @@ The comparison fixture still returns404 in two captures. The populated live comp
 
 ## Verification and limits
 
-Run `python docs/ui-audit/tools/verify_audit.py`. It checks all nine documents,35 structured issues and existing cited screenshots, all P0 rules,60 coverage rows, classification values and code paths, five prototype files/shared CSS/fonts, illustrative IDs and manifests, realistic source row counts, target contrast and write scope. Prototype source is GET-only, with no AI spend. No browser/server/commit was used in this run.
+Run `python docs/ui-audit/tools/verify_audit.py`. It checks all nine documents,35 structured issues and existing cited screenshots, all P0 rules,60 coverage rows, classification values and code paths, seven prototype files/shared CSS/fonts, illustrative IDs and manifests, realistic source row counts, target contrast and write scope. Prototype source is GET-only, with no AI spend. No browser/server/commit was used in this run.
 
-The static screens have not been rendered in a browser here, as instructed. Host screenshot review must prove layout at 1440/1280, actual line lengths, focus order and sticky decisions. Autosave and other backend contracts are specified, not implemented. The five screens render from disk; citation destinations require the existing app. The current source assessment contains DPDPA plus ISO; questionnaire/report prototypes explicitly demonstrate ISO focus, and the target single-framework grouping is disclosed. Content quality and productivity need their own writing and consultant testing work. There are no blocking product decisions left open.
+The pre-fix prototypes have supplied host captures at both laptop widths. This fix pass inspected them and made static changes without launching a browser. Fresh rendering remains unverified, as instructed. Host screenshot review must prove layout at 1440/1280, actual line lengths, focus order and sticky decisions. Autosave and other backend contracts are specified, not implemented. The seven screens render from disk; citation destinations require the existing app. The current source assessment contains DPDPA plus ISO; questionnaire/report prototypes explicitly demonstrate ISO focus, and the target single-framework grouping is disclosed. Content quality and productivity need their own writing and consultant testing work. Sub-section navigation is pending Saqlain between the select and nested sidebar options; neither prevents this prototype pass. Board height may exceed the three-screen target while all 25 primary findings remain visible.

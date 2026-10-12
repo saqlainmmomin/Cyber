@@ -11,7 +11,7 @@
     "id": "D02",
     "requirement": "Retire gradient canvas and glass",
     "classification": "Presentation",
-    "prototype": "All five",
+    "prototype": "All seven",
     "section": "Foundation",
     "work": "Opaque token surfaces."
   },
@@ -19,7 +19,7 @@
     "id": "D03",
     "requirement": "Keep eight accents for interaction and branding only",
     "classification": "Presentation",
-    "prototype": "All five, graphite shown; other presets in token table",
+    "prototype": "All seven, graphite shown; other presets in token table",
     "section": "Foundation",
     "work": "Accent never maps status; palette is documented for all presets."
   },
@@ -27,7 +27,7 @@
     "id": "D04",
     "requirement": "Four status families",
     "classification": "Presentation",
-    "prototype": "All five",
+    "prototype": "All seven",
     "section": "Status",
     "work": "Separate severity, outcome, progress, provenance labels."
   },
@@ -83,7 +83,7 @@
     "id": "D09",
     "requirement": "Laptop 1440 with 1280 support",
     "classification": "Presentation",
-    "prototype": "All five",
+    "prototype": "All seven",
     "section": "Foundation",
     "work": "Sidebar 224; gutters 24; minmax(0,1fr) workspace."
   },
@@ -91,15 +91,15 @@
     "id": "D10",
     "requirement": "Never stack secondary or tertiary navigation bars",
     "classification": "Presentation",
-    "prototype": "All five",
+    "prototype": "All seven; review-queue-sidebar.html compares option B",
     "section": "Navigation",
-    "work": "One labelled Section select in content toolbar replaces both levels two and three."
+    "work": "Option A flattened Section select; Option B nested assessment links under Engagements. Recommend B; choice pending Saqlain."
   },
   {
     "id": "D11",
     "requirement": "Inter stays",
     "classification": "Presentation",
-    "prototype": "All five",
+    "prototype": "All seven",
     "section": "Foundation",
     "work": "Vendored relative fonts and local Next font."
   },
@@ -149,7 +149,7 @@
     "classification": "Presentation",
     "prototype": "questionnaire.html",
     "section": "Questionnaire",
-    "work": "14px guidance minimum, 72ch cap, visible labels."
+    "work": "14px guidance minimum, 56ch cap in each role’s font size, visible labels."
   },
   {
     "id": "Q07",
@@ -389,7 +389,7 @@
     "classification": "Presentation",
     "prototype": "report.html",
     "section": "Report",
-    "work": "Single Section select switches two views; preserves released basis."
+    "work": "Top-right Board summary / Auditor detail toggle preserves released basis; Section select remains separate."
   },
   {
     "id": "P07",
@@ -403,7 +403,7 @@
     "id": "S01a",
     "requirement": "Ask only non-applicable controls and reasons",
     "classification": "Presentation",
-    "prototype": "questionnaire.html (clearly marked Scope panel)",
+    "prototype": "scope-applicability.html",
     "section": "Scope and SoA",
     "work": "Search exclusion controls; reason field shown only for exclusion."
   },
@@ -411,7 +411,7 @@
     "id": "S01b",
     "requirement": "Everything else applicable with standard justification",
     "classification": "Backend",
-    "prototype": "questionnaire.html (Scope panel)",
+    "prototype": "scope-applicability.html",
     "section": "Scope and SoA",
     "work": "app/services/soa.py default source and source marker; preserve frozen issued justification during cutover."
   },
@@ -419,7 +419,7 @@
     "id": "S01c",
     "requirement": "Author standard applicability justification",
     "classification": "Content",
-    "prototype": "questionnaire.html (Scope panel)",
+    "prototype": "scope-applicability.html",
     "section": "Content track",
     "work": "Authored once per framework/control, no generated claim of observed effectiveness."
   },
@@ -427,7 +427,7 @@
     "id": "S02",
     "requirement": "SoA lives under Scope, no own tab",
     "classification": "Presentation",
-    "prototype": "questionnaire.html (Scope panel)",
+    "prototype": "scope-applicability.html",
     "section": "Navigation",
     "work": "Scope Section select option Applicability, legacy SoA route redirect."
   },

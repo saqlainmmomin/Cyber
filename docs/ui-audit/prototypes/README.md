@@ -1,24 +1,28 @@
 # Static prototype review
 
-Open the five HTML files directly from disk. No server, browser build or CDN is needed. Inter loads from ../../../app/static/fonts/. All five share prototype.css tokens, layout and component classes. No production writes or AI calls occur. External citation links point to the existing app and need that app to read source files; rendering the screens itself works offline. Navigation destinations without a dedicated prototype use clearly named local panels. This is not a complete application.
+Open the seven HTML files directly from disk. No server, browser build or CDN is needed. Inter loads from ../../../app/static/fonts/. All seven share prototype.css. Citation and Findings/Workpaper destinations need the existing app; these views are not static prototypes. Sorts, disclosures and state changes are local demonstrations with no production writes or AI calls.
 
-questionnaire.html: the full staff frame exposes one stage bar and one labelled Section select. The ISO-domain rail uses the four Annex A themes. Two full-width work surfaces show an unanswered-state example and the real approved access-rights conclusion. Requirement, why and client hint have distinct roles. Draft state and completion remain separate. The marked Scope panel asks only for exclusions and shows the standard default justification. The unanswered question is a local state demonstration reset from the released source, not a claim that live data is incomplete.
+questionnaire.html: one stage bar and the Option A Section select frame the four ISO domain links. Full-width unanswered and answered question surfaces preserve requirement, why and client hint hierarchy. Prose, bold requirements and guidance cap at 56ch in their own font size; Inter’s zero glyph made the previous 72ch cap wider than 80 average characters. Applicability now lives in Scope. The unanswered example is a reset local state; typing shows unsaved changes without pretending a network save occurred. Other domain panels contain navigation placeholders, not a complete questionnaire.
 
-review-queue.html: the six real interim candidates appear with gap titles, outcome, risk and review state in words. Pending entries come first. Sort and selection work locally. The selected finding keeps decisions at the top while gap, outcome, impact, full-weight recommendation and reasoning, and one provenance narrative follow in order. File links are one click away. No interviews are invented. Local decision previews do not persist or authorize production actions.
+review-queue.html: six real interim candidates form a compact unbordered list. Pending decisions come first; Order also offers evidence issues, risk and control order. Evidence sorting is a representative priority based on the reviewed missing exercise, removal and training support. Plain counts read 3 pending, 3 decided. Titles take at most two lines; control/name and outcome/risk each take one. Decided items are quieter. Outcome and risk join the finding heading. The sticky decision bar stays attached. Gap, impact, a strong recommendation, Why this recommendation and one provenance narrative follow. No interviews are invented. Local decision previews do not persist.
 
-conclusions.html:32 real ISO conclusions across all four domains fill a deterministic five-column sheet. Rows expand across the full table width to gap, status, risk/impact, recommendation/logic and one provenance narrative. The final view removes review mechanics. Missing impact and reasoning are stated honestly. It is a populated subset of the93 source ISO controls, not a claim of completeness for the detailed inventory.
+conclusions.html: 32 real ISO conclusions across four domains remain in the deterministic five-column table. Rows expand to the shared finding hierarchy, including the strong recommendation and explicit reasoning. Final conclusions omit review mechanics. Missing fields are stated honestly; this is a subset of the 93 source controls.
 
-rfi.html:40 real request artifacts form a tight sortable list. Guidance is closed by default and retains what to send, example and good looks like. The first two artifacts demonstrate illustrative draft inclusion instead of an add form; source mapping counts remain real. The target backend must reconcile received, requested and issued identity. Candidate buttons turn into included state locally. Versions and links are flattened Section choices pointing to marked explanatory panels. No live issued-version or client-link records are fabricated.
+rfi.html: 40 real request artifacts are collapsed to one-line rows: title, requirement, state, mapped evidence and action. Chevron expansion retains what to send, example and good looks like. Column headers sort, defaulting to title ascending. The two illustrative draft items begin under In this RFI with no add control. Only the other 38 items are candidates. Adding moves an item into that group once and removes its add control. The backend must reconcile requested, issued and received identity; only Not requested and In draft RFI are demonstrated because the source has no verified issued/received state for these rows. Long titles use ellipsis, with the full title in the expansion and title attribute. Versions and client links are empty-state local panels.
 
-report.html: the board view starts with written engagement context, then all four ISO domains from weakest organizational to strongest physical, with each real non-compliant or partial conclusion, impact, recommendation and logic. The Section selector switches to auditor detail with all 93 controls and source trace. Framework scores are not combined. The mixed source assessment is explicitly ISO-focused; DPDPA results remain separate. Board narrative is illustrative content, not accepted report prose.
+report.html: Board summary and Auditor detail are a top-right two-option toggle, separate from Section. Board opens with written engagement context, posture and a weakest-to-strongest domain table with score and risk counts. It then shows the 25 high/medium non-compliant gaps with impact, risk, recommendation and logic visible in two columns; low gaps remain in Auditor detail. The detailed view holds all 93 controls and domain/outcome/risk filters. Scores stay separate by framework. The board height target is about three 1440 screens; 25 open findings may exceed it, and no new rendered height is claimed. Primary deliverables remain visible. Executive prose and posture are illustrative, not accepted report text.
+
+scope-applicability.html: the Scope stage is active. Controls that do not apply shows two plausible exclusions, marked illustrative, with a reason each. A picker asks only for a new exclusion and its reason. All remaining controls use the standard applicability justification shown once. No per-applicable-control justification boxes appear. Neither exclusion is claimed as stored in the real Veldhara assessment.
+
+review-queue-sidebar.html: Option B uses identical queue content and behavior, but replaces Section with nested assessment links beneath Engagements. Queue has aria-current. The horizontal stage bar stays. Option B is recommended for visible destinations and one-click frequent switching; the choice is pending Saqlain. Option A remains on the five original screens and Scope for comparison.
 
 ## Source and state limits
 
-GET curl responses from current assessment d491ee73-0925-43bd-8cb2-3b5fff2cc8ac and interim 506d1f04-9c19-44e4-9fdd-fa286f2b4eb6 supply the runtime content. The current assessment actually contains DPDPA and ISO, not ISO alone. source-data.json retains the extracted source and field names. The questionnaire demonstrates the target single-framework ISO grouping; multi-framework UCC grouping is specified, not prototyped. Form, sort, disclosure and view switches are local demonstrations. Autosave network behavior, review blockers/conflict handling and inclusion identity require implementation verification. No browser was launched and no runtime layout screenshots of these prototypes were taken in this run. Host QA must measure horizontal overflow at 1440/1280, font sizes and full prose lines, sticky decision visibility and keyboard focus.
+Existing GET responses from assessments d491ee73-0925-43bd-8cb2-3b5fff2cc8ac and 506d1f04-9c19-44e4-9fdd-fa286f2b4eb6 supply the content in source-data.json. The source assessment contains DPDPA and ISO; questionnaire/report demonstrate the ISO view, while multi-framework UCC grouping stays specified. No new GET was necessary for this fix pass. The supplied screenshots and measurements.json record the pre-fix host captures at 1440 and 1280; they have not been replaced with invented evidence. This pass launches no browser or server. Host QA must remeasure height, horizontal overflow, full prose lines, font sizes, focus order and sticky decisions. Static CSS bounds and interaction fixtures cannot prove rendered geometry. Autosave, review blockers/conflicts and inclusion identity remain implementation dependencies.
 
 ## Every illustrative element
 
-Each row is an exact HTML id with data-illustrative=true. Paired backend/content dependencies are explicit.
+Each row identifies a screen and exact HTML id carrying data-illustrative=true. Option B repeats Option A dependencies without changing their IDs. Paired backend/content dependencies remain explicit.
 
 | Screen | Element ID | Classification | Dependency |
 | --- | --- | --- | --- |
@@ -26,7 +30,7 @@ Each row is an exact HTML id with data-illustrative=true. Paired backend/content
 | questionnaire.html | q1-hint | Content | Static per-control client_prompt_hint field |
 | questionnaire.html | q2-why | Content | Static per-control why_asked field |
 | questionnaire.html | q2-hint | Content | Static per-control client_prompt_hint field |
-| questionnaire.html | soa-standard | Content | Authored standard justification plus Backend default applicability source marker |
+| scope-applicability.html | soa-standard | Content | Authored standard justification plus Backend default applicability source marker |
 | review-queue.html | queue-title-0 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
 | review-queue.html | finding-title-0 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
 | review-queue.html | finding-impact-0 | Backend | Conclusion.impact_statement; generated per assessment Content |
@@ -92,16 +96,10 @@ Each row is an exact HTML id with data-illustrative=true. Paired backend/content
 | rfi.html | rfi-included-0 | Backend | Illustrative inclusion state; stable cross-source request identity/state contract, not live receipt or issuance |
 | rfi.html | rfi-included-1 | Backend | Illustrative inclusion state; stable cross-source request identity/state contract, not live receipt or issuance |
 | report.html | report-executive | Content | Accepted per-assessment executive narrative, exposed by existing narrative/board read model |
-| report.html | report-organizational-impact-0 | Content | Board impact text; Backend per-conclusion impact slot |
-| report.html | report-organizational-reason-0 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-organizational-impact-1 | Content | Board impact text; Backend per-conclusion impact slot |
 | report.html | report-organizational-reason-1 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
-| report.html | report-organizational-impact-2 | Content | Board impact text; Backend per-conclusion impact slot |
-| report.html | report-organizational-reason-2 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-organizational-impact-3 | Content | Board impact text; Backend per-conclusion impact slot |
 | report.html | report-organizational-reason-3 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
-| report.html | report-organizational-impact-4 | Content | Board impact text; Backend per-conclusion impact slot |
-| report.html | report-organizational-reason-4 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-organizational-impact-5 | Content | Board impact text; Backend per-conclusion impact slot |
 | report.html | report-organizational-reason-5 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-organizational-impact-6 | Content | Board impact text; Backend per-conclusion impact slot |
@@ -136,8 +134,6 @@ Each row is an exact HTML id with data-illustrative=true. Paired backend/content
 | report.html | report-organizational-reason-20 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-people-impact-0 | Content | Board impact text; Backend per-conclusion impact slot |
 | report.html | report-people-reason-0 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
-| report.html | report-people-impact-1 | Content | Board impact text; Backend per-conclusion impact slot |
-| report.html | report-people-reason-1 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-people-impact-2 | Content | Board impact text; Backend per-conclusion impact slot |
 | report.html | report-people-reason-2 | Content | Recommendation reasoning generated per assessment; Backend explicit reason slot |
 | report.html | report-technological-impact-0 | Content | Board impact text; Backend per-conclusion impact slot |
@@ -205,3 +201,36 @@ Each row is an exact HTML id with data-illustrative=true. Paired backend/content
 | conclusions.html | conclusion-provenance-29 | Content | Reviewed provenance narrative with method/interview source records |
 | conclusions.html | conclusion-provenance-30 | Content | Reviewed provenance narrative with method/interview source records |
 | conclusions.html | conclusion-provenance-31 | Content | Reviewed provenance narrative with method/interview source records |
+| review-queue-sidebar.html | queue-title-0 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-0 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-0 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-0 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-0 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| review-queue-sidebar.html | queue-title-1 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-1 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-1 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-1 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-1 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| review-queue-sidebar.html | queue-title-2 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-2 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-2 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-2 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-2 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| review-queue-sidebar.html | queue-title-3 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-3 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-3 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-3 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-3 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| review-queue-sidebar.html | queue-title-4 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-4 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-4 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-4 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-4 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| review-queue-sidebar.html | queue-title-5 | Backend | Reviewed Conclusion.gap_title field; text is illustrative Content per assessment |
+| review-queue-sidebar.html | finding-title-5 | Backend | Conclusion.gap_title with reviewed per-assessment Content |
+| review-queue-sidebar.html | finding-impact-5 | Backend | Conclusion.impact_statement; generated per assessment Content |
+| review-queue-sidebar.html | finding-reason-5 | Content | Generated recommendation reasoning; Backend recommendation_reason slot |
+| review-queue-sidebar.html | finding-provenance-5 | Content | Reviewed provenance narrative with Backend method/interview source records |
+| scope-applicability.html | soa-exclusion-outsourcing | Content | Illustrative Veldhara scope exclusion; Backend stores exclusion reason/version; Content authored by scope reviewer |
+| scope-applicability.html | soa-exclusion-coding | Content | Illustrative Veldhara scope exclusion; Backend stores exclusion reason/version; Content authored by scope reviewer |
+| report.html | report-posture | Content | Assessment-specific board posture synthesis from deterministic domain scores and gaps; Backend accepted report read model |

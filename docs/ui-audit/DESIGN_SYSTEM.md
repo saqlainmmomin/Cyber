@@ -69,7 +69,7 @@ Not assessed is outcome-neutral; Available, Superseded and Excluded are evidence
 
 ## Type roles
 
-Inter 400/500/600, local files. All audit content is at least 14px. Type does not shrink to fit a table. Numbers use tabular figures. Prose uses 72ch maximum, with a target of 60 to 80 characters per line. Short paragraphs do not need artificial padding to reach 60 characters.
+Inter 400/500/600, local files. All audit content is at least 14px. Type does not shrink to fit a table. Numbers use tabular figures. Prose uses 56ch maximum, with a target of 60 to 80 characters per line. Inter’s digit 0 is wider than an average letter: the previous 72ch cap rendered up to 98 characters. Use 56ch in each role’s own font size, including 14px guidance and bold requirements; verify full lines remain at most 80 characters at both laptop widths. Short paragraphs do not need artificial padding to reach 60 characters.
 
 | Role | Size/line height | Weight | Use |
 | --- | --- | --- | --- |
@@ -97,7 +97,9 @@ Sidebar is 224px. Main gets viewport minus sidebar. Outer gutters are 24px per s
 | Inventory | 1168 | 1008 | Full-width table; grow wrapped rows, no horizontal page scrolling |
 | Task workspace | 1168 | 1008 | Questionnaire rail 196 + gap 20 + work 952/792; inner padding 20 each side leaves 910/750, including 1px borders |
 | Review task | 1168 | 1008 | Queue 280 + gap 20 + detail 868/708 |
-| Document | 880 | 880 | Centered document outer box; body <=72ch; surrounding margin carries no decision controls |
+| Document | 880 | 880 | Centered document outer box; body <=56ch; surrounding margin carries no decision controls |
+
+The board report uses the task workspace outer width for two columns of domain gaps; every text block retains the 56ch reading cap. Other document pages keep the 880px outer box.
 
 At 1280, keep five conclusions columns and wrap gap text; no fixed-width cards. Right-side evidence is an on-demand Sheet, not a third permanent questionnaire column. For smaller staff viewports collapse sidebar to drawer below 1100px; below 900px stack list and detail. Only the client upload is a required 390px product screen. Do not promise the static staff prototypes as mobile deliverables.
 
@@ -105,9 +107,11 @@ At 1280, keep five conclusions columns and wrap gap text; no fixed-width cards. 
 
 Global sidebar: Home, Clients, Engagements, Review, Evidence, Reports; Settings and working identity at bottom. Breadcrumb identifies client, engagement and assessment once. Assessment header names the task, shows framework focus, assessment period and evidence cut-off. Stage links: Overview, Scope, Evidence, Questionnaire, Review, Report. Exactly one horizontal stage bar.
 
-**The replacement for levels two and three is one labelled Section select in the content toolbar.** Review choices are Queue, Conclusions, Findings, Workpaper. Evidence choices are Inventory, Requests, Desk review, Reuse. Requests use flattened choices Requests: Items, Requests: Versions, Requests: Client links in that same select. Report choices include Board summary, Auditor detail, Versions, Comparison, Narrative, Board inputs. Scope choices include Boundaries and Applicability. No second tab bar, segmented row or third request navigation bar. Domain rail is item navigation inside the questionnaire workspace, not another top-level bar.
+Two alternatives replace levels two and three. **Choice pending Saqlain.** Option A keeps one labelled Section select in the content toolbar, shown on the original five screens and Scope. Review choices are Queue, Conclusions, Findings, Workpaper. Evidence choices flatten Inventory, Requests: Items, Requests: Versions, Requests: Client links, Desk review and Reuse. Scope choices are Boundaries and Applicability. Report sections are Summary, Domains, Versions, Comparison, Narrative and Board inputs; Board summary and Auditor detail use a separate two-option view toggle at the top right.
 
-Stage navigation is links with aria-current. Section select navigates routes or URL state; it is not a fake tablist. Native select in prototypes maps to shadcn Select in Next. URLs encode section, framework and selected finding; Back/Forward restores those and scroll position. No nested engagement and assessment bars: entering an assessment replaces engagement tabs.
+Option B exposes the active assessment under Engagements in the sidebar, with its stage sections as nested links. review-queue-sidebar.html demonstrates Review: Queue, Conclusions, Findings, Workpaper; Queue has aria-current. There is no Section select in this option. The horizontal stage bar stays. I recommend B for frequent assessment work because destinations remain visible and switching takes one click. A is more compact when the sidebar must hold many engagements.
+
+Stage navigation and nested links use aria-current. The Option A select navigates routes or URL state and is not a fake tablist; native Select maps to shadcn Select. Neither option adds a horizontal navigation bar. Domain rail stays local item navigation. URLs encode section, framework and selected finding; history restores those and scroll position. Entering an assessment replaces engagement tabs.
 
 ## P1 to P10 rulings
 

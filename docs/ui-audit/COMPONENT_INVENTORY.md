@@ -18,7 +18,7 @@ This is the minimum shared set for the named workflows. Domain components compos
 | Split | Domain | One rail and work region | questionnaire / queue | stacked, selected | Task and Queue |
 | Heading | Domain | Semantic heading role | page / section / item | normal | All pages |
 | Text | Domain | Content versus restricted metadata | body / guidance / table / metadata | normal, emphasis | All pages |
-| Prose | Domain | 72ch readable paragraphs | body / quote / criteria | normal | Documents and detail |
+| Prose | Domain | 56ch readable paragraphs | body / quote / criteria | normal | Documents and detail |
 | Toolbar | Domain | Sort search filters and section selector | inventory / queue | filtered, refreshing | Lists and queue |
 | DataTable | shadcn Table | Stable columns and row disclosure | inventory / conclusions / comparison | loading, empty, sorted, expanded | Inventory |
 | KeyValue | Domain | Compact labelled metadata | inline / stacked | missing | Entity and source headers |
@@ -50,3 +50,7 @@ Use cva variants for Button and typed StatusBadge. Field wraps input semantics o
 No generic Card, decorative ScoreRing or secondary ToggleGroup navigation. Progress is overview/run feedback, never another stage bar. DomainSummary uses text and counts that survive greyscale. Tooltip is optional help only. Empty and Error views are Feedback variants, not separate page-specific components.
 
 Acceptance gallery must exercise light/dark and all listed states using real fixtures: unanswered question with notes, autosave failure, stale409, locked conclusion, unsupported citation, already-issued RFI, empty filter, all four domains and client picker keyboard access. Runtime screenshots are host work after this docs-only run. Component-level visual assertions do not replace JSON mutation or domain invariant tests.
+
+## Prototype fix-pass variants
+
+SectionSelect remains Option A. AssessmentSectionLinks is Option B nested under Engagements with aria-current; choose between them after Saqlain reviews the two queue prototypes. ReportViewToggle is a two-button group with aria-pressed, Board summary and Auditor detail. RequestRow has one-line collapsed columns and a chevron disclosure; included rows have no add control. QueueItem is a divided list row with two-line title maximum, single-line control and outcome/risk; decided variant uses quieter weight. FindingDetail pairs title with outcome/risk and gives Recommendation the strongest body block, followed by Why this recommendation. ScopeExceptions lists only excluded controls with reasons, a picker and the standard justification once.

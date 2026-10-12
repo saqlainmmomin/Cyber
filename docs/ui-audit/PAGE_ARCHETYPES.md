@@ -9,7 +9,7 @@ An archetype specifies regions and states, not a template copied from today's ma
 | Inventory | Scan many records and choose one | PageHeader, Toolbar, DataTable/list, optional row disclosure | Inventory | loading, empty, filtered-empty, populated, error, locked | Home, Clients, Engagements, Issued reports, Findings and actions, Client requests, Evidence inventory (all three scopes), Evidence reuse, Conclusions, Findings, Report versions, Comparison, RFI items / versions / links |
 | Queue | Make a decision on a selected candidate | Toolbar, QueueList, FindingDetail, sticky ReviewDecision | Task workspace | pending, decided, no pending, blocker, edit, conflict, locked | Portfolio review, Review queue |
 | Task | Complete control work without losing context | Header, domain/item rail, work surface, optional Sheet inspector | Task workspace | unanswered, draft, saving, saved, failed, complete, running, blocked | Desk review, Assessment workspace |
-| Form | Configure or record explicit exceptions | Header, labelled Field groups, validation, action | Task workspace; field groups <=72ch | pristine, dirty, invalid, saving, saved, conflict, disabled | New engagement, New assessment, AWS evidence, Purge, Settings, Board inputs, Applicability within Scope |
+| Form | Configure or record explicit exceptions | Header, labelled Field groups, validation, action | Task workspace; field groups <=56ch | pristine, dirty, invalid, saving, saved, conflict, disabled | New engagement, New assessment, AWS evidence, Purge, Settings, Board inputs, Applicability within Scope |
 | Document | Read a report or source with stable provenance | Context header, document sections, domain navigation/select, citations | Document | board, auditor detail, draft, accepted, issued, stale, unavailable | Integrated reports, Evidence record and cited span, Workpaper, Narrative |
 | Entity | Understand an entity and enter its work | Identity/period, next task, related inventory | Inventory | empty, active, closed, error | Client, Engagement overview |
 | Recovery | Recover a missing page or failed task | Problem, preserved context, next step | Document | 404, 500, expired, unavailable | Error pages |
@@ -36,7 +36,7 @@ All regions inherit loading, empty, error and keyboard focus states. Empty filte
 | Purge | Form | Retention, eligibility, destructive confirmation | Typed confirm with affected records count |
 | Settings | Form | Branding, accent choices, field errors | Neutral surfaces, validated accent pairs |
 | Evidence inventory (all three scopes) | Inventory | Scope, search, status filters, version rows | Wide table, readable audit fields |
-| Evidence record and cited span | Document | Version header, source text, citation location | 72ch text; superseded source labelled |
+| Evidence record and cited span | Document | Version header, source text, citation location | 56ch text; superseded source labelled |
 | Evidence reuse | Inventory | Prior assessment filter, candidate rows, inclusion | Selection state and preview, no repeated full content |
 | Desk review | Task | Run state, prefill list, provenance inspector | Compact findings, stable async status |
 | Assessment workspace | Task | Breadcrumb, period, stage tabs, selected content | Shared frame and variants below; use task title |

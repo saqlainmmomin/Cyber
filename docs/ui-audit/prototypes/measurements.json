@@ -2,10 +2,10 @@
  {
   "screen": "conclusions",
   "viewport": 1440,
-  "height": 2983,
+  "height": 2927,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 190,
+   "14px": 187,
    "20px": 1,
    "12px": 1,
    "24px": 1
@@ -73,10 +73,10 @@
  {
   "screen": "conclusions",
   "viewport": 1280,
-  "height": 3203,
+  "height": 3147,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 190,
+   "14px": 187,
    "20px": 1,
    "12px": 1,
    "24px": 1
@@ -144,268 +144,14 @@
  {
   "screen": "questionnaire",
   "viewport": 1440,
-  "height": 1940,
-  "horizontalOverflow": false,
-  "fontSizeTextNodeCounts": {
-   "14px": 60,
-   "20px": 2,
-   "12px": 1,
-   "24px": 1,
-   "16px": 10
-  },
-  "below14": [
-   {
-    "text": "Working as",
-    "size": "12px",
-    "cls": "meta",
-    "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
-   {
-    "chars": 94,
-    "size": "16px",
-    "width": 727,
-    "text": "Access rights are provisioned and reviewed by poli"
-   }
-  ],
-  "navigation": [
-   {
-    "label": "",
-    "top": 78,
-    "left": 16,
-    "width": 191,
-    "height": 296
-   },
-   {
-    "label": "Assessment stages",
-    "top": 178,
-    "left": 248,
-    "width": 1168,
-    "height": 49
-   },
-   {
-    "label": "ISO 27001 domains",
-    "top": 330,
-    "left": 248,
-    "width": 196,
-    "height": 216
-   }
-  ],
-  "illustrative": 5,
-  "failedRequests": [],
-  "screenshot": "screenshots/questionnaire-1440.png"
- },
- {
-  "screen": "questionnaire",
-  "viewport": 1280,
-  "height": 1940,
-  "horizontalOverflow": false,
-  "fontSizeTextNodeCounts": {
-   "14px": 60,
-   "20px": 2,
-   "12px": 1,
-   "24px": 1,
-   "16px": 10
-  },
-  "below14": [
-   {
-    "text": "Working as",
-    "size": "12px",
-    "cls": "meta",
-    "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
-   {
-    "chars": 94,
-    "size": "16px",
-    "width": 727,
-    "text": "Access rights are provisioned and reviewed by poli"
-   }
-  ],
-  "navigation": [
-   {
-    "label": "",
-    "top": 78,
-    "left": 16,
-    "width": 191,
-    "height": 296
-   },
-   {
-    "label": "Assessment stages",
-    "top": 178,
-    "left": 248,
-    "width": 1008,
-    "height": 49
-   },
-   {
-    "label": "ISO 27001 domains",
-    "top": 330,
-    "left": 248,
-    "width": 196,
-    "height": 216
-   }
-  ],
-  "illustrative": 5,
-  "failedRequests": [],
-  "screenshot": "screenshots/questionnaire-1280.png"
- },
- {
-  "screen": "report",
-  "viewport": 1440,
-  "height": 9353,
-  "horizontalOverflow": false,
-  "fontSizeTextNodeCounts": {
-   "14px": 83,
-   "20px": 6,
-   "12px": 1,
-   "24px": 1,
-   "16px": 147
-  },
-  "below14": [
-   {
-    "text": "Working as",
-    "size": "12px",
-    "cls": "meta",
-    "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
-   {
-    "chars": 98,
-    "size": "16px",
-    "width": 727,
-    "text": "Reconciling the leaver checklist with both identit"
-   },
-   {
-    "chars": 97,
-    "size": "16px",
-    "width": 727,
-    "text": "Verifying every entry before the tabletop lets res"
-   },
-   {
-    "chars": 97,
-    "size": "16px",
-    "width": 727,
-    "text": "A review for every critical supplier checks curren"
-   },
-   {
-    "chars": 95,
-    "size": "16px",
-    "width": 727,
-    "text": "Reviewing obligations before renewal creates a pra"
-   },
-   {
-    "chars": 93,
-    "size": "16px",
-    "width": 727,
-    "text": "Veldhara\u2019s July to September engagement reviewed p"
-   }
-  ],
-  "navigation": [
-   {
-    "label": "",
-    "top": 78,
-    "left": 16,
-    "width": 191,
-    "height": 296
-   },
-   {
-    "label": "Assessment stages",
-    "top": 178,
-    "left": 248,
-    "width": 1168,
-    "height": 49
-   }
-  ],
-  "illustrative": 60,
-  "failedRequests": [],
-  "screenshot": "screenshots/report-1440.png"
- },
- {
-  "screen": "report",
-  "viewport": 1280,
-  "height": 9353,
-  "horizontalOverflow": false,
-  "fontSizeTextNodeCounts": {
-   "14px": 83,
-   "20px": 6,
-   "12px": 1,
-   "24px": 1,
-   "16px": 147
-  },
-  "below14": [
-   {
-    "text": "Working as",
-    "size": "12px",
-    "cls": "meta",
-    "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
-   {
-    "chars": 98,
-    "size": "16px",
-    "width": 727,
-    "text": "Reconciling the leaver checklist with both identit"
-   },
-   {
-    "chars": 97,
-    "size": "16px",
-    "width": 727,
-    "text": "Verifying every entry before the tabletop lets res"
-   },
-   {
-    "chars": 97,
-    "size": "16px",
-    "width": 727,
-    "text": "A review for every critical supplier checks curren"
-   },
-   {
-    "chars": 95,
-    "size": "16px",
-    "width": 727,
-    "text": "Reviewing obligations before renewal creates a pra"
-   },
-   {
-    "chars": 93,
-    "size": "16px",
-    "width": 727,
-    "text": "Veldhara\u2019s July to September engagement reviewed p"
-   }
-  ],
-  "navigation": [
-   {
-    "label": "",
-    "top": 78,
-    "left": 16,
-    "width": 191,
-    "height": 296
-   },
-   {
-    "label": "Assessment stages",
-    "top": 178,
-    "left": 248,
-    "width": 1008,
-    "height": 49
-   }
-  ],
-  "illustrative": 60,
-  "failedRequests": [],
-  "screenshot": "screenshots/report-1280.png"
- },
- {
-  "screen": "review-queue",
-  "viewport": 1440,
-  "height": 1524,
+  "height": 1904,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
    "14px": 56,
    "20px": 1,
    "12px": 1,
    "24px": 1,
-   "16px": 17
+   "16px": 9
   },
   "below14": [
    {
@@ -417,16 +163,390 @@
   ],
   "longestProseLines": [
    {
-    "chars": 87,
+    "chars": 72,
     "size": "16px",
-    "width": 727,
-    "text": "Closing removal tickets removes known residual acc"
+    "width": 565,
+    "text": "Access rights are provisioned and reviewed by poli"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
    },
    {
-    "chars": 85,
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   },
+   {
+    "label": "ISO 27001 domains",
+    "top": 330,
+    "left": 248,
+    "width": 196,
+    "height": 216
+   }
+  ],
+  "illustrative": 4,
+  "failedRequests": [],
+  "screenshot": "screenshots/questionnaire-1440.png"
+ },
+ {
+  "screen": "questionnaire",
+  "viewport": 1280,
+  "height": 1904,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 56,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1,
+   "16px": 9
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 72,
     "size": "16px",
-    "width": 727,
+    "width": 565,
+    "text": "Access rights are provisioned and reviewed by poli"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   },
+   {
+    "label": "ISO 27001 domains",
+    "top": 330,
+    "left": 248,
+    "width": 196,
+    "height": 216
+   }
+  ],
+  "illustrative": 4,
+  "failedRequests": [],
+  "screenshot": "screenshots/questionnaire-1280.png"
+ },
+ {
+  "screen": "report",
+  "viewport": 1440,
+  "height": 5878,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 92,
+   "20px": 7,
+   "12px": 1,
+   "24px": 1,
+   "16px": 179
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 76,
+    "size": "16px",
+    "width": 565,
+    "text": "Impact if unresolved: Incident evidence could lose"
+   },
+   {
+    "chars": 75,
+    "size": "16px",
+    "width": 565,
+    "text": "Why this recommendation: Verifying every entry bef"
+   },
+   {
+    "chars": 74,
+    "size": "16px",
+    "width": 565,
+    "text": "Why this recommendation: Reconciling the leaver ch"
+   },
+   {
+    "chars": 74,
+    "size": "16px",
+    "width": 565,
+    "text": "Why this recommendation: A withdrawal route addres"
+   },
+   {
+    "chars": 74,
+    "size": "16px",
+    "width": 565,
+    "text": "Impact if unresolved: Overdue training leaves52 pe"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 53,
+  "failedRequests": [],
+  "screenshot": "screenshots/report-1440.png"
+ },
+ {
+  "screen": "report",
+  "viewport": 1280,
+  "height": 6294,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 92,
+   "20px": 7,
+   "12px": 1,
+   "24px": 1,
+   "16px": 179
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 73,
+    "size": "16px",
+    "width": 565,
+    "text": "Veldhara\u2019s July to September engagement reviewed p"
+   },
+   {
+    "chars": 73,
+    "size": "16px",
+    "width": 565,
+    "text": "84.3% overall ISO score. Organizational controls a"
+   },
+   {
+    "chars": 72,
+    "size": "16px",
+    "width": 565,
+    "text": "No gap was identified in the approved physical-con"
+   },
+   {
+    "chars": 66,
+    "size": "16px",
+    "width": 492,
+    "text": "Impact if unresolved: Incident evidence could lose"
+   },
+   {
+    "chars": 66,
+    "size": "16px",
+    "width": 492,
+    "text": "Why this recommendation: Tracking each exception t"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 53,
+  "failedRequests": [],
+  "screenshot": "screenshots/report-1280.png"
+ },
+ {
+  "screen": "review-queue-sidebar",
+  "viewport": 1440,
+  "height": 1151,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 66,
+   "20px": 1,
+   "12px": 2,
+   "24px": 1,
+   "16px": 18
+  },
+  "below14": [
+   {
+    "text": "FY2026-27 assessment",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 72,
+    "size": "16px",
+    "width": 565,
     "text": "Eight approved removal actions remained open at 30"
+   },
+   {
+    "chars": 68,
+    "size": "16px",
+    "width": 565,
+    "text": "Closing removal tickets removes known residual acc"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 538
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 30,
+  "failedRequests": [],
+  "screenshot": "screenshots/review-queue-sidebar-1440.png"
+ },
+ {
+  "screen": "review-queue-sidebar",
+  "viewport": 1280,
+  "height": 1151,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 66,
+   "20px": 1,
+   "12px": 2,
+   "24px": 1,
+   "16px": 18
+  },
+  "below14": [
+   {
+    "text": "FY2026-27 assessment",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 72,
+    "size": "16px",
+    "width": 565,
+    "text": "Eight approved removal actions remained open at 30"
+   },
+   {
+    "chars": 68,
+    "size": "16px",
+    "width": 565,
+    "text": "Closing removal tickets removes known residual acc"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 538
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 30,
+  "failedRequests": [],
+  "screenshot": "screenshots/review-queue-sidebar-1280.png"
+ },
+ {
+  "screen": "review-queue",
+  "viewport": 1440,
+  "height": 1151,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 61,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1,
+   "16px": 18
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 72,
+    "size": "16px",
+    "width": 565,
+    "text": "Eight approved removal actions remained open at 30"
+   },
+   {
+    "chars": 68,
+    "size": "16px",
+    "width": 565,
+    "text": "Closing removal tickets removes known residual acc"
    }
   ],
   "navigation": [
@@ -452,14 +572,14 @@
  {
   "screen": "review-queue",
   "viewport": 1280,
-  "height": 1524,
+  "height": 1151,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 56,
+   "14px": 61,
    "20px": 1,
    "12px": 1,
    "24px": 1,
-   "16px": 17
+   "16px": 18
   },
   "below14": [
    {
@@ -471,15 +591,15 @@
   ],
   "longestProseLines": [
    {
-    "chars": 85,
+    "chars": 72,
     "size": "16px",
-    "width": 666,
+    "width": 565,
     "text": "Eight approved removal actions remained open at 30"
    },
    {
-    "chars": 83,
+    "chars": 68,
     "size": "16px",
-    "width": 666,
+    "width": 565,
     "text": "Closing removal tickets removes known residual acc"
    }
   ],
@@ -506,12 +626,12 @@
  {
   "screen": "rfi",
   "viewport": 1440,
-  "height": 4936,
+  "height": 2540,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 504,
-   "20px": 1,
-   "12px": 1,
+   "14px": 509,
+   "20px": 3,
+   "12px": 41,
    "24px": 1
   },
   "below14": [
@@ -520,16 +640,249 @@
     "size": "12px",
     "cls": "meta",
     "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
+   },
    {
-    "chars": 84,
-    "size": "14px",
-    "width": 636,
-    "text": "The live engagement includes DPDPA and ISO request"
+    "text": "RFI-002",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-001",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-019",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-037",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-024",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-004",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-023",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-035",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-021",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-039",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-009",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-034",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-007",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-011",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-010",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-003",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-013",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-005",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-026",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-022",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-018",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-006",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-016",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-040",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-014",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-032",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-029",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-033",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-038",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-028",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-012",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-027",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-031",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-036",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-025",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-017",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-015",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-020",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-008",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-030",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
    }
   ],
+  "longestProseLines": [],
   "navigation": [
    {
     "label": "",
@@ -553,12 +906,12 @@
  {
   "screen": "rfi",
   "viewport": 1280,
-  "height": 4936,
+  "height": 2540,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 504,
-   "20px": 1,
-   "12px": 1,
+   "14px": 509,
+   "20px": 3,
+   "12px": 41,
    "24px": 1
   },
   "below14": [
@@ -567,16 +920,249 @@
     "size": "12px",
     "cls": "meta",
     "tag": "SPAN"
-   }
-  ],
-  "longestProseLines": [
+   },
    {
-    "chars": 84,
-    "size": "14px",
-    "width": 636,
-    "text": "The live engagement includes DPDPA and ISO request"
+    "text": "RFI-002",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-001",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-019",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-037",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-024",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-004",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-023",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-035",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-021",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-039",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-009",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-034",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-007",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-011",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-010",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-003",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-013",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-005",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-026",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-022",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-018",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-006",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-016",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-040",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-014",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-032",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-029",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-033",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-038",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-028",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-012",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-027",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-031",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-036",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-025",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-017",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-015",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-020",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-008",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
+   },
+   {
+    "text": "RFI-030",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "P"
    }
   ],
+  "longestProseLines": [],
   "navigation": [
    {
     "label": "",
@@ -596,5 +1182,125 @@
   "illustrative": 2,
   "failedRequests": [],
   "screenshot": "screenshots/rfi-1280.png"
+ },
+ {
+  "screen": "scope-applicability",
+  "viewport": 1440,
+  "height": 1081,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 23,
+   "20px": 2,
+   "12px": 1,
+   "24px": 1,
+   "16px": 6
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 74,
+    "size": "16px",
+    "width": 565,
+    "text": "Veldhara does not commission third parties to deve"
+   },
+   {
+    "chars": 73,
+    "size": "16px",
+    "width": 565,
+    "text": "All other controls are applicable because they are"
+   },
+   {
+    "chars": 69,
+    "size": "16px",
+    "width": 565,
+    "text": "No software is developed or modified by Veldhara w"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 3,
+  "failedRequests": [],
+  "screenshot": "screenshots/scope-applicability-1440.png"
+ },
+ {
+  "screen": "scope-applicability",
+  "viewport": 1280,
+  "height": 1081,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 23,
+   "20px": 2,
+   "12px": 1,
+   "24px": 1,
+   "16px": 6
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 74,
+    "size": "16px",
+    "width": 565,
+    "text": "Veldhara does not commission third parties to deve"
+   },
+   {
+    "chars": 73,
+    "size": "16px",
+    "width": 565,
+    "text": "All other controls are applicable because they are"
+   },
+   {
+    "chars": 69,
+    "size": "16px",
+    "width": 565,
+    "text": "No software is developed or modified by Veldhara w"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 3,
+  "failedRequests": [],
+  "screenshot": "screenshots/scope-applicability-1280.png"
  }
 ]

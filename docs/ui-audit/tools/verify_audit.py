@@ -10,10 +10,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / 'docs/ui-audit'
-HANDOFF = 'tasks/handoffs/2026-10-12-ui-audit-second-run.md'
+HANDOFF = 'tasks/handoffs/2026-10-12-ui-audit-prototype-fix-pass.md'
 CORE = ['README', 'ARCHITECTURE', 'SCREEN_INVENTORY', 'UI_ISSUES', 'ROOT_CAUSES',
         'DESIGN_SYSTEM', 'PAGE_ARCHETYPES', 'NEXTJS_MIGRATION_UI_SPEC', 'COMPONENT_INVENTORY']
-SCREENS = ['questionnaire', 'review-queue', 'conclusions', 'rfi', 'report']
+SCREENS = ['questionnaire', 'review-queue', 'conclusions', 'rfi', 'report',
+           'scope-applicability', 'review-queue-sidebar']
 for name in CORE:
     assert (OUT / f'{name}.md').is_file(), name
 issues = (OUT / 'UI_ISSUES.md').read_text()
@@ -49,7 +50,7 @@ for row in requirements:
     assert row['classification'] in classes, row
     classes[row['classification']] += 1
     assert row['prototype'].strip(), row['id']
-    assert '.html' in row['prototype'] or 'All five' in row['prototype'] or any(
+    assert '.html' in row['prototype'] or 'All seven' in row['prototype'] or any(
         marker in row['prototype'] for marker in ['Not shown:', 'Not solved', 'Not measured:', 'No static']), row
     assert re.search(r'^\| ' + re.escape(row['id']) + r' \|', coverage, re.M), row['id']
     assert re.search(r'^\| ' + re.escape(row['id']) + r' \|', spec, re.M), row['id']
@@ -92,23 +93,30 @@ for name in SCREENS:
     assert sum(t == 'h1' for t, a in nodes) == 1, name
     assert sum(a.get('data-component') == 'StageNav' for t, a in nodes) == 1, name
     assert any(t == 'aside' and a.get('class') == 'sidebar' for t, a in nodes), name
-    assert any(t == 'select' for t, a in nodes), name
+    if name != 'review-queue-sidebar':
+        assert any(t == 'select' for t, a in nodes), name
     assert 'prototype.css' in path.read_text(), name
     assert 'Evidence cut-off 6 Oct 2026' in path.read_text(), name
     for tag, attrs in nodes:
         for key in ['aria-controls']:
             if key in attrs:
                 assert attrs[key] in html[name].ids, (name, attrs[key])
-assert sum(a.get('class') == 'queue-item' for t, a in html['review-queue'].nodes) == 6
+assert sum('queue-item' in a.get('class', '').split() for t, a in html['review-queue'].nodes) == 6
 assert sum(a.get('data-component') == 'FindingDetail' for t, a in html['review-queue'].nodes) == 6
 assert sum(a.get('class') == 'disclosure-row' for t, a in html['conclusions'].nodes) == 32
 assert sum(a.get('data-component') == 'RequestRow' for t, a in html['rfi'].nodes) >= 20
 assert {'board-view', 'detail-view'} <= html['report'].ids
-assert 'scope-panel' in html['questionnaire'].ids
+assert 'scope-panel' not in html['questionnaire'].ids
+assert 'soa-standard' in html['scope-applicability'].ids
+assert {'soa-exclusion-outsourcing', 'soa-exclusion-coding'} <= html['scope-applicability'].illustrative
+assert sum(a.get('class') == 'assessment-links' for t, a in html['review-queue-sidebar'].nodes) == 1
+assert sum(t == 'select' for t, a in html['review-queue-sidebar'].nodes) == 1
+assert 'sectionGo(this.value)' not in (OUT / 'prototypes/review-queue-sidebar.html').read_text()
+assert {'board-toggle', 'detail-toggle', 'detail-domain', 'detail-outcome', 'detail-risk'} <= html['report'].ids
 for domain in ['organizational', 'people', 'physical', 'technological']:
     assert f'report-{domain}' in html['report'].ids
 illustrations = json.loads((OUT / 'prototypes/illustrative-content.json').read_text())
-assert len({r['id'] for r in illustrations}) == len(illustrations)
+assert len({(r['screen'], r['id']) for r in illustrations}) == len(illustrations)
 manifest = {(r['screen'].removesuffix('.html'), r['id']) for r in illustrations}
 actual = {(name, id) for name, parser in html.items() for id in parser.illustrative}
 assert actual == manifest, (actual - manifest, manifest - actual)
@@ -122,6 +130,35 @@ assert len(source['queue']) == 6 and sum(r['state'] == 'pending' for r in source
 assert len(source['rfi']) >= 20
 css = (OUT / 'prototypes/prototype.css').read_text()
 assert css.count('{') == css.count('}'), 'CSS brace imbalance'
+assert '--prose:56ch' in css
+for value in re.findall(r'max-width:([^;}]+)', css):
+    match = re.fullmatch(r'([0-9.]+)ch', value)
+    if match:
+        assert float(match[1]) <= 58, ('Prose measure too wide', value)
+for role in ['.prose', '.guidance', '.requirement', '.request-details', '.recommendation-text']:
+    assert re.search(re.escape(role) + r'\{[^}]*max-width:56ch', css), role
+assert '.queue-item[aria-current]{background:' in css
+assert 'height:100vh' in css and 'position:sticky;top:0' in css
+for name in SCREENS:
+    screen = (OUT / 'prototypes' / f'{name}.html').read_text()
+    for commentary in ['Assessment workspace', 'ISO 27001 focus', 'Switch any time',
+                       'Guidance closed by default', 'Included; no add form',
+                       'Draft ready. Completion is a separate action.', 'Scope panel:',
+                       'The prototype shows', 'Production autosave requires']:
+        assert commentary not in screen, (name, commentary)
+    if name.startswith('review-queue'):
+        assert '3 pending, 3 decided' in screen
+        assert screen.count('class="prose recommendation-text"') == 6
+        assert screen.count('Why this recommendation') == 6
+report = (OUT / 'prototypes/report.html').read_text()
+assert report.count('class="board-gap"') == 25
+assert sum(t == 'details' and 'data-domain' in a for t, a in html['report'].nodes) == 93
+assert '<option value="board">' not in report and '<option value="detail">' not in report
+rfi = (OUT / 'prototypes/rfi.html').read_text()
+assert 'In this RFI' in rfi and 'id="included-items"' in rfi and 'id="request-items"' in rfi
+assert rfi.count('data-sort=') >= 4
+assert len(re.findall(r'<summary class="request-summary">', rfi)) == 40
+
 tokens = dict(re.findall(r'(--[\w-]+):([^;}]+)', css))
 for value in re.findall(r'font-size:([^;}]+)', css):
     match = re.fullmatch(r'var\((--[\w-]+)\)', value)
@@ -155,6 +192,6 @@ for path in changed:
                 continue
             assert (path.parent / target.split('#')[0]).exists(), (path.name, target)
 print(f'PASS: nine documents; 35 reconciled issues; {len(p0)} P0 rules; '
-      f'60 requirements {classes}; 31 page families; five prototypes; '
+      f'60 requirements {classes}; 31 page families; seven prototypes; '
       f'32 conclusions / 40 RFI / six queue items; {len(illustrations)} illustrative IDs; '
       '144 AA colour pairs; screenshot citations, local fonts and allowed scope verified.')

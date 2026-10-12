@@ -10,11 +10,11 @@ AppShell supplies 224px sidebar and 24px gutters. Page(mode) produces 1168/1008p
 
 ## Type roles
 
-All decision-bearing audit text is >=14px, body and recommendations 16/26px, requirement/item titles 16/24px at weight600. Guidance and criteria 14/22px. Prose max width 72ch. Only identifiers, timestamps and optional table metadata may be12/18px. Never put gap text or evidence quotes in a metadata role. Page title24/32px, section20/28px. Follow semantic heading order. Avoid all caps and repeated client titles.
+All decision-bearing audit text is >=14px, body and recommendations 16/26px, requirement/item titles 16/24px at weight600. Guidance and criteria 14/22px. Prose max width 56ch in each role’s own font size, including bold requirements and 14px guidance. Inter’s zero-glyph ch unit held about 95 average letters at the former 72ch setting. Host line measurement must verify at most 80 characters at 1440 and 1280. Only identifiers, timestamps and optional table metadata may be12/18px. Never put gap text or evidence quotes in a metadata role. Page title24/32px, section20/28px. Follow semantic heading order. Avoid all caps and repeated client titles.
 
 ## Navigation
 
-One global sidebar. One breadcrumb. One assessment header with task title, period, cut-off and explicit framework focus. One horizontal assessment StageNav: Overview, Scope, Evidence, Questionnaire, Review, Report. Entering assessment replaces engagement navigation. **One labelled Section select in the content toolbar replaces levels two and three.** Choices are flattened, including Requests: Items, Requests: Versions and Requests: Client links; Review: Queue, Conclusions, Findings, Workpaper; Report: Board summary, Auditor detail, Versions, Comparison, Narrative, Board inputs; Scope: Boundaries, Applicability.
+One global sidebar. One breadcrumb. One assessment header with task title, period, cut-off and explicit framework focus. One horizontal assessment StageNav: Overview, Scope, Evidence, Questionnaire, Review, Report. Entering assessment replaces engagement navigation. **Navigation choice pending Saqlain:** Option A uses one labelled Section select in the content toolbar for levels two and three. Option B replaces that select with nested assessment section links under Engagements; review-queue-sidebar.html shows Queue, Conclusions, Findings and Workpaper with aria-current on Queue. Recommend B for visible destinations and one-click frequent switching; A saves sidebar space. Both keep the single stage bar. The five original screens keep A for comparison. Choices are flattened, including Requests: Items, Requests: Versions and Requests: Client links; Review: Queue, Conclusions, Findings, Workpaper; Report: Summary, Domains, Versions, Comparison, Narrative, Board inputs; Scope: Boundaries, Applicability.
 
 StageNav uses Next Link with aria-current=page, not tabs roles. SectionSelect uses shadcn Select and updates canonical route or query state. Domain rail is local item navigation. Canonical URLs: /assessments/[id]/questionnaire?domain=organizational&question=...; /review?finding=...&sort=pending; /review/conclusions?domain=...; /report?view=board&framework=iso27001. Preserve selection and scroll on history. Legacy ?tab= routes and standalone /soa redirect to the corresponding stage/section. Do not redirect file downloads. No href=# dummy navigation.
 
@@ -25,6 +25,8 @@ StatusBadge accepts family and enum member. Use the label and paired foreground/
 ## Review hierarchy
 
 This exact ordered field list is the shared FindingDetail read model for Queue, Conclusions, Findings and Workpaper. The coding agent must not create separate evidence blocks by view.
+
+Outcome and risk share the finding title block. Body order is gap statement, risk and impact, Recommendation, Why this recommendation, Where this finding came from. Recommendation is the strongest block after the gap statement, with at least the size and contrast of surrounding prose.
 
 1. Gap title: new Conclusion.gap_title before approval; existing Finding.title after approval. Control code, control title, domain and framework sit directly below it, from registry enriched controls.
 2. Gap statement: Conclusion.gaps_identified / approved GapItem.gap_description. If outcome is Compliant, say no gap identified and show the positive conclusion; do not invent a gap to fill the schema.
@@ -39,7 +41,7 @@ Expose this as a typed DTO with existing source fields and optional new fields. 
 
 ## Review queue
 
-Default stable order is pending first, then evidence missing/contradictory among remaining candidates, then control order and record ID. Toolbar lets auditor switch Pending, Evidence issues, All and sort by risk or control. Selecting any of six candidates updates URL and the single reading pane. Queue row contains gap title, code/name, outcome, risk and decision state in words. Use existing ConclusionCard state and RequirementCard blockers; serializer must expose them.
+Default stable order is pending first, then evidence missing/contradictory among remaining candidates, then control order and record ID. Toolbar lets auditor switch Pending, Evidence issues, All and sort by risk or control. Selecting any of six candidates updates URL and the single reading pane. Queue is a compact divided list, with no bordered card per item. Gap title takes at most two lines, code/name one line, then outcome and risk in words on one line. Decided rows are quieter than pending rows. Toolbar counts are plain text: 3 pending, 3 decided. Queue row contains gap title, code/name, outcome, risk and decision state in words. Use existing ConclusionCard state and RequirementCard blockers; serializer must expose them.
 
 ReviewDecision is sticky at top of selected detail and includes Approve, Edit, Reject; only Approve is primary. No action requires scrolling all detail. Blocked action shows reason and link to missing support. Edits preserve expected_version; 409 shows current versus unsaved values without discarding text. Rejected or locked content cannot be silently reapproved. j/k may supplement native keyboard links and must ignore text inputs.
 
@@ -51,7 +53,7 @@ Five columns: Domain, Control ID, Gap/conclusion, Risk, Status. Stable sort doma
 
 Use registry master domains for single-framework assessments. ISO: Organizational, People, Physical, Technological, with control counts37/8/14/34. Current router treats non-DPDPA as UCC based; fix grouping in app/routers/questionnaire.py. For multi-framework use canonical UCC domains and membership from cluster_engine/mapping/mappings. Centralize labels/order; cover every in-scope requirement exactly once, including singleton fallback, while preserving mappings to all frameworks. Do not change scoring weights or merge framework scores.
 
-QuestionCard order: requirement, why asked, client prompt hint, answer, notes, source provenance. Control.description/test_criteria and existing question/guidance are inputs, but why_asked and client_prompt_hint need authored fields. Work surface uses width; reading text capped at 72ch. No blank persistent evidence pane. Answered state shows answer/source and approved conclusion separately, with explicit change/reopen policy. Show unanswered and answered states without pretending the source assessment is unfinished.
+QuestionCard order: requirement, why asked, client prompt hint, answer, notes, source provenance. Control.description/test_criteria and existing question/guidance are inputs, but why_asked and client_prompt_hint need authored fields. Work surface uses width; reading text capped at 56ch. No blank persistent evidence pane. Answered state shows answer/source and approved conclusion separately, with explicit change/reopen policy. Show unanswered and answered states without pretending the source assessment is unfinished.
 
 ## Draft contract
 
@@ -61,19 +63,19 @@ Debounce500ms, flush on blur and before domain navigation, serialize writes per 
 
 ## RFI
 
-Inventory rows show title, required/optional, framework/control references, received state and inclusion state. Sort title, required, missing, requested date; preserve stable request identity. What to send, example and good looks like are collapsed details, not default wall text. Use current document_request_fields and rfi_examples content. No generated content on page load.
+Collapsed inventory rows are one line, at most 48px tall: title, required/optional, state (Not requested, In draft RFI, Issued, Received), evidence mapped (2 of 5), and row action. Header buttons sort each column with one default title sort and aria-sort. In this RFI is a separate top group with no add controls; remaining candidates alone form the add list. References stay in the expanded detail; preserve stable request identity. What to send, example and good looks like are collapsed details, not default wall text. Use current document_request_fields and rfi_examples content. No generated content on page load.
 
 Existing request_key/record_request already make active same-key requests idempotent. Cross-source artifact duplication still needs reconciliation: checklist docs, approved insufficient-evidence requirements and added requests must expose a common artifact identity, included_ids, issued state and mapping list in JSON. In the candidate add form exclude already-included IDs. Included items remain inspectable as read-only requested/issued rows or a separate selection count, without the same add checkbox/form. After successful add update state atomically; on failure retain candidate. Versions and client links are choices in the same Section select, not another navigation strip.
 
 ## Scope and SoA
 
-Applicability lives in Scope via Section select. Default applicable controls use a standard justification with source=standard; ask only for exclusions and explicit reasons. Existing build_soa derives applicability from approved outcome/scope and stores justifications as AuditEvent metadata. Existing justifications POST does not change applicability. Add exclusion API/state that records control, reason, actor, version and time, reconciles scope and reports, and preserves frozen issued snapshots. Defaults describe scope inclusion, never assert tested compliance. No own SoA stage or report subtab. Keep SoA export/download available.
+Applicability lives in Scope. scope-applicability.html shows the Scope stage active, two illustrative exclusions with reasons, an Add a control that does not apply picker, and the standard justification once. No questionnaire applicability panel or per-applicable-control reason boxes. Default applicable controls use a standard justification with source=standard; ask only for exclusions and explicit reasons. Existing build_soa derives applicability from approved outcome/scope and stores justifications as AuditEvent metadata. Existing justifications POST does not change applicability. Add exclusion API/state that records control, reason, actor, version and time, reconciles scope and reports, and preserves frozen issued snapshots. Defaults describe scope inclusion, never assert tested compliance. No own SoA stage or report subtab. Keep SoA export/download available.
 
 ## Report
 
 Document begins with accepted executive prose: engagement, period, material reviewed, domains, gaps, location/criticality and posture. Source approved_report._summary_text is count-based; do not call that prose. Reuse accepted sentences/freshness from app/services/narrative.py and board_report.build_document; expose context and accepted text through report JSON. If accepted prose missing, show Needs narrative review, never auto-generate on GET. Scores derive from approved_report/scoring, separately per framework.
 
-Then show every in-scope domain, weakest and strongest by score; each exception identifies gap, impact, risk, recommendation and reason. No gaps in a domain means show strength and remaining assurance limits, not manufacture non-compliance. Board summary avoids control-level jargon; Auditor detail adds all control findings and source trace. The same Section select switches these two views. Recommendations follow context and domain assessment as the exported board document does. Do not duplicate full findings in both priorities and detail: priorities link to the detailed row. Use frozen report basis for issued views, accepted narrative only when current for that basis.
+Board summary targets about three screens at 1440: executive summary, posture line, then a weakest-to-strongest domain table with domain, score and gaps by risk. Every domain then shows only high and medium non-compliant gaps, each with impact, risk, recommendation and logic. Low-risk gaps remain in auditor detail. Primary recommendation content stays visible. The board prototype uses task workspace width and two columns of domain gaps, each capped at 56ch. Dense real findings can exceed the height target; host QA must measure and resolve density without hiding this deliverable. No gaps in a domain means show strength and remaining assurance limits, not manufacture non-compliance. Board summary avoids control-level jargon; Auditor detail adds all control findings and source trace. A top-right two-option toggle labelled Board summary and Auditor detail switches views of the same report; they are not Section select entries. Auditor detail contains all 93 controls with filters. Recommendations follow context and domain assessment as the exported board document does. Do not duplicate full findings in both priorities and detail: priorities link to the detailed row. Use frozen report basis for issued views, accepted narrative only when current for that basis.
 
 ## States, forms and accessibility
 
@@ -92,8 +94,8 @@ Loading: region Skeleton, known content retained while refreshing, aria-busy. Em
 | UI-009 | Status | Enum family/member map has one label definition; no severity/progress/provenance value accepted as outcome. |
 | UI-011 | Client upload | Keyboard Tab reaches native file input or real Choose file button; Enter/Space opens picker; failure linked by aria-describedby. |
 | UI-012 | Foundation | All target text/background pairs >=4.5:1 in both themes and eight accents; no literal white component fill under dark theme. |
-| UI-013 | Type roles | Long prose max-inline-size 72ch; host Range measurement target 60 to 80 characters per full line; short text exempt. |
-| UI-025 | Navigation | Exactly one horizontal route navigation bar inside assessment main; Section select replaces both sublevels, including RFI. |
+| UI-013 | Type roles | Long prose max-inline-size 56ch; host Range measurement target 60 to 80 characters per full line; short text exempt. |
+| UI-025 | Navigation | Exactly one horizontal route navigation bar inside assessment main; Option A Section select or Option B nested sidebar links replaces both sublevels, including RFI; choice pending Saqlain. |
 
 ## Requirement classification
 
@@ -102,24 +104,24 @@ Every row is exactly one of Presentation, Backend, Content. Split rows represent
 | ID | Requirement | Classification | Prototype / reason | Spec section | Work and checked source |
 | --- | --- | --- | --- | --- | --- |
 | D01 | FastAPI remains JSON API; cut over screen by screen | Backend | No static API execution: spec only | Delivery | Extract typed UI view models from app/routers/web.py; keep Python scoring and exports. |
-| D02 | Retire gradient canvas and glass | Presentation | All five | Foundation | Opaque token surfaces. |
-| D03 | Keep eight accents for interaction and branding only | Presentation | All five, graphite shown; other presets in token table | Foundation | Accent never maps status; palette is documented for all presets. |
-| D04 | Four status families | Presentation | All five | Status | Separate severity, outcome, progress, provenance labels. |
+| D02 | Retire gradient canvas and glass | Presentation | All seven | Foundation | Opaque token surfaces. |
+| D03 | Keep eight accents for interaction and branding only | Presentation | All seven, graphite shown; other presets in token table | Foundation | Accent never maps status; palette is documented for all presets. |
+| D04 | Four status families | Presentation | All seven | Status | Separate severity, outcome, progress, provenance labels. |
 | D05 | Control codes allowed beside titles | Presentation | questionnaire.html, review-queue.html, conclusions.html | Review hierarchy | Show requirement_id beside meaningful title. |
 | D06a | Single framework uses its own master domains | Backend | questionnaire.html (target ISO focus) | Questionnaire | Use registry Domain keys in app/frameworks/definitions/iso27001.py; expose ordered domain tree via app/routers/questionnaire.py. |
 | D06b | Multi-framework covers each requirement once in unified domains | Backend | Not shown: ISO focus prototype; multi-framework is specified | Questionnaire | Centralize existing UnifiedControlCluster.domain_group and DOMAIN_GROUP_ORDER as master domain registry; app/frameworks/mapping.py, cluster_engine.py, mappings/clusters.py, questionnaire_builder.py. Validate each in-scope framework requirement covered exactly once. |
 | D07a | Drafts save automatically while typing | Backend | questionnaire.html (static saved state) | Draft contract | Add partial draft PATCH and independent completion; app/models/questionnaire.py QuestionnaireResponse and app/routers/questionnaire.py. |
 | D07b | Draft saving feedback and explicit completion act | Presentation | questionnaire.html | Draft contract | Saved, saving, failed and offline feedback; completion button separate. |
 | D08 | Pending first, then missing or contradictory evidence; sort and switch anytime | Presentation | review-queue.html | Review queue | Sort existing card state, blockers and evidence conflicts; selectable ordering without changing record. |
-| D09 | Laptop 1440 with 1280 support | Presentation | All five | Foundation | Sidebar 224; gutters 24; minmax(0,1fr) workspace. |
-| D10 | Never stack secondary or tertiary navigation bars | Presentation | All five | Navigation | One labelled Section select in content toolbar replaces both levels two and three. |
-| D11 | Inter stays | Presentation | All five | Foundation | Vendored relative fonts and local Next font. |
+| D09 | Laptop 1440 with 1280 support | Presentation | All seven | Foundation | Sidebar 224; gutters 24; minmax(0,1fr) workspace. |
+| D10 | Never stack secondary or tertiary navigation bars | Presentation | All seven; review-queue-sidebar.html compares option B | Navigation | Option A flattened Section select; Option B nested assessment links under Engagements. Recommend B; choice pending Saqlain. |
+| D11 | Inter stays | Presentation | All seven | Foundation | Vendored relative fonts and local Next font. |
 | Q01 | Question area uses available width, no blank side | Presentation | questionnaire.html | Questionnaire | Full-width question surface, 196px domain rail; no persistent context pane. |
 | Q02 | Control requirement is primary | Presentation | questionnaire.html | Questionnaire | h2 requirement, followed by contextual prose and hint. |
 | Q03 | Explain why asked | Content | questionnaire.html | Content track | Authored once per control in app/frameworks/schema.py QuestionDef; current guidance is not a separate why field. |
 | Q04 | Hint on how to put question to client | Content | questionnaire.html | Content track | Authored once per control; separate how-to-ask text slot. |
 | Q05 | Persist distinct why and how fields | Backend | questionnaire.html | Questionnaire | Extend QuestionDef and questionnaire serializers; no inference from generic guidance. |
-| Q06 | Rework help hierarchy at readable size and measure | Presentation | questionnaire.html | Questionnaire | 14px guidance minimum, 72ch cap, visible labels. |
+| Q06 | Rework help hierarchy at readable size and measure | Presentation | questionnaire.html | Questionnaire | 14px guidance minimum, 56ch cap, visible labels. |
 | Q07 | Show unanswered and answered after assessment | Presentation | questionnaire.html | Questionnaire | Unanswered input plus settled answer and linked conclusion; prototype resets one existing question locally for state demonstration. |
 | Q08 | ISO uses four Annex A themes, not privacy headings | Presentation | questionnaire.html | Questionnaire | Organizational, People, Physical, Technological from registry; backend dependency D06a. |
 | R01 | Each queue item is a finding before approval | Presentation | review-queue.html | Review hierarchy | Use finding terminology for candidate conclusions; preserve model distinction. |
@@ -149,12 +151,12 @@ Every row is exactly one of Presentation, Backend, Content. Split rows represent
 | P03 | Summary identifies gaps location criticality and overall posture | Content | report.html | Report | Generated per assessment; ratings/metrics from deterministic scoring only. |
 | P04 | Gaps by domain, weakest and strongest | Presentation | report.html | Report | All ISO domains with scores; ascending score ranking, tie by registry order. |
 | P05 | Each domain gap has non-compliance impact risk for board | Content | report.html | Content track | Generated per assessment; replace raw control wording with audience-specific text, impact backing R04a. |
-| P06 | Board summary and auditor/technical detail | Presentation | report.html | Report | Single Section select switches two views; preserves released basis. |
+| P06 | Board summary and auditor/technical detail | Presentation | report.html | Report | Top-right Board summary / Auditor detail toggle preserves released basis; Section select remains separate. |
 | P07 | Recommendations and logic follow exported report flow | Presentation | report.html | Report | Context, domains, priorities, recommendations, detail; reuse typed source fields, not regenerate on view. |
-| S01a | Ask only non-applicable controls and reasons | Presentation | questionnaire.html (clearly marked Scope panel) | Scope and SoA | Search exclusion controls; reason field shown only for exclusion. |
-| S01b | Everything else applicable with standard justification | Backend | questionnaire.html (Scope panel) | Scope and SoA | app/services/soa.py default source and source marker; preserve frozen issued justification during cutover. |
-| S01c | Author standard applicability justification | Content | questionnaire.html (Scope panel) | Content track | Authored once per framework/control, no generated claim of observed effectiveness. |
-| S02 | SoA lives under Scope, no own tab | Presentation | questionnaire.html (Scope panel) | Navigation | Scope Section select option Applicability, legacy SoA route redirect. |
+| S01a | Ask only non-applicable controls and reasons | Presentation | scope-applicability.html | Scope and SoA | Search exclusion controls; reason field shown only for exclusion. |
+| S01b | Everything else applicable with standard justification | Backend | scope-applicability.html | Scope and SoA | app/services/soa.py default source and source marker; preserve frozen issued justification during cutover. |
+| S01c | Author standard applicability justification | Content | scope-applicability.html | Content track | Authored once per framework/control, no generated claim of observed effectiveness. |
+| S02 | SoA lives under Scope, no own tab | Presentation | scope-applicability.html | Navigation | Scope Section select option Applicability, legacy SoA route redirect. |
 | T01 | Content quality is separate, reader-specific track | Content | Not solved by static prototype: examples expose slots only | Content track | Separate writing and prompt work for controls, UCC, RFIs, board reports and auditor workpapers. |
 | T02 | Useful consultant AI output and good reports with less effort | Content | Not measured: needs consultant task testing | Content track | Audience-specific acceptance criteria, grounded claims, approved text reuse; do not claim productivity from screenshots. |
 | D06c | Unified taxonomy and requirement wording | Content | Not shown: requires content track beyond ISO focus | Content track | Authored once for UCC domain names and cluster prompts; use existing DOMAIN_GROUP_ORDER as starting inventory, not accepted final taxonomy. |
@@ -184,7 +186,7 @@ These31 live page families replace the plan's Tpl/Work columns. Assessment varia
 | Purge (`engagement_purge`) | Form | Retention, eligibility, destructive confirmation | Typed confirm with affected records count | Presentation |
 | Settings (`firm_settings`) | Form | Branding, accent choices, field errors | Neutral surfaces, validated accent pairs | Presentation |
 | Evidence inventory (all three scopes) (`evidence_inventory`) | Inventory | Scope, search, status filters, version rows | Wide table, readable audit fields | Presentation, Backend |
-| Evidence record and cited span (`evidence_detail`) | Document | Version header, source text, citation location | 72ch text; superseded source labelled | Presentation |
+| Evidence record and cited span (`evidence_detail`) | Document | Version header, source text, citation location | 56ch text; superseded source labelled | Presentation |
 | Evidence reuse (`evidence_reuse`) | Inventory | Prior assessment filter, candidate rows, inclusion | Selection state and preview, no repeated full content | Presentation |
 | Desk review (`desk_review`) | Task | Run state, prefill list, provenance inspector | Compact findings, stable async status | Presentation, Backend |
 | Assessment workspace (`assessment`) | Task | Breadcrumb, period, stage tabs, selected content | Shared frame and variants below; use task title | Presentation, Backend, Content |

@@ -32,7 +32,7 @@
     "text": "All other controls are applicable because they are included in the agreed ISMS scope. This is a scope justification, not a claim that the controls work.",
     "classification": "Content",
     "dependency": "Authored standard justification plus Backend default applicability source marker",
-    "screen": "questionnaire.html"
+    "screen": "scope-applicability.html"
   },
   {
     "id": "queue-title-0",
@@ -484,23 +484,9 @@
   },
   {
     "id": "report-executive",
-    "text": "Veldhara\u2019s July to September engagement reviewed privacy and information security. This ISO 27001 view uses the approved control conclusions and their linked evidence at the 6 October cut-off. Physical safeguards are the strongest assessed area. Organizational controls are the weakest, with incomplete access reviews and untested incident response. The ISO score is 84%, but it should be read alongside those high-risk gaps. The separate DPDPA result is 44%; the two scores are not combined.",
+    "text": "Veldhara’s July to September engagement reviewed privacy and information security. This ISO 27001 view uses the approved control conclusions and their linked evidence at the 6 October cut-off. Physical safeguards are the strongest assessed area. Organizational controls are the weakest, with incomplete access reviews and untested incident response. The ISO score is 84%, but it should be read alongside those high-risk gaps. The separate DPDPA result is 44%; the two scores are not combined.",
     "classification": "Content",
     "dependency": "Accepted per-assessment executive narrative, exposed by existing narrative/board read model",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-organizational-impact-0",
-    "text": "Six recipients may be acting without confirmed knowledge of the approved policy.",
-    "classification": "Content",
-    "dependency": "Board impact text; Backend per-conclusion impact slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-organizational-reason-0",
-    "text": "The six acknowledgements and updated portal export close the recorded coverage gap and provide a checkable completion record.",
-    "classification": "Content",
-    "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
     "screen": "report.html"
   },
   {
@@ -518,20 +504,6 @@
     "screen": "report.html"
   },
   {
-    "id": "report-organizational-impact-2",
-    "text": "Without a maintained forum record, the company cannot show how it receives specialist security developments.",
-    "classification": "Content",
-    "dependency": "Board impact text; Backend per-conclusion impact slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-organizational-reason-2",
-    "text": "A documented decision makes the chosen external-information channel explicit; forum membership is useful only if relevant to the company.",
-    "classification": "Content",
-    "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
-    "screen": "report.html"
-  },
-  {
     "id": "report-organizational-impact-3",
     "text": "Enabled leaver accounts and missing return records could leave company systems or devices accessible after employment ends.",
     "classification": "Content",
@@ -541,20 +513,6 @@
   {
     "id": "report-organizational-reason-3",
     "text": "Reconciling the leaver checklist with both identity and asset inventories catches missing returns as well as retained access.",
-    "classification": "Content",
-    "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-organizational-impact-4",
-    "text": "An unlabelled route workbook may be shared or handled without the restrictions its information requires.",
-    "classification": "Content",
-    "dependency": "Board impact text; Backend per-conclusion impact slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-organizational-reason-4",
-    "text": "Repeating the sample checks whether labelling remains effective; retiring old exports removes known unlabelled copies.",
     "classification": "Content",
     "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
     "screen": "report.html"
@@ -659,7 +617,7 @@
   },
   {
     "id": "report-organizational-impact-12",
-    "text": "Missing cloud assurance leaves uncertainty about safeguards and the company\u2019s ability to exit or delete its data.",
+    "text": "Missing cloud assurance leaves uncertainty about safeguards and the company’s ability to exit or delete its data.",
     "classification": "Content",
     "dependency": "Board impact text; Backend per-conclusion impact slot",
     "screen": "report.html"
@@ -793,20 +751,6 @@
   {
     "id": "report-people-reason-0",
     "text": "Scheduled sessions target the overdue groups; verified completion and manager sign-off close both evidence gaps.",
-    "classification": "Content",
-    "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-people-impact-1",
-    "text": "Managers may not understand how to apply the disciplinary process when a security issue requires it.",
-    "classification": "Content",
-    "dependency": "Board impact text; Backend per-conclusion impact slot",
-    "screen": "report.html"
-  },
-  {
-    "id": "report-people-reason-1",
-    "text": "A briefing and acknowledgement demonstrate awareness. Retaining a case record only if invoked avoids fabricating evidence of a case.",
     "classification": "Content",
     "dependency": "Recommendation reasoning generated per assessment; Backend explicit reason slot",
     "screen": "report.html"
@@ -1279,5 +1223,233 @@
     "classification": "Content",
     "dependency": "Reviewed provenance narrative with method/interview source records",
     "screen": "conclusions.html"
+  },
+  {
+    "id": "queue-title-0",
+    "text": "Access reviews omit systems and leave removals open",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-0",
+    "text": "Access reviews omit systems and leave removals open",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-0",
+    "text": "Retained access for departed users could expose operational systems and data to unauthorized changes.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-0",
+    "text": "Closing removal tickets removes known residual access. Including TMS and the driver app closes the two coverage omissions.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-0",
+    "text": "The reviewer examined Veldhara_Access_Review_Q2_FY26.docx. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "queue-title-1",
+    "text": "Incident response has not been exercised",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-1",
+    "text": "Incident response has not been exercised",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-1",
+    "text": "Untested roles and call trees could delay containment and recovery during an incident.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-1",
+    "text": "An exercise tests whether people can use the documented plan and exposes changes that a document review cannot.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-1",
+    "text": "The reviewer examined Veldhara_Incident_Response_Plan_v1.pdf. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "queue-title-2",
+    "text": "Security awareness is not complete across the workforce",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-2",
+    "text": "Security awareness is not complete across the workforce",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-2",
+    "text": "Incomplete training coverage can leave people less able to recognize or report security events.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-2",
+    "text": "Completing the training and recording its coverage addresses the missing assurance for untrained staff.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-2",
+    "text": "The reviewer examined Veldhara_Security_Awareness_Completion_Q2.xlsx. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "queue-title-3",
+    "text": "Policy acknowledgement is incomplete for six recipients",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-3",
+    "text": "Policy acknowledgement is incomplete for six recipients",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-3",
+    "text": "Unconfirmed acknowledgement makes it harder to show that staff know the security policy.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-3",
+    "text": "A documented review and acknowledgement cycle provides repeatable ownership and coverage.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-3",
+    "text": "The reviewer examined Veldhara_Policy_Acknowledgement_Export_Q2.xlsx. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "queue-title-4",
+    "text": "Backup recovery has not been demonstrated",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-4",
+    "text": "Backup recovery has not been demonstrated",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-4",
+    "text": "Without demonstrated recovery, a backup failure could prolong interruption of logistics operations.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-4",
+    "text": "An evidenced restore test checks recovery capability rather than the existence of backups alone.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-4",
+    "text": "The reviewer examined Veldhara_Backup_Operations_and_Restore_Log_Q2.xlsx. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "queue-title-5",
+    "text": "ICT continuity is supported by the reviewed evidence",
+    "classification": "Backend",
+    "dependency": "Reviewed Conclusion.gap_title field; text is illustrative Content per assessment",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-title-5",
+    "text": "ICT continuity is supported by the reviewed evidence",
+    "classification": "Backend",
+    "dependency": "Conclusion.gap_title with reviewed per-assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-impact-5",
+    "text": "The reviewed continuity evidence supports readiness; continue checking it when systems or recovery objectives change.",
+    "classification": "Backend",
+    "dependency": "Conclusion.impact_statement; generated per assessment Content",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-reason-5",
+    "text": "Maintain the demonstrated continuity practice and review evidence against the next assessment period.",
+    "classification": "Content",
+    "dependency": "Generated recommendation reasoning; Backend recommendation_reason slot",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "id": "finding-provenance-5",
+    "text": "The reviewer examined Veldhara_DR_Failover_Test_Report.docx. No interview is recorded in the source data.",
+    "classification": "Content",
+    "dependency": "Reviewed provenance narrative with Backend method/interview source records",
+    "screen": "review-queue-sidebar.html"
+  },
+  {
+    "screen": "scope-applicability.html",
+    "id": "soa-exclusion-outsourcing",
+    "classification": "Content",
+    "dependency": "Illustrative Veldhara scope exclusion; Backend stores exclusion reason/version; Content authored by scope reviewer"
+  },
+  {
+    "screen": "scope-applicability.html",
+    "id": "soa-exclusion-coding",
+    "classification": "Content",
+    "dependency": "Illustrative Veldhara scope exclusion; Backend stores exclusion reason/version; Content authored by scope reviewer"
+  },
+  {
+    "screen": "report.html",
+    "id": "report-posture",
+    "classification": "Content",
+    "dependency": "Assessment-specific board posture synthesis from deterministic domain scores and gaps; Backend accepted report read model"
   }
 ]
