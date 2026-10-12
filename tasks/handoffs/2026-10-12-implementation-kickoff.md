@@ -229,3 +229,70 @@ C2 (periodic sweep), C3 (interview rule), C4 and C5 (S5 and S6-F2 scope lines), 
 3. **Report coverage (M8):** do you want released reports to name unread and excluded files? Default is yes, as an additive line. Say no if you want the card only.
 
 Everything else above is a plan edit I will make without asking, unless you object.
+
+### Part 2b. Live-API Veldhara run with full capture (2026-10-12)
+
+**Result: complete, no failures, about $0.20.** Run 1, `MAX_TOTAL_DOCUMENT_WORDS=30000`, v2 off, one framework (ISO 27001), 57 files uploaded through the real routes and 93 conclusions produced.
+
+| Item | Value |
+|---|---|
+| Run folder (private, never committed) | `~/cyberassess-runs/2026-10-12-live-veldhara/` |
+| Report | `report.html` there (open it with a local static server; it embeds document text) |
+| Calls captured | 55, equal to the app's 55 usage records (checked inside the run) |
+| Failures, retries, parse errors, length cut-offs | 0 of each. Every call was attempt 1, `finish_reason=stop` |
+| Estimated spend (plan prices) | $0.183 |
+| Provider key usage delta | **$0.2024** (before 10.5991, after 10.8015). My price assumption was about 10% low |
+| Hard stop | $5 estimated, or one request failing twice. Neither was near |
+| Code used | `scripts/live/` on branch `claude/live-run-capture`, base d50cc61. No app file changed |
+
+The 58 originals in the pack were generated from `main` before #137, so two files still carry the word "synthetic". The 2025 baseline was not uploaded (the guide forbids it). The December 2023 file was uploaded and left unmapped, as a stale-evidence test. Total words after extraction and OCR: **23,469**.
+
+#### Stages and cost
+
+| Stage | Calls | Input tok | Output tok | Est. cost | Seconds | Notes |
+|---|---|---|---|---|---|---|
+| Context profile | 1 | 999 | 236 | $0.000 | 7 | on the extract model |
+| Vision OCR (11 PNG, 1 more image) | 12 | 19,951 | 3,112 | **$0.107** | 94 (upload stage) | Sonnet 4. **58% of the cost** |
+| Desk review (ISO, 6 batches) | 6 | 242,790 | 62,205 | $0.051 | 244 | each batch resends all 57 documents |
+| Evidence extraction (ISO) | 1 | 67,573 | 6,033 | $0.011 | 219 | one call for all 93 controls |
+| Judge (ISO, 6 batches) | 6 | 22,241 | 21,973 | $0.009 | 182 (last batch) | |
+| Follow-ups | 29 | 13,175 | 8,113 | $0.004 | 304 | one call per not-fully-implemented answer |
+| **Total** | **55** | | | **$0.183** | | desk review plus analysis: 648 s (10.8 min) |
+
+#### Measurements the reads plan needs
+
+- **Tokens per word:** 1.54 to 1.64 in text calls (mean about 1.6). The plan's 1.6 holds. Images are about 1,700 input tokens each.
+- **Seconds per call:** desk review mean 112 s (p50 103, max 166) at about 10.4k output tokens, so roughly 90 tokens a second. Judge mean 81 s (max 182). Follow-ups mean 10 s. Vision mean 7.7 s. Extraction 219 s (one call). A reader call of about 500 output tokens should be about 5 to 10 s, so the plan's 15 s assumption looks reasonable. Still unmeasured for the real reader prompt.
+- **Extraction output tokens:** 6,033 for 93 controls (ceiling 65,536). Desk review output averaged 10.4k and peaked at 13,511 against a 16,384 ceiling (82%). **A denser pack could truncate desk review.** No truncation in this run.
+- **Extraction input composition (call #50 file):** 292,702 characters: desk-review context 112k (38%, about 26k tokens), controls 20k (7%, about 5k tokens, which matches Codex's figure), documents 160k (55%). So today's extraction call carries roughly as many desk-review tokens as document tokens. The reads plan's per-part extraction drops this.
+- **Cached tokens:** 0 on all 55 calls, including 6 desk-review calls with the same system block. OpenRouter prompt-cache passthrough is **not observed** for this model. Treat caching as no help.
+- **Reasoning tokens:** 0 on all calls (the `reasoning: enabled False` setting holds).
+- **Context window:** the provider response does not report it. The largest request that succeeded was 67,573 input tokens. A 100k-word pack at 1.6 tokens a word is about 160k tokens before controls, so today's single extraction call would not fit a 128k window and would also run past 600 s. That is the real reason the cap exists.
+- **Concurrency:** `llm_max_concurrency=4`. Six desk-review batches took 244 s wall against 671 s of call time.
+
+#### Observation checklist (observation only; nothing was tuned)
+
+1. **Evidence page Summary and Key passages.** All 57 evidence pages return 200 with a Summary section. 34 of 57 have Key passages. (Method: fetched `/evidence/{id}` on a copy of the run database with no LLM key.)
+2. **Conclusion cards.** 93 cards, outcomes: 39 compliant, 52 partially compliant, 2 non-compliant. 52 cards have a grounded citation with a page or character label and 41 have none ("No supporting citation"). The app dropped 51 ungrounded quotes during citation grounding and 7 at extraction. Citations name the filename and `Characters x to y`.
+3. **"N files linked, M cited" and false "Missing evidence".** Cannot be judged on this run. All 93 cards say "No files linked", because the guide's manual path does not map evidence to controls (control references are consultant notes only). 51 cards show "Missing evidence". This is a finding about the flow, not the AI: a policy uploaded to the assessment is in scope for analysis but is not linked to any control, so every card says nothing is linked.
+4. **Size-limit notices.** None appeared. 23,469 words is under the 30,000 setting, so nothing was cut. Seeing the notices needs run 2 at the 20,000 default (about $0.20). Not run, as the kickoff specified one run.
+5. **OCR.** 12 vision calls, all readable. The email chain screenshot came back with its full text, dates and senders. Output 172 to 316 tokens each.
+6. **Pre-fill.** **0 of 93 questions were pre-filled.** Every question has status "deepened", because desk review wrote an absence finding for every control (93 absence rows, 225 evidence rows, 18 signals; coverage 43 adequate and 50 partial). Reconstructed on a copy of the run database with the entered answers removed: still 93 deepened, 0 pre-filled. In this run, the pre-fill step produced nothing the consultant could confirm.
+7. **Planted gaps (observation only).** All five were found in the rationale, with correct figures:
+   - monthly access reviews (A.5.18, Critical): two incomplete cycles, two omitted systems, eight open removals, four enabled terminated users. Cited to the Statement of Applicability workbook, not to the access review document or export;
+   - supplier assurance (A.5.19 non-compliant, A.5.21 and A.5.22 partial): cited to the Statement of Applicability workbook;
+   - incident exercise (A.5.24, A.5.25 partial): no grounded citation;
+   - annual training (A.6.3 partial): 81% completion, 52 overdue; no grounded citation, flagged "Unsupported assertion";
+   - restore tests (A.8.13 partial): cited to the backup log (characters 543 to 609), correct.
+   
+   One contradiction: A.5.30 is **Compliant** with the rationale "separate restore tests are performed", which A.8.13 contradicts. The card flags it ("Unsupported assertion", "Quote not found in the evidence"), but the proposal itself is wrong.
+
+#### What this means for the plan (for Saqlain to weigh; no edits made)
+
+- The reads plan's cost and time estimates are the right order of magnitude. Vision OCR, which the plan excludes, is the largest single cost at upload (58% here) and needs its own line.
+- Desk review output nearing its ceiling and the 219 s single extraction call are the two near-limit points at today's 23k words.
+- No caching to count on.
+- Stage 1's "card says what the judge actually received" matters here: the judge saw only quotes from one extraction call, and 41 of 93 cards ended with no grounded citation.
+- Run 2 at the 20,000 default would show the size-limit notices and a second cost point (about $0.20, about 11 minutes).
+
+**To look at it yourself:** `report.html` in the run folder shows every call, what was sent and what came back. To browse the app on the run's data: `DATABASE_URL=sqlite:///<run>/app.db UPLOAD_DIR=<run>/uploads OPENROUTER_KEY="" .venv/bin/python -m uvicorn app.main:app` from the repo root, then `/assessments/c0176706-523c-4bb7-a2ee-7b177708c728/conclusions`.
