@@ -148,8 +148,22 @@ def _requirement_pairs(item: dict) -> list[list[str]]:
 
 def current_source(db: Session, assessment: Assessment) -> dict:
     checklist = _checklist(db, assessment)
+    requests = rfi_evidence_requests.active_requests(db, assessment.id)
+    guidance = [
+        rfi_evidence_requests.document_request_text(
+            item["reason"], item["document_type"], _requirement_pairs(item)
+        )
+        for item in checklist
+    ]
+    guidance.extend(
+        rfi_evidence_requests.document_request_text(
+            request.request, request.document_type,
+            [[request.framework_id, request.requirement_id]],
+        )
+        for request in sorted(requests, key=lambda item: (item.conclusion_id, item.request_key))
+    )
     checklist_bytes = json.dumps(
-        checklist,
+        {"checklist": checklist, "guidance": guidance},
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),
@@ -164,7 +178,6 @@ def current_source(db: Session, assessment: Assessment) -> dict:
             for row in sorted(rows, key=lambda item: item.conclusion_id)
         ],
     }
-    requests = rfi_evidence_requests.active_requests(db, assessment.id)
     if requests:
         source["schema_version"] = RFI_REQUESTS_SCHEMA_VERSION
         source["evidence_requests"] = sorted(
@@ -231,6 +244,12 @@ def build_rfi_document(
         item["item_id"] = RFI_ITEM_ID_FORMAT.format(n=next_number)
         items.append(item)
         next_number += 1
+
+    for item in items:
+        if item["document_type"] is not None:
+            item["request"] = rfi_evidence_requests.document_request_text(
+                item["request"], item["document_type"], item["requirements"]
+            )
 
     documents = sum(item["kind"] == "document" for item in items)
     requirements = sum(item["kind"] == "requirement" for item in items)

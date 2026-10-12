@@ -69,7 +69,7 @@
             <b>{{ item.title }}</b>
             {{ pill("Required" if item.required else "Recommended", "accent" if item.required else "neutral") }}
           </div>
-          <span class="sub">{{ item.request }}</span>
+          <div class="sub cc-pre" data-rfi-request-text>{{ item.request }}</div>
           <div class="chips" style="margin-top:var(--s-3)">
             {% for framework_id, requirement_id in item.requirements %}{{ pill(framework_label(framework_id), "neutral") }}{% endfor %}
             <span class="sub">{{ item.group }}</span>

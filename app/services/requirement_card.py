@@ -22,7 +22,7 @@ from app.services.citations import resolve_citations
 
 FALLBACK_CRITERIA_LABEL = "Judged against the control description; no approved test criteria yet"
 APPROVED_CRITERIA_LABEL = "Judged against approved test criteria"
-V1_SOURCE_LABEL = "Proposed by the v1 analysis: no criteria checklist or verified claims are available for this requirement."
+V1_SOURCE_LABEL = "Auditor checklist; not used by this analysis"
 NO_RUN_LABEL = "No analysis run is linked to this conclusion."
 REASON_COMPLIANT = "Every test criterion is met by at least one verified claim."
 REASON_SCOPE_EXCLUDED = "Outside the recorded assessment scope."
@@ -101,6 +101,8 @@ class CriterionRow:
     symbol: str
     claim_ids: tuple[str, ...]
     met_without_claim: bool
+    evidence_hint: str = ""
+    source_basis: str = ""
 
 
 @dataclass(frozen=True)
@@ -399,6 +401,19 @@ def _criterion_rows(item: dict, cited_ids: set[str]) -> tuple[CriterionRow, ...]
     return tuple(rows)
 
 
+def _auditor_checklist(framework_id: str, requirement_id: str) -> tuple[CriterionRow, ...]:
+    framework = FrameworkRegistry.get_or_none(framework_id)
+    control = framework.get_control(requirement_id) if framework is not None else None
+    return tuple(
+        CriterionRow(
+            criterion_id=criterion.id, statement=criterion.statement, kind=criterion.kind,
+            result="", symbol="", claim_ids=(), met_without_claim=False,
+            evidence_hint=criterion.evidence_hint, source_basis=criterion.source_basis,
+        )
+        for criterion in control.test_criteria
+    ) if control is not None else ()
+
+
 def _response_view(item: dict) -> ResponseView | None:
     response = item.get("response")
     if not isinstance(response, dict) or not response.get("answer"):
@@ -456,7 +471,7 @@ def _rfi_missing_evidence(
     visible_keys: set[str] = set()
     # Linked files replace the suggestions; requests already on the draft RFI stay.
     linked = bool(context.linked_evidence.get((conclusion.framework_id, conclusion.requirement_id)))
-    if source != "v2":
+    if source not in {"v1", "v2"}:
         return (() if linked else missing), tuple(states.values())
 
     rendered = []
@@ -680,7 +695,9 @@ def build_card(context: CardContext, conclusion: Conclusion, proposal: Conclusio
             **evidence_context,
             source="v1", analysis_run_id=run_id, proposed_outcome=outcome,
             reason=item.get("gap_description") or None, criteria_source=None,
-            criteria_label=V1_SOURCE_LABEL, criteria=(), claims=(), response=None,
+            criteria_label=V1_SOURCE_LABEL,
+            criteria=_auditor_checklist(conclusion.framework_id, conclusion.requirement_id),
+            claims=(), response=None,
             contradictions=(), unsupported_assertion=bool(quality.get("unsupported_assertion")),
             analysis_incomplete=False, flags=(),
             quality=_quality_v1(envelope, claim_entry, citations, conclusion),
@@ -802,7 +819,7 @@ def add_rfi_request(
         ),
         None,
     )
-    if card.source != "v2" or match is None:
+    if match is None:
         raise rfi_evidence_requests.RfiRequestError(
             rfi_evidence_requests.RFI_REQUEST_STALE_MESSAGE, 409
         )

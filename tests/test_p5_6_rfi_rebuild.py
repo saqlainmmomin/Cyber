@@ -8,6 +8,7 @@ import inspect
 import io
 import json
 import re
+from html import unescape
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -309,6 +310,100 @@ def _latest_generated(db, snapshot_id):
     )
 
 
+def _request_element(http, assessment, item):
+    response = http.get(f"/assessments/{assessment.id}/rfi")
+    assert response.status_code == 200
+    assert 'href="/static/css/yozora-patterns.css"' in response.text
+    row = response.text.split(f'data-rfi-item="{item["item_id"]}"', 1)[1]
+    match = re.search(r'<div class="sub cc-pre" data-rfi-request-text>(.*?)</div>', row, re.S)
+    assert match, row
+    return unescape(match.group(1))
+
+
+def test_iso_rfi_page_preserves_guidance_lines(db, http):
+    assessment = _seed(db, frameworks=("iso27001",))
+    item = next(item for item in rfi_requests.build_rfi_document(db, assessment)["items"]
+                if item["document_type"] == "access_control_policy")
+    request = _request_element(http, assessment, item)
+    assert request == item["request"]
+    assert "\n\nAuditor checklist\n" in request
+    assert "\nEvidence hint:" in request
+    assert "\nSource basis:" in request
+    assert "\n\nExample of what to send:" in request
+    assert "\n\nGood looks like:" in request
+    assert "\n\nPeriod (auditor): __________\nSample size (auditor): __________" in request
+    stylesheet = http.get("/static/css/yozora-patterns.css")
+    assert stylesheet.status_code == 200
+    assert ".cc-pre{white-space:pre-line}" in stylesheet.text
+
+
+@pytest.mark.parametrize("document_type", ["retired_document_type", ""])
+def test_stored_unknown_document_type_uses_other_example(db, http, document_type):
+    from app.services import rfi_evidence_requests
+    from app.services.rfi_examples import DOCUMENT_EXAMPLES
+
+    assessment = _seed(db, frameworks=("iso27001",))
+    row = _conclusion(db, assessment, "iso27001", "ISO.A5.18")
+    rfi_evidence_requests.record_request(
+        db, conclusion=row, request_key_value="stored-request",
+        document_type=document_type, title="Stored evidence request",
+        request="Provide the historical record.", analysis_run_id=None,
+        actor="consultant:Priya",
+    )
+    db.commit()
+    document = rfi_requests.build_rfi_document(db, assessment)
+    item = next(item for item in document["items"] if item["kind"] == "evidence_request")
+    request = _request_element(http, assessment, item)
+    assert request.startswith("Provide the historical record.")
+    assert DOCUMENT_EXAMPLES["other"]["example_artifacts"] in request
+    assert DOCUMENT_EXAMPLES["other"]["good_looks_like"] in request
+
+
+def test_scoped_dpdpa_rfi_renders_example_and_signed_statement(db, http):
+    from app.services.rfi_examples import DOCUMENT_EXAMPLES
+
+    assessment = _seed(db, frameworks=("dpdpa",))
+    item = next(item for item in rfi_requests.build_rfi_document(db, assessment)["items"]
+                if item["document_type"] == "consent_forms")
+    request = _request_element(http, assessment, item)
+    assert DOCUMENT_EXAMPLES["consent_forms"]["example_artifacts"] in request
+    criteria = [criterion for framework_id, requirement_id in item["requirements"]
+                for criterion in FrameworkRegistry.get(framework_id).get_control(requirement_id).test_criteria]
+    assert criteria
+    assert criteria[0].statement in request
+
+
+def test_access_request_includes_signed_guidance_and_examples(db):
+    assessment = _seed(db, frameworks=("iso27001", "nist_csf"))
+    document = rfi_requests.build_rfi_document(db, assessment)
+    item = next(item for item in document["items"] if item["document_type"] == "access_control_policy")
+    original = next(entry["reason"] for entry in scope_profiler.compute_scope_multi(json.loads(assessment.scope_answers), assessment.frameworks)["evidence_checklist"]
+                    if entry["document_type"] == "access_control_policy")
+    assert item["request"].startswith(original)
+    assert "dated user list per system" in item["request"].lower()
+    assert "reviewer sign-off" in item["request"].lower()
+    assert "Auditor checklist\n" in item["request"]
+    assert "not used by this analysis" not in item["request"]
+    assert "ISO.A5.18" in item["request"]
+    for framework_id, requirement_id in item["requirements"]:
+        for criterion in FrameworkRegistry.get(framework_id).get_control(requirement_id).test_criteria:
+            assert criterion.statement in item["request"]
+            assert criterion.evidence_hint in item["request"]
+            assert criterion.source_basis in item["request"]
+
+
+def test_example_edit_changes_rfi_source(db, monkeypatch):
+    from app.services.rfi_examples import DOCUMENT_EXAMPLES
+
+    assessment = _seed(db, frameworks=("iso27001",))
+    before = rfi_requests.current_source(db, assessment)
+    monkeypatch.setitem(DOCUMENT_EXAMPLES, "access_control_policy", {
+        "example_artifacts": "Revised access review example.",
+        "good_looks_like": "Dated sign-off.",
+    })
+    assert rfi_requests.current_source(db, assessment) != before
+
+
 def test_scenario_1_preanalysis_document_items_are_deterministic(db):
     """Scenario 1: pre-analysis output contains deterministic ISO document requests only."""
     assessment = _seed(db, frameworks=("iso27001",))
@@ -322,7 +417,17 @@ def test_scenario_1_preanalysis_document_items_are_deterministic(db):
     for item, expected in zip(document["items"], checklist):
         assert item["required"] == expected["required"]
         assert item["title"] == expected["label"]
-        assert item["request"] == expected["reason"]
+        assert item["request"].startswith(expected["reason"] + "\n\n")
+        assert "Example of what to send:" in item["request"]
+        assert "Good looks like:" in item["request"]
+        assert "Period (auditor): __________" in item["request"]
+        assert "Sample size (auditor): __________" in item["request"]
+        for control_id in expected["maps_to"]:
+            control = FrameworkRegistry.get("iso27001").get_control(control_id)
+            for criterion in control.test_criteria:
+                assert criterion.statement in item["request"]
+                assert criterion.evidence_hint in item["request"]
+                assert criterion.source_basis in item["request"]
         assert item["requirements"] == [["iso27001", value] for value in expected["maps_to"]]
         assert item["group"] == rfi_requests.RFI_DOCUMENTS_GROUP
         assert item["conclusion_id"] is None

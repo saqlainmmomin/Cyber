@@ -14,6 +14,7 @@ from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion
+from app.services.rfi_examples import DOCUMENT_EXAMPLES
 
 REQUESTED_ACTION = "rfi.evidence_requested"
 WITHDRAWN_ACTION = "rfi.evidence_request_withdrawn"
@@ -134,6 +135,36 @@ def request_text(
         requirement_id=requirement_id,
         requirement_title=_requirement_title(framework_id, requirement_id),
     )
+
+
+def document_request_text(
+    original: str,
+    document_type: str,
+    requirements: list[list[str]],
+) -> str:
+    """Append signed auditor criteria and document examples without analysis."""
+    sections = [original]
+    checklist = []
+    for framework_id, requirement_id in requirements:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        control = framework.get_control(requirement_id) if framework else None
+        if control is None:
+            continue
+        for criterion in control.test_criteria:
+            checklist.append(
+                f"{framework_id} {requirement_id} ({criterion.kind}): {criterion.statement}\n"
+                f"Evidence hint: {criterion.evidence_hint}\n"
+                f"Source basis: {criterion.source_basis}"
+            )
+    if checklist:
+        sections.append("Auditor checklist\n" + "\n\n".join(checklist))
+    example = DOCUMENT_EXAMPLES.get(document_type) or DOCUMENT_EXAMPLES["other"]
+    sections.extend((
+        f"Example of what to send: {example['example_artifacts']}",
+        f"Good looks like: {example['good_looks_like']}",
+        "Period (auditor): __________\nSample size (auditor): __________",
+    ))
+    return "\n\n".join(sections)
 
 
 def _metadata(event: AuditEvent) -> dict:

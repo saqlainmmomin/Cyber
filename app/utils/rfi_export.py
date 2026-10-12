@@ -6,11 +6,13 @@ DOCX: Editable format using python-docx.
 """
 
 import json
+import re
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
 
 from fpdf import FPDF
+from fpdf.enums import MethodReturnValue
 
 from app.config import settings
 # Reuse palette and helpers from main PDF export
@@ -166,81 +168,74 @@ def generate_rfi_pdf(
 
 def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
     """Render a single evidence request item as a card."""
-    if pdf.get_y() > 240:
-        pdf.add_page()
-        _rfi_header(pdf, "Evidence Items (continued)")
-        _rfi_footer(pdf, company_name)
-
-    y_start = pdf.get_y()
     requirements = item.get("requirements") or []
-    card_height = 48 if requirements else 40
-
-    # Item header bar
     priority = item.get("priority", "Medium")
     color = RFI_PRIORITY_COLORS.get(priority, (150, 150, 150))
-    pdf.set_fill_color(*color)
-    pdf.rect(PM, y_start, 3, card_height, style="F")  # Left color bar
-
-    pdf.set_fill_color(*CARD_BG)
-    pdf.rect(PM + 3, y_start, CW - 3, card_height, style="F")
-
-    # Item ID + Priority
-    pdf.set_xy(PM + 6, y_start + 2)
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(*NAVY)
-    pdf.cell(30, 5, text=S(item.get("item_id", "")))
-
-    pdf.set_font("Helvetica", "B", 8)
-    pdf.set_text_color(*color)
-    pdf.cell(20, 5, text=S(priority))
-
-    pdf.set_font("Helvetica", "", 8)
-    pdf.set_text_color(*LIGHT_TEXT)
-    # "dpdpa_section" is the pre-multi-framework key still present in stored RFIs
+    # "dpdpa_section" is the pre-multi-framework key still present in stored RFIs.
     section_ref = item.get("section_ref") or item.get("dpdpa_section", "")
     reference = " | ".join(
         part for part in (item.get("requirement_id", ""), section_ref) if part
     )
-    pdf.cell(0, 5, text=S(reference))
-
-    # Requirement title
-    pdf.set_xy(PM + 6, y_start + 8)
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(*DARK_TEXT)
-    pdf.multi_cell(CW - 12, 4, text=S(item.get("requirement_title", "")[:100]))
-
-    # Current status
-    pdf.set_x(PM + 6)
-    pdf.set_font("Helvetica", "I", 8)
-    pdf.set_text_color(*MID_TEXT)
-    status_text = item.get("current_status", "")[:150]
-    pdf.multi_cell(CW - 12, 4, text=S(f"Status: {status_text}"))
-
-    # Evidence requested
-    pdf.set_x(PM + 6)
-    pdf.set_font("Helvetica", "", 8)
-    pdf.set_text_color(*DARK_TEXT)
-    evidence_text = item.get("evidence_requested", "")[:300]
-    pdf.multi_cell(CW - 12, 4, text=S(f"Evidence Requested: {evidence_text}"))
-
+    blocks = [
+        ("B", 9, DARK_TEXT, item.get("requirement_title", "")),
+        ("I", 8, MID_TEXT, f"Status: {item.get('current_status', '')}"),
+        ("", 8, DARK_TEXT, f"Evidence Requested: {item.get('evidence_requested', '')}"),
+    ]
     if requirements:
+        blocks.append(("", 7, MID_TEXT, f"Requested for: {_requested_for(requirements)}"))
+    blocks.append(("", 7, LIGHT_TEXT,
+                   f"Suggested deadline: {item.get('deadline_weeks', 3)} weeks"))
+
+    # Wrap before drawing so each card segment has the exact height needed.
+    # A request can span pages; fixed-height cards would overlap the next item.
+    lines = []
+    for style, size, text_color, text in blocks:
+        pdf.set_font("Helvetica", style, size)
         pdf.set_x(PM + 6)
-        pdf.set_font("Helvetica", "", 7)
-        pdf.set_text_color(*MID_TEXT)
-        pdf.multi_cell(
-            CW - 12,
-            4,
-            text=S(f"Requested for: {_requested_for(requirements)}"),
+        wrapped = pdf.multi_cell(
+            CW - 12, 4, text=S(text), dry_run=True, output=MethodReturnValue.LINES,
         )
+        lines.extend((style, size, text_color, line) for line in wrapped)
 
-    # Deadline
-    pdf.set_x(PM + 6)
-    pdf.set_font("Helvetica", "", 7)
-    pdf.set_text_color(*LIGHT_TEXT)
-    deadline = item.get("deadline_weeks", 3)
-    pdf.cell(0, 4, text=S(f"Suggested deadline: {deadline} weeks"))
+    while lines:
+        # Keep the header with at least five body lines when available.
+        minimum_height = 10 + 4 * min(5, len(lines))
+        if pdf.page_break_trigger - pdf.get_y() < minimum_height:
+            _rfi_footer(pdf, company_name)
+            pdf.add_page()
+            _rfi_header(pdf, "Evidence Items (continued)")
 
-    pdf.set_y(pdf.get_y() + 8)
+        y_start = pdf.get_y()
+        capacity = int((pdf.page_break_trigger - y_start - 10) // 4)
+        # Avoid a continuation containing only the final one or two lines.
+        remaining = len(lines) - capacity
+        if 0 < remaining < 3:
+            capacity -= 3 - remaining
+        segment, lines = lines[:capacity], lines[capacity:]
+        card_height = 10 + 4 * len(segment)
+        pdf.set_fill_color(*color)
+        pdf.rect(PM, y_start, 3, card_height, style="F")
+        pdf.set_fill_color(*CARD_BG)
+        pdf.rect(PM + 3, y_start, CW - 3, card_height, style="F")
+
+        pdf.set_xy(PM + 6, y_start + 2)
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(*NAVY)
+        pdf.cell(30, 5, text=S(item.get("item_id", "")))
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_text_color(*color)
+        pdf.cell(20, 5, text=S(priority))
+        pdf.set_font("Helvetica", "", 8)
+        pdf.set_text_color(*LIGHT_TEXT)
+        pdf.cell(0, 5, text=S(reference))
+
+        pdf.set_y(y_start + 8)
+        for style, size, text_color, line in segment:
+            pdf.set_x(PM + 6)
+            pdf.set_font("Helvetica", style, size)
+            pdf.set_text_color(*text_color)
+            pdf.cell(CW - 12, 4, text=S(line), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_y(y_start + card_height + 4)
 
 
 def _requested_for(requirements: list[str]) -> str:
@@ -261,11 +256,16 @@ def _rfi_header(pdf: FPDF, section_title: str):
 
 def _rfi_footer(pdf: FPDF, company_name: str):
     """Draw RFI footer."""
-    pdf.set_y(-15)
+    x, y = pdf.get_x(), pdf.get_y()
+    auto_page_break, margin = pdf.auto_page_break, pdf.b_margin
+    pdf.set_auto_page_break(False)
+    pdf.set_xy(PM, pdf.h - 15)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(*LIGHT_TEXT)
     pdf.cell(0, 5, text=S(f"{settings.firm_name}  |  CONFIDENTIAL  |  RFI  |  {company_name}"), align="L")
-    pdf.cell(0, 5, text=f"Page {pdf.page_no()}/{{nb}}", align="R")
+    pdf.cell(0, 5, text=S(f"Page {pdf.page_no()}/{{nb}}"), align="R")
+    pdf.set_auto_page_break(auto_page_break, margin)
+    pdf.set_xy(x, y)
 
 
 # ---------------------------------------------------------------------------
@@ -386,8 +386,8 @@ def generate_rfi_docx(
                     f"({item.get('requirement_id', '')})"
                 )
             row.cells[2].text = item.get("priority", "Medium")
-            row.cells[3].text = item.get("current_status", "")[:200]
-            row.cells[4].text = item.get("evidence_requested", "")[:300]
+            row.cells[3].text = item.get("current_status", "")
+            row.cells[4].text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", item.get("evidence_requested", ""))
 
             for cell in row.cells:
                 for paragraph in cell.paragraphs:

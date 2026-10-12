@@ -63,10 +63,7 @@ FIXTURES = Path(__file__).parent / "grounding_fixtures"
 # Exact copy pinned by the handoff (D-P6-7-E..J).
 FALLBACK_LABEL = "Judged against the control description; no approved test criteria yet"
 APPROVED_CRITERIA_LABEL = "Judged against approved test criteria"
-V1_LABEL = (
-    "Proposed by the v1 analysis: no criteria checklist or verified claims are "
-    "available for this requirement."
-)
+V1_LABEL = "Auditor checklist; not used by this analysis"
 NO_RUN_LABEL = "No analysis run is linked to this conclusion."
 REASON_COMPLIANT = "Every test criterion is met by at least one verified claim."
 NO_RESPONSE_LABEL = "No confirmed questionnaire response."
@@ -757,6 +754,17 @@ def _v1_items():
     ]
 
 
+def assert_show_only_criteria(html):
+    blocks = [block for block in re.findall(r'<div class="block">(.*?)</div>', html, re.S)
+              if '<h3>Criteria</h3>' in block]
+    if 'data-criterion="' in html:
+        assert blocks
+    for block in blocks:
+        assert "data-criterion-result" not in block
+        for marker in ("c-ok", "c-non", "c-insuf", "✓", "✔", "✗", "✘", "×", 'class="ck', '#i-check', '#i-x'):
+            assert marker not in block
+
+
 def test_scenario_8_v1_fallback_and_legacy_cards(db, http, monkeypatch):
     from app.frameworks.registry import FrameworkRegistry
     from app.services import analysis_pipeline
@@ -786,7 +794,15 @@ def test_scenario_8_v1_fallback_and_legacy_cards(db, http, monkeypatch):
     assert 'data-requirement-source="v1"' in open_tag(html, "data-requirement-card")
     assert V1_LABEL in html
     assert FALLBACK_LABEL not in html
-    assert "data-criterion=" not in html and "data-divergence-note" not in html
+    assert "data-criterion=" in html and "data-divergence-note" not in html
+    assert "data-criterion-result" not in html
+    assert_show_only_criteria(html)
+    for criterion in FrameworkRegistry.get("dpdpa").get_control("CH2.CONSENT.1").test_criteria:
+        assert open_tag(html, "data-criterion", criterion.id)
+        assert unescape(criterion.statement) in unescape(html)
+        assert criterion.kind.capitalize() in html
+        assert criterion.evidence_hint in html
+        assert unescape(criterion.source_basis) in unescape(html)
     consent_chips = chips(html)
     assert consent_chips["grounding:grounded"] == "ok"
     assert consent_chips["currency:current"] == "ok"
@@ -810,7 +826,8 @@ def test_scenario_8_v1_fallback_and_legacy_cards(db, http, monkeypatch):
 
     cards = {card.conclusion.id: card for card in conclusion_review.conclusion_cards(db, assessment.id)}
     assert cards[consent.id].requirement.source == "v1"
-    assert cards[consent.id].requirement.criteria == ()
+    assert cards[consent.id].requirement.criteria
+    assert all(row.result == "" and row.symbol == "" for row in cards[consent.id].requirement.criteria)
     assert cards[consent.id].requirement.divergence is None
     assert cards[legacy.id].requirement.source == "none"
 
@@ -819,6 +836,44 @@ def test_scenario_8_v1_fallback_and_legacy_cards(db, http, monkeypatch):
     db.commit()
     db.refresh(consent)
     assert approve(http, assessment, consent).status_code == 200
+
+
+@pytest.mark.parametrize("framework_id", ["iso27001", "nist_csf", "gdpr", "hipaa", "pci_dss"])
+def test_v1_registry_checklist_is_show_only(db, http, monkeypatch, framework_id):
+    from app.frameworks.registry import FrameworkRegistry
+    from app.services import analysis_pipeline
+
+    forbid_llm(monkeypatch)
+    framework = FrameworkRegistry.get(framework_id)
+    control = framework.all_controls()[0]
+    assessment = seed_assessment(db, (framework_id,))
+    context = analysis_pipeline.start_runs(db, assessment_id=assessment.id, framework_ids=[framework_id])
+    analysis_pipeline.record_framework_run(
+        db, context, framework_id=framework_id,
+        assessments=[{
+            "requirement_id": control.id, "compliance_status": "non_compliant",
+            "current_state": "Not documented.", "evidence_quote": "",
+            "gap_description": "Missing record.", "risk_level": "low",
+            "remediation_action": "Collect records.",
+        }], desk_review_data=None, gap_report_id="historical-report",
+    )
+    db.commit()
+    row = conclusion(db, assessment, framework_id, control.id)
+    html = card_html(conclusions_page(http, assessment), row.id)
+    assert 'data-requirement-source="v1"' in open_tag(html, "data-requirement-card")
+    assert "data-criterion-result" not in html
+    assert_show_only_criteria(html)
+    if control.test_criteria:
+        assert V1_LABEL in html
+        for criterion in control.test_criteria:
+            assert open_tag(html, "data-criterion", criterion.id)
+            assert f'data-criterion-kind="{criterion.kind}"' in html
+            assert criterion.statement in unescape(html)
+            assert criterion.evidence_hint in unescape(html)
+            assert criterion.source_basis in unescape(html)
+    else:
+        assert "data-criterion=" not in html
+        assert V1_LABEL not in html
 
 
 # --------------------------------------------------------------------------- #

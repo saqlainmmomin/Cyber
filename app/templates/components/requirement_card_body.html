@@ -25,10 +25,20 @@
       {% if requirement.reason %}<p data-proposal-reason class="muted cc-pre cc-reason">{{ requirement.reason }}</p>{% endif %}
     </div>
 
+    {% if requirement.source != "v1" or requirement.criteria %}
     <div class="block">
       {% if requirement.source == "v1" %}
       <h3>Criteria</h3>
       <p class="muted">{{ requirement.criteria_label }}</p>
+      <ul class="cc-claims">
+        {% for criterion in requirement.criteria %}
+        <li data-criterion="{{ criterion.criterion_id }}" data-criterion-kind="{{ criterion.kind }}">
+          <p><span class="chip">{{ criterion.kind|capitalize }}</span> <span class="cc-crit-id">{{ criterion.criterion_id }}</span> {{ criterion.statement }}</p>
+          <p class="sub">Evidence hint: {{ criterion.evidence_hint }}</p>
+          <p class="sub">Source basis: {{ criterion.source_basis }}</p>
+        </li>
+        {% endfor %}
+      </ul>
       {% else %}
       <h3 class="cc-head">Criteria{% if requirement.criteria_label %}<span class="sub">{{ requirement.criteria_label }}</span>{% endif %}</h3>
       <ul class="checks">
@@ -43,6 +53,7 @@
       </ul>
       {% endif %}
     </div>
+    {% endif %}
 
     {% if requirement.source == "v2" %}
     <div class="block">
@@ -75,7 +86,7 @@
       {% if requirement.missing_evidence %}
       <ul class="cc-req-list">
         {% for request in requirement.missing_evidence %}
-        {% if requirement.source == "v2" %}
+        {% if request.request_key %}
         <li data-missing-evidence="{{ request.document_type }}" data-rfi-request-key="{{ request.request_key }}" data-rfi-state="{{ request.rfi_state }}">
           <div><b>{{ request.label }}</b><p class="sub">{{ request.what_it_would_show }}</p></div>
           {% if request.rfi_state == "available" %}
