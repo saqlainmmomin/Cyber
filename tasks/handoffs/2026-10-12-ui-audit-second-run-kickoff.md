@@ -92,3 +92,55 @@ No migration code is written in this session. The build starts in a later sessio
 ## Report back
 
 Append a `## Results` section to this file: what was produced, what Saqlain changed, what is still open, and the PR link. Then give Saqlain the one-line prompt for the build kickoff session.
+
+## Results
+
+Run by Claude on 12 Oct 2026. PR: https://github.com/saqlainmmomin/Cyber/pull/141 (docs only, not merged). Review page for Saqlain: https://claude.ai/artifact/9uj6BYMdsm9NKuiedj4evk
+
+### What was produced
+
+| Step | Outcome |
+|---|---|
+| 1. Read inputs | Done. |
+| 2. Captures | All 8 interaction captures fixed in `tools/capture_measure.py` and captured (`review-selected`, `conclusions-edit`, `evidence-cited`, `confirm-dialog`, at 1440 and 1280). Client upload page captured at 390 in four states by seeding the three fixture links into the demo database, capturing, then removing them. 419 of 421 captures now succeed; the 2 comparison fixture captures still return 404 and the live comparison page covers that screen. |
+| 3. Second-run handoff | `tasks/handoffs/2026-10-12-ui-audit-second-run.md`. Conclusions replaced evidence inventory as the fifth prototype, because Saqlain's notes were about conclusions. |
+| 4. Codex run | `DESIGN_SYSTEM.md`, `PAGE_ARCHETYPES.md`, `NEXTJS_MIGRATION_UI_SPEC.md`, `COMPONENT_INVENTORY.md`, final `README.md`, five prototypes, and the first-half documents reconciled with the captures. Codex's own Results are in the second-run handoff. |
+| 5. Review | Claude screenshotted and measured the prototypes on the host (`tools/capture_prototypes.py`, `prototypes/measurements.json`), found ten defects and sent one fix pass (`tasks/handoffs/2026-10-12-ui-audit-prototype-fix-pass.md`). After it: seven prototypes, prose lines 62 to 76 characters, no horizontal overflow at 1280, only identifiers and labels below 14px, no stacked navigation. |
+| 6. Show Saqlain | Review page published (link above): current screen beside proposed for six screens, where each requirement landed, what each depends on, and one decision. |
+| 7. Plan | Sections 4, 6 and 7 and the context paragraph revised. No provisional markers remain. |
+| 8. PR and memory | PR #141 open. `project_nextjs_migration.md` updated. |
+
+### Numbers
+
+- Issue register: 35 entries (9 P0). Of the original 24: 19 confirmed, 4 corrected, 1 withdrawn. 11 added from the captures and Saqlain's notes.
+- Root causes: 16. Stack 1, design decision 3, shortcut 7, never designed 5.
+- Requirements: 60 parts. Presentation 32, backend 14, content 14.
+- Templates T1 to T7: T1 and T7 agreed, the other five changed. Seven archetypes replace them: Inventory, Entity, Task, Queue, Form, Document, Recovery.
+- Plan: about 27 presentation PRs (Track A), 9 backend PRs (Track B), and a content track (C1 to C6) that needs its own plan.
+
+### Verification
+
+- `git diff --name-only origin/main...HEAD` lists only `docs/ui-audit/`, `docs/plans/` and `tasks/`. Checked.
+- `python docs/ui-audit/tools/verify_audit.py` passes: nine documents, every cited screenshot exists, seven prototypes, no em dashes.
+- Each prototype has a 1440 and a 1280 screenshot committed and opens from disk with no failed requests.
+- The requirements coverage table is in the audit `README.md`.
+- Greyscale copies of every prototype were generated; Claude looked at the colour captures only, so the greyscale check is not signed off.
+
+### What Saqlain changed
+
+Nothing yet. The round of changes in step 6 has not happened: the review page was published at the end of this session. Steps 7 and 8 went ahead without it so the PR exists; his notes land as follow-up commits on the PR.
+
+### Still open
+
+1. **Sub-section navigation (Saqlain decides).** Option A, a Section dropdown in the toolbar, or option B, sections listed in the sidebar under the open assessment. Both are prototyped. Codex and Claude both recommend B. The plan (4.4) and the spec mark it pending; it must be settled before P0d.
+2. **Saqlain's round of changes on the prototypes.**
+3. **Approval of the revised plan.** No build starts before it.
+4. **Content plan (Track C).** Not written. C2 and C4 touch prompts and need a decision record first.
+5. Known weak spots in the prototypes: the board summary is 5,878px tall at 1440 (target was about three screens); option B's sidebar lists "Review" twice; the multi-framework questionnaire is specified but not drawn; keyboard, history and autosave are specified but cannot be exercised in static HTML.
+6. Codex hit its usage limit once during the fix pass and was re-dispatched after the reset. Nothing was lost.
+
+### Prompt for the build kickoff session
+
+Paste this once the plan is approved and the navigation option is chosen:
+
+> Read `docs/plans/2026-10-12-001-nextjs-frontend-migration-plan.md` and `docs/ui-audit/NEXTJS_MIGRATION_UI_SPEC.md` on branch `codex/ui-audit` (PR #141), then start P0 step 0a and write the handoff for 0b. Saqlain chose navigation option <A or B>.
