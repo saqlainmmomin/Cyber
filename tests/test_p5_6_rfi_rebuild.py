@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.services.rfi_evidence_requests import display_hint
 import hashlib
 import importlib.util
 import inspect
@@ -9,6 +10,8 @@ import io
 import json
 import re
 from html import unescape
+
+from lxml import html
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -314,23 +317,27 @@ def _request_element(http, assessment, item):
     response = http.get(f"/assessments/{assessment.id}/rfi")
     assert response.status_code == 200
     assert 'href="/static/css/yozora-patterns.css"' in response.text
-    row = response.text.split(f'data-rfi-item="{item["item_id"]}"', 1)[1]
-    match = re.search(r'<div class="sub cc-pre" data-rfi-request-text>(.*?)</div>', row, re.S)
-    assert match, row
-    return unescape(match.group(1))
+    page = html.fromstring(response.text)
+    row = page.xpath(f'//*[@data-rfi-item="{item["item_id"]}"]')[0]
+    request = row.xpath('.//*[@data-rfi-request-text]')[0]
+    return " ".join(request.text_content().split())
 
 
 def test_iso_rfi_page_preserves_guidance_lines(db, http):
     assessment = _seed(db, frameworks=("iso27001",))
     item = next(item for item in rfi_requests.build_rfi_document(db, assessment)["items"]
                 if item["document_type"] == "access_control_policy")
-    request = _request_element(http, assessment, item)
-    assert request == item["request"]
-    assert "\n\nAuditor checklist\n" in request
-    assert "\nEvidence hint:" in request
-    assert "\nSource basis:" in request
+    rendered = _request_element(http, assessment, item)
+    assert item["summary"] in rendered
+    assert "What to send" in rendered
+    assert item["example"] in rendered
+    assert item["good_looks_like"] in rendered
+    request = item["request"]
+    assert "\n\nWhat to send\n" in request
+    assert "Auditor checklist" not in request
+    assert item["why_we_ask"]
     assert "\n\nExample of what to send:" in request
-    assert "\n\nGood looks like:" in request
+    assert "\nGood looks like:" in request
     assert "\n\nPeriod (auditor): __________\nSample size (auditor): __________" in request
     stylesheet = http.get("/static/css/yozora-patterns.css")
     assert stylesheet.status_code == 200
@@ -370,7 +377,8 @@ def test_scoped_dpdpa_rfi_renders_example_and_signed_statement(db, http):
     criteria = [criterion for framework_id, requirement_id in item["requirements"]
                 for criterion in FrameworkRegistry.get(framework_id).get_control(requirement_id).test_criteria]
     assert criteria
-    assert criteria[0].statement in request
+    assert criteria[0].statement not in request
+    assert criteria[0].statement in http.get(f"/assessments/{assessment.id}/rfi").text
 
 
 def test_access_request_includes_signed_guidance_and_examples(db):
@@ -379,17 +387,21 @@ def test_access_request_includes_signed_guidance_and_examples(db):
     item = next(item for item in document["items"] if item["document_type"] == "access_control_policy")
     original = next(entry["reason"] for entry in scope_profiler.compute_scope_multi(json.loads(assessment.scope_answers), assessment.frameworks)["evidence_checklist"]
                     if entry["document_type"] == "access_control_policy")
-    assert item["request"].startswith(original)
+    assert item["summary"] == original
+    assert " ".join(item["request"].split()).startswith(original)
     assert "dated user list per system" in item["request"].lower()
     assert "reviewer sign-off" in item["request"].lower()
-    assert "Auditor checklist\n" in item["request"]
+    assert "What to send\n" in item["request"]
     assert "not used by this analysis" not in item["request"]
     assert "ISO.A5.18" in item["request"]
     for framework_id, requirement_id in item["requirements"]:
         for criterion in FrameworkRegistry.get(framework_id).get_control(requirement_id).test_criteria:
-            assert criterion.statement in item["request"]
-            assert criterion.evidence_hint in item["request"]
-            assert criterion.source_basis in item["request"]
+            assert criterion.statement not in item["request"]
+            rows = [row for row in item["why_we_ask"] if row["requirement_id"] == requirement_id]
+            assert {"kind": criterion.kind, "statement": criterion.statement,
+                    "evidence_hint": criterion.evidence_hint,
+                    "evidence_hint_label": display_hint(criterion.evidence_hint),
+                    "source_basis": criterion.source_basis} in rows[0]["criteria"]
 
 
 def test_example_edit_changes_rfi_source(db, monkeypatch):
@@ -402,6 +414,37 @@ def test_example_edit_changes_rfi_source(db, monkeypatch):
         "good_looks_like": "Dated sign-off.",
     })
     assert rfi_requests.current_source(db, assessment) != before
+
+
+def test_signed_statement_edit_changes_rfi_source(db, monkeypatch):
+    from dataclasses import replace
+
+    assessment = _seed(db, frameworks=("iso27001",))
+    before = rfi_requests.current_source(db, assessment)
+    framework = FrameworkRegistry.get("iso27001")
+    control = framework.get_control("ISO.A5.15")
+    changed = replace(control, test_criteria=(
+        replace(control.test_criteria[0], statement="Revised signed statement."),
+        *control.test_criteria[1:],
+    ))
+    lookup = framework.get_control
+    monkeypatch.setattr(type(framework), "get_control",
+                        lambda self, rid: changed if rid == control.id else lookup(rid))
+    assert rfi_requests.current_source(db, assessment) != before
+
+
+def test_document_without_criteria_and_requirement_items_have_no_checks_key(db, monkeypatch):
+    from dataclasses import replace
+
+    assessment = _seed(db, frameworks=("iso27001",))
+    framework = FrameworkRegistry.get("iso27001")
+    lookup = framework.get_control
+    monkeypatch.setattr(type(framework), "get_control",
+                        lambda self, rid: replace(lookup(rid), test_criteria=()) if lookup(rid) else None)
+    document = rfi_requests.build_rfi_document(db, assessment)
+    assert all("What to send" not in item["request"] for item in document["items"])
+    assert all("why_we_ask" not in item for item in document["items"])
+    assert all(item["why_we_ask"] == [] for item in rfi_requests.render_items(document))
 
 
 def test_scenario_1_preanalysis_document_items_are_deterministic(db):
@@ -417,7 +460,8 @@ def test_scenario_1_preanalysis_document_items_are_deterministic(db):
     for item, expected in zip(document["items"], checklist):
         assert item["required"] == expected["required"]
         assert item["title"] == expected["label"]
-        assert item["request"].startswith(expected["reason"] + "\n\n")
+        assert item["summary"] == expected["reason"]
+        assert " ".join(item["request"].split()).startswith(expected["reason"])
         assert "Example of what to send:" in item["request"]
         assert "Good looks like:" in item["request"]
         assert "Period (auditor): __________" in item["request"]
@@ -425,9 +469,12 @@ def test_scenario_1_preanalysis_document_items_are_deterministic(db):
         for control_id in expected["maps_to"]:
             control = FrameworkRegistry.get("iso27001").get_control(control_id)
             for criterion in control.test_criteria:
-                assert criterion.statement in item["request"]
-                assert criterion.evidence_hint in item["request"]
-                assert criterion.source_basis in item["request"]
+                assert criterion.statement not in item["request"]
+                rows = [row for row in item["why_we_ask"] if row["requirement_id"] == control_id]
+                assert {"kind": criterion.kind, "statement": criterion.statement,
+                        "evidence_hint": criterion.evidence_hint,
+                    "evidence_hint_label": display_hint(criterion.evidence_hint),
+                    "source_basis": criterion.source_basis} in rows[0]["criteria"]
         assert item["requirements"] == [["iso27001", value] for value in expected["maps_to"]]
         assert item["group"] == rfi_requests.RFI_DOCUMENTS_GROUP
         assert item["conclusion_id"] is None

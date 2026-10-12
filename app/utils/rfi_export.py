@@ -1,5 +1,5 @@
 """
-RFI (Request for Information) export — PDF and DOCX formats.
+RFI (Request for Information) export - PDF and DOCX formats.
 
 PDF: Professional letterhead style using fpdf2.
 DOCX: Editable format using python-docx.
@@ -30,6 +30,11 @@ RFI_PRIORITY_COLORS = {
     "Required": (230, 126, 34),
     "Recommended": (39, 174, 96),
 }
+
+WHY_WE_ASK_INTRO = (
+    "This appendix lists the checks behind each request. Send the items listed "
+    "under each request. You do not need to answer each check separately."
+)
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +160,12 @@ def generate_rfi_pdf(
 
         _rfi_footer(pdf, company_name)
 
+    if any(item.get("why_we_ask") or [] for item in evidence_items):
+        pdf.add_page()
+        _rfi_header(pdf, "Why We Ask")
+        _render_why_we_ask(pdf, evidence_items, company_name)
+        _rfi_footer(pdf, company_name)
+
     # --- Response Instructions Page ---
     pdf.add_page()
     _rfi_header(pdf, "Response Instructions")
@@ -164,6 +175,68 @@ def generate_rfi_pdf(
     _rfi_footer(pdf, company_name)
 
     return pdf.output()
+
+
+def _hint_label(criterion: dict) -> str:
+    """Readable evidence hint. The signed source basis carries auditor notes and
+    is not printed in client documents."""
+    return criterion.get("evidence_hint_label") or criterion.get("evidence_hint", "")
+
+
+def _render_why_we_ask(pdf: FPDF, evidence_items: list[dict], company_name: str):
+    """Measure appendix lines before drawing and keep headings with content."""
+    blocks = [("", 9, WHY_WE_ASK_INTRO, False)]
+    for item in evidence_items:
+        controls = item.get("why_we_ask") or []
+        if not controls:
+            continue
+        blocks.append(("", 7, "", False))
+        blocks.append(("B", 9,
+                       f"{item.get('item_id', '')} {item.get('requirement_title', '')}", True))
+        for control in controls:
+            blocks.append(("B", 8,
+                           f"{control['requirement_id']} {control['title']}", True))
+            for criterion in control["criteria"]:
+                label = "Design" if criterion["kind"] == "design" else "Operating"
+                blocks.extend([
+                    ("", 7, f"[{label}] {criterion['statement']}", True),
+                    ("", 7, f"Evidence hint: {_hint_label(criterion)}", False),
+                    ("", 7, "", False),
+                ])
+
+    lines = []
+    for style, size, text, heading in blocks:
+        pdf.set_font("Helvetica", style, size)
+        pdf.set_x(PM)
+        wrapped = pdf.multi_cell(
+            CW, 4, text=S(text), dry_run=True, output=MethodReturnValue.LINES,
+        ) if text else [""]
+        lines.extend((style, size, line,
+                      heading or (bool(text) and index < len(wrapped) - 1),
+                      4 if text else 2)
+                     for index, line in enumerate(wrapped))
+
+    for index, (style, size, line, heading, height) in enumerate(lines):
+        # Keep headings, including any intervening spacing, with the first
+        # complete criterion. Wrapped source bases stay in that same group.
+        minimum_lines = 1
+        if heading:
+            following = index + 1
+            while following < len(lines) and (lines[following][3] or not lines[following][2]):
+                following += 1
+            minimum_lines = following - index + (following < len(lines))
+        minimum_height = sum(row[4] for row in lines[index:index + minimum_lines])
+        if not line and (pdf.get_y() <= 16 or
+                         pdf.page_break_trigger - pdf.get_y() < height):
+            continue
+        if pdf.page_break_trigger - pdf.get_y() < minimum_height:
+            _rfi_footer(pdf, company_name)
+            pdf.add_page()
+            _rfi_header(pdf, "Why We Ask (continued)")
+        pdf.set_x(PM)
+        pdf.set_font("Helvetica", style, size)
+        pdf.set_text_color(*DARK_TEXT)
+        pdf.cell(CW, height, text=S(line), new_x="LMARGIN", new_y="NEXT")
 
 
 def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
@@ -179,8 +252,36 @@ def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
     blocks = [
         ("B", 9, DARK_TEXT, item.get("requirement_title", "")),
         ("I", 8, MID_TEXT, f"Status: {item.get('current_status', '')}"),
-        ("", 8, DARK_TEXT, f"Evidence Requested: {item.get('evidence_requested', '')}"),
     ]
+    structured = bool(item.get("what_to_send") or item.get("summary"))
+    if structured:
+        # Indents locate the text; the bullet occupies the preceding 4 mm.
+        blocks.append(("", 8, DARK_TEXT, item.get("summary") or "", 0, False))
+        artifacts = item.get("what_to_send") or []
+        if artifacts:
+            blocks.extend([("", 8, DARK_TEXT, "", 0, False),
+                           ("B", 8, DARK_TEXT, "What to send", 0, False)])
+        for artifact in artifacts:
+            ids = ", ".join(artifact.get("controls") or [])
+            text = artifact.get("name", "") + (f" ({ids})" if ids else "")
+            blocks.append(("", 8, DARK_TEXT, text, 4, True))
+            for specific in artifact.get("specifics") or []:
+                ids = ", ".join(specific.get("controls") or [])
+                text = specific.get("text", "") + (f" ({ids})" if ids else "")
+                blocks.append(("", 8, DARK_TEXT, text, 8, True))
+        blocks.append(("", 8, DARK_TEXT, "", 0, False))
+        for label, key in (("Example of what to send:", "example"),
+                           ("Good looks like:", "good_looks_like")):
+            blocks.append(("B", 8, MID_TEXT, label, 0, False))
+            blocks.append(("", 8, DARK_TEXT, item.get(key) or "", 0, False))
+        blocks.extend([
+            ("", 8, DARK_TEXT, "", 0, False),
+            ("", 8, DARK_TEXT,
+             "Period (auditor): ________    Sample size (auditor): ________", 0, False),
+        ])
+    else:
+        blocks.append(("", 8, DARK_TEXT,
+                       f"Evidence Requested: {item.get('evidence_requested', '')}"))
     if requirements:
         blocks.append(("", 7, MID_TEXT, f"Requested for: {_requested_for(requirements)}"))
     blocks.append(("", 7, LIGHT_TEXT,
@@ -189,13 +290,25 @@ def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
     # Wrap before drawing so each card segment has the exact height needed.
     # A request can span pages; fixed-height cards would overlap the next item.
     lines = []
-    for style, size, text_color, text in blocks:
+    for block in blocks:
+        style, size, text_color, text = block[:4]
+        indent, bullet = block[4:] if len(block) > 4 else (0, False)
         pdf.set_font("Helvetica", style, size)
         pdf.set_x(PM + 6)
         wrapped = pdf.multi_cell(
-            CW - 12, 4, text=S(text), dry_run=True, output=MethodReturnValue.LINES,
-        )
-        lines.extend((style, size, text_color, line) for line in wrapped)
+            CW - 12 - indent, 4, text=S(text), dry_run=True, output=MethodReturnValue.LINES,
+        ) if text else [""]
+        lines.extend((style, size, text_color, line, indent, bullet and index == 0,
+                      index == 0, len(wrapped) - index)
+                     for index, line in enumerate(wrapped))
+
+    if structured:
+        card_height = 10 + 4 * len(lines)
+        fresh_capacity = pdf.page_break_trigger - 16
+        if card_height <= fresh_capacity and card_height > pdf.page_break_trigger - pdf.get_y():
+            _rfi_footer(pdf, company_name)
+            pdf.add_page()
+            _rfi_header(pdf, "Evidence Items (continued)")
 
     while lines:
         # Keep the header with at least five body lines when available.
@@ -211,6 +324,20 @@ def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
         remaining = len(lines) - capacity
         if 0 < remaining < 3:
             capacity -= 3 - remaining
+        if structured and capacity < len(lines):
+            tail_start = next((index for index, row in enumerate(lines)
+                               if row[0] == "B" and row[3] == "Good looks like:"), None)
+            if tail_start is not None and 0 < tail_start < capacity:
+                capacity = tail_start
+            # Keep a paragraph's first two and last two lines together.
+            next_line = lines[capacity]
+            if not next_line[6] and next_line[7] == 1:
+                capacity -= 1
+            elif capacity and lines[capacity - 1][6] and lines[capacity - 1][7] > 1:
+                capacity -= 1
+            # A section label always stays with its first value line.
+            while capacity and lines[capacity - 1][0] == "B":
+                capacity -= 1
         segment, lines = lines[:capacity], lines[capacity:]
         card_height = 10 + 4 * len(segment)
         pdf.set_fill_color(*color)
@@ -230,11 +357,14 @@ def _render_evidence_item(pdf: FPDF, item: dict, company_name: str):
         pdf.cell(0, 5, text=S(reference))
 
         pdf.set_y(y_start + 8)
-        for style, size, text_color, line in segment:
-            pdf.set_x(PM + 6)
+        for style, size, text_color, line, indent, bullet, _, _ in segment:
+            pdf.set_x(PM + 6 + indent)
             pdf.set_font("Helvetica", style, size)
             pdf.set_text_color(*text_color)
-            pdf.cell(CW - 12, 4, text=S(line), new_x="LMARGIN", new_y="NEXT")
+            if bullet:
+                pdf.set_x(PM + 6 + indent - 4)
+                pdf.cell(4, 4, text=S("-"))
+            pdf.cell(CW - 12 - indent, 4, text=S(line), new_x="LMARGIN", new_y="NEXT")
         pdf.set_y(y_start + card_height + 4)
 
 
@@ -299,7 +429,7 @@ def generate_rfi_docx(
     style.font.size = Pt(10)
 
     # Title
-    title_p = doc.add_heading(f"{settings.firm_name} — {title}", level=0)
+    title_p = doc.add_heading(f"{settings.firm_name} - {title}", level=0)
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     subtitle_p = doc.add_paragraph(subtitle)
     subtitle_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -319,7 +449,7 @@ def generate_rfi_docx(
     # Confidentiality
     conf_p = doc.add_paragraph()
     conf_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    conf_run = conf_p.add_run("CONFIDENTIAL — Distribution limited to authorized personnel")
+    conf_run = conf_p.add_run("CONFIDENTIAL - Distribution limited to authorized personnel")
     conf_run.font.size = Pt(8)
     conf_run.font.italic = True
     conf_run.font.color.rgb = RGBColor(150, 150, 150)
@@ -359,6 +489,13 @@ def generate_rfi_docx(
         table = doc.add_table(rows=1, cols=5)
         table.style = "Light Grid Accent 1"
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        structured_table = any(item.get("what_to_send") or item.get("summary") for item in items)
+        if structured_table:
+            table.autofit = False
+            for column, width in zip(table.columns, (0.6, 1.35, 0.65, 0.9, 3.0)):
+                column.width = Inches(width)
+            for cell, width in zip(table.rows[0].cells, (0.6, 1.35, 0.65, 0.9, 3.0)):
+                cell.width = Inches(width)
 
         # Header row
         headers = ["Item ID", "Requirement", "Priority", "Current Status", "Evidence Requested"]
@@ -373,6 +510,9 @@ def generate_rfi_docx(
         # Data rows
         for item in items:
             row = table.add_row()
+            if structured_table:
+                for cell, width in zip(row.cells, (0.6, 1.35, 0.65, 0.9, 3.0)):
+                    cell.width = Inches(width)
             row.cells[0].text = item.get("item_id", "")
             requirements = item.get("requirements") or []
             if requirements:
@@ -387,14 +527,59 @@ def generate_rfi_docx(
                 )
             row.cells[2].text = item.get("priority", "Medium")
             row.cells[3].text = item.get("current_status", "")
-            row.cells[4].text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", item.get("evidence_requested", ""))
+            if item.get("what_to_send") or item.get("summary"):
+                cell = row.cells[4]
+                cell.paragraphs[0].add_run(_xml_text(item.get("summary") or ""))
+                if item.get("what_to_send"):
+                    cell.add_paragraph().add_run("What to send").bold = True
+                for artifact in item.get("what_to_send") or []:
+                    paragraph = cell.add_paragraph(style="List Bullet")
+                    paragraph.add_run(_xml_text(artifact.get("name", "")))
+                    _docx_control_ids(paragraph, artifact.get("controls") or [])
+                    for specific in artifact.get("specifics") or []:
+                        paragraph = cell.add_paragraph(style="List Bullet 2")
+                        paragraph.add_run(_xml_text(specific.get("text", "")))
+                        _docx_control_ids(paragraph, specific.get("controls") or [])
+                for label, key in (("Example of what to send:", "example"),
+                                   ("Good looks like:", "good_looks_like")):
+                    paragraph = cell.add_paragraph()
+                    paragraph.add_run(label).bold = True
+                    paragraph.add_run(_xml_text(" " + (item.get(key) or "")))
+                cell.add_paragraph(
+                    "Period (auditor): ________    Sample size (auditor): ________"
+                )
+            else:
+                row.cells[4].text = _xml_text(item.get("evidence_requested", ""))
 
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
                     for run in paragraph.runs:
-                        run.font.size = Pt(8)
+                        if run.font.size is None:
+                            run.font.size = Pt(8)
 
         doc.add_paragraph()  # spacer
+
+    if any(item.get("why_we_ask") or [] for item in evidence_items):
+        doc.add_page_break()
+        doc.add_heading("Why We Ask", level=1)
+        doc.add_paragraph(WHY_WE_ASK_INTRO)
+        for item in evidence_items:
+            controls = item.get("why_we_ask") or []
+            if not controls:
+                continue
+            doc.add_heading(_xml_text(
+                f"{item.get('item_id', '')} {item.get('requirement_title', '')}"
+            ), level=3)
+            for control in controls:
+                doc.add_paragraph().add_run(_xml_text(
+                    f"{control['requirement_id']} {control['title']}"
+                )).bold = True
+                for criterion in control["criteria"]:
+                    label = "Design" if criterion["kind"] == "design" else "Operating"
+                    doc.add_paragraph(_xml_text(
+                        f"[{label}] {criterion['statement']}\n"
+                        f"Evidence hint: {_hint_label(criterion)}"
+                    ))
 
     doc.add_page_break()
 
@@ -411,6 +596,20 @@ def generate_rfi_docx(
     buffer = BytesIO()
     doc.save(buffer)
     return _stamp_zip_entries(buffer.getvalue(), generated_at)
+
+
+def _docx_control_ids(paragraph, controls: list[str]):
+    """Keep citations distinct from the artifact a reader needs to send."""
+    from docx.shared import Pt, RGBColor
+
+    if controls:
+        run = paragraph.add_run(_xml_text(f" ({', '.join(controls)})"))
+        run.font.size = Pt(7)
+        run.font.color.rgb = RGBColor(100, 100, 100)
+
+
+def _xml_text(text: str) -> str:
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
 
 def _stamp_zip_entries(content: bytes, generated_at: datetime | None) -> bytes:

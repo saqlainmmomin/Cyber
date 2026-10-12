@@ -21,6 +21,7 @@ call fails the test. Approvals record a report basis first
 
 from __future__ import annotations
 
+from app.services.rfi_evidence_requests import display_hint
 import dataclasses
 import hashlib
 import importlib
@@ -364,12 +365,16 @@ def test_scenario_2_add_records_one_event_updates_the_draft_and_is_idempotent(db
     assert len(items) == 1
     item = items[0]
     original_request = expected_text("dpdpa", DPDPA_RID, detail)
-    assert item["request"].startswith(original_request)
+    assert item["summary"] == original_request
+    assert " ".join(item["request"].split("\n\n", 1)[0].splitlines()) == original_request
+    assert item["what_to_send"]
+    assert "What to send\n" in item["request"]
+    assert len(item["why_we_ask"]) == 1
     control = FrameworkRegistry.get("dpdpa").get_control(DPDPA_RID)
     for criterion in control.test_criteria:
-        assert criterion.statement in item["request"]
-        assert criterion.evidence_hint in item["request"]
-        assert criterion.source_basis in item["request"]
+        assert criterion.statement not in item["request"]
+        assert dict(kind=criterion.kind, statement=criterion.statement,
+                    evidence_hint=criterion.evidence_hint, evidence_hint_label=display_hint(criterion.evidence_hint), source_basis=criterion.source_basis) in item["why_we_ask"][0]["criteria"]
     assert "Example of what to send:" in item["request"]
     assert "Good looks like:" in item["request"]
     assert "Period (auditor): __________" in item["request"]
@@ -379,6 +384,11 @@ def test_scenario_2_add_records_one_event_updates_the_draft_and_is_idempotent(db
         "kind": ITEM_KIND,
         "title": json.loads(event.metadata_json)["title"],
         "request": item["request"],
+        "why_we_ask": item["why_we_ask"],
+        "summary": original_request,
+        "what_to_send": item["what_to_send"],
+        "example": item["example"],
+        "good_looks_like": item["good_looks_like"],
         "required": True,
         "requirements": [["dpdpa", DPDPA_RID]],
         "document_type": "privacy_policy",
@@ -487,10 +497,14 @@ def test_scenario_3_stale_foreign_refused_and_v1_requests_are_idempotent(db, htt
     assert rfi_events(db)[0].entity_id == v1_row.id
     saved_request = json.loads(rfi_events(db)[0].metadata_json)["request"]
     v1_item = requested_items(draft(db, v1))[0]
-    assert v1_item["request"].startswith(saved_request)
+    assert v1_item["summary"] == saved_request
+    assert v1_item["what_to_send"]
+    assert "What to send\n" in v1_item["request"]
+    assert len(v1_item["why_we_ask"]) == 1
     for criterion in FrameworkRegistry.get("iso27001").get_control("ISO.A5.2").test_criteria:
-        assert criterion.statement in v1_item["request"]
-        assert criterion.evidence_hint in v1_item["request"]
+        assert criterion.statement not in v1_item["request"]
+        assert dict(kind=criterion.kind, statement=criterion.statement,
+                    evidence_hint=criterion.evidence_hint, evidence_hint_label=display_hint(criterion.evidence_hint), source_basis=criterion.source_basis) in v1_item["why_we_ask"][0]["criteria"]
     assert "Example of what to send:" in v1_item["request"]
     assert add(http, v1, v1_row, "0" * 16).status_code == 409
     assert withdraw(http, v1, v1_row, v1_key).status_code == 200
@@ -641,14 +655,14 @@ def test_scenario_6_requests_merge_by_document_type_across_frameworks(db, http, 
     # Ordered by the first active request; the document is asked for once.
     assert privacy["requirements"] == [["iso27001", ISO_RID], ["dpdpa", DPDPA_RID]]
     assert privacy["request_refs"] == [[iso.id, iso_privacy], [dpdpa.id, dpdpa_privacy]]
-    assert privacy["request"].startswith(" ".join((
+    assert privacy["summary"] == " ".join((
         expected_text("iso27001", ISO_RID, ISO_PRIVACY),
         expected_text("dpdpa", DPDPA_RID, DPDPA_PRIVACY),
-    )))
+    ))
     assert privacy["title"] == expected_title("iso27001", "privacy_policy")
     assert other["title"] == OTHER_TITLE
     assert other["requirements"] == [["dpdpa", DPDPA_RID]]
-    assert other["request"].startswith(expected_text("dpdpa", DPDPA_RID, DPDPA_OTHER))
+    assert other["summary"] == expected_text("dpdpa", DPDPA_RID, DPDPA_OTHER)
     assert document["source"]["evidence_requests"] == sorted(
         [[iso.id, iso_privacy], [dpdpa.id, dpdpa_other], [dpdpa.id, dpdpa_privacy]]
     )

@@ -157,3 +157,63 @@ PR-body notes:
 - RFI PDFs now have about half the pages because blank footer-only pages are gone.
 - v1 "add to RFI" suggestions can duplicate a scoped document item under "Additional evidence requested", same as v2 today.
 - Design preview strings in `app/routers/design_s7_cards.py` still show the old v1 label. That file remains untouched.
+
+
+### Option A (2026-10-12)
+
+- Readability revision: document and card-added requests keep every existing item key and add `summary`, `what_to_send`, `example` and `good_looks_like`. Grouping retains 12 artifacts for ISO access control, with five nested specifics under Access control policy. Its seven controls and 20 signed criteria remain in `why_we_ask`. Plain-text `request` uses section breaks, supports lines and nested bullets, with no access-request line longer than 100 characters.
+- HTML uses real artifact and specific lists, separate Example and Good looks like rows limited to 70ch, short auditor fields, and a closed checks fold. Criterion statements appear only inside the fold. Existing classes and spacing tokens are reused. Stored snapshots lacking summary and artifacts keep their pre-line request text; PDF and DOCX also retain their legacy paths.
+- PDF uses measured hanging bullets at 4 mm and 8 mm text indents. The optional appendix remains before Response Instructions. DOCX uses List Bullet and List Bullet 2, with smaller grey control ids. Fingerprints still include catalogue wording, request text and signed checks. No prompt, analyzer, scoring, LLM or protected card-router edits were made; changes remain uncommitted.
+- Export inspection: generated a real ISO RFI from `tests.test_p5_6_rfi_rebuild._seed`, with scope answers `{}` and all applicable ISO controls. Files are `/private/tmp/e4-optionA/iso-rfi.pdf` and `iso-rfi.docx`. Ran `pdftoppm -png -r 80` into that directory, opened the page images and contact sheets, and inspected the access block plus every appendix page individually. Final PDF: **33 pages**, access request **page 5**, appendix **pages 18-32**, Response Instructions **page 33**. It has no blank pages and a footer on every page. The access request is one complete scannable card, with no overlapping text.
+- Visual fixes: added space between appendix criterion groups; kept statements, hints and complete source bases together; prevented metadata-only request continuations; kept section labels with their values and whole requests together when they fit a page. Wrapped bullets hang beneath their text. Widened the structured DOCX request column so nested bullets have a usable measure. XML/style inspection confirms **12 List Bullet** paragraphs and **5 List Bullet 2** paragraphs in the access request, and **118/108** across the ISO document. Two DOCX generations are byte identical.
+- Mobile inspection limitation: generated the real HTML with an isolated fixture database and attempted Chromium at **375px**. The sandbox denied Chromium's Mach port registration (`bootstrap_check_in ... Permission denied`); the computer-use connector has no available browser. DOM checks pass, and the template uses a shrinking value column, wrapping auditor row and overflow wrapping, but actual 375px visual/overflow verification remains pending.
+- Focused command: `OPENROUTER_KEY="" .venv/bin/python -m pytest tests/test_p5_6_rfi_rebuild.py tests/test_p6_7_requirement_card.py tests/test_p6_7b_add_to_rfi.py tests/test_rfi_examples.py tests/test_rfi_export_full_requests.py tests/test_rfi_docx_determinism.py tests/test_rfi_artifact_guidance.py tests/test_rfi_why_html.py tests/test_rfi_why_exports.py tests/test_p6_1b_framework_batching.py -q --disable-warnings`: **175 passed** in **40.06 seconds**.
+- Final full command: `OPENROUTER_KEY="" .venv/bin/python -m pytest -q --disable-warnings`: **1,736 passed, 29 skipped** in **340.75 seconds**. This final run includes the additional appendix boundary regression. `git diff --check` passes.
+- Character counts across all **30 ISO document requests**: access **5,833 before Option A, 1,366 final**; ISO median **2,174.5 before, 659 final**. The interrupted dense attempt was 1,203 for access and 618.5 median. The small increase adds readable hierarchy and line breaks while keeping signed criteria outside the main request.
+
+Final access-request "What to send" structure:
+
+```text
+What to send
+- Access control policy
+    supports: ISO.A5.15, ISO.A5.17, ISO.A5.18, ISO.A8.2, ISO.A8.3, ISO.A8.5
+    - identity management procedure (ISO.A5.16)
+    - access request tickets (ISO.A5.18)
+    - user access review records (ISO.A5.18)
+    - privileged account list, approvals (ISO.A8.2)
+    - privileged access review records (ISO.A8.2)
+- System access listings
+    supports: ISO.A5.15, ISO.A8.3
+- Identity provider export
+    supports: ISO.A5.16
+- HR leaver list
+    supports: ISO.A5.16, ISO.A5.18
+- Asset inventory
+    supports: ISO.A5.16
+- Security policy
+    supports: ISO.A5.17
+- Training records
+    supports: ISO.A5.17
+- Configuration baselines
+    supports: ISO.A5.17, ISO.A8.5
+- Identity provider logs
+    supports: ISO.A5.18
+- System role matrices
+    supports: ISO.A8.3
+- Assessor test results
+    supports: ISO.A8.3
+- Identity provider configuration export
+    supports: ISO.A8.5
+```
+
+### Option A review round (2026-10-12, Claude)
+
+Checked on the generated RFI for the live Veldhara run (93 v1 ISO conclusions): HTML page at desktop and 375 px, the PDF (rendered to images) and the DOCX (paragraph styles).
+
+- **Source basis is off client documents.** Signed `source_basis` strings carry auditor notes (for example "repo description omits the ownership element of the control", 40 such strings across ISO, NIST and DPDPA). The PDF and DOCX appendix now print statement and evidence hint only. The consultant's HTML fold and the cards still show source basis.
+- **Readable hints.** Nearly every signed hint uses internal ids (`asset_inventory`). The rows carry `evidence_hint_label` (ids become plain names, details kept) and the appendix and fold show it. The signed hint itself is unchanged.
+- **Plain names for 51 document types** (`DOCUMENT_NAMES`, `artifact_name`) with an acronym rule, replacing auto-humanised ids ("Hr security" is now "HR security procedures", "Roles responsibilities" is now "Roles and responsibilities").
+- **RFI page:** the framework pill shows once per request, not once per control (seven identical "ISO 27001" pills before). At 375 px the checkbox column wrapped below the text instead of squeezing it to half width.
+- **Result for the ISO access request:** 12 "What to send" lines (down from about 60 lines of criteria); the PDF is 29 pages (34 before this round, 33 in the first Option A pass); no source basis, no internal ids and no repo notes anywhere in the PDF or DOCX; DOCX uses List Bullet and List Bullet 2.
+- **Verified:** focused set 182 passed. Full suite with `OPENROUTER_KEY=""`: 1743 passed, 29 skipped.
+

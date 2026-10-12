@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import textwrap
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -14,7 +16,7 @@ from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion
-from app.services.rfi_examples import DOCUMENT_EXAMPLES
+from app.services.rfi_examples import DOCUMENT_EXAMPLES, artifact_name
 
 REQUESTED_ACTION = "rfi.evidence_requested"
 WITHDRAWN_ACTION = "rfi.evidence_request_withdrawn"
@@ -137,34 +139,155 @@ def request_text(
     )
 
 
+def _split_hint(hint: str) -> list[str]:
+    """Split an evidence hint on ';' outside parentheses."""
+    parts, current, depth = [], [], 0
+    for char in hint:
+        if char == ";" and depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+            continue
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth = max(0, depth - 1)
+        current.append(char)
+    parts.append("".join(current).strip())
+    return [part for part in parts if part]
+
+
+def display_hint(hint: str) -> str:
+    """Readable form of a signed evidence hint: internal ids become plain names.
+
+    `access_control_policy (user access review records); HR leaver list` becomes
+    `Access control policy (user access review records); HR leaver list`.
+    """
+    readable = []
+    for part in _split_hint(hint):
+        match = re.fullmatch(r"(.*?)\s*\((.*)\)", part)
+        if match:
+            readable.append(f"{artifact_name(match[1].strip())} ({match[2].strip()})")
+        else:
+            readable.append(artifact_name(part))
+    return "; ".join(readable)
+
+
+def document_request_guidance(requirements: list[list[str]]) -> tuple[list[dict], list[dict]]:
+    """Group signed evidence hints and retain the checks in requirement order."""
+    groups: dict[str, dict] = {}
+    rows = []
+    for framework_id, requirement_id in requirements:
+        framework = FrameworkRegistry.get_or_none(framework_id)
+        control = framework.get_control(requirement_id) if framework else None
+        if control is None or not control.test_criteria:
+            continue
+        rows.append({
+            "framework_id": framework_id,
+            "requirement_id": requirement_id,
+            "title": control.title,
+            "criteria": [{
+                "kind": criterion.kind,
+                "statement": criterion.statement,
+                "evidence_hint": criterion.evidence_hint,
+                "evidence_hint_label": display_hint(criterion.evidence_hint),
+                "source_basis": criterion.source_basis,
+            } for criterion in control.test_criteria],
+        })
+        for criterion in control.test_criteria:
+            parts = []
+            current = []
+            depth = 0
+            for char in criterion.evidence_hint:
+                if char == ";" and depth == 0:
+                    parts.append("".join(current).strip())
+                    current = []
+                    continue
+                if char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+                current.append("," if char == ";" else char)
+            parts.append("".join(current).strip())
+            for part in parts:
+                if not part:
+                    continue
+                match = re.fullmatch(r"(.*?)\s*\((.*)\)", part)
+                base, detail = (match[1].strip(), match[2].strip()) if match else (part, None)
+                group = groups.setdefault(base.casefold(), {
+                    "name": artifact_name(base), "bare": [], "details": {},
+                })
+                ids = group["bare"] if detail is None else group["details"].setdefault(detail, [])
+                if requirement_id not in ids:
+                    ids.append(requirement_id)
+
+    order = {requirement_id: index for index, (_framework_id, requirement_id) in enumerate(requirements)}
+    artifacts = [{
+        "name": group["name"],
+        "controls": sorted(group["bare"], key=order.get),
+        "specifics": [{
+            "text": detail,
+            "controls": sorted(ids, key=order.get),
+        } for detail, ids in group["details"].items()],
+    } for group in groups.values()]
+    return artifacts, rows
+
+
+def _wrapped(text: str, *, initial_indent: str = "", subsequent_indent: str = "") -> str:
+    return textwrap.fill(
+        text, width=100, initial_indent=initial_indent,
+        subsequent_indent=subsequent_indent, break_long_words=False,
+        break_on_hyphens=False,
+    )
+
+
+def document_request_fields(
+    original: str,
+    document_type: str,
+    requirements: list[list[str]],
+) -> dict:
+    """Build the structured request and its plain-text compatibility rendering."""
+    artifacts, rows = document_request_guidance(requirements)
+    example = DOCUMENT_EXAMPLES.get(document_type) or DOCUMENT_EXAMPLES["other"]
+    sections = [_wrapped(original)]
+    if artifacts:
+        lines = ["What to send"]
+        for artifact in artifacts:
+            lines.append(_wrapped(artifact["name"], initial_indent="- ", subsequent_indent="  "))
+            if artifact["controls"]:
+                lines.append(_wrapped(
+                    "supports: " + ", ".join(artifact["controls"]),
+                    initial_indent="    ", subsequent_indent="    ",
+                ))
+            for specific in artifact["specifics"]:
+                lines.append(_wrapped(
+                    specific["text"] + " (" + ", ".join(specific["controls"]) + ")",
+                    initial_indent="    - ", subsequent_indent="      ",
+                ))
+        sections.append("\n".join(lines))
+    sections.extend((
+        _wrapped("Example of what to send: " + example["example_artifacts"])
+        + "\n" + _wrapped("Good looks like: " + example["good_looks_like"]),
+        "Period (auditor): __________\nSample size (auditor): __________",
+    ))
+    fields = {
+        "summary": original,
+        "what_to_send": artifacts,
+        "example": example["example_artifacts"],
+        "good_looks_like": example["good_looks_like"],
+        "request": "\n\n".join(sections),
+    }
+    if rows:
+        fields["why_we_ask"] = rows
+    return fields
+
+
 def document_request_text(
     original: str,
     document_type: str,
     requirements: list[list[str]],
 ) -> str:
-    """Append signed auditor criteria and document examples without analysis."""
-    sections = [original]
-    checklist = []
-    for framework_id, requirement_id in requirements:
-        framework = FrameworkRegistry.get_or_none(framework_id)
-        control = framework.get_control(requirement_id) if framework else None
-        if control is None:
-            continue
-        for criterion in control.test_criteria:
-            checklist.append(
-                f"{framework_id} {requirement_id} ({criterion.kind}): {criterion.statement}\n"
-                f"Evidence hint: {criterion.evidence_hint}\n"
-                f"Source basis: {criterion.source_basis}"
-            )
-    if checklist:
-        sections.append("Auditor checklist\n" + "\n\n".join(checklist))
-    example = DOCUMENT_EXAMPLES.get(document_type) or DOCUMENT_EXAMPLES["other"]
-    sections.extend((
-        f"Example of what to send: {example['example_artifacts']}",
-        f"Good looks like: {example['good_looks_like']}",
-        "Period (auditor): __________\nSample size (auditor): __________",
-    ))
-    return "\n\n".join(sections)
+    """Render grouped artifacts and document examples without analysis."""
+    return document_request_fields(original, document_type, requirements)["request"]
 
 
 def _metadata(event: AuditEvent) -> dict:

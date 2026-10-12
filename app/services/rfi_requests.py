@@ -150,13 +150,13 @@ def current_source(db: Session, assessment: Assessment) -> dict:
     checklist = _checklist(db, assessment)
     requests = rfi_evidence_requests.active_requests(db, assessment.id)
     guidance = [
-        rfi_evidence_requests.document_request_text(
+        rfi_evidence_requests.document_request_fields(
             item["reason"], item["document_type"], _requirement_pairs(item)
         )
         for item in checklist
     ]
     guidance.extend(
-        rfi_evidence_requests.document_request_text(
+        rfi_evidence_requests.document_request_fields(
             request.request, request.document_type,
             [[request.framework_id, request.requirement_id]],
         )
@@ -246,10 +246,10 @@ def build_rfi_document(
         next_number += 1
 
     for item in items:
-        if item["document_type"] is not None:
-            item["request"] = rfi_evidence_requests.document_request_text(
+        if item["kind"] in ("document", rfi_evidence_requests.ITEM_KIND):
+            item.update(rfi_evidence_requests.document_request_fields(
                 item["request"], item["document_type"], item["requirements"]
-            )
+            ))
 
     documents = sum(item["kind"] == "document" for item in items)
     requirements = sum(item["kind"] == "requirement" for item in items)
@@ -317,6 +317,10 @@ def render_items(document: dict) -> list[dict]:
                         else RFI_DOCUMENT_STATUS
                     ),
                     "requirements": ids,
+                    "why_we_ask": item.get("why_we_ask") or [],
+                    **{key: item[key] for key in (
+                        "summary", "what_to_send", "example", "good_looks_like"
+                    ) if key in item},
                 }
             )
         else:

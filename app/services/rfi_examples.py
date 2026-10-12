@@ -209,3 +209,79 @@ DOCUMENT_EXAMPLES: dict[str, dict[str, str]] = {
         "good_looks_like": "Identify scanned systems, scan dates, issue owners and remediation status.",
     },
 }
+
+
+# Short names shown in "What to send". Plain English for a client reading an RFI.
+DOCUMENT_NAMES: dict[str, str] = {
+    "access_control_policy": "Access control policy",
+    "age_verification": "Age verification records",
+    "application_security_testing": "Application security testing records",
+    "asset_inventory": "Asset inventory",
+    "audit_reports": "Audit reports",
+    "backup": "Backup records",
+    "breach_procedure": "Incident and breach procedure",
+    "business_continuity": "Business continuity plans",
+    "change_management": "Change management records",
+    "cloud_services": "Cloud service records",
+    "configuration_baselines": "Configuration baselines",
+    "consent_form": "Consent form",
+    "consent_forms": "Consent forms",
+    "cross_border_safeguards": "Cross-border transfer safeguards",
+    "cryptography_policy": "Cryptography policy",
+    "csf_profiles": "Cybersecurity profiles",
+    "data_flow_diagram": "Data flow diagram",
+    "dpia": "Impact assessment (DPIA)",
+    "dpia_reports": "Impact assessment reports (DPIA)",
+    "dpo_appointment": "DPO appointment record",
+    "exercise_records": "Exercise records",
+    "grievance_mechanism": "Grievance mechanism records",
+    "hr_privacy_notices": "HR privacy notices",
+    "hr_security": "HR security procedures",
+    "incident_log": "Incident log",
+    "isms_audit_reports": "ISMS audit reports",
+    "isms_scope": "ISMS scope statement",
+    "leadership_oversight": "Leadership oversight records",
+    "legal_register": "Legal and contractual register",
+    "logging_monitoring": "Logging and monitoring records",
+    "media_disposal": "Media disposal records",
+    "network_security": "Network security records",
+    "other": "Other supporting document",
+    "outsourced_development": "Outsourced development records",
+    "parental_consent": "Parental consent records",
+    "physical_security": "Physical security records",
+    "privacy_policy": "Privacy notice",
+    "processing_records": "Records of processing",
+    "remote_working_policy": "Remote working policy",
+    "retention_policy": "Retention schedule",
+    "risk_assessment": "Risk assessment",
+    "risk_management_strategy": "Risk management strategy",
+    "roles_responsibilities": "Roles and responsibilities",
+    "sdlc_policy": "Secure development policy",
+    "security_policy": "Information security policy",
+    "statement_of_applicability": "Statement of Applicability",
+    "supplier_security": "Supplier security records",
+    "training_records": "Training records",
+    "vendor_agreement": "Vendor agreement",
+    "vendor_agreements": "Vendor agreements",
+    "vulnerability_management": "Vulnerability management records",
+}
+
+_ACRONYMS = frozenset({
+    "api", "dpia", "dpo", "dr", "hr", "ict", "id", "idp", "isms", "it", "mdm", "mfa",
+    "pam", "pii", "rpo", "rto", "sdlc", "siem", "soc", "sso", "vpn",
+})
+
+
+def artifact_name(base: str) -> str:
+    """Display name for an evidence hint's base text.
+
+    A snake_case document type uses its catalogue name. Any other text keeps its
+    words, with the first letter and known acronyms upper-cased.
+    """
+    base = base.strip()
+    if base in DOCUMENT_NAMES:
+        return DOCUMENT_NAMES[base]
+    words = base.replace("_", " ").split()
+    words = [word.upper() if word.lower() in _ACRONYMS else word for word in words]
+    text = " ".join(words)
+    return text[:1].upper() + text[1:]
