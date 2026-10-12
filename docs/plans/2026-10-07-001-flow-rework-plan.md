@@ -153,7 +153,7 @@ S0a = guard retirement only (first). S0b = everything else.
 - Merge Queue + Conclusions (P4); workpaper becomes a link; auto-draft findings (P5).
 - Release button lives where the stage says it does (today stage "Release report" goes to a tab with no release button).
 - Reviewer name defaults from Settings instead of 13 fields.
-- Framework-conditional section refs on conclusions/review queue (today DPDPA refs are hard-coded).
+- ~~Framework-conditional section refs on conclusions/review queue (today DPDPA refs are hard-coded).~~ Moved to document-reads stage 2c (E7, 2026-10-12).
 - Report: demote Narrative/Board inputs/Applicability sub-tabs; one primary action per screen.
 - Comparison: human labels; match the prior assessment by engagement, not the `company_name` string; add a "Re-assess" entry at setup.
 - Design pass on the screens no other slice touched (dashboard, engagement page, settings).
