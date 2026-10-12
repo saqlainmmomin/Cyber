@@ -43,3 +43,13 @@ Loop step: findings (part 1) and request evidence (part 2). AI output: none new.
 
 ## Out of scope
 Sending criteria to the judge, any prompt change, scoring changes, new LLM calls, criterion-level pass/fail, defaults for period or sample size, answer keys.
+
+## Drift notes (2026-10-12, Claude): the line references above are stale
+The handoff was written before #134 and #135. Scope is unchanged; use these locations instead of the numbers in "Files" and "Do":
+- v1 `criteria=()` is in `app/services/requirement_card.py` at about lines 660 and 683 (two branches), next to `V1_SOURCE_LABEL` (line 25). Re-read the function; do not trust a line number.
+- The guard that refuses v1 "add to RFI" is `if card.source != "v2" or match is None` inside `add_rfi_request` (about line 806). Part 2c relaxes the `source` half only; keep the `match is None` stale check and idempotent recording.
+- `tests/test_p6_7b_add_to_rfi.py` (about lines 413-463, `test_scenario_3_stale_foreign_and_v1_requests_are_refused`) currently asserts that v1 cards show no add control and the route refuses. Part 2c reverses that on purpose: update that test deliberately to the new behaviour and keep its stale and foreign-request assertions.
+- Budget lists on the card (`budget_skipped_filenames`, `budget_partial_filenames`, around lines 169, 210, 331, 643) are Evidence fix C and are not part of E4. Do not touch them: reads stage 1 changes them next.
+- Writing rules for the catalogue: plain short sentences, no em dashes, own words, no standard text, no AI attribution anywhere (commits, code, PR body).
+- Run tests with `OPENROUTER_KEY=""` and the repo `.venv` (Python 3.13). Never `env -u`.
+- Do not open `validation/companies/*/answer_key.json`.
