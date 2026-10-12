@@ -4,8 +4,31 @@
     {
       "name": "cyberassess",
       "runtimeExecutable": ".venv/bin/uvicorn",
-      "runtimeArgs": ["app.main:app", "--host", "127.0.0.1", "--port", "8001"],
+      "runtimeArgs": [
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8001"
+      ],
       "port": 8001,
+      "autoPort": false
+    },
+    {
+      "name": "veldhara-intake",
+      "runtimeExecutable": "/usr/bin/env",
+      "runtimeArgs": [
+        "DATABASE_URL=sqlite:///data/demo/veldhara-intake-demo.db",
+        "UPLOAD_DIR=data/demo/uploads/intake",
+        "MAX_TOTAL_DOCUMENT_WORDS=30000",
+        ".venv/bin/uvicorn",
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8002"
+      ],
+      "port": 8002,
       "autoPort": false
     }
   ]
