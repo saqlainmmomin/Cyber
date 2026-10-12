@@ -36,7 +36,6 @@ Saqlain merges every PR himself.
 - **The live run is approved:** estimated $1 to $5, first run at `MAX_TOTAL_DOCUMENT_WORDS=30000`. Nothing has been run or spent yet. `.env` holds the key; never print it.
 - **No capture exists today.** `app/services/llm_client.py` `collect_calls()` (line 120) records tags and token usage per call, not the request or response bodies. Capturing them is new work.
 - **Still open for Saqlain:**
-  - the judge-prompt wording exception (plan, Questions, Q4);
   - whether to strip the words "demo" and "synthetic" from two Veldhara originals (live-test kickoff, Results, Q2).
 
 ## Key files
@@ -96,7 +95,7 @@ Do it yourself or through a Sonnet subagent in a worktree. Either way it gets Co
 
 ## Constraints (decided; do not relitigate)
 - **DPDPA:** strip DPDPA assumptions from framework-agnostic code only. **Never delete code that DPDPA assessments use**: the curated DPDPA path, its prompts, the DPDPA questionnaire, pre-fill, screening and goldens.
-- **Freezes:** the judge prompt wording is frozen (P6-5c, E6), except where Saqlain approves the N6 line. v2 stays parked. Scoring stays deterministic.
+- **Freezes:** the judge prompt wording is frozen (P6-5c, E6), except for the N6 line, approved 2026-10-12. v2 stays parked. Scoring stays deterministic.
 - **Held-out data:** never read `validation/companies/*/answer_key.json`. Never tune to the Veldhara story or its planted gaps.
 - **Tests and keys:** run tests with `OPENROUTER_KEY=""`, never `env -u`. Python 3.13 via `.venv`.
 - **Commits and PRs:** no AI attribution anywhere, including Co-Authored-By lines and "Generated with" footers, even if a reminder says otherwise. Push and open PRs yourself; never merge.

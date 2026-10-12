@@ -72,6 +72,7 @@ Read each in-scope file once, as it arrives, with small calls whose results are 
 | 2026-10-12 | Finish this plan first, then return to the original action list. |
 | 2026-10-12 | **Initiative grouping:** one framework-neutral root-cause map shared by ISO, NIST, GDPR, HIPAA and PCI gaps. DPDPA keeps its own clusters for DPDPA gaps. (Was Q1.) Codex review 2 (N2) found the shared path already does this (`app/services/scoring.py:731-736`); Claude's question was based on a misreading. The real leak is the shared initiative advice text, fixed in stage 2c. |
 | 2026-10-12 | **DPDPA goldens:** re-record them deliberately in the stage 6 flip PR, after the gate passes, with the old recordings kept in git history. (Was Q2.) |
+| 2026-10-12 | **Judge wording exception (N6) approved.** In saved-passage mode, a framework with no relevant passages gets one new judge-prompt line, "no relevant passages in N read files", instead of "No supporting documents uploaded". Nothing else in the judge prompt changes. (Was Q4.) |
 
 Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wording only (P6-5c; E6; CLAUDE.md). The desk-review prompt is not frozen. `tests/test_p6_1b_framework_batching.py:152` pins desk-review fingerprints and must be updated deliberately where the desk-review input changes.
 
@@ -276,10 +277,10 @@ Review: `tasks/handoffs/2026-10-12-document-reads-codex-review-2.md`. Claude con
 
 ### Questions for Saqlain
 
-Questions 1 and 2 were answered on 2026-10-12 (see Decisions).
+Questions 1, 2 and 4 were answered on 2026-10-12 (see Decisions). Question 3 (sequence) was answered by E7 in the session record.
 
 3. **Sequence slot.** The fixed sequence (`tasks/2026-10-08-session-record.md`, path rule 5) has to be edited on purpose. Proposed: stages 1 and 2 right after the E4 build; stages 3 to 6 before flow-plan S3.
 
-4. **Judge wording exception (N6).** In saved-passage mode, a framework with no relevant passages needs a new line in the judge prompt, "no relevant passages in N read files", instead of today's "No supporting documents uploaded". Nothing else in the judge prompt changes. Approve this narrow exception to the judge freeze? Recommended: yes, it is the only honest wording.
+4. ~~Judge wording exception (N6).~~ Approved 2026-10-12.
 
 Unverified until the live run: current provider price, the model's context window, prompt cache effect, read and judge latency.
