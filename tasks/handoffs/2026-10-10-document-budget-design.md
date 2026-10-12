@@ -57,7 +57,7 @@ Revision 3, 2026-10-12. Replaces revision 1 (2026-10-10, chunked batch) and revi
 
 ### Recommendation
 
-Read each in-scope file once, as it arrives, with small calls whose results are saved per file version and shown on the evidence record. Desk review and gap analysis keep their outputs, contracts and report persistence exactly as today; they only stop reading whole documents and work from the saved passages instead, and every run still judges every control. Before that, DPDPA stops being a special case: it runs through the same path as every other framework, and the DPDPA-only plumbing is deleted.
+Read each in-scope file once, as it arrives, with small calls whose results are saved per file version and shown on the evidence record. Desk review and gap analysis keep their outputs, contracts and report persistence exactly as today; they only stop reading whole documents and work from the saved passages instead, and every run still judges every control. Before that, shared code that is meant to serve every framework stops assuming DPDPA. DPDPA assessments keep every feature they use today.
 
 ### Decisions (Saqlain)
 
@@ -68,7 +68,7 @@ Read each in-scope file once, as it arrives, with small calls whose results are 
 | 2026-10-11 | A 20 to 30 minute end-of-assessment run is too long. |
 | 2026-10-11 | No vector store for now. |
 | 2026-10-12 | **Narrower first version approved.** No stale-only re-judging, no live desk-review view, no pre-fill rule changes, no release-policy changes in this work. |
-| 2026-10-12 | **No DPDPA-only plumbing in the app.** "Ideally we were supposed to remove this long time ago." DPDPA is one framework among six, on the shared registry path. |
+| 2026-10-12 | **Strip DPDPA assumptions from framework-agnostic code; keep everything DPDPA assessments use.** "I don't want you to delete code that is being used by DPDPA assessment. I only want you to delete things or remove things that are supposed to be framework agnostic, but are using DPDPA-specific plumbing." (Corrects Claude's first reading, which would have deleted the curated DPDPA path and screening.) |
 | 2026-10-12 | Finish this plan first, then return to the original action list. |
 
 Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wording only (P6-5c; E6; CLAUDE.md). The desk-review prompt is not frozen. `tests/test_p6_1b_framework_batching.py:152` pins desk-review fingerprints and must be updated deliberately where the desk-review input changes.
@@ -87,8 +87,8 @@ Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wo
 | F12, F13 (queue, retention) | One lifespan-managed dispatcher, atomic claims, bounded attempts, publish only if still in scope. Purge covers reads before versions. |
 | F14 to F18 (live view, pre-fill, issues, RFI) | Out of scope. Desk review keeps its stored fields and finding rows, so every consumer is unchanged. |
 | F19, F26 (truthful cut) | Stage 1 records what each stage actually received, per run, and fixes the two inaccurate claims. |
-| F20 (empty evidence, small frameworks) | In saved-passage mode every framework uses the existing batched builder; small frameworks are one batch. The existing "no extracted quotes" line covers empty batches. No raw documents. |
-| F21 (curated DPDPA path) | Deleted in stage 2, so no legacy cap machinery survives the flip. |
+| F20 (empty evidence, small frameworks) | In saved-passage mode every registry framework uses the existing batched builder; small frameworks are one batch. The existing "no extracted quotes" line covers empty batches. No raw documents. |
+| F21 (curated DPDPA path) | Kept, because DPDPA assessments use it. In stage 5 it takes saved passages through the same adapter, into the quote input it already accepts. Its goldens stay as the setting-off characterization, and a new setting-on fixture is added. Re-baselining the goldens when the setting is removed is Q2. |
 | F22 (A/B runner) | Queue settlement, reader identity and isolated caches are prerequisites for the stage 5 gate. |
 | F23 (seeds) | Offline seeds and loaders disable the dispatcher or write deterministic read fixtures. |
 | F24 (reports) | Untouched. Reports and narrative read conclusions and approved findings as today. |
@@ -101,18 +101,35 @@ Revision 2's facts stand except where Codex corrected them (F26):
 - Registry frameworks always extract; curated DPDPA can reuse desk-review evidence instead (`app/services/claude_analyzer.py:324`, `:369`).
 - Only unknown category strings rank after "other"; framework document types that share a legacy category keep its priority (`claude_analyzer.py:426`, `app/services/document_categories.py:31`).
 
-DPDPA-only plumbing found on 2026-10-12 (read, with lines):
-- **Analysis.** An assessment with frameworks `["dpdpa"]` takes a separate legacy path (`app/routers/analysis.py:263-299`, `_persist_single_analysis` at `:357`). That path uses `run_gap_analysis` and `_run_gap_analysis` (`claude_analyzer.py:43`, `:78`), the curated extraction prompt (`_run_evidence_extraction`, `claude_analyzer.py:222-253`) and the legacy priority truncator (`claude_analyzer.py:419-457`).
-- **Desk review and extraction.** `CURATED_PROMPT_FRAMEWORK_ID = "dpdpa"` (`app/frameworks/prompts.py:19`) sends DPDPA to the hand-curated desk-review prompt and keeps it unbatched (`app/services/desk_review.py:131`, `:369`). It also switches extraction and the desk-evidence skip rule (`claude_analyzer.py:263-268`, `:360-369`) and the flag vocabulary (`prompts.py:192-193`). This applies inside multi-framework assessments too.
-- **Questionnaire, pre-fill and screening.** `is_dpdpa_only` (`app/services/question_engine.py:85-87`) selects a requirement-keyed questionnaire (`question_engine.py:403`), a separate pre-fill (`app/services/auto_answer.py:63-64`) and screening, which only applies to DPDPA-only assessments (`app/services/screening.py:46-50`).
-- **Findings.** A finding with no framework id defaults to DPDPA (`app/services/desk_review_findings.py:9`, `:30`; `prompts.py:541`).
-- **Tests and goldens.** `tests/test_golden_dpdpa.py`, `tests/support/analyzer_mock.py`, `tests/support/fixture_capture.py`.
-- **Validation baseline.** Validation company c1 is DPDPA-only; c2 and c3 include DPDPA (`validation/companies/*/company.json`, frameworks field only). Removing the curated path changes the v1 baseline for all three.
-- **Not plumbing: DPDPA content, kept.** The requirement definitions, question text and scope questions behind the registry DPDPA definition (`app/frameworks/definitions/dpdpa.py:8-14`), plus conditional DPDPA copy such as the board readiness note.
+DPDPA code found on 2026-10-12 (read, with lines), sorted by Saqlain's rule.
+
+**Kept: used by DPDPA assessments.** None of this is touched by stage 2.
+- The curated single-framework analysis path for `["dpdpa"]` assessments (`app/routers/analysis.py:263-299`, `_persist_single_analysis` at `:357`, `run_gap_analysis` at `claude_analyzer.py:43`, `:78`, `_run_evidence_extraction` at `claude_analyzer.py:222-253`).
+- The curated DPDPA desk-review and extraction prompts (`CURATED_PROMPT_FRAMEWORK_ID`, `app/frameworks/prompts.py:19`, `:192-193`; `app/services/desk_review.py:131`, `:369`; `claude_analyzer.py:263-268`, `:360-369`).
+- The DPDPA-only questionnaire, its pre-fill and screening (`app/services/question_engine.py:85-87`, `:403`; `app/services/auto_answer.py:63-64`; `app/services/screening.py:46-50`).
+- The DPDPA goldens (`tests/test_golden_dpdpa.py`, `tests/support/analyzer_mock.py`) and DPDPA content (`app/frameworks/definitions/dpdpa.py:8-14`, conditional copy such as the board readiness note).
+
+**Candidates: shared code that assumes DPDPA.** Stage 2 makes these framework-agnostic. Codex is to confirm each one, and to find any others.
+- **Gap-analysis truncator.** The shared multi-framework path ranks every framework's documents by the legacy DPDPA category list (`claude_analyzer.py:426-445`, called at `:521`). Stage 1 replaces it with one framework-neutral selection.
+- **Upload categories.** The legacy DPDPA document categories (`app/schemas/assessment.py:27-36`) are offered for every framework's uploads (`app/services/document_categories.py:31-33`).
+- **"No framework means DPDPA" defaults**, in about 15 places:
+  - `Assessment.frameworks` returns `["dpdpa"]` when the field is unset or invalid (`app/models/assessment.py:57-62`);
+  - `app/frameworks/compat.py:13`;
+  - `app/routers/questionnaire.py:321-327`;
+  - `app/routers/analysis.py:141`, `:256`;
+  - `app/routers/assessments.py:144`;
+  - `app/utils/pdf_export.py:951`;
+  - findings, gap items and remediation rows with a null `framework_id` read as DPDPA (`app/services/desk_review_findings.py:9`, `:30`; `app/frameworks/prompts.py:541`; `app/routers/web.py:3126`, `:3274`; `app/utils/pdf_export.py:651`, `:726`; `app/templates/partials/report_summary.html:23`; `app/models/desk_review.py:45`).
+  - A data backfill for gap items already exists (`app/legacy_migrations.py:230-245`).
+- **Initiative grouping.** `scoring.generate_initiatives` groups every framework's gaps by DPDPA root-cause clusters, with a DPDPA requirement-prefix fallback (`app/services/scoring.py:12`, `:465-497`, `:527`). ISO or NIST gaps fall into DPDPA groupings or into none.
+- **Context interview.** The risk-context blocks for every assessment come from `app/dpdpa/context_questions.py` (`app/routers/web.py:19`, `:2471-2496`; `app/routers/questionnaire.py:7`, `:39`). Codex is to check whether the wording is DPDPA-specific.
+- **Scope profiler.** It imports DPDPA requirements (`app/services/scope_profiler.py:14`) but is called for every assessment (`app/routers/web.py:2013`, `:2194`, `:2250`, `:2282`; `app/services/rfi_requests.py:26`). CLAUDE.md says non-DPDPA scope profiling is not implemented. Codex is to check whether shared code depends on the DPDPA import.
+
+**Validation baseline.** Validation company c1 is DPDPA-only; c2 and c3 include DPDPA (`validation/companies/*/company.json`, frameworks field only). Fixing shared defaults should not change c1. The initiative and truncator changes can change c2 to c4.
 
 ### The plan, in stages
 
-Each stage names its loop step for the coherence test (path rule 1). One in flight at a time. Stages 3 to 5 share one setting, `evidence_reads_mode` (`off` or `on`), default `off` until stage 5 passes.
+Each stage names its loop step for the coherence test (path rule 1). One in flight at a time. Stages 3 to 5 share one setting, `evidence_reads_mode` (`off` or `on`), default `off` until the stage 6 gate passes.
 
 **Stage 1. Truthful cut** (read step; no LLM or prompt change; small)
 - What: one selection function used by desk review and gap analysis. Each run records a manifest per stage: the documents extraction received, and the passages the judge received per control, by evidence version id. The card's "not read" notice reads that manifest, not desk review's filename list. Fix the two over-broad claims (F26) in tests.
@@ -120,18 +137,16 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 - Click-through: Veldhara pack (over 20k words). The same unread files appear on the desk-review page, the evidence list and a linked card.
 - Survives later stages: the manifest is how stages 4 and 5 prove what the judge saw.
 
-**Stage 2. One path for every framework set** (all loop steps; deletes code)
-- What:
-  - `["dpdpa"]` runs through the registry path; delete the legacy analysis path and its persistence.
-  - DPDPA uses the registry desk-review and extraction prompts. Delete `CURATED_PROMPT_FRAMEWORK_ID`, the curated desk-review, judge and extraction builders in `app/dpdpa/prompts.py`, and the legacy priority list.
-  - DPDPA-only assessments use the UCC questionnaire and the cluster pre-fill; delete the requirement-keyed branch.
-  - Screening is DPDPA-only, so it goes too (Q1).
-  - An Alembic data migration sets `framework_id = "dpdpa"` on old findings that lack one, then the fallback is removed.
-  - Retire the DPDPA goldens and the analyzer mock; add a registry-path characterization fixture for a DPDPA-only assessment.
-  - Keep the DPDPA content modules the registry definition uses.
-- Existing DPDPA-only assessments: local data only (D1 clean break); see Q2.
-- Gate: A/B on all validation companies with `scripts/validation/ab_compare.py`, before versus after, aggregate numbers only (catch not lower, decoy and clean false positives not higher, stability not lower, cost reported). This gate stands alone, so the reading change in stage 5 is measured against the unified baseline. If it fails, the result is recorded and Saqlain decides; there is no silent rollback to the curated path.
-- Click-through: create a DPDPA-only assessment and walk the questionnaire, desk review, analysis and report. No screening tab. ISO and multi-framework assessments are unchanged.
+**Stage 2. Shared code stops assuming DPDPA** (all loop steps; no prompt change; DPDPA features untouched)
+- What, for each confirmed candidate above:
+  - Framework fallbacks raise or use the assessment's real framework list instead of `["dpdpa"]`. Assessments with no stored frameworks are migrated once (Alembic). Every live row already has a list; Codex is to confirm.
+  - Null `framework_id` on findings, gap items and remediation rows is backfilled (extending `app/legacy_migrations.py:230-245` to every affected table). The read-time "null means DPDPA" fallbacks are then removed.
+  - Upload categories offered for an assessment come from its own frameworks plus "other". The legacy DPDPA categories are offered only when DPDPA is in scope.
+  - Initiative grouping uses a framework-neutral root-cause map, or the framework's own map when one exists. DPDPA keeps its clusters for DPDPA gaps.
+  - The context interview and the scope profiler: fixed only if Codex confirms a DPDPA dependency in shared code. Otherwise they are left alone and recorded as checked.
+- Kept: everything in the "Kept" list above, unchanged.
+- Gate: run the full suite, including the DPDPA goldens, which must pass byte for byte. Then an A/B on all validation companies with `scripts/validation/ab_compare.py`, before versus after, aggregate numbers only (catch not lower, decoy and clean false positives not higher, stability not lower, cost reported). The gate stands alone, so stage 6 is measured against this baseline.
+- Click-through: one DPDPA-only assessment works exactly as before, screening included. An ISO-only assessment shows ISO upload categories only, and its initiatives are not DPDPA-named.
 
 **Stage 3. Read storage and scope reconciliation** (read step; no LLM; behind the setting)
 - Read identity: one row per (evidence version, framework, part). The fingerprint covers source text hash, framework pack version, read schema version, prompt fingerprint, model id and part settings. A row is reused only when every field matches.
@@ -165,9 +180,10 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 - Gap analysis:
   - The extraction step is replaced by saved passages per control. Order: consultant-linked evidence first, then one passage per file in turn, then upload order. At most 10 passages and 2,500 tokens per control.
   - Passages left out are recorded in the run manifest and listed on the card.
-  - Every framework goes through the batched builder; small frameworks form one batch. No raw documents.
+  - Every registry framework goes through the batched builder; small frameworks form one batch. The curated DPDPA path keeps its own builder (see below). No raw documents.
   - Judge citations resolve only within the passages sent for that control.
   - Judge fingerprints for equal inputs are unchanged.
+- DPDPA: the curated desk-review prompt, the curated judge path for `["dpdpa"]` assessments and DPDPA inside multi-framework runs keep their prompts. Their document input is replaced by the same saved-passage adapter: passages for desk review, and the quote evidence the curated judge already accepts (`claude_analyzer.py:78-120`) for the judge. With the setting off, the DPDPA goldens still pass byte for byte. A new setting-on DPDPA fixture is added.
 - Locked conclusions: never overwritten (existing rule). The card shows "evidence changed since you approved" when the current read set differs from the one recorded on the approving run.
 - Click-through: run desk review and analysis on Veldhara with the setting on. Pre-fill, cards and report work as before. Every card's sources link to passages that were actually sent.
 
@@ -184,7 +200,6 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 - RFI-status absence (after flow-plan S4);
 - release provenance for new evidence on locked conclusions;
 - one combined read call across frameworks (only if bulk-drop time is a problem);
-- generalised screening for every framework (parking lot);
 - read tags as suggested links (parked decision B stays parked).
 
 ### Budgets (fixed before any evaluation)
@@ -220,8 +235,8 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 
 ### Questions for Saqlain
 
-1. **Screening (adaptive tiering) only runs on DPDPA-only assessments** (`app/services/screening.py:46-50`). Removing DPDPA-only plumbing removes it. Retire it in stage 2 and put "screening for every framework" in the parking lot? Recommended: yes.
-2. **Existing local DPDPA-only assessments** store answers keyed by DPDPA requirement ids; the UCC questionnaire uses question keys. Migrate those answers, or re-seed local and demo data (D1: no real user data)? Recommended: re-seed, unless Codex finds a clean mapping.
+1. **Initiative grouping (stage 2).** For ISO, NIST, GDPR, HIPAA and PCI gaps: one framework-neutral root-cause map shared by all five, or a map per framework? Recommended: one neutral map now, so cross-framework initiatives group together.
+2. **DPDPA goldens after the flip (stage 6).** When `evidence_reads_mode` is removed, the curated DPDPA path always takes saved passages, so its golden requests change. Re-record them deliberately in the flip PR, after the gate, with the old recordings kept in git history? Recommended: yes.
 3. **Sequence slot.** The fixed sequence (`tasks/2026-10-08-session-record.md`, path rule 5) has to be edited on purpose. Proposed: stages 1 and 2 right after the E4 build; stages 3 to 6 before flow-plan S3.
 
 Unverified until the live run: current provider price, the model's context window, prompt cache effect, read and judge latency.
