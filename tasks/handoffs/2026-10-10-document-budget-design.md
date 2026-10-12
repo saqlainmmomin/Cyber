@@ -53,7 +53,7 @@ Append `## Results` to this file: recommendation first (three sentences), then t
 
 ## Results
 
-Revision 3, 2026-10-12. Replaces revision 1 (2026-10-10, chunked batch) and revision 2 (2026-10-11, read on arrival with stale-only re-judging). Revision 2 was reviewed by Codex: **NO-GO as written**, 29 findings (`tasks/handoffs/2026-10-11-document-reads-codex-review.md`). This revision answers those findings within the narrower scope Saqlain approved. Status: **design for Codex's second review. Nothing is built.**
+Revision 4, 2026-10-12 (revision 3 plus the changes required by Codex review 2, listed under "Revision 4 changes"; where they differ, revision 4 wins). Revision 3: Replaces revision 1 (2026-10-10, chunked batch) and revision 2 (2026-10-11, read on arrival with stale-only re-judging). Revision 2 was reviewed by Codex: **NO-GO as written**, 29 findings (`tasks/handoffs/2026-10-11-document-reads-codex-review.md`). This revision answers those findings within the narrower scope Saqlain approved. Status: **design for Codex's second review. Nothing is built.**
 
 ### Recommendation
 
@@ -70,7 +70,7 @@ Read each in-scope file once, as it arrives, with small calls whose results are 
 | 2026-10-12 | **Narrower first version approved.** No stale-only re-judging, no live desk-review view, no pre-fill rule changes, no release-policy changes in this work. |
 | 2026-10-12 | **Strip DPDPA assumptions from framework-agnostic code; keep everything DPDPA assessments use.** "I don't want you to delete code that is being used by DPDPA assessment. I only want you to delete things or remove things that are supposed to be framework agnostic, but are using DPDPA-specific plumbing." (Corrects Claude's first reading, which would have deleted the curated DPDPA path and screening.) |
 | 2026-10-12 | Finish this plan first, then return to the original action list. |
-| 2026-10-12 | **Initiative grouping:** one framework-neutral root-cause map shared by ISO, NIST, GDPR, HIPAA and PCI gaps. DPDPA keeps its own clusters for DPDPA gaps. (Was Q1.) |
+| 2026-10-12 | **Initiative grouping:** one framework-neutral root-cause map shared by ISO, NIST, GDPR, HIPAA and PCI gaps. DPDPA keeps its own clusters for DPDPA gaps. (Was Q1.) Codex review 2 (N2) found the shared path already does this (`app/services/scoring.py:731-736`); Claude's question was based on a misreading. The real leak is the shared initiative advice text, fixed in stage 2c. |
 | 2026-10-12 | **DPDPA goldens:** re-record them deliberately in the stage 6 flip PR, after the gate passes, with the old recordings kept in git history. (Was Q2.) |
 
 Freeze scope (checked 2026-10-11): the written freeze covers the judge prompt wording only (P6-5c; E6; CLAUDE.md). The desk-review prompt is not frozen. `tests/test_p6_1b_framework_batching.py:152` pins desk-review fingerprints and must be updated deliberately where the desk-review input changes.
@@ -235,10 +235,53 @@ Each stage names its loop step for the coherence test (path rule 1). One in flig
 - **Bulk drop, in the background:** 58 files about 5 minutes at concurrency 6; 100 files across six frameworks about 38 minutes at 6 (57 at 4). Each file's result appears as it finishes. This is the price of single-framework read identity (F9). A combined call across frameworks would cut it about 6 times, and is deferred until measured.
 - **Today, for comparison:** about $0.06 for Veldhara, reading 20,000 of 22,500 words; about $0.20 for 100 files, reading 20,000 of 100,000 words.
 
+### Revision 4 changes (after Codex review 2: GO with changes)
+
+Review: `tasks/handoffs/2026-10-12-document-reads-codex-review-2.md`. Claude confirmed N2 and N6 in code. Each change below is binding for the stage it names.
+
+**Stage boundaries, re-cut**
+- Stage 1: unchanged. Manifests need a legacy-source key for unmigrated `AssessmentDocument` rows until migration finishes (`app/services/evidence.py:891-913`). Add a duplicate-filename catalog and viewer case (N10).
+- **Stage 2a. Explicit frameworks (N1).** A **new** Alembic revision backfills and validates `assessments.selected_frameworks`, `desk_review_findings.framework_id` and `gap_items.framework_id`. Historical revisions are never edited. Missing selections with known legacy DPDPA provenance become `["dpdpa"]`; invalid or ambiguous ones are refused with a report, never defaulted. A migration preflight counts null and invalid rows first. Make every seed and test writer explicit (`scripts/seed_test_companies.py:1286-1296`, `:1348-1357`). Convert `tests/test_legacy_dpdpa_framework_id.py` into migration characterization. Only then remove the "null or unset means DPDPA" readers: `Assessment.frameworks`, the questionnaire, analysis and assessment readers, the PDF default, the desk-finding reader and query, the signal prompt fallback, the gap and remediation readers and links, and the conclusion-review lookup (`app/services/conclusion_review.py:420-427`, missed by revision 3). `compat.py` requires an explicit framework or is marked legacy-only. The legacy creation API (`app/routers/assessments.py:47-54`) creates DPDPA explicitly. That is used by DPDPA, so it is kept, not made framework-selectable.
+- **Stage 2b. Framework-aware context and follow-ups (N3).**
+  - The context interview: the neutral questions are kept. The DPDPA-specific ones (SDF, data principals; `app/dpdpa/context_questions.py:106-125`) are shown only when DPDPA is in scope.
+  - The context profiler (`app/services/context_profiler.py:57-60`, `:157-184`) and the follow-up engine (`app/services/followup_engine.py:98`, `:188`) get framework-aware branches.
+  - Existing DPDPA requests, stored context ids and answers are preserved. Narrow non-DPDPA prompt changes are allowed here (the desk-review and judge prompts are not touched; the judge freeze stands).
+- **Stage 2c. Categories and initiative text (N2).**
+  - Upload categories: legacy DPDPA categories only when DPDPA is in scope; stored strings stay valid.
+  - The shared initiative advice (`app/services/scoring.py:567-589`, used by `generate_multi_framework_initiatives`) becomes framework-neutral. DPDPA members of mixed initiatives keep their privacy actions.
+  - The curated `generate_initiatives`, its DPDPA clusters, prefix fallback and naming are kept (DPDPA-only path, `app/routers/analysis.py:494`).
+- Stage 2 gate (N9): the aggregate A/B stays, plus per-framework regression checks in its outputs. Add offline all-six-framework checks for creation, categories, context, follow-ups and initiative copy. The DPDPA goldens pass unchanged; they pass `initiatives=[]`, so add a curated-initiative characterization test.
+- Stage 3 (N4): shared read results are separate from assessment membership. A read is inactive only when no remaining scope needs it. Test two assessments sharing one version: unmap, remove a framework and archive only one of them. Claims and publication check assessment and engagement archive state, not only active evidence.
+- **Stage 5a.** Saved-passage adapter plus desk-review persistence (registry and curated), default off. **Stage 5b.** Judge integration (registry and curated), default off. Resolve N5 to N7 before 5a.
+- **Stage 6a.** The gate, then flip the default to on, with rollback kept. **Stage 6b.** Separately, retire the setting and the off branches, only after every endpoint and loader uses saved reads and offline seeds have read fixtures or stubs. The DPDPA goldens are re-recorded in 6b, as decided (N8).
+
+**Contracts fixed before stage 5**
+- **Readiness (N5).** Desk review and analysis run only when every required read for each framework is read, read with nothing relevant, or explicitly unreadable. If any are queued, reading or failed, that framework refuses to run, with a visible error naming the files. The other frameworks run. Failed-framework pre-fill suppression is kept. Partial execution is a later decision.
+- **Empty evidence (N6).**
+  - Add an explicit saved-evidence empty state that distinguishes "no relevant passages in N read files" from "no files uploaded".
+  - Today `evidence={}` with `documents=[]` renders "No supporting documents uploaded" (`app/frameworks/prompts.py:599-621`, `:718-726`). And moving a small framework from `control_ids=None` to all ids changes the final instruction line (`prompts.py:623-626`).
+  - So small frameworks keep the full-framework wording, and the new empty-state line is recorded as a narrow wording exception to the judge freeze, for Saqlain to approve (Q4).
+  - Test empty and nonempty inputs for every framework; all unchanged request fingerprints are preserved.
+  - Curated DPDPA gets an explicit saved-read branch: passing `documents=[]` to today's runner skips evidence loading (`app/services/claude_analyzer.py:89-106`).
+- **Budgets (N7).**
+  - Per-control limits are maxima. Every desk-review and judge request also gets a total input bound, covering controls, answers, catalog, passages and instructions, of 48k tokens. A batch that would exceed it is split.
+  - The existing judge output ceiling (`llm_max_output_tokens_framework`, `app/config.py:65`) is kept until measured.
+  - An extraction reply cut off at its length limit is a failed read, not empty evidence.
+  - The unchanged extraction prompt embeds full control text: about 5k tokens for ISO before any document (Codex offline check). Read input estimates are revised up accordingly; the stage 6 runner measures the real figure.
+- **Reader identity (Codex Q2, Q3).** The framework-free reader result is its own row: (evidence version, part, reader fingerprint), with no framework. Every published result gets an immutable generation id. A "Re-read" adds a generation and never edits one. Run manifests record generation ids, so old run inputs survive re-reads and setting changes.
+- **Attempts (Codex Q4).** "At most 2 attempts" means queue attempts. Each attempt is one `llm_client` call with its own internal retry. The dispatcher counts an attempt's thread against the shared budget until the thread exits, including after a deadline. Shutdown stops claiming and waits up to one deadline.
+- **Empty-text uploads (Codex Q5).** These are already refused with a visible upload error and rolled back (`app/services/evidence.py:703-715`). That is not silent, so no failed-receipt row is added.
+- **Time corrections.**
+  - A one-part file across six frameworks needs seven calls, so two waves at concurrency 4 or 6.
+  - A combined extraction call across frameworks would cut 910 calls to 260 (3.5 times, not 6).
+  - The six-framework end-of-assessment cost includes one cross-framework synthesis call at about 8k input and 2k output.
+
 ### Questions for Saqlain
 
 Questions 1 and 2 were answered on 2026-10-12 (see Decisions).
 
 3. **Sequence slot.** The fixed sequence (`tasks/2026-10-08-session-record.md`, path rule 5) has to be edited on purpose. Proposed: stages 1 and 2 right after the E4 build; stages 3 to 6 before flow-plan S3.
+
+4. **Judge wording exception (N6).** In saved-passage mode, a framework with no relevant passages needs a new line in the judge prompt, "no relevant passages in N read files", instead of today's "No supporting documents uploaded". Nothing else in the judge prompt changes. Approve this narrow exception to the judge freeze? Recommended: yes, it is the only honest wording.
 
 Unverified until the live run: current provider price, the model's context window, prompt cache effect, read and judge latency.
