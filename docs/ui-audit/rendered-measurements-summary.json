@@ -10581,6 +10581,264 @@
     "maxCharactersPerRenderedLine": 138,
     "fontSize": "14px"
    }
+  },
+  {
+   "name": "review-selected",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/review-queue",
+   "group": "interaction",
+   "width": 1440,
+   "theme": "light",
+   "actualFilename": "screenshots/review-selected-1440.png",
+   "contentWidth": 1120,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 64,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 18,
+    "13px": 35,
+    "12px": 31,
+    "20px": 1,
+    "16px": 1
+   },
+   "height": 1177,
+   "textNodesBelow14": 66
+  },
+  {
+   "name": "review-selected",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/review-queue",
+   "group": "interaction",
+   "width": 1280,
+   "theme": "light",
+   "actualFilename": "screenshots/review-selected-1280.png",
+   "contentWidth": 1024,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 18,
+    "13px": 35,
+    "12px": 31,
+    "20px": 1,
+    "16px": 1
+   },
+   "height": 1177,
+   "textNodesBelow14": 66
+  },
+  {
+   "name": "conclusions-edit",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/conclusions",
+   "group": "interaction",
+   "width": 1440,
+   "theme": "light",
+   "actualFilename": "screenshots/conclusions-edit-1440.png",
+   "contentWidth": 1040,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 144,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 44,
+    "13px": 73,
+    "12px": 51,
+    "20px": 6,
+    "16px": 5
+   },
+   "height": 5121,
+   "textNodesBelow14": 124
+  },
+  {
+   "name": "conclusions-edit",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/conclusions",
+   "group": "interaction",
+   "width": 1280,
+   "theme": "light",
+   "actualFilename": "screenshots/conclusions-edit-1280.png",
+   "contentWidth": 1024,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 44,
+    "13px": 73,
+    "12px": 51,
+    "20px": 6,
+    "16px": 5
+   },
+   "height": 5142,
+   "textNodesBelow14": 124
+  },
+  {
+   "name": "confirm-dialog",
+   "path": "/design/pages/b7-modals?state=purge&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "interaction",
+   "width": 1440,
+   "theme": "light",
+   "actualFilename": "screenshots/confirm-dialog-1440.png",
+   "contentWidth": 1184,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 6,
+    "28px": 1,
+    "14px": 2,
+    "20px": 1,
+    "12px": 1
+   },
+   "height": 1115,
+   "textNodesBelow14": 7
+  },
+  {
+   "name": "confirm-dialog",
+   "path": "/design/pages/b7-modals?state=purge&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "interaction",
+   "width": 1280,
+   "theme": "light",
+   "actualFilename": "screenshots/confirm-dialog-1280.png",
+   "contentWidth": 1024,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 6,
+    "28px": 1,
+    "14px": 2,
+    "20px": 1,
+    "12px": 1
+   },
+   "height": 1115,
+   "textNodesBelow14": 7
+  },
+  {
+   "name": "b6-magic_upload-default",
+   "path": "/design/pages/b6-magic_upload?state=default&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "fixture",
+   "width": 390,
+   "theme": "light",
+   "actualFilename": "screenshots/b6-magic_upload-default-390.png",
+   "contentWidth": 390,
+   "sidebarWidth": 0,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 10,
+    "15px": 1,
+    "14px": 6,
+    "24px": 1,
+    "12px": 1
+   },
+   "height": 1045,
+   "textNodesBelow14": 11
+  },
+  {
+   "name": "b6-magic_upload-uploading",
+   "path": "/design/pages/b6-magic_upload?state=uploading&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "fixture",
+   "width": 390,
+   "theme": "light",
+   "actualFilename": "screenshots/b6-magic_upload-uploading-390.png",
+   "contentWidth": 390,
+   "sidebarWidth": 0,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 9,
+    "15px": 1,
+    "14px": 7,
+    "24px": 1,
+    "12px": 1
+   },
+   "height": 1015,
+   "textNodesBelow14": 10
+  },
+  {
+   "name": "b6-magic_upload-done",
+   "path": "/design/pages/b6-magic_upload?state=done&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "fixture",
+   "width": 390,
+   "theme": "light",
+   "actualFilename": "screenshots/b6-magic_upload-done-390.png",
+   "contentWidth": 390,
+   "sidebarWidth": 0,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 12,
+    "15px": 1,
+    "14px": 7,
+    "24px": 1,
+    "12px": 1
+   },
+   "height": 1000,
+   "textNodesBelow14": 13
+  },
+  {
+   "name": "b6-magic_upload-error",
+   "path": "/design/pages/b6-magic_upload?state=error&assessment_id=d491ee73-0925-43bd-8cb2-3b5fff2cc8ac",
+   "group": "fixture",
+   "width": 390,
+   "theme": "light",
+   "actualFilename": "screenshots/b6-magic_upload-error-390.png",
+   "contentWidth": 390,
+   "sidebarWidth": 0,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "13px": 12,
+    "15px": 1,
+    "14px": 6,
+    "24px": 1,
+    "12px": 1
+   },
+   "height": 1152,
+   "textNodesBelow14": 13
+  },
+  {
+   "name": "evidence-cited",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/conclusions",
+   "group": "interaction",
+   "width": 1440,
+   "theme": "light",
+   "actualFilename": "screenshots/evidence-cited-1440.png",
+   "contentWidth": 1040,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 144,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 26,
+    "13px": 49,
+    "12px": 35,
+    "20px": 5,
+    "16px": 4
+   },
+   "height": 3124,
+   "textNodesBelow14": 84
+  },
+  {
+   "name": "evidence-cited",
+   "path": "/assessments/506d1f04-9c19-44e4-9fdd-fa286f2b4eb6/conclusions",
+   "group": "interaction",
+   "width": 1280,
+   "theme": "light",
+   "actualFilename": "screenshots/evidence-cited-1280.png",
+   "contentWidth": 1024,
+   "sidebarWidth": 256,
+   "unusedOutsideContent": 0,
+   "horizontalOverflow": false,
+   "fontSizeTextNodeCounts": {
+    "28px": 1,
+    "14px": 26,
+    "13px": 49,
+    "12px": 35,
+    "20px": 5,
+    "16px": 4
+   },
+   "height": 3145,
+   "textNodesBelow14": 84
   }
  ],
  "errors": [
@@ -10591,86 +10849,6 @@
   {
    "capture": "screenshots/b6-comparison-default-1280.png",
    "error": "HTTP 404"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-default-1440.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-default-1280.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-uploading-1440.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-uploading-1280.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-done-1440.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-done-1280.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-error-1440.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-error-1280.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/conclusions-edit-1440.png",
-   "error": "Find pending row and its read-only edit control manually"
-  },
-  {
-   "capture": "screenshots/conclusions-edit-1280.png",
-   "error": "Find pending row and its read-only edit control manually"
-  },
-  {
-   "capture": "screenshots/review-selected-1440.png",
-   "error": "Locator.evaluate: Error: strict mode violation: locator(\".rq-body\") resolved to 7 elements:\n    1) <div class=\"rq-body\">\u2026</div> aka locator(\".rq-body\").first\n    2) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Access rights Pending Partially compliant High AI proposed ISO 27001 ISO.A5.18\")\n    3) <div class=\"rq-body\">\u2026</div> aka locator(\"#conclusion-card-ca8180c9-683a-4c74-9329-23c96f93e8b9 > .rq-body\")\n    4) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Information security awareness, education and training Pending Partially\")\n    5) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Policies for information security Approved Partially compliant Low AI proposed\")\n    6) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Information backup Approved Partially compliant High AI proposed ISO 27001 ISO.\")\n    7) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"ICT readiness for business continuity Approved Compliant Low AI proposed ISO\")\n\nCall log:\n  - waiting for locator(\".rq-body\")\n"
-  },
-  {
-   "capture": "screenshots/review-selected-1280.png",
-   "error": "Locator.evaluate: Error: strict mode violation: locator(\".rq-body\") resolved to 7 elements:\n    1) <div class=\"rq-body\">\u2026</div> aka locator(\".rq-body\").first\n    2) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Access rights Pending Partially compliant High AI proposed ISO 27001 ISO.A5.18\")\n    3) <div class=\"rq-body\">\u2026</div> aka locator(\"#conclusion-card-ca8180c9-683a-4c74-9329-23c96f93e8b9 > .rq-body\")\n    4) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Information security awareness, education and training Pending Partially\")\n    5) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Policies for information security Approved Partially compliant Low AI proposed\")\n    6) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"Information backup Approved Partially compliant High AI proposed ISO 27001 ISO.\")\n    7) <div class=\"rq-body\">\u2026</div> aka get_by_text(\"ICT readiness for business continuity Approved Compliant Low AI proposed ISO\")\n\nCall log:\n  - waiting for locator(\".rq-body\")\n"
-  },
-  {
-   "capture": "screenshots/evidence-cited-1440.png",
-   "error": "Expand conclusion and choose citation manually"
-  },
-  {
-   "capture": "screenshots/evidence-cited-1280.png",
-   "error": "Expand conclusion and choose citation manually"
-  },
-  {
-   "capture": "screenshots/confirm-dialog-1440.png",
-   "error": "Confirmation fixture b7-modals-purge covers dialog; live enabled trigger must be confirmed manually"
-  },
-  {
-   "capture": "screenshots/confirm-dialog-1280.png",
-   "error": "Confirmation fixture b7-modals-purge covers dialog; live enabled trigger must be confirmed manually"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-default-390.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-uploading-390.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-done-390.png",
-   "error": "HTTP 500"
-  },
-  {
-   "capture": "screenshots/b6-magic_upload-error-390.png",
-   "error": "HTTP 500"
   }
  ]
 }

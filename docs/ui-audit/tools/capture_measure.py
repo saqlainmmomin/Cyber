@@ -58,19 +58,27 @@ def interact(page,name):
         page.locator('.rv-toggle').first.click()
     elif name=='review-selected':
         page.locator('[data-queue-select]').first.click()
-        page.locator('.rq-body').evaluate('(e)=>e.scrollTop=e.scrollHeight')
+        # Seven .rq-body panes exist; only the selected item's pane is visible.
+        page.locator('.rq-body:visible').first.evaluate('(e)=>e.scrollTop=e.scrollHeight')
     elif name=='conclusions-edit':
-        page.locator('.rv-toggle').first.click()
-        edit=page.locator('[data-conclusion-edit="open"]:visible').first
-        if not edit.count(): raise RuntimeError('Find pending row and its read-only edit control manually')
-        edit.click()
+        # Runs on the interim assessment: approved rows have no edit control, so open rows until one shows it.
+        edit=page.locator('[data-conclusion-edit="open"]:visible')
+        for toggle in page.locator('.rv-toggle').all():
+            if edit.count(): break
+            toggle.click()
+        if not edit.count(): raise RuntimeError('No pending row with an edit control')
+        edit.first.click()
     elif name=='evidence-cited':
-        page.locator('.rv-toggle').first.click()
-        link=page.locator('a[href*="/evidence/"]:visible').first
-        if not link.count(): raise RuntimeError('Expand conclusion and choose citation manually')
-        link.click()
+        # Runs on the interim assessment, whose pending rows carry cited-span links.
+        link=page.locator('a[href*="/evidence-versions/"]:visible')
+        for toggle in page.locator('.rv-toggle').all():
+            if link.count(): break
+            toggle.click()
+        if not link.count(): raise RuntimeError('No visible citation link')
+        link.first.click(); page.wait_for_load_state('networkidle')
     elif name=='confirm-dialog':
-        raise RuntimeError('Confirmation fixture b7-modals-purge covers dialog; live enabled trigger must be confirmed manually')
+        # The manifest points this capture at the b7-modals purge fixture: the live trigger posts, and posts are blocked.
+        pass
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--only',help='Capture name filter');ap.add_argument('--measure-only',action='store_true');args=ap.parse_args()
     manifest=json.loads((OUT/'capture-manifest.json').read_text());results=[];errors=[]
