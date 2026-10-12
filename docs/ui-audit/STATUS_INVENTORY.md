@@ -1,6 +1,6 @@
 # Status inventory and semantic collisions
 
-Source audit, 12 October 2026. These are declared application states and rendering rules, not claims that every state appeared in a capture. Browser confirmation remains pending where the app was unreachable. Model columns generally store strings; the services below define allowed transitions and display labels. No analysis or generation was run.
+Source audit, 12 October 2026. These are declared application states and rendering rules, not claims that every state appeared in a capture. Host captures now show queue outcomes/provenance, report states and mobile upload states. This register still distinguishes declared conditional states from states visibly shown. Model columns generally store strings; the services below define allowed transitions and display labels. No analysis or generation was run.
 
 ## Shared tone contract
 
@@ -102,3 +102,7 @@ All severity/outcome tokens inherit the same values in dark mode. Pill text rema
 Keep a restrained set of visual tones: neutral context, active/information, positive confirmed state, attention and blocking failure. Keep severity ordinal and explicitly labelled, with a distinct field from outcome. Display evidence availability, compliance outcome, human decision, release lifecycle and provenance as separate facts rather than interchangeable pills. This is a recommendation for the Phase 12 stop point, not a final component or design specification.
 
 Prioritise truthful labels and transition semantics before palette polish. Validate status text and non-text indicators in both themes and all eight presets. A screenshot alone cannot prove backend lifecycle integrity; the sources above establish the meanings and transitions.
+
+## Host capture reconciliation
+
+`review-selected-1440.png` shows partially compliant, high risk, AI proposed and Pending together, but its queue rows display outcome dots without words. This confirms that finding risk, outcome, decision progress and provenance must remain separate. `report-iso-1440.jpg` shows released status and domain outcomes. `b6-magic_upload-default-390.png`, uploading, done and error companions now cover upload lifecycle appearance. Eight Tab presses never reach a file input, per host runtime evidence. The error alert is not tied to the failed request item. Target mappings are in DESIGN_SYSTEM.md: severity, outcome, progress and provenance, with accent excluded from status meaning.

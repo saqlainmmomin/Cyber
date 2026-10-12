@@ -1,6 +1,6 @@
 # Frontend architecture audit
 
-Audit date: 12 Oct 2026. This document records verified source structure, not a visual verdict. Chromium could not launch in the sandbox; page geometry, focus behavior and appearance remain pending the capture requests.
+Audit date: 12 Oct 2026. This document records source structure. The host subsequently captured the interface and measured its geometry. UI_ISSUES.md and MEASUREMENTS.md contain the reconciled visual findings and remaining interaction limits.
 
 ## Generation and ownership
 
@@ -18,7 +18,7 @@ FastAPI routes construct view models and render Jinja2 pages. `app/templates/bas
 | `app/static/js/app.js` | 905 lines | Toast headers, skeletons, errors, confirms, focus management, menus, copy, row navigation, shortcuts and upload progress |
 | Design routers | `PREVIEW_PAGES` registries | No-spend fixture states; they supplement seeded live pages |
 
-The 31 page-template count includes error and login templates, while the brief's live-screen table separates tabs and scopes. Use the screen inventory for capture coverage rather than treating the template count as a complete route inventory.
+The 31 live page-template count includes error; login is design-only in app/routers/design.py. Assessment tabs and inventory scopes create additional meaningful screens. The brief's live-screen table separates tabs and scopes. Use the screen inventory for capture coverage rather than treating the template count as a complete route inventory.
 
 ## CSS cascade and tokens
 

@@ -1,0 +1,482 @@
+[
+  {
+    "id": "D01",
+    "requirement": "FastAPI remains JSON API; cut over screen by screen",
+    "classification": "Backend",
+    "prototype": "No static API execution: spec only",
+    "section": "Delivery",
+    "work": "Extract typed UI view models from app/routers/web.py; keep Python scoring and exports."
+  },
+  {
+    "id": "D02",
+    "requirement": "Retire gradient canvas and glass",
+    "classification": "Presentation",
+    "prototype": "All five",
+    "section": "Foundation",
+    "work": "Opaque token surfaces."
+  },
+  {
+    "id": "D03",
+    "requirement": "Keep eight accents for interaction and branding only",
+    "classification": "Presentation",
+    "prototype": "All five, graphite shown; other presets in token table",
+    "section": "Foundation",
+    "work": "Accent never maps status; palette is documented for all presets."
+  },
+  {
+    "id": "D04",
+    "requirement": "Four status families",
+    "classification": "Presentation",
+    "prototype": "All five",
+    "section": "Status",
+    "work": "Separate severity, outcome, progress, provenance labels."
+  },
+  {
+    "id": "D05",
+    "requirement": "Control codes allowed beside titles",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html, review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Show requirement_id beside meaningful title."
+  },
+  {
+    "id": "D06a",
+    "requirement": "Single framework uses its own master domains",
+    "classification": "Backend",
+    "prototype": "questionnaire.html (target ISO focus)",
+    "section": "Questionnaire",
+    "work": "Use registry Domain keys in app/frameworks/definitions/iso27001.py; expose ordered domain tree via app/routers/questionnaire.py."
+  },
+  {
+    "id": "D06b",
+    "requirement": "Multi-framework covers each requirement once in unified domains",
+    "classification": "Backend",
+    "prototype": "Not shown: ISO focus prototype; multi-framework is specified",
+    "section": "Questionnaire",
+    "work": "Centralize existing UnifiedControlCluster.domain_group and DOMAIN_GROUP_ORDER as master domain registry; app/frameworks/mapping.py, cluster_engine.py, mappings/clusters.py, questionnaire_builder.py. Validate each in-scope framework requirement covered exactly once."
+  },
+  {
+    "id": "D07a",
+    "requirement": "Drafts save automatically while typing",
+    "classification": "Backend",
+    "prototype": "questionnaire.html (static saved state)",
+    "section": "Draft contract",
+    "work": "Add partial draft PATCH and independent completion; app/models/questionnaire.py QuestionnaireResponse and app/routers/questionnaire.py."
+  },
+  {
+    "id": "D07b",
+    "requirement": "Draft saving feedback and explicit completion act",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Draft contract",
+    "work": "Saved, saving, failed and offline feedback; completion button separate."
+  },
+  {
+    "id": "D08",
+    "requirement": "Pending first, then missing or contradictory evidence; sort and switch anytime",
+    "classification": "Presentation",
+    "prototype": "review-queue.html",
+    "section": "Review queue",
+    "work": "Sort existing card state, blockers and evidence conflicts; selectable ordering without changing record."
+  },
+  {
+    "id": "D09",
+    "requirement": "Laptop 1440 with 1280 support",
+    "classification": "Presentation",
+    "prototype": "All five",
+    "section": "Foundation",
+    "work": "Sidebar 224; gutters 24; minmax(0,1fr) workspace."
+  },
+  {
+    "id": "D10",
+    "requirement": "Never stack secondary or tertiary navigation bars",
+    "classification": "Presentation",
+    "prototype": "All five",
+    "section": "Navigation",
+    "work": "One labelled Section select in content toolbar replaces both levels two and three."
+  },
+  {
+    "id": "D11",
+    "requirement": "Inter stays",
+    "classification": "Presentation",
+    "prototype": "All five",
+    "section": "Foundation",
+    "work": "Vendored relative fonts and local Next font."
+  },
+  {
+    "id": "Q01",
+    "requirement": "Question area uses available width, no blank side",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "Full-width question surface, 196px domain rail; no persistent context pane."
+  },
+  {
+    "id": "Q02",
+    "requirement": "Control requirement is primary",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "h2 requirement, followed by contextual prose and hint."
+  },
+  {
+    "id": "Q03",
+    "requirement": "Explain why asked",
+    "classification": "Content",
+    "prototype": "questionnaire.html",
+    "section": "Content track",
+    "work": "Authored once per control in app/frameworks/schema.py QuestionDef; current guidance is not a separate why field."
+  },
+  {
+    "id": "Q04",
+    "requirement": "Hint on how to put question to client",
+    "classification": "Content",
+    "prototype": "questionnaire.html",
+    "section": "Content track",
+    "work": "Authored once per control; separate how-to-ask text slot."
+  },
+  {
+    "id": "Q05",
+    "requirement": "Persist distinct why and how fields",
+    "classification": "Backend",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "Extend QuestionDef and questionnaire serializers; no inference from generic guidance."
+  },
+  {
+    "id": "Q06",
+    "requirement": "Rework help hierarchy at readable size and measure",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "14px guidance minimum, 72ch cap, visible labels."
+  },
+  {
+    "id": "Q07",
+    "requirement": "Show unanswered and answered after assessment",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "Unanswered input plus settled answer and linked conclusion; prototype resets one existing question locally for state demonstration."
+  },
+  {
+    "id": "Q08",
+    "requirement": "ISO uses four Annex A themes, not privacy headings",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html",
+    "section": "Questionnaire",
+    "work": "Organizational, People, Physical, Technological from registry; backend dependency D06a."
+  },
+  {
+    "id": "R01",
+    "requirement": "Each queue item is a finding before approval",
+    "classification": "Presentation",
+    "prototype": "review-queue.html",
+    "section": "Review hierarchy",
+    "work": "Use finding terminology for candidate conclusions; preserve model distinction."
+  },
+  {
+    "id": "R02a",
+    "requirement": "Gap title distinct from control name",
+    "classification": "Backend",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Add gap_title to Conclusion; propagate to Finding.title in app/services/findings.py."
+  },
+  {
+    "id": "R02b",
+    "requirement": "Write short gap titles",
+    "classification": "Content",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Content track",
+    "work": "Generated per assessment from grounded gap; reviewed by auditor; compliant title describes positive conclusion."
+  },
+  {
+    "id": "R03",
+    "requirement": "Gap statement then compliance status",
+    "classification": "Presentation",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Use gaps_identified then outcome; current_state supplies context."
+  },
+  {
+    "id": "R04a",
+    "requirement": "Risk or impact of non-compliance",
+    "classification": "Backend",
+    "prototype": "review-queue.html, report.html",
+    "section": "Review hierarchy",
+    "work": "Add impact_statement to Conclusion; propagate existing Finding.business_impact; risk_level already exists."
+  },
+  {
+    "id": "R04b",
+    "requirement": "Write impact statements",
+    "classification": "Content",
+    "prototype": "review-queue.html, report.html",
+    "section": "Content track",
+    "work": "Generated per assessment with no unsupported incident or loss claims."
+  },
+  {
+    "id": "R05",
+    "requirement": "Recommendation at full weight",
+    "classification": "Presentation",
+    "prototype": "review-queue.html, report.html",
+    "section": "Review hierarchy",
+    "work": "Same 16px body role as gap, no tiny inset."
+  },
+  {
+    "id": "R06a",
+    "requirement": "Recommendation reasoning has its own slot",
+    "classification": "Backend",
+    "prototype": "review-queue.html, report.html",
+    "section": "Review hierarchy",
+    "work": "Add recommendation_reason to Conclusion and typed reporting view model; existing recommended_action stays."
+  },
+  {
+    "id": "R06b",
+    "requirement": "Write recommendation logic",
+    "classification": "Content",
+    "prototype": "review-queue.html, report.html",
+    "section": "Content track",
+    "work": "Generated per assessment, connection from gap to remedy."
+  },
+  {
+    "id": "R07a",
+    "requirement": "What reviewed and who spoken to as provenance",
+    "classification": "Backend",
+    "prototype": "review-queue.html",
+    "section": "Review hierarchy",
+    "work": "Store interview records with date, role, consented name, notes, evidence IDs; new interview model/service/router, linked to conclusion."
+  },
+  {
+    "id": "R07b",
+    "requirement": "Concise provenance narrative",
+    "classification": "Content",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Content track",
+    "work": "Generated per assessment from revision citations and stored interviews. Never invent interviews."
+  },
+  {
+    "id": "R08",
+    "requirement": "One provenance block; cited file one click away",
+    "classification": "Presentation",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Deduplicate by evidence version and span; anchors retain exact citation URL."
+  },
+  {
+    "id": "R09",
+    "requirement": "Queue outcome and risk in words",
+    "classification": "Presentation",
+    "prototype": "review-queue.html",
+    "section": "Review queue",
+    "work": "No dot-only queue state."
+  },
+  {
+    "id": "R10",
+    "requirement": "Approve edit reject attached and visible",
+    "classification": "Presentation",
+    "prototype": "review-queue.html",
+    "section": "Review queue",
+    "work": "Sticky decision header on reading pane, no footer-only action."
+  },
+  {
+    "id": "R11",
+    "requirement": "One Review hierarchy across queue conclusions findings workpaper",
+    "classification": "Presentation",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Shared FindingDetail field order with domain-specific mechanics."
+  },
+  {
+    "id": "C01",
+    "requirement": "Conclusions are final gaps without queue mechanics",
+    "classification": "Presentation",
+    "prototype": "conclusions.html",
+    "section": "Conclusions",
+    "work": "No approve/edit/reject per row; settled revision only."
+  },
+  {
+    "id": "C02",
+    "requirement": "Deterministic table domain control ID gap risk status",
+    "classification": "Presentation",
+    "prototype": "conclusions.html",
+    "section": "Conclusions",
+    "work": "Five fixed columns, stable domain/control sort; no masonry cards."
+  },
+  {
+    "id": "C03",
+    "requirement": "Row expands to full finding",
+    "classification": "Presentation",
+    "prototype": "conclusions.html",
+    "section": "Conclusions",
+    "work": "Native button/details disclosure with all hierarchy fields."
+  },
+  {
+    "id": "F01",
+    "requirement": "RFI tight sortable list",
+    "classification": "Presentation",
+    "prototype": "rfi.html",
+    "section": "RFI",
+    "work": "40 real source requests; at least 20 visible compact rows."
+  },
+  {
+    "id": "F02a",
+    "requirement": "Already added item absent from same add form",
+    "classification": "Backend",
+    "prototype": "rfi.html",
+    "section": "RFI",
+    "work": "Existing request_key and record_request already idempotent. Add cross-source artifact identity and state serializer in app/routers/web.py rfi_page with app/services/rfi_evidence_requests.py rfi_items and app/services/rfi_requests.py; do not reimplement same-key dedup."
+  },
+  {
+    "id": "F02b",
+    "requirement": "Separate included items from candidates",
+    "classification": "Presentation",
+    "prototype": "rfi.html",
+    "section": "RFI",
+    "work": "Included state read-only in list; add form only remaining candidates."
+  },
+  {
+    "id": "F03",
+    "requirement": "What to send example good looks like on demand",
+    "classification": "Presentation",
+    "prototype": "rfi.html",
+    "section": "RFI",
+    "work": "details disclosure, all three source content fields retained."
+  },
+  {
+    "id": "P01",
+    "requirement": "Written executive context first",
+    "classification": "Content",
+    "prototype": "report.html",
+    "section": "Content track",
+    "work": "Generated per assessment from released snapshot; source summary is currently a string of counts."
+  },
+  {
+    "id": "P02",
+    "requirement": "Summary names engagement reviewed material and scope domains",
+    "classification": "Content",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "Generated per assessment from approved basis and engagement period."
+  },
+  {
+    "id": "P03",
+    "requirement": "Summary identifies gaps location criticality and overall posture",
+    "classification": "Content",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "Generated per assessment; ratings/metrics from deterministic scoring only."
+  },
+  {
+    "id": "P04",
+    "requirement": "Gaps by domain, weakest and strongest",
+    "classification": "Presentation",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "All ISO domains with scores; ascending score ranking, tie by registry order."
+  },
+  {
+    "id": "P05",
+    "requirement": "Each domain gap has non-compliance impact risk for board",
+    "classification": "Content",
+    "prototype": "report.html",
+    "section": "Content track",
+    "work": "Generated per assessment; replace raw control wording with audience-specific text, impact backing R04a."
+  },
+  {
+    "id": "P06",
+    "requirement": "Board summary and auditor/technical detail",
+    "classification": "Presentation",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "Single Section select switches two views; preserves released basis."
+  },
+  {
+    "id": "P07",
+    "requirement": "Recommendations and logic follow exported report flow",
+    "classification": "Presentation",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "Context, domains, priorities, recommendations, detail; reuse typed source fields, not regenerate on view."
+  },
+  {
+    "id": "S01a",
+    "requirement": "Ask only non-applicable controls and reasons",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html (clearly marked Scope panel)",
+    "section": "Scope and SoA",
+    "work": "Search exclusion controls; reason field shown only for exclusion."
+  },
+  {
+    "id": "S01b",
+    "requirement": "Everything else applicable with standard justification",
+    "classification": "Backend",
+    "prototype": "questionnaire.html (Scope panel)",
+    "section": "Scope and SoA",
+    "work": "app/services/soa.py default source and source marker; preserve frozen issued justification during cutover."
+  },
+  {
+    "id": "S01c",
+    "requirement": "Author standard applicability justification",
+    "classification": "Content",
+    "prototype": "questionnaire.html (Scope panel)",
+    "section": "Content track",
+    "work": "Authored once per framework/control, no generated claim of observed effectiveness."
+  },
+  {
+    "id": "S02",
+    "requirement": "SoA lives under Scope, no own tab",
+    "classification": "Presentation",
+    "prototype": "questionnaire.html (Scope panel)",
+    "section": "Navigation",
+    "work": "Scope Section select option Applicability, legacy SoA route redirect."
+  },
+  {
+    "id": "T01",
+    "requirement": "Content quality is separate, reader-specific track",
+    "classification": "Content",
+    "prototype": "Not solved by static prototype: examples expose slots only",
+    "section": "Content track",
+    "work": "Separate writing and prompt work for controls, UCC, RFIs, board reports and auditor workpapers."
+  },
+  {
+    "id": "T02",
+    "requirement": "Useful consultant AI output and good reports with less effort",
+    "classification": "Content",
+    "prototype": "Not measured: needs consultant task testing",
+    "section": "Content track",
+    "work": "Audience-specific acceptance criteria, grounded claims, approved text reuse; do not claim productivity from screenshots."
+  },
+  {
+    "id": "D06c",
+    "requirement": "Unified taxonomy and requirement wording",
+    "classification": "Content",
+    "prototype": "Not shown: requires content track beyond ISO focus",
+    "section": "Content track",
+    "work": "Authored once for UCC domain names and cluster prompts; use existing DOMAIN_GROUP_ORDER as starting inventory, not accepted final taxonomy."
+  },
+  {
+    "id": "R07c",
+    "requirement": "Persist independent provenance narrative",
+    "classification": "Backend",
+    "prototype": "review-queue.html, conclusions.html",
+    "section": "Review hierarchy",
+    "work": "Store provenance_narrative with conclusion revision and linked method sources; app/models/conclusion.py and app/services/conclusion_review.py."
+  },
+  {
+    "id": "R12",
+    "requirement": "Expose queue state and evidence conflicts to JSON",
+    "classification": "Backend",
+    "prototype": "review-queue.html",
+    "section": "Delivery",
+    "work": "Serialize ConclusionCard and RequirementCard in app/routers/conclusions.py; retain allowed_actions and blocker computation."
+  },
+  {
+    "id": "P08",
+    "requirement": "Expose accepted narrative and board read model",
+    "classification": "Backend",
+    "prototype": "report.html",
+    "section": "Report",
+    "work": "Reuse app/services/narrative.py accepted AuditEvents and app/services/board_report.py build_document; JSON read view must preserve freshness and acceptance gate."
+  }
+]

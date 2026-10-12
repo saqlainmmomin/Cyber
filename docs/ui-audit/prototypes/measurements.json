@@ -1,0 +1,600 @@
+[
+ {
+  "screen": "conclusions",
+  "viewport": 1440,
+  "height": 2983,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 190,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 62,
+    "size": "14px",
+    "width": 443,
+    "text": "No gap identified. Door alarms and camera coverage"
+   },
+   {
+    "chars": 62,
+    "size": "14px",
+    "width": 443,
+    "text": "No gap identified. Environmental safeguards cover "
+   },
+   {
+    "chars": 62,
+    "size": "14px",
+    "width": 443,
+    "text": "No gap identified. Service owners review resource "
+   },
+   {
+    "chars": 61,
+    "size": "14px",
+    "width": 443,
+    "text": "Eight approved removal actions remained open at 30"
+   },
+   {
+    "chars": 60,
+    "size": "14px",
+    "width": 443,
+    "text": "No gap identified. Approval, implementation and in"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 86,
+  "failedRequests": [],
+  "screenshot": "screenshots/conclusions-1440.png"
+ },
+ {
+  "screen": "conclusions",
+  "viewport": 1280,
+  "height": 3203,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 190,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 54,
+    "size": "14px",
+    "width": 382,
+    "text": "No gap identified. Door alarms and camera coverage"
+   },
+   {
+    "chars": 54,
+    "size": "14px",
+    "width": 382,
+    "text": "No gap identified. Authentication uses multifactor"
+   },
+   {
+    "chars": 53,
+    "size": "14px",
+    "width": 382,
+    "text": "No gap identified. Security impact, ownership and "
+   },
+   {
+    "chars": 53,
+    "size": "14px",
+    "width": 382,
+    "text": "No gap identified. An owner-maintained inventory i"
+   },
+   {
+    "chars": 53,
+    "size": "14px",
+    "width": 382,
+    "text": "No gap identified. Environmental safeguards cover "
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 86,
+  "failedRequests": [],
+  "screenshot": "screenshots/conclusions-1280.png"
+ },
+ {
+  "screen": "questionnaire",
+  "viewport": 1440,
+  "height": 1940,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 60,
+   "20px": 2,
+   "12px": 1,
+   "24px": 1,
+   "16px": 10
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 94,
+    "size": "16px",
+    "width": 727,
+    "text": "Access rights are provisioned and reviewed by poli"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   },
+   {
+    "label": "ISO 27001 domains",
+    "top": 330,
+    "left": 248,
+    "width": 196,
+    "height": 216
+   }
+  ],
+  "illustrative": 5,
+  "failedRequests": [],
+  "screenshot": "screenshots/questionnaire-1440.png"
+ },
+ {
+  "screen": "questionnaire",
+  "viewport": 1280,
+  "height": 1940,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 60,
+   "20px": 2,
+   "12px": 1,
+   "24px": 1,
+   "16px": 10
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 94,
+    "size": "16px",
+    "width": 727,
+    "text": "Access rights are provisioned and reviewed by poli"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   },
+   {
+    "label": "ISO 27001 domains",
+    "top": 330,
+    "left": 248,
+    "width": 196,
+    "height": 216
+   }
+  ],
+  "illustrative": 5,
+  "failedRequests": [],
+  "screenshot": "screenshots/questionnaire-1280.png"
+ },
+ {
+  "screen": "report",
+  "viewport": 1440,
+  "height": 9353,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 83,
+   "20px": 6,
+   "12px": 1,
+   "24px": 1,
+   "16px": 147
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 98,
+    "size": "16px",
+    "width": 727,
+    "text": "Reconciling the leaver checklist with both identit"
+   },
+   {
+    "chars": 97,
+    "size": "16px",
+    "width": 727,
+    "text": "Verifying every entry before the tabletop lets res"
+   },
+   {
+    "chars": 97,
+    "size": "16px",
+    "width": 727,
+    "text": "A review for every critical supplier checks curren"
+   },
+   {
+    "chars": 95,
+    "size": "16px",
+    "width": 727,
+    "text": "Reviewing obligations before renewal creates a pra"
+   },
+   {
+    "chars": 93,
+    "size": "16px",
+    "width": 727,
+    "text": "Veldhara\u2019s July to September engagement reviewed p"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 60,
+  "failedRequests": [],
+  "screenshot": "screenshots/report-1440.png"
+ },
+ {
+  "screen": "report",
+  "viewport": 1280,
+  "height": 9353,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 83,
+   "20px": 6,
+   "12px": 1,
+   "24px": 1,
+   "16px": 147
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 98,
+    "size": "16px",
+    "width": 727,
+    "text": "Reconciling the leaver checklist with both identit"
+   },
+   {
+    "chars": 97,
+    "size": "16px",
+    "width": 727,
+    "text": "Verifying every entry before the tabletop lets res"
+   },
+   {
+    "chars": 97,
+    "size": "16px",
+    "width": 727,
+    "text": "A review for every critical supplier checks curren"
+   },
+   {
+    "chars": 95,
+    "size": "16px",
+    "width": 727,
+    "text": "Reviewing obligations before renewal creates a pra"
+   },
+   {
+    "chars": 93,
+    "size": "16px",
+    "width": 727,
+    "text": "Veldhara\u2019s July to September engagement reviewed p"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 60,
+  "failedRequests": [],
+  "screenshot": "screenshots/report-1280.png"
+ },
+ {
+  "screen": "review-queue",
+  "viewport": 1440,
+  "height": 1524,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 56,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1,
+   "16px": 17
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 87,
+    "size": "16px",
+    "width": 727,
+    "text": "Closing removal tickets removes known residual acc"
+   },
+   {
+    "chars": 85,
+    "size": "16px",
+    "width": 727,
+    "text": "Eight approved removal actions remained open at 30"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 30,
+  "failedRequests": [],
+  "screenshot": "screenshots/review-queue-1440.png"
+ },
+ {
+  "screen": "review-queue",
+  "viewport": 1280,
+  "height": 1524,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 56,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1,
+   "16px": 17
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 85,
+    "size": "16px",
+    "width": 666,
+    "text": "Eight approved removal actions remained open at 30"
+   },
+   {
+    "chars": 83,
+    "size": "16px",
+    "width": 666,
+    "text": "Closing removal tickets removes known residual acc"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 30,
+  "failedRequests": [],
+  "screenshot": "screenshots/review-queue-1280.png"
+ },
+ {
+  "screen": "rfi",
+  "viewport": 1440,
+  "height": 4936,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 504,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 84,
+    "size": "14px",
+    "width": 636,
+    "text": "The live engagement includes DPDPA and ISO request"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1168,
+    "height": 49
+   }
+  ],
+  "illustrative": 2,
+  "failedRequests": [],
+  "screenshot": "screenshots/rfi-1440.png"
+ },
+ {
+  "screen": "rfi",
+  "viewport": 1280,
+  "height": 4936,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 504,
+   "20px": 1,
+   "12px": 1,
+   "24px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "12px",
+    "cls": "meta",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 84,
+    "size": "14px",
+    "width": 636,
+    "text": "The live engagement includes DPDPA and ISO request"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 78,
+    "left": 16,
+    "width": 191,
+    "height": 296
+   },
+   {
+    "label": "Assessment stages",
+    "top": 178,
+    "left": 248,
+    "width": 1008,
+    "height": 49
+   }
+  ],
+  "illustrative": 2,
+  "failedRequests": [],
+  "screenshot": "screenshots/rfi-1280.png"
+ }
+]

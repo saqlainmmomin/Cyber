@@ -1,102 +1,135 @@
-# CyberAssess UI audit: Phase 12 stop point
+# CyberAssess UI audit
 
-The source/HTTP audit identifies 24 grouped issues, with 8 P0, 12 P1 and 4 P2 priorities. The largest migration risks are constrained task layouts, undersized audit prose, hidden queue outcomes, inconsistent navigation/state and blurred status semantics. Most are avoidable within the existing stack. This is the authorised A2 fallback result: no screenshots or browser measurements were obtained, so visual approval remains pending.
-
-Port 8011 was reachable. Chromium launch failed with a sandbox macOS MachPort permission error. All 38 required live route variants returned HTTP 200 after redirects. Read-only inspection covered 213 routes/fragments/states, including every questionnaire section returned for the current and NIST assessments. Five fixture responses failed: four upload states returned 500 and the comparison fixture returned 404. No server was started, no seed changed and no AI action ran.
+The interface needs a shared reading and decision system before its Next.js cutover. Most defects come from design decisions, shortcuts and missing specifications. Replacing Jinja and HTMX alone will preserve them. The target is opaque neutral surfaces, readable audit text, compact inventories and a consistent finding hierarchy.
 
 ## The ten biggest problems
 
-These are source/HTTP findings with expected workflow impacts, not measured scanning-time or fatigue results. See the issue register for severity, evidence and specific recommendations.
+| Issue | Problem | Target |
+| --- | --- | --- |
+| UI-001 | Question pane is576px inside a1040px page at 1440. | Wide task workspace with a196px domain rail and no permanent third pane. |
+| UI-002 / UI-013 | Guidance is12px, substantive text13px, report prose reaches138 characters per line. | Audit text >=14px; primary reading16px; prose72ch target. |
+| UI-025 / UI-008 | Stage tabs stack above changing subnavigation; RFI adds a third level. | One stage bar and one flattened Section selector; stable URL state. |
+| UI-003 / UI-009 / UI-012 | Queue dots hide outcomes; status meanings collide; seven dark accent-text pairs fail modeled contrast. | Four labelled status families and validated theme pairs. |
+| UI-004 | Section validation prevents draft saving and navigation can discard work. | Partial autosave and separate explicit completion. |
+| UI-027 / UI-028 / UI-029 | Control-name titles, duplicate evidence and demoted recommendation obscure the finding. | Gap title, outcome, impact, recommendation/logic and one provenance narrative. |
+| UI-005 / UI-034 | RFI is20,005px tall and repeats selection content. | Compact sorted requests, inclusion state, guidance on demand. |
+| UI-007 / UI-035 | Report repeats detail and needs reader-specific context rather than counts. | Accepted executive prose, all domains, board/detail views. |
+| UI-030 | SoA is17,481px and asks for every control justification. | Scope exception panel with standard applicable justification. |
+| UI-011 / UI-031 / UI-032 / UI-033 | Mobile upload file picker is unreachable by Tab; error/heading/type/branding need repair. | Keyboard file choice, item-linked errors, h1 first and consistent CyberAssess branding. |
 
-| Issue | Problem | Migration priority |
-|---|---|---|
-| UI-001 | Fixed navigation and nested gutters consume the questionnaire work area before the reading task is considered. | P0 |
-| UI-002 | Guidance, caveats, evidence and gap descriptions use 12/13px metadata roles. | P0 |
-| UI-003 | The review list represents outcome with a dot and tooltip; risk and exception flags remain in hidden data. | P0 |
-| UI-004 | Questionnaire saves require a complete section, with no inspected draft/dirty-navigation contract. | P1 |
-| UI-005 | RFI selection exposes repeated guidance before compact receipt and inclusion decisions. | P1 |
-| UI-006 | Review exposes many provenance layers at once and places decisions after long supporting detail. | P1 |
-| UI-007 | Report detail lacks local triage and repeats critical rows despite useful existing summaries. | P1 |
-| UI-008 | Route tabs, in-page tabs, questionnaire selection and review selection have different URL/history contracts. | P0 |
-| UI-009 | Status mappings duplicate wording and confuse provenance, lifecycle, outcome and authority. | P0 |
-| UI-010 | The prominent shell Search input has no inspected search handler or result contract. | P1 |
+## Which problems are systemic
 
-The client upload keyboard path (UI-011), dark theme foreground/background pairs (UI-012) and consistent reading measure (UI-013) are also P0. High severity does not automatically mean P0: a workflow improvement may be P1 while an accessibility foundation must precede viability.
+ROOT_CAUSES.md records16 causes:1 Stack,3 Design decision,7 Shortcut,5 Never designed. Fifteen of 16 are not inherent to Jinja/HTMX. Width, small text roles, status semantics, repeated navigation, copied card markup and missing provenance/content contracts affect many screens. The stack cause is fragment-local state and focus/history coordination; explicit React contracts can help, but do not automatically fix it.
 
-## Which problems are systemic?
+## What must not carry into Next.js
 
-Width, type roles, surface pairs, status mapping, form anatomy, navigation state and retained screen verification span multiple routes. [ROOT_CAUSES.md](ROOT_CAUSES.md) classifies 12 causes exactly once:
+Retire gradient canvas, glass surfaces, stacked segmented navigation, universal narrow page width, metadata-sized audit content, control-title-only findings, duplicate evidence regions, footer-only decisions, per-control SoA justification forms and full RFI teaching text on every row. Do not copy HTML fragments into React with the same structure. Keep deterministic Python scoring, separate framework scores, evidence/version trace, conflict guards, locked/released gates and conditional framework copy.
 
-| Stack | Design decision | Shortcut | Never designed |
-|---:|---:|---:|---:|
-| 1 | 3 | 7 | 1 |
+## Core principles
 
-Eleven of twelve causes concern design decisions, bypasses or unspecified rules; React does not solve them automatically. The stack-related cause is coordination of selection, fragments, local scripts, errors and URL state. Jinja already supports shared macros and the app already has tokens, readable conclusion type, explicit warnings and useful component primitives.
+Information follows the auditor's decision. A table is for scanning, a workspace for comparing, and a document for reading. All audit content is at least14px. Prose targets60 to 80 characters per full line. Status has words and a semantic family. Surface, spacing and typography come from shared tokens. Greyscale preserves title, gap and next action. One stage navigation bar is enough; a labelled Section selector handles sub-sections. Good writing remains a separate track.
 
-Starting assumptions were corrected rather than repeated. There are 623 parsed inline style attributes, 426 outside board-print layout. Only the gallery actually calls the shared `ui.field` macro. Local prose caps and review-width exceptions already exist. The retained shell/gallery baselines are incomplete, but S7/S8/S9 page comparison gates refute the claim that no screen was ever checked.
+## P0 migration gates
 
-## What should not carry into Next.js?
+UI-001, UI-002, UI-003, UI-008, UI-009, UI-011, UI-012, UI-013 and UI-025 must pass the measured checks in the spec's P0 table before the migrated UI is viable. These cover usable width, reading size/measure, explicit status, navigation/history, theme contrast and keyboard file access. Source/math checks in this run do not replace runtime geometry and keyboard tests of a future implementation.
 
-Do not preserve the single default workspace width, nested card gutters, metadata styling for audit prose, arbitrary surface combinations, repeated status dictionaries, undurable selected-item state, decorative Search or completion-only persistence. Do not translate each inline layout choice into a one-off Tailwind class composition.
+## First five screens and components
 
-Preserve deterministic framework-specific scoring, period/cutoff and immutable release semantics, citation/version identity, contradiction and conflict warnings, shared evidence, readable conclusion styling, current executive/domain summaries and existing keyboard/modal behavior. The current report already has summaries; the recommendation is to connect them to exception detail.
+Build Questionnaire, Review queue, Conclusions, RFI and Report first. Their [static prototypes](prototypes/README.md) test distinct work patterns with real Veldhara GET content. The first primitives are AppShell, Page width modes, Header/StageNav/SectionSelect, Text/Prose roles, Field, StatusBadge and DataTable. Then compose QuestionCard, FindingDetail/ReviewDecision, RequestRow and DomainSummary. The component inventory rules on every provisional plan component; no generic Card or decorative score ring is required.
 
-## Core design principles proposed for the new UI
+## Requirements coverage
 
-Separate content typography from metadata. Optimize layouts for the decision and allow dense inventory, reading and task-workspace modes. Show outcome, severity, lifecycle and provenance as distinct text-backed dimensions. Keep blockers and auditor authority explicit. Reveal repetitive guidance and provenance detail after a concise summary. Make selected section/control and framework context durable in the URL, with safe draft persistence and predictable focus. Validate both desktop widths and the one mobile-first client flow using real content.
+Each of Saqlain's decisions and per-screen requirements is linked below. Split rows distinguish data, writing and display dependencies. Presentation 32, Backend 14, Content 14;60 rows total. Requirements that are not demonstrated name the reason instead of implying a static screen verifies them. Requirements JSON and the spec use identical IDs.
 
-The Yozora recommendation keeps P1/P3/P4/P6/P8/P9/P10, changes P2/P5/P7, retires the canvas gradient and glass reading surfaces, keeps eight branding presets subject to pair validation, and changes the status color contract. [ROOT_CAUSES.md](ROOT_CAUSES.md) gives the exact principle wording, rationale and limits. These are recommendations for Saqlain, not adopted design decisions.
+| ID | Decision / requirement | Prototype or reason | Spec section | Classification |
+| --- | --- | --- | --- | --- |
+| D01 | FastAPI remains JSON API; cut over screen by screen | No static API execution: spec only | Delivery | Backend |
+| D02 | Retire gradient canvas and glass | All five | Foundation | Presentation |
+| D03 | Keep eight accents for interaction and branding only | All five, graphite shown; other presets in token table | Foundation | Presentation |
+| D04 | Four status families | All five | Status | Presentation |
+| D05 | Control codes allowed beside titles | questionnaire.html, review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| D06a | Single framework uses its own master domains | questionnaire.html (target ISO focus) | Questionnaire | Backend |
+| D06b | Multi-framework covers each requirement once in unified domains | Not shown: ISO focus prototype; multi-framework is specified | Questionnaire | Backend |
+| D07a | Drafts save automatically while typing | questionnaire.html (static saved state) | Draft contract | Backend |
+| D07b | Draft saving feedback and explicit completion act | questionnaire.html | Draft contract | Presentation |
+| D08 | Pending first, then missing or contradictory evidence; sort and switch anytime | review-queue.html | Review queue | Presentation |
+| D09 | Laptop 1440 with 1280 support | All five | Foundation | Presentation |
+| D10 | Never stack secondary or tertiary navigation bars | All five | Navigation | Presentation |
+| D11 | Inter stays | All five | Foundation | Presentation |
+| Q01 | Question area uses available width, no blank side | questionnaire.html | Questionnaire | Presentation |
+| Q02 | Control requirement is primary | questionnaire.html | Questionnaire | Presentation |
+| Q03 | Explain why asked | questionnaire.html | Content track | Content |
+| Q04 | Hint on how to put question to client | questionnaire.html | Content track | Content |
+| Q05 | Persist distinct why and how fields | questionnaire.html | Questionnaire | Backend |
+| Q06 | Rework help hierarchy at readable size and measure | questionnaire.html | Questionnaire | Presentation |
+| Q07 | Show unanswered and answered after assessment | questionnaire.html | Questionnaire | Presentation |
+| Q08 | ISO uses four Annex A themes, not privacy headings | questionnaire.html | Questionnaire | Presentation |
+| R01 | Each queue item is a finding before approval | review-queue.html | Review hierarchy | Presentation |
+| R02a | Gap title distinct from control name | review-queue.html, conclusions.html | Review hierarchy | Backend |
+| R02b | Write short gap titles | review-queue.html, conclusions.html | Content track | Content |
+| R03 | Gap statement then compliance status | review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| R04a | Risk or impact of non-compliance | review-queue.html, report.html | Review hierarchy | Backend |
+| R04b | Write impact statements | review-queue.html, report.html | Content track | Content |
+| R05 | Recommendation at full weight | review-queue.html, report.html | Review hierarchy | Presentation |
+| R06a | Recommendation reasoning has its own slot | review-queue.html, report.html | Review hierarchy | Backend |
+| R06b | Write recommendation logic | review-queue.html, report.html | Content track | Content |
+| R07a | What reviewed and who spoken to as provenance | review-queue.html | Review hierarchy | Backend |
+| R07b | Concise provenance narrative | review-queue.html, conclusions.html | Content track | Content |
+| R08 | One provenance block; cited file one click away | review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| R09 | Queue outcome and risk in words | review-queue.html | Review queue | Presentation |
+| R10 | Approve edit reject attached and visible | review-queue.html | Review queue | Presentation |
+| R11 | One Review hierarchy across queue conclusions findings workpaper | review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| C01 | Conclusions are final gaps without queue mechanics | conclusions.html | Conclusions | Presentation |
+| C02 | Deterministic table domain control ID gap risk status | conclusions.html | Conclusions | Presentation |
+| C03 | Row expands to full finding | conclusions.html | Conclusions | Presentation |
+| F01 | RFI tight sortable list | rfi.html | RFI | Presentation |
+| F02a | Already added item absent from same add form | rfi.html | RFI | Backend |
+| F02b | Separate included items from candidates | rfi.html | RFI | Presentation |
+| F03 | What to send example good looks like on demand | rfi.html | RFI | Presentation |
+| P01 | Written executive context first | report.html | Content track | Content |
+| P02 | Summary names engagement reviewed material and scope domains | report.html | Report | Content |
+| P03 | Summary identifies gaps location criticality and overall posture | report.html | Report | Content |
+| P04 | Gaps by domain, weakest and strongest | report.html | Report | Presentation |
+| P05 | Each domain gap has non-compliance impact risk for board | report.html | Content track | Content |
+| P06 | Board summary and auditor/technical detail | report.html | Report | Presentation |
+| P07 | Recommendations and logic follow exported report flow | report.html | Report | Presentation |
+| S01a | Ask only non-applicable controls and reasons | questionnaire.html (clearly marked Scope panel) | Scope and SoA | Presentation |
+| S01b | Everything else applicable with standard justification | questionnaire.html (Scope panel) | Scope and SoA | Backend |
+| S01c | Author standard applicability justification | questionnaire.html (Scope panel) | Content track | Content |
+| S02 | SoA lives under Scope, no own tab | questionnaire.html (Scope panel) | Navigation | Presentation |
+| T01 | Content quality is separate, reader-specific track | Not solved by static prototype: examples expose slots only | Content track | Content |
+| T02 | Useful consultant AI output and good reports with less effort | Not measured: needs consultant task testing | Content track | Content |
+| D06c | Unified taxonomy and requirement wording | Not shown: requires content track beyond ISO focus | Content track | Content |
+| R07c | Persist independent provenance narrative | review-queue.html, conclusions.html | Review hierarchy | Backend |
+| R12 | Expose queue state and evidence conflicts to JSON | review-queue.html | Delivery | Backend |
+| P08 | Expose accepted narrative and board read model | report.html | Report | Backend |
 
-Source contrast calculations do not support a global muted-text failure: base body, secondary and muted tokens pass AA on modeled canvas/glass/solid. Seven non-graphite accent-text presets in dark theme require targeted attention, and literal white chips need rendered pairing checks. The complete 5,198-row contrast matrix is a conservative source superset; it is not an accessibility certification of the running UI.
+## Deliverables
 
-## P0 fixes and acceptance direction
+The nine requested audit documents are:
 
-The eight P0 issues are UI-001, UI-002, UI-003, UI-008, UI-009, UI-011, UI-012 and UI-013. Resolve task width, reading type/measure, queue outcome wording, navigation state, status vocabulary, upload keyboard access and validated theme pairs before considering migration UI viable. Acceptance must include actual rendered width/type/line-length measurements and keyboard/history checks, which remain deferred here.
+| Document | Purpose |
+| --- | --- |
+| [README.md](README.md) | Executive findings and requirements coverage |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Current source architecture |
+| [SCREEN_INVENTORY.md](SCREEN_INVENTORY.md) | Live route and state coverage |
+| [UI_ISSUES.md](UI_ISSUES.md) | Reconciled35-issue register |
+| [ROOT_CAUSES.md](ROOT_CAUSES.md) | 16 causes and design rulings |
+| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Target tokens, contrast, type, widths and navigation |
+| [PAGE_ARCHETYPES.md](PAGE_ARCHETYPES.md) | Reusable archetypes and T1 to T7 rulings |
+| [NEXTJS_MIGRATION_UI_SPEC.md](NEXTJS_MIGRATION_UI_SPEC.md) | Coding-agent contract and 60 classified requirements |
+| [COMPONENT_INVENTORY.md](COMPONENT_INVENTORY.md) | 40 shared primitive/domain contracts |
 
-Candidate archetypes for the second dispatch are inventory/list, review workspace, form/configuration, report/document and work queue. Keep prose width independent of table/task width. Questionnaire may use navigation plus reading with contextual evidence in a drawer or replaceable inspector at 1280; a permanent third column must be justified by actual content measurements. This run does not create PAGE_ARCHETYPES.md or an implementation specification.
+Supporting evidence: [Measurements](MEASUREMENTS.md), [Status inventory](STATUS_INVENTORY.md), [Contrast appendix](CONTRAST_APPENDIX.md), [Saqlain decisions](SAQLAIN_FEEDBACK.md), [Host rendered summary](rendered-measurements-summary.json), [Target contrast](target-contrast.json), [Prototypes and illustrative dependencies](prototypes/README.md). Capture requests remain a historical plan with completion status, not a list of missing screenshots.
 
-## Five screens to redesign first
+## What changed after the first half
 
-1. Evidence requests: include RFI item selection, engagement Requests and client upload, since they are distinct tasks.
-2. Evidence inventory: test all three scopes and exact mapping/version discovery.
-3. Questionnaire: test populated and partly answered sections, evidence disclosure and draft persistence.
-4. Review: test pending selection, expanded evidence, edit, conflict, locked and blocked states.
-5. Report: use the ISO 93-control content, preserve domain/risk summaries and improve exception drill-down.
+Host captures now substantiate appearance and geometry:411 measured rows,109 committed live/dark/mobile captures plus local fixture captures. The original24 issues reconcile to 19 confirmed,4 corrected and 1 withdrawn. UI-015's conditional wording and UI-017's six-item scale claim were narrowed; UI-021 acknowledges host coverage; UI-023 is now a product requirement with confirmed wrong framework headings. UI-024's audit fixture blocker is withdrawn because the upload fixtures were temporarily seeded, captured and removed. Eleven new entries UI-025 toUI-035 capture stacked navigation, repeated client headings, duplicate provenance, small recommendation treatment, finding titles, SoA workload, upload error/heading/type/brand problems, RFI repetition and audience-specific report content. There are 35 register entries,34 active.
 
-## Common components to establish first
+The comparison fixture still returns404 in two captures. The populated live comparison is captured at both widths and is not unreviewed. Most below14px counts include metadata, so counts alone are not accessibility defect counts. Runtime host keyboard evidence establishes the upload file-control failure. Autosave, conflict and history behavior remain code-backed findings unless exercised by the host.
 
-At the recommendation level, start with shell/context navigation and task-width containers; typography/content roles; status/provenance indicators; labelled form controls with errors and draft state; structured table/list rows with filter and disclosure anatomy; and a reading/decision workspace with citation context. Dialog, alert, loading and upload primitives must retain focus and recovery contracts. The formal component inventory and exact variants belong to the second run.
+## Verification and limits
 
-## Deliverables and coverage
+Run `python docs/ui-audit/tools/verify_audit.py`. It checks all nine documents,35 structured issues and existing cited screenshots, all P0 rules,60 coverage rows, classification values and code paths, five prototype files/shared CSS/fonts, illustrative IDs and manifests, realistic source row counts, target contrast and write scope. Prototype source is GET-only, with no AI spend. No browser/server/commit was used in this run.
 
-| Artifact | What it establishes |
-|---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Verified stack, source organization, reusable primitives and corrected starting assumptions |
-| [SCREEN_INVENTORY.md](SCREEN_INVENTORY.md) | 206 route/state/interaction entries, including 38 required live variants and all 44 fixture names |
-| [UI_ISSUES.md](UI_ISSUES.md) | 24 grouped findings with P0/P1/P2 and focused questionnaire/request/review/report assessments |
-| [ROOT_CAUSES.md](ROOT_CAUSES.md) | 12 classified causes and full Yozora ruling |
-| [MEASUREMENTS.md](MEASUREMENTS.md) | Per-screen pending browser fields, contrast method and source type risks |
-| [CONTRAST_APPENDIX.md](CONTRAST_APPENDIX.md) | All source-computed contrast candidate pairs and extrema |
-| [STATUS_INVENTORY.md](STATUS_INVENTORY.md) | Status wording, tone, location and semantic collisions |
-| [CAPTURE_REQUESTS.md](CAPTURE_REQUESTS.md) | 421 exact requests: 412 light desktop, five dark desktop and four mobile upload |
-| [http-observations.json](http-observations.json) | 213 curl GET responses, effective URLs, markup/text and fragment targets |
-| [tools](tools/) | Reproducible manifest, HTTP inspection, contrast, deferred capture/measurement and documentation verification tools |
-
-Phases 1, 3, 4 and 7 to 12 are delivered through source/HTTP inspection. Phase 2 is delivered through A2's deferred-capture inventory. Phase 5 DESIGN_SYSTEM.md and Phase 6 PAGE_ARCHETYPES.md are explicitly second-run deliverables under A6, with only recommendations/candidate archetypes here. Phases 13 to 15 were not executed.
-
-Document verification passed: complete request coverage, issue structure and references, valid local links, contrast extrema, live HTTP status, no new long dashes and allowed change scope. The contrast calculation smoke checks passed. No production test run was needed for documentation-only changes.
-
-## What remains unverified
-
-Zero screenshots exist. Width, unused width, actual line length, rendered text-node counts, visible overflow, scroll/action placement, keyboard runtime behavior and visual hierarchy remain pending. Each issue cites a requested capture and an inspected source; the existing-screenshot requirement cannot be met in this sandbox, so A2's fallback takes precedence. The 421 requests are comprehensive state coverage, not 421 claims of distinct visual defects.
-
-The upload fixture needs its expected `s8-client-active` data; the comparison fixture needs a valid previous assessment. These failures are fixture limitations, not proof that production upload or live comparison is broken. No changes to either were authorised in this docs-only run. [CAPTURE_REQUESTS.md](CAPTURE_REQUESTS.md) includes the handoff for an unrestricted capture host and records the remaining manual interaction checks.
-
-## Questions for Saqlain at this stop point
-
-- Accept opaque neutral reading surfaces and retirement of the gradient canvas, or retain a restrained brand treatment outside content?
-- Should shared questionnaire grouping stay cross-framework with explicit control coverage, or should navigation present framework-native domains? The demo includes legacy DPDPA alongside ISO.
-- Should questionnaire and narrative drafts save explicitly or automatically, with completion/acceptance kept separate?
-- Which queue triage dimension should lead: pending decision, high risk or missing/contradictory evidence?
-
-These decisions are for the second dispatch. No redesign, production implementation, push or PR was performed.
+The static screens have not been rendered in a browser here, as instructed. Host screenshot review must prove layout at 1440/1280, actual line lengths, focus order and sticky decisions. Autosave and other backend contracts are specified, not implemented. The five screens render from disk; citation destinations require the existing app. The current source assessment contains DPDPA plus ISO; questionnaire/report prototypes explicitly demonstrate ISO focus, and the target single-framework grouping is disclosed. Content quality and productivity need their own writing and consultant testing work. There are no blocking product decisions left open.
