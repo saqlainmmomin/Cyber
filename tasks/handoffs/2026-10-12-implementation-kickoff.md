@@ -230,6 +230,25 @@ C2 (periodic sweep), C3 (interview rule), C4 and C5 (S5 and S6-F2 scope lines), 
 
 Everything else above is a plan edit I will make without asking, unless you object.
 
+### Part 2a. E4 build (Codex) (2026-10-12)
+
+**PR: https://github.com/saqlainmmomin/Cyber/pull/138** (branch `codex/e4-checklist-rfi-examples`, not merged). Ready for your click-through.
+
+- **Dispatch.** Own worktree from `origin/main` (d50cc61), `gpt-6.1-sol` at medium effort. I added a "Drift notes" section to the E4 handoff first, because its line references were stale after #134 and #135. Scope was unchanged.
+- **What it does.** v1 cards show the control's signed criteria under "Auditor checklist; not used by this analysis" with no met or unmet marks; v1 cards can add a suggested document to the RFI (idempotent); every scoped RFI request keeps its original text and then lists the mapped controls' signed statements, hints and source bases, a document example from a new 51-type catalogue, and blank Period and Sample size lines.
+- **Verified by me, not on Codex's word.**
+  - Full suite with `OPENROUTER_KEY=""`: 1,702 passed, 29 skipped on Codex's first pass (my own run: same). After the fix round: **1,716 passed, 29 skipped** (my own run).
+  - Prompt fingerprint tests pass unchanged. No prompt, analyzer, grounding, scoring or LLM file is in the diff.
+  - Diff scope checked against the handoff. One file outside it: `app/utils/rfi_export.py`. It is necessary, because the PDF and DOCX cut every request at 300 characters and all 55 ISO and NIST requests are longer (median about 2,300). A reviewer confirmed this by measurement and by rendering.
+- **Review.** Two Sonnet reviewers (behaviour and tests; PDF/DOCX export), run on top of Codex's own five-lens review. Real findings, all fixed in one Codex round and re-verified:
+  - major: the HTML RFI page collapsed the guidance into one run-on line (now pre-line, block level);
+  - `KeyError` hazard for a stored document type outside the catalogue (now falls back to "other", with tests);
+  - weak or missing tests (pass/fail marks absent, DPDPA scoped item, no-run card refuses add, unconditional PDF overlap, page number format, non-latin-1 text);
+  - PDF orphan and widow pagination;
+  - DOCX control characters and a leftover truncation.
+- **Click-through done by me** on the live run's data (93 v1 ISO conclusions) against the E4 branch: A.5.18 shows 4 criteria with kinds, hints, basis, the label, no tick marks and an add control; the RFI page shows 30 requests with the guidance as separate lines, including the firewall example and the blank Period and Sample lines.
+- **Left for you:** catalogue wording sign-off (table in the PR body) and your own click-through. The RFI page shows each request in full (380 to 5,900 characters). Say if you want it collapsed after the first paragraph.
+
 ### Part 2b. Live-API Veldhara run with full capture (2026-10-12)
 
 **Result: complete, no failures, about $0.20.** Run 1, `MAX_TOTAL_DOCUMENT_WORDS=30000`, v2 off, one framework (ISO 27001), 57 files uploaded through the real routes and 93 conclusions produced.
@@ -296,3 +315,24 @@ The 58 originals in the pack were generated from `main` before #137, so two file
 - Run 2 at the 20,000 default would show the size-limit notices and a second cost point (about $0.20, about 11 minutes).
 
 **To look at it yourself:** `report.html` in the run folder shows every call, what was sent and what came back. To browse the app on the run's data: `DATABASE_URL=sqlite:///<run>/app.db UPLOAD_DIR=<run>/uploads OPENROUTER_KEY="" .venv/bin/python -m uvicorn app.main:app` from the repo root, then `/assessments/c0176706-523c-4bb7-a2ee-7b177708c728/conclusions`.
+
+### Part 3. Reads stage 1 (truthful cut)
+
+**Not started.** Per the kickoff it waits for E4 to merge (#138), because stage 1 edits the same card files. Plan revision 5 already holds its scope (M5 to M8: manifests in the run envelope, version id on documents, upload order for registry frameworks with the curated DPDPA order kept, report line naming unread files).
+
+### Summary, PRs and open questions
+
+| Item | Link | State |
+|---|---|---|
+| Plan revision 5, session record E8, this file | docs-only PR on `claude/plan-revision-5` | open |
+| E4 build | https://github.com/saqlainmmomin/Cyber/pull/138 | open, needs your click-through and catalogue sign-off |
+| Live capture tooling | https://github.com/saqlainmmomin/Cyber/pull/139 | open, no app change |
+
+Spend: about $0.20 on the provider key for the live run (hard cap was $5). No other spend.
+
+Open questions for Saqlain:
+1. **Merge order.** #138 first (stage 1 waits on it). #139 and the docs PR are independent.
+2. **Run 2 at the 20,000-word default?** About $0.20 and 11 minutes. It is the only way to see the size-limit notices on a real run and gives a second cost point. Not run, because the kickoff specified one run.
+3. **Interim cap raise.** Run 1 shows a 23.4k-word pack costs about $0.07 for desk review, extraction and judge, and takes 11 minutes at the current design. Raising `max_total_document_words` (`app/config.py:21`) is a one-line interim until stage 6. Your call; it does not replace stage 1.
+4. **#137** (strip "synthetic") is still open. The live pack was generated before it.
+5. **Pre-fill produced nothing in run 1** (0 of 93), because desk review wrote an absence finding on every control. That is an observation, not a tuning request. It is the first thing to decide how to treat when stage 5 reshapes desk review.
