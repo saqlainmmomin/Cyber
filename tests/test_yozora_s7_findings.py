@@ -185,7 +185,7 @@ def test_reviewer_name_sits_in_the_detail_head_not_in_the_flow(db, http):
 def test_finding_detail_uses_only_in_scope_framework_copy(db, http):
     response = _get(db, http, "b5-finding-card", "open")
 
-    assert '<span class="chip">DPDPA</span>' in response.text
+    assert '<span class="chip">India DPDPA</span>' in response.text
     assert "ISO 27001" not in response.text
 
 

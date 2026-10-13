@@ -117,14 +117,14 @@ def test_headers_rows_priority_words_and_filename(db, http):
     first, second, third = rows[1:]
     assert first[:8] == [
         "Head office", FrameworkRegistry.get("dpdpa").name, "DPDPA.6.1", "Consent is pre-ticked", "High",
-        "Do first", "Replace the pre-ticked box", "Ananya",
+        "Immediate", "Replace the pre-ticked box", "Ananya",
     ]
     assert third[1] == FrameworkRegistry.get("iso27001").name
     assert first[8] == datetime(2026, 10, 15)
     assert first[9] == "Open" and first[10] == "No" and first[11] is None
     assert second[6] == "Re-collect consent" and second[7] == "Unassigned"
-    assert second[9] == "Closed and verified" and second[10] == "Yes" and second[11] == datetime(2026, 9, 25)
-    assert third[3] == "Access reviews are informal" and third[4] == "Medium" and third[5] == "Backlog"
+    assert second[9] == "Verified" and second[10] == "Yes" and second[11] == datetime(2026, 9, 25)
+    assert third[3] == "Access reviews are informal" and third[4] == "Medium" and third[5] == "Long-term"
     assert third[6] == '=HYPERLINK("x")'  # stored as text, never a formula
     sheet = _book(response)["Actions"]
     assert sheet.cell(row=4, column=7).data_type == "s"
@@ -135,9 +135,9 @@ def test_headers_rows_priority_words_and_filename(db, http):
 
 
 def test_priority_word_map_is_the_single_mapping():
-    assert findings.PRIORITY_WORDS == {1: "Do first", 2: "Next", 3: "Planned", 4: "Backlog"}
+    assert findings.PRIORITY_WORDS == {1: "Immediate", 2: "Short-term", 3: "Medium-term", 4: "Long-term"}
     assert set(findings.PRIORITY_WORDS) == set(findings.PRIORITIES)
-    assert [findings.priority_word(p) for p in findings.PRIORITIES] == ["Do first", "Next", "Planned", "Backlog"]
+    assert [findings.priority_word(p) for p in findings.PRIORITIES] == ["Immediate", "Short-term", "Medium-term", "Long-term"]
     assert set(findings.PRIORITY_BY_SEVERITY.values()) <= set(findings.PRIORITY_WORDS)
 
 
@@ -167,7 +167,7 @@ def test_only_tracker_rows_archived_assessments_and_other_engagements_excluded(d
     db.commit()
     rows = _rows(http.get(f"/engagements/{engagement.id}/remediation/export.xlsx"))
     assert [row[6] for row in rows[1:]] == ["Kept action"]
-    assert rows[1][5] == "Planned"
+    assert rows[1][5] == "Medium-term"
 
 
 def test_archived_engagement_still_exports(db, http):

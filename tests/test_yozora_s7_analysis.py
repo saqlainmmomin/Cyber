@@ -8,9 +8,12 @@ from types import SimpleNamespace
 
 from jinja2 import Environment, FileSystemLoader
 
+from app.services import vocabulary as vocab
+
 
 TEMPLATE_ROOT = Path(__file__).parents[1] / "app" / "templates"
 ENVIRONMENT = Environment(loader=FileSystemLoader(TEMPLATE_ROOT))
+ENVIRONMENT.globals["vocab"] = vocab
 
 
 def _render(name: str, **context) -> str:

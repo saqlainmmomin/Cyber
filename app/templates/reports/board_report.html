@@ -394,7 +394,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     </div>
     {% endfor %}
     <div class="semantic-note" data-takeaway="status-board">{{ doc.takeaways.status_board }}</div>
-    <div class="src">{{ v.source }} Not-concluded requirements are left out of the score.</div>
+    <div class="src">{{ v.source }} Insufficient evidence requirements are left out of the score.</div>
   </div>
   {{ foot() }}
 </section>
@@ -638,7 +638,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 
 <!-- LIMITS -->
 <section class="slide" data-slide="limits">
-  {{ frame('04', doc.not_assessed.insufficient_evidence|length ~ ' requirements could not be concluded; ' ~ doc.not_assessed.rfi['items']|length ~ ' evidence requests are open', 'Not-concluded requirements are left out of scores, not counted as failures. The limits of this assessment follow.', 'Remediation roadmap') }}
+  {{ frame('04', doc.not_assessed.insufficient_evidence|length ~ ' requirements could not be concluded; ' ~ doc.not_assessed.rfi['items']|length ~ ' evidence requests are open', 'Insufficient evidence requirements are left out of scores, not counted as failures. The limits of this assessment follow.', 'Remediation roadmap') }}
   <div class="body" style="display:flex; gap:8mm">
     <div style="flex:0.9">
       <div style="display:flex; gap:2.5mm; margin-bottom:4mm">{% for f in v.fw %}<div class="card" style="flex:1"><div class="disp" style="font-weight:700; font-size:30pt; line-height:1; color:#5A6385">{{ f.coverage.insufficient_evidence }}</div><div style="font-size:9.4pt">not concluded · {{ f.name }}</div></div>{% endfor %}</div>

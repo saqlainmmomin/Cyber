@@ -9,6 +9,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy import literal_column, select, update
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.models.action import Action
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
@@ -37,22 +38,12 @@ ACTION_TRANSITIONS = {
 }
 CLOSURE_STATUSES = ("closed", "verified")
 GENERIC_STATUS_TARGETS = ("open", "in_progress")
-ACTION_STATUS_LABELS = {
-    "open": "Open",
-    "in_progress": "In progress",
-    "closed": "Closed, awaiting verification",
-    "verified": "Closed and verified",
-}
-FINDING_STATUS_LABELS = {
-    "open": "Open",
-    "in_progress": "In progress",
-    "resolved": "Resolved",
-    "accepted_risk": "Accepted risk",
-}
+ACTION_STATUS_LABELS = vocab.REMEDIATION_STATUSES
+FINDING_STATUS_LABELS = vocab.FINDING_STATUS_LABELS
 ELIGIBLE_STATES = ("approved", "edited")
 PRIORITIES = (1, 2, 3, 4)
 # Words for the 1 to 4 priority wherever it can reach a client (Yozora); the number stays internal.
-PRIORITY_WORDS = {1: "Do first", 2: "Next", 3: "Planned", 4: "Backlog"}
+PRIORITY_WORDS = vocab.PRIORITY_LABELS
 PRIORITY_BY_SEVERITY = {"critical": 1, "high": 1, "medium": 2, "low": 3}
 HISTORY_KEYS = ("actor", "action", "timestamp", "notes", "changes")
 HISTORY_ACTIONS = ("created", "status_changed", "updated", "closed", "verified", "reopened")

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
-from app.services import approved_report, conclusion_review
+from app.services import approved_report, conclusion_review, vocabulary as vocab
 
 
 FRAMEWORK_ID = "iso27001"
@@ -31,7 +31,7 @@ IMPLEMENTATION_LABELS = {
     "partially_compliant": "Partially implemented",
     "non_compliant": "Not implemented",
     "insufficient_evidence": "Not determined: insufficient evidence",
-    "not_applicable": "Not applicable",
+    "not_applicable": vocab.OUTCOMES["not_applicable"],
 }
 NOT_ASSESSED_LABEL = "Not assessed: outside the assessment scope"
 PENDING_LABEL = "Not determined: awaiting consultant decision"

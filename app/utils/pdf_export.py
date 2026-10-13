@@ -16,6 +16,7 @@ from fpdf import FPDF
 from app.config import settings
 from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.frameworks.registry import FrameworkRegistry
+from app.services import vocabulary as vocab
 from app.services.report_basis import EMPTY_BASIS, ReportBasis, basis_for
 from app.services.scoring import (
     RATING_THRESHOLDS,
@@ -65,18 +66,18 @@ ANSWER_SOURCE_CONFIG = {
 
 # Rating colors
 RATING_COLORS = {
-    "Non-Compliant": (231, 76, 60),
+    vocab.LEGACY_OUTCOMES["non_compliant"]: (231, 76, 60),
     "Needs Significant Improvement": (230, 126, 34),
-    "Partially Compliant": (241, 196, 15),
-    "Compliant": (39, 174, 96),
+    vocab.LEGACY_OUTCOMES["partially_compliant"]: (241, 196, 15),
+    vocab.LEGACY_OUTCOMES["compliant"]: (39, 174, 96),
 }
 
 # Priority config
 PRIORITY_CONFIG = {
-    1: ("Immediate", "0-4 weeks", (231, 76, 60)),
-    2: ("Short-Term", "1-3 months", (230, 126, 34)),
-    3: ("Medium-Term", "3-6 months", (241, 196, 15)),
-    4: ("Ongoing", "6-12 months", (39, 174, 96)),
+    1: (vocab.LEGACY_PRIORITY_LABELS[1], "0-4 weeks", (231, 76, 60)),
+    2: (vocab.LEGACY_PRIORITY_LABELS[2], "1-3 months", (230, 126, 34)),
+    3: (vocab.LEGACY_PRIORITY_LABELS[3], "3-6 months", (241, 196, 15)),
+    4: (vocab.LEGACY_PRIORITY_LABELS[4], "6-12 months", (39, 174, 96)),
 }
 
 # Unicode -> ASCII for latin-1 safety
@@ -454,13 +455,7 @@ def _draw_status_bar(pdf: FPDF, x: float, y: float, w: float, h: float,
         "not_assessed",
         "insufficient_evidence",
     ]
-    labels = {
-        "compliant": "Compliant",
-        "partially_compliant": "Partial",
-        "non_compliant": "Non-Compliant",
-        "not_assessed": "N/A",
-        "insufficient_evidence": "Insufficient evidence",
-    }
+    labels = vocab.OUTCOME_SHORT
     legend_order = order if show_insufficient_evidence else order[:-1]
     for status in legend_order:
         count = counts.get(status, 0)
@@ -520,7 +515,9 @@ def _draw_gap_card(pdf: FPDF, item, x: float, y: float, w: float,
     pdf.text(inner_x, y + 5, S(title))
 
     # Status + risk badges
-    status_label = item.compliance_status.replace("_", " ").title()
+    status_label = vocab.LEGACY_PDF_OUTCOMES.get(
+        item.compliance_status, item.compliance_status.replace("_", " ").title()
+    )
     sr, sg, sb = STATUS_COLORS.get(item.compliance_status, NAVY)
     badge_x = inner_x + inner_w - 50
     pdf.set_fill_color(sr, sg, sb)
@@ -532,7 +529,7 @@ def _draw_gap_card(pdf: FPDF, item, x: float, y: float, w: float,
 
     pdf.set_fill_color(r, g, b)
     pdf.rect(badge_x + 24, y + 1.5, 18, 4.5, style="F", round_corners=True, corner_radius=1)
-    risk_label = item.risk_level.upper()
+    risk_label = vocab.risk_label(item.risk_level).upper()
     bw = pdf.get_string_width(risk_label)
     pdf.text(badge_x + 24 + (18 - bw) / 2, y + 4.8, risk_label)
 
@@ -805,7 +802,7 @@ def _draw_finding_detail(pdf: FPDF, finding, index: int, y: float) -> float:
         f"{finding.requirement_title}"
     ) + 1
     y = paragraph(
-        f"Severity: {finding.severity.title()} | Priority P{finding.priority} | "
+        f"Severity: {vocab.risk_label(finding.severity)} | Priority P{finding.priority} | "
         f"Finding status: {finding.status_label}"
     ) + 1
     decided_date = (
@@ -1156,7 +1153,7 @@ def generate_pdf(
         card_w,
         27,
         str(counts.get("insufficient_evidence", 0)),
-        "Insufficient Evidence",
+        vocab.LEGACY_OUTCOMES["insufficient_evidence"],
         STATUS_COLORS["insufficient_evidence"],
     )
 
@@ -1486,9 +1483,9 @@ def generate_pdf(
                 pdf.set_font("Helvetica", "", 8)
                 pdf.set_text_color(*LIGHT_TEXT)
                 label = (
-                    "Insufficient evidence"
+                    vocab.OUTCOMES["insufficient_evidence"]
                     if item.compliance_status == "insufficient_evidence"
-                    else "N/A"
+                    else vocab.OUTCOME_SHORT["not_assessed"]
                 )
                 pdf.text(
                     PM + 4,

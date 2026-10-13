@@ -5,20 +5,20 @@
 {% set risk = item.ai_risk_level or item.risk_level or "medium" %}
 {% set evidence = item.evidence_confidence or "weak" %}
 {% set notes_visible = notes_open|default(false) %}
-{% set compliance_labels = {"non_compliant": "Non-compliant", "partially_compliant": "Partially compliant", "compliant": "Compliant", "insufficient_evidence": "Insufficient evidence"} %}
+{% set compliance_labels = vocab.OUTCOMES %}
 <div class="solid card" data-review-card data-review-status="{{ review_state }}" data-risk-level="{{ item.risk_level }}" id="review-card-{{ item.id }}">
   <div class="d-title">
     <div>
-      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="muted">{{ item.chapter or item.requirement_id }}</span></div>
+      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="muted">{{ vocab.display_reference(item.framework_id, item.requirement_id) if item.framework_id else (item.chapter or item.requirement_id) }}</span></div>
       <h3 class="rfc-title">{{ item.requirement_title }}</h3>
     </div>
     {% if review_state == "accepted" %}<span class="status">{{ icon("check") }}Accepted</span>
-    {% elif review_state == "rejected" %}<span class="status">{{ icon("x") }}Rejected</span>
-    {% else %}<span class="status"><span class="st"></span>{{ review_state|replace("_", " ")|capitalize }}</span>{% endif %}
+    {% elif review_state == "rejected" %}<span class="status">{{ icon("x") }}{{ vocab.review_label("rejected") }}</span>
+    {% else %}<span class="status"><span class="st"></span>{{ vocab.review_label(review_state) }}</span>{% endif %}
   </div>
   <div class="hrow rfc-facts">
     <div><span class="sub">AI status</span><div class="rfc-fact">{{ pill(compliance_labels.get(compliance, compliance|replace("_", " ")|capitalize), "non" if compliance == "non_compliant" else "part" if compliance == "partially_compliant" else "insuf" if compliance == "insufficient_evidence" else "ok") }}{% if item.needs_review %}<span class="warn" title="The model flagged this verdict for review because no evidence supports it." aria-label="Needs review">{{ icon("alert") }}Needs review</span>{% endif %}</div></div>
-    <div><span class="sub">AI risk level</span><div class="rfc-fact">{{ pill(risk|title, "high" if risk == "high" else "medium" if risk == "medium" else "critical" if risk == "critical" else "low") }}</div></div>
+    <div><span class="sub">AI risk level</span><div class="rfc-fact">{{ pill(vocab.risk_label(risk), "high" if risk == "high" else "medium" if risk == "medium" else "critical" if risk == "critical" else "low") }}</div></div>
     <div><span class="sub">Evidence</span><div class="rfc-fact">{{ chip("No evidence" if not item.evidence_quote else evidence|title) }}</div></div>
   </div>
   <p class="concl rfc-gap">{{ item.ai_gap_description or item.gap_description }}</p>

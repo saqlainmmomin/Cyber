@@ -5,6 +5,7 @@ from functools import partial
 
 from sqlalchemy import select
 
+from app.services import vocabulary as vocab
 from app.config import settings
 
 
@@ -161,21 +162,8 @@ def _assessment_engagement_context(request):
             override_generator.close()
 
 
-# Yozora display labels: short ("DPDPA") for chips in lists, full ("DPDPA 2023") where
-# the framework edition matters. Unknown ids fall back to the upper-cased id.
-FRAMEWORK_LABELS = {
-    "dpdpa": ("DPDPA", "DPDPA 2023"),
-    "iso27001": ("ISO 27001", "ISO 27001:2022"),
-    "gdpr": ("GDPR", "GDPR"),
-    "nist_csf": ("NIST CSF", "NIST CSF 2.0"),
-    "hipaa": ("HIPAA", "HIPAA"),
-    "pci_dss": ("PCI DSS", "PCI DSS 4.0"),
-}
-
-
 def framework_label(framework_id: str, full: bool = False) -> str:
-    short, long = FRAMEWORK_LABELS.get(framework_id, (framework_id.upper(), framework_id.upper()))
-    return long if full else short
+    return vocab.framework_display_name(framework_id)
 
 
 def display_date(moment) -> str:
@@ -286,6 +274,7 @@ def configure_templates(templates):
     from app.services.report_basis import basis_for
     from app.services.evidence_locations import location_label
 
+    templates.env.globals["vocab"] = vocab
     templates.env.globals["evidence_location_label"] = location_label
 
     templates.env.globals["branding"] = {

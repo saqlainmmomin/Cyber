@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import lru_cache
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.services.report_content import ReportFinding
 
 
-SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+SEVERITY_RANK = vocab.RISK_RANK
 SINGLE_PREFIX = "SINGLE."
 
 

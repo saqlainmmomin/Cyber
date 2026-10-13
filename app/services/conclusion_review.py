@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
@@ -31,7 +32,7 @@ GAP_OUTCOMES = (
     "non_compliant",
     "insufficient_evidence",
 )
-RISK_LEVELS = ("critical", "high", "medium", "low")
+RISK_LEVELS = vocab.RISK_LEVELS
 EDITABLE_FIELDS = (
     "outcome",
     "rationale",

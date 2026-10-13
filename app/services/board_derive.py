@@ -6,14 +6,15 @@ from collections import Counter
 from datetime import date, datetime
 from typing import Iterable, Mapping, Sequence
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.services.remediation_groups import cluster_index
 
 HORIZON_SHORT_DAYS = 90
 HORIZON_MEDIUM_DAYS = 180
 HORIZONS = ("short", "medium", "long", "unscheduled")
-OPEN_STATUS_LABELS = ("Open", "In progress")
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+OPEN_STATUS_LABELS = tuple(vocab.REMEDIATION_STATUSES[key] for key in ("open", "in_progress"))
+SEVERITY_ORDER = vocab.RISK_RANK
 
 
 def _as_date(value) -> date | None:

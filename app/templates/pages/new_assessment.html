@@ -30,7 +30,7 @@
     <p class="help">Select one or more frameworks to assess against.</p>
     <div class="stack-s">
       {% for framework in frameworks %}
-      <label class="choice"><input type="checkbox" name="selected_frameworks" value="{{ framework.id }}"{% if framework.id in form_values.selected_frameworks %} checked{% endif %}><span><b>{{ framework.name }}</b><span class="sub">{{ framework.version }} · {{ framework.control_count }} controls</span></span></label>
+      <label class="choice"><input type="checkbox" name="selected_frameworks" value="{{ framework.id }}"{% if framework.id in form_values.selected_frameworks %} checked{% endif %}><span><b>{{ vocab.framework_display_name(framework.id) }}</b> <span class="sub">{{ framework.version }} · {{ framework.control_count }} controls</span></span></label>
       {% endfor %}
     </div>
   </section>

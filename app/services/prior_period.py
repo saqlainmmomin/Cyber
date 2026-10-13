@@ -8,6 +8,7 @@ from datetime import date
 from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.report_snapshot import ReportSnapshot
@@ -26,13 +27,7 @@ DIRECTION_LABELS = {
 }
 COUNT_KEYS = ("improved", "regressed", "unchanged", "changed", "new", "no_longer_assessed")
 OUTCOME_RANK = {"non_compliant": 0, "partially_compliant": 1, "compliant": 2}
-OUTCOME_LABELS = {
-    "compliant": "Compliant",
-    "partially_compliant": "Partially Compliant",
-    "non_compliant": "Non-Compliant",
-    "insufficient_evidence": "Insufficient Evidence",
-    "not_applicable": "Not Applicable",
-}
+OUTCOME_LABELS = vocab.LEGACY_OUTCOMES
 TOTAL_KEYS = ("requirements", "gaps", "critical_high_gaps", "insufficient_evidence", "not_applicable")
 REQUIREMENT_ID_ALIASES: dict[tuple[str, str], str] = {}
 INTRO_TEXT = (

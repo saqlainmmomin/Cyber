@@ -8,6 +8,7 @@ Also handles root cause clustering and initiative generation (post-analysis).
 import json
 import logging
 
+from app.services import vocabulary as vocab
 from app.database import SessionLocal
 from app.dpdpa.framework import ROOT_CAUSE_CLUSTERS
 from app.schemas.scoring import ScoringResult
@@ -31,10 +32,10 @@ DENOMINATOR_EXCLUDED_OUTCOMES = ("not_applicable", "insufficient_evidence")
 KNOWN_STATUSES = frozenset(STATUS_SCORES) | {"not_assessed", "not_applicable"}
 
 RATING_THRESHOLDS = [
-    (80, "Compliant"),
-    (60, "Partially Compliant"),
+    (80, vocab.LEGACY_OUTCOMES["compliant"]),
+    (60, vocab.LEGACY_OUTCOMES["partially_compliant"]),
     (40, "Needs Significant Improvement"),
-    (0, "Non-Compliant"),
+    (0, vocab.LEGACY_OUTCOMES["non_compliant"]),
 ]
 
 MATURITY_STATUS_SCORES = {
@@ -415,7 +416,7 @@ def get_rating(score: float) -> str:
     for threshold, rating in RATING_THRESHOLDS:
         if score >= threshold:
             return rating
-    return "Non-Compliant"
+    return vocab.LEGACY_OUTCOMES["non_compliant"]
 
 
 def compute_scores(assessments: list[dict]) -> dict:

@@ -1,7 +1,7 @@
 {% from "components/ui.html" import icon %}
 {% if card.requirement %}
   {% set requirement = card.requirement %}
-  {% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "not_applicable": "Not applicable", "insufficient_evidence": "Insufficient evidence"} %}
+  {% set outcome_labels = vocab.OUTCOMES %}
   <section data-requirement-card data-requirement-source="{{ requirement.source }}" data-criteria-source="{{ requirement.criteria_source or "" }}" class="cc-requirement">
     <div class="block" data-control-evidence-list>
       <h3>Evidence on this control</h3>

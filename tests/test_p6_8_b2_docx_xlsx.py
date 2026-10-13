@@ -989,7 +989,7 @@ def test_scenario_10_no_llm_no_live_readers():
         }
     assert re.search(r"^\s*import app\b", source, re.M) is None
     # P6-8 V3-B: the v3 renderers also read the presenter's labels (board_view).
-    assert app_imports <= {"board_report", "report_snapshots", "board_view"}, app_imports
+    assert app_imports <= {"board_report", "report_snapshots", "board_view", "vocabulary"}, app_imports
 
     requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
     assert OPENPYXL_PIN in requirements
