@@ -1,5 +1,11 @@
 # CyberAssess implementation tracker
 
+## Wave 1 (2026-10-13, lane C, Codex)
+
+- [x] WP 1.1 vocabulary module: PR #145, verified 1,749 passed / 29 skipped, waits for click-through. Merge last (rebase on 1.3).
+- [x] WP 1.3 reads stage 1, truthful cut: PR #144, verified 1,759 passed / 29 skipped, waits for click-through.
+- [x] WP 2.2 statute citations from the pack: PR #143, verified 1,749 passed / 29 skipped, waits for click-through. Merge first.
+
 ## Evidence fixes Part B: viewer (2026-10-08)
 
 - [x] Add guarded original-file delivery, full extracted text and spreadsheet tables, stored catalog entries, citation links, and category labels.

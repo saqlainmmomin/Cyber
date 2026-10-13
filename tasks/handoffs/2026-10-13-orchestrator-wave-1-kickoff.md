@@ -134,4 +134,14 @@ If PR #142 is still open, push one commit to its branch adding a short "Wave 1" 
 
 ## Results
 
-_To be filled by the session._
+Run 13 Oct 2026. Three Codex runs launched concurrently (about 20 minutes each), each reviewed by Sonnet subagents split by concern, each sent one fix round, each re-verified here with a fresh full suite. Nothing merged.
+
+| WP | PR | Tests before to after | Files | Fix round | Open issues |
+|---|---|---|---|---|---|
+| 2.2 statute citations | #143 | 1,748 to 1,749 (29 skipped) | 3 | No (I restored em dashes Codex had changed in curated text) | Pack line 8(4)-(6) and a few `Section 6` / `Section 8` strings in `questionnaire.py` and `clusters.py` left for legal review |
+| 1.3 reads stage 1 | #144 | 1,748 to 1,759 (29 skipped) | 17 | Yes: DPDPA desk review ordering restored, report line over-claimed "not read", legacy lists, outside-cut, manifest failure guard, multi-framework default shape, PDF overflow, HTML cap | PPTX/XLSX line, duplicate-filename and replaced-file notice polish, extraction-failure marker |
+| 1.1 vocabulary | #145 | 1,748 to 1,749 (29 skipped) | 36 | Yes: registry-empty fallback names, "Not concluded" leftovers, PCI-DSS stutter, one raw id | Wording changes need Saqlain's look (priority words, edition names dropped, issued-snapshot re-exports); guard has blind spots listed in the PR |
+
+Process notes for the next wave: Codex edited `tasks/todo.md` in two worktrees despite the brief (reverted); its per-WP Results files stay untracked in the worktrees (`~/dpdpa-w1-*`), copies in `~/cyberassess-runs/wave1/`; CI registers no checks on these PRs; a zsh loop with a space-separated row does not word-split, so create worktrees from explicit arguments.
+
+Recommended merge order: 2.2, then 1.3, then 1.1 (1.1 needs a small rebase on the card template).
