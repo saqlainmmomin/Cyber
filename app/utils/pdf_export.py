@@ -1593,6 +1593,21 @@ This report is prepared solely for the use of the named organization. It should 
         new_x="LMARGIN",
     )
 
+    if getattr(report, "evidence_basis_line", None):
+        text = S(report.evidence_basis_line)
+        # Estimate wrapped lines using the current font's average character width.
+        char_width = max(pdf.get_string_width(text) / max(len(text), 1), 0.1)
+        chars_per_line = max(int((CW - 2 * pdf.c_margin) / char_width), 1)
+        paragraph_height = (math.ceil(len(text) / chars_per_line) + 1) * 4.5
+        if pdf.get_y() + paragraph_height > CONTENT_BOTTOM:
+            _page_footer(pdf, company_name)
+            pdf.add_page()
+            _page_header(pdf, "Methodology (continued)")
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(*DARK_TEXT)
+        pdf.set_x(PM)
+        pdf.multi_cell(CW, 4.5, text=text, new_x="LMARGIN")
+
     _page_footer(pdf, company_name)
 
     _render_sign_off_page(pdf, company_name, basis, generated)

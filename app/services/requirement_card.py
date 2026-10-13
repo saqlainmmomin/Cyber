@@ -16,8 +16,7 @@ from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.evidence import Evidence, EvidenceUse, EvidenceVersion
-from app.models.desk_review import DeskReviewSummary
-from app.services import desk_review, desk_review_v2, report_basis, rfi_evidence_requests
+from app.services import desk_review_v2, report_basis, rfi_evidence_requests
 from app.services.citations import resolve_citations
 
 FALLBACK_CRITERIA_LABEL = "Judged against the control description; no approved test criteria yet"
@@ -155,6 +154,7 @@ class LinkedEvidence:
     evidence_id: str
     filename: str
     cited: bool = False
+    evidence_version_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -168,8 +168,6 @@ class CardContext:
     acks: dict[tuple[str, str, str], AuditEvent]
     rfi_states: dict = field(default_factory=dict)
     linked_evidence: dict = field(default_factory=dict)
-    budget_skipped_filenames: tuple[str, ...] = ()
-    budget_partial_filenames: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -211,6 +209,7 @@ class RequirementCard:
     linked_evidence: tuple[LinkedEvidence, ...] = ()
     budget_skipped_filenames: tuple[str, ...] = ()
     budget_partial_filenames: tuple[str, ...] = ()
+    reused_quote_outside_cut_filenames: tuple[str, ...] = ()
     other_rfi_requests: tuple = ()
 
     @property
@@ -305,20 +304,17 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
     linked_evidence: dict[tuple[str, str], list[LinkedEvidence]] = {}
     rows = db.execute(
         select(EvidenceUse.framework_id, EvidenceUse.requirement_id,
-               Evidence.id, EvidenceVersion.original_filename)
+               Evidence.id, EvidenceVersion.original_filename, EvidenceVersion.id)
         .join(Evidence, Evidence.id == EvidenceUse.evidence_id)
         .join(EvidenceVersion, EvidenceVersion.evidence_id == Evidence.id)
         .where(EvidenceUse.assessment_id == assessment.id,
                Evidence.status == "active", EvidenceVersion.status == "active")
         .order_by(EvidenceVersion.original_filename, Evidence.id)
     ).all()
-    for framework_id, requirement_id, evidence_id, filename in rows:
+    for framework_id, requirement_id, evidence_id, filename, version_id in rows:
         linked_evidence.setdefault((framework_id, requirement_id), []).append(
-            LinkedEvidence(evidence_id, filename)
+            LinkedEvidence(evidence_id, filename, evidence_version_id=version_id)
         )
-    summary = db.execute(
-        select(DeskReviewSummary).where(DeskReviewSummary.assessment_id == assessment.id)
-    ).scalar_one_or_none()
 
     return CardContext(
         assessment=assessment,
@@ -330,8 +326,6 @@ def load_context(db: Session, assessment, proposals, conclusion_ids) -> CardCont
         acks=acknowledgement_by_key,
         rfi_states=rfi_evidence_requests.request_states(db, assessment, ids),
         linked_evidence=linked_evidence,
-        budget_skipped_filenames=tuple(desk_review.budget_skipped_filenames(summary)),
-        budget_partial_filenames=tuple(desk_review.budget_partial_filenames(summary)),
     )
 
 
@@ -650,21 +644,32 @@ def _quality_v1(envelope: dict, item: dict, citations: list[dict], conclusion: C
 def build_card(context: CardContext, conclusion: Conclusion, proposal: ConclusionRevision | None, citations) -> RequirementCard:
     cited_evidence_ids = {citation.get("evidence_id") for citation in citations if citation.get("resolved")}
     linked = tuple(
-        LinkedEvidence(item.evidence_id, item.filename, item.evidence_id in cited_evidence_ids)
+        LinkedEvidence(item.evidence_id, item.filename, item.evidence_id in cited_evidence_ids,
+                       item.evidence_version_id)
         for item in context.linked_evidence.get((conclusion.framework_id, conclusion.requirement_id), ())
     )
+    entry = _entry_for(context, proposal)
+    envelope = entry[2] if entry is not None else {}
+    manifest = envelope.get("document_manifest") or {}
+    stage = (manifest.get("frameworks") or {}).get(conclusion.framework_id) or manifest
+    linked_versions = {item.evidence_version_id for item in linked if item.evidence_version_id}
+    selection = stage.get("selection") or ()
+    passages = ((stage.get("judge") or {}).get("passages") or {}).get(conclusion.requirement_id) or ()
     evidence_context = {
         "linked_evidence": linked,
         "budget_skipped_filenames": tuple(
-            dict.fromkeys(item.filename for item in linked
-                          if item.filename in context.budget_skipped_filenames)
+            item.get("filename") or "Unnamed file" for item in selection
+            if item.get("evidence_version_id") in linked_versions and item.get("status") == "not_read"
         ),
         "budget_partial_filenames": tuple(
-            dict.fromkeys(item.filename for item in linked
-                          if item.filename in context.budget_partial_filenames)
+            item.get("filename") or "Unnamed file" for item in selection
+            if item.get("evidence_version_id") in linked_versions and item.get("status") == "partial"
+        ),
+        "reused_quote_outside_cut_filenames": tuple(
+            dict.fromkeys(item.get("filename") or "Unnamed file" for item in passages
+                          if item.get("reused_from_desk_review") and item.get("outside_cut"))
         ),
     }
-    entry = _entry_for(context, proposal)
     if entry is None:
         missing_evidence, other_rfi_requests = _rfi_missing_evidence(
             context, conclusion, "none", ()

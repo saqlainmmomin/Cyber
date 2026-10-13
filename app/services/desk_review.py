@@ -39,6 +39,7 @@ from app.services.citations import (
     whole_item_citation,
 )
 from app.services.evidence import analysis_documents
+from app.services.document_selection import select_documents, stage_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
     documents = [
         {
             "id": d["id"],
+            "evidence_version_id": d.get("evidence_version_id"),
+            "legacy_document_id": d.get("legacy_document_id"),
             "filename": d["filename"],
             "category": d["category"],
             "text": d["text"],
@@ -113,14 +116,38 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
 
         return run_desk_review_v2(db, assessment, summary, doc_id_by_filename)
 
-    # Truncate documents for prompt
-    truncated = _truncate_documents(documents)
-    skipped_filenames = [doc["filename"] for doc in documents[len(truncated):]]
-    partial_filenames = [
-        sent["filename"] for sent, doc in zip(truncated, documents) if sent["text"] != doc["text"]
-    ]
-
     framework_ids = assessment.frameworks
+    documents_by_framework = {
+        framework_id: select_documents(
+            documents, ordering="upload"
+        )
+        for framework_id in framework_ids
+    }
+    document_manifest = {
+        "schema_version": 1,
+        "frameworks": {
+            framework_id: stage_manifest(
+                documents, selected,
+                ordering="upload",
+                control_ids=[], raw_judge=True,
+            )
+            for framework_id, selected in documents_by_framework.items()
+        },
+    }
+    # Keep the legacy filename lists for older consumers. Versioned consumers
+    # use the per-framework manifest instead.
+    selections = [
+        entry
+        for manifest in document_manifest["frameworks"].values()
+        for entry in manifest["selection"]
+    ]
+    skipped_filenames = list(dict.fromkeys(
+        entry["filename"] for entry in selections if entry["status"] == "not_read"
+    ))
+    partial_filenames = list(dict.fromkeys(
+        entry["filename"] for entry in selections if entry["status"] == "partial"
+    ))
+
     results: dict[str, dict] = {}
     errors: dict[str, str] = {}
     batch_units: list[tuple[str, ControlBatch | None]] = []
@@ -146,7 +173,7 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
                         framework_id,
                         _desk_review_call(
                             framework_id,
-                            documents=truncated,
+                            documents=documents_by_framework[framework_id],
                             company_name=assessment.company_name,
                             industry=assessment.industry,
                         ),
@@ -159,7 +186,7 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
                     framework_id,
                     _desk_review_call(
                         framework_id,
-                        documents=truncated,
+                        documents=documents_by_framework[framework_id],
                         company_name=assessment.company_name,
                         industry=assessment.industry,
                         control_ids=batch.control_ids,
@@ -209,6 +236,7 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
             framework_ids, results, errors, llm_calls=llm_calls,
             budget_skipped_filenames=skipped_filenames,
             budget_partial_filenames=partial_filenames,
+            document_manifest=document_manifest,
         )
         assessment.desk_review_status = "error"
         db.commit()
@@ -247,6 +275,7 @@ def run_desk_review(assessment_id: str, db: Session) -> DeskReviewSummary:
             framework_ids, results, errors, llm_calls=llm_calls,
             budget_skipped_filenames=skipped_filenames,
             budget_partial_filenames=partial_filenames,
+            document_manifest=document_manifest,
         )
         summary.status = "completed"
         summary.error_message = None
@@ -490,6 +519,7 @@ def _raw_response(
     llm_calls: list[dict] | None = None,
     budget_skipped_filenames: list[str] | None = None,
     budget_partial_filenames: list[str] | None = None,
+    document_manifest: dict | None = None,
 ) -> str:
     """Serialize the versioned per-framework raw desk-review response."""
     response = {
@@ -503,6 +533,8 @@ def _raw_response(
             for framework_id in framework_ids
         },
     }
+    if document_manifest is not None:
+        response["document_manifest"] = document_manifest
     if llm_calls is not None:
         response["llm_calls"] = llm_calls
     if budget_skipped_filenames is not None:
@@ -690,23 +722,8 @@ def _persist_findings(
 
 
 def _truncate_documents(documents: list[dict]) -> list[dict]:
-    """Enforce word limits for desk review prompt."""
-    max_total = settings.max_total_document_words
-    total_words = 0
-    result = []
-
-    for doc in documents:
-        words = doc["text"].split()
-        remaining = max_total - total_words
-        if remaining <= 0:
-            break
-        if len(words) > remaining:
-            doc = {**doc, "text": " ".join(words[:remaining]) + "\n\n[... truncated ...]"}
-            words = words[:remaining]
-        total_words += len(words)
-        result.append(doc)
-
-    return result
+    """Compatibility seam for callers using registry upload order."""
+    return select_documents(documents, ordering="upload")
 
 
 def _parse_json_response(text: str) -> dict:

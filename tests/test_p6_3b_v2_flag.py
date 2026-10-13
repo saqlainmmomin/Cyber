@@ -391,11 +391,16 @@ def test_scenario_2_flag_off_runs_v1_only_and_is_identical(db, monkeypatch):
         if explicit:
             monkeypatch.setattr(settings, "analysis_pipeline_version", "v1")
         assessment = seed_assessment(db)
-        add_evidence(db, assessment, filename="policy.pdf", text=policy_text(Q_CONSENT))
+        evidence, version = add_evidence(db, assessment, filename="policy.pdf", text=policy_text(Q_CONSENT))
         summary = run_desk_review(db, assessment)
         assert summary.status == "completed"
         raw = raw_of(db, assessment)
         assert "claim_set" not in raw and "analysis_pipeline_version" not in raw
+        # Different assessments have different source identities, even in v1.
+        manifest = raw.pop("document_manifest")["frameworks"]["dpdpa"]
+        assert manifest["selection"][0]["evidence_version_id"] == version.id
+        assert manifest["selection"][0]["evidence_id"] == evidence.id
+        assert manifest["extraction"]["documents"] == manifest["selection"]
         runs.append((raw, _row_shape(findings(db, assessment)),
                      json.loads(summary_of(db, assessment).coverage_summary)))
 

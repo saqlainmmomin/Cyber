@@ -15,6 +15,7 @@ from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
 from app.frameworks.registry import FrameworkRegistry
+from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
@@ -145,6 +146,7 @@ class RenderReport:
     framework_scores: str
     executive_summary: str
     generated_at: datetime
+    evidence_basis_line: str | None = None
 
 
 @dataclass(frozen=True)
@@ -158,6 +160,8 @@ class ApprovedReport:
     chapter_scores: dict[str, dict]
     summary_text: str
     release: ReleaseState
+    evidence_basis_line: str | None = None
+    evidence_basis_html_line: str | None = None
 
     def render_report(self) -> RenderReport:
         if self.report_id is None or self.generated_at is None:
@@ -168,6 +172,7 @@ class ApprovedReport:
             chapter_scores=json.dumps(self.chapter_scores, sort_keys=True),
             framework_scores=json.dumps(self.framework_scores, sort_keys=True),
             executive_summary=self.summary_text,
+            evidence_basis_line=self.evidence_basis_line,
             generated_at=self.generated_at,
         )
 
@@ -418,6 +423,85 @@ def _release_state(
     )
 
 
+def _evidence_basis_line(
+    db: Session, rows: list[ApprovedRow], *, filename_limit: int | None = None,
+) -> str | None:
+    """Describe only cuts recorded by the proposals behind the approved rows."""
+    if not rows:
+        return None
+    revisions = db.execute(
+        select(ConclusionRevision)
+        .where(ConclusionRevision.conclusion_id.in_([row.conclusion_id for row in rows]),
+               ConclusionRevision.action == "proposed")
+        .order_by(ConclusionRevision.created_at, literal_column("conclusion_revisions.rowid"))
+    ).scalars().all()
+    proposals = {revision.conclusion_id: revision for revision in revisions}
+    run_ids = {revision.analysis_run_id for revision in proposals.values() if revision.analysis_run_id}
+    if not run_ids:
+        return None
+    runs = {run.id: run for run in db.execute(
+        select(AnalysisRun).where(AnalysisRun.id.in_(run_ids))
+    ).scalars().all()}
+    files = {}
+    reused_names = []
+    for row in rows:
+        proposal = proposals.get(row.conclusion_id)
+        run = runs.get(proposal.analysis_run_id) if proposal else None
+        if run is None:
+            continue
+        try:
+            envelope = json.loads(run.claims_json or "{}")
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if not isinstance(envelope, dict):
+            continue
+        manifest = envelope.get("document_manifest") or {}
+        stage = (manifest.get("frameworks") or {}).get(row.framework_id) or manifest
+        judge = stage.get("judge") or {}
+        status_rank = {"not_read": 0, "partial": 1, "read": 2}
+        stages = (manifest.get("frameworks") or {}).values() if manifest.get("frameworks") else [manifest]
+        for recorded_stage in stages:
+            for document in recorded_stage.get("selection") or ():
+                identity = document.get("evidence_version_id") or document.get("legacy_source_key")
+                if not identity:
+                    continue
+                previous = files.get(identity)
+                # Full reads beat partial reads, which beat unread cuts across runs.
+                if previous is None or status_rank.get(document.get("status"), 0) > status_rank.get(previous.get("status"), 0):
+                    files[identity] = document
+        for passage in (judge.get("passages") or {}).get(row.requirement_id) or ():
+            if passage.get("reused_from_desk_review"):
+                name = passage.get("filename") or "Unnamed file"
+                if name not in reused_names:
+                    reused_names.append(name)
+    if not files:
+        return None
+    read = [document for document in files.values() if document.get("status") in {"read", "partial"}]
+    unread = [document for document in files.values() if document.get("status") == "not_read"]
+    noun = "file" if len(read) == 1 else "files"
+    parts = [f"Analysis document input: {len(read)} {noun} read, {len(unread)} not read"]
+    partial = [document for document in read if document.get("status") == "partial"]
+    lists = [
+        (label, [document.get("filename") or "Unnamed file" for document in documents])
+        for label, documents in (("Read", read), ("Not read", unread), ("Partly read", partial))
+        if documents
+    ]
+    if reused_names:
+        lists.append(("Desk-review quotes reused for judging", reused_names))
+    remaining = sum(len(names) for _, names in lists)
+    shown = 0
+    for label, names in lists:
+        visible = names if filename_limit is None else names[:max(filename_limit - shown, 0)]
+        if visible:
+            parts.append(f"{label}: " + ", ".join(visible))
+            shown += len(visible)
+            remaining -= len(visible)
+        if filename_limit is not None and shown >= filename_limit and remaining:
+            parts[-1] += f" and {remaining} more; the full list is in the PDF and DOCX report"
+            break
+    return ". ".join(parts) + "."
+
+
 def build_approved_report(db: Session, assessment: Assessment) -> ApprovedReport:
     report = (
         db.query(GapReport)
@@ -600,6 +684,8 @@ def build_approved_report(db: Session, assessment: Assessment) -> ApprovedReport
         chapter_scores=chapter_scores,
         summary_text=_summary_text(assessment, reviews),
         release=release,
+        evidence_basis_line=_evidence_basis_line(db, rows),
+        evidence_basis_html_line=_evidence_basis_line(db, rows, filename_limit=8),
     )
 
 

@@ -333,6 +333,8 @@ def _render_docx_summary(word, source: dict) -> None:
     _add_docx_heading(word, "Management summary", 1)
     _add_docx_heading(word, "Basis of assessment", 2)
     _add_docx_paragraph(word, summary["basis_of_assessment"])
+    if summary.get("evidence_basis_line"):
+        _add_docx_paragraph(word, summary["evidence_basis_line"])
     _add_docx_heading(word, "Scope", 2)
     for line in summary["scope"]:
         _add_docx_paragraph(word, line)

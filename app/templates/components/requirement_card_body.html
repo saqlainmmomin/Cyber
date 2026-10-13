@@ -9,12 +9,13 @@
       <p class="sub" data-linked-evidence-count>{{ requirement.linked_evidence|length }} file{{ "s" if requirement.linked_evidence|length != 1 }} linked, {{ requirement.cited_file_count }} cited</p>
       <ul class="cc-claims">
         {% for evidence in requirement.linked_evidence %}
-        <li data-control-evidence="{{ evidence.evidence_id }}"><a href="/evidence/{{ evidence.evidence_id }}">{{ evidence.filename }}</a><p class="sub">{{ "Cited" if evidence.cited else "Not cited by the analysis" }}</p></li>
+        <li data-control-evidence="{{ evidence.evidence_id }}" data-evidence-version="{{ evidence.evidence_version_id or '' }}"><a href="/evidence/{{ evidence.evidence_id }}">{{ evidence.filename }}</a><p class="sub">{{ "Cited" if evidence.cited else "Not cited by the analysis" }}</p></li>
         {% endfor %}
       </ul>
       {% else %}<p class="sub">No files linked.</p>{% endif %}
-      {% if requirement.budget_skipped_filenames %}<p class="sub" data-budget-skipped>Not read by the analysis (size limit): {{ requirement.budget_skipped_filenames|join(", ") }}</p>{% endif %}
-      {% if requirement.budget_partial_filenames %}<p class="sub" data-budget-partial>Partly read by the analysis (size limit): {{ requirement.budget_partial_filenames|join(", ") }}</p>{% endif %}
+      {% if requirement.budget_skipped_filenames %}<p class="sub" data-budget-skipped>Not included in this run’s document cut (size limit): {{ requirement.budget_skipped_filenames|join(", ") }}</p>{% endif %}
+      {% if requirement.budget_partial_filenames %}<p class="sub" data-budget-partial>Partly included in this run’s document cut (size limit): {{ requirement.budget_partial_filenames|join(", ") }}</p>{% endif %}
+      {% if requirement.reused_quote_outside_cut_filenames %}<p class="sub" data-reused-quote-outside-cut>Quotes reused from desk review outside this run’s document cut: {{ requirement.reused_quote_outside_cut_filenames|join(", ") }}</p>{% endif %}
     </div>
     {% if requirement.source == "none" %}
     <div class="block"><p class="muted">No analysis run is linked to this conclusion.</p></div>

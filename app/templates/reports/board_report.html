@@ -323,6 +323,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     </div>
     <div style="flex:1; padding-bottom:4mm">
       <div class="h3">Approach</div>
+      {% if doc.summary.evidence_basis_line %}<p data-evidence-basis>{{ doc.summary.evidence_basis_html_line or doc.summary.evidence_basis_line }}</p>{% endif %}
       {% for n, h, b in [('1','Collect evidence','Documents, questionnaire answers and walkthrough notes received up to the cut-off, each stored by version with a fingerprint.'),('2','Assess and approve','For each requirement an outcome is proposed with the evidence it rests on. A consultant reviews the evidence and approves, edits or rejects every outcome.'),('3','Score and report','Scores are computed in code from approved outcomes only. Findings, owners and dates are agreed with management.')] %}
       <div style="display:flex; border:0.35mm solid var(--line); padding:3.4mm 4mm; align-items:center; margin-bottom:5mm; height:36mm">
         <div style="width:10mm; height:10mm; border-radius:5mm; background:var(--p2); color:#fff; font-weight:700; text-align:center; line-height:10mm; flex:none">{{ n }}</div>

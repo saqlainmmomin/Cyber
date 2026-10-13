@@ -133,10 +133,7 @@ def trigger_analysis(
     ]
 
     # Gather documents
-    documents = [
-        {"filename": d["filename"], "category": d["category"], "text": d["text"]}
-        for d in analysis_documents(db, assessment_id)
-    ]
+    documents = analysis_documents(db, assessment_id)
 
     _selected_fw = ["dpdpa"]
     if assessment.selected_frameworks:
@@ -295,6 +292,7 @@ def trigger_analysis(
                 context_profile=context_profile,
                 desk_review_data=desk_review_data,
                 applicable_requirements=applicable_requirements,
+                include_document_manifest=True,
             )
     except Exception as e:
         analysis_pipeline.fail_runs(
@@ -329,6 +327,7 @@ def trigger_analysis(
             assessments=assessments,
             parsed=parsed,
             raw=raw,
+            document_manifest=result.get("document_manifest"),
             responses=responses,
             documents=documents,
             desk_review_data=desk_review_data,
@@ -369,6 +368,7 @@ def _persist_single_analysis(
     db: Session,
     run_context: analysis_pipeline.RunContext,
     llm_calls: list[dict] | None = None,
+    document_manifest: dict | None = None,
 ) -> dict:
     # Server-side scope enforcement: ensure out-of-scope requirements are not_applicable
     if applicable_requirements:
@@ -435,6 +435,7 @@ def _persist_single_analysis(
         db,
         run_context,
         framework_id="dpdpa",
+        document_manifest=document_manifest,
         assessments=assessments,
         desk_review_data=desk_review_data,
         gap_report_id=report.id,
@@ -555,6 +556,7 @@ def _run_multi_framework_analysis(
                 context_profile=context_profile,
                 desk_review_data=desk_review_data,
                 applicable_controls=applicable_requirements,
+                include_document_manifest=True,
             )
     except Exception as e:
         analysis_pipeline.fail_runs(
@@ -749,6 +751,7 @@ def _persist_multi_framework_analysis(
                 run_context,
                 framework_id=framework_id,
                 assessments=per_fw_assessments[framework_id],
+                document_manifest=framework_result.get("document_manifest"),
                 desk_review_data=desk_review_data,
                 gap_report_id=report.id,
                 llm_calls=llm_calls or None,
