@@ -45,7 +45,7 @@ def main():
     with sync_playwright() as pw:
         browser=pw.chromium.launch()
         # (file, url suffix, screenshot stem): the suffix selects a state such as the hidden sidebar.
-        targets=[(h,'',h.stem) for h in sorted(PROTO.glob('*.html'))]+[(PROTO/'questionnaire.html','#wide','questionnaire-wide'),(PROTO/'review-queue.html','#wide','review-queue-wide'),(PROTO/'report.html','#detail','report-detail')]
+        targets=[(h,'',h.stem) for h in sorted(PROTO.glob('*.html'))]+[(PROTO/'questionnaire.html','#wide','questionnaire-wide'),(PROTO/'review-queue.html','#wide','review-queue-wide'),(PROTO/'report.html','#detail','report-detail'),(PROTO/'gaps.html','#open','gaps-open'),(PROTO/'gaps.html','#all','gaps-all')]
         for html,suffix,stem in targets:
             for width in (1440,1280):
                 page=browser.new_page(viewport={'width':width,'height':1000},device_scale_factor=1)

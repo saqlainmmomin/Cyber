@@ -2,7 +2,7 @@
 
 Run from repo root: python3 docs/ui-audit/tools/build_prototypes.py
 Writes all six screens from scratch. Content comes from the JSON files beside them
-(findings, conclusions, rfi, report), which hold the Veldhara demo data and the illustrative text.
+(findings, conclusions, workpaper, rfi, report), which hold the Veldhara demo data and the illustrative text.
 """
 import html
 import json
@@ -23,7 +23,7 @@ STAGES = [
     ('scope', 'Scope', 'scope-applicability.html', [('Boundaries', 'scope-applicability.html#boundaries', ''), ('Applicability', 'scope-applicability.html', '')]),
     ('evidence', 'Evidence', 'rfi.html', [('Documents', APP + '/evidence', ''), ('Requests', 'rfi.html', ''), ('Client links', 'rfi.html#links', '')]),
     ('questionnaire', 'Questionnaire', 'questionnaire.html', []),
-    ('review', 'Review', 'review-queue.html', [('Queue', 'review-queue.html', '3'), ('Conclusions', 'conclusions.html', ''), ('Findings', APP + '/findings', ''), ('Workpaper', APP + '/workpaper', '')]),
+    ('review', 'Review', 'review-queue.html', [('Queue', 'review-queue.html', '3'), ('Gaps', 'gaps.html', '')]),
     ('report', 'Report', 'report.html', []),
 ]
 
@@ -233,50 +233,82 @@ def cited(quote, href):
     return (f'<a href="{href}">{e(name)}</a><div class="evidence-quote"><span>“{e(text)}”</span><span class="caption">{span}</span></div>')
 
 
-def finding_body(gap, impact, impact_id, rec, why, why_id, rationale, aside):
-    main = ''
-    if gap:
-        main += f'<section class="block"><h3 class="overline">Gap</h3><p class="lead">{e(gap)}</p></section>'
-    if impact:
-        main += f'<section class="block"><h3 class="overline">Impact if unresolved</h3><p id="{impact_id}" data-illustrative="true">{e(impact)}</p></section>'
-    if rec:
-        reason = f'<div class="block"><h3 class="overline">Why this recommendation</h3><p id="{why_id}" data-illustrative="true">{e(why)}</p></div>' if why else ''
-        main += f'<section class="recommend"><div class="block"><h3 class="overline">Recommendation</h3><p class="rec-text">{e(rec)}</p></div>{reason}</section>'
-    if rationale:
-        main += f'<section class="block reasoning"><h3 class="overline">Reasoning on record</h3><p>{e(rationale)}</p></section>'
-    return f'<div class="finding-grid"><div class="finding-main">{main}</div><aside class="finding-aside">{aside}</aside></div>'
+# ---------------------------------------------------------------- gaps
+def trail(r, w, i):
+    """The workpaper for one control: four steps in the order the conclusion was reached."""
+    said = f'{w["answer"].capitalize()}. {w["confidence"]} confidence, {w["answer_source"].lower()}, {w["submitted"]}.'
+    if w['shared_question']:
+        said += ' One answer covers every control in this question group.'
+    note = w['client_note'] if w['client_note'] and w['client_note'] not in r['rationale'] else None
+    direct = [x for x in w['evidence'] if x['relevance'] == 'Direct']
+    read = f'{len(w["evidence"])} document{"" if len(w["evidence"]) == 1 else "s"} mapped to this control' + (f', {len(direct)} direct.' if direct else ', none direct.')
+    checks = dict(w['proposal']['checks'])
+    cites = checks.get('Citations', '0')
+    grounded = {'Grounded': 'the quote was found in the document', 'Not grounded': 'the quote was not found in the document'}.get(checks.get('Evidence quote found in the document'), 'no quote was offered')
+    proposed = f'{w["proposal"]["outcome"]}. {cites} citation{"" if cites == "1" else "s"}; {grounded}.'
+    decided = ' '.join(f'{t} by {sub.split(" · ")[0]}, {sub.split(" · ")[1]}.' for t, sub in w['history'] if not t.startswith('Proposed'))
+    changed = 'The AI proposal was approved without edits.' if all(t in ('Proposed by the AI', 'Approved') for t, _ in w['history']) else ''
+    steps = [
+        ('The client answered', said, f'<p class="caption">{e(note)}</p>' if note else ''),
+        ('The evidence showed', read, f'<div class="block">{cited(r["quote"], r["href"])}</div><p class="caption" id="conclusion-provenance-{i}" data-illustrative="true">No interview is recorded for this control.</p>'),
+        ('The AI proposed', proposed, f'<p class="caption">{e(r["rationale"])}</p>'),
+        ('The reviewer decided', f'{decided} {changed}'.strip(), ''),
+    ]
+    return ('<section class="block"><h3 class="overline">How this was concluded</h3><ol class="trail">' + ''.join(
+        f'<li><span class="trail-step">{e(t)}</span><p>{e(line)}</p>{extra}</li>' for t, line, extra in steps) + '</ol></section>')
 
 
-# ---------------------------------------------------------------- conclusions
-def conclusions():
+def remediation(r, w, i, has_gap):
+    if not has_gap:
+        return f'<section class="block"><h3 class="overline">Recommendation</h3><p>{e(r["rec"])}</p></section>'
+    rem = w['remediation']
+    facts = [('Owner', rem['owner']), ('Target', rem['target']), ('Status', rem['status'])] if rem else [('Owner', 'Not assigned'), ('Target', 'Not set'), ('Status', 'Open')]
+    ident = '' if rem else f' id="gap-remediation-{i}" data-illustrative="true"'
+    why = f'<div class="block"><h4 class="overline">Why this recommendation</h4><p id="conclusion-reason-{i}" data-illustrative="true">{e(r["why"])}</p></div>' if r['why'] else ''
+    impact = f'<div class="block"><h4 class="overline">Impact if unresolved</h4><p id="conclusion-impact-{i}" data-illustrative="true">{e(r["impact"])}</p></div>' if r['impact'] else ''
+    return ('<section class="recommend"><div class="block"><h3 class="overline">Remediation</h3>'
+            f'<p class="rec-text">{e(r["rec"])}</p></div>{why}{impact}'
+            f'<dl class="rem-facts"{ident}>' + ''.join(f'<div><dt class="overline">{k}</dt><dd>{e(v)}</dd></div>' for k, v in facts) + '</dl>'
+            f'<div class="cluster"><button class="button" type="button">{"Update" if rem else "Assign owner and date"}</button><button class="button quiet" type="button">Add action</button></div></section>')
+
+
+def gaps():
     rows = json.loads((PROTO / 'conclusions.json').read_text())
-    gaps = [r for r in rows if not r['gap'].startswith('No gap')]
-    high = sum(r['risk'] == 'High' for r in gaps)
+    paper = json.loads((PROTO / 'workpaper.json').read_text())
+    with_gap = [r for r in rows if not r['gap'].startswith('No gap')]
+    high = sum(r['risk'] == 'High' for r in with_gap)
     out = []
     for i, r in enumerate(rows):
-        has_gap = r in gaps
-        aside = (f'<div class="block"><h3 class="overline">Evidence cited</h3>{cited(r["quote"], r["href"])}</div>'
-                 f'<div class="block"><h3 class="overline">Interviews</h3><p id="conclusion-provenance-{i}" data-illustrative="true">None recorded for this control.</p></div>'
-                 f'<div class="block"><h3 class="overline">Control</h3><p>{r["control_id"]} · {e(r["name"])}</p><p>{r["domain"]} · ISO 27001</p></div>')
-        body = finding_body(r['gap_statement'] if has_gap else None, r['impact'], f'conclusion-impact-{i}', r['rec'], r['why'], f'conclusion-reason-{i}', r['rationale'], aside)
+        has_gap = r in with_gap
+        w = paper[r['control_id']]
+        rem = w['remediation']
+        owner = (f'{e(rem["owner"])}<span class="caption row-sub">Due {rem["target"]}</span>' if rem else '<span class="quiet">Not assigned</span>') if has_gap else ''
+        links = ''.join(f'<li><a href="{x["href"]}">{e(x["name"])}</a><span class="caption">{x["relevance"]}</span></li>' for x in sorted(w['evidence'], key=lambda x: x['relevance'] != 'Direct'))
+        aside = (f'<div class="block"><h3 class="overline">Evidence</h3><ul class="evidence-links">{links}</ul></div>'
+                 f'<div class="block"><h3 class="overline">Control</h3><p>{r["control_id"]} · {e(r["name"])}</p><p>{r["domain"]} · ISO 27001</p></div>'
+                 '<div class="block"><button class="button quiet" type="button">Reopen decision</button></div>')
+        body = f'<div class="finding-grid"><div class="finding-main">{remediation(r, w, i, has_gap)}{trail(r, w, i)}</div><aside class="finding-aside">{aside}</aside></div>'
         out.append(
-            f'<tr data-title="{r["control_id"]}" data-rank="{r["rank"]}" data-risk="{RISK_ORDER[r["risk"]]}" data-gap="{int(has_gap)}"><td>{r["domain"]}</td><td class="code">{r["code"]}</td>'
+            f'<tr data-title="{r["control_id"]}" data-rank="{r["rank"]}" data-risk="{RISK_ORDER[r["risk"]]}" data-gap="{int(has_gap)}"{"" if has_gap else " hidden"}><td>{r["domain"]}</td><td class="code">{r["code"]}</td>'
             f'<td><button class="row-disclosure{"" if has_gap else " quiet"}" id="conclusion-title-{i}" data-illustrative="true" aria-expanded="false" aria-controls="conclusion-detail-{i}" onclick="toggleConclusion(this)">{e(r["gap"])}</button>'
-            f'<span class="caption row-sub">{e(r["name"])}</span></td><td>{status(r["risk"], "severity")}</td><td>{status(r["outcome"], "outcome")}</td></tr>'
-            f'<tr id="conclusion-detail-{i}" class="disclosure-row" hidden><td colspan="5">{body}</td></tr>')
-    body = (shell('Conclusions', 'review', 'Conclusions', 4) +
-            f'<header class="view-head"><div><h1>Conclusions</h1><p class="caption">{len(rows)} controls with an approved conclusion · {len(gaps)} with a gap · {high} high risk</p></div>'
-            '<div class="cluster"><div class="segmented" role="group" aria-label="Show"><button type="button" aria-pressed="true" onclick="filterGaps(this,false)">All</button><button type="button" aria-pressed="false" onclick="filterGaps(this,true)">With a gap</button></div>'
-            '<label class="select-label inline">Sort<select onchange="sortConclusions(this.value)"><option value="rank">Domain and control</option><option value="risk">Highest risk</option></select></label></div></header>'
-            '<div class="table-shell"><table class="data-table sheet" data-component="DataTable"><thead><tr><th scope="col">Domain</th><th scope="col">Control</th><th scope="col">Gap or conclusion</th><th scope="col">Risk</th><th scope="col">Status</th></tr></thead>'
+            f'<span class="caption row-sub">{e(r["name"])}</span></td><td>{status(r["risk"], "severity")}</td><td>{status(r["outcome"], "outcome")}</td><td>{owner}</td></tr>'
+            f'<tr id="conclusion-detail-{i}" class="disclosure-row" hidden><td colspan="6">{body}</td></tr>')
+    body = (shell('Gaps', 'review', 'Gaps', 4) +
+            f'<header class="view-head"><div><h1>Gaps</h1><p class="caption">{len(with_gap)} gaps · {high} high risk · {len(rows)} controls concluded</p></div>'
+            '<div class="cluster"><div class="segmented" role="group" aria-label="Show"><button type="button" aria-pressed="true" onclick="filterGaps(this,true)">With a gap</button><button type="button" aria-pressed="false" onclick="filterGaps(this,false)">All controls</button></div>'
+            '<label class="select-label inline">Sort<select onchange="sortConclusions(this.value)"><option value="rank">Domain and control</option><option value="risk">Highest risk</option></select></label>'
+            '<button class="button" type="button">Export workpaper</button></div></header>'
+            '<div class="table-shell"><table class="data-table sheet register" data-component="DataTable"><thead><tr><th scope="col">Domain</th><th scope="col">Control</th><th scope="col">Gap or conclusion</th><th scope="col">Risk</th><th scope="col">Status</th><th scope="col">Owner</th></tr></thead>'
             f'<tbody id="conclusion-rows">{"".join(out)}</tbody></table></div>')
     script = """<script>
 function toggleConclusion(b){var r=document.getElementById(b.getAttribute('aria-controls'));r.hidden=!r.hidden;b.setAttribute('aria-expanded',String(!r.hidden));}
 function detailOf(r){return document.getElementById(r.querySelector('button').getAttribute('aria-controls'));}
 function sortConclusions(v){var root=document.getElementById('conclusion-rows'),rows=[].slice.call(root.querySelectorAll('tr[data-title]'));rows.sort(function(a,b){return v==='risk'?(a.dataset.risk-b.dataset.risk||b.dataset.gap-a.dataset.gap||a.dataset.rank-b.dataset.rank):a.dataset.rank-b.dataset.rank;});rows.forEach(function(r){root.append(r,detailOf(r));});}
 function filterGaps(b,only){b.parentNode.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});document.querySelectorAll('#conclusion-rows tr[data-title]').forEach(function(r){var hide=only&&r.dataset.gap==='0';r.hidden=hide;if(hide){detailOf(r).hidden=true;r.querySelector('button').setAttribute('aria-expanded','false');}});}
+if(location.hash==='#open'){var first=document.querySelector('#conclusion-rows tr[data-title="ISO.A5.18"] button');if(first)toggleConclusion(first);}
+if(location.hash==='#all'){filterGaps(document.querySelectorAll('.segmented button')[1],false);}
 </script>"""
-    (PROTO / 'conclusions.html').write_text(page('Conclusions', body, script))
+    (PROTO / 'gaps.html').write_text(page('Gaps', body, script))
 
 
 # ---------------------------------------------------------------- evidence requests
@@ -288,9 +320,32 @@ def rfi():
         return ('<div class="request-heading"><div class="request-summary">' + ''.join(
             f'<button class="request-sort" type="button" data-sort="{k}" onclick="sortRequests(\'{k}\')">{l}<span aria-hidden="true"></span></button>' for k, l in cols) + '</div><span class="overline">Action</span></div>')
 
-    def row(it):
-        what = [w.strip() for w in re.split(r'(?<=\))\s+', it['what'] or '') if w.strip()]
-        what_html = ('<ul>' + ''.join(f'<li>{e(w)}</li>' for w in what) + '</ul>') if what else '<p>Not specified for this request.</p>'
+    def documents(text, n):
+        """Split the stored paragraph on closing brackets: 'Name (codes)' per document. Mechanical, so some names split wrongly."""
+        docs = []
+        for part in re.split(r'(?<=\))\s+', text or ''):
+            m = re.match(r'\s*(.*?)\s*\(([^()]*)\)\s*$', part, re.S)
+            if m:
+                docs.append((m.group(1), ', '.join(c.strip().replace('ISO.', '') for c in m.group(2).split(','))))
+            elif part.strip():
+                docs.append((part.strip(), ''))
+        if not docs:
+            return '<p>Not specified for this request.</p>', ''
+        coded = any(c for _, c in docs)
+        toggle = (f'<button class="link-button" type="button" aria-expanded="false" aria-controls="request-docs-{n}" onclick="toggleControls(this)">Show controls supported</button>' if coded else '')
+        lis = ''.join(f'<li>{e(name)}' + (f'<span class="doc-controls caption" hidden>Supports {e(codes)}</span>' if codes else '') + '</li>' for name, codes in docs)
+        return f'<ul class="doc-list" id="request-docs-{n}">{lis}</ul>', toggle
+
+    def adds_to_title(text, title):
+        """A slot earns its space only when most of its content words are not already in the request title."""
+        stop = set('a an the and or of for to in on with by per each every how where who that this is are be it its as at from'.split())
+        words = lambda v: {w.rstrip('s') for w in re.findall(r'[a-z]+', (v or '').lower()) if w not in stop and len(w) > 2}
+        mine = words(text)
+        return bool(mine) and len(mine - words(title)) * 2 > len(mine)
+
+    def row(it, n):
+        what_html, toggle = documents(it['what'], n)
+        good = (f'<div class="block"><h3 class="overline">What good looks like</h3><p>{e(it["good"])}</p></div>' if adds_to_title(it['good'], it['title']) else '')
         ident = f' id="{it["id"]}" data-illustrative="true"' if it['id'] else ''
         action = '' if it['included'] else '<button class="button" type="button" onclick="includeRequest(this)">Add to RFI</button>'
         req = 'Required' if it['required'] == 'Required' else '<span class="quiet">Optional</span>'
@@ -299,8 +354,7 @@ def rfi():
                 f'<details><summary class="request-summary"><span class="request-title">{e(it["title"])}</span><span>{req}</span>'
                 f'<span class="held"><span class="numeric">{it["mapped"]} of {it["total"]}</span><progress class="rail-bar" value="{it["mapped"]}" max="{it["total"]}" aria-label="Evidence already held for {it["mapped"]} of {it["total"]} requirements"></progress></span>'
                 f'<span class="status {state_tone} request-state" data-component="StatusBadge" data-family="progress">{it["state"]}</span></summary>'
-                f'<div class="request-details"><p class="caption">{it["ref"] or ""}</p><div class="pair"><div class="block"><h3 class="overline">What to send</h3>{what_html}</div>'
-                f'<div class="stack-s"><div class="block"><h3 class="overline">Example</h3><p>{e(it["example"] or "")}</p></div><div class="block"><h3 class="overline">What good looks like</h3><p>{e(it["good"] or "")}</p></div></div></div></div>'
+                f'<div class="request-details"><p class="caption">{it["ref"] or ""}</p><div class="block"><div class="block-head"><h3 class="overline">What to send</h3>{toggle}</div>{what_html}</div>{good}</div>'
                 f'</details><div class="request-action">{action}</div></article>')
 
     inc = [i for i in items if i['included']]
@@ -308,8 +362,8 @@ def rfi():
     body = (shell('Evidence requests', 'evidence', 'Requests', 2) +
             f'<header class="view-head"><div><h1>Evidence requests</h1><p class="caption"><span id="rfi-count-in">{len(inc)}</span> in the draft RFI · <span id="rfi-count-out">{len(rest)}</span> not requested · sent as Meera Joshi</p></div>'
             '<button class="button primary" type="button">Generate RFI version</button></header>'
-            f'<section class="stack-s" aria-labelledby="included-heading"><h2 id="included-heading">In this RFI</h2><div class="table-shell">{heading()}<div id="included-items" class="request-list">{"".join(map(row, inc))}</div></div></section>'
-            f'<section class="stack-s" aria-labelledby="available-heading"><h2 id="available-heading">Not yet requested</h2><div class="table-shell">{heading()}<div id="request-items" class="request-list">{"".join(map(row, rest))}</div></div></section>'
+            f'<section class="stack-s" aria-labelledby="included-heading"><h2 id="included-heading">In this RFI</h2><div class="table-shell">{heading()}<div id="included-items" class="request-list">{"".join(row(it, n) for n, it in enumerate(inc))}</div></div></section>'
+            f'<section class="stack-s" aria-labelledby="available-heading"><h2 id="available-heading">Not yet requested</h2><div class="table-shell">{heading()}<div id="request-items" class="request-list">{"".join(row(it, n + len(inc)) for n, it in enumerate(rest))}</div></div></section>'
             '<section class="stack-s empty" id="versions"><h2>RFI versions</h2><p class="prose">No version has been generated. Generate one when the list above is right, then issue it to the client.</p></section>'
             '<section class="stack-s empty" id="links"><h2>Client links</h2><p class="prose">A client upload link can be created once an RFI version is issued.</p></section>')
     script = """<script>
@@ -319,6 +373,7 @@ if(k==='mapped')c=(a.dataset.mapped/a.dataset.total||0)-(b.dataset.mapped/b.data
 return rs.dir*(c||a.dataset.title.localeCompare(b.dataset.title));});rows.forEach(function(r){root.append(r);});});
 document.querySelectorAll('[data-sort]').forEach(function(b){var on=b.dataset.sort===rs.key;b.setAttribute('aria-pressed',String(on));b.querySelector('span').textContent=on?(rs.dir>0?' ↑':' ↓'):'';});}
 function sortRequests(k){rs.dir=rs.key===k?-rs.dir:1;rs.key=k;applySort();}
+function toggleControls(b){var l=document.getElementById(b.getAttribute('aria-controls')),on=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',String(on));b.textContent=on?'Hide controls supported':'Show controls supported';l.querySelectorAll('.doc-controls').forEach(function(c){c.hidden=!on;});}
 function includeRequest(b){var r=b.closest('.request-row'),s=r.querySelector('.request-state');r.dataset.state='In draft RFI';s.textContent='In draft RFI';s.className='status info request-state';b.remove();document.getElementById('included-items').append(r);
 document.getElementById('rfi-count-in').textContent=document.getElementById('included-items').children.length;document.getElementById('rfi-count-out').textContent=document.getElementById('request-items').children.length;applySort();}
 applySort();
@@ -354,7 +409,12 @@ def report():
         inner = ''
         if d['strength']:
             inner += f'<p id="{d["strength_id"]}" class="prose" data-illustrative="true">{e(d["strength"])}</p>'
-        inner += f'<div class="board-domain-gaps">{"".join(map(gap, full))}</div>'
+        # The board reads the two highest-ranked high-risk gaps per domain; the rest open on request.
+        inner += f'<div class="board-domain-gaps">{"".join(map(gap, full[:2]))}</div>'
+        if full[2:]:
+            more = len(full) - 2
+            inner += (f'<button class="button more-gaps" type="button" aria-expanded="false" aria-controls="more-{d["key"]}" data-more="{more}" onclick="moreGaps(this)">Show {more} more high-risk gap{"" if more == 1 else "s"}</button>'
+                      f'<div class="board-domain-gaps" id="more-{d["key"]}" hidden>{"".join(map(gap, full[2:]))}</div>')
         if other:
             inner += f'<h3 class="overline">Medium risk · {len(other)}</h3><div class="board-domain-gaps compact">{"".join(map(gap, other))}</div>'
         sec = ' data-report-section="gaps"' if d['key'] == 'organizational' else ''
@@ -409,6 +469,7 @@ function filterReport(){var d=document.getElementById('detail-domain').value,o=d
 document.querySelectorAll('#detail-view details').forEach(function(x){var ok=(d==='all'||x.dataset.domain===d)&&(o==='all'||x.dataset.outcome===o)&&(r==='all'||x.dataset.risk===r);x.hidden=!ok;if(ok)n++;});
 document.querySelectorAll('#detail-view section[data-domain]').forEach(function(s){s.hidden=!s.querySelector('details:not([hidden])');});
 document.getElementById('detail-count').textContent=n+(n===1?' control shown':' controls shown');}
+function moreGaps(b){var m=document.getElementById(b.getAttribute('aria-controls')),n=b.dataset.more,open=m.hidden;m.hidden=!open;b.setAttribute('aria-expanded',String(open));b.textContent=(open?'Hide ':'Show ')+n+' more high-risk gap'+(n==='1'?'':'s');}
 if(location.hash==='#detail'||location.hash==='#detail-wide')switchReport('detail');
 </script>"""
     (PROTO / 'report.html').write_text(page('Report', body, script))
@@ -433,5 +494,5 @@ def scope():
 
 
 if __name__ == '__main__':
-    questionnaire(); review(); conclusions(); rfi(); report(); scope()
+    questionnaire(); review(); gaps(); rfi(); report(); scope()
     print('built')

@@ -35,7 +35,7 @@
     "id": "D05",
     "requirement": "Control codes allowed beside titles",
     "classification": "Presentation",
-    "prototype": "questionnaire.html, review-queue.html, conclusions.html",
+    "prototype": "questionnaire.html, review-queue.html, gaps.html",
     "section": "Review hierarchy",
     "work": "Show requirement_id beside meaningful title."
   },
@@ -179,7 +179,7 @@
     "id": "R02a",
     "requirement": "Gap title distinct from control name",
     "classification": "Backend",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Review hierarchy",
     "work": "Add gap_title to Conclusion; propagate to Finding.title in app/services/findings.py."
   },
@@ -187,7 +187,7 @@
     "id": "R02b",
     "requirement": "Write short gap titles",
     "classification": "Content",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Content track",
     "work": "Generated per assessment from grounded gap; reviewed by auditor; compliant title describes positive conclusion."
   },
@@ -195,7 +195,7 @@
     "id": "R03",
     "requirement": "Gap statement then compliance status",
     "classification": "Presentation",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Review hierarchy",
     "work": "Use gaps_identified then outcome; current_state supplies context."
   },
@@ -251,7 +251,7 @@
     "id": "R07b",
     "requirement": "Concise provenance narrative",
     "classification": "Content",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Content track",
     "work": "Generated per assessment from revision citations and stored interviews. Never invent interviews."
   },
@@ -259,7 +259,7 @@
     "id": "R08",
     "requirement": "One provenance block; cited file one click away",
     "classification": "Presentation",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Review hierarchy",
     "work": "Deduplicate by evidence version and span; anchors retain exact citation URL."
   },
@@ -281,35 +281,35 @@
   },
   {
     "id": "R11",
-    "requirement": "One Review hierarchy across queue conclusions findings workpaper",
+    "requirement": "One gap detail across the Review queue and the gap register",
     "classification": "Presentation",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Review hierarchy",
-    "work": "Shared FindingDetail field order with domain-specific mechanics."
+    "work": "Shared FindingDetail field order. Review is two screens (Queue, Gaps); the workpaper and remediation are sections of a gap, not screens."
   },
   {
     "id": "C01",
-    "requirement": "Conclusions are final gaps without queue mechanics",
+    "requirement": "Gaps are decided conclusions without queue mechanics",
     "classification": "Presentation",
-    "prototype": "conclusions.html",
-    "section": "Conclusions",
-    "work": "No approve/edit/reject per row; settled revision only."
+    "prototype": "gaps.html",
+    "section": "Gaps",
+    "work": "No approve/edit/reject per row; settled revision only, with Reopen decision on the gap."
   },
   {
     "id": "C02",
-    "requirement": "Deterministic table domain control ID gap risk status",
+    "requirement": "Deterministic table domain control ID gap risk status owner",
     "classification": "Presentation",
-    "prototype": "conclusions.html",
-    "section": "Conclusions",
-    "work": "Five fixed columns, stable domain/control sort; no masonry cards."
+    "prototype": "gaps.html",
+    "section": "Gaps",
+    "work": "Six fixed columns, stable domain/control sort; opens on controls with a gap, with an All controls filter; no masonry cards."
   },
   {
     "id": "C03",
-    "requirement": "Row expands to full finding",
+    "requirement": "Row expands to the gap workpaper and remediation",
     "classification": "Presentation",
-    "prototype": "conclusions.html",
-    "section": "Conclusions",
-    "work": "Native button/details disclosure with all hierarchy fields."
+    "prototype": "gaps.html",
+    "section": "Gaps",
+    "work": "Native button disclosure: remediation block, then how the conclusion was reached in four steps, evidence links in the aside."
   },
   {
     "id": "F01",
@@ -337,11 +337,11 @@
   },
   {
     "id": "F03",
-    "requirement": "What to send example good looks like on demand",
+    "requirement": "What to send and good looks like on demand",
     "classification": "Presentation",
     "prototype": "rfi.html",
     "section": "RFI",
-    "work": "details disclosure, all three source content fields retained."
+    "work": "Document names only; controls each document supports behind one keyboard-operable toggle; a slot that only repeats the title does not render; no Example slot."
   },
   {
     "id": "P01",
@@ -459,7 +459,7 @@
     "id": "R07c",
     "requirement": "Persist independent provenance narrative",
     "classification": "Backend",
-    "prototype": "review-queue.html, conclusions.html",
+    "prototype": "review-queue.html, gaps.html",
     "section": "Review hierarchy",
     "work": "Store provenance_narrative with conclusion revision and linked method sources; app/models/conclusion.py and app/services/conclusion_review.py."
   },

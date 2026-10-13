@@ -249,224 +249,224 @@
   "text": "Acknowledgement is not complete for six recipients.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-1",
   "text": "Security duties are assigned to current roles and reviewed by management.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-2",
   "text": "Approval, implementation and independent review duties are separated with documented compensating checks for small teams.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-3",
   "text": "Management requires personnel to follow security procedures and uses tracked briefings and policy acknowledgements.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-4",
   "text": "The authority and emergency entries were not all reconfirmed within the current review period.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-5",
   "text": "No maintained record shows participation in a specialist security forum.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-6",
   "text": "Security advisories are collected, assessed for service relevance and assigned to owners.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-7",
   "text": "Security impact, ownership and tests are built into project and change approval for new or changed services.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-8",
   "text": "An owner-maintained inventory identifies production services, information classes, suppliers and dependencies.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-9",
   "text": "Acceptable use and handling rules are communicated for company information and devices.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-10",
   "text": "Four terminated identities remained enabled and asset-return evidence was not attached to all sampled leaver records.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-11",
   "text": "Eight approved removal actions remained open at 30 September, including four enabled terminated users; July and August lack signed reviews.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-12",
   "text": "No exercise showed whether owners can use the plan and call tree under incident conditions.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-13",
   "text": "The dispatch recovery capability was exercised within its target and reviewed by the responsible operator.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-14",
   "text": "Employees with access to scoped information are screened before access is granted and screening records have restricted ownership.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-15",
   "text": "Employment terms define security responsibilities and confidentiality obligations for personnel.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-16",
   "text": "Fifty-two personnel were overdue at cutoff and manager sign-off was missing for two depot groups.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-17",
   "text": "No security disciplinary case or manager acknowledgement of the process was supplied for this period.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-18",
   "text": "Leaver responsibilities and access removal were not completed for four sampled identities by cutoff.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-19",
   "text": "Confidentiality obligations are included in employee terms and supplier developer agreements.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-20",
   "text": "Staffed offices and depots use defined facility boundaries and badge-controlled entry.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-21",
   "text": "Physical entry is managed through staff badges, visitor registration and host escort.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-22",
   "text": "Office, depot and network spaces use locked rooms and assigned facility owners.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-23",
   "text": "Door alarms and camera coverage are checked during facility shifts and exceptions are sent to the facility owner.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-24",
   "text": "Environmental safeguards cover the staffed premises and have current inspection and maintenance records.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-25",
   "text": "Managed endpoints are assigned to users and protected through encryption, updates and malware controls.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-26",
   "text": "Two privileged identities remained without an affirmative reviewer decision at cutoff.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-27",
   "text": "The TMS and driver app were omitted and open leaver actions weaken assurance that restrictions remain current.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-28",
   "text": "Private repositories use protected branches, named accounts and separated merge approval.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-29",
   "text": "Authentication uses multifactor requirements and controlled administrator identities, with current samples of access activity.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-30",
   "text": "Service owners review resource utilization and forecast demand before capacity headroom becomes constrained.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-title-31",
   "text": "Production images and endpoints receive managed malware protection and alerts are reviewed.",
   "classification": "Backend",
   "dependency": "Reviewed gap_title; title uses real gap text but field is absent",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "rfi-included-0",
@@ -851,378 +851,378 @@
   "text": "Six recipients may be acting without confirmed knowledge of the approved policy.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-0",
   "text": "The six acknowledgements and updated portal export close the recorded coverage gap and provide a checkable completion record.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-0",
   "text": "The reviewer examined Veldhara_Policy_Acknowledgement_Export_Q2.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-1",
   "text": "The reviewer examined Veldhara_Security_Roles_and_RACI_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-2",
   "text": "The reviewer examined Veldhara_Security_Roles_and_RACI_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-3",
   "text": "The reviewer examined Veldhara_Information_Security_Policy_v3.1.pdf. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-4",
   "text": "An outdated authority or emergency contact could delay escalation during an incident.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-4",
   "text": "Verifying every entry before the tabletop lets responders test a current call tree, with a named owner for future updates.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-4",
   "text": "The reviewer examined Veldhara_Incident_Response_Plan_v1.pdf. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-5",
   "text": "Without a maintained forum record, the company cannot show how it receives specialist security developments.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-5",
   "text": "A documented decision makes the chosen external-information channel explicit; forum membership is useful only if relevant to the company.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-5",
   "text": "The reviewer examined Veldhara_Threat_Advisory_Digest_Q2_2026.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-6",
   "text": "The reviewer examined Veldhara_Threat_Advisory_Digest_Q2_2026.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-7",
   "text": "The reviewer examined Veldhara_Application_Security_Test_Report_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-8",
   "text": "The reviewer examined Veldhara_Information_Asset_Inventory_Q2.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-9",
   "text": "The reviewer examined Veldhara_Information_Security_Policy_v3.1.pdf. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-10",
   "text": "Enabled leaver accounts and missing return records could leave company systems or devices accessible after employment ends.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-10",
   "text": "Reconciling the leaver checklist with both identity and asset inventories catches missing returns as well as retained access.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-10",
   "text": "The reviewer examined Veldhara_People_Security_Procedures_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-11",
   "text": "Retained access for departed users could expose operational systems and data to unauthorized changes.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-11",
   "text": "Closing removal tickets removes known residual access. Including TMS and the driver app closes the two coverage omissions.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-11",
   "text": "The reviewer examined Veldhara_Access_Review_Q2_FY26.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-12",
   "text": "Untested roles and call trees could delay containment and recovery during an incident.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-12",
   "text": "An exercise tests whether people can use the documented plan and exposes changes that document review cannot.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-12",
   "text": "The reviewer examined Veldhara_Incident_Response_Plan_v1.pdf. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-13",
   "text": "The reviewer examined Veldhara_DR_Failover_Test_Report.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-14",
   "text": "The reviewer examined Veldhara_People_Security_Procedures_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-15",
   "text": "The reviewer examined Veldhara_People_Security_Procedures_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-16",
   "text": "Overdue training leaves52 personnel without current verified awareness, and missing depot sign-off weakens coverage assurance.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-16",
   "text": "Scheduled sessions target the overdue groups; verified completion and manager sign-off close both evidence gaps.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-16",
   "text": "The reviewer examined Veldhara_Security_Awareness_Completion_Q2.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-17",
   "text": "Managers may not understand how to apply the disciplinary process when a security issue requires it.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-17",
   "text": "A briefing and acknowledgement demonstrate awareness. Retaining a case record only if invoked avoids fabricating evidence of a case.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-17",
   "text": "The reviewer examined Veldhara_People_Security_Procedures_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-18",
   "text": "Four former workers may retain access or assets beyond the intended end of their responsibilities.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-18",
   "text": "Disabling accounts and confirming asset return addresses the immediate exceptions; service-owner reconciliation checks coverage.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-18",
   "text": "The reviewer examined Veldhara_User_Access_Review_Export.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-19",
   "text": "The reviewer examined Veldhara_Supplier_Security_Schedules_Extract.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-20",
   "text": "The reviewer examined Veldhara_Facilities_Security_Inspection_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-21",
   "text": "The reviewer examined Veldhara_Facilities_Security_Inspection_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-22",
   "text": "The reviewer examined Veldhara_Facilities_Security_Inspection_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-23",
   "text": "The reviewer examined Veldhara_Facilities_Security_Inspection_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-24",
   "text": "The reviewer examined Veldhara_Facilities_Security_Inspection_Q2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-25",
   "text": "The reviewer examined Veldhara_Remote_Work_and_Endpoint_Standard_v2.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-26",
   "text": "Two privileged identities could retain powerful permissions without a current affirmative owner decision.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-26",
   "text": "Owner decisions resolve the known exceptions; a separate monthly privileged-group sample checks this higher-impact access repeatedly.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-26",
   "text": "The reviewer examined Veldhara_User_Access_Review_Export.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-impact-27",
   "text": "Omitted applications and open leaver actions reduce assurance that information access stays restricted to authorized people.",
   "classification": "Content",
   "dependency": "Assessment-specific impact narrative; Backend impact_statement slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-reason-27",
   "text": "Reviewing every production service closes the application gap, while checking disabled removals tests the actual restriction.",
   "classification": "Content",
   "dependency": "Recommendation logic from source action; Backend recommendation_reason slot",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-27",
   "text": "The reviewer examined Veldhara_Information_Security_Policy_v3.1.pdf. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-28",
   "text": "The reviewer examined Veldhara_Secure_Development_Standard_v1.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-29",
   "text": "The reviewer examined Veldhara_Cloud_Service_Review_Q2_2026.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-30",
   "text": "The reviewer examined Veldhara_Service_Capacity_and_Utilization_Q2.xlsx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "id": "conclusion-provenance-31",
   "text": "The reviewer examined Veldhara_Secure_Configuration_Baseline_v3.docx. No interview record is available in the source data.",
   "classification": "Content",
   "dependency": "Reviewed provenance narrative with method/interview source records",
-  "screen": "conclusions.html"
+  "screen": "gaps.html"
  },
  {
   "screen": "scope-applicability.html",
@@ -1269,5 +1269,61 @@
   "classification": "Backend",
   "dependency": "Stored client response for A5.18; the value shown is a placeholder",
   "screen": "questionnaire.html"
+ },
+ {
+  "id": "gap-remediation-0",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-4",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-5",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-10",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-17",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-18",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-26",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
+ },
+ {
+  "id": "gap-remediation-27",
+  "text": "Owner: Not assigned. Target: Not set. Status: Open.",
+  "classification": "Backend",
+  "dependency": "Remediation record created when a gap is approved (Track B); today a finding is created by hand, so this gap has no owner, target or status on record",
+  "screen": "gaps.html"
  }
 ]

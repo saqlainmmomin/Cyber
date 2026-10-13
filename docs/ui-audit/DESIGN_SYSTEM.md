@@ -30,17 +30,25 @@ Section labels inside content are overlines. The content under a label carries t
 
 **Navigation.** This replaces options A and B and every mention of a Section select.
 - A stepper replaces the stage bar: Overview, Scope, Evidence, Questionnaire, Review, Report, numbered, with a tick on completed stages. Every step is a link; it is not a forced wizard.
-- The open stage shows its sections inline beside its name as a segmented group (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Documents, Requests, Client links; Scope: Boundaries, Applicability). There is still never a second bar.
+- The open stage shows its sections inline beside its name as a segmented group (Review: Queue, Gaps; Evidence: Documents, Requests, Client links; Scope: Boundaries, Applicability). There is still never a second bar.
 - A single context line above the stepper carries the breadcrumb and the period and cut-off. The separate assessment header block is gone.
 - The global sidebar can be hidden with a button at the start of the context line. The state persists per user. Domain navigation inside the questionnaire stays visible when the sidebar is hidden.
-- At 1340px and below the stepper tightens its gaps so the widest stage (Review, four sections) fits at 1280 with the sidebar open.
+- At 1340px and below the stepper tightens its gaps so the widest stage (Evidence, three sections) fits at 1280 with the sidebar open.
+
+**Review structure (decided by Saqlain, 13 Oct 2026).** Review is two screens, not four. This overrides every later mention of Conclusions, Findings and Workpaper as screens.
+- Queue: what the assessment proposed, awaiting approve, edit or reject.
+- Gaps: the register of decided controls. A gap is an approved conclusion whose outcome is not compliant. Compliant controls are reachable through the "All controls" filter.
+- The workpaper is a section of each control, not a screen: client answer, evidence with links, AI proposal and its checks, reviewer decision and revision history. One export produces the whole-assessment document (`reports/workpaper_standalone.html` already renders it).
+- Remediation (owner, actions, target date, status, closure evidence) is a section of the gap. Approving a gap creates its remediation record; the manual "Create finding" step is removed. This is backend work (plan section 6.2, B10).
+- The assessment-level trail moves out of Review: analysis runs to Overview; requirements excluded by scope and applicable requirements with no conclusion to the report's auditor detail and the exported workpaper.
+- Period, sign-off and release panels, which sat on Conclusions, belong to Report.
 
 **Per screen.**
 - Questionnaire: questions in a domain are one-line rows (code, control name, response state); the open question shows the requirement as Heading, then "Rationale" and "Steering the response" side by side, then the answer area as the shaded block. The domain rail shows answered counts.
-- Review queue: list grouped into "To decide" and "Decided"; the detail leads with the gap title as Title, then one strip (compliance, risk, decision, proposed by), then gap, impact and the shaded recommendation; evidence, interviews and control sit in a quieter aside.
-- Conclusions: assessment sheet table; rows with a gap are heavier than rows without; "With a gap" filter and "Highest risk" sort; an open row uses the review detail layout.
-- Evidence requests: "In this RFI" and "Not yet requested" lists with sortable headers, evidence already held as a count and bar, and one filled "Generate RFI version" action.
-- Report: executive summary as Lead with the score and gap counts as facts beside it; domain table weakest first; high-risk gaps shown in full, medium-risk gaps as one-line rows that open; auditor detail as a filterable list of all controls.
+- Review queue: list grouped into "To decide" and "Decided" (a decided item stays visible until the reviewer leaves the queue, so a decision can be undone where it was made; its home afterwards is Gaps); the detail leads with the gap title as Title, then one strip (compliance, risk, decision, proposed by), then gap, impact and the shaded recommendation; evidence, interviews and control sit in a quieter aside.
+- Gaps (replaces Conclusions, Findings and Workpaper): assessment sheet table with domain, control, gap, risk, status and owner. It opens on controls with a gap; "All controls" adds the compliant ones. An open row shows the remediation block (recommendation, why, impact, owner, target, status) and then "How this was concluded" in four numbered steps: the client answered, the evidence showed, the AI proposed, the reviewer decided. Evidence links, the control and "Reopen decision" sit in the aside. "Export workpaper" in the page head produces the whole-assessment document.
+- Evidence requests: "In this RFI" and "Not yet requested" lists with sortable headers, evidence already held as a count and bar, and one filled "Generate RFI version" action. An open request lists document names only. The controls a document supports appear under each name when the reviewer presses "Show controls supported" (a button, so it works by keyboard and touch; never hover only). "What good looks like" renders only when it adds something the title does not say. There is no Example slot.
+- Report: executive summary as Lead with the score and gap counts as facts beside it; domain table weakest first; the two highest-ranked high-risk gaps per domain shown in full, the rest behind "Show N more high-risk gaps", medium-risk gaps as one-line rows that open; auditor detail as a filterable list of all controls.
 - Applicability: three counts, the standard justification stated once, the excluded controls with reasons, and a form to exclude another.
 
 ## Colour and surface tokens

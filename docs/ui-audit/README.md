@@ -47,7 +47,7 @@ Each of Saqlain's decisions and per-screen requirements is linked below. Split r
 | D02 | Retire gradient canvas and glass | All seven | Foundation | Presentation |
 | D03 | Keep eight accents for interaction and branding only | All seven, graphite shown; other presets in token table | Foundation | Presentation |
 | D04 | Four status families | All seven | Status | Presentation |
-| D05 | Control codes allowed beside titles | questionnaire.html, review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| D05 | Control codes allowed beside titles | questionnaire.html, review-queue.html, gaps.html | Review hierarchy | Presentation |
 | D06a | Single framework uses its own master domains | questionnaire.html (target ISO focus) | Questionnaire | Backend |
 | D06b | Multi-framework covers each requirement once in unified domains | Not shown: ISO focus prototype; multi-framework is specified | Questionnaire | Backend |
 | D07a | Drafts save automatically while typing | questionnaire.html (static saved state) | Draft contract | Backend |
@@ -65,27 +65,27 @@ Each of Saqlain's decisions and per-screen requirements is linked below. Split r
 | Q07 | Show unanswered and answered after assessment | questionnaire.html | Questionnaire | Presentation |
 | Q08 | ISO uses four Annex A themes, not privacy headings | questionnaire.html | Questionnaire | Presentation |
 | R01 | Each queue item is a finding before approval | review-queue.html | Review hierarchy | Presentation |
-| R02a | Gap title distinct from control name | review-queue.html, conclusions.html | Review hierarchy | Backend |
-| R02b | Write short gap titles | review-queue.html, conclusions.html | Content track | Content |
-| R03 | Gap statement then compliance status | review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| R02a | Gap title distinct from control name | review-queue.html, gaps.html | Review hierarchy | Backend |
+| R02b | Write short gap titles | review-queue.html, gaps.html | Content track | Content |
+| R03 | Gap statement then compliance status | review-queue.html, gaps.html | Review hierarchy | Presentation |
 | R04a | Risk or impact of non-compliance | review-queue.html, report.html | Review hierarchy | Backend |
 | R04b | Write impact statements | review-queue.html, report.html | Content track | Content |
 | R05 | Recommendation at full weight | review-queue.html, report.html | Review hierarchy | Presentation |
 | R06a | Recommendation reasoning has its own slot | review-queue.html, report.html | Review hierarchy | Backend |
 | R06b | Write recommendation logic | review-queue.html, report.html | Content track | Content |
 | R07a | What reviewed and who spoken to as provenance | review-queue.html | Review hierarchy | Backend |
-| R07b | Concise provenance narrative | review-queue.html, conclusions.html | Content track | Content |
-| R08 | One provenance block; cited file one click away | review-queue.html, conclusions.html | Review hierarchy | Presentation |
+| R07b | Concise provenance narrative | review-queue.html, gaps.html | Content track | Content |
+| R08 | One provenance block; cited file one click away | review-queue.html, gaps.html | Review hierarchy | Presentation |
 | R09 | Queue outcome and risk in words | review-queue.html | Review queue | Presentation |
 | R10 | Approve edit reject attached and visible | review-queue.html | Review queue | Presentation |
-| R11 | One Review hierarchy across queue conclusions findings workpaper | review-queue.html, conclusions.html | Review hierarchy | Presentation |
-| C01 | Conclusions are final gaps without queue mechanics | conclusions.html | Conclusions | Presentation |
-| C02 | Deterministic table domain control ID gap risk status | conclusions.html | Conclusions | Presentation |
-| C03 | Row expands to full finding | conclusions.html | Conclusions | Presentation |
+| R11 | One gap detail across the Review queue and the gap register | review-queue.html, gaps.html | Review hierarchy | Presentation |
+| C01 | Gaps are decided conclusions without queue mechanics | gaps.html | Gaps | Presentation |
+| C02 | Deterministic table domain control ID gap risk status owner | gaps.html | Gaps | Presentation |
+| C03 | Row expands to the gap workpaper and remediation | gaps.html | Gaps | Presentation |
 | F01 | RFI tight sortable list | rfi.html | RFI | Presentation |
 | F02a | Already added item absent from same add form | rfi.html | RFI | Backend |
 | F02b | Separate included items from candidates | rfi.html | RFI | Presentation |
-| F03 | What to send example good looks like on demand | rfi.html | RFI | Presentation |
+| F03 | What to send and good looks like on demand | rfi.html | RFI | Presentation |
 | P01 | Written executive context first | report.html | Content track | Content |
 | P02 | Summary names engagement reviewed material and scope domains | report.html | Report | Content |
 | P03 | Summary identifies gaps location criticality and overall posture | report.html | Report | Content |
@@ -100,7 +100,7 @@ Each of Saqlain's decisions and per-screen requirements is linked below. Split r
 | T01 | Content quality is separate, reader-specific track | Not solved by static prototype: examples expose slots only | Content track | Content |
 | T02 | Useful consultant AI output and good reports with less effort | Not measured: needs consultant task testing | Content track | Content |
 | D06c | Unified taxonomy and requirement wording | Not shown: requires content track beyond ISO focus | Content track | Content |
-| R07c | Persist independent provenance narrative | review-queue.html, conclusions.html | Review hierarchy | Backend |
+| R07c | Persist independent provenance narrative | review-queue.html, gaps.html | Review hierarchy | Backend |
 | R12 | Expose queue state and evidence conflicts to JSON | review-queue.html | Delivery | Backend |
 | P08 | Expose accepted narrative and board read model | report.html | Report | Backend |
 

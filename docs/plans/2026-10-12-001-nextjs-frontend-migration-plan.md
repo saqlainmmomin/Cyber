@@ -90,7 +90,7 @@ This session's context is full. On approval, Claude does four things and stops:
 
 - **Questionnaire.** The question area must use the width; no narrow column with a blank side. Per question, in this order of weight: what the control requires, why it is asked, a hint on how to put it to the client. Rework help text and the text hierarchy. The answered state after assessment also needs redesign.
 - **Review queue.** Each item is a finding. Title it with the gap itself ("Access reviews do not cover all systems"), not the control name. Show: gap statement, compliance status, risk or impact of the non-compliance, recommendation at full weight with its reasoning, and where the finding came from (what was reviewed, who was spoken to) as a short narrative, not an evidence extract. Remove the duplicate "Evidence" and "Evidence on this control" blocks. Settle one data hierarchy for every screen under Review.
-- **Conclusions.** Same content as the queue with review mechanics removed: the final gap, in a table with domain, control ID, risk and status, like a standard assessment sheet. Deterministic layout.
+- **Conclusions.** Same content as the queue with review mechanics removed: the final gap, in a table with domain, control ID, risk and status, like a standard assessment sheet. Deterministic layout. (Superseded 13 Oct 2026: this screen is now Gaps and also carries the workpaper and remediation; see 4.4.)
 - **RFI.** Much simpler: a tight list with good sorting. An item already added to an RFI is not shown again in the same form.
 - **Report.** Opens with an executive summary that sets the context (what the engagement was, what was reviewed, domains in scope), the gaps, where they lie, their criticality and overall posture, well written. Then gaps by domain (weakest and strongest), each with the non-compliance, impact if unresolved and risk, readable by a board. A summary view for the board and a detailed view for auditors and technical teams. Recommendations with their logic, following the flow of the exported report.
 - **SoA.** Ask only which controls are not applicable and why; everything else is applicable with a standard justification. It does not need its own tab.
@@ -192,19 +192,20 @@ Seven archetypes cover all 31 screens. Each is built once in the gallery with re
 
 | Archetype | Used by | Replaces |
 |---|---|---|
-| Inventory | Home, Clients, Engagements, Reports, Evidence inventory (3 scopes), Evidence reuse, Requests, RFI, Remediation, Findings, Conclusions, Versions, Comparison | T1 (agree); takes Conclusions from T4 and Versions and Comparison from T2 |
+| Inventory | Home, Clients, Engagements, Reports, Evidence inventory (3 scopes), Evidence reuse, Requests, RFI, Remediation, Gaps, Versions, Comparison | T1 (agree); takes Conclusions from T4 and Versions and Comparison from T2 |
 | Entity | Client, Engagement overview, Assessment overview | T2 (changed: no generic card pages) |
 | Task | Questionnaire, Desk review, run states | T3 and T6 (changed: one stepper as navigation across stages, every step a link; the questionnaire is a workspace, not a forced wizard) |
 | Queue | Review queue, Portfolio review | T4 (changed: only the queue needs a permanent selection pane) |
 | Form | New engagement, New assessment, Scope with applicability, Settings, Board inputs, AWS evidence, Purge, Client upload | T5 (changed: SoA becomes a panel in Scope) |
-| Document | Evidence record, Workpaper, Narrative, Report (board and auditor views), Integrated reports | T7 (agree) |
+| Document | Evidence record, Narrative, Report (board and auditor views), Integrated reports | T7 (agree) |
 | Recovery | Error pages, invalid and expired client links | New |
 
 ### 4.4 Navigation
 
 - **Decided 13 Oct 2026 (Saqlain): a stepper, not option A or B.** One sidebar that can be hidden, one context line (breadcrumb, period and cut-off), and one stepper inside an assessment (Overview, Scope, Evidence, Questionnaire, Review, Report). Entering an assessment replaces the engagement's navigation.
 - Every step is a link. Completed stages show a tick. It is not a forced wizard.
-- **Never a second bar under the stepper.** The open stage shows its sections inline beside its name (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Documents, Requests, Client links, plus Desk review and Reuse; Scope: Boundaries, Applicability; Report: Versions, Comparison, Narrative, Board inputs where they exist).
+- **Decided 13 Oct 2026 (Saqlain): Review is two screens, Queue and Gaps.** Conclusions, Findings and Workpaper stop being screens. A gap is an approved conclusion that is not compliant; its workpaper and its remediation are sections of the gap; compliant controls are an "All controls" filter on Gaps; the run trail moves to Overview and the report's auditor detail. Why: Queue and Conclusions rendered the same card twice, and a finding was a second record made by hand from an approved gap (in the demo, 28 of 34 gaps had none, so they were missing from the PDF findings section, the board deck, the narrative and the remediation tracker, all of which read findings).
+- **Never a second bar under the stepper.** The open stage shows its sections inline beside its name (Review: Queue, Gaps; Evidence: Documents, Requests, Client links, plus Desk review and Reuse; Scope: Boundaries, Applicability; Report: Versions, Comparison, Narrative, Board inputs where they exist).
 - The sidebar hide state persists per user. The questionnaire's domain rail stays when the sidebar is hidden.
 - Full rules and type roles: the "Second-pass amendment" section at the top of `docs/ui-audit/DESIGN_SYSTEM.md` and `docs/ui-audit/NEXTJS_MIGRATION_UI_SPEC.md`. It overrides the rest of those documents and section 4.1 of this plan where they differ. Values: `docs/ui-audit/prototypes/prototype.css`.
 - Report board summary and auditor detail are two views of one page, switched by a two-option toggle, not navigation.
@@ -266,7 +267,7 @@ Revised 12 Oct 2026. The audit showed that five areas are more than a restyle: Q
 - **Track B, product changes.** A new field, data shape, endpoint or stored state. Each one is backend work with its own tests and lands before or after the port of its screen, never inside it.
 - **Track C, content.** Writing and prompt work: what the tool says, to whom. It gets its own plan (section 6.3). The UI leaves the slots; the redesign does not claim to fill them well.
 
-### 6.1 Track A: presentation ports (about 27 PRs)
+### 6.1 Track A: presentation ports (about 26 PRs)
 
 | Phase | PRs | Content |
 |---|---|---|
@@ -275,7 +276,7 @@ Revised 12 Oct 2026. The audit showed that five areas are more than a restyle: Q
 | P2 Engagement and firm | 4 | New engagement, Engagement, New assessment, Remediation, Integrated reports, Requests, AWS, Purge, Settings |
 | P3 Evidence | 3 | Inventory (3 scopes), Evidence record, Reuse, Desk review |
 | P4 Assessment workspace | 4 | Shell and overview, Scope, Questionnaire (two PRs), Report |
-| P5 Review | 3 | Queue, Conclusions with Findings (one table component), Workpaper |
+| P5 Review | 2 | Queue; Gaps (register, with the workpaper and remediation sections of a gap) |
 | P6 Reporting | 3 | Versions and Comparison, Narrative and Board inputs, RFI |
 | P7 Decommission | 2 | Remove Jinja UI, HTMX, old CSS, design routers, old tests; restyle the client upload page with the new tokens and fix its keyboard path; docs |
 
@@ -287,7 +288,7 @@ Revised 12 Oct 2026. The audit showed that five areas are more than a restyle: Q
 - **0d** Layout and type primitives, `AppShell`, the seven archetypes in the gallery, ESLint rules, measured checks, screenshot harness pointed at Next. **Saqlain signs the archetypes and picks the section pattern (4.4) here.**
 - **0e** `/api/ui` conventions, error envelope, `GET /api/ui/shell` (nav, review count, branding, accent), OpenAPI type generation, `response_model` guard test.
 
-### 6.2 Track B: product changes (9 backend PRs)
+### 6.2 Track B: product changes (10 backend PRs)
 
 The audit classified 60 requirement parts: 32 presentation, 14 backend, 14 content (`docs/ui-audit/requirements.json`; spec, "Requirement classification"). The 14 backend parts group into these PRs.
 
@@ -296,14 +297,15 @@ The audit classified 60 requirement parts: 32 presentation, 14 backend, 14 conte
 | B1 | Questionnaire drafts save as you type; completing a section is a separate act | New `PATCH /api/assessments/{id}/questionnaire/drafts` (partial upsert, version check, 409 with diff). Today both save routes mark the questionnaire done (`app/routers/questionnaire.py`) | P4 Questionnaire | None |
 | B2 | Questionnaire navigation by the framework's own domains; unified domains for multi-framework | Ordered domain tree from the registry (`app/frameworks/definitions/`); for multi-framework, one master list from `UnifiedControlCluster.domain_group` and `DOMAIN_GROUP_ORDER` (`cluster_engine.py`, `mapping.py`), with a check that each in-scope requirement is covered once | P4 Questionnaire | None |
 | B3 | Per question: what the control requires, why it is asked, how to put it to the client | `why_asked` and `client_prompt_hint` on `QuestionDef` (`app/frameworks/schema.py`) and in the serializers | P4 Questionnaire | C1 |
-| B4 | A finding is titled by its gap and carries impact and the reason for the recommendation | `gap_title`, `impact_statement`, `recommendation_reason` on `Conclusion` (today: `rationale`, `evidence_summary`, `gaps_identified`, `risk_level`, `recommended_action`); carried into the existing `Finding.title` and `Finding.business_impact` on approval. Analyzer output schema gains the three fields; **the v1 prompt path and the parked v2 pipeline are not retuned without a decision** | P5 Queue, Conclusions, Findings, Workpaper; P4 Report | C2 |
+| B4 | A finding is titled by its gap and carries impact and the reason for the recommendation | `gap_title`, `impact_statement`, `recommendation_reason` on `Conclusion` (today: `rationale`, `evidence_summary`, `gaps_identified`, `risk_level`, `recommended_action`); carried into the existing `Finding.title` and `Finding.business_impact` on approval. Analyzer output schema gains the three fields; **the v1 prompt path and the parked v2 pipeline are not retuned without a decision** | P5 Queue, Gaps; P4 Report | C2 |
 | B5 | "Where this finding came from": what was reviewed and who was spoken to | Interview record (who, role, date, notes, linked evidence) as a new model, service and router; `provenance_narrative` on `Conclusion` built from revision citations and interview records. No interview is ever inferred | P5 Review | C2 |
 | B6 | One typed `FindingDetail` read model for every Review screen | `/api/ui` DTO with the ordered field list in the spec; optional new fields have an explicit missing state | P5 | None |
 | B7 | RFI: an item already in an RFI is not offered again | Common artifact identity across checklist items, conclusion requests and added requests; `included_ids`, issued and received state in JSON (`app/models/rfi.py`, RFI services) | P6 RFI | None |
 | B8 | Applicability asks only for exclusions | Exclusion state (control, reason, actor, version) in Scope; `build_soa` uses a standard justification for the rest. Today justifications are audit-event metadata and do not change applicability | P4 Scope | C3 |
 | B9 | Report opens with written context and has board and auditor views | Report JSON exposes engagement context, accepted narrative sections and their freshness (reuse `app/services/narrative.py` and `board_report.build_document`); board read model ordered weakest to strongest. `approved_report._summary_text` is a string of counts and is not the executive summary | P4 Report | C4 |
+| B10 | Approving a gap creates its remediation record; no manual "Create finding" step | On approve or edit-and-approve of a conclusion whose outcome is a gap, create the `Finding` and its first `Action` from the conclusion (the prefill that `findings_page` in `app/services/findings.py` already computes: title, description, severity, priority, first action). One-off backfill for approved gaps with no finding. A reopened or rejected conclusion keeps its finding flagged, as `source_approved` does today. Readers do not change: `report_content.assessment_findings`, `board_report`, `narrative`, `board_inputs`, `remediation_rollup`, `actions_export`. Legacy bulk approvals stay excluded. The per-control workpaper fields (client response, mapped evidence, proposal checks, revisions from `workpaper.build_workpaper`) join the B6 read model; analysis runs are exposed to Overview, and exclusions and unconcluded requirements to the report's auditor detail | P5 Gaps | None |
 
-Order: B1, B2 and B6 have no content dependency and go first. B4 is the largest and gates the Review ports reading well; the Review screens can port against existing fields before it lands. Analysis must also stop blocking the request (background task and polling) before the Questionnaire cut-over; that was already in this plan and stays in P4.
+Order: B1, B2, B6 and B10 have no content dependency and go first. B10 changes what the PDF, board deck and tracker contain for existing assessments (every approved gap appears, not only those someone created a finding for), so it needs a decision record before it lands. B4 is the largest and gates the Review ports reading well; the Review screens can port against existing fields before it lands. Analysis must also stop blocking the request (background task and polling) before the Questionnaire cut-over; that was already in this plan and stays in P4.
 
 ### 6.3 Track C: content (its own plan, not written here)
 
@@ -317,6 +319,8 @@ Saqlain flagged this separately: the content is not shaped for its reader. The r
 | C4 | Executive summary and domain narrative, board wording against auditor wording | Generated per assessment, accepted by the auditor | Board and executives |
 | C5 | Unified control framework: domain names and structure | Once | Consultant |
 | C6 | RFI request wording, examples and "good looks like" | Once per artifact | Client |
+
+C6 detail from Saqlain's review (13 Oct 2026), handed to the parallel content session: a request titled for two things (a policy and review records) lists about fifteen documents, and the example and "good looks like" restate the title. The presentation needs, per request, a short list of documents that matches its title and, per document, the controls it supports as structured data (today the list is one paragraph, split mechanically). His idea of a first-level request (policy, procedure, record) with more requested after review is a product change: recorded here, not designed.
 
 C2 and C4 touch prompts. They need a decision record before any prompt changes, and they are evaluated on the held-out set without reading the answer keys.
 
@@ -375,9 +379,7 @@ Legend: "API new" means a `/api/ui` read model must be added; "json" means a JSO
 | Screen | Jinja today | Next route | Archetype | Work | Track |
 |---|---|---|---|---|---|
 | Review queue | `pages/review_queue.html`, `components/conclusion_card.html`, `requirement_card_body.html`, `partials/remediation_draft.html` | `/assessments/[id]/review` | Queue | Findings titled by the gap; outcome and risk in words in the list; decision bar attached to the selected finding; one provenance block; pending first, then evidence issues, switchable. `j`/`k`. | Port; B4, B5, B6, C2 |
-| Conclusions | `pages/conclusions.html`, `partials/report_basis_panel.html`, `release_panel.html` | `/assessments/[id]/review/conclusions` | Inventory | Assessment-sheet table: domain, control ID, gap, risk, status; a row expands to the full finding. Report basis and release with blockers list. Conflict diff from JSON. | Port; B4, B6 |
-| Findings | `pages/findings.html`, `components/finding_card.html` | `/assessments/[id]/review/findings` | Inventory | Same table and `FindingDetail`, with ownership and action states (`expected_history_length`). | Port; B6 |
-| Workpaper | `pages/workpaper.html`, `components/workpaper_entry.html` | `/assessments/[id]/review/workpaper` | Document | Read only; same field order with the method and revision trace. The standalone workpaper HTML for PDF stays in Python. | Port; B5, B6 |
+| Gaps | `pages/conclusions.html`, `pages/findings.html`, `components/finding_card.html`, `pages/workpaper.html`, `components/workpaper_entry.html` | `/assessments/[id]/review/gaps` | Inventory | One register replaces Conclusions, Findings and Workpaper. Table: domain, control ID, gap, risk, status, owner; opens on controls with a gap, "All controls" as a filter in the URL. A row expands to the remediation section (recommendation, owner, actions, target, status, closure evidence; `expected_history_length`) and the workpaper section (client answer, evidence links, AI proposal and checks, decision, revisions). Reopen decision on the gap; conflict diff from JSON. "Export workpaper" calls the standalone workpaper HTML, which stays in Python. Report basis and release panels move to Report; analysis runs move to Overview. | Port; B4, B5, B6, B10 |
 
 ### P6 Reporting
 
@@ -387,7 +389,7 @@ Legend: "API new" means a `/api/ui` read model must be added; "json" means a JSO
 | Comparison | `pages/comparison.html` | `/assessments/[id]/report/compare/[otherId]` | Inventory | json exists (`reports.py` compare). | Port |
 | Narrative | `pages/narrative.html` | `/assessments/[id]/report/narrative` | Document | Generate, accept, discard AI sections; a draft saves without being accepted (UI-019). | Port; C4 |
 | Board inputs | `pages/board_inputs.html` | `/assessments/[id]/report/board-inputs` | Form | Observations, owners, initiatives, asks. json exists. | Port |
-| RFI | `pages/rfi.html`, `partials/rfi_links.html` | `/assessments/[id]/evidence/requests` | Inventory | One tight sortable list, guidance on demand, items already in the RFI grouped and not offered again; versions and client links as sections, not a third bar; 20-item limit on a link. | Port; B7, C6 |
+| RFI | `pages/rfi.html`, `partials/rfi_links.html` | `/assessments/[id]/evidence/requests` | Inventory | One tight sortable list, guidance on demand (document names only, controls supported behind a toggle, no slot that repeats the title), items already in the RFI grouped and not offered again; versions and client links as sections, not a third bar; 20-item limit on a link. | Port; B7, C6 |
 
 ### Stays in FastAPI and Jinja
 

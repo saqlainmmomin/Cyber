@@ -10,10 +10,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / 'docs/ui-audit'
-HANDOFF = 'tasks/handoffs/2026-10-12-ui-audit-prototype-fix-pass.md'
+HANDOFF = 'tasks/handoffs/2026-10-13-review-structure-and-rfi-kickoff.md'
 CORE = ['README', 'ARCHITECTURE', 'SCREEN_INVENTORY', 'UI_ISSUES', 'ROOT_CAUSES',
         'DESIGN_SYSTEM', 'PAGE_ARCHETYPES', 'NEXTJS_MIGRATION_UI_SPEC', 'COMPONENT_INVENTORY']
-SCREENS = ['questionnaire', 'review-queue', 'conclusions', 'rfi', 'report',
+SCREENS = ['questionnaire', 'review-queue', 'gaps', 'rfi', 'report',
            'scope-applicability']
 for name in CORE:
     assert (OUT / f'{name}.md').is_file(), name
@@ -103,7 +103,17 @@ for name in SCREENS:
                 assert attrs[key] in html[name].ids, (name, attrs[key])
 assert sum('queue-item' in a.get('class', '').split() for t, a in html['review-queue'].nodes) == 6
 assert sum(a.get('data-component') == 'FindingDetail' for t, a in html['review-queue'].nodes) == 6
-assert sum(a.get('class') == 'disclosure-row' for t, a in html['conclusions'].nodes) == 32
+assert sum(a.get('class') == 'disclosure-row' for t, a in html['gaps'].nodes) == 32
+# Review is two screens: the queue and the gap register. Each gap carries its workpaper and its remediation.
+review_steps = [a for t, a in html['gaps'].nodes if t == 'a' and a.get('href') in ('review-queue.html', 'gaps.html') and 'step-link' not in a.get('class', '')]
+assert len(review_steps) == 2, review_steps
+assert not (OUT / 'prototypes/conclusions.html').exists()
+gaps = (OUT / 'prototypes/gaps.html').read_text()
+assert gaps.count('class="trail"') == 32 and gaps.count('<h3 class="overline">Remediation</h3>') == 11
+# Evidence requests: clause codes are never inline; they sit behind a keyboard-operable toggle. No Example slot.
+rfi_html = (OUT / 'prototypes/rfi.html').read_text()
+assert '>Example<' not in rfi_html and not re.search(r'<li>[^<]*\((?:ISO|CH\d|CM)\.', rfi_html)
+assert all('hidden' in m for m in re.findall(r'<span class="doc-controls caption"([^>]*)>', rfi_html))
 assert sum(a.get('data-component') == 'RequestRow' for t, a in html['rfi'].nodes) >= 20
 assert {'board-view', 'detail-view'} <= html['report'].ids
 assert 'scope-panel' not in html['questionnaire'].ids

@@ -333,6 +333,29 @@ form.recommend{max-width:var(--measure)}
 .disclosure-row .recommend,.d-body .recommend,form.recommend{background:var(--surface);box-shadow:var(--ring)}
 .d-body .recommend .rec-text{font:var(--lead);font-weight:600}
 .request-details p.caption{font:var(--caption)}
+.block-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--4);flex-wrap:wrap}
+.link-button{min-height:28px;padding:0;border:0;background:transparent;font:var(--caption);color:var(--text-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link-button:hover{color:var(--text)}
+.request-details .doc-list{display:block;columns:2 18rem;column-gap:var(--10)}
+.request-details .doc-list li{break-inside:avoid;margin-bottom:var(--1)}
+.doc-controls{display:block;color:var(--text-2)}
+.doc-controls[hidden]{display:none}
+.register th:nth-child(1){width:13%}.register th:nth-child(2){width:8%}.register th:nth-child(4){width:9%}.register th:nth-child(5){width:16%}.register th:nth-child(6){width:13%}
+.register td.code{white-space:nowrap}
+.trail{display:flex;flex-direction:column;gap:var(--5);counter-reset:step}
+.trail li{display:flex;flex-direction:column;gap:var(--1);padding-inline-start:var(--8);position:relative;counter-increment:step}
+.trail li::before{content:counter(step);position:absolute;inset-inline-start:0;top:0;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:var(--sunken);font:var(--caption);font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-2)}
+.trail-step{font:var(--ui);font-weight:600}
+.trail p{font:var(--body)}.trail p.caption{font:var(--ui);color:var(--text-2);max-width:34rem}
+.trail .evidence-quote{margin-top:var(--1)}
+.more-gaps{align-self:flex-start;justify-self:start}
+.rem-facts{display:flex;flex-wrap:wrap;gap:var(--4) var(--10)}
+.rem-facts div{display:flex;flex-direction:column;gap:var(--1)}
+.rem-facts dd{font:var(--ui);font-weight:500}
+.finding-aside .button{align-self:flex-start;margin-inline-start:calc(-1 * var(--4))}
+.evidence-links{display:flex;flex-direction:column;gap:var(--3)}
+.evidence-links li{display:flex;flex-direction:column;gap:2px}
+.evidence-links a{font:var(--ui);font-weight:500;color:var(--text);overflow-wrap:anywhere}
 .why summary{font:var(--ui);font-weight:500;color:var(--text-2);text-decoration:underline;text-underline-offset:3px}
 .why[open] summary{margin-bottom:var(--2)}
 .why p{font:var(--body)}

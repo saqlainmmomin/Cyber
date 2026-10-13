@@ -30,17 +30,25 @@ Section labels inside content are overlines. The content under a label carries t
 
 **Navigation.** This replaces options A and B and every mention of a Section select.
 - A stepper replaces the stage bar: Overview, Scope, Evidence, Questionnaire, Review, Report, numbered, with a tick on completed stages. Every step is a link; it is not a forced wizard.
-- The open stage shows its sections inline beside its name as a segmented group (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Documents, Requests, Client links; Scope: Boundaries, Applicability). There is still never a second bar.
+- The open stage shows its sections inline beside its name as a segmented group (Review: Queue, Gaps; Evidence: Documents, Requests, Client links; Scope: Boundaries, Applicability). There is still never a second bar.
 - A single context line above the stepper carries the breadcrumb and the period and cut-off. The separate assessment header block is gone.
 - The global sidebar can be hidden with a button at the start of the context line. The state persists per user. Domain navigation inside the questionnaire stays visible when the sidebar is hidden.
-- At 1340px and below the stepper tightens its gaps so the widest stage (Review, four sections) fits at 1280 with the sidebar open.
+- At 1340px and below the stepper tightens its gaps so the widest stage (Evidence, three sections) fits at 1280 with the sidebar open.
+
+**Review structure (decided by Saqlain, 13 Oct 2026).** Review is two screens, not four. This overrides every later mention of Conclusions, Findings and Workpaper as screens.
+- Queue: what the assessment proposed, awaiting approve, edit or reject.
+- Gaps: the register of decided controls. A gap is an approved conclusion whose outcome is not compliant. Compliant controls are reachable through the "All controls" filter.
+- The workpaper is a section of each control, not a screen: client answer, evidence with links, AI proposal and its checks, reviewer decision and revision history. One export produces the whole-assessment document (`reports/workpaper_standalone.html` already renders it).
+- Remediation (owner, actions, target date, status, closure evidence) is a section of the gap. Approving a gap creates its remediation record; the manual "Create finding" step is removed. This is backend work (plan section 6.2, B10).
+- The assessment-level trail moves out of Review: analysis runs to Overview; requirements excluded by scope and applicable requirements with no conclusion to the report's auditor detail and the exported workpaper.
+- Period, sign-off and release panels, which sat on Conclusions, belong to Report.
 
 **Per screen.**
 - Questionnaire: questions in a domain are one-line rows (code, control name, response state); the open question shows the requirement as Heading, then "Rationale" and "Steering the response" side by side, then the answer area as the shaded block. The domain rail shows answered counts.
-- Review queue: list grouped into "To decide" and "Decided"; the detail leads with the gap title as Title, then one strip (compliance, risk, decision, proposed by), then gap, impact and the shaded recommendation; evidence, interviews and control sit in a quieter aside.
-- Conclusions: assessment sheet table; rows with a gap are heavier than rows without; "With a gap" filter and "Highest risk" sort; an open row uses the review detail layout.
-- Evidence requests: "In this RFI" and "Not yet requested" lists with sortable headers, evidence already held as a count and bar, and one filled "Generate RFI version" action.
-- Report: executive summary as Lead with the score and gap counts as facts beside it; domain table weakest first; high-risk gaps shown in full, medium-risk gaps as one-line rows that open; auditor detail as a filterable list of all controls.
+- Review queue: list grouped into "To decide" and "Decided" (a decided item stays visible until the reviewer leaves the queue, so a decision can be undone where it was made; its home afterwards is Gaps); the detail leads with the gap title as Title, then one strip (compliance, risk, decision, proposed by), then gap, impact and the shaded recommendation; evidence, interviews and control sit in a quieter aside.
+- Gaps (replaces Conclusions, Findings and Workpaper): assessment sheet table with domain, control, gap, risk, status and owner. It opens on controls with a gap; "All controls" adds the compliant ones. An open row shows the remediation block (recommendation, why, impact, owner, target, status) and then "How this was concluded" in four numbered steps: the client answered, the evidence showed, the AI proposed, the reviewer decided. Evidence links, the control and "Reopen decision" sit in the aside. "Export workpaper" in the page head produces the whole-assessment document.
+- Evidence requests: "In this RFI" and "Not yet requested" lists with sortable headers, evidence already held as a count and bar, and one filled "Generate RFI version" action. An open request lists document names only. The controls a document supports appear under each name when the reviewer presses "Show controls supported" (a button, so it works by keyboard and touch; never hover only). "What good looks like" renders only when it adds something the title does not say. There is no Example slot.
+- Report: executive summary as Lead with the score and gap counts as facts beside it; domain table weakest first; the two highest-ranked high-risk gaps per domain shown in full, the rest behind "Show N more high-risk gaps", medium-risk gaps as one-line rows that open; auditor detail as a filterable list of all controls.
 - Applicability: three counts, the standard justification stated once, the excluded controls with reasons, and a form to exclude another.
 
 ## Foundation
@@ -65,7 +73,7 @@ StatusBadge accepts family and enum member. Use the label and paired foreground/
 
 ## Review hierarchy
 
-This exact ordered field list is the shared FindingDetail read model for Queue, Conclusions, Findings and Workpaper. The coding agent must not create separate evidence blocks by view.
+This exact ordered field list is the shared FindingDetail read model for the Queue and for Gaps (which absorbs Conclusions, Findings and Workpaper; see the amendment). The coding agent must not create separate evidence blocks by view.
 
 Outcome and risk share the finding title block. Body order is gap statement, risk and impact, Recommendation, Why this recommendation, Where this finding came from. Recommendation is the strongest block after the gap statement, with at least the size and contrast of surrounding prose.
 
@@ -76,7 +84,7 @@ Outcome and risk share the finding title block. Body order is gap statement, ris
 5. Recommendation: Conclusion.recommended_action / Finding.recommendation, full body weight. Separate new recommendation_reason explains how it addresses the gap. Compliance rationale is not recommendation reasoning.
 6. Provenance narrative: existing evidence_summary as raw input, new reviewed provenance_narrative as presentation text. Revision citations_json supplies evidence version IDs and spans. New interview source records supply who, role, date and notes. Reviewer/uploader names do not prove an interview. Cite each unique source once and preserve direct source/span links. Unresolved/superseded citations remain visible warnings.
 7. Supporting detail on demand: control criteria, evidence quote, current_state/rationale, client response, contradictions, missing evidence, analysis completeness, prior revision and method trace. These remain available, not deleted.
-8. Mechanics specific to the view: Queue sticky ReviewDecision and blockers; Conclusions final approved version, no candidate decisions; Findings ownership/actions/history; Workpaper read-only method and revision trace. Record version, source basis and accepted/released state remain explicit.
+8. Mechanics specific to the view: Queue sticky ReviewDecision and blockers; Gaps final approved version with no candidate decisions, the remediation section (ownership, actions, history) and the read-only workpaper section (method and revision trace). Record version, source basis and accepted/released state remain explicit.
 
 Expose this as a typed DTO with existing source fields and optional new fields. Empty fields have an honest missing state. Do not infer impact, interview, recommendation reason or a reviewed title merely by truncating rationale. Do not name pre-approval Conclusion rows as stored Finding records: the user-facing candidate is a finding while model lifecycle stays intact.
 
@@ -86,9 +94,9 @@ Default stable order is pending first, then evidence missing/contradictory among
 
 ReviewDecision is sticky at top of selected detail and includes Approve, Edit, Reject; only Approve is primary. No action requires scrolling all detail. Blocked action shows reason and link to missing support. Edits preserve expected_version; 409 shows current versus unsaved values without discarding text. Rejected or locked content cannot be silently reapproved. j/k may supplement native keyboard links and must ignore text inputs.
 
-## Conclusions
+## Gaps
 
-Five columns: Domain, Control ID, Gap/conclusion, Risk, Status. Stable sort domain registry order then control ID; risk/outcome filters are optional and reflected in URL. Table markup remains semantic. Gap wraps, identifiers do not squeeze prose. A row disclosure reveals the full shared hierarchy, no approve/edit/reject controls. Show at least25 populated rows across domains in acceptance fixture. Approved compliant controls remain in inventory and say No gap identified. Release/basis gate belongs to page header, not repeated row mechanics.
+Six columns: Domain, Control ID, Gap/conclusion, Risk, Status, Owner. Default view is controls with a gap; All controls is a filter reflected in the URL. Stable sort domain registry order then control ID; risk/outcome filters are optional and reflected in URL. Table markup remains semantic. Gap wraps, identifiers do not squeeze prose. A row disclosure reveals the remediation section and the workpaper section in the order set by the amendment, with no approve/edit/reject controls; the gap statement is not repeated because the row already states it. Show at least25 populated rows across domains in acceptance fixture. Approved compliant controls remain in inventory and say No gap identified. The release and basis gate moves to Report.
 
 ## Questionnaire
 
@@ -104,7 +112,7 @@ Debounce500ms, flush on blur and before domain navigation, serialize writes per 
 
 ## RFI
 
-Collapsed inventory rows are one line, at most 48px tall: title, required/optional, state (Not requested, In draft RFI, Issued, Received), evidence mapped (2 of 5), and row action. Header buttons sort each column with one default title sort and aria-sort. In this RFI is a separate top group with no add controls; remaining candidates alone form the add list. References stay in the expanded detail; preserve stable request identity. What to send, example and good looks like are collapsed details, not default wall text. Use current document_request_fields and rfi_examples content. No generated content on page load.
+Collapsed inventory rows are one line, at most 48px tall: title, required/optional, state (Not requested, In draft RFI, Issued, Received), evidence mapped (2 of 5), and row action. Header buttons sort each column with one default title sort and aria-sort. In this RFI is a separate top group with no add controls; remaining candidates alone form the add list. References stay in the expanded detail; preserve stable request identity. What to send and good looks like are collapsed details, not default wall text; clause codes are never inline beside a document name (see the amendment). Use current document_request_fields and rfi_examples content. No generated content on page load.
 
 Existing request_key/record_request already make active same-key requests idempotent. Cross-source artifact duplication still needs reconciliation: checklist docs, approved insufficient-evidence requirements and added requests must expose a common artifact identity, included_ids, issued state and mapping list in JSON. In the candidate add form exclude already-included IDs. Included items remain inspectable as read-only requested/issued rows or a separate selection count, without the same add checkbox/form. After successful add update state atomically; on failure retain candidate. Versions and client links are choices in the same Section select, not another navigation strip.
 
@@ -148,7 +156,7 @@ Every row is exactly one of Presentation, Backend, Content. Split rows represent
 | D02 | Retire gradient canvas and glass | Presentation | All seven | Foundation | Opaque token surfaces. |
 | D03 | Keep eight accents for interaction and branding only | Presentation | All seven, graphite shown; other presets in token table | Foundation | Accent never maps status; palette is documented for all presets. |
 | D04 | Four status families | Presentation | All seven | Status | Separate severity, outcome, progress, provenance labels. |
-| D05 | Control codes allowed beside titles | Presentation | questionnaire.html, review-queue.html, conclusions.html | Review hierarchy | Show requirement_id beside meaningful title. |
+| D05 | Control codes allowed beside titles | Presentation | questionnaire.html, review-queue.html, gaps.html | Review hierarchy | Show requirement_id beside meaningful title. |
 | D06a | Single framework uses its own master domains | Backend | questionnaire.html (target ISO focus) | Questionnaire | Use registry Domain keys in app/frameworks/definitions/iso27001.py; expose ordered domain tree via app/routers/questionnaire.py. |
 | D06b | Multi-framework covers each requirement once in unified domains | Backend | Not shown: ISO focus prototype; multi-framework is specified | Questionnaire | Centralize existing UnifiedControlCluster.domain_group and DOMAIN_GROUP_ORDER as master domain registry; app/frameworks/mapping.py, cluster_engine.py, mappings/clusters.py, questionnaire_builder.py. Validate each in-scope framework requirement covered exactly once. |
 | D07a | Drafts save automatically while typing | Backend | questionnaire.html (static saved state) | Draft contract | Add partial draft PATCH and independent completion; app/models/questionnaire.py QuestionnaireResponse and app/routers/questionnaire.py. |
@@ -166,27 +174,27 @@ Every row is exactly one of Presentation, Backend, Content. Split rows represent
 | Q07 | Show unanswered and answered after assessment | Presentation | questionnaire.html | Questionnaire | Unanswered input plus settled answer and linked conclusion; prototype resets one existing question locally for state demonstration. |
 | Q08 | ISO uses four Annex A themes, not privacy headings | Presentation | questionnaire.html | Questionnaire | Organizational, People, Physical, Technological from registry; backend dependency D06a. |
 | R01 | Each queue item is a finding before approval | Presentation | review-queue.html | Review hierarchy | Use finding terminology for candidate conclusions; preserve model distinction. |
-| R02a | Gap title distinct from control name | Backend | review-queue.html, conclusions.html | Review hierarchy | Add gap_title to Conclusion; propagate to Finding.title in app/services/findings.py. |
-| R02b | Write short gap titles | Content | review-queue.html, conclusions.html | Content track | Generated per assessment from grounded gap; reviewed by auditor; compliant title describes positive conclusion. |
-| R03 | Gap statement then compliance status | Presentation | review-queue.html, conclusions.html | Review hierarchy | Use gaps_identified then outcome; current_state supplies context. |
+| R02a | Gap title distinct from control name | Backend | review-queue.html, gaps.html | Review hierarchy | Add gap_title to Conclusion; propagate to Finding.title in app/services/findings.py. |
+| R02b | Write short gap titles | Content | review-queue.html, gaps.html | Content track | Generated per assessment from grounded gap; reviewed by auditor; compliant title describes positive conclusion. |
+| R03 | Gap statement then compliance status | Presentation | review-queue.html, gaps.html | Review hierarchy | Use gaps_identified then outcome; current_state supplies context. |
 | R04a | Risk or impact of non-compliance | Backend | review-queue.html, report.html | Review hierarchy | Add impact_statement to Conclusion; propagate existing Finding.business_impact; risk_level already exists. |
 | R04b | Write impact statements | Content | review-queue.html, report.html | Content track | Generated per assessment with no unsupported incident or loss claims. |
 | R05 | Recommendation at full weight | Presentation | review-queue.html, report.html | Review hierarchy | Same 16px body role as gap, no tiny inset. |
 | R06a | Recommendation reasoning has its own slot | Backend | review-queue.html, report.html | Review hierarchy | Add recommendation_reason to Conclusion and typed reporting view model; existing recommended_action stays. |
 | R06b | Write recommendation logic | Content | review-queue.html, report.html | Content track | Generated per assessment, connection from gap to remedy. |
 | R07a | What reviewed and who spoken to as provenance | Backend | review-queue.html | Review hierarchy | Store interview records with date, role, consented name, notes, evidence IDs; new interview model/service/router, linked to conclusion. |
-| R07b | Concise provenance narrative | Content | review-queue.html, conclusions.html | Content track | Generated per assessment from revision citations and stored interviews. Never invent interviews. |
-| R08 | One provenance block; cited file one click away | Presentation | review-queue.html, conclusions.html | Review hierarchy | Deduplicate by evidence version and span; anchors retain exact citation URL. |
+| R07b | Concise provenance narrative | Content | review-queue.html, gaps.html | Content track | Generated per assessment from revision citations and stored interviews. Never invent interviews. |
+| R08 | One provenance block; cited file one click away | Presentation | review-queue.html, gaps.html | Review hierarchy | Deduplicate by evidence version and span; anchors retain exact citation URL. |
 | R09 | Queue outcome and risk in words | Presentation | review-queue.html | Review queue | No dot-only queue state. |
 | R10 | Approve edit reject attached and visible | Presentation | review-queue.html | Review queue | Sticky decision header on reading pane, no footer-only action. |
-| R11 | One Review hierarchy across queue conclusions findings workpaper | Presentation | review-queue.html, conclusions.html | Review hierarchy | Shared FindingDetail field order with domain-specific mechanics. |
-| C01 | Conclusions are final gaps without queue mechanics | Presentation | conclusions.html | Conclusions | No approve/edit/reject per row; settled revision only. |
-| C02 | Deterministic table domain control ID gap risk status | Presentation | conclusions.html | Conclusions | Five fixed columns, stable domain/control sort; no masonry cards. |
-| C03 | Row expands to full finding | Presentation | conclusions.html | Conclusions | Native button/details disclosure with all hierarchy fields. |
+| R11 | One gap detail across the Review queue and the gap register | Presentation | review-queue.html, gaps.html | Review hierarchy | Shared FindingDetail field order. Review is two screens (Queue, Gaps); the workpaper and remediation are sections of a gap, not screens. |
+| C01 | Gaps are decided conclusions without queue mechanics | Presentation | gaps.html | Gaps | No approve/edit/reject per row; settled revision only, with Reopen decision on the gap. |
+| C02 | Deterministic table domain control ID gap risk status owner | Presentation | gaps.html | Gaps | Six fixed columns, stable domain/control sort; opens on controls with a gap, with an All controls filter; no masonry cards. |
+| C03 | Row expands to the gap workpaper and remediation | Presentation | gaps.html | Gaps | Native button disclosure: remediation block, then how the conclusion was reached in four steps, evidence links in the aside. |
 | F01 | RFI tight sortable list | Presentation | rfi.html | RFI | 40 real source requests; at least 20 visible compact rows. |
 | F02a | Already added item absent from same add form | Backend | rfi.html | RFI | Existing request_key and record_request already idempotent. Add cross-source artifact identity and state serializer in app/routers/web.py rfi_page with app/services/rfi_evidence_requests.py rfi_items and app/services/rfi_requests.py; do not reimplement same-key dedup. |
 | F02b | Separate included items from candidates | Presentation | rfi.html | RFI | Included state read-only in list; add form only remaining candidates. |
-| F03 | What to send example good looks like on demand | Presentation | rfi.html | RFI | details disclosure, all three source content fields retained. |
+| F03 | What to send and good looks like on demand | Presentation | rfi.html | RFI | Document names only; controls each document supports behind one keyboard-operable toggle; a slot that only repeats the title does not render; no Example slot. |
 | P01 | Written executive context first | Content | report.html | Content track | Generated per assessment from released snapshot; source summary is currently a string of counts. |
 | P02 | Summary names engagement reviewed material and scope domains | Content | report.html | Report | Generated per assessment from approved basis and engagement period. |
 | P03 | Summary identifies gaps location criticality and overall posture | Content | report.html | Report | Generated per assessment; ratings/metrics from deterministic scoring only. |
@@ -201,7 +209,7 @@ Every row is exactly one of Presentation, Backend, Content. Split rows represent
 | T01 | Content quality is separate, reader-specific track | Content | Not solved by static prototype: examples expose slots only | Content track | Separate writing and prompt work for controls, UCC, RFIs, board reports and auditor workpapers. |
 | T02 | Useful consultant AI output and good reports with less effort | Content | Not measured: needs consultant task testing | Content track | Audience-specific acceptance criteria, grounded claims, approved text reuse; do not claim productivity from screenshots. |
 | D06c | Unified taxonomy and requirement wording | Content | Not shown: requires content track beyond ISO focus | Content track | Authored once for UCC domain names and cluster prompts; use existing DOMAIN_GROUP_ORDER as starting inventory, not accepted final taxonomy. |
-| R07c | Persist independent provenance narrative | Backend | review-queue.html, conclusions.html | Review hierarchy | Store provenance_narrative with conclusion revision and linked method sources; app/models/conclusion.py and app/services/conclusion_review.py. |
+| R07c | Persist independent provenance narrative | Backend | review-queue.html, gaps.html | Review hierarchy | Store provenance_narrative with conclusion revision and linked method sources; app/models/conclusion.py and app/services/conclusion_review.py. |
 | R12 | Expose queue state and evidence conflicts to JSON | Backend | review-queue.html | Delivery | Serialize ConclusionCard and RequirementCard in app/routers/conclusions.py; retain allowed_actions and blocker computation. |
 | P08 | Expose accepted narrative and board read model | Backend | report.html | Report | Reuse app/services/narrative.py accepted AuditEvents and app/services/board_report.py build_document; JSON read view must preserve freshness and acceptance gate. |
 
@@ -232,9 +240,9 @@ These31 live page families replace the plan's Tpl/Work columns. Assessment varia
 | Desk review (`desk_review`) | Task | Run state, prefill list, provenance inspector | Compact findings, stable async status | Presentation, Backend |
 | Assessment workspace (`assessment`) | Task | Breadcrumb, period, stage tabs, selected content | Shared frame and variants below; use task title | Presentation, Backend, Content |
 | Review queue (`review_queue`) | Queue | Section select, sort, six candidates, selected FindingDetail | Sticky decisions; gap titles and consolidated provenance | Presentation, Backend, Content |
-| Conclusions (`conclusions`) | Inventory | Section select, stable five-column table, expanded finding | No per-row review mechanics; final settled revision | Presentation, Backend, Content |
-| Findings (`findings`) | Inventory | Owner/action filters, gap rows, FindingDetail | Existing editable title/impact retained; same hierarchy | Presentation, Backend |
-| Workpaper (`workpaper`) | Document | Method, controls, findings, source/history trace | Auditor detail, same field sequence, history disclosed | Presentation, Backend, Content |
+| Conclusions (`conclusions`) | Inventory | Becomes Gaps: six-column register, expanded gap | No per-row review mechanics; final settled revision; release panels move to Report | Presentation, Backend, Content |
+| Findings (`findings`) | Inventory | Merged into Gaps as the remediation section of a gap | Existing action state machine retained; record created on approval | Presentation, Backend |
+| Workpaper (`workpaper`) | Document | Merged into Gaps as the workpaper section of a control; whole-assessment export stays | Run trail moves to Overview and the report's auditor detail | Presentation, Backend, Content |
 | Report versions (`report_snapshots`) | Inventory | Version type selector, issued/draft rows, download | No framework or version tab stack; immutable basis | Presentation |
 | Comparison (`comparison`) | Inventory | Two snapshot selectors, domain deltas, expandable changes | Read live comparison, isolate frameworks | Presentation |
 | Narrative (`narrative`) | Document | Section select, accepted sentences, citations, freshness | Audience-specific slots, acceptance gate retained | Presentation, Backend, Content |

@@ -1,14 +1,14 @@
 [
  {
-  "screen": "conclusions",
+  "screen": "gaps",
   "viewport": 1440,
-  "height": 2994,
+  "height": 1254,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 118,
+   "14px": 65,
    "16px": 1,
-   "13px": 102,
-   "12px": 7,
+   "13px": 42,
+   "12px": 8,
    "26px": 1
   },
   "below14": [
@@ -49,7 +49,7 @@
     "tag": "SPAN"
    },
    {
-    "text": "32 controls with an approved conclusion \u00b7 11 with a gap \u00b7 6 ",
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
     "size": "13px",
     "cls": "caption",
     "tag": "P"
@@ -91,6 +91,12 @@
     "tag": "TH"
    },
    {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
     "text": "Organizational",
     "size": "13px",
     "cls": "",
@@ -104,60 +110,6 @@
    },
    {
     "text": "Policies for information security",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Information security roles and responsibilities",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.3",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Segregation of duties",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Management responsibilities",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -205,78 +157,6 @@
     "tag": "TD"
    },
    {
-    "text": "A5.7",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Threat intelligence",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.8",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Information security in project management",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.9",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Inventory of information and other associated assets",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.10",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Acceptable use of information and other associated assets",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
     "text": "A5.11",
     "size": "13px",
     "cls": "code",
@@ -307,6 +187,12 @@
     "tag": "SPAN"
    },
    {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
     "text": "Organizational",
     "size": "13px",
     "cls": "",
@@ -325,55 +211,7 @@
     "tag": "SPAN"
    },
    {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.30",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "ICT readiness for business continuity",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Screening",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Terms and conditions of employment",
+    "text": "Due 6 Nov 2026",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -392,6 +230,12 @@
    },
    {
     "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -433,132 +277,6 @@
     "tag": "SPAN"
    },
    {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.6",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Confidentiality or non-disclosure agreements",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical security perimeters",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical entry",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.3",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Securing offices, rooms and facilities",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical security monitoring",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.5",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Protecting against physical and environmental threats",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "User endpoint devices",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
     "text": "Technological",
     "size": "13px",
     "cls": "",
@@ -593,110 +311,38 @@
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Access to source code",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.5",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Secure authentication",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.6",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Capacity management",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.7",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Protection against malware",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
    }
   ],
   "longestProseLines": [
    {
-    "chars": 93,
+    "chars": 65,
     "size": "14px",
-    "width": 652,
-    "text": "No gap identified. An owner-maintained inventory i"
+    "width": 469,
+    "text": "No exercise showed whether owners can use the plan"
    },
    {
-    "chars": 93,
+    "chars": 64,
     "size": "14px",
-    "width": 652,
-    "text": "No gap identified. Authentication uses multifactor"
+    "width": 469,
+    "text": "Fifty-two personnel were overdue at cutoff and man"
    },
    {
-    "chars": 91,
+    "chars": 62,
     "size": "14px",
-    "width": 652,
-    "text": "No gap identified. Confidentiality obligations are"
+    "width": 469,
+    "text": "Eight approved removal actions remained open at 30"
    },
    {
-    "chars": 90,
+    "chars": 61,
     "size": "14px",
-    "width": 652,
-    "text": "No gap identified. Security impact, ownership and "
-   },
-   {
-    "chars": 90,
-    "size": "14px",
-    "width": 652,
+    "width": 469,
     "text": "Four terminated identities remained enabled and as"
+   },
+   {
+    "chars": 61,
+    "size": "14px",
+    "width": 469,
+    "text": "Leaver responsibilities and access removal were no"
    }
   ],
   "navigation": [
@@ -715,20 +361,20 @@
     "height": 36
    }
   ],
-  "illustrative": 86,
+  "illustrative": 94,
   "failedRequests": [],
-  "screenshot": "screenshots/conclusions-1440.png"
+  "screenshot": "screenshots/gaps-1440.png"
  },
  {
-  "screen": "conclusions",
+  "screen": "gaps",
   "viewport": 1280,
-  "height": 3014,
+  "height": 1333,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 118,
+   "14px": 65,
    "16px": 1,
-   "13px": 102,
-   "12px": 7,
+   "13px": 42,
+   "12px": 8,
    "26px": 1
   },
   "below14": [
@@ -769,7 +415,7 @@
     "tag": "SPAN"
    },
    {
-    "text": "32 controls with an approved conclusion \u00b7 11 with a gap \u00b7 6 ",
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
     "size": "13px",
     "cls": "caption",
     "tag": "P"
@@ -811,6 +457,12 @@
     "tag": "TH"
    },
    {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
     "text": "Organizational",
     "size": "13px",
     "cls": "",
@@ -824,60 +476,6 @@
    },
    {
     "text": "Policies for information security",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Information security roles and responsibilities",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.3",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Segregation of duties",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Management responsibilities",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -925,78 +523,6 @@
     "tag": "TD"
    },
    {
-    "text": "A5.7",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Threat intelligence",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.8",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Information security in project management",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.9",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Inventory of information and other associated assets",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.10",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Acceptable use of information and other associated assets",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
     "text": "A5.11",
     "size": "13px",
     "cls": "code",
@@ -1027,6 +553,12 @@
     "tag": "SPAN"
    },
    {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
     "text": "Organizational",
     "size": "13px",
     "cls": "",
@@ -1045,55 +577,7 @@
     "tag": "SPAN"
    },
    {
-    "text": "Organizational",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A5.30",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "ICT readiness for business continuity",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Screening",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Terms and conditions of employment",
+    "text": "Due 6 Nov 2026",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -1112,6 +596,12 @@
    },
    {
     "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
@@ -1153,132 +643,6 @@
     "tag": "SPAN"
    },
    {
-    "text": "People",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A6.6",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Confidentiality or non-disclosure agreements",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical security perimeters",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.2",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical entry",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.3",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Securing offices, rooms and facilities",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Physical security monitoring",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Physical",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A7.5",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Protecting against physical and environmental threats",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.1",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "User endpoint devices",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
     "text": "Technological",
     "size": "13px",
     "cls": "",
@@ -1313,110 +677,38 @@
     "size": "13px",
     "cls": "caption row-sub",
     "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.4",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Access to source code",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.5",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Secure authentication",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.6",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Capacity management",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
-   },
-   {
-    "text": "Technological",
-    "size": "13px",
-    "cls": "",
-    "tag": "TD"
-   },
-   {
-    "text": "A8.7",
-    "size": "13px",
-    "cls": "code",
-    "tag": "TD"
-   },
-   {
-    "text": "Protection against malware",
-    "size": "13px",
-    "cls": "caption row-sub",
-    "tag": "SPAN"
    }
   ],
   "longestProseLines": [
    {
-    "chars": 79,
+    "chars": 58,
     "size": "14px",
-    "width": 561,
-    "text": "No gap identified. Security impact, ownership and "
+    "width": 403,
+    "text": "Leaver responsibilities and access removal were no"
    },
    {
-    "chars": 79,
+    "chars": 54,
     "size": "14px",
-    "width": 561,
-    "text": "No gap identified. Private repositories use protec"
+    "width": 403,
+    "text": "Four terminated identities remained enabled and as"
    },
    {
-    "chars": 79,
+    "chars": 54,
     "size": "14px",
-    "width": 561,
-    "text": "No gap identified. Authentication uses multifactor"
+    "width": 403,
+    "text": "No exercise showed whether owners can use the plan"
    },
    {
-    "chars": 78,
+    "chars": 54,
     "size": "14px",
-    "width": 561,
-    "text": "No gap identified. Security duties are assigned to"
+    "width": 403,
+    "text": "Fifty-two personnel were overdue at cutoff and man"
    },
    {
-    "chars": 78,
+    "chars": 52,
     "size": "14px",
-    "width": 561,
-    "text": "No gap identified. Approval, implementation and in"
+    "width": 403,
+    "text": "Eight approved removal actions remained open at 30"
    }
   ],
   "navigation": [
@@ -1435,9 +727,9 @@
     "height": 36
    }
   ],
-  "illustrative": 86,
+  "illustrative": 94,
   "failedRequests": [],
-  "screenshot": "screenshots/conclusions-1280.png"
+  "screenshot": "screenshots/gaps-1280.png"
  },
  {
   "screen": "questionnaire",
@@ -1962,15 +1254,15 @@
  {
   "screen": "report",
   "viewport": 1440,
-  "height": 5930,
+  "height": 3406,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 77,
-   "16px": 114,
+   "14px": 46,
+   "16px": 81,
    "13px": 8,
-   "12px": 71,
+   "12px": 49,
    "26px": 2,
-   "18px": 18,
+   "18px": 7,
    "20px": 9
   },
   "below14": [
@@ -2075,102 +1367,6 @@
     "size": "13px",
     "cls": "caption",
     "tag": "SPAN"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
    },
    {
     "text": "Impact if unresolved",
@@ -2381,42 +1577,6 @@
     "size": "13px",
     "cls": "caption",
     "tag": "SPAN"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
    },
    {
     "text": "Impact if unresolved",
@@ -2475,10 +1635,10 @@
     "text": "Omitted applications and open leaver actions reduc"
    },
    {
-    "chars": 66,
+    "chars": 65,
     "size": "16px",
     "width": 532,
-    "text": "People may lack an effective way to withdraw mobil"
+    "text": "Overdue training leaves52 personnel without curren"
    }
   ],
   "navigation": [
@@ -2504,15 +1664,15 @@
  {
   "screen": "report",
   "viewport": 1280,
-  "height": 6358,
+  "height": 3546,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 77,
-   "16px": 114,
+   "14px": 46,
+   "16px": 81,
    "13px": 8,
-   "12px": 71,
+   "12px": 49,
    "26px": 2,
-   "18px": 18,
+   "18px": 7,
    "20px": 9
   },
   "below14": [
@@ -2617,102 +1777,6 @@
     "size": "13px",
     "cls": "caption",
     "tag": "SPAN"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
    },
    {
     "text": "Impact if unresolved",
@@ -2949,42 +2013,6 @@
     "tag": "H4"
    },
    {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Impact if unresolved",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
-    "text": "Recommendation",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H4"
-   },
-   {
     "text": "Strongest domain",
     "size": "13px",
     "cls": "caption",
@@ -3014,13 +2042,13 @@
     "chars": 54,
     "size": "16px",
     "width": 452,
-    "text": "People may lack an effective way to withdraw mobil"
+    "text": "Overdue training leaves52 personnel without curren"
    },
    {
-    "chars": 54,
+    "chars": 53,
     "size": "16px",
     "width": 452,
-    "text": "Overdue training leaves52 personnel without curren"
+    "text": "Omitted applications and open leaver actions reduc"
    }
   ],
   "navigation": [
@@ -3049,7 +2077,7 @@
   "height": 1113,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 35,
+   "14px": 33,
    "16px": 9,
    "13px": 27,
    "12px": 17,
@@ -3368,7 +2396,7 @@
   "height": 1371,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 35,
+   "14px": 33,
    "16px": 9,
    "13px": 27,
    "12px": 17,
@@ -3688,9 +2716,9 @@
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
    "14px": 218,
-   "16px": 387,
-   "13px": 47,
-   "12px": 136,
+   "16px": 346,
+   "13px": 84,
+   "12px": 96,
    "26px": 1,
    "20px": 2
   },
@@ -3810,10 +2838,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3834,10 +2862,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3894,10 +2922,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3918,10 +2946,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3942,10 +2970,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3966,10 +2994,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -3990,10 +3018,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4014,10 +3042,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4038,10 +3066,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4062,10 +3090,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4086,10 +3114,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4110,10 +3138,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4134,10 +3162,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4158,10 +3186,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4182,10 +3210,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4206,10 +3234,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4230,10 +3258,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4254,10 +3282,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4278,10 +3306,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4302,10 +3330,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4326,10 +3354,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4350,10 +3378,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4369,12 +3397,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -4398,10 +3420,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4417,12 +3439,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -4446,10 +3462,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4470,10 +3486,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4494,10 +3510,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4518,10 +3534,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4542,10 +3558,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4566,10 +3582,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4590,10 +3606,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4614,10 +3630,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4638,10 +3654,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4662,10 +3678,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4686,10 +3702,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4705,12 +3721,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -4734,10 +3744,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4758,10 +3768,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4782,10 +3792,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4822,9 +3832,9 @@
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
    "14px": 218,
-   "16px": 387,
-   "13px": 47,
-   "12px": 136,
+   "16px": 346,
+   "13px": 84,
+   "12px": 96,
    "26px": 1,
    "20px": 2
   },
@@ -4944,10 +3954,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -4968,10 +3978,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5028,10 +4038,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5052,10 +4062,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5076,10 +4086,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5100,10 +4110,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5124,10 +4134,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5148,10 +4158,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5172,10 +4182,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5196,10 +4206,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5220,10 +4230,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5244,10 +4254,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5268,10 +4278,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5292,10 +4302,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5316,10 +4326,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5340,10 +4350,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5364,10 +4374,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5388,10 +4398,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5412,10 +4422,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5436,10 +4446,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5460,10 +4470,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5484,10 +4494,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5503,12 +4513,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -5532,10 +4536,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5551,12 +4555,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -5580,10 +4578,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5604,10 +4602,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5628,10 +4626,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5652,10 +4650,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5676,10 +4674,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5700,10 +4698,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5724,10 +4722,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5748,10 +4746,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5772,10 +4770,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5796,10 +4794,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5820,10 +4818,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5839,12 +4837,6 @@
    },
    {
     "text": "What to send",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
-   },
-   {
-    "text": "Example",
     "size": "12px",
     "cls": "overline",
     "tag": "H3"
@@ -5868,10 +4860,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5892,10 +4884,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -5916,10 +4908,10 @@
     "tag": "H3"
    },
    {
-    "text": "Example",
-    "size": "12px",
-    "cls": "overline",
-    "tag": "H3"
+    "text": "Show controls supported",
+    "size": "13px",
+    "cls": "link-button",
+    "tag": "BUTTON"
    },
    {
     "text": "What good looks like",
@@ -6727,7 +5719,7 @@
   "height": 1000,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 29,
+   "14px": 27,
    "13px": 25,
    "12px": 17,
    "16px": 8,
@@ -7027,7 +6019,7 @@
   "height": 1066,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 29,
+   "14px": 27,
    "13px": 25,
    "12px": 17,
    "16px": 8,
@@ -16430,5 +15422,2455 @@
   "illustrative": 53,
   "failedRequests": [],
   "screenshot": "screenshots/report-detail-1280.png"
+ },
+ {
+  "screen": "gaps-open",
+  "viewport": 1440,
+  "height": 2221,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 82,
+   "16px": 7,
+   "13px": 52,
+   "12px": 17,
+   "26px": 1,
+   "18px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Settings",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "A"
+   },
+   {
+    "text": "1 Jul to 30 Sep 2026 \u00b7 Evidence cut-off 6 Oct 2026",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "5",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "3",
+    "size": "13px",
+    "cls": "count",
+    "tag": "SPAN"
+   },
+   {
+    "text": "6",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "P"
+   },
+   {
+    "text": "Sort",
+    "size": "13px",
+    "cls": "select-label inline",
+    "tag": "LABEL"
+   },
+   {
+    "text": "Domain",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Gap or conclusion",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Risk",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Policies for information security",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with authorities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with special interest groups",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.11",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Return of assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.18",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Remediation",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Why this recommendation",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H4"
+   },
+   {
+    "text": "Impact if unresolved",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H4"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Target",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Update",
+    "size": "13px",
+    "cls": "button",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "Add action",
+    "size": "13px",
+    "cls": "button quiet",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "How this was concluded",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Veldhara_Access_Review_Q2_FY26.docx",
+    "size": "13px",
+    "cls": "",
+    "tag": "A"
+   },
+   {
+    "text": "Characters 167\u2013223",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Evidence",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Direct",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Reopen decision",
+    "size": "13px",
+    "cls": "button quiet",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.24",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security incident management planning and prepar",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Disciplinary process",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Responsibilities after termination or change of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Privileged access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information access restriction",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 79,
+    "size": "16px",
+    "width": 640,
+    "text": "Partially implemented. Medium confidence, question"
+   },
+   {
+    "chars": 79,
+    "size": "14px",
+    "width": 544,
+    "text": "Access rights are provisioned and reviewed by poli"
+   },
+   {
+    "chars": 77,
+    "size": "16px",
+    "width": 624,
+    "text": "Closing removal tickets removes known residual acc"
+   },
+   {
+    "chars": 65,
+    "size": "14px",
+    "width": 469,
+    "text": "No exercise showed whether owners can use the plan"
+   },
+   {
+    "chars": 64,
+    "size": "14px",
+    "width": 469,
+    "text": "Fifty-two personnel were overdue at cutoff and man"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 77,
+    "left": 12,
+    "width": 207,
+    "height": 188
+   },
+   {
+    "label": "Assessment stages",
+    "top": 80,
+    "left": 264,
+    "width": 1144,
+    "height": 36
+   }
+  ],
+  "illustrative": 94,
+  "failedRequests": [],
+  "screenshot": "screenshots/gaps-open-1440.png"
+ },
+ {
+  "screen": "gaps-open",
+  "viewport": 1280,
+  "height": 2325,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 82,
+   "16px": 7,
+   "13px": 52,
+   "12px": 17,
+   "26px": 1,
+   "18px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Settings",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "A"
+   },
+   {
+    "text": "1 Jul to 30 Sep 2026 \u00b7 Evidence cut-off 6 Oct 2026",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "5",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "3",
+    "size": "13px",
+    "cls": "count",
+    "tag": "SPAN"
+   },
+   {
+    "text": "6",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "P"
+   },
+   {
+    "text": "Sort",
+    "size": "13px",
+    "cls": "select-label inline",
+    "tag": "LABEL"
+   },
+   {
+    "text": "Domain",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Gap or conclusion",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Risk",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Policies for information security",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with authorities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with special interest groups",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.11",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Return of assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.18",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Remediation",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Why this recommendation",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H4"
+   },
+   {
+    "text": "Impact if unresolved",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H4"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Target",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "DT"
+   },
+   {
+    "text": "Update",
+    "size": "13px",
+    "cls": "button",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "Add action",
+    "size": "13px",
+    "cls": "button quiet",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "How this was concluded",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Veldhara_Access_Review_Q2_FY26.docx",
+    "size": "13px",
+    "cls": "",
+    "tag": "A"
+   },
+   {
+    "text": "Characters 167\u2013223",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Evidence",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Direct",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Supporting",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "overline",
+    "tag": "H3"
+   },
+   {
+    "text": "Reopen decision",
+    "size": "13px",
+    "cls": "button quiet",
+    "tag": "BUTTON"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.24",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security incident management planning and prepar",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Disciplinary process",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Responsibilities after termination or change of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Privileged access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information access restriction",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 79,
+    "size": "14px",
+    "width": 544,
+    "text": "Access rights are provisioned and reviewed by poli"
+   },
+   {
+    "chars": 77,
+    "size": "16px",
+    "width": 608,
+    "text": "Closing removal tickets removes known residual acc"
+   },
+   {
+    "chars": 73,
+    "size": "16px",
+    "width": 624,
+    "text": "Partially implemented. Medium confidence, question"
+   },
+   {
+    "chars": 58,
+    "size": "14px",
+    "width": 403,
+    "text": "Leaver responsibilities and access removal were no"
+   },
+   {
+    "chars": 54,
+    "size": "14px",
+    "width": 403,
+    "text": "Four terminated identities remained enabled and as"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 77,
+    "left": 12,
+    "width": 207,
+    "height": 188
+   },
+   {
+    "label": "Assessment stages",
+    "top": 80,
+    "left": 264,
+    "width": 984,
+    "height": 36
+   }
+  ],
+  "illustrative": 94,
+  "failedRequests": [],
+  "screenshot": "screenshots/gaps-open-1280.png"
+ },
+ {
+  "screen": "gaps-all",
+  "viewport": 1440,
+  "height": 3177,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 128,
+   "16px": 1,
+   "13px": 105,
+   "12px": 8,
+   "26px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Settings",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "A"
+   },
+   {
+    "text": "1 Jul to 30 Sep 2026 \u00b7 Evidence cut-off 6 Oct 2026",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "5",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "3",
+    "size": "13px",
+    "cls": "count",
+    "tag": "SPAN"
+   },
+   {
+    "text": "6",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "P"
+   },
+   {
+    "text": "Sort",
+    "size": "13px",
+    "cls": "select-label inline",
+    "tag": "LABEL"
+   },
+   {
+    "text": "Domain",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Gap or conclusion",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Risk",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Policies for information security",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security roles and responsibilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Segregation of duties",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Management responsibilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with authorities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with special interest groups",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.7",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Threat intelligence",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.8",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security in project management",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.9",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Inventory of information and other associated assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.10",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Acceptable use of information and other associated assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.11",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Return of assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.18",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.24",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security incident management planning and prepar",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.30",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "ICT readiness for business continuity",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Screening",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Terms and conditions of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Disciplinary process",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Responsibilities after termination or change of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Confidentiality or non-disclosure agreements",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical security perimeters",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical entry",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Securing offices, rooms and facilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical security monitoring",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Protecting against physical and environmental threats",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "User endpoint devices",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Privileged access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information access restriction",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access to source code",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Secure authentication",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Capacity management",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.7",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Protection against malware",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 69,
+    "size": "14px",
+    "width": 469,
+    "text": "No gap identified. Door alarms and camera coverage"
+   },
+   {
+    "chars": 67,
+    "size": "14px",
+    "width": 469,
+    "text": "No gap identified. Security advisories are collect"
+   },
+   {
+    "chars": 67,
+    "size": "14px",
+    "width": 469,
+    "text": "No gap identified. Staffed offices and depots use "
+   },
+   {
+    "chars": 66,
+    "size": "14px",
+    "width": 469,
+    "text": "No gap identified. The dispatch recovery capabilit"
+   },
+   {
+    "chars": 65,
+    "size": "14px",
+    "width": 469,
+    "text": "No gap identified. Security duties are assigned to"
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 77,
+    "left": 12,
+    "width": 207,
+    "height": 188
+   },
+   {
+    "label": "Assessment stages",
+    "top": 80,
+    "left": 264,
+    "width": 1144,
+    "height": 36
+   }
+  ],
+  "illustrative": 94,
+  "failedRequests": [],
+  "screenshot": "screenshots/gaps-all-1440.png"
+ },
+ {
+  "screen": "gaps-all",
+  "viewport": 1280,
+  "height": 3459,
+  "horizontalOverflow": false,
+  "fontSizeTextNodeCounts": {
+   "14px": 128,
+   "16px": 1,
+   "13px": 105,
+   "12px": 8,
+   "26px": 1
+  },
+  "below14": [
+   {
+    "text": "Working as",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Settings",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "A"
+   },
+   {
+    "text": "1 Jul to 30 Sep 2026 \u00b7 Evidence cut-off 6 Oct 2026",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "SPAN"
+   },
+   {
+    "text": "5",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "3",
+    "size": "13px",
+    "cls": "count",
+    "tag": "SPAN"
+   },
+   {
+    "text": "6",
+    "size": "12px",
+    "cls": "step-mark",
+    "tag": "SPAN"
+   },
+   {
+    "text": "11 gaps \u00b7 6 high risk \u00b7 32 controls concluded",
+    "size": "13px",
+    "cls": "caption",
+    "tag": "P"
+   },
+   {
+    "text": "Sort",
+    "size": "13px",
+    "cls": "select-label inline",
+    "tag": "LABEL"
+   },
+   {
+    "text": "Domain",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Control",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Gap or conclusion",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Risk",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Status",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Owner",
+    "size": "12px",
+    "cls": "",
+    "tag": "TH"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Policies for information security",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security roles and responsibilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Segregation of duties",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Management responsibilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with authorities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Contact with special interest groups",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.7",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Threat intelligence",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.8",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security in project management",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.9",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Inventory of information and other associated assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.10",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Acceptable use of information and other associated assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.11",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Return of assets",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.18",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 30 Sep 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.24",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security incident management planning and prepar",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Organizational",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A5.30",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "ICT readiness for business continuity",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Screening",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Terms and conditions of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information security awareness, education and training",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Due 6 Nov 2026",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Disciplinary process",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Responsibilities after termination or change of employment",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "People",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A6.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Confidentiality or non-disclosure agreements",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical security perimeters",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical entry",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Securing offices, rooms and facilities",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Physical security monitoring",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Physical",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A7.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Protecting against physical and environmental threats",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.1",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "User endpoint devices",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.2",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Privileged access rights",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.3",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Information access restriction",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.4",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Access to source code",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.5",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Secure authentication",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.6",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Capacity management",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   },
+   {
+    "text": "Technological",
+    "size": "13px",
+    "cls": "",
+    "tag": "TD"
+   },
+   {
+    "text": "A8.7",
+    "size": "13px",
+    "cls": "code",
+    "tag": "TD"
+   },
+   {
+    "text": "Protection against malware",
+    "size": "13px",
+    "cls": "caption row-sub",
+    "tag": "SPAN"
+   }
+  ],
+  "longestProseLines": [
+   {
+    "chars": 58,
+    "size": "14px",
+    "width": 403,
+    "text": "Leaver responsibilities and access removal were no"
+   },
+   {
+    "chars": 57,
+    "size": "14px",
+    "width": 403,
+    "text": "No gap identified. Acceptable use and handling rul"
+   },
+   {
+    "chars": 56,
+    "size": "14px",
+    "width": 403,
+    "text": "No gap identified. Security impact, ownership and "
+   },
+   {
+    "chars": 56,
+    "size": "14px",
+    "width": 403,
+    "text": "No gap identified. The dispatch recovery capabilit"
+   },
+   {
+    "chars": 55,
+    "size": "14px",
+    "width": 403,
+    "text": "No gap identified. Staffed offices and depots use "
+   }
+  ],
+  "navigation": [
+   {
+    "label": "",
+    "top": 77,
+    "left": 12,
+    "width": 207,
+    "height": 188
+   },
+   {
+    "label": "Assessment stages",
+    "top": 80,
+    "left": 264,
+    "width": 984,
+    "height": 36
+   }
+  ],
+  "illustrative": 94,
+  "failedRequests": [],
+  "screenshot": "screenshots/gaps-all-1280.png"
  }
 ]
