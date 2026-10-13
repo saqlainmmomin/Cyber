@@ -1,6 +1,6 @@
 # Static prototype review
 
-> Second design pass, 13 Oct 2026. After Saqlain's review, `prototype.css` was rewritten around seven fixed type roles, `questionnaire.html` and `review-queue.html` were redrawn, and both navigation options were replaced by a stepper with a hideable sidebar (`review-queue-sidebar.html` is removed). The other four screens carry the new stylesheet and shell but are not redesigned. `tools/build_prototypes.py` regenerates the two redrawn screens and the shared shell. The per-screen notes below describe the first pass where they differ.
+> Second design pass, 13 Oct 2026. After Saqlain's review, `prototype.css` was rewritten around seven fixed type roles, all six screens were redrawn on it, and both navigation options were replaced by a stepper with a hideable sidebar (`review-queue-sidebar.html` is removed). `tools/build_prototypes.py` regenerates every screen from the JSON files in this folder (`findings.json`, `conclusions.json`, `rfi.json`, `report.json`). The per-screen notes below describe the first pass where they differ.
 
 Placeholders added in the second pass (questionnaire.html): `q-rail-counts`, `q-section-progress`, `q-row-states`, `q2-response`. All depend on saved draft responses (Backend).
 

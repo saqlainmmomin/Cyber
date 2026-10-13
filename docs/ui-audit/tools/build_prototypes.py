@@ -1,8 +1,8 @@
 """Build the static prototypes' shared shell and the two hand-designed screens.
 
 Run from repo root: python3 docs/ui-audit/tools/build_prototypes.py
-Writes questionnaire.html and review-queue.html from scratch (review content comes from
-prototypes/findings.json) and replaces the shell of the other prototypes in place.
+Writes all six screens from scratch. Content comes from the JSON files beside them
+(findings, conclusions, rfi, report), which hold the Veldhara demo data and the illustrative text.
 """
 import html
 import json
@@ -216,32 +216,222 @@ document.querySelectorAll('[data-group]').forEach(function(g){g.hidden=v!=='pend
     (PROTO / 'review-queue.html').write_text(page('Review queue', body, script))
 
 
-# ---------------------------------------------------------------- other screens: shell only
-OTHERS = {
-    'conclusions.html': ('Conclusions', 'review', 'Conclusions', 4, 'Conclusions'),
-    'rfi.html': ('Evidence requests', 'evidence', 'Requests', 2, 'Evidence requests'),
-    'report.html': ('Report', 'report', None, 5, 'Report'),
-    'scope-applicability.html': ('Scope', 'scope', 'Applicability', 1, 'Applicability'),
-}
+# ---------------------------------------------------------------- shared pieces
+RISK_ORDER = {'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3}
 
 
-REPORT_TOGGLE = ('<div class="report-toggle" role="group" aria-label="Report view" data-component="ReportViewToggle">'
-                 '<button type="button" class="button primary" id="board-toggle" aria-pressed="true" onclick="switchReport(\'board\')">Board summary</button>'
-                 '<button type="button" class="button" id="detail-toggle" aria-pressed="false" onclick="switchReport(\'detail\')">Auditor detail</button></div>')
+def status(text, family, suffix=''):
+    return f'<span class="status {TONE.get(text, "neutral")}" data-family="{family}">{text}{suffix}</span>'
 
 
-def reshell():
-    for name, (title, stage, section, upto, h1) in OTHERS.items():
-        t = (PROTO / name).read_text()
-        start, end = t.index('<body>'), t.index('<div class="toolbar"')  # replaces any earlier shell and heading
-        extra = REPORT_TOGGLE if name == 'report.html' else ''
-        heading = f'<header class="view-head"><div><h1>{h1}</h1></div>{extra}</header>'
-        t = t[:start] + shell(title, stage, section, upto) + heading + t[end:]
-        t = re.sub(r'<label class="select-label">Section<select.*?</select></label>', '', t, count=1, flags=re.S)
-        t = t.replace(SCRIPT, '').replace('</body>', SCRIPT + '</body>', 1)
-        (PROTO / name).write_text(t)
+def cited(quote, href):
+    """'File , Characters a-b text' -> link, quote and character span."""
+    m = re.match(r'\s*(.*?)\s*,\s*(Characters [\d–-]+)\s*(.*)', quote or '', re.S)
+    if not m:
+        return '<p>No source is cited.</p>'
+    name, span, text = m.groups()
+    return (f'<a href="{href}">{e(name)}</a><div class="evidence-quote"><span>“{e(text)}”</span><span class="caption">{span}</span></div>')
+
+
+def finding_body(gap, impact, impact_id, rec, why, why_id, rationale, aside):
+    main = ''
+    if gap:
+        main += f'<section class="block"><h3 class="overline">Gap</h3><p class="lead">{e(gap)}</p></section>'
+    if impact:
+        main += f'<section class="block"><h3 class="overline">Impact if unresolved</h3><p id="{impact_id}" data-illustrative="true">{e(impact)}</p></section>'
+    if rec:
+        reason = f'<div class="block"><h3 class="overline">Why this recommendation</h3><p id="{why_id}" data-illustrative="true">{e(why)}</p></div>' if why else ''
+        main += f'<section class="recommend"><div class="block"><h3 class="overline">Recommendation</h3><p class="rec-text">{e(rec)}</p></div>{reason}</section>'
+    if rationale:
+        main += f'<section class="block reasoning"><h3 class="overline">Reasoning on record</h3><p>{e(rationale)}</p></section>'
+    return f'<div class="finding-grid"><div class="finding-main">{main}</div><aside class="finding-aside">{aside}</aside></div>'
+
+
+# ---------------------------------------------------------------- conclusions
+def conclusions():
+    rows = json.loads((PROTO / 'conclusions.json').read_text())
+    gaps = [r for r in rows if not r['gap'].startswith('No gap')]
+    high = sum(r['risk'] == 'High' for r in gaps)
+    out = []
+    for i, r in enumerate(rows):
+        has_gap = r in gaps
+        aside = (f'<div class="block"><h3 class="overline">Evidence cited</h3>{cited(r["quote"], r["href"])}</div>'
+                 f'<div class="block"><h3 class="overline">Interviews</h3><p id="conclusion-provenance-{i}" data-illustrative="true">None recorded for this control.</p></div>'
+                 f'<div class="block"><h3 class="overline">Control</h3><p>{r["control_id"]} · {e(r["name"])}</p><p>{r["domain"]} · ISO 27001</p></div>')
+        body = finding_body(r['gap_statement'] if has_gap else None, r['impact'], f'conclusion-impact-{i}', r['rec'], r['why'], f'conclusion-reason-{i}', r['rationale'], aside)
+        out.append(
+            f'<tr data-title="{r["control_id"]}" data-rank="{r["rank"]}" data-risk="{RISK_ORDER[r["risk"]]}" data-gap="{int(has_gap)}"><td>{r["domain"]}</td><td class="code">{r["code"]}</td>'
+            f'<td><button class="row-disclosure{"" if has_gap else " quiet"}" id="conclusion-title-{i}" data-illustrative="true" aria-expanded="false" aria-controls="conclusion-detail-{i}" onclick="toggleConclusion(this)">{e(r["gap"])}</button>'
+            f'<span class="caption row-sub">{e(r["name"])}</span></td><td>{status(r["risk"], "severity")}</td><td>{status(r["outcome"], "outcome")}</td></tr>'
+            f'<tr id="conclusion-detail-{i}" class="disclosure-row" hidden><td colspan="5">{body}</td></tr>')
+    body = (shell('Conclusions', 'review', 'Conclusions', 4) +
+            f'<header class="view-head"><div><h1>Conclusions</h1><p class="caption">{len(rows)} controls with an approved conclusion · {len(gaps)} with a gap · {high} high risk</p></div>'
+            '<div class="cluster"><div class="segmented" role="group" aria-label="Show"><button type="button" aria-pressed="true" onclick="filterGaps(this,false)">All</button><button type="button" aria-pressed="false" onclick="filterGaps(this,true)">With a gap</button></div>'
+            '<label class="select-label inline">Sort<select onchange="sortConclusions(this.value)"><option value="rank">Domain and control</option><option value="risk">Highest risk</option></select></label></div></header>'
+            '<div class="table-shell"><table class="data-table sheet" data-component="DataTable"><thead><tr><th scope="col">Domain</th><th scope="col">Control</th><th scope="col">Gap or conclusion</th><th scope="col">Risk</th><th scope="col">Status</th></tr></thead>'
+            f'<tbody id="conclusion-rows">{"".join(out)}</tbody></table></div>')
+    script = """<script>
+function toggleConclusion(b){var r=document.getElementById(b.getAttribute('aria-controls'));r.hidden=!r.hidden;b.setAttribute('aria-expanded',String(!r.hidden));}
+function detailOf(r){return document.getElementById(r.querySelector('button').getAttribute('aria-controls'));}
+function sortConclusions(v){var root=document.getElementById('conclusion-rows'),rows=[].slice.call(root.querySelectorAll('tr[data-title]'));rows.sort(function(a,b){return v==='risk'?(a.dataset.risk-b.dataset.risk||b.dataset.gap-a.dataset.gap||a.dataset.rank-b.dataset.rank):a.dataset.rank-b.dataset.rank;});rows.forEach(function(r){root.append(r,detailOf(r));});}
+function filterGaps(b,only){b.parentNode.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});document.querySelectorAll('#conclusion-rows tr[data-title]').forEach(function(r){var hide=only&&r.dataset.gap==='0';r.hidden=hide;if(hide){detailOf(r).hidden=true;r.querySelector('button').setAttribute('aria-expanded','false');}});}
+</script>"""
+    (PROTO / 'conclusions.html').write_text(page('Conclusions', body, script))
+
+
+# ---------------------------------------------------------------- evidence requests
+def rfi():
+    items = json.loads((PROTO / 'rfi.json').read_text())
+    cols = [('title', 'Request'), ('required', 'Requirement'), ('mapped', 'Evidence held'), ('state', 'State')]
+
+    def heading():
+        return ('<div class="request-heading"><div class="request-summary">' + ''.join(
+            f'<button class="request-sort" type="button" data-sort="{k}" onclick="sortRequests(\'{k}\')">{l}<span aria-hidden="true"></span></button>' for k, l in cols) + '</div><span class="overline">Action</span></div>')
+
+    def row(it):
+        what = [w.strip() for w in re.split(r'(?<=\))\s+', it['what'] or '') if w.strip()]
+        what_html = ('<ul>' + ''.join(f'<li>{e(w)}</li>' for w in what) + '</ul>') if what else '<p>Not specified for this request.</p>'
+        ident = f' id="{it["id"]}" data-illustrative="true"' if it['id'] else ''
+        action = '' if it['included'] else '<button class="button" type="button" onclick="includeRequest(this)">Add to RFI</button>'
+        req = 'Required' if it['required'] == 'Required' else '<span class="quiet">Optional</span>'
+        state_tone = 'info' if it['included'] else 'neutral'
+        return (f'<article class="request-row"{ident} data-component="RequestRow" data-title="{e(it["title"])}" data-required="{it["required"]}" data-state="{it["state"]}" data-mapped="{it["mapped"]}" data-total="{it["total"]}">'
+                f'<details><summary class="request-summary"><span class="request-title">{e(it["title"])}</span><span>{req}</span>'
+                f'<span class="held"><span class="numeric">{it["mapped"]} of {it["total"]}</span><progress class="rail-bar" value="{it["mapped"]}" max="{it["total"]}" aria-label="Evidence already held for {it["mapped"]} of {it["total"]} requirements"></progress></span>'
+                f'<span class="status {state_tone} request-state" data-component="StatusBadge" data-family="progress">{it["state"]}</span></summary>'
+                f'<div class="request-details"><p class="caption">{it["ref"] or ""}</p><div class="pair"><div class="block"><h3 class="overline">What to send</h3>{what_html}</div>'
+                f'<div class="stack-s"><div class="block"><h3 class="overline">Example</h3><p>{e(it["example"] or "")}</p></div><div class="block"><h3 class="overline">What good looks like</h3><p>{e(it["good"] or "")}</p></div></div></div></div>'
+                f'</details><div class="request-action">{action}</div></article>')
+
+    inc = [i for i in items if i['included']]
+    rest = [i for i in items if not i['included']]
+    body = (shell('Evidence requests', 'evidence', 'Requests', 2) +
+            f'<header class="view-head"><div><h1>Evidence requests</h1><p class="caption"><span id="rfi-count-in">{len(inc)}</span> in the draft RFI · <span id="rfi-count-out">{len(rest)}</span> not requested · sent as Meera Joshi</p></div>'
+            '<button class="button primary" type="button">Generate RFI version</button></header>'
+            f'<section class="stack-s" aria-labelledby="included-heading"><h2 id="included-heading">In this RFI</h2><div class="table-shell">{heading()}<div id="included-items" class="request-list">{"".join(map(row, inc))}</div></div></section>'
+            f'<section class="stack-s" aria-labelledby="available-heading"><h2 id="available-heading">Not yet requested</h2><div class="table-shell">{heading()}<div id="request-items" class="request-list">{"".join(map(row, rest))}</div></div></section>'
+            '<section class="stack-s empty" id="versions"><h2>RFI versions</h2><p class="prose">No version has been generated. Generate one when the list above is right, then issue it to the client.</p></section>'
+            '<section class="stack-s empty" id="links"><h2>Client links</h2><p class="prose">A client upload link can be created once an RFI version is issued.</p></section>')
+    script = """<script>
+var rs={key:'title',dir:1},so={'Not requested':0,'In draft RFI':1,'Issued':2,'Received':3};
+function applySort(){['included-items','request-items'].forEach(function(id){var root=document.getElementById(id),rows=[].slice.call(root.children);rows.sort(function(a,b){var c=0,k=rs.key;
+if(k==='mapped')c=(a.dataset.mapped/a.dataset.total||0)-(b.dataset.mapped/b.dataset.total||0);else if(k==='state')c=so[a.dataset.state]-so[b.dataset.state];else if(k==='required')c=(a.dataset.required==='Required'?0:1)-(b.dataset.required==='Required'?0:1);else c=a.dataset.title.localeCompare(b.dataset.title);
+return rs.dir*(c||a.dataset.title.localeCompare(b.dataset.title));});rows.forEach(function(r){root.append(r);});});
+document.querySelectorAll('[data-sort]').forEach(function(b){var on=b.dataset.sort===rs.key;b.setAttribute('aria-pressed',String(on));b.querySelector('span').textContent=on?(rs.dir>0?' ↑':' ↓'):'';});}
+function sortRequests(k){rs.dir=rs.key===k?-rs.dir:1;rs.key=k;applySort();}
+function includeRequest(b){var r=b.closest('.request-row'),s=r.querySelector('.request-state');r.dataset.state='In draft RFI';s.textContent='In draft RFI';s.className='status info request-state';b.remove();document.getElementById('included-items').append(r);
+document.getElementById('rfi-count-in').textContent=document.getElementById('included-items').children.length;document.getElementById('rfi-count-out').textContent=document.getElementById('request-items').children.length;applySort();}
+applySort();
+</script>"""
+    (PROTO / 'rfi.html').write_text(page('Evidence requests', body, script))
+
+
+# ---------------------------------------------------------------- report
+def report():
+    rep = json.loads((PROTO / 'report.json').read_text())
+    counts = [[int(n) for n in re.findall(r'(\d+) (?:high|medium|low)', r[2])] for r in rep['table']]
+    tot = [sum(c[i] for c in counts) for i in range(3)]
+
+    def gap(g):
+        marks = f'<p class="cluster">{status(g["risk"], "severity", " risk")}{status(g["outcome"], "outcome")}</p>'
+        impact = f'<div class="block"><h4 class="overline">Impact if unresolved</h4><p id="{g["impact_id"]}" data-illustrative="true">{e(g["impact"])}</p></div>'
+        why = f'<p id="{g["why_id"]}" data-illustrative="true">{e(g["why"])}</p>'
+        head = f'<div class="block"><h4 class="overline">Recommendation</h4><p class="rec-text">{e(g["rec"])}</p></div>'
+        if g['risk'] == 'High':
+            rec = f'<div class="recommend">{head}<details class="why"><summary>Why this recommendation</summary>{why}</details></div>'
+        else:
+            rec = f'<div class="recommend">{head}<div class="block"><h4 class="overline">Why this recommendation</h4>{why}</div></div>'
+        if g['risk'] == 'High':
+            return f'<article class="board-gap" data-level="full"><div class="gap-lead"><h3 class="board-gap-title">{e(g["title"])}</h3>{marks}{impact}</div>{rec}</article>'
+        return (f'<article class="board-gap" data-level="compact"><details><summary><span class="board-gap-title">{e(g["title"])}</span>{status(g["risk"], "severity", " risk")}</summary>'
+                f'<div class="gap-open"><div class="gap-lead">{impact}</div>{rec}</div></details></article>')
+
+    domains = ''
+    for d in rep['domains']:
+        score, label = [x.strip() for x in d['score'].split('·')]
+        full = [g for g in d['gaps'] if g['risk'] == 'High']
+        other = [g for g in d['gaps'] if g['risk'] != 'High']
+        inner = ''
+        if d['strength']:
+            inner += f'<p id="{d["strength_id"]}" class="prose" data-illustrative="true">{e(d["strength"])}</p>'
+        inner += f'<div class="board-domain-gaps">{"".join(map(gap, full))}</div>'
+        if other:
+            inner += f'<h3 class="overline">Medium risk · {len(other)}</h3><div class="board-domain-gaps compact">{"".join(map(gap, other))}</div>'
+        sec = ' data-report-section="gaps"' if d['key'] == 'organizational' else ''
+        domains += (f'<section id="report-{d["key"]}"{sec}><div class="domain-summary"><h2>{d["title"]}</h2><p class="domain-score"><strong class="numeric">{score}</strong><span class="caption">{label}</span></p></div>{inner}</section>')
+
+    table = ''.join(
+        f'<tr><td>{r[0]}</td><td class="score"><span class="numeric">{r[1]}</span><progress class="rail-bar" value="{r[1].rstrip("%")}" max="100" aria-label="{r[0]} score"></progress></td>'
+        + ''.join(f'<td class="numeric{" zero" if n == 0 else ""}">{n}</td>' for n in c) + '</tr>' for r, c in zip(rep['table'], counts))
+    weakest, strongest = rep['table'][0], rep['table'][-1]
+    board = (
+        '<section id="report-summary" class="report-top"><div class="block"><h2 class="overline">Executive summary</h2>'
+        f'<p id="report-executive" class="lead" data-illustrative="true">{e(rep["executive"])}</p></div>'
+        '<dl class="facts"><div><dt class="overline">Overall ISO 27001 score</dt><dd class="big numeric">84.3%</dd></div>'
+        f'<div><dt class="overline">Open gaps</dt><dd><span class="status danger">{tot[0]} high</span> · {tot[1]} medium · {tot[2]} low</dd></div>'
+        f'<div><dt class="overline">Weakest domain</dt><dd>{weakest[0]} · <span class="numeric">{weakest[1]}</span></dd></div>'
+        f'<div><dt class="overline">Strongest domain</dt><dd>{strongest[0]} · <span class="numeric">{strongest[1]}</span></dd></div>'
+        '<div><dt class="overline">Basis</dt><dd>93 controls, approved conclusions at 6 Oct 2026</dd></div></dl></section>'
+        f'<section id="report-domains"><h2>Overall posture</h2><p class="prose" data-illustrative="true" id="report-posture">{rep["posture"]}</p>'
+        '<div class="table-shell"><table class="data-table report-domain-table"><thead><tr><th scope="col">Domain, weakest first</th><th scope="col">Score</th><th scope="col">High</th><th scope="col">Medium</th><th scope="col">Low</th></tr></thead>'
+        f'<tbody>{table}</tbody></table></div></section>' + domains)
+
+    detail = ''
+    names = []
+    for x in rep['detail']:
+        if x['domain'] not in names:
+            if names:
+                detail += '</div></section>'
+            detail += f'<section id="auditor-domain-{len(names)}" data-domain="{x["domain"]}"><h2>{x["domain"]}</h2><div class="table-shell d-list">'
+            names.append(x['domain'])
+        has_gap = not x['gap'].startswith('No gap')
+        aside = (f'<div class="block"><h4 class="overline">Evidence cited</h4>{cited(x["prov"], x["href"])}</div>'
+                 f'<div class="block"><h4 class="overline">Control</h4><p>{x["code"]} · {e(x["name"])}</p></div>'
+                 '<div class="block"><h4 class="overline">Not recorded</h4><p>Impact and the reasoning behind the recommendation.</p></div>')
+        main = (f'<section class="block"><h4 class="overline">Conclusion</h4><p>{e(x["rationale"])}</p></section>'
+                f'<section class="recommend"><div class="block"><h4 class="overline">Recommendation</h4><p class="rec-text">{e(x["rec"])}</p></div></section>')
+        detail += (f'<details class="d-item" data-domain="{x["domain"]}" data-outcome="{x["outcome"]}" data-risk="{x["risk"]}"><summary class="d-row"><span class="code caption">{x["code"]}</span>'
+                   f'<span class="d-title{"" if has_gap else " quiet"}">{e(x["gap"])}<span class="caption row-sub">{e(x["name"])}</span></span>{status(x["risk"], "severity")}{status(x["outcome"], "outcome")}</summary>'
+                   f'<div class="d-body"><div class="finding-grid"><div class="finding-main">{main}</div><aside class="finding-aside">{aside}</aside></div></div></details>')
+    detail += '</div></section>'
+    sel = lambda i, label, opts: f'<label class="select-label">{label}<select id="{i}" onchange="filterReport()"><option value="all">All</option>{"".join(f"<option>{o}</option>" for o in opts)}</select></label>'
+    filters = ('<div class="view-head"><div><h2>Auditor detail</h2><p class="caption" id="detail-count" role="status" aria-live="polite">93 controls shown</p></div><div class="toolbar-group report-filters">'
+               + sel('detail-domain', 'Domain', names) + sel('detail-outcome', 'Outcome', ['Compliant', 'Partially compliant', 'Non-compliant']) + sel('detail-risk', 'Risk', ['High', 'Medium', 'Low']) + '</div></div>')
+    toggle = ('<div class="report-toggle" role="group" aria-label="Report view" data-component="ReportViewToggle">'
+              '<button type="button" class="button primary" id="board-toggle" aria-pressed="true" onclick="switchReport(\'board\')">Board summary</button>'
+              '<button type="button" class="button" id="detail-toggle" aria-pressed="false" onclick="switchReport(\'detail\')">Auditor detail</button></div>')
+    body = (shell('Report', 'report', None, 5) +
+            f'<header class="view-head"><div><h1>Assessment report</h1><p class="caption">ISO 27001 · Veldhara Logistics Pvt Ltd · 1 Jul to 30 Sep 2026</p></div>{toggle}</header>'
+            f'<div class="document report-document"><div id="board-view">{board}</div><div id="detail-view" hidden>{filters}{detail}</div></div>')
+    script = """<script>
+function switchReport(v){document.getElementById('board-view').hidden=v!=='board';document.getElementById('detail-view').hidden=v!=='detail';['board','detail'].forEach(function(n){var b=document.getElementById(n+'-toggle');b.setAttribute('aria-pressed',String(n===v));b.classList.toggle('primary',n===v);});}
+function filterReport(){var d=document.getElementById('detail-domain').value,o=document.getElementById('detail-outcome').value,r=document.getElementById('detail-risk').value,n=0;
+document.querySelectorAll('#detail-view details').forEach(function(x){var ok=(d==='all'||x.dataset.domain===d)&&(o==='all'||x.dataset.outcome===o)&&(r==='all'||x.dataset.risk===r);x.hidden=!ok;if(ok)n++;});
+document.querySelectorAll('#detail-view section[data-domain]').forEach(function(s){s.hidden=!s.querySelector('details:not([hidden])');});
+document.getElementById('detail-count').textContent=n+(n===1?' control shown':' controls shown');}
+if(location.hash==='#detail'||location.hash==='#detail-wide')switchReport('detail');
+</script>"""
+    (PROTO / 'report.html').write_text(page('Report', body, script))
+
+
+# ---------------------------------------------------------------- scope: applicability
+def scope():
+    excluded = [('A.8.30', 'Outsourced development', 'soa-exclusion-outsourcing', 'Veldhara does not commission third parties to develop software within this ISMS scope. Its transport systems are licensed services managed through supplier controls.'),
+                ('A.8.28', 'Secure coding', 'soa-exclusion-coding', 'No software is developed or modified by Veldhara within the agreed scope. Configuration of licensed transport applications is covered by change management.')]
+    rows = ''.join(f'<li class="exclusion"><div class="block"><h3><span class="code">{c}</span> {n}</h3><p id="{i}" class="prose" data-illustrative="true">{t}</p></div><button class="button quiet" type="button">Remove</button></li>' for c, n, i, t in excluded)
+    body = (shell('Scope', 'scope', 'Applicability', 1) +
+            '<header class="view-head"><div><h1>Applicability</h1><p class="caption">ISO 27001 Annex A · record only the controls that do not apply</p></div></header>'
+            '<dl class="facts row"><div><dt class="overline">Annex A controls</dt><dd class="numeric">93</dd></div><div><dt class="overline">Applicable</dt><dd class="numeric">91</dd></div><div><dt class="overline">Excluded</dt><dd class="numeric">2</dd></div></dl>'
+            '<section class="block"><h2 class="overline">Standard justification for every applicable control</h2>'
+            '<p id="soa-standard" class="lead measure" data-illustrative="true">All other controls are applicable because they are included in the agreed ISMS scope. This is a scope justification, not a claim that the controls work.</p></section>'
+            f'<section class="stack-s" data-component="ScopeExceptions"><h2>Controls that do not apply</h2><ul class="surface exclusions">{rows}</ul></section>'
+            '<form class="recommend scope-form" onsubmit="event.preventDefault();document.getElementById(\'scope-message\').hidden=false"><h2 class="t-sub">Exclude another control</h2>'
+            '<label class="field" for="exclude-control"><span class="overline">Control</span><select id="exclude-control" required><option value="">Choose a control</option><option>A.8.4 · Access to source code</option><option>A.8.25 · Secure development life cycle</option></select></label>'
+            '<label class="field" for="exclude-reason"><span class="overline">Why it does not apply</span><textarea id="exclude-reason" rows="3" required placeholder="For example: no source code is held or changed within the agreed scope"></textarea></label>'
+            '<div class="cluster"><button class="button primary" type="submit">Exclude control</button><span id="scope-message" class="caption" role="status" hidden>Exclusion added to the scope for review.</span></div></form>')
+    (PROTO / 'scope-applicability.html').write_text(page('Scope', body))
 
 
 if __name__ == '__main__':
-    questionnaire(); review(); reshell()
+    questionnaire(); review(); conclusions(); rfi(); report(); scope()
     print('built')
