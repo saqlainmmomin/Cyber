@@ -59,7 +59,7 @@ p { margin: 0; }
 .glyph { display: inline-block; white-space: nowrap; }
 .glyph i { display: inline-block; width: 1.6mm; margin-right: 0.5mm; background: #D9DDE8; vertical-align: bottom; }
 .glyph i:nth-child(1) { height: 2mm; } .glyph i:nth-child(2) { height: 3mm; } .glyph i:nth-child(3) { height: 4mm; }
-.g-pri i.on { background: var(--p2); } .g-cx i.on { background: var(--ink); } .g-bn i.on { background: var(--acc); }
+.g-cx i.on { background: var(--ink); } .g-bn i.on { background: var(--acc); }
 .up { color: var(--ok); font-weight: 700; } .down { color: var(--nc); font-weight: 700; }
 table.t { width: 100%; border-collapse: collapse; }
 table.t th { background: var(--p1); color: #fff; font-size: 9pt; font-weight: 700; text-align: left; padding: 1.8mm 2.2mm; }
@@ -288,7 +288,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       <div class="h3" style="margin-top:5mm">4 · How we rate each fix</div>
       <table class="t" style="margin-bottom:3mm">
         <tr><th style="width:36mm">Dimension</th><th>What it means</th></tr>
-        <tr><td><b>Priority</b> {{ glyph('pri','high') }}</td><td>Set by the most serious gap the fix closes.</td></tr>
+        <tr><td><b>Remediation timeframe</b></td><td>Set by the most serious gap the fix closes.</td></tr>
         <tr><td><b>Effort</b> {{ glyph('cx','high') }}</td><td>Our estimate: high is over 40 person-hours or a cross-team change.</td></tr>
         <tr><td><b>Benefit</b> {{ glyph('bn','high') }}</td><td>How much exposure the fix removes.</td></tr>
       </table>
@@ -554,13 +554,13 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     </div>
     <div style="flex:1">
       <table class="t init">
-        <tr><th style="width:12mm">Ref</th><th>Initiative</th><th style="width:28mm">Horizon</th><th style="width:16mm">Priority</th><th style="width:15mm">Effort</th><th style="width:16mm">Benefit</th></tr>
+        <tr><th style="width:12mm">Ref</th><th>Initiative</th><th style="width:28mm">Horizon</th><th style="width:24mm">Remediation timeframe</th><th style="width:15mm">Effort</th><th style="width:16mm">Benefit</th></tr>
         {% for i in doc.initiatives %}
         <tr data-initiative-row="{{ i.ref }}">
           <td><span class="ref">{{ i.ref }}</span></td>
           <td><b>{{ i.title }}</b><br><span class="mut" style="font-size:9pt">{{ marker(i.responsibility) }} {{ i.owner or 'Owner not set' }} · closes {{ i.obs_refs|join(', ') }}</span></td>
           <td>{{ {'short':'Short term','medium':'Medium term','long':'Long term','unscheduled':'Not scheduled'}[i.horizon] }}<br><span class="{{ 'down' if i.overdue else 'mut' }}" style="font-size:9pt">{{ (i.target_date|display_date) or 'No date set' }}{{ ' · overdue' if i.overdue }}</span></td>
-          <td><span data-priority="{{ i.priority }}">{{ glyph('pri', i.priority) }}</span></td><td><span data-complexity="{{ i.complexity }}">{{ glyph('cx', i.complexity) }}</span></td><td><span data-benefit="{{ i.benefit }}">{{ glyph('bn', i.benefit) }}</span></td>
+          <td><span data-priority="{{ i.priority }}">{{ v.priority_labels.get(i.priority, '') }}</span></td><td><span data-complexity="{{ i.complexity }}">{{ glyph('cx', i.complexity) }}</span></td><td><span data-benefit="{{ i.benefit }}">{{ glyph('bn', i.benefit) }}</span></td>
         </tr>
         {% endfor %}
       </table>

@@ -1070,7 +1070,7 @@ V3_OBSERVATION_HEADERS = (
     "Actionable recommendation", "Reference", "Responsibility",
 )
 V3_TRACKER_HEADERS = (
-    "Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Priority",
+    "Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Remediation timeframe",
     "Horizon", "Target date", "Complexity", "Benefit", "Status", "Client update", "Evidence of closure",
 )
 
@@ -1406,12 +1406,12 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _v3_header(tracker, V3_TRACKER_HEADERS)
     row_number = 7
     action_rows = []
-    priority_label = vocab.RISK_LABELS
+    priority_label = vocab.PRIORITY_LABELS
     horizon_label = {"short": "Short term", "medium": "Medium term", "long": "Long term", "unscheduled": "Not scheduled"}
     for initiative in document["initiatives"]:
         banner = (
             f"{initiative['ref']}  {initiative['title']}   |   {' / '.join(initiative['obs_refs'])}   |   "
-            f"{horizon_label[initiative['horizon']]}   |   Priority: {priority_label[initiative['priority']]}   |   "
+            f"{horizon_label[initiative['horizon']]}   |   Remediation timeframe: {priority_label[initiative['priority']]}   |   "
             f"Complexity: {(initiative['complexity'] or 'Not recorded').title()}   |   Benefit: {(initiative['benefit'] or 'Not recorded').title()}"
         )
         _set_xlsx_cell(tracker.cell(row=row_number, column=1), banner)
@@ -1439,12 +1439,6 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         f"E7:E{max(row_number, 7)}",
         FormulaRule(formula=['$E7="Unassigned"'], fill=red, font=Font(color="C0392B")),
     )
-    for action_row, priority in action_rows:
-        priority_key = priority.lower()
-        color = V3_SEVERITY_COLORS.get(priority_key)
-        if color:
-            _v3_fill_and_label(tracker.cell(row=action_row, column=7), color, white_text=priority_key == "high")
-    _v3_apply_color_rules(tracker, "G", 7, max(row_number - 1, 7), V3_SEVERITY_COLORS, value_keys=("high", "medium", "low"))
 
     if document.get("soa"):
         soa_sheet = book["Statement of Applicability"]
@@ -1478,7 +1472,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         (vocab.RISK_LABELS["medium"], "Moderate exposure. Plan within six months."),
         (vocab.RISK_LABELS["low"], "Limited exposure. Fix in the normal course."),
         ("How to read ratings", "A framework score is a weighted average of its domain scores. A met requirement counts in full and a partly met one counts half. Scores are deterministic and never combined across frameworks."),
-        ("Priority", "Set by the most serious gap the fix closes."),
+        ("Remediation timeframe", "Set by the most serious gap the fix closes."),
         ("Effort", "High is over 40 person-hours or a cross-team change."),
         ("Benefit", "How much exposure the fix removes."),
         ("Short term", "Within 90 days."),
@@ -1926,7 +1920,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
                 x = 14 + index * 77
                 rect(slide, x, 126, 74, 14, fill=_pptx_color(colour), border=line, name="Rating band legend")
                 text_box(slide, band_label.title(), x + 2, 129, 70, 7, size=10, color=ink, bold=True, align=PP_ALIGN.CENTER)
-            text_box(slide, "Scores are deterministic and never combined across frameworks. Priority, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
+            text_box(slide, "Scores are deterministic and never combined across frameworks. Remediation timeframe, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
         elif name == "overview":
             totals = (document.get("summary") or {}).get("totals", {})
             text_box(slide, f"Scope, the evidence we used and how every outcome was approved. {totals.get('requirements', 0)} requirements across {len(document.get('frameworks', []))} framework(s).", 14, 34, 310, 10, size=12, color=ink2)
@@ -1988,7 +1982,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         elif name == "effort-benefit":
             text_box(slide, "Each initiative is placed by the effort it needs and the exposure it removes. Top left is where to start.", 14, 34, 310, 10, size=12, color=ink2)
             effort_benefit_matrix(slide)
-            native_table(slide, ["Ref", "Initiative", "Horizon", "Priority", "Effort", "Benefit"], [[item.get("ref", ""), item.get("title", ""), str(item.get("horizon", "")).title(), str(item.get("priority", "")).title(), str(item.get("complexity", "")).title(), str(item.get("benefit", "")).title()] for item in document.get("initiatives", [])], top=48, left=205, width=119, height=113, column_widths=[14, 45, 22, 17, 17, 18])
+            native_table(slide, ["Ref", "Initiative", "Horizon", "Remediation timeframe", "Effort", "Benefit"], [[item.get("ref", ""), item.get("title", ""), str(item.get("horizon", "")).title(), vocab.priority_label(item.get("priority")), str(item.get("complexity", "")).title(), str(item.get("benefit", "")).title()] for item in document.get("initiatives", [])], top=48, left=205, width=119, height=113, column_widths=[14, 45, 22, 17, 17, 18])
         elif name == "comparison":
             prior = (document.get("prior_period") or {}).get("prior")
             text_box(slide, f"Compared with {shown(prior.get('version_label'), '')} (snapshot {str(prior.get('snapshot_id') or '')[:8]}) for {shown(prior.get('period_label'), '')}." if prior else "First report baseline; no prior period is available for comparison.", 14, 34, 310, 10, size=11, color=ink2)

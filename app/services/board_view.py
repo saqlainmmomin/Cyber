@@ -350,6 +350,7 @@ def view(document: Mapping) -> dict:
         "out_col": OUTCOME_COLORS,
         "bands": RATING_BANDS,
         "level": LEVELS,
+        "priority_labels": vocab.PRIORITY_LABELS,
         "sev": SEVERITIES,
         "sev_col": SEVERITY_COLORS,
         "sev_tot": severity_totals,

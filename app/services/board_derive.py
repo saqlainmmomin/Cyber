@@ -39,9 +39,10 @@ def _severity(value) -> str:
     return str(value or "").strip().lower()
 
 
-def priority_for(severities: Iterable[str]) -> str:
-    rank = min((SEVERITY_ORDER.get(_severity(value), 4) for value in severities), default=4)
-    return {0: "high", 1: "high", 2: "medium", 3: "low"}.get(rank, "low")
+def priority_for(severities: Iterable[str]) -> int:
+    """1 (Immediate) to 4 (Long-term): the most serious severity wins; empty or unknown is 4."""
+    known = [vocab.PRIORITY_BY_RISK[key] for key in (_severity(value) for value in severities) if key in vocab.RISK_RANK]
+    return min(known, default=max(vocab.PRIORITY_BY_RISK.values()))
 
 
 def responsibility_for(values: Iterable[str | None]) -> str | None:
