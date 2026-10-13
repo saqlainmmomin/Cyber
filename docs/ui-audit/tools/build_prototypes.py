@@ -38,7 +38,7 @@ set(h);b.addEventListener('click',function(){var n=r.dataset.nav!=='hidden';set(
 def stepper(stage, section, in_progress_from):
     order = [s[0] for s in STAGES]
     cur = order.index(stage)
-    out = ['<div class="stepper-wrap"><nav aria-label="Assessment stages"><ol class="stepper">']
+    out = ['<div class="stepper-wrap"><nav aria-label="Assessment stages" data-component="StageNav"><ol class="stepper">']
     for n, (key, label, href, subs) in enumerate(STAGES):
         state = 'current' if n == cur else ('done' if n < in_progress_from else 'todo')
         mark = CHECK if state == 'done' else str(n + 1)
@@ -84,7 +84,7 @@ CHOICES = [('fully', 'Fully implemented'), ('partial', 'Partially implemented'),
 
 def q_row(code, name, state, tone, open_=False, qid=''):
     return (f'<button class="q-row" type="button" aria-expanded="{str(open_).lower()}"{f" aria-controls={qid}-body" if qid else ""} onclick="toggleQ(this)">'
-            f'<span class="code">{code}</span><span class="name">{e(name)}</span><span class="status {tone}" data-family="progress" data-illustrative="true">{state}</span>{CHEVRON}</button>')
+            f'<span class="code">{code}</span><span class="name">{e(name)}</span><span class="status {tone}" data-family="progress">{state}</span>{CHEVRON}</button>')
 
 
 def choices(name, checked=None):
@@ -115,7 +115,7 @@ def questionnaire():
         '<div class="block"><h3 class="overline">Steering the response</h3><p id="q2-hint" data-illustrative="true">Ask the system owner to show the last three review cycles, including excluded systems and removal tickets.</p></div>'
         '</div>'
         '<div class="answer"><div class="pair">'
-        '<div class="block"><h3 class="overline">Client response</h3><p><span class="status warning" data-illustrative="true">Partially implemented</span></p>'
+        '<div class="block"><h3 class="overline">Client response</h3><p id="q2-response" data-illustrative="true"><span class="status warning">Partially implemented</span></p>'
         '<p>Eight approved removal actions remained open at 30 September, including four enabled terminated users; July and August lack signed reviews.</p></div>'
         '<div class="block"><h3 class="overline">Approved conclusion</h3><p><span class="status warning" data-family="outcome">Partially compliant</span></p>'
         '<p>Access rights are provisioned and reviewed by policy, but the quarter contains two incomplete cycles, two omitted systems and open removals.</p>'
@@ -123,16 +123,16 @@ def questionnaire():
         '</div><div class="answer-foot"><span class="caption">Answered and reviewed. Editing the response reopens the conclusion.</span><button class="button" type="button">Edit response</button></div></div>'
         '</div></li>')
     rail = ''.join(
-        f'<li><a href="#{k}"{" aria-current=true" if cur else ""}><span class="rail-name">{n}</span><span class="count" data-illustrative="true">{a} of {t}</span><span class="rail-bar"><i style="width:{round(a / t * 100)}%"></i></span></a></li>'
+        f'<li><a href="#{k}"{" aria-current=true" if cur else ""}><span class="rail-name">{n}</span><span class="count">{a} of {t}</span><progress class="rail-bar" value="{a}" max="{t}" aria-label="{n} answered"></progress></a></li>'
         for k, n, a, t, cur in [('organizational', 'Organizational', 36, 37, True), ('people', 'People', 8, 8, False), ('physical', 'Physical', 14, 14, False), ('technological', 'Technological', 34, 34, False)])
     body = (shell('Questionnaire', 'questionnaire', None, 3) +
-            '<div class="split"><nav class="rail" aria-label="ISO 27001 domains"><span class="overline">Annex A domains</span><ul class="rail-list">' + rail + '</ul></nav>'
+            '<div class="split"><nav class="rail" aria-label="ISO 27001 domains"><span class="overline">Annex A domains</span><ul class="rail-list" id="q-rail-counts" data-illustrative="true">' + rail + '</ul></nav>'
             '<div class="stack" id="organizational">'
-            '<header class="view-head"><div><h1>Organizational controls</h1><p class="caption" data-illustrative="true">37 questions · 1 left to answer · drafts save as you type</p></div>'
+            '<header class="view-head"><div><h1>Organizational controls</h1><p class="caption" id="q-section-progress" data-illustrative="true">37 questions · 1 left to answer · drafts save as you type</p></div>'
             '<div class="cluster"><div class="segmented" role="group" aria-label="Show"><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Unanswered</button></div>'
             '<button class="button primary" type="button" onclick="document.getElementById(\'complete-message\').hidden=false">Complete section</button></div></header>'
             '<p id="complete-message" class="caption" role="status" hidden>Answer A5.24 to complete this section.</p>'
-            '<ol class="q-list">' + closed(ROWS_BEFORE) + q2 + closed([('A5.19', 'Information security in supplier relationships', 'Fully implemented', 'success'), ('A5.23', 'Information security for use of cloud services', 'Fully implemented', 'success')]) + q1 + closed(ROWS_AFTER) + '</ol>'
+            '<ol class="q-list" id="q-row-states" data-illustrative="true">' + closed(ROWS_BEFORE) + q2 + closed([('A5.19', 'Information security in supplier relationships', 'Fully implemented', 'success'), ('A5.23', 'Information security for use of cloud services', 'Fully implemented', 'success')]) + q1 + closed(ROWS_AFTER) + '</ol>'
             '</div></div>')
     script = """<script>
 function toggleQ(b){var q=b.closest('.q');if(!q.querySelector('.q-body'))return;var o=q.dataset.open!=='true';q.dataset.open=o;b.setAttribute('aria-expanded',o);q.querySelector('.q-body').hidden=!o;}
@@ -156,7 +156,7 @@ def review():
         decided = ' decided' if f['decided'] else ''
         tail = '<span>Approved</span>' if f['decided'] else ''
         return (f'<li><button class="queue-item{decided}" type="button" data-control="{f["code"]}" data-evidence-priority="{f["evidence_priority"]}" data-rank="{f["rank"]}" data-risk="{f["risk"]}"{cur} onclick="showFinding({f["i"]},this)">'
-                f'<span class="q-title" data-illustrative="true">{e(f["title"])}</span>'
+                f'<span class="q-title" id="queue-title-{f["i"]}" data-illustrative="true">{e(f["title"])}</span>'
                 f'<span class="q-meta"><span class="code">{f["code"]}</span><span class="status {TONE[f["risk"]]}" data-family="severity">{f["risk"]} risk</span><span data-family="outcome">{f["outcome"]}</span>{tail}</span></button></li>')
 
     def detail(f):
@@ -174,7 +174,7 @@ def review():
             decision = f'<span id="decision-{i}" role="status">Awaiting your decision</span>'
         return (
             f'<article id="finding-{i}" class="surface finding" data-component="FindingDetail"{"" if i == 0 else " hidden"}>'
-            f'<header class="finding-head"><div class="finding-id"><p class="overline">{f["code"]} {e(name)} · {domain}</p><h1 id="finding-title-{i}" data-illustrative="true">{e(f["title"])}</h1></div>'
+            f'<header class="finding-head"><div class="finding-id"><p class="overline">{f["code"]} {e(name)} · {domain}</p><h2 class="t-title" id="finding-title-{i}" data-illustrative="true">{e(f["title"])}</h2></div>'
             f'<div class="actions" data-component="ReviewDecision">{actions}</div></header>'
             '<dl class="verdict">'
             f'<div><dt class="overline">Compliance</dt><dd><span class="status {TONE[f["outcome"]]}" data-family="outcome">{f["outcome"]}</span></dd></div>'
@@ -191,7 +191,7 @@ def review():
             '</div><aside class="finding-aside" aria-label="Where this finding came from">'
             f'<div class="block"><h2 class="overline">Evidence cited</h2><a href="{f["href"]}">{e(f["file"])}</a>'
             f'<div class="evidence-quote"><span>“{e(quote)}”</span><span class="caption">{span.group(0) if span else ""}</span></div></div>'
-            '<div class="block"><h2 class="overline">Interviews</h2><p data-illustrative="true">None recorded for this control.</p></div>'
+            f'<div class="block"><h2 class="overline">Interviews</h2><p id="finding-provenance-{i}" data-illustrative="true">None recorded for this control.</p></div>'
             f'<div class="block"><h2 class="overline">Control</h2><p>{cid} · {e(name)}</p><p>{domain} · ISO 27001</p></div>'
             '</aside></div></article>')
 
@@ -199,7 +199,7 @@ def review():
     decided = [f for f in fs if f['decided']]
     body = (shell('Review queue', 'review', 'Queue', 4) +
             '<div class="queue-split"><div class="queue">'
-            '<div class="queue-head"><h2 class="t-sub">Findings</h2>'
+            '<div class="queue-head"><h1 class="t-sub">Findings</h1>'
             '<label class="select-label">Order<select onchange="sortQueue(this.value)"><option value="pending">Pending first</option><option value="evidence">Evidence problems first</option><option value="risk">Highest risk</option><option value="control">Control ID</option></select></label></div>'
             f'<div class="queue-group"><span class="overline" data-group>To decide · {len(pending)}</span><ul class="queue-list" id="queue-pending">{"".join(map(item, pending))}</ul></div>'
             f'<div class="queue-group"><span class="overline" data-group>Decided · {len(decided)}</span><ul class="queue-list" id="queue-decided">{"".join(map(item, decided))}</ul></div>'
@@ -220,16 +220,22 @@ document.querySelectorAll('[data-group]').forEach(function(g){g.hidden=v!=='pend
 OTHERS = {
     'conclusions.html': ('Conclusions', 'review', 'Conclusions', 4, 'Conclusions'),
     'rfi.html': ('Evidence requests', 'evidence', 'Requests', 2, 'Evidence requests'),
-    'report.html': ('Report', 'report', None, 5, None),
+    'report.html': ('Report', 'report', None, 5, 'Report'),
     'scope-applicability.html': ('Scope', 'scope', 'Applicability', 1, 'Applicability'),
 }
+
+
+REPORT_TOGGLE = ('<div class="report-toggle" role="group" aria-label="Report view" data-component="ReportViewToggle">'
+                 '<button type="button" class="button primary" id="board-toggle" aria-pressed="true" onclick="switchReport(\'board\')">Board summary</button>'
+                 '<button type="button" class="button" id="detail-toggle" aria-pressed="false" onclick="switchReport(\'detail\')">Auditor detail</button></div>')
 
 
 def reshell():
     for name, (title, stage, section, upto, h1) in OTHERS.items():
         t = (PROTO / name).read_text()
-        start, end = t.index('<body>'), t.index('<div class="toolbar"')
-        heading = f'<header class="view-head"><div><h1>{h1}</h1></div></header>' if h1 else ''
+        start, end = t.index('<body>'), t.index('<div class="toolbar"')  # replaces any earlier shell and heading
+        extra = REPORT_TOGGLE if name == 'report.html' else ''
+        heading = f'<header class="view-head"><div><h1>{h1}</h1></div>{extra}</header>'
         t = t[:start] + shell(title, stage, section, upto) + heading + t[end:]
         t = re.sub(r'<label class="select-label">Section<select.*?</select></label>', '', t, count=1, flags=re.S)
         t = t.replace(SCRIPT, '').replace('</body>', SCRIPT + '</body>', 1)

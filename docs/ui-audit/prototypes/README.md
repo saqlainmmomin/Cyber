@@ -2,6 +2,8 @@
 
 > Second design pass, 13 Oct 2026. After Saqlain's review, `prototype.css` was rewritten around seven fixed type roles, `questionnaire.html` and `review-queue.html` were redrawn, and both navigation options were replaced by a stepper with a hideable sidebar (`review-queue-sidebar.html` is removed). The other four screens carry the new stylesheet and shell but are not redesigned. `tools/build_prototypes.py` regenerates the two redrawn screens and the shared shell. The per-screen notes below describe the first pass where they differ.
 
+Placeholders added in the second pass (questionnaire.html): `q-rail-counts`, `q-section-progress`, `q-row-states`, `q2-response`. All depend on saved draft responses (Backend).
+
 Open the seven HTML files directly from disk. No server, browser build or CDN is needed. Inter loads from ../../../app/static/fonts/. All seven share prototype.css. Citation and Findings/Workpaper destinations need the existing app; these views are not static prototypes. Sorts, disclosures and state changes are local demonstrations with no production writes or AI calls.
 
 questionnaire.html: one stage bar and the Option A Section select frame the four ISO domain links. Full-width unanswered and answered question surfaces preserve requirement, why and client hint hierarchy. Prose, bold requirements and guidance cap at 56ch in their own font size; Inter’s zero glyph made the previous 72ch cap wider than 80 average characters. Applicability now lives in Scope. The unanswered example is a reset local state; typing shows unsaved changes without pretending a network save occurred. Other domain panels contain navigation placeholders, not a complete questionnaire.

@@ -14,7 +14,7 @@ HANDOFF = 'tasks/handoffs/2026-10-12-ui-audit-prototype-fix-pass.md'
 CORE = ['README', 'ARCHITECTURE', 'SCREEN_INVENTORY', 'UI_ISSUES', 'ROOT_CAUSES',
         'DESIGN_SYSTEM', 'PAGE_ARCHETYPES', 'NEXTJS_MIGRATION_UI_SPEC', 'COMPONENT_INVENTORY']
 SCREENS = ['questionnaire', 'review-queue', 'conclusions', 'rfi', 'report',
-           'scope-applicability', 'review-queue-sidebar']
+           'scope-applicability']
 for name in CORE:
     assert (OUT / f'{name}.md').is_file(), name
 issues = (OUT / 'UI_ISSUES.md').read_text()
@@ -93,8 +93,8 @@ for name in SCREENS:
     assert sum(t == 'h1' for t, a in nodes) == 1, name
     assert sum(a.get('data-component') == 'StageNav' for t, a in nodes) == 1, name
     assert any(t == 'aside' and a.get('class') == 'sidebar' for t, a in nodes), name
-    if name != 'review-queue-sidebar':
-        assert any(t == 'select' for t, a in nodes), name
+    # The stepper replaced the Section select: every screen exposes the hide-navigation control instead.
+    assert any(a.get('id') == 'nav-toggle' for t, a in nodes), name
     assert 'prototype.css' in path.read_text(), name
     assert 'Evidence cut-off 6 Oct 2026' in path.read_text(), name
     for tag, attrs in nodes:
@@ -109,9 +109,8 @@ assert {'board-view', 'detail-view'} <= html['report'].ids
 assert 'scope-panel' not in html['questionnaire'].ids
 assert 'soa-standard' in html['scope-applicability'].ids
 assert {'soa-exclusion-outsourcing', 'soa-exclusion-coding'} <= html['scope-applicability'].illustrative
-assert sum(a.get('class') == 'assessment-links' for t, a in html['review-queue-sidebar'].nodes) == 1
-assert sum(t == 'select' for t, a in html['review-queue-sidebar'].nodes) == 1
-assert 'sectionGo(this.value)' not in (OUT / 'prototypes/review-queue-sidebar.html').read_text()
+assert not (OUT / 'prototypes/review-queue-sidebar.html').exists()
+assert sum(a.get('class') == 'substeps' for t, a in html['review-queue'].nodes) == 1
 assert {'board-toggle', 'detail-toggle', 'detail-domain', 'detail-outcome', 'detail-risk'} <= html['report'].ids
 for domain in ['organizational', 'people', 'physical', 'technological']:
     assert f'report-{domain}' in html['report'].ids
@@ -130,15 +129,13 @@ assert len(source['queue']) == 6 and sum(r['state'] == 'pending' for r in source
 assert len(source['rfi']) >= 20
 css = (OUT / 'prototypes/prototype.css').read_text()
 assert css.count('{') == css.count('}'), 'CSS brace imbalance'
-assert '--prose:56ch' in css
-for value in re.findall(r'max-width:([^;}]+)', css):
-    match = re.fullmatch(r'([0-9.]+)ch', value)
-    if match:
-        assert float(match[1]) <= 58, ('Prose measure too wide', value)
-for role in ['.prose', '.guidance', '.requirement', '.request-details', '.recommendation-text']:
-    assert re.search(re.escape(role) + r'\{[^}]*max-width:56ch', css), role
+assert '--measure:42rem' in css
+for role in ['--title', '--heading', '--lead', '--body', '--ui', '--caption', '--overline']:
+    assert re.search(re.escape(role) + r':\d00 [0-9.]+rem/[0-9.]+ ', css), role
+for role in ['.prose,.read', '.guidance', '.request-details', '.expanded-finding', '.finding-main', '.scope-form']:
+    assert re.search(re.escape(role) + r'\{[^}]*max-width:var\(--measure\)', css), role
 assert '.queue-item[aria-current]{background:' in css
-assert 'height:100vh' in css and 'position:sticky;top:0' in css
+assert 'height:100dvh' in css and 'position:sticky;top:0' in css
 for name in SCREENS:
     screen = (OUT / 'prototypes' / f'{name}.html').read_text()
     for commentary in ['Assessment workspace', 'ISO 27001 focus', 'Switch any time',
@@ -147,8 +144,8 @@ for name in SCREENS:
                        'The prototype shows', 'Production autosave requires']:
         assert commentary not in screen, (name, commentary)
     if name.startswith('review-queue'):
-        assert '3 pending, 3 decided' in screen
-        assert screen.count('class="prose recommendation-text"') == 6
+        assert 'To decide · 3' in screen and 'Decided · 3' in screen
+        assert screen.count('class="rec-text"') == 6
         assert screen.count('Why this recommendation') == 6
 report = (OUT / 'prototypes/report.html').read_text()
 assert report.count('class="board-gap"') == 25
@@ -159,14 +156,12 @@ assert 'In this RFI' in rfi and 'id="included-items"' in rfi and 'id="request-it
 assert rfi.count('data-sort=') >= 4
 assert len(re.findall(r'<summary class="request-summary">', rfi)) == 40
 
-tokens = dict(re.findall(r'(--[\w-]+):([^;}]+)', css))
-for value in re.findall(r'font-size:([^;}]+)', css):
-    match = re.fullmatch(r'var\((--[\w-]+)\)', value)
-    assert match, ('Non-token font size', value)
-    number = float(tokens[match[1]].removesuffix('px'))
-    assert number >= 14 or match[1] == '--t-meta', ('Content role below 14px', match[1])
-assert 'font-size:var(--t-meta)' in css
-assert len(re.findall(r'font-size:var\(--t-meta\)', css)) == 1, 'Metadata exception leaked'
+# Second pass: type is set only through the seven role tokens, never a loose font-size.
+assert 'font-size:' not in css, 'Loose font size outside the type roles'
+sizes = {k: float(v) * 16 for k, v in re.findall(r'--(title|heading|lead|body|ui|caption|overline):\d00 ([0-9.]+)rem', css)}
+assert sizes == {'title': 26, 'heading': 20, 'lead': 18, 'body': 16, 'ui': 14, 'caption': 13, 'overline': 12}, sizes
+for role in ['.guidance', '.block p', '.prose,.read', '.expanded-finding p', '.request-details p,.request-details li']:
+    assert re.search(re.escape(role) + r'\{[^}]*font:var\(--body\)', css), ('Sentence text below 16px', role)
 for font in re.findall(r"url\('([^']+)'\)", css):
     assert (OUT / 'prototypes' / font).is_file(), font
 contrast = json.loads((OUT / 'target-contrast.json').read_text())
@@ -192,6 +187,6 @@ for path in changed:
                 continue
             assert (path.parent / target.split('#')[0]).exists(), (path.name, target)
 print(f'PASS: nine documents; 35 reconciled issues; {len(p0)} P0 rules; '
-      f'60 requirements {classes}; 31 page families; seven prototypes; '
+      f'60 requirements {classes}; 31 page families; six prototypes; '
       f'32 conclusions / 40 RFI / six queue items; {len(illustrations)} illustrative IDs; '
       '144 AA colour pairs; screenshot citations, local fonts and allowed scope verified.')

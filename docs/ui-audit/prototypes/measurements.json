@@ -1299,7 +1299,7 @@
     "height": 255
    }
   ],
-  "illustrative": 20,
+  "illustrative": 8,
   "failedRequests": [],
   "screenshot": "screenshots/questionnaire-1440.png"
  },
@@ -1559,20 +1559,21 @@
     "height": 255
    }
   ],
-  "illustrative": 20,
+  "illustrative": 8,
   "failedRequests": [],
   "screenshot": "screenshots/questionnaire-1280.png"
  },
  {
   "screen": "report",
   "viewport": 1440,
-  "height": 5187,
+  "height": 5247,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 225,
+   "14px": 227,
    "16px": 30,
    "13px": 11,
    "12px": 4,
+   "26px": 1,
    "20px": 6,
    "18px": 1
   },
@@ -1723,13 +1724,14 @@
  {
   "screen": "report",
   "viewport": 1280,
-  "height": 5615,
+  "height": 5675,
   "horizontalOverflow": false,
   "fontSizeTextNodeCounts": {
-   "14px": 225,
+   "14px": 227,
    "16px": 30,
    "13px": 11,
    "12px": 4,
+   "26px": 1,
    "20px": 6,
    "18px": 1
   },
@@ -3234,7 +3236,7 @@
     "height": 255
    }
   ],
-  "illustrative": 20,
+  "illustrative": 8,
   "failedRequests": [],
   "screenshot": "screenshots/questionnaire-wide-1440.png"
  },
@@ -3475,7 +3477,7 @@
     "height": 255
    }
   ],
-  "illustrative": 20,
+  "illustrative": 8,
   "failedRequests": [],
   "screenshot": "screenshots/questionnaire-wide-1280.png"
  },
