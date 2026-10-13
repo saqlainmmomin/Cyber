@@ -1586,27 +1586,46 @@ This report is prepared solely for the use of the named organization. It should 
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*DARK_TEXT)
     pdf.set_x(PM)
-    pdf.multi_cell(
-        CW,
-        4.5,
-        text=S(methodology_text(selected_frameworks, len(gap_items))),
-        new_x="LMARGIN",
-    )
+    methodology = S(methodology_text(selected_frameworks, len(gap_items)))
+    basis_line = getattr(report, "evidence_basis_line", None)
+    disclaimer_marker = "\n\nDisclaimer:\n"
 
-    if getattr(report, "evidence_basis_line", None):
-        text = S(report.evidence_basis_line)
+    def _fits_or_continue(text: str):
         # Estimate wrapped lines using the current font's average character width.
         char_width = max(pdf.get_string_width(text) / max(len(text), 1), 0.1)
         chars_per_line = max(int((CW - 2 * pdf.c_margin) / char_width), 1)
-        paragraph_height = (math.ceil(len(text) / chars_per_line) + 1) * 4.5
-        if pdf.get_y() + paragraph_height > CONTENT_BOTTOM:
+        height = (math.ceil(len(text) / chars_per_line) + 1) * 4.5
+        if pdf.get_y() + height > CONTENT_BOTTOM:
             _page_footer(pdf, company_name)
             pdf.add_page()
             _page_header(pdf, "Methodology (continued)")
             pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(*DARK_TEXT)
+
+    if basis_line and disclaimer_marker in methodology:
+        head, disclaimer = methodology.split(disclaimer_marker, 1)
+        pdf.multi_cell(CW, 4.5, text=head, new_x="LMARGIN")
+        pdf.ln(4.5)
+        text = S(basis_line)
+        _fits_or_continue("Documents analyzed:\n" + text)
         pdf.set_x(PM)
-        pdf.multi_cell(CW, 4.5, text=text, new_x="LMARGIN")
+        pdf.multi_cell(CW, 4.5, text="Documents analyzed:", new_x="LMARGIN")
+        pdf.set_x(PM)
+        pdf.multi_cell(CW, 4.5, text=text, new_x="LMARGIN", align="L")
+        pdf.ln(4.5)
+        disclaimer = "Disclaimer:\n" + disclaimer
+        _fits_or_continue(disclaimer)
+        pdf.set_x(PM)
+        pdf.multi_cell(CW, 4.5, text=disclaimer, new_x="LMARGIN")
+    else:
+        pdf.multi_cell(CW, 4.5, text=methodology, new_x="LMARGIN")
+        if basis_line:
+            text = S(basis_line)
+            _fits_or_continue("Documents analyzed:\n" + text)
+            pdf.set_x(PM)
+            pdf.multi_cell(CW, 4.5, text="Documents analyzed:", new_x="LMARGIN")
+            pdf.set_x(PM)
+            pdf.multi_cell(CW, 4.5, text=text, new_x="LMARGIN", align="L")
 
     _page_footer(pdf, company_name)
 

@@ -217,17 +217,17 @@ def test_report_basis_counts_actual_documents_and_names_reused_quotes(db):
     assert '1 file read, 1 not read' in _evidence_basis_line(db, [row])
 
 
-    # A full read in any framework beats partial and unread selections.
+    # Identical cuts across frameworks keep the single-line wording.
+    both_read = [{**documents[1], 'status': 'read'}, documents[0]]
     envelope['document_manifest'] = {'frameworks': {
-        'iso27001': {'selection': documents},
-        'nist_csf': {'selection': [{**documents[1], 'status': 'partial'}]},
-        'dpdpa': {'selection': [{**documents[1], 'status': 'read'}]},
+        'iso27001': {'selection': both_read},
+        'dpdpa': {'selection': both_read},
     }}
     run.claims_json = json.dumps(envelope)
     db.flush()
     line = _evidence_basis_line(db, [row])
-    assert '2 files read, 0 not read' in line
-    assert 'Partly read:' not in line
+    assert line.startswith('Analysis document input: 2 files read, 0 not read.')
+    assert 'ISO 27001:' not in line and 'Partly read:' not in line
 
     # Later runs cannot turn a full read back into an unread or partial file.
     second = add_conclusion(db, assessment, [], requirement='ISO.A5.1', manifest={
@@ -252,6 +252,29 @@ def test_report_basis_counts_actual_documents_and_names_reused_quotes(db):
     assert 'File 9.pdf' in full
 
 
+def test_report_basis_reports_per_framework_when_cuts_differ(db):
+    from types import SimpleNamespace
+    from app.services.approved_report import _evidence_basis_line
+
+    _, _, assessment = seed_engagement(db, frameworks=('iso27001', 'dpdpa'))
+    docs = [{'evidence_version_id': f'f{i}', 'filename': name, 'status': 'read'}
+            for i, name in enumerate(['a.pdf', 'b.docx', 'c.pdf'])]
+    cut = [{**docs[0], 'status': 'not_read'}, {**docs[1], 'status': 'not_read'}, docs[2]]
+    conclusion = add_conclusion(db, assessment, [], manifest={'frameworks': {
+        'iso27001': {'selection': docs}, 'dpdpa': {'selection': cut},
+    }})
+    rows = [SimpleNamespace(conclusion_id=conclusion.id, framework_id=fid, requirement_id='ISO.A5.18')
+            for fid in ('iso27001', 'dpdpa')]
+    line = _evidence_basis_line(db, rows)
+    assert line.startswith('Analysis document input. ')
+    assert 'ISO 27001: 3 files read, 0 not read.' in line
+    assert 'DPDPA: 1 file read, 2 not read (not read: a.pdf, b.docx).' in line
+    assert line.count('a.pdf') == 1
+    short = _evidence_basis_line(db, rows, filename_limit=1)
+    assert '3 files read, 0 not read' in short and '1 file read, 2 not read' in short
+    assert 'b.docx' not in short
+
+
 def test_report_basis_pdf_moves_long_paragraph_to_continuation_page(canonical_dpdpa_assessment):
     import io
     import pdfplumber
@@ -272,3 +295,22 @@ def test_report_basis_pdf_moves_long_paragraph_to_continuation_page(canonical_dp
         assert 'number 099 reviewed.pdf' in page.extract_text()
         ending = page.search(r'number 099 reviewed\.pdf')[0]
         assert ending['bottom'] < CONTENT_BOTTOM * 72 / 25.4
+
+
+def test_report_basis_pdf_labels_documents_before_disclaimer(canonical_dpdpa_assessment):
+    import io
+    import pdfplumber
+    from tests.test_golden_dpdpa import _analyze
+    from tests.support.canonical_dpdpa import materialize_report
+    from app.utils.pdf_export import generate_pdf
+
+    canonical = canonical_dpdpa_assessment
+    report, items = materialize_report(canonical.session, canonical.assessment, _analyze(canonical))
+    report.evidence_basis_line = 'Analysis document input: 2 files read, 0 not read. Read: A.pdf, B.pdf.'
+    content = generate_pdf(report, items, canonical.assessment.company_name,
+                           initiatives=[], selected_frameworks=['dpdpa'])
+    with pdfplumber.open(io.BytesIO(content)) as pdf:
+        text = '\n'.join(page.extract_text() or '' for page in pdf.pages)
+    assert 'Documents analyzed:' in text
+    assert text.index('Documents analyzed:') < text.index('Disclaimer:')
+    assert text.index('Analysis document input:') < text.index('Disclaimer:')
