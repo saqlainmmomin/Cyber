@@ -201,7 +201,7 @@ Sizes are working sessions, my estimates, not measured. S is one or less, M is t
 | 1.3 | Reads stage 1: truthful cut (already approved, E7 and E8). | None | S | Manifest matches what prompts contained. |
 | 1.4 | Reads stage 2, in its three parts: 2a explicit frameworks, 2b follow-up engine (narrow non-DPDPA prompt changes; the follow-up engine stays even when the context wizard goes), 2c upload categories, initiative text, section refs. Not yet built: the clean-up session never produced code. Lane O does the prompt part and runs the live gate on the reduced company set. | 1.3 | M | DPDPA goldens pass byte for byte at the point the gate runs, with WP 2.3 and 2.5 not yet merged. Gate passes. |
 
-Status, 13 Oct 2026: WP 1.1 is PR #145 (open, 1,750 passed / 29 skipped). WP 1.3 is PR #144 (open, 1,761 passed / 29 skipped). Details in `tasks/handoffs/2026-10-13-next-session-start-here.md`.
+Status, 13 Oct 2026: WP 1.1 is PR #145 (merged; 1,750 passed / 29 skipped on its branch). WP 1.3 is PR #144 (merged; 1,761 passed / 29 skipped on its branch). WP 1.2, WP 1.4 non-prompt parts and WP 2.3 to 2.8 are unblocked. The combined suite on main is not yet run. Details in `tasks/handoffs/2026-10-13-next-session-start-here.md`.
 
 ### Phase 2. Durable defects (backend and exports; no new screens)
 

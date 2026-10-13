@@ -134,13 +134,13 @@ If PR #142 is still open, push one commit to its branch adding a short "Wave 1" 
 
 ## Results
 
-Run 13 Oct 2026. Three Codex runs launched concurrently (about 20 minutes each), each reviewed by Sonnet subagents split by concern, each sent fix rounds as needed, each re-verified with a fresh full suite. Saqlain merged #143; #144 and #145 are open and mergeable in either order (trial merge, no conflict).
+Run 13 Oct 2026. Three Codex runs launched concurrently (about 20 minutes each), each reviewed by Sonnet subagents split by concern, each sent fix rounds as needed, each re-verified with a fresh full suite. Saqlain has merged #143, #144 and #145. Each PR passed its own full suite; the combined suite on main is not yet run.
 
 | WP | PR | Final tests | State | Fix rounds | Open issues |
 |---|---|---|---|---|---|
 | 2.2 statute citations | #143 | 1,749 passed / 29 skipped | Merged | One: restored em dashes Codex changed in curated text | Pack text "Section 8(4)-(6)" for BN.NOTIFY.3, `questionnaire.py:90`, `clusters.py:1013` and `1026` left for legal review |
-| 1.3 reads stage 1 | #144 | 1,761 passed / 29 skipped | Open | One: DPDPA desk review ordering, report over-claim, legacy lists, outside-cut, manifest failure guard, multi-framework default shape, PDF overflow, HTML cap | PPTX/XLSX evidence line, duplicate-filename and replaced-file notice polish, extraction-failure marker |
-| 1.1 vocabulary | #145 | 1,750 passed / 29 skipped | Open | One: registry-empty fallback names, "Not concluded" leftovers, PCI-DSS stutter, one raw id | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` |
+| 1.3 reads stage 1 | #144 | 1,761 passed / 29 skipped | Merged | One: DPDPA desk review ordering, report over-claim, legacy lists, outside-cut, manifest failure guard, multi-framework default shape, PDF overflow, HTML cap | PPTX/XLSX evidence line, duplicate-filename and replaced-file notice polish, extraction-failure marker |
+| 1.1 vocabulary | #145 | 1,750 passed / 29 skipped | Merged | One: registry-empty fallback names, "Not concluded" leftovers, PCI-DSS stutter, one raw id | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` |
 
 Decisions Saqlain took on 13 Oct (priority map, remediation timeframe, Verified wording, board priority unified, citations, edition names, evidence-basis line) are recorded in `tasks/handoffs/2026-10-13-next-session-start-here.md` and as E9 in `tasks/2026-10-08-session-record.md`.
 

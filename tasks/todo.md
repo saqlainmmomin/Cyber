@@ -5,17 +5,17 @@
 | WP | PR | State | Tests | Still open |
 |---|---|---|---|---|
 | 2.2 statute citations | #143 | Merged by Saqlain | 1,749 passed / 29 skipped | Legal review of pack text "Section 8(4)-(6)" (BN.NOTIFY.3); `questionnaire.py:90` and `clusters.py:1013`, `1026` differ from the pack |
-| 1.3 reads stage 1, truthful cut | #144 | Open, awaiting Saqlain's merge | 1,761 passed / 29 skipped | PPTX/XLSX evidence line, duplicate-filename notice polish, replaced-file notice, extraction-failure marker; fallback for framework display names in `approved_report.py` can go once #145 lands |
-| 1.1 vocabulary module | #145 | Open, mergeable clean | 1,750 passed / 29 skipped | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` label compare |
+| 1.3 reads stage 1, truthful cut | #144 | Merged | 1,761 passed / 29 skipped | PPTX/XLSX evidence line, duplicate-filename notice polish, replaced-file notice, extraction-failure marker; the framework display-name try-import fallback in `approved_report.py` can now be deleted (first cleanup) |
+| 1.1 vocabulary module | #145 | Merged | 1,750 passed / 29 skipped | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` label compare |
 
-#144 and #145 merge in either order (trial merge, no conflict). Full detail: `tasks/handoffs/2026-10-13-next-session-start-here.md`.
+All three are merged. Test counts are per branch; run the full suite on main first. Full detail: `tasks/handoffs/2026-10-13-next-session-start-here.md`.
 
 ### Next
 
-- [ ] WP 1.2 stage and status rollup (lane C, after #145 merged)
-- [ ] WP 1.4 non-prompt parts (lane C, after #144 merged); 1.4 prompt part (lane O)
-- [ ] WP 2.3 score band switch to Readiness (lane C, after 1.1; moves goldens)
-- [ ] WP 2.4 to 2.8 (lane C)
+- [ ] WP 1.2 stage and status rollup (lane C, unblocked)
+- [ ] WP 1.4 non-prompt parts (lane C, unblocked); 1.4 prompt part (lane O, waits for Phase 0 sign-offs)
+- [ ] WP 2.3 score band switch to Readiness (lane C, unblocked; moves goldens)
+- [ ] WP 2.4 to 2.8 (lane C, unblocked)
 - [ ] WP 3.5 (lane C, after the orchestrator writes the spec)
 - [ ] Lane O: Phase 0 sign-offs, evaluation gates
 - [ ] Lane T: UCF part 1 (`tasks/handoffs/2026-10-13-ucf-part-1-kickoff.md`, branch `claude/ucf-part-1`, worktree `~/dpdpa-ucf`)
