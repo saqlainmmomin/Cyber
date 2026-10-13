@@ -3,7 +3,7 @@
 {% from "components/seg_rows.html" import review_seg %}
 
 {% set page_title = "Review" %}
-{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"} %}
+{% set outcome_labels = vocab.OUTCOMES %}
 {% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf", "not_applicable": "c-neutral"} %}
 {% set basis = report_basis_for(assessment) %}
 {% set shell_context = assessment_engagement_context(request) %}
@@ -14,8 +14,7 @@
 {%- endmacro %}
 
 {% macro requirement_reference(conclusion) -%}
-  {% set reference = conclusion.requirement_id %}
-  {% if conclusion.framework_id == "iso27001" %}{{ reference|replace("ISO.", "") }}{% elif conclusion.requirement_id == "CH2.CONSENT.3" %}s.6{% elif conclusion.requirement_id == "CH2.SECURITY.1" %}s.8{% elif conclusion.requirement_id == "CM.RECORDS.1" %}s.6{% else %}{{ reference }}{% endif %}
+  {{ vocab.reference_with_framework(conclusion.framework_id, conclusion.requirement_id) }}
 {%- endmacro %}
 
 {% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}
@@ -44,7 +43,7 @@
         {% if group.shared %}{% set label = (group.topic or "Shared evidence") ~ ", shared evidence" %}{% elif group_open %}{% set label = "To review" %}{% else %}{% set label = "Decided" %}{% endif %}
         {% if label != group_label.value %}<div class="grp">{{ label }}</div>{% set group_label.value = label %}{% endif %}
         {% for entry in group.entries %}
-          <a class="item{% if entry.card.state in ['approved', 'edited'] %} decided{% endif %}{% if item_position.value == initial %} sel{% endif %}" href="#conclusion-card-{{ entry.card.conclusion.id }}" data-queue-select="{{ entry.card.conclusion.id }}" aria-current="{{ 'true' if item_position.value == initial else 'false' }}"><div class="txt"><b>{{ entry.card.requirement_title }}</b><span>{{ framework_label(entry.card.conclusion.framework_id) }} · {{ requirement_reference(entry.card.conclusion) }}</span></div><i class="dot {{ outcome_tones.get(entry.card.conclusion.outcome, 'c-neutral') }}" title="{{ outcome_labels.get(entry.card.conclusion.outcome, entry.card.conclusion.outcome) }}"></i></a>
+          <a class="item{% if entry.card.state in ['approved', 'edited'] %} decided{% endif %}{% if item_position.value == initial %} sel{% endif %}" href="#conclusion-card-{{ entry.card.conclusion.id }}" data-queue-select="{{ entry.card.conclusion.id }}" aria-current="{{ 'true' if item_position.value == initial else 'false' }}"><div class="txt"><b>{{ entry.card.requirement_title }}</b><span>{{ requirement_reference(entry.card.conclusion) }}</span></div><i class="dot {{ outcome_tones.get(entry.card.conclusion.outcome, 'c-neutral') }}" title="{{ outcome_labels.get(entry.card.conclusion.outcome, entry.card.conclusion.outcome) }}"></i></a>
           {% set item_position.value = item_position.value + 1 %}
         {% endfor %}
       {% endfor %}

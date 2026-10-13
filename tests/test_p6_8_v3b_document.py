@@ -69,8 +69,8 @@ def test_scenario_1_horizon_boundaries_and_overdue_follow_the_decision_doc():
     assert bd.OPEN_STATUS_LABELS == ("Open", "In progress")
     past = day(-1)
     assert bd.is_overdue(past, GENERATED_ON, "Open") and bd.is_overdue(past, GENERATED_ON, "In progress")
-    assert not bd.is_overdue(past, GENERATED_ON, "Closed, awaiting verification")
-    assert not bd.is_overdue(past, GENERATED_ON, "Closed and verified")
+    assert not bd.is_overdue(past, GENERATED_ON, "Closed and awaiting verification")
+    assert not bd.is_overdue(past, GENERATED_ON, "Verified")
     assert not bd.is_overdue(day(0), GENERATED_ON, "Open")  # due today is not overdue
     assert not bd.is_overdue(None, GENERATED_ON, "Open")
 
@@ -78,11 +78,12 @@ def test_scenario_1_horizon_boundaries_and_overdue_follow_the_decision_doc():
 def test_scenario_2_priority_is_derived_from_the_highest_closed_risk_and_never_typed():
     """D-P6-8-V3-O (F10): High if any critical/high, else Medium if any medium, else Low."""
     bd = _bd()
-    assert bd.priority_for(["low", "critical"]) == "high"
-    assert bd.priority_for(["high"]) == "high"
-    assert bd.priority_for(["low", "medium"]) == "medium"
-    assert bd.priority_for(["low", "low"]) == "low"
-    assert bd.priority_for([]) == "low"
+    assert bd.priority_for(["critical", "medium"]) == 1
+    assert bd.priority_for(["low", "critical"]) == 1
+    assert bd.priority_for(["high"]) == 2
+    assert bd.priority_for(["low", "medium"]) == 3
+    assert bd.priority_for(["low"]) == 4
+    assert bd.priority_for([]) == 4
     assert bd.responsibility_for(["client", "client"]) == "client"
     assert bd.responsibility_for(["client", "consultant"]) == "shared"
     assert bd.responsibility_for(["client", None]) == "client"
@@ -138,7 +139,7 @@ def test_scenario_4_initiatives_come_from_roadmap_groups_with_derived_horizon_pr
     for initiative in built:
         group = groups[initiative["group_id"]]
         assert initiative["priority"] == bd.priority_for(c["severity"] for c in group["closes"])
-        assert initiative["priority"] in ("high", "medium", "low")
+        assert initiative["priority"] in (1, 2, 3, 4)
         assert "priority_rank" not in initiative
     assert [a["ref"] for i in built for a in i["actions"]] == [f"A-{n:02d}" for n in range(1, 12)]
 
@@ -312,7 +313,7 @@ def test_scenario_11_inputs_flow_into_initiatives_asks_and_the_derived_blocks(db
     for index, initiative in enumerate(initiatives):
         assert initiative["title"] == f"Initiative {index}" and initiative["complexity"] == "high"
         assert initiative["benefit"] == "medium" and initiative["responsibility"] == "client"
-        assert initiative["priority"] in ("high", "medium", "low") and initiative["horizon"] in bd.HORIZONS
+        assert initiative["priority"] in (1, 2, 3, 4) and initiative["horizon"] in bd.HORIZONS
         assert initiative["obs_refs"] and all(ref in {o["ref"] for o in document["observations"]} for ref in initiative["obs_refs"])
     actions = [a for i in initiatives for a in i["actions"]]
     assert [a["ref"] for a in actions] == [f"A-{n:02d}" for n in range(1, len(actions) + 1)]
@@ -329,7 +330,7 @@ def test_scenario_11_inputs_flow_into_initiatives_asks_and_the_derived_blocks(db
         initiatives, document["observations"],
     )
     counts = document["roadmap"]["status_counts"]
-    assert list(counts) == ["Open", "In progress", "Closed, awaiting verification", "Closed and verified"]
+    assert list(counts) == ["Open", "In progress", "Closed and awaiting verification", "Verified"]
     assert sum(counts.values()) == len(document["roadmap"]["actions"]) == len(actions)
     assert document["roadmap"]["overdue_count"] == sum(a["overdue"] for a in actions) == 0
     assert _document(db, assessment) == document  # deterministic
@@ -370,7 +371,7 @@ def test_scenario_13_overdue_open_actions_and_derived_asks_come_from_live_data(d
     assert document["roadmap"]["overdue_count"] == 1
     assert "1 remediation action(s) past their target date." in document["board_asks"]["derived"]
     assert any(i["overdue"] for i in document["initiatives"])
-    assert document["roadmap"]["status_counts"]["Closed and verified"] == 1
+    assert document["roadmap"]["status_counts"]["Verified"] == 1
 
 
 def test_scenario_14_standards_only_assessment_has_no_legal_framework_in_references(db, http, gate, monkeypatch):

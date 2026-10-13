@@ -5,19 +5,24 @@ from __future__ import annotations
 from math import ceil
 from typing import Mapping
 
+from app.services import vocabulary as vocab
+
 
 NEVER_COMBINED_NOTE = "Scores are per framework and are never combined; the totals above are counts."
 EMPTY_ROADMAP_TEXT = "No remediation actions are recorded for the approved findings yet."
 
-OUTCOMES = (
-    ("compliant", "Compliant", "#0E8F86"),
-    ("partially_compliant", "Partially compliant", "#E39A1F"),
-    ("non_compliant", "Non-compliant", "#C0392B"),
-    ("insufficient_evidence", "Not concluded", "#9AA3B5"),
-    ("not_applicable", "Not applicable", "#D5D9E3"),
+OUTCOMES = tuple(
+    (key, vocab.outcome_label(key), color)
+    for key, color in (
+        ("compliant", "#0E8F86"),
+        ("partially_compliant", "#E39A1F"),
+        ("non_compliant", "#C0392B"),
+        ("insufficient_evidence", "#9AA3B5"),
+        ("not_applicable", "#D5D9E3"),
+    )
 )
 OUTCOME_COLORS = {key: color for key, _, color in OUTCOMES}
-SEVERITIES = ("critical", "high", "medium", "low")
+SEVERITIES = vocab.RISK_LEVELS
 SEVERITY_COLORS = {
     "critical": "#9B1C1C",
     "high": "#D9481E",
@@ -25,16 +30,16 @@ SEVERITY_COLORS = {
     "low": "#3C9D6B",
 }
 RATING_COLORS = {
-    "Compliant": "#0E8F86",
-    "Partially Compliant": "#E39A1F",
+    vocab.LEGACY_OUTCOMES["compliant"]: "#0E8F86",
+    vocab.LEGACY_OUTCOMES["partially_compliant"]: "#E39A1F",
     "Needs Significant Improvement": "#D9481E",
-    "Non-Compliant": "#C0392B",
+    vocab.LEGACY_OUTCOMES["non_compliant"]: "#C0392B",
 }
 RATING_BANDS = (
-    (0, 40, "Non-compliant", "#CDD2DE"),
+    (0, 40, vocab.OUTCOMES["non_compliant"], "#CDD2DE"),
     (40, 60, "Needs significant improvement", "#DCE0E9"),
-    (60, 80, "Partially compliant", "#E9ECF2"),
-    (80, 100, "Compliant", "#F5F6F9"),
+    (60, 80, vocab.OUTCOMES["partially_compliant"], "#E9ECF2"),
+    (80, 100, vocab.OUTCOMES["compliant"], "#F5F6F9"),
 )
 LEVELS = {"high": 3, "medium": 2, "low": 1}
 HORIZONS = (
@@ -179,7 +184,7 @@ def view(document: Mapping) -> dict:
             }
         )
 
-    below = [framework for framework in frameworks if framework.get("rating") != "Compliant"]
+    below = [framework for framework in frameworks if framework.get("rating") != vocab.OUTCOMES["compliant"]]
     critical_high = int(totals.get("critical_high_gaps", 0) or 0)
     gaps = int(totals.get("gaps", 0) or 0)
     framework_count = len(frameworks)
@@ -345,6 +350,7 @@ def view(document: Mapping) -> dict:
         "out_col": OUTCOME_COLORS,
         "bands": RATING_BANDS,
         "level": LEVELS,
+        "priority_labels": vocab.PRIORITY_LABELS,
         "sev": SEVERITIES,
         "sev_col": SEVERITY_COLORS,
         "sev_tot": severity_totals,

@@ -99,10 +99,10 @@ def test_generation_failure_and_limit_toasts_match_mockup_copy(
     endpoint = f"/api/assessments/{assessment.id}/narrative/generate"
     data = {"section_id": "framework-iso27001", "reviewer_name": REVIEWER}
     expected_failure = (
-        "ISO 27001:2022 posture could not be drafted. The section stays as it was. "
+        "ISO 27001 posture could not be drafted. The section stays as it was. "
         "Write it yourself or try again."
     )
-    expected_limit = "Draft limit reached for ISO 27001:2022 posture. Write this section yourself."
+    expected_limit = "Draft limit reached for ISO 27001 posture. Write this section yourself."
 
     for _ in range(3):
         failed = http.post(endpoint, data=data)

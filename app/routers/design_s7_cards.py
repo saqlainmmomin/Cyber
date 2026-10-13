@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 
 from app.routers.design import PREVIEW_PAGES
 from app.routers.web import templates
+from app.services import vocabulary as vocab
 from app.services.report_basis import PERIOD_REQUIRED_MESSAGE
 
 router = APIRouter(tags=["design"])
@@ -28,7 +29,7 @@ SCREEN_STATES = {
 
 STATE_HEADS = {
     "b5-requirement-card": {"v2": "Full analysis, RFI request available", "v2-draft": "Request already on the draft RFI, divergence acknowledged", "contradiction": "Contradiction and shared evidence", "v1": "Earlier analysis pipeline", "none": "No analysis run linked"},
-    "b5-conclusion-card": {"pending": "Pending", "edit": "Editing before approval", "approved": "Approved", "edited": "Edited and approved", "rejected": "Rejected", "blocked": "Approval blocked", "no-citation": "No supporting citation", "superseded": "Citation from a superseded version", "locked": "Locked, newer proposal withheld", "conflict": "Changed by someone else", "bulk": "Approved in bulk"},
+    "b5-conclusion-card": {"pending": vocab.review_label("pending"), "edit": "Editing before approval", "approved": vocab.review_label("approved"), "edited": vocab.review_label("edited"), "rejected": vocab.review_label("rejected"), "blocked": "Approval blocked", "no-citation": "No supporting citation", "superseded": "Citation from a superseded version", "locked": "Locked, newer proposal withheld", "conflict": "Changed by someone else", "bulk": "Approved in bulk"},
     "b5-recommended-action": {"empty": "Empty, draft button available", "drafting": "Drafting", "drafted": "Draft present, editable", "edited": "Draft edited by hand", "error": "Draft could not be produced", "saved": "Saved after approval", "gaps-required": "Gaps not described yet", "limit": "Draft limit reached", "stale": "Conclusion changed since the page loaded", "not-open": "Conclusion not awaiting a decision", "not-draftable": "Outcome not draftable"},
 }
 

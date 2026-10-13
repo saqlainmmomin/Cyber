@@ -18,6 +18,7 @@ from markupsafe import Markup
 from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.config import settings
 from app.dpdpa.framework import DPDPA_READINESS_NOTE, dpdpa_readiness_note_applies
 from app.frameworks.registry import FrameworkRegistry
@@ -62,14 +63,8 @@ TEMPLATE = "reports/board_report.html"
 PREVIEW_VERSION_LABEL = "Preview (not a report version)"
 SHA_PREFIX_CHARS = 12
 DATE_FORMAT = "%d %b %Y"
-OUTCOME_LABELS = {
-    "compliant": "Compliant",
-    "partially_compliant": "Partially Compliant",
-    "non_compliant": "Non-Compliant",
-    "insufficient_evidence": "Insufficient Evidence",
-    "not_applicable": "Not Applicable",
-}
-SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+OUTCOME_LABELS = vocab.LEGACY_OUTCOMES
+SEVERITY_RANK = vocab.RISK_RANK
 REGISTER_VERSION_STATUSES = ("active", "superseded")
 EDITED_CITATION_NOTE = "Consultant decision; no cited evidence"
 LEGACY_CITATION_NOTE = "Evidence support not captured"

@@ -3,8 +3,8 @@
    visible primary: the first control that moves the work on, else Add action. #}
 {% set severity_tones = {"critical": "critical", "high": "high", "medium": "medium", "low": "low"} %}
 {% set outcome_tones = {"compliant": "ok", "partially_compliant": "part", "non_compliant": "non", "insufficient_evidence": "insuf"} %}
-{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence"} %}
-{% set status_words = {"open": "Open", "in_progress": "In progress", "closed": "Closed, to verify", "verified": "Verified"} %}
+{% set outcome_labels = vocab.OUTCOMES %}
+{% set status_words = vocab.REMEDIATION_STATUSES %}
 {% set finding_url = "/api/assessments/" ~ assessment.id ~ "/findings/" ~ view.finding.id %}
 {% set detail_href = "/assessments/" ~ assessment.id ~ "/findings?finding=" ~ view.finding.id %}
 {% set adding = adding is defined and adding %}
@@ -40,16 +40,16 @@
   <div class="d-title">
     <h2 class="big">{{ view.finding.title }}</h2>
     <span class="sr-only">Status: {{ view.status_label }}</span>
-    {% if view.finding.status == "resolved" %}{{ state_status("verified", "Verified") }}{% elif awaiting_verification %}{{ state_status("closed", "Closed, to verify") }}{% elif view.finding.status == "accepted_risk" %}<span class="status"><span class="dot c-neutral"></span>{{ view.status_label }}</span>{% else %}{{ state_status(view.finding.status, view.status_label) }}{% endif %}
+    {% if view.finding.status == "resolved" %}{{ state_status("verified", vocab.remediation_label("verified")) }}{% elif awaiting_verification %}{{ state_status("closed", vocab.remediation_label("closed")) }}{% elif view.finding.status == "accepted_risk" %}<span class="status"><span class="dot c-neutral"></span>{{ view.status_label }}</span>{% else %}{{ state_status(view.finding.status, view.status_label) }}{% endif %}
   </div>
   <div class="meta">
-    <span class="pill c-{{ severity_tones.get(view.finding.severity, 'neutral') }}">{{ view.finding.severity|capitalize }}</span>
+    <span class="pill c-{{ severity_tones.get(view.finding.severity, 'neutral') }}">{{ vocab.risk_label(view.finding.severity) }}</span>
     {% if view.card %}<span class="chip">{{ framework_label(view.card.conclusion.framework_id) }}</span><span class="pill c-{{ outcome_tones.get(view.card.conclusion.outcome, 'neutral') }}">{{ outcome_labels.get(view.card.conclusion.outcome, view.card.conclusion.outcome|replace('_', ' ')|capitalize) }}</span>{% endif %}
     {% if view.origin == "migrated" %}<span class="ref">Migrated from the earlier remediation tracker</span>{% else %}<span class="ref">Created by {{ view.created_by }} on {{ view.finding.created_at|display_date }}</span>{% endif %}
     {% if view.workpaper_href %}<a class="btn ghost sm lead" href="{{ view.workpaper_href }}"><svg class="i"><use href="#i-link"/></svg>Workpaper trace</a>{% endif %}
   </div>
   {% if view.card and view.card.legacy_bulk_approval %}<p class="help">Legacy bulk approval, not individually reviewed</p>{% endif %}
-  {% if not view.source_approved %}<div class="alert c-medium f-mt6"><svg class="i"><use href="#i-alert"/></svg><div><b>The source conclusion is no longer approved</b>{% if view.card %}It is now {{ view.card.state|replace('_', ' ') }}. {% endif %}Read it before you rely on this finding.</div></div>{% endif %}
+  {% if not view.source_approved %}<div class="alert c-medium f-mt6"><svg class="i"><use href="#i-alert"/></svg><div><b>The source conclusion is no longer approved</b>{% if view.card %}It is now {{ vocab.review_label(view.card.state)|lower }}. {% endif %}Read it before you rely on this finding.</div></div>{% endif %}
   <p class="concl f-mt4">{{ view.finding.description }}</p>
 
   <div class="block">

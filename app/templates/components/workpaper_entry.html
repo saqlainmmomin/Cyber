@@ -1,20 +1,20 @@
 {% from "components/layout.html" import assessment_tabs %}
 {% macro outcome_label(outcome) -%}
-{{ {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "insufficient_evidence": "Insufficient evidence", "not_applicable": "Not applicable"}.get(outcome, (outcome or "")|replace("_", " ")|capitalize) }}
+{{ vocab.outcome_label(outcome) }}
 {%- endmacro %}
 {% macro outcome_pill(outcome) -%}
 {% set tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf"} %}
 <span class="pill {{ tones.get(outcome, 'c-neutral') }}">{{ outcome_label(outcome) }}</span>
 {%- endmacro %}
 {% macro risk_pill(risk) -%}
-{% if risk %}{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}<span class="pill {{ tones.get(risk|lower, 'c-neutral') }}">{{ risk|capitalize }}</span>{% endif %}
+{% if risk %}{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}<span class="pill {{ tones.get(risk|lower, 'c-neutral') }}">{{ vocab.risk_label(risk) }}</span>{% endif %}
 {%- endmacro %}
 {% macro decision_status(card) -%}
 {% if card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy approval</span>
-{%- elif card.state == "approved" %}<span class="status"><span class="dot c-ok"></span>Approved</span>
-{%- elif card.state == "edited" %}<span class="status"><span class="dot c-accent"></span>Edited and approved</span>
-{%- elif card.state == "rejected" %}<span class="status"><span class="dot c-non"></span>Rejected</span>
-{%- else %}<span class="status"><span class="st"></span>Pending</span>{% endif %}
+{%- elif card.state == "approved" %}<span class="status"><span class="dot c-ok"></span>{{ vocab.review_label("approved") }}</span>
+{%- elif card.state == "edited" %}<span class="status"><span class="dot c-accent"></span>{{ vocab.review_label("edited") }}</span>
+{%- elif card.state == "rejected" %}<span class="status"><span class="dot c-non"></span>{{ vocab.review_label("rejected") }}</span>
+{%- else %}<span class="status"><span class="st"></span>{{ vocab.review_label("pending") }}</span>{% endif %}
 {%- endmacro %}
 {% macro field(label, value, wide=false) -%}
 <div{% if wide %} style="grid-column:1/-1"{% endif %}><span class="sub">{{ label }}</span><div class="t-title" style="margin-top:2px;font-weight:400">{{ value }}</div></div>
@@ -32,7 +32,9 @@
 {%- endmacro %}
 {% macro entry_meta(entry) -%}
 {% set card = entry.card %}
-<div class="meta"><span class="chip">{{ framework_label(card.conclusion.framework_id) }}</span><span class="ref" style="margin-left:0">{{ card.conclusion.requirement_id }} · Conclusion version {{ card.conclusion.version }}</span>
+{% set reference = vocab.reference_with_framework(card.conclusion.framework_id, card.conclusion.requirement_id) %}
+{% set control_reference = vocab.display_reference(card.conclusion.framework_id, card.conclusion.requirement_id) %}
+<div class="meta">{% if reference != control_reference %}<span class="chip">{{ framework_label(card.conclusion.framework_id) }}</span>{% endif %}<span class="ref" style="margin-left:0">{{ control_reference }} · Conclusion version {{ card.conclusion.version }}</span>
 <span>{%- if not entry.in_scope %}<span class="pill c-insuf">Excluded by scope enforcement</span>
 {%- else %}{{ outcome_pill(card.conclusion.outcome) }}{{ decision_status(card) }}{% if card.locked and not card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-lock"/></svg>Locked, re-analysis will not overwrite</span>{% endif %}{% endif %}</span></div>
 {%- endmacro %}
@@ -99,7 +101,7 @@
     <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="chip">{{ "AI proposal" if card.conclusion.ai_proposed else "Consultant-edited" }}</span>{{ outcome_pill(card.conclusion.outcome) }}{{ risk_pill(card.conclusion.risk_level) }}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{{ field("Rationale", card.conclusion.rationale, true) }}{{ field("Gaps identified", card.conclusion.gaps_identified, true) }}{{ field("Recommended action", card.conclusion.recommended_action, true) }}{{ field("Evidence summary", card.conclusion.evidence_summary or "No grounded supporting quote", true) }}</div>
     {% set edited_note = not card.conclusion.ai_proposed and card.previous_outcome %}
-    {% if edited_note or card.last_decision or card.state == "edited" %}<p class="sub">{% if edited_note %}The AI proposed {{ outcome_label(card.previous_outcome) }} before this edit. {% endif %}{% if card.last_decision %}{{ {"approved": "Approved", "edited": "Approved", "rejected": "Rejected", "reopened": "Reopened"}.get(card.last_decision.action, card.last_decision.action|capitalize) }} by {{ card.last_decision.actor_display }}, {{ card.last_decision.created_at|display_date }}. {% endif %}{% if card.state == "edited" %}Edits carry no citations; the citations above belong to the AI proposal this edit replaced.{% endif %}</p>{% endif %}
+    {% if edited_note or card.last_decision or card.state == "edited" %}<p class="sub">{% if edited_note %}The AI proposed {{ outcome_label(card.previous_outcome) }} before this edit. {% endif %}{% if card.last_decision %}{{ vocab.review_label(card.last_decision.action) }} by {{ card.last_decision.actor_display }}, {{ card.last_decision.created_at|display_date }}. {% endif %}{% if card.state == "edited" %}Edits carry no citations; the citations above belong to the AI proposal this edit replaced.{% endif %}</p>{% endif %}
     {% endif %}
   </div></div>
 

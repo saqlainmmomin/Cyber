@@ -422,7 +422,7 @@ def test_scenario_1_full_lifecycle_and_closure_history(db, http, gate, monkeypat
     )
     assert response.status_code == 200
     assert 'data-action-status="closed"' in response.text
-    assert "Closed, to verify" in response.text  # Yozora S7: approved mockup status copy
+    assert "Closed and awaiting verification" in response.text
     assert 'data-verify-control' in response.text
     assert _history(db, action.id)[:-1] == history_before_close
     assert db.get(Finding, finding.id).status == "in_progress"
@@ -475,8 +475,8 @@ def test_scenario_2_state_machine_and_generic_status_route(db, http, gate, monke
     assert findings.ACTION_STATUS_LABELS == {
         "open": "Open",
         "in_progress": "In progress",
-        "closed": "Closed, awaiting verification",
-        "verified": "Closed and verified",
+        "closed": "Closed and awaiting verification",
+        "verified": "Verified",
     }
     assert findings.CLOSURE_HISTORY_KEYS == findings.HISTORY_KEYS + ("evidence",)
     assert findings.EVIDENCE_KEYS == (

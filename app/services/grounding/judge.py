@@ -13,6 +13,7 @@ from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
 from app.frameworks.prompts import _expand_cluster_responses, desk_review_flag_types
 from app.frameworks.registry import FrameworkRegistry
 from app.services import llm_client
+from app.services import vocabulary as vocab
 from app.services.document_categories import document_categories
 from app.services.grounding.claims import ClaimSet
 from app.services.grounding import injection
@@ -35,7 +36,7 @@ JUDGE_FLAGS = (
     "suspected_instruction",
 )
 RISK_LEVELS = ("low", "medium", "high", "critical")
-PRIORITY_BY_RISK = {"critical": 1, "high": 2, "medium": 3, "low": 4}
+PRIORITY_BY_RISK = vocab.PRIORITY_BY_RISK
 POSITIVE_ANSWERS = ("fully_implemented", "partially_implemented", "yes", "partial")
 IMPLICIT_SUFFIX = ".IMPLICIT"
 V2_EXCLUDED_RED_FLAGS = {"dpdpa": ("gdpr_copy_paste", "ccpa_copy_paste")}

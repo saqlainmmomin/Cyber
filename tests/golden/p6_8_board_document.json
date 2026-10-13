@@ -259,7 +259,7 @@
       ],
       "overdue": false,
       "owner": "Vikram Iyer",
-      "priority": "high",
+      "priority": 1,
       "ref": "I-1",
       "responsibility": null,
       "target_date": "2026-10-31",
@@ -296,7 +296,7 @@
       ],
       "overdue": false,
       "owner": "Anita Rao",
-      "priority": "high",
+      "priority": 2,
       "ref": "I-2",
       "responsibility": null,
       "target_date": "2026-11-30",
@@ -493,10 +493,10 @@
     ],
     "overdue_count": 0,
     "status_counts": {
-      "Closed and verified": 0,
-      "Closed, awaiting verification": 0,
+      "Closed and awaiting verification": 0,
       "In progress": 0,
-      "Open": 2
+      "Open": 2,
+      "Verified": 0
     },
     "unplanned_gap_count": 0
   },

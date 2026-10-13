@@ -17,6 +17,7 @@ import re
 
 import pytest
 
+from app.services import vocabulary as vocab
 from tests.p6_8_v3_support import DEFAULT_THEME, load_deck_document
 from tests.test_p6_8_board_report_v2 import NON_LEGAL_FORBIDDEN, _require_renderer
 
@@ -500,9 +501,9 @@ def test_scenario_14c_remediation_tracker_has_initiative_banners_status_dropdown
     document = load_deck_document()
     sheet = _workbook(document)["Remediation Tracker"]
     headers, rows = _rows(sheet)
-    assert headers == ["Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Priority",
+    assert headers == ["Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Remediation timeframe",
                        "Horizon", "Target date", "Complexity", "Benefit", "Status", "Client update", "Evidence of closure"]
-    # A banner row is one cell: "I-1  <title>   |   R-03 / R-05   |   Short term   |   Priority: High   |   ...".
+    # A banner row is one cell: "I-1  <title>   |   R-03 / R-05   |   Short term   |   Remediation timeframe: Immediate   |   ...".
     banners = [row for row in rows if str(row[0]).startswith("I-")]
     assert [str(row[0]).split()[0] for row in banners] == [i["ref"] for i in document["initiatives"]]
     actions = [row for row in rows if str(row[0]).startswith("A-")]
@@ -510,7 +511,7 @@ def test_scenario_14c_remediation_tracker_has_initiative_banners_status_dropdown
     for initiative in document["initiatives"]:
         banner = next(row for row in banners if str(row[0]).split()[0] == initiative["ref"])
         text = str(banner[0])
-        assert initiative["title"] in text and f"Priority: {initiative['priority'].title()}" in text
+        assert initiative["title"] in text and f"Remediation timeframe: {vocab.PRIORITY_LABELS[initiative['priority']]}" in text
         assert " / ".join(initiative["obs_refs"]) in text
     validations = [dv.formula1 for dv in sheet.data_validations.dataValidation]
     assert any(formula and "Open" in formula and "In progress" in formula and "Done" in formula for formula in validations)

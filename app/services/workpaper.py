@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
@@ -27,9 +28,9 @@ CONTENT_CHANGING_ACTIONS = ("proposed", "edited")
 ACTION_LABELS = {
     "proposed": "AI proposal",
     "proposal_withheld": "AI proposal withheld (conclusion locked)",
-    "approved": "Approved",
-    "edited": "Edited and approved",
-    "rejected": "Rejected",
+    "approved": vocab.review_label("approved"),
+    "edited": vocab.review_label("edited"),
+    "rejected": vocab.review_label("rejected"),
     "reopened": "Reopened",
 }
 LEGACY_BULK_LABEL = "Legacy bulk approval, not individually reviewed"

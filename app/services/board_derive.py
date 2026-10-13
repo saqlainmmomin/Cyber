@@ -6,14 +6,15 @@ from collections import Counter
 from datetime import date, datetime
 from typing import Iterable, Mapping, Sequence
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.services.remediation_groups import cluster_index
 
 HORIZON_SHORT_DAYS = 90
 HORIZON_MEDIUM_DAYS = 180
 HORIZONS = ("short", "medium", "long", "unscheduled")
-OPEN_STATUS_LABELS = ("Open", "In progress")
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+OPEN_STATUS_LABELS = tuple(vocab.REMEDIATION_STATUSES[key] for key in ("open", "in_progress"))
+SEVERITY_ORDER = vocab.RISK_RANK
 
 
 def _as_date(value) -> date | None:
@@ -38,9 +39,10 @@ def _severity(value) -> str:
     return str(value or "").strip().lower()
 
 
-def priority_for(severities: Iterable[str]) -> str:
-    rank = min((SEVERITY_ORDER.get(_severity(value), 4) for value in severities), default=4)
-    return {0: "high", 1: "high", 2: "medium", 3: "low"}.get(rank, "low")
+def priority_for(severities: Iterable[str]) -> int:
+    """1 (Immediate) to 4 (Long-term): the most serious severity wins; empty or unknown is 4."""
+    known = [vocab.PRIORITY_BY_RISK[key] for key in (_severity(value) for value in severities) if key in vocab.RISK_RANK]
+    return min(known, default=max(vocab.PRIORITY_BY_RISK.values()))
 
 
 def responsibility_for(values: Iterable[str | None]) -> str | None:

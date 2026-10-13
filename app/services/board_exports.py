@@ -8,7 +8,7 @@ import zipfile
 from copy import copy
 from datetime import date, datetime, timezone
 
-from app.services import board_report, board_view, report_snapshots
+from app.services import board_report, board_view, report_snapshots, vocabulary as vocab
 
 
 EXPORT_FORMAT_VERSION = 1
@@ -54,11 +54,11 @@ XLSX_COLUMNS = {
         "Rating",
         "Headline",
         "In scope",
-        "Compliant",
-        "Partially compliant",
-        "Non-compliant",
-        "Insufficient evidence",
-        "Not applicable",
+        vocab.OUTCOMES["compliant"],
+        vocab.OUTCOMES["partially_compliant"],
+        vocab.OUTCOMES["non_compliant"],
+        vocab.OUTCOMES["insufficient_evidence"],
+        vocab.OUTCOMES["not_applicable"],
     ),
     "Requirement register": (
         "Framework",
@@ -127,11 +127,11 @@ DOCX_TABLE_HEADERS = {
         "Framework",
         "Headline",
         "In scope",
-        "Compliant",
-        "Partial",
-        "Non-compliant",
-        "Insufficient evidence",
-        "Not applicable",
+        vocab.OUTCOMES["compliant"],
+        vocab.OUTCOME_SHORT["partially_compliant"],
+        vocab.OUTCOMES["non_compliant"],
+        vocab.OUTCOMES["insufficient_evidence"],
+        vocab.OUTCOMES["not_applicable"],
     ),
     "roadmap": ("Action", "Owner", "Target date", "Status", "Closes"),
     "roadmap_group": ("Action", "Owner", "Target date", "Status", "Finding"),
@@ -451,7 +451,7 @@ def _render_docx_roadmap(word, source: dict, schema_version: int) -> None:
 def _render_docx_not_assessed(word, source: dict) -> None:
     not_assessed = source["not_assessed"]
     _add_docx_heading(word, "What we could not assess", 1)
-    _add_docx_heading(word, "Insufficient evidence", 2)
+    _add_docx_heading(word, vocab.OUTCOMES["insufficient_evidence"], 2)
     if not_assessed["insufficient_evidence"]:
         for row in not_assessed["insufficient_evidence"]:
             _add_docx_paragraph(
@@ -486,8 +486,8 @@ def _render_docx_frameworks(word, source: dict) -> None:
             [
                 [
                     domain["title"],
-                    domain["score"] if domain["score"] is not None else "Not applicable",
-                    domain["rating"] or "Not applicable",
+                    domain["score"] if domain["score"] is not None else vocab.OUTCOMES["not_applicable"],
+                    domain["rating"] or vocab.OUTCOMES["not_applicable"],
                 ]
                 for domain in framework["domains"]
             ],
@@ -1072,17 +1072,11 @@ V3_OBSERVATION_HEADERS = (
     "Actionable recommendation", "Reference", "Responsibility",
 )
 V3_TRACKER_HEADERS = (
-    "Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Priority",
+    "Item", "Source obs.", "Domain", "Action description", "Owner", "Responsibility", "Remediation timeframe",
     "Horizon", "Target date", "Complexity", "Benefit", "Status", "Client update", "Evidence of closure",
 )
 
-V3_OUTCOME_LABELS = {
-    "compliant": "Compliant",
-    "partially_compliant": "Partially compliant",
-    "non_compliant": "Non-compliant",
-    "insufficient_evidence": "Not concluded",
-    "not_applicable": "Not applicable",
-}
+V3_OUTCOME_LABELS = vocab.OUTCOMES
 V3_OUTCOME_COLORS = {
     "compliant": "#0E8F86",
     "partially_compliant": "#E39A1F",
@@ -1097,10 +1091,10 @@ V3_SEVERITY_COLORS = {
     "low": "#3C9D6B",
 }
 V3_RATING_COLORS = {
-    "Compliant": V3_OUTCOME_COLORS["compliant"],
-    "Partially Compliant": V3_OUTCOME_COLORS["partially_compliant"],
+    vocab.LEGACY_OUTCOMES["compliant"]: V3_OUTCOME_COLORS["compliant"],
+    vocab.LEGACY_OUTCOMES["partially_compliant"]: V3_OUTCOME_COLORS["partially_compliant"],
     "Needs Significant Improvement": V3_SEVERITY_COLORS["high"],
-    "Non-Compliant": V3_OUTCOME_COLORS["non_compliant"],
+    vocab.LEGACY_OUTCOMES["non_compliant"]: V3_OUTCOME_COLORS["non_compliant"],
 }
 V3_RATING_BANDS = (
     ("0-40 Non-compliant", "Scores from 0 up to 40 are Non-compliant."),
@@ -1128,7 +1122,7 @@ def _v3_outcome_key(value) -> str:
 
 def _v3_outcome_label(row: dict) -> str:
     key = _v3_outcome_key(row.get("outcome"))
-    return V3_OUTCOME_LABELS.get(key, row.get("outcome_label") or "Not concluded")
+    return V3_OUTCOME_LABELS.get(key, row.get("outcome_label") or vocab.OUTCOMES["insufficient_evidence"])
 
 
 def _v3_delta_text(delta, *, compared: bool = True) -> str:
@@ -1259,7 +1253,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _v3_title_block(book["Definitions"], document, "Definitions", "Report scales and interpretation")
 
     summary = book["Executive Summary"]
-    summary_headers = ("Framework", "Score (%)", "Rating", "In scope", "Approved gaps", "Insufficient evidence")
+    summary_headers = ("Framework", "Score (%)", "Rating", "In scope", "Approved gaps", vocab.OUTCOMES["insufficient_evidence"])
     _v3_header(summary, summary_headers)
     for row_number, framework in enumerate(document["summary"]["frameworks"], start=7):
         coverage = framework["coverage"]
@@ -1284,7 +1278,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     for row_number, framework in enumerate(document["summary"]["frameworks"], start=posture_header_row + 1):
         prior = prior_frameworks.get(framework.get("framework_id"), {})
         compared = bool(prior.get("compared"))
-        rating = framework.get("rating") or "Not concluded"
+        rating = framework.get("rating") or vocab.outcome_label("insufficient_evidence")
         _write_xlsx_row(summary, row_number, [
             framework.get("name"),
             framework.get("score"),
@@ -1302,7 +1296,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _set_xlsx_cell(summary.cell(row=outcome_title_row, column=1), "Requirement outcomes by framework")
     outcome_header_row = outcome_title_row + 1
     outcome_headers = (
-        "Framework", "Compliant", "Partially compliant", "Non-compliant", "Not concluded", "Not applicable"
+        "Framework", *vocab.OUTCOMES.values()
     )
     _v3_write_secondary_header(summary, outcome_header_row, outcome_headers)
     for row_number, framework in enumerate(document["summary"]["frameworks"], start=outcome_header_row + 1):
@@ -1339,7 +1333,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     pie.title = "Approved gaps by severity"
     _v3_write_secondary_header(summary, severity_header_row, ("Severity", "Count"))
     for number, severity in enumerate(("critical", "high", "medium", "low"), start=severity_header_row + 1):
-        _write_xlsx_row(summary, number, [severity.title(), document["severity_dashboard"][severity]["total"]])
+        _write_xlsx_row(summary, number, [vocab.risk_label(severity), document["severity_dashboard"][severity]["total"]])
         _v3_fill_and_label(summary.cell(row=number, column=1), V3_SEVERITY_COLORS[severity], white_text=severity in {"critical", "high"})
     pie.add_data(Reference(summary, min_col=2, min_row=severity_header_row, max_row=severity_header_row + 4), titles_from_data=True)
     pie.set_categories(Reference(summary, min_col=1, min_row=severity_header_row + 1, max_row=severity_header_row + 4))
@@ -1414,12 +1408,12 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _v3_header(tracker, V3_TRACKER_HEADERS)
     row_number = 7
     action_rows = []
-    priority_label = {"high": "High", "medium": "Medium", "low": "Low"}
+    priority_label = vocab.PRIORITY_LABELS
     horizon_label = {"short": "Short term", "medium": "Medium term", "long": "Long term", "unscheduled": "Not scheduled"}
     for initiative in document["initiatives"]:
         banner = (
             f"{initiative['ref']}  {initiative['title']}   |   {' / '.join(initiative['obs_refs'])}   |   "
-            f"{horizon_label[initiative['horizon']]}   |   Priority: {priority_label[initiative['priority']]}   |   "
+            f"{horizon_label[initiative['horizon']]}   |   Remediation timeframe: {priority_label[initiative['priority']]}   |   "
             f"Complexity: {(initiative['complexity'] or 'Not recorded').title()}   |   Benefit: {(initiative['benefit'] or 'Not recorded').title()}"
         )
         _set_xlsx_cell(tracker.cell(row=row_number, column=1), banner)
@@ -1447,12 +1441,6 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         f"E7:E{max(row_number, 7)}",
         FormulaRule(formula=['$E7="Unassigned"'], fill=red, font=Font(color="C0392B")),
     )
-    for action_row, priority in action_rows:
-        priority_key = priority.lower()
-        color = V3_SEVERITY_COLORS.get(priority_key)
-        if color:
-            _v3_fill_and_label(tracker.cell(row=action_row, column=7), color, white_text=priority_key == "high")
-    _v3_apply_color_rules(tracker, "G", 7, max(row_number - 1, 7), V3_SEVERITY_COLORS, value_keys=("high", "medium", "low"))
 
     if document.get("soa"):
         soa_sheet = book["Statement of Applicability"]
@@ -1474,19 +1462,19 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _v3_header(definitions, ("Term", "Meaning"))
     definitions_rows = [
         *V3_RATING_BANDS,
-        ("How to read outcomes", "Every requirement gets one outcome. Not concluded requirements are left out of scores, not counted as a failure."),
-        ("Compliant", "Met, and the evidence shows it."),
-        ("Partially compliant", "Met in part; a gap remains."),
-        ("Non-compliant", "Not met."),
-        ("Not concluded", "The evidence does not support a conclusion either way."),
-        ("Not applicable", "Does not apply within the assessed scope."),
+        ("How to read outcomes", "Every requirement gets one outcome. Insufficient evidence requirements are left out of scores, not counted as failures."),
+        (vocab.OUTCOMES["compliant"], "Met, and the evidence shows it."),
+        (vocab.OUTCOMES["partially_compliant"], "Met in part; a gap remains."),
+        (vocab.OUTCOMES["non_compliant"], "Not met."),
+        (vocab.OUTCOMES["insufficient_evidence"], "The evidence does not support a conclusion either way."),
+        (vocab.OUTCOMES["not_applicable"], "Does not apply within the assessed scope."),
         ("How to read risk levels", "Every gap gets a risk level. Critical means material regulatory or breach exposure; High means significant exposure; Medium means moderate exposure; Low means limited exposure."),
-        ("Critical", "Material regulatory or breach exposure. Act now."),
-        ("High", "Significant exposure. Act this quarter."),
-        ("Medium", "Moderate exposure. Plan within six months."),
-        ("Low", "Limited exposure. Fix in the normal course."),
+        (vocab.RISK_LABELS["critical"], "Material regulatory or breach exposure. Act now."),
+        (vocab.RISK_LABELS["high"], "Significant exposure. Act this quarter."),
+        (vocab.RISK_LABELS["medium"], "Moderate exposure. Plan within six months."),
+        (vocab.RISK_LABELS["low"], "Limited exposure. Fix in the normal course."),
         ("How to read ratings", "A framework score is a weighted average of its domain scores. A met requirement counts in full and a partly met one counts half. Scores are deterministic and never combined across frameworks."),
-        ("Priority", "Set by the most serious gap the fix closes."),
+        ("Remediation timeframe", "Set by the most serious gap the fix closes."),
         ("Effort", "High is over 40 person-hours or a cross-team change."),
         ("Benefit", "How much exposure the fix removes."),
         ("Short term", "Within 90 days."),
@@ -1496,15 +1484,15 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         ("Client", "Responsibility recorded against the client."),
         ("Consultant", "Responsibility recorded against the firm."),
         ("Shared", "Responsibility recorded against both the client and the firm."),
-        ("Fill legend · Compliant", "Outcome fill #0E8F86"),
-        ("Fill legend · Partially compliant", "Outcome fill #E39A1F"),
-        ("Fill legend · Non-compliant", "Outcome fill #C0392B"),
-        ("Fill legend · Not concluded", "Outcome fill #9AA3B5"),
-        ("Fill legend · Not applicable", "Outcome fill #D5D9E3"),
-        ("Fill legend · Critical", "Severity fill #9B1C1C"),
-        ("Fill legend · High", "Severity fill #D9481E"),
-        ("Fill legend · Medium", "Severity fill #F0A030"),
-        ("Fill legend · Low", "Severity fill #3C9D6B"),
+        (f"Fill legend · {vocab.OUTCOMES['compliant']}", "Outcome fill #0E8F86"),
+        (f"Fill legend · {vocab.OUTCOMES['partially_compliant']}", "Outcome fill #E39A1F"),
+        (f"Fill legend · {vocab.OUTCOMES['non_compliant']}", "Outcome fill #C0392B"),
+        (f"Fill legend · {vocab.OUTCOMES['insufficient_evidence']}", "Outcome fill #9AA3B5"),
+        (f"Fill legend · {vocab.OUTCOMES['not_applicable']}", "Outcome fill #D5D9E3"),
+        (f"Fill legend · {vocab.RISK_LABELS['critical']}", "Severity fill #9B1C1C"),
+        (f"Fill legend · {vocab.RISK_LABELS['high']}", "Severity fill #D9481E"),
+        (f"Fill legend · {vocab.RISK_LABELS['medium']}", "Severity fill #F0A030"),
+        (f"Fill legend · {vocab.RISK_LABELS['low']}", "Severity fill #3C9D6B"),
         ("Critical / High / Medium / Low", "Risk rating scale used in the report."),
         ("Complexity", "High, Medium or Low consultant assessment of implementation effort."),
         ("Benefit", "High, Medium or Low expected risk-reduction benefit."),
@@ -1520,7 +1508,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             color = next((
                 candidate for key, candidate in {
                     **{V3_OUTCOME_LABELS[key]: value for key, value in V3_OUTCOME_COLORS.items()},
-                    **{key.title(): value for key, value in V3_SEVERITY_COLORS.items()},
+                    **{vocab.risk_label(key): value for key, value in V3_SEVERITY_COLORS.items()},
                 }.items()
                 if legend_label.lower() == key.lower()
             ), None)
@@ -1928,13 +1916,13 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             for index, severity in enumerate(board_view.SEVERITIES):
                 x, y = 184 + (index % 2) * 70, 61 + (index // 2) * 25
                 rect(slide, x, y, 64, 20, fill=_pptx_color(board_view.SEVERITY_COLORS[severity]), name="Risk level legend", rounded=True)
-                text_box(slide, f"{severity.title()}\n{ {'critical': 'Material exposure. Act now.', 'high': 'Significant exposure. Act this quarter.', 'medium': 'Moderate exposure. Plan within six months.', 'low': 'Limited exposure. Fix normally.'}[severity] }", x + 2, y + 2, 60, 16, size=10, color=ink if severity == "medium" else white, bold=True)
+                text_box(slide, f"{vocab.risk_label(severity)}\n{ {'critical': 'Material exposure. Act now.', 'high': 'Significant exposure. Act this quarter.', 'medium': 'Moderate exposure. Plan within six months.', 'low': 'Limited exposure. Fix normally.'}[severity] }", x + 2, y + 2, 60, 16, size=10, color=ink if severity == "medium" else white, bold=True)
             text_box(slide, "Rating bands", 14, 113, 90, 9, size=14, color=secondary, bold=True)
             for index, (_low, _high, band_label, colour) in enumerate(board_view.RATING_BANDS):
                 x = 14 + index * 77
                 rect(slide, x, 126, 74, 14, fill=_pptx_color(colour), border=line, name="Rating band legend")
                 text_box(slide, band_label.title(), x + 2, 129, 70, 7, size=10, color=ink, bold=True, align=PP_ALIGN.CENTER)
-            text_box(slide, "Scores are deterministic and never combined across frameworks. Priority, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
+            text_box(slide, "Scores are deterministic and never combined across frameworks. Remediation timeframe, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
         elif name == "overview":
             totals = (document.get("summary") or {}).get("totals", {})
             text_box(slide, f"Scope, the evidence we used and how every outcome was approved. {totals.get('requirements', 0)} requirements across {len(document.get('frameworks', []))} framework(s).", 14, 34, 310, 10, size=12, color=ink2)
@@ -1977,9 +1965,9 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             for index, severity in enumerate(board_view.SEVERITIES):
                 x = 14 + index * 78
                 rect(slide, x, 40, 74, 24, fill=_pptx_color(board_view.SEVERITY_COLORS[severity]), name="Severity tile")
-                text_box(slide, f"{severity.title()}\n{view['sev_tot'].get(severity, 0)} gaps", x + 2, 44, 70, 14, size=13, color=ink if severity == "medium" else white, bold=True, align=PP_ALIGN.CENTER)
+                text_box(slide, f"{vocab.risk_label(severity)}\n{view['sev_tot'].get(severity, 0)} gaps", x + 2, 44, 70, 14, size=13, color=ink if severity == "medium" else white, bold=True, align=PP_ALIGN.CENTER)
             outcome_chart(slide)
-            native_table(slide, ["Framework", "Critical", "High", "Medium", "Low"], [[framework["short"], *[framework.get("sev", {}).get(severity, 0) for severity in board_view.SEVERITIES]] for framework in view["fw"]], top=48, left=14, width=150, height=44, column_widths=[65, 20, 20, 20, 20])
+            native_table(slide, ["Framework", vocab.RISK_LABELS["critical"], vocab.RISK_LABELS["high"], vocab.RISK_LABELS["medium"], vocab.RISK_LABELS["low"]], [[framework["short"], *[framework.get("sev", {}).get(severity, 0) for severity in board_view.SEVERITIES]] for framework in view["fw"]], top=48, left=14, width=150, height=44, column_widths=[65, 20, 20, 20, 20])
             native_table(slide, ["Framework", "Domain", "Critical/high"], [[short, domain["title"], domain.get("crit_high", 0)] for short, domain in view["ch_doms"]], top=158, height=20, column_widths=[60, 190, 60])
         elif name == "board-asks":
             asks = document.get("board_asks") or {}
@@ -1996,7 +1984,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         elif name == "effort-benefit":
             text_box(slide, "Each initiative is placed by the effort it needs and the exposure it removes. Top left is where to start.", 14, 34, 310, 10, size=12, color=ink2)
             effort_benefit_matrix(slide)
-            native_table(slide, ["Ref", "Initiative", "Horizon", "Priority", "Effort", "Benefit"], [[item.get("ref", ""), item.get("title", ""), str(item.get("horizon", "")).title(), str(item.get("priority", "")).title(), str(item.get("complexity", "")).title(), str(item.get("benefit", "")).title()] for item in document.get("initiatives", [])], top=48, left=205, width=119, height=113, column_widths=[14, 45, 22, 17, 17, 18])
+            native_table(slide, ["Ref", "Initiative", "Horizon", "Remediation timeframe", "Effort", "Benefit"], [[item.get("ref", ""), item.get("title", ""), str(item.get("horizon", "")).title(), vocab.priority_label(item.get("priority")), str(item.get("complexity", "")).title(), str(item.get("benefit", "")).title()] for item in document.get("initiatives", [])], top=48, left=205, width=119, height=113, column_widths=[14, 45, 22, 17, 17, 18])
         elif name == "comparison":
             prior = (document.get("prior_period") or {}).get("prior")
             text_box(slide, f"Compared with {shown(prior.get('version_label'), '')} (snapshot {str(prior.get('snapshot_id') or '')[:8]}) for {shown(prior.get('period_label'), '')}." if prior else "First report baseline; no prior period is available for comparison.", 14, 34, 310, 10, size=11, color=ink2)
@@ -2050,8 +2038,8 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         elif name == "limits":
             not_assessed = document.get("not_assessed") or {}
             rfi = not_assessed.get("rfi") or {}
-            text_box(slide, "Not-concluded requirements are left out of scores, not counted as failures.", 14, 34, 310, 10, size=12, color=ink2)
-            native_table(slide, ["Framework", "Not concluded"], [[framework["short"], str(framework.get("coverage", {}).get("insufficient_evidence", 0))] for framework in view["fw"]], top=48, width=115, height=40, column_widths=[85, 30])
+            text_box(slide, "Insufficient evidence requirements are left out of scores, not counted as failures.", 14, 34, 310, 10, size=12, color=ink2)
+            native_table(slide, ["Framework", vocab.OUTCOMES["insufficient_evidence"]], [[framework["short"], str(framework.get("coverage", {}).get("insufficient_evidence", 0))] for framework in view["fw"]], top=48, width=115, height=40, column_widths=[85, 30])
             native_table(slide, ["Open evidence request", "Type"], [[item.get("item_id", ""), "Required" if item.get("required") else "Recommended"] for item in rfi.get("items", [])], top=96, width=115, height=64, column_widths=[82, 33])
             text_box(slide, "Limitations\n" + "\n".join(f"• {item}" for item in (document.get("summary") or {}).get("limitations", [])), 145, 48, 179, 112, size=11, color=ink2, fill=panel)
         elif name == "sign-off":
@@ -2072,7 +2060,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         elif name == "requirement-register":
             page = view["reg_pages"][reg_index]
             reg_index += 1
-            native_table(slide, ["Framework", "Requirement", "Title", "Domain", "Outcome", "Risk", "Decision", "Evidence"], [[view["framework_names"].get(row.get("framework_id"), row.get("framework_id", "")), row.get("requirement_id", ""), row.get("requirement_title", ""), str(row.get("domain_title", "")).split(" — ")[-1], row.get("outcome_label") or "Not concluded", str(row.get("risk_level") or "").title(), f"{shown(row.get('decision_label'), '')} · {shown(row.get('decided_by'), '')}, {shown(row.get('decided_on'), '')}", row.get("citation") or row.get("citation_note") or "Not recorded"] for row in page], top=43, height=132, font_size=9, column_widths=[35, 35, 65, 40, 38, 20, 55, 60])
+            native_table(slide, ["Framework", "Requirement", "Title", "Domain", "Outcome", "Risk", "Decision", "Evidence"], [[view["framework_names"].get(row.get("framework_id"), row.get("framework_id", "")), row.get("requirement_id", ""), row.get("requirement_title", ""), str(row.get("domain_title", "")).split(" — ")[-1], row.get("outcome_label") or vocab.OUTCOMES["insufficient_evidence"], vocab.risk_label(row.get("risk_level")), f"{shown(row.get('decision_label'), '')} · {shown(row.get('decided_by'), '')}, {shown(row.get('decided_on'), '')}", row.get("citation") or row.get("citation_note") or "Not recorded"] for row in page], top=43, height=132, font_size=9, column_widths=[35, 35, 65, 40, 38, 20, 55, 60])
         elif name == "evidence-and-soa":
             evidence = (document.get("appendices") or {}).get("evidence_register", [])
             native_table(slide, ["Document", "Version", "Added", "Fingerprint", "Cited"], [[row.get("filename", ""), f"v{row.get('version_number', '')}", row.get("added_on", ""), row.get("sha256_prefix", ""), "Yes" if row.get("cited") else "No"] for row in evidence], top=48, width=190, height=112, column_widths=[72, 20, 30, 50, 18])

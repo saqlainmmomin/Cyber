@@ -6,13 +6,14 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.frameworks.mappings.clusters import CONTROL_CLUSTERS
 from app.frameworks.registry import FrameworkRegistry
 from app.services import conclusion_review
 from app.services.requirement_card import ClaimView
 
-QUEUE_RISK_LEVELS = ("low", "medium", "high", "critical")
-RISK_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+QUEUE_RISK_LEVELS = tuple(reversed(vocab.RISK_LEVELS))
+RISK_RANK = vocab.RISK_RANK
 STATE_RANK = {"pending": 0, "rejected": 1, "approved": 2, "edited": 2}
 QUEUE_FLAGS = ("inconsistency", "unsupported_assertion", "divergence")
 

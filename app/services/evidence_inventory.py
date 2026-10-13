@@ -30,6 +30,7 @@ from pathlib import PurePath
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.client import Client
@@ -44,7 +45,7 @@ SOURCE_LABELS = {"upload": "Upload", "aws": "AWS", "client_link": "Client link",
 STATUS_LABELS = {
     "quarantined": "Scanning",
     "active": "Available",
-    "rejected": "Rejected",
+    "rejected": vocab.REVIEW_STATES["rejected"],
     "invalidated": "Out of date",
 }
 LISTED_STATUSES = tuple(STATUS_LABELS)

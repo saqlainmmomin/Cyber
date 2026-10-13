@@ -9,6 +9,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.services import vocabulary as vocab
 from app.frameworks.registry import FrameworkRegistry
 from app.models.assessment import Assessment
 from app.models.assessment_pack import AssessmentPack
@@ -21,20 +22,10 @@ from app.services import report_snapshots
 from app.services.approved_report import build_approved_report, is_released
 from app.services.workpaper import anchor_for
 
-SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-DECISION_LABELS = {"approved": "Approved", "edited": "Edited and approved"}
-ACTION_STATUS_LABELS = {
-    "open": "Open",
-    "in_progress": "In progress",
-    "closed": "Closed, awaiting verification",
-    "verified": "Closed and verified",
-}
-FINDING_STATUS_LABELS = {
-    "open": "Open",
-    "in_progress": "In progress",
-    "resolved": "Resolved",
-    "accepted_risk": "Accepted risk",
-}
+SEVERITY_RANK = vocab.RISK_RANK
+DECISION_LABELS = vocab.REVIEW_STATES
+ACTION_STATUS_LABELS = vocab.REMEDIATION_STATUSES
+FINDING_STATUS_LABELS = vocab.FINDING_STATUS_LABELS
 NOT_RELEASED = "Not approved for release"
 NO_REPORT = "No analysis report yet"
 ANALYSIS_INCOMPLETE = "Analysis failed for at least one framework"
@@ -131,8 +122,7 @@ class IntegratedReport:
 
 
 def _framework_name(framework_id: str) -> str:
-    framework = FrameworkRegistry.get_or_none(framework_id)
-    return framework.name if framework else framework_id.upper()
+    return vocab.framework_display_name(framework_id)
 
 
 def _scope_label(assessment: Assessment) -> str:
@@ -254,7 +244,9 @@ def assessment_findings(db: Session, assessment: Assessment) -> AssessmentFindin
                 framework_name=_framework_name(conclusion.framework_id),
                 requirement_id=conclusion.requirement_id,
                 requirement_title=card.requirement_title,
-                outcome_label=conclusion.outcome.replace("_", " ").title(),
+                outcome_label=vocab.LEGACY_PDF_OUTCOMES.get(
+                    conclusion.outcome, vocab.outcome_label(conclusion.outcome)
+                ),
                 decision_label=DECISION_LABELS[card.state],
                 decided_by=last_decision.get("actor_display"),
                 decided_at=last_decision.get("created_at"),

@@ -54,7 +54,6 @@ def test_v3c3_xlsx_uses_labeled_outcome_and_severity_fills_with_print_setup():
     expected = {
         "Detailed Assessment": {"E": board_exports.V3_OUTCOME_COLORS, "F": board_exports.V3_SEVERITY_COLORS},
         "Observation Register": {"F": board_exports.V3_SEVERITY_COLORS},
-        "Remediation Tracker": {"G": board_exports.V3_SEVERITY_COLORS},
     }
     for sheet_name, columns in expected.items():
         sheet = book[sheet_name]

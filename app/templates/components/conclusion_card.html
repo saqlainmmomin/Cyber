@@ -1,8 +1,8 @@
 {% from "components/ui.html" import icon %}
-{% set outcome_labels = {"compliant": "Compliant", "partially_compliant": "Partially compliant", "non_compliant": "Non-compliant", "not_applicable": "Not applicable", "insufficient_evidence": "Insufficient evidence"} %}
+{% set outcome_labels = vocab.OUTCOMES %}
 {% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf"} %}
 {% set risk_tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}
-{% set decision_labels = {"approved": "Approved", "edited": "Edited and approved", "rejected": "Rejected", "reopened": "Reopened"} %}
+{% set decision_labels = vocab.REVIEW_ACTION_LABELS %}
 {% set card_editing = card_editing|default(false) %}
 {% set edit_focus = edit_focus|default(false) %}
 {% set can_edit = "edited" in card.allowed_actions %}
@@ -16,16 +16,16 @@
   <div class="rq-body">
     <div class="d-title">
       <h2 class="big">{{ card.requirement_title }}</h2>
-      {% if card.legacy_bulk_approval or card.state == "approved" %}<span class="status">{{ icon("check") }}Approved</span>
-      {% elif card.state == "edited" %}<span class="status">{{ icon("pen") }}Edited and approved</span>
-      {% elif card.state == "rejected" %}<span class="status">{{ icon("x") }}Rejected</span>
-      {% else %}<span class="status"><span class="st"></span>Pending</span>{% endif %}
+      {% if card.legacy_bulk_approval or card.state == "approved" %}<span class="status">{{ icon("check") }}{{ vocab.review_label("approved") }}</span>
+      {% elif card.state == "edited" %}<span class="status">{{ icon("pen") }}{{ vocab.review_label("edited") }}</span>
+      {% elif card.state == "rejected" %}<span class="status">{{ icon("x") }}{{ vocab.review_label("rejected") }}</span>
+      {% else %}<span class="status"><span class="st"></span>{{ vocab.review_label("pending") }}</span>{% endif %}
     </div>
     <div class="meta">
       <span class="pill {{ outcome_tones.get(card.conclusion.outcome, "c-neutral") }}">{{ outcome_labels.get(card.conclusion.outcome, card.conclusion.outcome|replace("_", " ")|capitalize) }}</span>
-      {% if card.conclusion.risk_level %}<span class="pill {{ risk_tones.get(card.conclusion.risk_level, "c-neutral") }}">{{ card.conclusion.risk_level|capitalize }}</span>{% endif %}
+      {% if card.conclusion.risk_level %}<span class="pill {{ risk_tones.get(card.conclusion.risk_level, "c-neutral") }}">{{ vocab.risk_label(card.conclusion.risk_level) }}</span>{% endif %}
       <span class="ai">{{ "AI proposed" if card.conclusion.ai_proposed else "Edited by consultant" }}</span>
-      <span class="ref">{{ framework_label(card.conclusion.framework_id) }} {{ card.conclusion.requirement_id }} · Version {{ card.conclusion.version }}</span>
+      <span class="ref">{{ vocab.reference_with_framework(card.conclusion.framework_id, card.conclusion.requirement_id) }} · Version {{ card.conclusion.version }}</span>
       {% if not edit_focus %}<a class="btn ghost sm lead" href="/assessments/{{ assessment.id }}/workpaper#wp-{{ card.conclusion.framework_id }}-{{ card.conclusion.requirement_id }}">{{ icon("link") }}Workpaper trace</a>{% endif %}
       {% if card.locked and card.withheld_proposal %}<span class="warn">{{ icon("lock") }}Locked</span>{% endif %}
     </div>
@@ -34,7 +34,7 @@
     <div class="alert c-medium cc-top-alert" role="alert">{{ icon("alert") }}<div class="cc-grow"><b>This conclusion changed since you loaded it</b>You had version {{ conflict.submitted_version }} and it is now version {{ card.conclusion.version }}. Nothing was saved. Read the current version and decide again.
       {% if conflict.diff %}
       <div class="solid cc-diff"><table class="static"><thead><tr><th>Field</th><th>Current</th><th>Your unsaved value</th></tr></thead><tbody>
-        {% for row in conflict.diff %}<tr><td class="t-title">{{ row.field|replace("_", " ")|capitalize }}</td><td class="cc-pre">{{ outcome_labels.get(row.current, row.current) if row.field == "outcome" else (row.current|capitalize if row.field == "risk_level" else row.current) }}</td><td class="cc-pre">{{ outcome_labels.get(row.submitted, row.submitted) if row.field == "outcome" else (row.submitted|capitalize if row.field == "risk_level" else row.submitted) }}</td></tr>{% endfor %}
+        {% for row in conflict.diff %}<tr><td class="t-title">{{ row.field|replace("_", " ")|capitalize }}</td><td class="cc-pre">{{ outcome_labels.get(row.current, row.current) if row.field == "outcome" else (vocab.risk_label(row.current) if row.field == "risk_level" else row.current) }}</td><td class="cc-pre">{{ outcome_labels.get(row.submitted, row.submitted) if row.field == "outcome" else (vocab.risk_label(row.submitted) if row.field == "risk_level" else row.submitted) }}</td></tr>{% endfor %}
       </tbody></table></div>
       {% endif %}
     </div></div>
@@ -86,8 +86,8 @@
       <form class="stack" id="conclusion-edit-{{ card.conclusion.id }}" hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/edit" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
         <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
         <div class="fw-grid">
-          <div><label class="label" for="outcome-{{ card.conclusion.id }}">Outcome</label><label class="field"><select id="outcome-{{ card.conclusion.id }}" name="outcome">{% for value in ["compliant", "partially_compliant", "non_compliant", "not_applicable", "insufficient_evidence"] %}<option value="{{ value }}"{% if card.conclusion.outcome == value %} selected{% endif %}>{{ outcome_labels[value] }}</option>{% endfor %}</select></label></div>
-          <div><label class="label" for="risk-{{ card.conclusion.id }}">Risk level</label><label class="field"><select id="risk-{{ card.conclusion.id }}" name="risk_level">{% for value in ["critical", "high", "medium", "low"] %}<option value="{{ value }}"{% if card.conclusion.risk_level == value %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}</select></label></div>
+          <div><label class="label" for="outcome-{{ card.conclusion.id }}">Outcome</label><label class="field"><select id="outcome-{{ card.conclusion.id }}" name="outcome">{% for value in vocab.OUTCOMES %}<option value="{{ value }}"{% if card.conclusion.outcome == value %} selected{% endif %}>{{ outcome_labels[value] }}</option>{% endfor %}</select></label></div>
+          <div><label class="label" for="risk-{{ card.conclusion.id }}">Risk level</label><label class="field"><select id="risk-{{ card.conclusion.id }}" name="risk_level">{% for value in vocab.RISK_LEVELS %}<option value="{{ value }}"{% if card.conclusion.risk_level == value %} selected{% endif %}>{{ vocab.risk_label(value) }}</option>{% endfor %}</select></label></div>
         </div>
         <div><label class="label" for="rationale-{{ card.conclusion.id }}">Rationale</label><label class="field area"><textarea id="rationale-{{ card.conclusion.id }}" name="rationale" rows="3">{{ card.conclusion.rationale }}</textarea></label></div>
         <div><label class="label" for="gaps-{{ card.conclusion.id }}">Gaps identified</label><label class="field area"><textarea id="gaps-{{ card.conclusion.id }}" name="gaps_identified" rows="3">{{ card.conclusion.gaps_identified or "" }}</textarea></label></div>

@@ -482,4 +482,4 @@ def test_questionnaire_summary_keeps_the_partial_failure_alert(db, http):
     card = http.get(f"/assessments/{assessment.id}/desk-review-status?surface=questionnaire")
     assert "data-desk-review-failed-frameworks" in card.text
     assert "Desk review failed for ISO 27001" in card.text
-    assert "Findings for DPDPA were saved" in card.text
+    assert "Findings for India DPDPA were saved" in card.text

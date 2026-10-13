@@ -37,7 +37,7 @@ COLUMNS = (
     "Control code",
     "Finding",
     "Severity",
-    "Priority",
+    "Remediation timeframe",
     "Action",
     "Owner",
     "Due date",

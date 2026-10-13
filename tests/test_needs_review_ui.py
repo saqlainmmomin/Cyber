@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
+from app.services import vocabulary as vocab
 from app.database import Base
 from app.legacy_migrations import run_column_migrations
 from app.models.assessment import Assessment, AssessmentDocument
@@ -41,6 +42,7 @@ def _item(**overrides):
 def _render_card(item):
     template_dir = Path(__file__).parents[1] / "app" / "templates"
     environment = Environment(loader=FileSystemLoader(template_dir))
+    environment.globals["vocab"] = vocab
     template = environment.get_template("partials/review_finding_card.html")
     return template.render(item=item, assessment=SimpleNamespace(id="assessment-1"))
 
