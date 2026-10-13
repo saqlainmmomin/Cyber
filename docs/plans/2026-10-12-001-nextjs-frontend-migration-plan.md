@@ -261,7 +261,7 @@ Unchanged from the earlier list: `Button`, `Field` inputs, `Choice`, `DataTable`
 
 ## 6. Phases (Saqlain clicks through each PR)
 
-**On hold, 13 Oct 2026 (Saqlain).** The build does not start until the content problems found by the content audit are fixed, because a port would carry them across. Content first; then the prototypes are regenerated, this plan is finalised, and the port follows. The tracks, rows and PR counts below are the state before that work and will change. See `tasks/handoffs/2026-10-13-ui-thread-record-for-content-session.md`.
+**On hold, 13 Oct 2026 (Saqlain).** The build does not start until the content problems found by the content audit are fixed, because a port would carry them across. Order: the design system and the content are defined, this plan is finalised, then the build. There is no further prototype round. The tracks, rows and PR counts below are the state before that work and will change. See `tasks/handoffs/2026-10-13-ui-thread-record-for-content-session.md`.
 
 Revised 12 Oct 2026. The audit showed that five areas are more than a restyle: Questionnaire, Review, RFI, Scope applicability and Report change what the screen shows and how the data is shaped. So the work is split into three tracks that must not be mixed in one PR.
 

@@ -13,11 +13,14 @@ Written at Saqlain's request after he read the third-pass review page. It record
 - Step 0a of the plan is on hold. No build kickoff prompt was written.
 - PR #141 stays open. Whether to merge it as a record before the content work is his call; nobody has asked him since the hold.
 
-Three questions were put to him and dismissed without an answer. They are still open:
+**Answered by Saqlain later on 13 Oct 2026 (in chat). These override anything below that says otherwise.**
 
-1. In the Queue, does a decided item stay in a quiet "Decided" group until the reviewer leaves (as drawn), or leave at once?
-2. Does the shorter board summary stay (two high-risk gaps per domain open, the rest behind "Show N more")?
-3. Are Report and Applicability approved? He has left no notes on either in two rounds.
+1. **No more prototypes.** "We won't be doing prototypes this time. We will define the design system, the content and get straight to building." The static prototypes in `docs/ui-audit/prototypes/` are a record of approved layout decisions, not something to regenerate. Section 6 below (effort to regenerate the UI) no longer applies as written; what remains of it is the design system and plan work.
+2. **A decided item leaves the queue at once.** The queue shows only what is pending. The "Decided" group in `review-queue.html` and in the amendment's Review queue line is superseded. Undo and reopen need a home (my suggestion, not his: a short undo message after the decision, and "Reopen decision" on the gap).
+3. **Board summary length is the other session's.** The content session owns what the board view contains. The two-per-domain shortening in `report.html` is not a decision.
+4. **Report and Applicability are approved.**
+
+So the order is now: design system defined, content defined, then build. No prototype round in between.
 
 ## 2. What this thread did
 
@@ -147,6 +150,8 @@ The content audit's own framing: "The interface is not the main problem. The con
 
 ## 6. Effort to regenerate the UI after the content is settled
 
+**Superseded 13 Oct 2026:** Saqlain decided there will be no further prototype round (section 1). The rows that still stand as work are the design system and spec rewritten as one text, the plan finalised, and the checks not yet done. The other rows describe decisions the build now has to make directly from the design system and the content definitions.
+
 Sizes are my estimates, in working sessions of this kind (one sitting, with captures and the verifier). They assume the content session delivers the inputs named. I have not done this work, so treat them as rough.
 
 | Work | Needs from content | Size |
@@ -171,7 +176,7 @@ This is a proposal. Saqlain has decided only that content comes first.
 1. Saqlain answers the content audit's decisions D1 to D11. D1 (vocabulary), D2 (gap title), D4 (question grain), D10 (board and auditor field sets) and D11 (sequencing) are the ones the screens wait on.
 2. The content session fixes what is wrong in the Python app now (its T1: the draft marker on issued reports, the statute citations, the score label, the stage logic). These do not depend on the UI.
 3. One agreed finding anatomy and one workpaper order, written once, owned by the content session. This thread's sections 5.1 and 5.2 are the input from the UI side.
-4. The prototypes are regenerated from that (section 6), and Saqlain reviews them once.
+4. The design system is written as one text (today it is an amendment over older text), using the settled vocabulary and field lists. No prototype round (Saqlain, 13 Oct 2026).
 5. The plan is finalised as one document: backend changes, content work and screen ports in order.
 6. The build starts.
 

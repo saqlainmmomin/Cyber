@@ -207,5 +207,5 @@ Saqlain's note from the review page, 13 Oct 2026, in short: the parallel content
 
 - That record is `tasks/handoffs/2026-10-13-ui-thread-record-for-content-session.md`.
 - No build kickoff prompt was written. Step 0a does not start.
-- Three questions were put to him and dismissed unanswered: what happens to a decided queue item, whether the shorter board summary stays, and whether Report and Applicability are approved.
+- Answered later the same day: no further prototypes (define the design system and the content, then build); a decided item leaves the queue at once; board summary content belongs to the content session; Report and Applicability are approved.
 - Against "Done means": items 1, 2 and 3 are done. Item 4 is done in its second form (he listed what blocks approval: the content). Item 5 is this section, without a build prompt.
