@@ -493,10 +493,10 @@
     ],
     "overdue_count": 0,
     "status_counts": {
-      "Closed and verified": 0,
-      "Closed, awaiting verification": 0,
+      "Closed and awaiting verification": 0,
       "In progress": 0,
-      "Open": 2
+      "Open": 2,
+      "Verified": 0
     },
     "unplanned_gap_count": 0
   },

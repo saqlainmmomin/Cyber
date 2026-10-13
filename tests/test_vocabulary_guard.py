@@ -68,3 +68,14 @@ def test_vocabulary_guard():
         "Not ready", "Not ready", "Not ready", "Partly ready", "Partly ready",
         "Mostly ready", "Mostly ready", "Ready", "Ready",
     ]
+
+
+def test_one_numeric_priority_map_one_priority_per_risk_level():
+    from app.services import approved_report, findings, vocabulary as vocab
+    from app.services.grounding import judge
+
+    assert vocab.PRIORITY_BY_RISK == {"critical": 1, "high": 2, "medium": 3, "low": 4}
+    assert findings.PRIORITY_BY_SEVERITY is vocab.PRIORITY_BY_RISK
+    assert approved_report.PRIORITY_BY_RISK is vocab.PRIORITY_BY_RISK
+    assert judge.PRIORITY_BY_RISK is vocab.PRIORITY_BY_RISK
+    assert sorted(vocab.PRIORITY_BY_RISK.values()) == sorted(vocab.PRIORITY_LABELS)

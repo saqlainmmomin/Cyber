@@ -28,7 +28,7 @@ from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
 )
 
 HEADERS = [
-    "Assessment", "Framework", "Control code", "Finding", "Severity", "Priority", "Action", "Owner",
+    "Assessment", "Framework", "Control code", "Finding", "Severity", "Remediation timeframe", "Action", "Owner",
     "Due date", "Status", "Verified", "Verified on", "Last updated",
 ]
 

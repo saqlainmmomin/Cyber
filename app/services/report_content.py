@@ -24,8 +24,8 @@ from app.services.workpaper import anchor_for
 
 SEVERITY_RANK = vocab.RISK_RANK
 DECISION_LABELS = vocab.REVIEW_STATES
-ACTION_STATUS_LABELS = vocab.LEGACY_REMEDIATION_STATUSES
-FINDING_STATUS_LABELS = vocab.LEGACY_FINDING_STATUSES
+ACTION_STATUS_LABELS = vocab.REMEDIATION_STATUSES
+FINDING_STATUS_LABELS = vocab.FINDING_STATUS_LABELS
 NOT_RELEASED = "Not approved for release"
 NO_REPORT = "No analysis report yet"
 ANALYSIS_INCOMPLETE = "Analysis failed for at least one framework"

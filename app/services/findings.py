@@ -44,7 +44,7 @@ ELIGIBLE_STATES = ("approved", "edited")
 PRIORITIES = (1, 2, 3, 4)
 # Words for the 1 to 4 priority wherever it can reach a client (Yozora); the number stays internal.
 PRIORITY_WORDS = vocab.PRIORITY_LABELS
-PRIORITY_BY_SEVERITY = {"critical": 1, "high": 1, "medium": 2, "low": 3}
+PRIORITY_BY_SEVERITY = vocab.PRIORITY_BY_RISK
 HISTORY_KEYS = ("actor", "action", "timestamp", "notes", "changes")
 HISTORY_ACTIONS = ("created", "status_changed", "updated", "closed", "verified", "reopened")
 LEGACY_HISTORY_ACTION = "imported"

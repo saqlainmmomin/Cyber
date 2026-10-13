@@ -20,6 +20,7 @@ from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.report import GapReport
 from app.services import analysis_pipeline, conclusion_review
+from app.services import vocabulary as vocab
 from app.services.scoring import (
     approved_framework_scores,
     failed_framework_scores,
@@ -37,7 +38,7 @@ FRAMEWORK_VIEW_STATUSES = (
     "unavailable",
     "failed",
 )
-PRIORITY_BY_RISK = {"critical": 1, "high": 2, "medium": 3, "low": 4}
+PRIORITY_BY_RISK = vocab.PRIORITY_BY_RISK
 
 NO_ANALYSIS_MESSAGE = "Run analysis before releasing this report."
 ANALYSIS_RUNNING_MESSAGE = (

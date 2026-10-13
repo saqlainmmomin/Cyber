@@ -74,10 +74,10 @@ RATING_COLORS = {
 
 # Priority config
 PRIORITY_CONFIG = {
-    1: (vocab.LEGACY_PRIORITY_LABELS[1], "0-4 weeks", (231, 76, 60)),
-    2: (vocab.LEGACY_PRIORITY_LABELS[2], "1-3 months", (230, 126, 34)),
-    3: (vocab.LEGACY_PRIORITY_LABELS[3], "3-6 months", (241, 196, 15)),
-    4: (vocab.LEGACY_PRIORITY_LABELS[4], "6-12 months", (39, 174, 96)),
+    1: (vocab.PRIORITY_LABELS[1], vocab.PRIORITY_WINDOWS[1], (231, 76, 60)),
+    2: (vocab.PRIORITY_LABELS[2], vocab.PRIORITY_WINDOWS[2], (230, 126, 34)),
+    3: (vocab.PRIORITY_LABELS[3], vocab.PRIORITY_WINDOWS[3], (241, 196, 15)),
+    4: (vocab.PRIORITY_LABELS[4], vocab.PRIORITY_WINDOWS[4], (39, 174, 96)),
 }
 
 # Unicode -> ASCII for latin-1 safety

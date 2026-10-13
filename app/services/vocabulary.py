@@ -46,8 +46,10 @@ LEGACY_PDF_OUTCOMES = {
 RISK_LEVELS = ("critical", "high", "medium", "low")
 RISK_LABELS = dict(zip(RISK_LEVELS, ("Critical", "High", "Medium", "Low")))
 RISK_RANK = {key: rank for rank, key in enumerate(RISK_LEVELS)}
+# The one numeric map: each risk level has its own timeframe, one to one. Priority is when to act.
+PRIORITY_BY_RISK = {key: rank + 1 for key, rank in RISK_RANK.items()}
 PRIORITY_LABELS = {1: "Immediate", 2: "Short-term", 3: "Medium-term", 4: "Long-term"}
-LEGACY_PRIORITY_LABELS = {1: "Immediate", 2: "Short-Term", 3: "Medium-Term", 4: "Ongoing"}
+PRIORITY_WINDOWS = {1: "0-4 weeks", 2: "1-3 months", 3: "3-6 months", 4: "6-12 months"}
 REVIEW_STATES = {
     "pending": "Pending",
     "approved": "Approved",
@@ -68,12 +70,6 @@ FINDING_STATUS_LABELS = {
     "resolved": REMEDIATION_STATUSES["verified"],
     "accepted_risk": "Accepted risk",
 }
-LEGACY_REMEDIATION_STATUSES = {
-    **REMEDIATION_STATUSES,
-    "closed": "Closed, awaiting verification",
-    "verified": "Closed and verified",
-}
-LEGACY_FINDING_STATUSES = {**FINDING_STATUS_LABELS, "resolved": "Resolved"}
 SCORE_BANDS = ((0, "Not ready"), (40, "Partly ready"), (60, "Mostly ready"), (80, "Ready"))
 
 

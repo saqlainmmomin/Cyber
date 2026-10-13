@@ -69,8 +69,8 @@ def test_scenario_1_horizon_boundaries_and_overdue_follow_the_decision_doc():
     assert bd.OPEN_STATUS_LABELS == ("Open", "In progress")
     past = day(-1)
     assert bd.is_overdue(past, GENERATED_ON, "Open") and bd.is_overdue(past, GENERATED_ON, "In progress")
-    assert not bd.is_overdue(past, GENERATED_ON, "Closed, awaiting verification")
-    assert not bd.is_overdue(past, GENERATED_ON, "Closed and verified")
+    assert not bd.is_overdue(past, GENERATED_ON, "Closed and awaiting verification")
+    assert not bd.is_overdue(past, GENERATED_ON, "Verified")
     assert not bd.is_overdue(day(0), GENERATED_ON, "Open")  # due today is not overdue
     assert not bd.is_overdue(None, GENERATED_ON, "Open")
 
@@ -329,7 +329,7 @@ def test_scenario_11_inputs_flow_into_initiatives_asks_and_the_derived_blocks(db
         initiatives, document["observations"],
     )
     counts = document["roadmap"]["status_counts"]
-    assert list(counts) == ["Open", "In progress", "Closed, awaiting verification", "Closed and verified"]
+    assert list(counts) == ["Open", "In progress", "Closed and awaiting verification", "Verified"]
     assert sum(counts.values()) == len(document["roadmap"]["actions"]) == len(actions)
     assert document["roadmap"]["overdue_count"] == sum(a["overdue"] for a in actions) == 0
     assert _document(db, assessment) == document  # deterministic
@@ -370,7 +370,7 @@ def test_scenario_13_overdue_open_actions_and_derived_asks_come_from_live_data(d
     assert document["roadmap"]["overdue_count"] == 1
     assert "1 remediation action(s) past their target date." in document["board_asks"]["derived"]
     assert any(i["overdue"] for i in document["initiatives"])
-    assert document["roadmap"]["status_counts"]["Closed and verified"] == 1
+    assert document["roadmap"]["status_counts"]["Verified"] == 1
 
 
 def test_scenario_14_standards_only_assessment_has_no_legal_framework_in_references(db, http, gate, monkeypatch):
