@@ -136,7 +136,7 @@ Session of 13 Oct 2026. Docs and static prototypes only; nothing under `app/`, `
 
 ### 1. What the four Review screens do (read from templates, routes, models and the live demo)
 
-Demo ISO assessment `d491ee73`: 99 conclusions (64 compliant, 32 partially compliant, 2 non-compliant, 1 not applicable), all approved.
+Demo assessment `d491ee73` (DPDPA plus ISO 27001, not ISO alone): 99 conclusions, 93 ISO and 6 DPDPA (64 compliant, 32 partially compliant, 2 non-compliant, 1 not applicable), all approved.
 
 | Screen | What it is | Source |
 | --- | --- | --- |
@@ -190,7 +190,7 @@ Commit `6d895b5` on `codex/ui-audit`, plus the commit that adds this section.
 
 ### 6. Still open
 
-- Final approval of the prototypes and plan: see below.
+- Final approval: **not given.** Saqlain chose "Changes needed first" on the review page (13 Oct 2026). See section 7.
 - Queue: decided items still sit in a "Decided" group until the reviewer leaves, so a decision can be undone where it was made. Saqlain's words were that items leave when decided. Put to him on the review page.
 - Overview (analysis runs) and the report's excluded and unconcluded lists are in the plan and spec but not drawn.
 - Multi-framework questionnaire: specified, not drawn.
@@ -200,3 +200,12 @@ Commit `6d895b5` on `codex/ui-audit`, plus the commit that adds this section.
 - PR #141: recommended to merge before the build starts. Saqlain merges.
 
 Review page (private to Saqlain): https://claude.ai/artifact/9uj6BYMdsm9NKuiedj4evk. Its builder was in the session scratchpad and may be gone; rebuild from `docs/ui-audit/prototypes/screenshots/`.
+
+### 7. Outcome: the build is on hold until the content is fixed
+
+Saqlain's note from the review page, 13 Oct 2026, in short: the parallel content session has found many problems; they must be fixed before the migration, or the migration carries them across. The screens "look good for now" and will change again once the content is final. He asked for a record of this thread (work, decisions, what is not known or researched, coverage, effort to redo) so the content session can pick it up, see the overlap, regenerate the UI, finalise the plan and then go forward, with the content remap first and the port after.
+
+- That record is `tasks/handoffs/2026-10-13-ui-thread-record-for-content-session.md`.
+- No build kickoff prompt was written. Step 0a does not start.
+- Three questions were put to him and dismissed unanswered: what happens to a decided queue item, whether the shorter board summary stays, and whether Report and Applicability are approved.
+- Against "Done means": items 1, 2 and 3 are done. Item 4 is done in its second form (he listed what blocks approval: the content). Item 5 is this section, without a build prompt.
