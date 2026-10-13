@@ -15,6 +15,7 @@ from sqlalchemy import literal_column, select
 from sqlalchemy.orm import Session
 
 from app.frameworks.registry import FrameworkRegistry
+from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion, ConclusionRevision
@@ -145,6 +146,7 @@ class RenderReport:
     framework_scores: str
     executive_summary: str
     generated_at: datetime
+    evidence_basis_line: str | None = None
 
 
 @dataclass(frozen=True)
@@ -158,6 +160,8 @@ class ApprovedReport:
     chapter_scores: dict[str, dict]
     summary_text: str
     release: ReleaseState
+    evidence_basis_line: str | None = None
+    evidence_basis_html_line: str | None = None
 
     def render_report(self) -> RenderReport:
         if self.report_id is None or self.generated_at is None:
@@ -168,6 +172,7 @@ class ApprovedReport:
             chapter_scores=json.dumps(self.chapter_scores, sort_keys=True),
             framework_scores=json.dumps(self.framework_scores, sort_keys=True),
             executive_summary=self.summary_text,
+            evidence_basis_line=self.evidence_basis_line,
             generated_at=self.generated_at,
         )
 
@@ -418,6 +423,144 @@ def _release_state(
     )
 
 
+def _evidence_basis_line(
+    db: Session, rows: list[ApprovedRow], *, filename_limit: int | None = None,
+) -> str | None:
+    """Describe only cuts recorded by the proposals behind the approved rows."""
+    if not rows:
+        return None
+    revisions = db.execute(
+        select(ConclusionRevision)
+        .where(ConclusionRevision.conclusion_id.in_([row.conclusion_id for row in rows]),
+               ConclusionRevision.action == "proposed")
+        .order_by(ConclusionRevision.created_at, literal_column("conclusion_revisions.rowid"))
+    ).scalars().all()
+    proposals = {revision.conclusion_id: revision for revision in revisions}
+    run_ids = {revision.analysis_run_id for revision in proposals.values() if revision.analysis_run_id}
+    if not run_ids:
+        return None
+    runs = {run.id: run for run in db.execute(
+        select(AnalysisRun).where(AnalysisRun.id.in_(run_ids))
+    ).scalars().all()}
+    status_rank = {"not_read": 0, "partial": 1, "read": 2}
+    # Per framework, a file's status is its best status across that framework's runs.
+    by_framework: dict[str, dict[str, dict]] = {}
+    order = list(dict.fromkeys(row.framework_id for row in rows))
+    reused_names = []
+    for row in rows:
+        proposal = proposals.get(row.conclusion_id)
+        run = runs.get(proposal.analysis_run_id) if proposal else None
+        if run is None:
+            continue
+        try:
+            envelope = json.loads(run.claims_json or "{}")
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if not isinstance(envelope, dict):
+            continue
+        manifest = envelope.get("document_manifest") or {}
+        recorded = manifest.get("frameworks") or {}
+        stage = recorded.get(row.framework_id) or manifest
+        judge = stage.get("judge") or {}
+        stages = recorded.items() if recorded else [(row.framework_id, manifest)]
+        for framework_id, recorded_stage in stages:
+            for document in recorded_stage.get("selection") or ():
+                identity = document.get("evidence_version_id") or document.get("legacy_source_key")
+                if not identity:
+                    continue
+                files = by_framework.setdefault(framework_id, {})
+                previous = files.get(identity)
+                # Full reads beat partial reads, which beat unread cuts across runs.
+                if previous is None or status_rank.get(document.get("status"), 0) > status_rank.get(previous.get("status"), 0):
+                    files[identity] = document
+                if framework_id not in order:
+                    order.append(framework_id)
+        for passage in (judge.get("passages") or {}).get(row.requirement_id) or ():
+            if passage.get("reused_from_desk_review"):
+                name = passage.get("filename") or "Unnamed file"
+                if name not in reused_names:
+                    reused_names.append(name)
+    frameworks = [fid for fid in order if by_framework.get(fid)]
+    if not frameworks:
+        return None
+
+    def name_of(document: dict) -> str:
+        return document.get("filename") or "Unnamed file"
+
+    def unique(documents) -> list[str]:
+        return list(dict.fromkeys(name_of(document) for document in documents))
+
+    def split(files: dict[str, dict]):
+        read = [d for d in files.values() if d.get("status") in {"read", "partial"}]
+        unread = [d for d in files.values() if d.get("status") == "not_read"]
+        return read, unread
+
+    def counts(read: list, unread: list) -> str:
+        noun = "file" if len(read) == 1 else "files"
+        return f"{len(read)} {noun} read, {len(unread)} not read"
+
+    statuses = [{k: d.get("status") for k, d in by_framework[fid].items()} for fid in frameworks]
+    uniform = all(item == statuses[0] for item in statuses)
+    # Segments are (head, names, tail); names are the only part a shortened line trims.
+    segments: list[tuple[str, list[str], str]] = []
+    if uniform:
+        read, unread = split(by_framework[frameworks[0]])
+        segments.append((f"Analysis document input: {counts(read, unread)}", [], ""))
+        for label, documents in (("Read", read), ("Not read", unread)):
+            if documents:
+                segments.append((f"{label}: ", unique(documents), ""))
+        partial_docs = [d for d in read if d.get("status") == "partial"]
+    else:
+        from app.frameworks.registry import FrameworkRegistry
+        try:
+            from app.services.vocabulary import framework_display_name
+        except ImportError:  # vocabulary module not on this branch yet
+            def framework_display_name(framework_id: str) -> str:
+                framework = FrameworkRegistry.get_or_none(framework_id)
+                return framework.name if framework else framework_id
+        segments.append(("Analysis document input", [], ""))
+        partial_docs = {}
+        for fid in frameworks:
+            read, unread = split(by_framework[fid])
+            head = f"{framework_display_name(fid)}: {counts(read, unread)}"
+            if unread:
+                segments.append((head + " (not read: ", unique(unread), ")"))
+            else:
+                segments.append((head, [], ""))
+            for document in read:
+                if document.get("status") == "partial":
+                    partial_docs[name_of(document)] = document
+        partial_docs = list(partial_docs.values())
+    if partial_docs:
+        segments.append(("Partly read: ", unique(partial_docs), ""))
+    if reused_names:
+        segments.append(("Desk-review quotes reused for judging: ", reused_names, ""))
+
+    shown = 0
+    parts: list[str] = []
+    hidden = 0
+    for head, names, tail in segments:
+        if names and filename_limit is not None:
+            visible = names[:max(filename_limit - shown, 0)]
+        else:
+            visible = names
+        shown += len(visible)
+        hidden += len(names) - len(visible)
+        if names and not visible:
+            if uniform:
+                continue
+            parts.append(head.removesuffix(" (not read: "))
+            continue
+        parts.append(head + ", ".join(visible) + tail)
+    line = ". ".join(parts)
+    if hidden:
+        if uniform:
+            line += f" and {hidden} more; the full list is in the PDF and DOCX report"
+        else:
+            line += f". {hidden} more file names are omitted; the full list is in the PDF and DOCX report"
+    return line + "."
+
+
 def build_approved_report(db: Session, assessment: Assessment) -> ApprovedReport:
     report = (
         db.query(GapReport)
@@ -600,6 +743,8 @@ def build_approved_report(db: Session, assessment: Assessment) -> ApprovedReport
         chapter_scores=chapter_scores,
         summary_text=_summary_text(assessment, reviews),
         release=release,
+        evidence_basis_line=_evidence_basis_line(db, rows),
+        evidence_basis_html_line=_evidence_basis_line(db, rows, filename_limit=8),
     )
 
 

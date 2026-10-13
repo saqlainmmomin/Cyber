@@ -887,7 +887,7 @@ def test_mapped_evidence_feeds_other_assessment_and_unmap_removes_it(db, extract
 # 10-11. Readers and the pipeline
 # --------------------------------------------------------------------------- #
 
-ANALYSIS_DOCUMENT_KEYS = {"id", "filename", "category", "text", "legacy_document_id", "source"}
+ANALYSIS_DOCUMENT_KEYS = {"id", "evidence_version_id", "filename", "category", "text", "legacy_document_id", "source"}
 
 
 def test_analysis_documents_shape_order_and_legacy_fallback(db, extractor):
@@ -906,6 +906,7 @@ def test_analysis_documents_shape_order_and_legacy_fallback(db, extractor):
     evidence_doc, first_legacy, second_legacy = docs
     assert evidence_doc == {
         "id": evidence_id,
+        "evidence_version_id": db.query(EvidenceVersion).filter_by(evidence_id=evidence_id, status="active").one().id,
         "filename": "Privacy Policy.pdf",
         "category": "other",
         "text": "Extracted text from v1.pdf",
@@ -914,6 +915,7 @@ def test_analysis_documents_shape_order_and_legacy_fallback(db, extractor):
     }
     assert first_legacy == {
         "id": older_legacy.id,
+        "evidence_version_id": None,
         "filename": "a.pdf",
         "category": "dpia",
         "text": "A text",
@@ -1009,7 +1011,7 @@ def test_desk_review_reads_evidence_and_stays_fk_valid(db, extractor, monkeypatc
     summary = desk_review.run_desk_review(assessment.id, db)
 
     assert summary.status == "completed", summary.error_message
-    assert [set(d) for d in seen["documents"]] == [{"id", "filename", "category", "text"}] * 2
+    assert [set(d) for d in seen["documents"]] == [{"id", "evidence_version_id", "legacy_document_id", "filename", "category", "text"}] * 2
     assert {d["filename"] for d in seen["documents"]} == {"new-policy.pdf", "legacy.pdf"}
     assert {d["id"] for d in seen["documents"]} == {evidence_id, legacy.id}
     db.expire_all()

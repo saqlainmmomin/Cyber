@@ -19,6 +19,7 @@ from app.config import settings
 from app.frameworks.batching import ControlBatch, control_batches
 from app.services import llm_client
 from app.services.parallel import run_bounded
+from app.services.document_selection import select_documents, stage_manifest
 from app.dpdpa.framework import get_all_requirements
 from app.dpdpa.prompts import (
     build_evidence_extraction_prompt,
@@ -50,6 +51,8 @@ def run_gap_analysis(
     context_profile: dict | None = None,
     desk_review_data: dict | None = None,
     applicable_requirements: list[str] | None = None,
+    *,
+    include_document_manifest: bool = False,
 ) -> dict:
     """
     Run full DPDPA gap analysis using Claude.
@@ -61,6 +64,9 @@ def run_gap_analysis(
     Returns:
         Dict with "parsed" (structured assessment) and "raw" (Claude's text),
         plus "usage" with token stats including cache info.
+
+    Production callers request the document manifest for persistence. The
+    default preserves the curated replay result contract.
     """
     return _run_gap_analysis(
         company_name=company_name,
@@ -72,6 +78,7 @@ def run_gap_analysis(
         context_profile=context_profile,
         desk_review_data=desk_review_data,
         applicable_requirements=applicable_requirements,
+        include_document_manifest=include_document_manifest,
     )
 
 
@@ -85,6 +92,8 @@ def _run_gap_analysis(
     context_profile: dict | None = None,
     desk_review_data: dict | None = None,
     applicable_requirements: list[str] | None = None,
+    *,
+    include_document_manifest: bool = False,
 ) -> dict:
     truncated_docs = _truncate_documents(documents)
 
@@ -92,6 +101,8 @@ def _run_gap_analysis(
     # Desk review (Call 0) maps document quotes to requirements. When it has run
     # successfully, re-extracting evidence is redundant and wastes ~45-60s.
     evidence = None
+    dr_evidence = None
+    extraction_ran = False
     if truncated_docs:
         dr_evidence = _evidence_from_desk_review(desk_review_data)
         if dr_evidence:
@@ -103,6 +114,7 @@ def _run_gap_analysis(
         else:
             desk_review_findings = desk_review_data.get("findings") if desk_review_data else None
             with llm_client.call_tag(stage="evidence_extraction", framework_id="dpdpa"):
+                extraction_ran = True
                 evidence = _run_evidence_extraction(truncated_docs, desk_review_findings)
 
     # Call 2: Gap analysis with cached system prompt
@@ -145,7 +157,7 @@ def _run_gap_analysis(
         f"cache_read: {cache_read}, cache_create: {cache_create}"
     )
 
-    return {
+    result = {
         "parsed": parsed,
         "raw": raw_text,
         "usage": {
@@ -155,6 +167,19 @@ def _run_gap_analysis(
             "cache_creation_input_tokens": cache_create,
         },
     }
+    if include_document_manifest:
+        manifest = None
+        try:
+            manifest = stage_manifest(
+                documents, truncated_docs, ordering="dpdpa",
+                control_ids=list(evidence or {}),
+                evidence=evidence, reused=dr_evidence,
+                extraction_ran=extraction_ran, raw_judge=not any((evidence or {}).values()),
+            )
+        except Exception:
+            logger.warning("Could not build DPDPA document manifest", exc_info=True)
+        result["document_manifest"] = manifest
+    return result
 
 
 def _evidence_from_desk_review(desk_review_data: dict | None) -> dict | None:
@@ -318,6 +343,8 @@ def _collect_framework_evidence(
     desk_review_data: dict | None,
     *,
     grounding_documents: list[dict] | None = None,
+    documents_by_framework: dict[str, list[dict]] | None = None,
+    extraction_frameworks: set[str] | None = None,
 ) -> dict | None:
     """Collect desk-review and extracted evidence independently per framework.
 
@@ -375,13 +402,15 @@ def _collect_framework_evidence(
             if finding.get("requirement_id") in control_ids
         ]
         extraction_items.append((framework_id, framework_findings or None))
+        if extraction_frameworks is not None:
+            extraction_frameworks.add(framework_id)
 
     def extract_framework(item: tuple[str, list[dict] | None]):
         framework_id, framework_findings = item
         with llm_client.call_tag(framework_id=framework_id):
             return _run_framework_evidence_extraction(
                 framework_id,
-                documents,
+                (documents_by_framework or {}).get(framework_id, documents),
                 framework_findings,
             )
 
@@ -417,44 +446,8 @@ def _collect_framework_evidence(
 
 
 def _truncate_documents(documents: list[dict]) -> list[dict]:
-    """Enforce total document word limit across all documents."""
-    max_total = settings.max_total_document_words
-    total_words = 0
-    result = []
-
-    # Prioritize by category importance
-    priority_order = [
-        "privacy_policy",
-        "consent_form",
-        "breach_procedure",
-        "dpia",
-        "retention_policy",
-        "processing_records",
-        "data_flow_diagram",
-        "vendor_agreement",
-        "other",
-    ]
-    sorted_docs = sorted(
-        documents,
-        key=lambda d: (
-            priority_order.index(d["category"])
-            if d["category"] in priority_order
-            else 99
-        ),
-    )
-
-    for doc in sorted_docs:
-        words = doc["text"].split()
-        remaining = max_total - total_words
-        if remaining <= 0:
-            break
-        if len(words) > remaining:
-            doc = {**doc, "text": " ".join(words[:remaining]) + "\n\n[... truncated ...]"}
-            words = words[:remaining]
-        total_words += len(words)
-        result.append(doc)
-
-    return result
+    """Keep curated DPDPA ordering at the legacy compatibility seam."""
+    return select_documents(documents, ordering="dpdpa")
 
 
 def run_multi_framework_analysis(
@@ -468,6 +461,8 @@ def run_multi_framework_analysis(
     context_profile: dict | None = None,
     desk_review_data: dict | None = None,
     applicable_controls: list[str] | None = None,
+    *,
+    include_document_manifest: bool = False,
 ) -> dict:
     """
     Run multi-framework gap analysis.
@@ -495,6 +490,7 @@ def run_multi_framework_analysis(
         context_profile=context_profile,
         desk_review_data=desk_review_data,
         applicable_controls=applicable_controls,
+        include_document_manifest=include_document_manifest,
     )
 
 
@@ -509,6 +505,8 @@ def _run_multi_framework_analysis(
     context_profile: dict | None = None,
     desk_review_data: dict | None = None,
     applicable_controls: list[str] | None = None,
+    *,
+    include_document_manifest: bool = False,
 ) -> dict:
     from app.frameworks.prompts import (
         build_framework_system_prompt,
@@ -518,7 +516,14 @@ def _run_multi_framework_analysis(
     )
     from app.frameworks.registry import FrameworkRegistry
 
-    truncated_docs = _truncate_documents(documents)
+    documents_by_framework = {
+        framework_id: select_documents(
+            documents, ordering="dpdpa" if framework_id == "dpdpa" else "upload"
+        )
+        for framework_id in framework_ids
+    }
+    truncated_docs = select_documents(documents, ordering="upload")
+    extraction_frameworks: set[str] = set()
 
     # Step 1: Evidence extraction (reuse desk review independently per framework)
     evidence = _collect_framework_evidence(
@@ -526,6 +531,8 @@ def _run_multi_framework_analysis(
         truncated_docs,
         desk_review_data,
         grounding_documents=documents,
+        documents_by_framework=documents_by_framework,
+        extraction_frameworks=extraction_frameworks,
     )
 
     # Step 2: Per-framework gap analysis. Large registry frameworks contribute
@@ -555,7 +562,7 @@ def _run_multi_framework_analysis(
                 company_size=company_size,
                 description=description,
                 responses=responses,
-                documents=truncated_docs,
+                documents=documents_by_framework[fw_id],
                 context_profile=context_profile,
                 evidence=evidence,
                 desk_review_summary=desk_review_data,
@@ -627,7 +634,7 @@ def _run_multi_framework_analysis(
                 company_size=company_size,
                 description=description,
                 responses=responses,
-                documents=truncated_docs,
+                documents=documents_by_framework[fw_id],
                 context_profile=context_profile,
                 evidence=evidence,
                 desk_review_summary=desk_review_data,
@@ -889,6 +896,29 @@ def _run_multi_framework_analysis(
     framework_results = {
         framework_id: framework_results[framework_id] for framework_id in framework_ids
     }
+
+    if include_document_manifest:
+        for framework_id, result in framework_results.items():
+            if "error" in result:
+                continue
+            manifest = None
+            try:
+                reused = _evidence_from_desk_review(desk_review_data) or {}
+                control_ids = [control.id for control in FrameworkRegistry.get(framework_id).all_controls()]
+                framework_evidence = {
+                    control_id: quotes for control_id, quotes in (evidence or {}).items()
+                    if control_id in control_ids
+                }
+                manifest = stage_manifest(
+                    documents, documents_by_framework[framework_id],
+                    ordering="dpdpa" if framework_id == "dpdpa" else "upload",
+                    control_ids=control_ids, evidence=framework_evidence, reused=reused,
+                    extraction_ran=framework_id in extraction_frameworks,
+                    raw_judge=not any(framework_evidence.values()),
+                )
+            except Exception:
+                logger.warning("Could not build document manifest for %s", framework_id, exc_info=True)
+            result["document_manifest"] = manifest
 
     # Step 3: Cross-framework synthesis (only for 2+ frameworks)
     synthesis = None

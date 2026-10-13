@@ -893,6 +893,7 @@ def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
         documents.append(
             {
                 "id": evidence.id,
+                "evidence_version_id": version.id,
                 "filename": version.original_filename,
                 "category": evidence.document_category or "other",
                 "text": version.extracted_text or "",
@@ -903,6 +904,7 @@ def analysis_documents(db: Session, assessment_id: str) -> list[dict]:
     documents.extend(
         {
             "id": row.id,
+            "evidence_version_id": None,
             "filename": row.filename,
             "category": row.document_category,
             "text": row.extracted_text or "",

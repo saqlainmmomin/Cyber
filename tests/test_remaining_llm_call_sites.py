@@ -8,7 +8,7 @@ same convention `claude_analyzer.py`'s golden tests use.
 from __future__ import annotations
 
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -44,19 +44,115 @@ def test_desk_review_call_rejects_non_json_response():
             _call_claude_desk_review([], "Acme", "saas")
 
 
-def test_desk_review_truncation_preserves_document_order_and_budget(monkeypatch):
+def test_desk_review_shared_selection_preserves_upload_order_and_budget(monkeypatch):
+    from app.services import desk_review
+    from app.services.document_selection import select_documents
+
+    monkeypatch.setattr(desk_review.settings, "max_total_document_words", 3)
+    documents = [
+        {"filename": "first", "category": "other", "text": "one two"},
+        {"filename": "second", "category": "privacy_policy", "text": "three four"},
+    ]
+
+    expected = [
+        {"filename": "first", "category": "other", "text": "one two"},
+        {"filename": "second", "category": "privacy_policy", "text": "three\n\n[... truncated ...]"},
+    ]
+    assert desk_review._truncate_documents(documents) == expected
+    assert select_documents(documents, ordering="upload") == expected
+
+
+def _desk_review_with_documents(monkeypatch, documents, framework_ids):
+    from app.main import _register_frameworks
+    from app.models.assessment import Assessment
+    from app.services import desk_review
+
+    _register_frameworks()
+    assessment = Assessment(
+        id="assessment", company_name="Acme", industry="saas", company_size="sme",
+        selected_frameworks=json.dumps(framework_ids),
+    )
+    db = MagicMock()
+    db.get.return_value = assessment
+    db.query.return_value.filter.return_value.first.return_value = None
+    monkeypatch.setattr(desk_review.settings, "analysis_pipeline_version", "v1")
+    monkeypatch.setattr(desk_review, "analysis_documents", lambda *_args: documents)
+    monkeypatch.setattr(desk_review, "control_batches", lambda *_args: ())
+    calls = []
+
+    def fake_call(framework_id, **kwargs):
+        calls.append((framework_id, kwargs["documents"]))
+        raise ValueError("mock failure after capturing input")
+
+    monkeypatch.setattr(desk_review, "_desk_review_call", fake_call)
+    summary = desk_review.run_desk_review(assessment.id, db)
+    return calls, json.loads(summary.raw_ai_response)
+
+
+def test_dpdpa_desk_review_uses_upload_order_in_prompt_and_manifest(monkeypatch):
     from app.services import desk_review
 
     monkeypatch.setattr(desk_review.settings, "max_total_document_words", 3)
     documents = [
-        {"filename": "first", "text": "one two"},
-        {"filename": "second", "text": "three four"},
+        {"id": "1", "legacy_document_id": "1", "filename": "first", "category": "other", "text": "one two"},
+        {"id": "2", "legacy_document_id": "2", "filename": "second", "category": "privacy_policy", "text": "three four"},
+    ]
+    calls, response = _desk_review_with_documents(monkeypatch, documents, ["dpdpa"])
+
+    assert [doc["filename"] for doc in calls[0][1]] == ["first", "second"]
+    assert calls[0][1][1]["text"] == "three\n\n[... truncated ...]"
+    manifest = response["document_manifest"]["frameworks"]["dpdpa"]
+    assert manifest["ordering"] == "upload"
+    assert [(entry["filename"], entry["status"]) for entry in manifest["selection"]] == [
+        ("first", "read"), ("second", "partial"),
     ]
 
-    assert desk_review._truncate_documents(documents) == [
-        {"filename": "first", "text": "one two"},
-        {"filename": "second", "text": "three\n\n[... truncated ...]"},
+
+def test_desk_review_legacy_budget_lists_union_all_frameworks(monkeypatch):
+    from app.services import desk_review
+
+    calls = 0
+    real_manifest = desk_review.stage_manifest
+
+    def varied_selection(*args, **kwargs):
+        nonlocal calls
+        manifest = real_manifest(*args, **kwargs)
+        if calls:
+            manifest["selection"][0]["status"] = "not_read"
+            manifest["selection"][1]["status"] = "partial"
+        calls += 1
+        return manifest
+
+    monkeypatch.setattr(desk_review.settings, "max_total_document_words", 10)
+    monkeypatch.setattr(desk_review, "stage_manifest", varied_selection)
+    documents = [
+        {"id": "1", "legacy_document_id": "1", "filename": "first", "category": "other", "text": "one"},
+        {"id": "2", "legacy_document_id": "2", "filename": "second", "category": "other", "text": "two"},
     ]
+    _, response = _desk_review_with_documents(monkeypatch, documents, ["dpdpa", "iso27001", "nist_csf"])
+
+    assert response["budget_skipped_filenames"] == ["first"]
+    assert response["budget_partial_filenames"] == ["second"]
+
+
+def test_stage_manifest_shared_quote_is_inside_cut_and_normalizes_documents_once(monkeypatch):
+    from app.services import document_selection
+
+    documents = [
+        {"id": "1", "filename": "first", "text": "Shared quote"},
+        {"id": "2", "filename": "second", "text": "Shared quote with more text"},
+    ]
+    monkeypatch.setattr(document_selection.settings, "max_total_document_words", 2)
+    with patch.object(document_selection, "_normalized", wraps=document_selection._normalized) as normalize:
+        manifest = document_selection.stage_manifest(
+            documents, [documents[0]], ordering="upload", control_ids=["control"],
+            evidence={"control": ["shared quote", "more text"]},
+        )
+
+    passages = manifest["judge"]["passages"]["control"]
+    assert [entry["outside_cut"] for entry in passages] == [False, False, True]
+    assert sum(call.args == (documents[0]["text"],) for call in normalize.call_args_list) == 1
+    assert sum(call.args == (documents[1]["text"],) for call in normalize.call_args_list) == 1
 
 
 def test_screening_call_seam_returns_provider_text():

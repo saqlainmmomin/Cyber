@@ -339,6 +339,7 @@ def record_framework_run(
     desk_review_data: dict | None,
     gap_report_id: str,
     llm_calls: list[dict] | None = None,
+    document_manifest: dict | None = None,
 ) -> AnalysisRun:
     """Persist claims, conclusions, revisions, and the completed run.
 
@@ -454,6 +455,8 @@ def record_framework_run(
             }
         )
 
+    if document_manifest is not None:
+        envelope["document_manifest"] = document_manifest
     envelope["claims"] = claims
     envelope["gap_report_id"] = gap_report_id
     envelope["desk_review_used"] = desk_review_data is not None

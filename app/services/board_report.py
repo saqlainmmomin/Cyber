@@ -660,6 +660,9 @@ def build_document(
         "soa": soa.build_soa(db, assessment, approved),
         "source": report_snapshots.source_manifest(db, assessment),
     }
+    if approved.evidence_basis_line:
+        document["summary"]["evidence_basis_line"] = approved.evidence_basis_line
+        document["summary"]["evidence_basis_html_line"] = approved.evidence_basis_html_line
     document["prior_period"] = prior_period.build_comparison(db, assessment, document)
     narrative.apply_to_document(db, assessment, document)
     return document

@@ -149,6 +149,61 @@ def test_default_threshold_batches_only_large_frameworks():
     assert control_batches("pci_dss") == ()
 
 
+@pytest.mark.parametrize("multi_framework", [False, True])
+def test_manifest_is_optional_and_failure_preserves_analysis(monkeypatch, caplog, multi_framework):
+    from app.dpdpa.framework import get_all_requirements
+
+    ids = [requirement["id"] for requirement in get_all_requirements()]
+    monkeypatch.setattr(
+        claude_analyzer, "_call_llm",
+        lambda **_kwargs: {"text": _response(ids), "usage": _usage()},
+    )
+    manifest_calls = []
+
+    def broken_manifest(*args, **kwargs):
+        manifest_calls.append((args, kwargs))
+        raise ValueError("manifest unavailable")
+
+    monkeypatch.setattr(claude_analyzer, "stage_manifest", broken_manifest)
+
+    def run(**kwargs):
+        if multi_framework:
+            return claude_analyzer.run_multi_framework_analysis(
+                ["dpdpa"], "Acme", "saas", "sme", None, [], [], **kwargs,
+            )["frameworks"]["dpdpa"]
+        return claude_analyzer.run_gap_analysis(
+            "Acme", "saas", "sme", None, [], [], **kwargs,
+        )
+
+    original = run()
+    assert set(original) == {"parsed", "raw", "usage"}
+    assert manifest_calls == []
+    with caplog.at_level("WARNING"):
+        with_manifest = run(include_document_manifest=True)
+    assert with_manifest.pop("document_manifest") is None
+    assert with_manifest == original
+    assert len(manifest_calls) == 1
+    assert "Could not build" in caplog.text
+
+
+def test_empty_framework_quotes_record_raw_judge_documents(monkeypatch):
+    documents = [{"filename": "policy.pdf", "category": "policy", "text": "Policy text", "evidence_version_id": "version-read"}]
+    monkeypatch.setattr(
+        claude_analyzer, "_collect_framework_evidence",
+        lambda *_args, **_kwargs: {"ISO.A5.1": []},
+    )
+    monkeypatch.setattr(
+        claude_analyzer, "_call_llm",
+        lambda *, system, **_kwargs: {"text": _response(_prompt_control_ids(system)), "usage": _usage()},
+    )
+    result = claude_analyzer.run_multi_framework_analysis(
+        ["iso27001"], "Acme", "saas", "sme", None, [], documents,
+        include_document_manifest=True,
+    )
+    manifest = result["frameworks"]["iso27001"]["document_manifest"]
+    assert manifest["judge"]["documents"] == manifest["selection"]
+
+
 def test_unbatched_prompt_fingerprints_and_dpdpa_request_shape(monkeypatch):
     from app.frameworks import prompts
 
@@ -195,6 +250,18 @@ def test_unbatched_prompt_fingerprints_and_dpdpa_request_shape(monkeypatch):
     monkeypatch.setattr(settings, "llm_batch_threshold_controls", 90)
     _run_analysis(monkeypatch, fake, framework_ids=("dpdpa",))
     assert first == seen[0][1]
+
+    # The curated prompt fingerprints stay pinned. Selection changes only the
+    # document order supplied to registry prompts, while DPDPA keeps priority.
+    documents = [
+        {"filename": "upload-first.txt", "category": "other", "text": "upload first"},
+        {"filename": "priority-first.txt", "category": "privacy_policy", "text": "priority first"},
+    ]
+    monkeypatch.setattr(settings, "max_total_document_words", 2)
+    assert claude_analyzer._truncate_documents(documents) == [documents[1]]
+    from app.services.document_selection import select_documents
+
+    assert select_documents(documents, ordering="upload") == [documents[0]]
 
 
 def test_deterministic_batch_table_and_synthetic_split(monkeypatch):
@@ -516,17 +583,19 @@ def test_batched_invalid_status_on_retry_becomes_not_assessed(monkeypatch, caplo
     assert "Coercing compliance_status None to not_assessed" in caplog.text
 
 
-def test_desk_review_quote_grounding_uses_full_documents(monkeypatch):
+def test_reused_desk_review_quote_outside_cut_is_labelled(monkeypatch):
     monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)
     monkeypatch.setattr(settings, "max_total_document_words", 3)
     documents = [
         {
-            "filename": "first.txt",
+            "filename": "same.txt",
+            "evidence_version_id": "version-read",
             "category": "other",
             "text": "visible early quote",
         },
         {
-            "filename": "late.txt",
+            "filename": "same.txt",
+            "evidence_version_id": "version-unread",
             "category": "other",
             "text": "late desk review quote",
         },
@@ -577,11 +646,20 @@ def test_desk_review_quote_grounding_uses_full_documents(monkeypatch):
         [],
         documents,
         desk_review_data=desk_review_data,
+        include_document_manifest=True,
     )
 
     assert "error" not in result["frameworks"]["iso27001"]
     assert extraction_documents == [truncated_documents]
     assert "late desk review quote" in judge_prompts[0]
+    manifest = result["frameworks"]["iso27001"]["document_manifest"]
+    passage = manifest["judge"]["passages"]["ISO.A5.1"][0]
+    assert passage["quote"] == "late desk review quote"
+    assert passage["evidence_version_id"] == "version-unread"
+    assert passage["reused_from_desk_review"] is True
+    assert passage["outside_cut"] is True
+    assert manifest["judge"]["documents"] == []
+    assert [entry["evidence_version_id"] for entry in manifest["extraction"]["documents"]] == ["version-read"]
 
 
 def test_unbatched_missing_compliance_status_stays_not_assessed(monkeypatch):
@@ -812,6 +890,93 @@ def _desk_db(tmp_path, frameworks):
     ))
     db.commit()
     return db, assessment
+
+
+def test_truthful_cut_cap_50_matches_prompts_and_versioned_manifests(monkeypatch, tmp_path):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.assessment import AssessmentDocument
+    from app.models.evidence import Evidence, EvidenceVersion
+    from app.services import analysis_pipeline
+    from app.services.evidence import analysis_documents
+
+    monkeypatch.setattr(settings, "max_total_document_words", 50)
+    monkeypatch.setattr(settings, "llm_batch_threshold_controls", 10_000)
+    db, assessment = _desk_db(tmp_path, ["iso27001"])
+    db.query(AssessmentDocument).delete()
+    texts = [
+        " ".join([f"first_{index}" for index in range(30)]),
+        " ".join([f"second_{index}" for index in range(30)]),
+        " ".join([f"unread_{index}" for index in range(10)]),
+    ]
+    for index, text in enumerate(texts):
+        evidence = Evidence(
+            id=f"evidence-{index}", engagement_id="engagement",
+            assessment_id=assessment.id, document_category="other" if index != 1 else "privacy_policy",
+            original_filename="same.txt", storage_path=f"file-{index}",
+            file_hash_sha256=str(index) * 64, file_size_bytes=len(text),
+            mime_type="text/plain", status="active", uploaded_by="test",
+            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=index),
+        )
+        db.add(evidence)
+        db.add(EvidenceVersion(
+            id=f"version-{index}", evidence_id=evidence.id, version_number=1,
+            storage_path=evidence.storage_path, file_hash_sha256=evidence.file_hash_sha256,
+            file_size_bytes=len(text), status="active", original_filename="same.txt",
+            mime_type="text/plain", extracted_text=text,
+        ))
+    db.commit()
+    documents = analysis_documents(db, assessment.id)
+    assert [doc["evidence_version_id"] for doc in documents] == ["version-0", "version-1", "version-2"]
+    desk_prompts = []
+
+    def fake_desk(*, messages, **_kwargs):
+        desk_prompts.append(messages[0]["content"])
+        return {"text": json.dumps({"document_catalog": [], "evidence_map": {}}), "usage": _usage()}
+
+    monkeypatch.setattr(desk_review, "_call_llm", fake_desk)
+    summary = desk_review.run_desk_review(assessment.id, db)
+    assert summary.status == "completed"
+    desk_manifest = json.loads(summary.raw_ai_response)["document_manifest"]["frameworks"]["iso27001"]
+    gap_prompts = {}
+
+    def fake_gap(*, tier, system, messages, **_kwargs):
+        gap_prompts[tier] = messages[0]["content"]
+        if tier == "extract":
+            payload = {"evidence": {"ISO.A5.1": ["first_0 first_1"], "ISO.A5.2": ["second_0 second_1"]}}
+            return {"text": json.dumps(payload), "usage": _usage()}
+        return {"text": _response(_prompt_control_ids(system)), "usage": _usage()}
+
+    monkeypatch.setattr(claude_analyzer, "_call_llm", fake_gap)
+    result = claude_analyzer.run_multi_framework_analysis(
+        ["iso27001"], "Acme", "saas", "sme", None, [], documents,
+        include_document_manifest=True,
+    )
+    gap_manifest = result["frameworks"]["iso27001"]["document_manifest"]
+    assert desk_manifest["selection"] == gap_manifest["selection"]
+    assert desk_manifest["extraction"]["documents"] == gap_manifest["extraction"]["documents"]
+    assert [(entry["evidence_version_id"], entry["status"], entry["words_sent"])
+            for entry in gap_manifest["selection"]] == [
+        ("version-0", "read", 30), ("version-1", "partial", 20), ("version-2", "not_read", 0),
+    ]
+    for prompt in [desk_prompts[0], gap_prompts["extract"]]:
+        assert texts[0] in prompt
+        assert "second_19" in prompt
+        assert "second_20" not in prompt
+        assert "unread_0" not in prompt
+    assert gap_manifest["judge"]["documents"] == []
+    for control_id, expected_version in [("ISO.A5.1", "version-0"), ("ISO.A5.2", "version-1")]:
+        passage = gap_manifest["judge"]["passages"][control_id][0]
+        assert passage["evidence_version_id"] == expected_version
+        assert passage["quote"] in gap_prompts["judge"]
+        assert passage["outside_cut"] is False
+    context = analysis_pipeline.start_runs(db, assessment_id=assessment.id, framework_ids=["iso27001"])
+    run = analysis_pipeline.record_framework_run(
+        db, context, framework_id="iso27001", assessments=[], desk_review_data=None,
+        gap_report_id="report", document_manifest=gap_manifest,
+    )
+    assert json.loads(run.claims_json)["document_manifest"] == gap_manifest
+    db.close()
 
 
 def test_dpdpa_desk_review_never_batches_at_any_threshold(monkeypatch, tmp_path):
