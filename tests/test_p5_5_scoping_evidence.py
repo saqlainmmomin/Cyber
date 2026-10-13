@@ -287,6 +287,28 @@ def test_dpdpa_only_multi_scope_is_identical_to_direct_scope(answers):
     assert multi["proposed_not_applicable"] == []
 
 
+def test_scope_profiler_dpdpa_checklist_citations_match_mapped_pack():
+    from app.dpdpa.framework import get_all_requirements
+    from app.services.scope_profiler import statute_refs
+
+    requirements = {req["id"]: req for req in get_all_requirements()}
+    section_pattern = r"Section \d+(?:\([a-z0-9]+\))*(?:-\([a-z0-9]+\))?"
+    checklist = compute_scope({
+        "SCP.1": "yes", "SCP.2": "yes", "SCP.3": "yes",
+        "SCP.4": "both", "SCP.5": "yes",
+    })["evidence_checklist"]
+    for item in checklist:
+        pack_refs = [requirements[req_id]["section_ref"] for req_id in item["maps_to"]]
+        refs = statute_refs(item["maps_to"])
+        assert len(refs) == len(set(refs)), item["document_type"]
+        for ref in refs:
+            # Every citation traces to a mapped pack reference ("Section 8(9)" sits in "Section 6(3), 8(9)").
+            assert any(ref.removeprefix("Section ") in pack_ref for pack_ref in pack_refs), ref
+        assert set(re.findall(section_pattern, item["reason"])) <= set(refs), item["document_type"]
+        if "Section" in item["reason"]:
+            assert "; ".join(refs) in item["reason"], item["document_type"]
+
+
 def test_iso_only_scope_has_curated_requests_and_no_dpdpa_flags():
     result = compute_scope_multi({}, ["iso27001"])
     assert [item["document_type"] for item in result["evidence_checklist"]] == ISO_DOCUMENT_TYPES

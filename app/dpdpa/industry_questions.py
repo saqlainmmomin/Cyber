@@ -23,7 +23,7 @@ INDUSTRY_QUESTIONS = {
                 "maps_to": ["CH2.SECURITY.1", "CH2.SECURITY.2"],
                 "category": "data_isolation",
                 "criticality": "critical",
-                "guidance": "DPDPA Section 8(4) requires reasonable security safeguards. For SaaS platforms, tenant data isolation is a foundational control.",
+                "guidance": "DPDPA Section 8(5) requires reasonable security safeguards. For SaaS platforms, tenant data isolation is a foundational control.",
                 "skip_if": {"desk_review_coverage": {"CH2.SECURITY.1": "adequate", "CH2.SECURITY.2": "adequate"}},
                 "deepen_if": {"signal_flags": ["template_artifact", "scope_gap"]},
                 "follow_up_triggers": {
@@ -137,7 +137,7 @@ INDUSTRY_QUESTIONS = {
                 "maps_to": ["CH2.CONSENT.2", "CM.RECORDS.2"],
                 "category": "consent_ux",
                 "criticality": "high",
-                "guidance": "Purpose creep is common in SaaS — each new feature that processes data differently requires separate consent under Section 6(3).",
+                "guidance": "Purpose creep is common in SaaS — each new feature that processes data differently requires separate consent under Section 6(1).",
                 "skip_if": {},
                 "deepen_if": {},
                 "follow_up_triggers": {
@@ -241,7 +241,7 @@ INDUSTRY_QUESTIONS = {
                 "maps_to": ["CH2.SECURITY.1"],
                 "category": "people",
                 "criticality": "medium",
-                "guidance": "Organizational security measures under Section 8(4) include staff awareness and training.",
+                "guidance": "Organizational security measures under Section 8(5) include staff awareness and training.",
                 "skip_if": {},
                 "deepen_if": {},
                 "follow_up_triggers": {
