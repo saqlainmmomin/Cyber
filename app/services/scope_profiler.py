@@ -12,6 +12,7 @@ Other frameworks keep all controls applicable; their scope answers produce appli
 """
 
 from app.dpdpa.framework import get_all_requirements
+from app.frameworks.registry import FrameworkRegistry
 from app.frameworks.schema import FrameworkDefinition
 
 # Requirements that are only active when children's data is processed
@@ -117,6 +118,15 @@ def compute_scope(scope_answers: dict) -> dict:
     }
 
 
+def statute_refs(requirement_ids: list[str]) -> list[str]:
+    """Return mapped DPDPA pack references once each, in requirement order."""
+    dpdpa = FrameworkRegistry.get_or_none("dpdpa")
+    # Direct legacy callers can build a checklist before app startup registers packs.
+    requirements = dpdpa.all_controls_enriched() if dpdpa else get_all_requirements()
+    references = {req["id"]: req["section_ref"] for req in requirements}
+    return list(dict.fromkeys(references[req_id] for req_id in requirement_ids))
+
+
 def _build_evidence_checklist(
     cross_border_active: bool,
     children_active: bool,
@@ -139,7 +149,7 @@ def _build_evidence_checklist(
         checklist.append({
             "document_type": document_type,
             "label": label,
-            "reason": reason,
+            "reason": reason.format(statute_refs="; ".join(statute_refs(maps_to))),
             "required": required,
             "maps_to": maps_to,
             "frameworks": ["dpdpa"],
@@ -149,7 +159,7 @@ def _build_evidence_checklist(
     _add(
         "privacy_policy",
         "Privacy Policy / Privacy Notice",
-        "Assessed against notice obligations (Sections 5, 6)",
+        "Assessed against notice obligations ({statute_refs})",
         True,
         ["CH2.NOTICE.1", "CH2.NOTICE.2", "CH2.NOTICE.3", "CH2.CONSENT.1"],
     )
@@ -170,7 +180,7 @@ def _build_evidence_checklist(
     _add(
         "breach_procedure",
         "Breach notification procedure / incident response plan",
-        "Assessed against breach intimation obligations (Section 8(6); DPDP Rules 2025 r.7)",
+        "Assessed against breach intimation obligations ({statute_refs})",
         True,
         ["BN.NOTIFY.1", "BN.NOTIFY.2", "BN.NOTIFY.3"],
     )
@@ -184,7 +194,7 @@ def _build_evidence_checklist(
     _add(
         "security_policy",
         "Information security policy / controls documentation",
-        "Assessed for reasonable security safeguards (Section 8(4))",
+        "Assessed for reasonable security safeguards ({statute_refs})",
         True,
         ["CH2.SECURITY.1", "CH2.SECURITY.2"],
     )
@@ -203,7 +213,7 @@ def _build_evidence_checklist(
         _add(
             "vendor_agreements",
             "Vendor / Data Processor agreements (DPAs)",
-            "Assessed for processor contractual safeguards (Section 8(2))",
+            "Assessed for processor contractual safeguards ({statute_refs})",
             True,
             ["CH2.SECURITY.3"],
         )
@@ -213,7 +223,7 @@ def _build_evidence_checklist(
         _add(
             "cross_border_safeguards",
             "Cross-border transfer safeguards / international DPAs",
-            "Assessed against Section 16 transfer restrictions",
+            "Assessed against {statute_refs} transfer restrictions",
             True,
             ["CB.TRANSFER.1", "CB.TRANSFER.2", "CB.TRANSFER.3"],
         )
@@ -230,7 +240,7 @@ def _build_evidence_checklist(
         _add(
             "parental_consent",
             "Parental consent forms / guardian verification process",
-            "Assessed for verifiable parental consent (Section 9(1))",
+            "Assessed for verifiable parental consent ({statute_refs})",
             True,
             ["CH2.CONSENT.5", "CH4.CHILD.1", "CH4.CHILD.2"],
         )
@@ -240,21 +250,21 @@ def _build_evidence_checklist(
         _add(
             "dpo_appointment",
             "Data Protection Officer (DPO) appointment documentation",
-            "SDF obligation — DPO must be India-based (Section 10(2)(a))",
+            "SDF obligation — DPO must be India-based ({statute_refs})",
             True,
             ["CH4.SDF.1"],
         )
         _add(
             "dpia_reports",
             "Data Protection Impact Assessment (DPIA) reports",
-            "SDF obligation — periodic DPIAs required (Section 10(2)(c))",
+            "SDF obligation — periodic DPIAs required ({statute_refs})",
             True,
             ["CH4.SDF.3"],
         )
         _add(
             "audit_reports",
             "Privacy / compliance audit reports",
-            "SDF obligation — periodic audits required (Section 10(2)(d))",
+            "SDF obligation — periodic audits required ({statute_refs})",
             False,
             ["CH4.SDF.4", "CH4.SDF.2"],
         )
@@ -264,7 +274,7 @@ def _build_evidence_checklist(
         _add(
             "hr_privacy_notices",
             "Employee privacy notices / HR data policy",
-            "Employee data has legitimate use basis under Section 7 — policy evidence needed",
+            "Employee data has legitimate use basis under {statute_refs} — policy evidence needed",
             False,
             ["CH2.PURPOSE.2", "CH2.NOTICE.1"],
         )
@@ -283,8 +293,6 @@ def compute_scope_multi(
     keep all controls applicable, produce consultant-facing applicability
     proposals, and contribute evidence requests merged by document type.
     """
-    from app.frameworks.registry import FrameworkRegistry
-
     all_applicable: list[str] = []
     all_excluded: list[dict] = []
     all_flags: dict = {}
