@@ -2,6 +2,47 @@
 
 Opaque neutral surfaces, readable audit text and a stable app frame replace the current glass system. This is the target contract for migration, not a change to production tokens.
 
+## Second-pass amendment (13 Oct 2026, approved by Saqlain)
+
+Saqlain reviewed the first prototypes, rejected their text hierarchy and both navigation options, and approved the redrawn questionnaire, review queue and stepper. Where this section and the rest of this document disagree, this section wins. The source of truth for values is `docs/ui-audit/prototypes/prototype.css`; the six prototype screens show the intended result.
+
+**Type roles.** Seven roles, each a fixed size, line-height and weight. No other font size is allowed.
+
+| Role | Size / line-height / weight | Used for |
+| --- | --- | --- |
+| Title | 26px / 1.2 / 600 | The one thing the view is about: page title, or the selected finding's gap title |
+| Heading | 20px / 1.35 / 600 | A section; the question being asked |
+| Lead | 18px / 1.5 / 400 | The statement to read first: gap statement, executive summary. Recommendation text is Lead at 600 |
+| Body | 16px / 1.55 / 400 | Anything read as a sentence |
+| UI | 14px / 1.45 / 400 | Controls, rows, navigation |
+| Caption | 13px / 1.4 / 400 | Identifiers and supporting facts |
+| Overline | 12px / 1.3 / 500, uppercase, 0.06em | Section labels inside a card or finding |
+
+Section labels inside content are overlines. The content under a label carries the weight, never the label. This replaces the earlier rule that all audit content is at least 14px: sentences are 16px or larger, and only identifiers, counts and labels use Caption or Overline.
+
+**Measure.** Reading text is capped at 42rem (about 75 characters at 16px). The question text and table cells may run wider; Saqlain asked for the question to use the full block. This replaces the 56ch cap.
+
+**Grouping.** Space first, a background shape second, a hairline last (tables and dense lists only). Surfaces are white on the grey page with a 1px shadow ring, no border. One shaded block per view marks the thing that matters most (the recommendation, the answer area).
+
+**Status.** A shape and a word in the status colour, never a filled pill: diamond for high or critical, half circle for partial or medium, filled circle for compliant or done, hollow circle for low, neutral or not started. The four status families stay.
+
+**Actions.** One filled button per view. Secondary actions are outlined. A destructive action is plain red text.
+
+**Navigation.** This replaces options A and B and every mention of a Section select.
+- A stepper replaces the stage bar: Overview, Scope, Evidence, Questionnaire, Review, Report, numbered, with a tick on completed stages. Every step is a link; it is not a forced wizard.
+- The open stage shows its sections inline beside its name as a segmented group (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Documents, Requests, Client links; Scope: Boundaries, Applicability). There is still never a second bar.
+- A single context line above the stepper carries the breadcrumb and the period and cut-off. The separate assessment header block is gone.
+- The global sidebar can be hidden with a button at the start of the context line. The state persists per user. Domain navigation inside the questionnaire stays visible when the sidebar is hidden.
+- At 1340px and below the stepper tightens its gaps so the widest stage (Review, four sections) fits at 1280 with the sidebar open.
+
+**Per screen.**
+- Questionnaire: questions in a domain are one-line rows (code, control name, response state); the open question shows the requirement as Heading, then "Rationale" and "Steering the response" side by side, then the answer area as the shaded block. The domain rail shows answered counts.
+- Review queue: list grouped into "To decide" and "Decided"; the detail leads with the gap title as Title, then one strip (compliance, risk, decision, proposed by), then gap, impact and the shaded recommendation; evidence, interviews and control sit in a quieter aside.
+- Conclusions: assessment sheet table; rows with a gap are heavier than rows without; "With a gap" filter and "Highest risk" sort; an open row uses the review detail layout.
+- Evidence requests: "In this RFI" and "Not yet requested" lists with sortable headers, evidence already held as a count and bar, and one filled "Generate RFI version" action.
+- Report: executive summary as Lead with the score and gap counts as facts beside it; domain table weakest first; high-risk gaps shown in full, medium-risk gaps as one-line rows that open; auditor detail as a filterable list of all controls.
+- Applicability: three counts, the standard justification stated once, the excluded controls with reasons, and a form to exclude another.
+
 ## Colour and surface tokens
 
 Names are semantic CSS variables. Surface steps are opaque. Borders separate regions; control borders also identify input boundaries. No backdrop blur, gradient, tinted full-page canvas or decorative elevation.

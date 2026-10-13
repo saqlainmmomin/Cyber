@@ -194,7 +194,7 @@ Seven archetypes cover all 31 screens. Each is built once in the gallery with re
 |---|---|---|
 | Inventory | Home, Clients, Engagements, Reports, Evidence inventory (3 scopes), Evidence reuse, Requests, RFI, Remediation, Findings, Conclusions, Versions, Comparison | T1 (agree); takes Conclusions from T4 and Versions and Comparison from T2 |
 | Entity | Client, Engagement overview, Assessment overview | T2 (changed: no generic card pages) |
-| Task | Questionnaire, Desk review, run states | T3 and T6 (changed: one stage bar, no stepper on every stage; the questionnaire is a workspace, not a forced wizard) |
+| Task | Questionnaire, Desk review, run states | T3 and T6 (changed: one stepper as navigation across stages, every step a link; the questionnaire is a workspace, not a forced wizard) |
 | Queue | Review queue, Portfolio review | T4 (changed: only the queue needs a permanent selection pane) |
 | Form | New engagement, New assessment, Scope with applicability, Settings, Board inputs, AWS evidence, Purge, Client upload | T5 (changed: SoA becomes a panel in Scope) |
 | Document | Evidence record, Workpaper, Narrative, Report (board and auditor views), Integrated reports | T7 (agree) |
@@ -202,12 +202,13 @@ Seven archetypes cover all 31 screens. Each is built once in the gallery with re
 
 ### 4.4 Navigation
 
-- One sidebar, one breadcrumb, one horizontal stage bar inside an assessment (Overview, Scope, Evidence, Questionnaire, Review, Report). Entering an assessment replaces the engagement's navigation.
-- **Never a second bar under the stage bar.** Sub-sections (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Inventory, Requests, Desk review, Reuse; Report: Versions, Comparison, Narrative, Board inputs) use one of two patterns, both prototyped. **Saqlain chooses before P0d:**
-  - Option A: one labelled "Section" select in the content toolbar (`review-queue.html`).
-  - Option B: the sections listed as nested links in the sidebar under the open assessment (`review-queue-sidebar.html`).
+- **Decided 13 Oct 2026 (Saqlain): a stepper, not option A or B.** One sidebar that can be hidden, one context line (breadcrumb, period and cut-off), and one stepper inside an assessment (Overview, Scope, Evidence, Questionnaire, Review, Report). Entering an assessment replaces the engagement's navigation.
+- Every step is a link. Completed stages show a tick. It is not a forced wizard.
+- **Never a second bar under the stepper.** The open stage shows its sections inline beside its name (Review: Queue, Conclusions, Findings, Workpaper; Evidence: Documents, Requests, Client links, plus Desk review and Reuse; Scope: Boundaries, Applicability; Report: Versions, Comparison, Narrative, Board inputs where they exist).
+- The sidebar hide state persists per user. The questionnaire's domain rail stays when the sidebar is hidden.
+- Full rules and type roles: the "Second-pass amendment" section at the top of `docs/ui-audit/DESIGN_SYSTEM.md` and `docs/ui-audit/NEXTJS_MIGRATION_UI_SPEC.md`. It overrides the rest of those documents and section 4.1 of this plan where they differ. Values: `docs/ui-audit/prototypes/prototype.css`.
 - Report board summary and auditor detail are two views of one page, switched by a two-option toggle, not navigation.
-- Stage links are links with `aria-current`. Section, framework, domain and selected finding are in the URL, so Back, reload and copied links restore them.
+- Steps and sections are links with `aria-current`. Section, framework, domain and selected finding are in the URL, so Back, reload and copied links restore them.
 - The shell Search field is not ported until it has a result contract.
 
 ### 4.5 Components
