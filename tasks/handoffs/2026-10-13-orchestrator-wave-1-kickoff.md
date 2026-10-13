@@ -134,14 +134,14 @@ If PR #142 is still open, push one commit to its branch adding a short "Wave 1" 
 
 ## Results
 
-Run 13 Oct 2026. Three Codex runs launched concurrently (about 20 minutes each), each reviewed by Sonnet subagents split by concern, each sent one fix round, each re-verified here with a fresh full suite. Nothing merged.
+Run 13 Oct 2026. Three Codex runs launched concurrently (about 20 minutes each), each reviewed by Sonnet subagents split by concern, each sent fix rounds as needed, each re-verified with a fresh full suite. Saqlain merged #143; #144 and #145 are open and mergeable in either order (trial merge, no conflict).
 
-| WP | PR | Tests before to after | Files | Fix round | Open issues |
+| WP | PR | Final tests | State | Fix rounds | Open issues |
 |---|---|---|---|---|---|
-| 2.2 statute citations | #143 | 1,748 to 1,749 (29 skipped) | 3 | No (I restored em dashes Codex had changed in curated text) | Pack line 8(4)-(6) and a few `Section 6` / `Section 8` strings in `questionnaire.py` and `clusters.py` left for legal review |
-| 1.3 reads stage 1 | #144 | 1,748 to 1,759 (29 skipped) | 17 | Yes: DPDPA desk review ordering restored, report line over-claimed "not read", legacy lists, outside-cut, manifest failure guard, multi-framework default shape, PDF overflow, HTML cap | PPTX/XLSX line, duplicate-filename and replaced-file notice polish, extraction-failure marker |
-| 1.1 vocabulary | #145 | 1,748 to 1,749 (29 skipped) | 36 | Yes: registry-empty fallback names, "Not concluded" leftovers, PCI-DSS stutter, one raw id | Wording changes need Saqlain's look (priority words, edition names dropped, issued-snapshot re-exports); guard has blind spots listed in the PR |
+| 2.2 statute citations | #143 | 1,749 passed / 29 skipped | Merged | One: restored em dashes Codex changed in curated text | Pack text "Section 8(4)-(6)" for BN.NOTIFY.3, `questionnaire.py:90`, `clusters.py:1013` and `1026` left for legal review |
+| 1.3 reads stage 1 | #144 | 1,761 passed / 29 skipped | Open | One: DPDPA desk review ordering, report over-claim, legacy lists, outside-cut, manifest failure guard, multi-framework default shape, PDF overflow, HTML cap | PPTX/XLSX evidence line, duplicate-filename and replaced-file notice polish, extraction-failure marker |
+| 1.1 vocabulary | #145 | 1,750 passed / 29 skipped | Open | One: registry-empty fallback names, "Not concluded" leftovers, PCI-DSS stutter, one raw id | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` |
 
-Process notes for the next wave: Codex edited `tasks/todo.md` in two worktrees despite the brief (reverted); its per-WP Results files stay untracked in the worktrees (`~/dpdpa-w1-*`), copies in `~/cyberassess-runs/wave1/`; CI registers no checks on these PRs; a zsh loop with a space-separated row does not word-split, so create worktrees from explicit arguments.
+Decisions Saqlain took on 13 Oct (priority map, remediation timeframe, Verified wording, board priority unified, citations, edition names, evidence-basis line) are recorded in `tasks/handoffs/2026-10-13-next-session-start-here.md` and as E9 in `tasks/2026-10-08-session-record.md`.
 
-Recommended merge order: 2.2, then 1.3, then 1.1 (1.1 needs a small rebase on the card template).
+Process notes: Codex edited `tasks/todo.md` despite the brief (reverted), left changes uncommitted, and left Results files untracked in the worktrees (`~/dpdpa-w1-*`, copies in `~/cyberassess-runs/wave1/`). CI registers no checks on these PRs. A zsh loop with a space-separated row does not word-split; use explicit arguments. Next session: start from `tasks/handoffs/2026-10-13-next-session-start-here.md`.

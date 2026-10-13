@@ -11,7 +11,7 @@ AI-powered multi-framework compliance maturity platform (DPDPA, ISO 27001, GDPR,
 
 All older plans in `docs/plans/` and `tasks/` are superseded. Do NOT use `2026-09-21-001-*`, `multi-framework-demo-plan.md`, or any plan dated before 2026-09-21 for implementation decisions.
 
-**Current phase (2026-10-08):** evidence fixes A-C (`tasks/handoffs/2026-10-08-evidence-fixes.md`), then Saqlain's decisions on test criteria and access-review checks, then flow-plan S3+ (`docs/plans/2026-10-07-001-flow-rework-plan.md`). Every PR must pass the AI-coherence test and the path rules in `tasks/2026-10-08-session-record.md`. v2 analysis parked (P6-5c). Local-only until Track 4.
+**Current phase (2026-10-13):** Wave 1 PRs #143 merged, #144 and #145 open or merged per Saqlain. Next is the queue in `tasks/handoffs/2026-10-13-next-session-start-here.md`. Every PR must pass the AI-coherence test and path rules in `tasks/2026-10-08-session-record.md`. v2 analysis parked (P6-5c). Local-only until Track 4.
 
 ## Running
 ```bash
