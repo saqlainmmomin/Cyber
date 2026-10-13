@@ -44,17 +44,19 @@ def main():
     out=PROTO/'screenshots';out.mkdir(exist_ok=True);results=[]
     with sync_playwright() as pw:
         browser=pw.chromium.launch()
-        for html in sorted(PROTO.glob('*.html')):
+        # (file, url suffix, screenshot stem): the suffix selects a state such as the hidden sidebar.
+        targets=[(h,'',h.stem) for h in sorted(PROTO.glob('*.html'))]+[(PROTO/'questionnaire.html','#wide','questionnaire-wide'),(PROTO/'review-queue.html','#wide','review-queue-wide')]
+        for html,suffix,stem in targets:
             for width in (1440,1280):
                 page=browser.new_page(viewport={'width':width,'height':1000},device_scale_factor=1)
                 errors=[];page.on('requestfailed',lambda r:errors.append(r.url))
-                page.goto(html.as_uri(),wait_until='networkidle');page.evaluate('document.fonts.ready');page.wait_for_timeout(300)
+                page.goto(html.as_uri()+suffix,wait_until='networkidle');page.evaluate('document.fonts.ready');page.wait_for_timeout(300)
                 data=page.evaluate(MEASURE)
-                shot=out/f'{html.stem}-{width}.png';page.screenshot(path=str(shot),full_page=True)
+                shot=out/f'{stem}-{width}.png';page.screenshot(path=str(shot),full_page=True)
                 if args.grey:
                     page.add_style_tag(content='html{filter:grayscale(1)!important}')
-                    Path(args.grey).mkdir(parents=True,exist_ok=True);page.screenshot(path=str(Path(args.grey)/f'{html.stem}-{width}-grey.png'),full_page=True)
-                results.append({'screen':html.stem,**data,'failedRequests':errors,'screenshot':str(shot.relative_to(PROTO))});page.close()
+                    Path(args.grey).mkdir(parents=True,exist_ok=True);page.screenshot(path=str(Path(args.grey)/f'{stem}-{width}-grey.png'),full_page=True)
+                results.append({'screen':stem,**data,'failedRequests':errors,'screenshot':str(shot.relative_to(PROTO))});page.close()
         browser.close()
     (PROTO/'measurements.json').write_text(json.dumps(results,indent=1)+'\n')
     for r in results:
