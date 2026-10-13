@@ -129,3 +129,74 @@ Two separate problems. Keep them apart.
 ## Prompt to start the session
 
 > Read `tasks/handoffs/2026-10-13-review-structure-and-rfi-kickoff.md` on branch `codex/ui-audit` (worktree `/Users/saqlainmomin/dpdpa-ui-audit`) and execute it. Write your results to the Results section of that file.
+
+## Results
+
+Session of 13 Oct 2026. Docs and static prototypes only; nothing under `app/`, `design/`, `tests/` or `scripts/` changed. No AI spend: the demo app was read with GET requests and the demo database read-only. No answer key was read.
+
+### 1. What the four Review screens do (read from templates, routes, models and the live demo)
+
+Demo ISO assessment `d491ee73`: 99 conclusions (64 compliant, 32 partially compliant, 2 non-compliant, 1 not applicable), all approved.
+
+| Screen | What it is | Source |
+| --- | --- | --- |
+| Queue | All conclusions, pending first. Decided items stay, in a "Decided" group. Each opens `components/conclusion_card.html` with approve, edit, reject. | `pages/review_queue.html`, `routers/requirement_review.py`, `services/review_queue.py` |
+| Conclusions | The same conclusions in a table. A row expands to the same `conclusion_card.html`. Unique content: counts, period and sign-off, release panel. `/review` redirects here. | `pages/conclusions.html`, `web.py` `conclusions_page` |
+| Findings | A second table (`findings`, with `actions`). A finding is created by hand, one form per approved gap, prefilled from the conclusion; one finding per conclusion. It adds severity, remediation order, and actions with owner, target date, status, history and closure evidence. | `pages/findings.html`, `services/findings.py` `create_finding`, `models/finding.py`, `models/action.py` |
+| Workpaper | Analysis runs, then one entry per requirement (all 99 on one page, about 1 MB of HTML): client response and follow-ups, mapped evidence with links, desk review notes, AI proposal with quality checks and citations, consultant decision, revision history. Then excluded and unconcluded requirements. | `pages/workpaper.html`, `components/workpaper_entry.html`, `services/workpaper.py` |
+
+Two corrections to this handoff's own reading (it was made from headings only):
+
+- **The workpaper is not just an audit trail table.** It is close to what Saqlain described: a per-requirement record of what the client said, what the evidence showed, what was proposed and what was decided, with links. What it lacks: it is records, not an account of how each source moved the conclusion; it is not attached to a gap; no interview record exists anywhere.
+- **The finding record matters more than "remediation tracking".** `report_content.assessment_findings` reads findings, and the PDF findings section (`routers/reports.py`), the board deck (`board_report.py`), the narrative (`narrative.py`), board inputs, the engagement remediation tracker (`remediation_rollup.py`) and the actions spreadsheet (`actions_export.py`) all read it. In the demo, 34 conclusions have a gap, 6 have a finding and 28 wait for someone to press "Create finding", so 28 gaps are absent from all of those. The on-screen report reads conclusions, so the two can disagree.
+
+### 2. Saqlain's decision (13 Oct 2026, in chat)
+
+Review is two screens: **Queue** and **Gaps**. He chose the recommended option on all four questions.
+
+| Question | Decision |
+| --- | --- |
+| Compliant controls | An "All controls" filter on Gaps. Gaps opens on controls with a gap. |
+| Remediation (today's Findings) | A section of the gap. Approving a gap creates the record; the manual "Create finding" step goes. Backend change B10. |
+| Workpaper | A section of each control, plus one "Export workpaper" for the whole assessment (the app already renders `reports/workpaper_standalone.html`). No Workpaper screen. |
+| Run trail | Analysis runs to Overview. Excluded and unconcluded requirements to the report's auditor detail and the exported workpaper. |
+
+Period, sign-off and release panels, which sat on Conclusions, move to Report (my placement; he was not asked this separately).
+
+### 3. What changed
+
+Commit `6d895b5` on `codex/ui-audit`, plus the commit that adds this section.
+
+- **Prototypes.** `conclusions.html` is replaced by `gaps.html`. Stepper shows Review: Queue, Gaps. The register has six columns (domain, control, gap, risk, status, owner). An open gap shows the Remediation block, then "How this was concluded" in four steps, with evidence links, the control and "Reopen decision" at the side. The four steps use real demo data collected by the new `docs/ui-audit/tools/extract_workpaper.py` (GET only) into `prototypes/workpaper.json`. Three gaps have a real remediation record; eight show "Not assigned" and are marked illustrative (`gap-remediation-N`), because the record is created by hand today.
+- **Evidence request detail** (`rfi()` in `build_prototypes.py`). Clause codes are no longer inline. One "Show controls supported" button per request reveals them under each document name; it is a real button, so keyboard and touch work. The Example slot is removed (it restated the title on every request). "What good looks like" renders only when most of its words are not already in the title (this hides it on one of 40 requests). The document list is still split mechanically on closing brackets.
+- **Board summary.** Two high-risk gaps per domain open, the rest behind "Show N more high-risk gaps". Height at 1440: 5,930px to 3,406px. Offered, not requested; easy to revert.
+- **Docs.** Second-pass amendment in `DESIGN_SYSTEM.md` and `NEXTJS_MIGRATION_UI_SPEC.md` gains a "Review structure" block and updated navigation and per-screen lines. Spec sections "Review hierarchy", "Gaps" (was "Conclusions") and "RFI" updated; requirements R11, C01 to C03 and F03 reworded. Plan: 4.4 (decision and reason), 6.1 (P5 is two ports, about 26 PRs), 6.2 (new B10, 10 backend PRs, needs a decision record because it changes what existing reports contain), 6.3 (C6 brief from Saqlain's RFI notes), 7 (P5 Review table has Queue and Gaps).
+- **Tools.** `verify_audit.py` follows the new structure and checks that no clause code is inline and no Example slot renders. `capture_prototypes.py` also captures `gaps.html#open` and `#all`.
+
+### 4. Checks run
+
+- `python3 docs/ui-audit/tools/verify_audit.py`: PASS on a clean tree (190 illustrative IDs, 60 requirements, six prototypes).
+- `capture_prototypes.py` at 1440 and 1280: no horizontal overflow on any screen, no failed requests. Gaps 1,254px; one gap open 2,221px; longest text line 79 characters.
+- Keyboard pass (Playwright, Tab and Enter) on Gaps, evidence requests, report and queue: the row disclosure, "Show controls supported", "Show N more" and Approve are all reachable, every stop has a visible focus ring, and each toggle reports `aria-expanded`.
+- Greyscale captures made for every screen; Gaps inspected by eye (risk and status read by shape and word). The others were not inspected one by one.
+- Evidence request detail checked at 390px wide: no overflow.
+
+### 5. For the content session (not done here)
+
+- Per request: a short list of documents that matches the title. The access control request is titled for two things and lists seventeen.
+- Per document: the controls it supports, as structured data, so the screen stops splitting a paragraph.
+- "What good looks like" should state acceptance criteria, not restate the title. Decide whether Example returns with real examples.
+- Recorded, not designed: a first-level request (policy, procedure, record) with more requested after review.
+
+### 6. Still open
+
+- Final approval of the prototypes and plan: see below.
+- Queue: decided items still sit in a "Decided" group until the reviewer leaves, so a decision can be undone where it was made. Saqlain's words were that items leave when decided. Put to him on the review page.
+- Overview (analysis runs) and the report's excluded and unconcluded lists are in the plan and spec but not drawn.
+- Multi-framework questionnaire: specified, not drawn.
+- Report and Applicability: no notes from him last round; not yet approved explicitly.
+- Keyboard and greyscale not rechecked on Questionnaire and Applicability.
+- The spec and design system still carry the second-pass rules as an amendment over older text. Older body text that names Conclusions, Findings or Workpaper as screens is overridden by the amendment, not rewritten.
+- PR #141: recommended to merge before the build starts. Saqlain merges.
+
+Review page (private to Saqlain): https://claude.ai/artifact/9uj6BYMdsm9NKuiedj4evk. Its builder was in the session scratchpad and may be gone; rebuild from `docs/ui-audit/prototypes/screenshots/`.
