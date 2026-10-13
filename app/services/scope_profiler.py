@@ -118,13 +118,42 @@ def compute_scope(scope_answers: dict) -> dict:
     }
 
 
+def _split_citations(section_ref: str) -> list[str]:
+    """Split one pack reference into single citations ("Section 6(3), 8(9)" gives two)."""
+    citations = []
+    for part in section_ref.split(";"):
+        part = part.strip()
+        if part.startswith("Section "):
+            first, *rest = [piece.strip() for piece in part[len("Section "):].split(",")]
+            citations.append(f"Section {first}")
+            citations.extend(f"Section {piece}" for piece in rest if piece)
+        elif part:
+            citations.append(part)
+    return citations
+
+
 def statute_refs(requirement_ids: list[str]) -> list[str]:
-    """Return mapped DPDPA pack references once each, in requirement order."""
+    """Return the mapped DPDPA pack citations once each, in requirement order.
+
+    A pack reference can hold several citations ("Section 8(5); DPDP Rules 2025
+    r.6(1)(a)-(b)"). They are split and de-duplicated one by one, and a citation
+    is dropped when a more specific one under it is also listed (Section 16 next
+    to Section 16(1)), so the checklist stays short and every citation traces to
+    a pack reference.
+    """
     dpdpa = FrameworkRegistry.get_or_none("dpdpa")
     # Direct legacy callers can build a checklist before app startup registers packs.
     requirements = dpdpa.all_controls_enriched() if dpdpa else get_all_requirements()
     references = {req["id"]: req["section_ref"] for req in requirements}
-    return list(dict.fromkeys(references[req_id] for req_id in requirement_ids))
+    citations = list(dict.fromkeys(
+        citation
+        for req_id in requirement_ids
+        for citation in _split_citations(references[req_id])
+    ))
+    return [
+        citation for citation in citations
+        if not any(other.startswith(citation + "(") for other in citations)
+    ]
 
 
 def _build_evidence_checklist(
@@ -274,7 +303,7 @@ def _build_evidence_checklist(
         _add(
             "hr_privacy_notices",
             "Employee privacy notices / HR data policy",
-            "Employee data has legitimate use basis under {statute_refs} — policy evidence needed",
+            "Employee data has legitimate use basis ({statute_refs}) — policy evidence needed",
             False,
             ["CH2.PURPOSE.2", "CH2.NOTICE.1"],
         )
