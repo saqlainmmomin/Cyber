@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime, timezone
 
 import pytest
 from alembic import command
@@ -41,6 +42,9 @@ def test_form_lists_only_enabled_frameworks(db, http):
     for framework_id in web.ROADMAP_FRAMEWORKS:
         assert f'value="{framework_id}"' not in page.text
     assert 'name="name"' in page.text and 'name="description"' in page.text
+    name_input = page.text.split('name="name"', 1)[1].split(">", 1)[0]
+    assert "required" in name_input
+    assert "Without a name, the assessment uses the client name" not in page.text
     assert http.get("/engagements/missing/assessments/new").status_code == 404
 
 
@@ -95,16 +99,20 @@ def test_create_inherits_the_client_and_redirects_to_the_assessment(db, http):
     assert http.get(f"/assessments/{created.id}").status_code == 200
 
 
-def test_name_is_optional_and_falls_back_to_the_company_name(db, http):
-    client, engagement, _first = seed_engagement(db, client_name="Kestrel Health")
+def test_name_is_required_and_legacy_rows_use_framework_and_date(db, http):
+    _client, engagement, _first = seed_engagement(db, client_name="Kestrel Health")
     response = _post(http, engagement.id, name="", selected_frameworks="dpdpa")
-    assert response.status_code == 303
-    created = db.get(Assessment, response.headers["location"].rsplit("/", 1)[-1])
-    assert created.name is None
-    assert created.display_name == "Kestrel Health" == client.name
-    # Legacy rows have no name either; the display falls back the same way.
-    unnamed = Assessment(company_name="Brightfold Learning", industry="education", company_size="small")
-    assert unnamed.display_name == "Brightfold Learning"
+    assert response.status_code == 400
+    assert web.ADD_ASSESSMENT_NAME_REQUIRED in response.text
+    assert db.query(Assessment).filter(Assessment.engagement_id == engagement.id).count() == 1
+    unnamed = Assessment(
+        company_name="Brightfold Learning",
+        industry="education",
+        company_size="small",
+        selected_frameworks=json.dumps(["dpdpa", "iso27001"]),
+        created_at=datetime(2026, 10, 14, tzinfo=timezone.utc),
+    )
+    assert unnamed.display_name == "India DPDPA + ISO 27001 · 14 Oct 2026"
 
 
 @pytest.mark.parametrize(

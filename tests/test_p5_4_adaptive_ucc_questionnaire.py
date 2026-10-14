@@ -908,6 +908,8 @@ def test_scenario_12_screening_visibility_and_copy(db, http, monkeypatch):
 
     for frameworks in (("iso27001",), ("dpdpa", "iso27001")):
         assessment = _seed(db, frameworks)
+        # Named, so the header's fallback name (which lists the frameworks) cannot trip the copy check below.
+        assessment.name = "Screening copy check"
         assessment.context_answers = "[]"
         db.commit()
         page = http.get(f"/assessments/{assessment.id}?tab=questionnaire")

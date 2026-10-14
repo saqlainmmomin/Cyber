@@ -2,14 +2,13 @@
 {# Client-scoped engagement table. #}
 {% if engagements %}
 <div class="solid"><table>
-  <thead><tr><th>Engagement</th><th>Status</th><th>Assessments</th><th>Progress</th><th>Updated</th><th></th></tr></thead>
+  <thead><tr><th>Engagement</th><th>Earliest stage</th><th>Assessments</th><th>Updated</th><th></th></tr></thead>
   <tbody>
     {% for engagement in engagements %}
     <tr>
       <td class="t-title"><a href="/engagements/{{ engagement.id }}">{{ engagement.name }}</a></td>
-      <td>{{ pill(engagement.derived_status_label, "neutral") }}</td>
+      <td>{{ pill(engagement.stage_label, "neutral") }}{% if engagement.summary != engagement.stage_label %}<div class="t-sub">{{ engagement.summary }}</div>{% endif %}{% if engagement.earliest_note %}<div class="t-sub">{{ engagement.earliest_note }}</div>{% endif %}</td>
       <td>{{ engagement.assessment_count }}</td>
-      <td>{{ engagement.progress_pct }}%</td>
       <td>{{ engagement.last_activity.strftime('%d %b %Y') }}</td>
       <td><a class="btn ghost sm" href="/engagements/{{ engagement.id }}">Open</a></td>
     </tr>

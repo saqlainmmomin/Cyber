@@ -17,9 +17,9 @@
   <div class="solid card" aria-busy="true">{{ skeleton("55%") }}{{ skeleton("90%", margin_top="14px") }}{{ skeleton("70%", margin_top="14px") }}</div>
 {% elif engagements %}
   <div class="solid"><table>
-    <thead><tr><th>Engagement</th><th class="hide-sm">Stage</th><th class="n">Progress</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead>
+    <thead><tr><th>Engagement</th><th>Earliest stage</th><th class="n hide-sm">Updated</th><th class="hide-sm"></th></tr></thead>
     <tbody>{% for engagement in engagements %}
-      <tr data-href="{{ engagement.href }}"><td><a class="t-title" href="{{ engagement.href }}">{{ engagement.name }}</a></td><td class="hide-sm">{% if engagement.stage_label == "In review" %}{{ status(engagement.stage_label, tone="accent") }}{% elif engagement.stage_label == "Report released" %}{{ status(engagement.stage_label, tone="neutral") }}{% else %}{{ status(engagement.stage_label) }}{% endif %}</td><td class="n num">{{ engagement.progress_pct }}%</td><td class="n num hide-sm">{{ engagement.last_activity.strftime("%-d %b %Y") }}</td><td class="go hide-sm"><a href="{{ engagement.href }}" aria-label="Open {{ engagement.name }}">{{ icon("chev-r") }}</a></td></tr>
+      <tr data-href="{{ engagement.href }}"><td><a class="t-title" href="{{ engagement.href }}">{{ engagement.name }}</a></td><td>{{ status(engagement.stage_label, tone="accent" if engagement.stage == "review" else "neutral") }}{% if engagement.summary != engagement.stage_label %}<div class="t-sub">{{ engagement.summary }}</div>{% endif %}{% if engagement.earliest_note %}<div class="t-sub">{{ engagement.earliest_note }}</div>{% endif %}</td><td class="n num hide-sm">{{ engagement.last_activity.strftime("%-d %b %Y") }}</td><td class="go hide-sm"><a href="{{ engagement.href }}" aria-label="Open {{ engagement.name }}">{{ icon("chev-r") }}</a></td></tr>
     {% endfor %}</tbody>
   </table></div>
 {% else %}

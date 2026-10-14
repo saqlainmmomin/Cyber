@@ -20,8 +20,8 @@
   <section class="solid card">
     <h2>Assessment details</h2>
     <label class="label" for="assessment-name">Name</label>
-    <label class="field"><input id="assessment-name" name="name" value="{{ form_values.name }}" maxlength="255" placeholder="For example, Head office"></label>
-    <p class="help">Optional. Without a name, the assessment uses the client name.</p>
+    <label class="field"><input id="assessment-name" name="name" value="{{ form_values.name }}" maxlength="255" required placeholder="For example, Head office"></label>
+    <p class="help">Choose a name that distinguishes this assessment from others in the engagement.</p>
     <label class="label" for="assessment-description">Scope</label>
     <label class="field area"><textarea id="assessment-description" name="description" placeholder="Which sites, systems or business units this covers">{{ form_values.description }}</textarea></label>
   </section>
