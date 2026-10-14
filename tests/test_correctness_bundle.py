@@ -12,6 +12,8 @@ from types import SimpleNamespace
 
 import pdfplumber
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
 from fastapi import HTTPException
@@ -647,12 +649,9 @@ def test_failed_framework_blocks_release_but_draft_pdf_and_integrated_report_exp
     assert retired.status_code == 410
     assert retired.json()["detail"] == LEGACY_RFI_RETIRED
 
-    draft = http.post(
-        f"/api/assessments/{assessment.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    )
-    assert draft.status_code == 200
-    snapshot_id = draft.json()["snapshot_id"]
+    draft = stored_gap_snapshot(db, assessment)
+    assert draft.type == "gap_report"
+    snapshot_id = draft.id
     issued = http.post(
         f"/api/assessments/{assessment.id}/snapshots/{snapshot_id}/issue",
         data={"reviewer_name": "Priya"},

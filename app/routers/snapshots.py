@@ -126,6 +126,9 @@ def generate_snapshot(
     if type == "integrated_report":
         db.rollback()
         return _error(400, "Integrated engagement reports are not available yet.")
+    if type == "gap_report":
+        db.rollback()
+        return _error(400, "Gap reports are no longer generated. Create a board report instead.")
 
     snapshot = None
     try:

@@ -12,6 +12,8 @@ from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
@@ -246,7 +248,7 @@ def _direct_decision(db, conclusion, action, *, actor="consultant:Priya"):
     db.commit()
 
 
-def _generate(http, assessment_id, snapshot_type="gap_report", reviewer="Priya"):
+def _generate(http, assessment_id, snapshot_type="workpaper", reviewer="Priya"):
     return http.post(
         f"/api/assessments/{assessment_id}/snapshots",
         data={"type": snapshot_type, "reviewer_name": reviewer},
@@ -309,11 +311,8 @@ def test_generate_issue_regenerate_preserves_the_issued_artifact(
     """Scenario 1: generate, issue and regenerate without replacing v1."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
 
-    first_response = _generate(http, assessment.id)
-    assert first_response.status_code == 200
-    assert first_response.headers["HX-Redirect"] == f"/assessments/{assessment.id}/snapshots"
-    assert first_response.json()["is_issued"] is False
-    first = db.get(ReportSnapshot, first_response.json()["snapshot_id"])
+    first = stored_gap_snapshot(db, assessment)
+    assert first.is_issued is False
     assert (first.type, first.format, first.is_issued, first.engagement_id) == (
         "gap_report",
         "pdf",
@@ -329,8 +328,7 @@ def test_generate_issue_regenerate_preserves_the_issued_artifact(
     assert db.get(ReportSnapshot, first.id).is_issued is True
     first_hash = _generated_meta(db, first.id)["sha256"]
 
-    second_response = _generate(http, assessment.id)
-    assert second_response.status_code == 200
+    stored_gap_snapshot(db, assessment)
     rows = _snapshot_objects(db, assessment.id)
     assert len(rows) == 2
     assert rows[0].is_issued is True and rows[1].is_issued is False
@@ -351,7 +349,7 @@ def test_regeneration_keeps_drafts_and_only_newest_can_issue(
 ):
     """Scenario 2: superseded drafts remain immutable and cannot issue."""
     assessment, _conclusion = _run_one(db, gate, monkeypatch)
-    ids = [_generate(http, assessment.id).json()["snapshot_id"] for _ in range(3)]
+    ids = [stored_gap_snapshot(db, assessment).id for _ in range(3)]
     rows = report_snapshots.snapshot_rows(db, assessment)["gap_report"]
     assert [row.state for row in rows] == ["draft", "superseded_draft", "superseded_draft"]
     assert [row.sequence for row in rows] == [3, 2, 1]
@@ -365,7 +363,7 @@ def test_regeneration_keeps_drafts_and_only_newest_can_issue(
     assert _state(db, upload_root) == before
     assert _issue(http, assessment.id, ids[2]).status_code == 200
 
-    fourth = _generate(http, assessment.id).json()["snapshot_id"]
+    fourth = stored_gap_snapshot(db, assessment).id
     assert _issue(http, assessment.id, fourth).status_code == 200
     groups = report_snapshots.snapshot_rows(db, assessment)["gap_report"]
     issued = [row for row in groups if row.state == "issued"]
@@ -376,7 +374,7 @@ def test_regeneration_keeps_drafts_and_only_newest_can_issue(
 def test_issue_is_one_way_single_and_source_guarded(db, http, gate, monkeypatch, fake_pdf):
     """Scenario 3: issue is one-way and produces one release event."""
     assessment, _conclusion = _run_one(db, gate, monkeypatch)
-    snapshot_id = _generate(http, assessment.id).json()["snapshot_id"]
+    snapshot_id = stored_gap_snapshot(db, assessment).id
     assert _issue(http, assessment.id, snapshot_id).status_code == 200
     refused = _issue(http, assessment.id, snapshot_id)
     assert refused.status_code == 409
@@ -412,7 +410,7 @@ def test_issued_snapshot_survives_conclusion_and_analysis_changes(
 ):
     """Scenario 4: later source changes cannot alter an issued file."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
-    first_id = _generate(http, assessment.id).json()["snapshot_id"]
+    first_id = stored_gap_snapshot(db, assessment).id
     assert _issue(http, assessment.id, first_id).status_code == 200
     first_meta = _generated_meta(db, first_id)
     first_bytes = (upload_root / db.get(ReportSnapshot, first_id).storage_path).read_bytes()
@@ -429,7 +427,7 @@ def test_issued_snapshot_survives_conclusion_and_analysis_changes(
     assert hashlib.sha256(first_bytes).hexdigest() == first_meta["sha256"]
     assert report_snapshots.snapshot_rows(db, assessment)["gap_report"][0].source_changed is True
 
-    second_id = _generate(http, assessment.id).json()["snapshot_id"]
+    second_id = stored_gap_snapshot(db, assessment).id
     second_meta = _generated_meta(db, second_id)
     assert second_meta["source"]["conclusion_versions"] != first_meta["source"]["conclusion_versions"]
     assert second_meta["source"]["gap_report_id"] != first_meta["source"]["gap_report_id"]
@@ -440,7 +438,7 @@ def test_integrity_checks_refuse_tampered_or_missing_files(
 ):
     """Scenario 5: reads and issues fail closed on file tampering or loss."""
     assessment, _conclusion = _run_one(db, gate, monkeypatch)
-    first_id = _generate(http, assessment.id).json()["snapshot_id"]
+    first_id = stored_gap_snapshot(db, assessment).id
     first = db.get(ReportSnapshot, first_id)
     (upload_root / first.storage_path).write_bytes(b"tampered")
     read = http.get(f"/api/assessments/{assessment.id}/snapshots/{first_id}/file")
@@ -452,22 +450,22 @@ def test_integrity_checks_refuse_tampered_or_missing_files(
     assert _state(db, upload_root) == before
     assert db.get(ReportSnapshot, first_id).is_issued is False
 
-    second_id = _generate(http, assessment.id).json()["snapshot_id"]
+    second_id = stored_gap_snapshot(db, assessment).id
     second = db.get(ReportSnapshot, second_id)
     (upload_root / second.storage_path).unlink()
     missing = http.get(f"/api/assessments/{assessment.id}/snapshots/{second_id}/file")
     assert missing.status_code == 500 and missing.json()["detail"] == INTEGRITY_MESSAGE
 
 
-def test_release_gate_applies_to_gap_generation_and_all_issues(
+def test_release_gate_applies_to_live_gap_pdf_and_all_issues(
     db, http, gate, monkeypatch, fake_pdf, upload_root
 ):
     """Scenario 6: release approval gates PDFs and every issue operation."""
     assessment, _conclusion = _run_one(db, gate, monkeypatch, approved=False)
     before = _state(db, upload_root)
-    refused = _generate(http, assessment.id)
+    refused = http.get(f"/api/assessments/{assessment.id}/report/pdf")
     assert refused.status_code == 403
-    assert unquote(refused.headers["X-Toast-Message"]) == (
+    assert refused.json()["detail"] == (
         "Report not yet approved for release. Complete the review process first."
     )
     assert _state(db, upload_root) == before
@@ -488,7 +486,7 @@ def test_release_gate_applies_to_gap_generation_and_all_issues(
 
     unanalysed = _seed(db, client_name="No Report")
     before_missing = _state(db, upload_root)
-    missing = _generate(http, unanalysed.id)
+    missing = http.get(f"/api/assessments/{unanalysed.id}/report/pdf")
     assert missing.status_code == 404
     assert missing.json()["detail"] == "No report found. Run analysis first."
     assert _state(db, upload_root) == before_missing
@@ -524,8 +522,7 @@ def test_audit_records_capture_exact_hash_manifest_and_actor(
 ):
     """Scenario 8: generation and issue events hold exact provenance."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
-    response = _generate(http, assessment.id)
-    snapshot = db.get(ReportSnapshot, response.json()["snapshot_id"])
+    snapshot = stored_gap_snapshot(db, assessment)
     generated = _events(db, snapshot.id, report_snapshots.GENERATED_ACTION)[0]
     metadata = json.loads(generated.metadata_json)
     assert set(metadata) == {
@@ -573,7 +570,7 @@ def test_validation_scoping_and_unknown_resources_write_nothing(
         assert response.json()["detail"] == message
         assert _state(db, upload_root) == before
 
-    snapshot_id = _generate(http, assessment.id).json()["snapshot_id"]
+    snapshot_id = stored_gap_snapshot(db, assessment).id
     other = _seed(db, client_name="Other")
     unknown = "00000000-0000-0000-0000-000000000000"
     for method, url in (
@@ -746,12 +743,15 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
     assessment, conclusion = _run_one(db, gate, monkeypatch)
     empty = http.get(f"/assessments/{assessment.id}/snapshots")
     assert empty.status_code == 200
-    assert empty.text.count("data-snapshot-type=") == 3  # P6-8: + board_report
-    assert empty.text.count("No versions generated yet.") == 3
+    assert empty.text.count("data-snapshot-type=") == 2  # Empty gap report group is hidden.
+    assert 'data-report-type="gap_report"' not in empty.text
+    assert 'name="type" value="board_report"' in empty.text
+    assert 'name="type" value="gap_report"' not in empty.text
+    assert empty.text.count("No versions generated yet.") == 2
 
-    ids = [_generate(http, assessment.id).json()["snapshot_id"] for _ in range(3)]
+    ids = [stored_gap_snapshot(db, assessment).id for _ in range(3)]
     assert _issue(http, assessment.id, ids[2]).status_code == 200
-    fourth = _generate(http, assessment.id).json()["snapshot_id"]
+    fourth = stored_gap_snapshot(db, assessment).id
     assert _issue(http, assessment.id, fourth).status_code == 200
     page = http.get(f"/assessments/{assessment.id}/snapshots").text
     assert page.count("data-snapshot-row") == 4
@@ -762,7 +762,7 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
         assert f"/snapshots/{snapshot_id}/file" in page
     assert "consultant:Priya" not in page and "Priya" in page
 
-    newest = _generate(http, assessment.id).json()["snapshot_id"]
+    newest = stored_gap_snapshot(db, assessment).id
     page = http.get(f"/assessments/{assessment.id}/snapshots").text
     assert page.count("data-issue-control") == 1
     newest_row = re.search(
@@ -774,7 +774,7 @@ def test_report_versions_page_renders_states_controls_and_escaped_content(
     assessment.company_name = "<script>x</script>"
     db.commit()
     pending = http.get(f"/assessments/{assessment.id}/snapshots").text
-    assert "Generating a gap report requires the report to be released." in pending
+    assert "Generating a gap report requires the report to be released." not in pending
     assert "&lt;script&gt;x&lt;/script&gt;" in pending
     assert "<script>x</script>" not in pending
 
@@ -806,3 +806,51 @@ def test_live_routes_remain_unversioned_and_links_distinguish_them(
     page_source = (REPO_ROOT / "app/templates/pages/assessment.html").read_text()
     assert "Download PDF" not in page_source
     assert "PDF Report" not in page_source
+
+
+def test_gap_report_creation_is_retired_without_writing(
+    db, http, gate, monkeypatch, fake_pdf, upload_root
+):
+    assessment, _ = _run_one(db, gate, monkeypatch)
+    before = _state(db, upload_root)
+    response = _generate(http, assessment.id, "gap_report")
+    message = "Gap reports are no longer generated. Create a board report instead."
+    assert response.status_code == 400
+    assert response.json()["detail"] == message
+    assert unquote(response.headers["X-Toast-Message"]) == message
+    assert response.headers["X-Toast-Type"] == "error"
+    assert _state(db, upload_root) == before
+    assert fake_pdf == []
+
+
+def test_board_report_creation_still_returns_a_stored_version(
+    db, http, gate, monkeypatch, upload_root
+):
+    from app.services import board_report
+
+    assessment, _ = _run_one(db, gate, monkeypatch)
+    monkeypatch.setattr(board_report, "render_pdf", lambda *_args, **_kwargs: b"%PDF-1.4 board")
+    response = _generate(http, assessment.id, "board_report")
+    assert response.status_code == 200
+    assert response.headers["HX-Redirect"] == f"/assessments/{assessment.id}/snapshots"
+    assert response.json()["type"] == "board_report"
+    assert response.json()["is_issued"] is False
+    snapshot = db.get(ReportSnapshot, response.json()["snapshot_id"])
+    assert report_snapshots.read_snapshot_bytes(db, snapshot) == b"%PDF-1.4 board"
+
+
+def test_stored_gap_report_remains_listed_and_downloadable(
+    db, http, gate, monkeypatch, fake_pdf
+):
+    assessment, _ = _run_one(db, gate, monkeypatch)
+    snapshot = stored_gap_snapshot(db, assessment)
+    page = http.get(f"/assessments/{assessment.id}/snapshots")
+    assert page.status_code == 200
+    assert f'data-snapshot-id="{snapshot.id}"' in page.text
+    assert f"/snapshots/{snapshot.id}/file" in page.text
+    assert 'name="type" value="gap_report"' not in page.text
+    response = http.get(f"/api/assessments/{assessment.id}/snapshots/{snapshot.id}/file")
+    assert response.status_code == 200
+    assert response.content == fake_pdf[0]
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["X-Snapshot-Sha256"] == hashlib.sha256(fake_pdf[0]).hexdigest()

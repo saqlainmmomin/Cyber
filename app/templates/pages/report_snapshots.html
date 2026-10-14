@@ -6,7 +6,6 @@
 {% set basis = report_basis %}
 {% set preview = preview_state|default("") %}
 {% set show_generate = release.released and preview != "loading" %}
-{% set panel = report_panel|default("gap") %}
 
 {% macro snapshot_status(row) -%}
   {% if row.state == "issued" %}
@@ -43,9 +42,6 @@
   <div class="s8-group-head">
     <div>
       <h2>{{ {"gap_report": "Gap report", "board_report": "Board report", "workpaper": "Workpaper"}.get(type, type_labels[type]) }}</h2>
-      {% if type == "gap_report" and not release.released %}
-      <p class="help">Generating a gap report requires the report to be released.</p>
-      {% endif %}
       {% if type == "board_report" %}
       <div class="s8-group-links">
         {% if release.released %}<a data-board-report-preview href="/api/assessments/{{ assessment.id }}/board-report/preview">Preview the board report</a>{% else %}<span>Generating a board report requires the report to be released.</span>{% endif %}
@@ -56,7 +52,7 @@
     </div>
   </div>
   {% if not rows %}
-    <div class="glass empty s8-inline-empty"><h3>No versions generated yet.</h3><p>Generate a version to see it here. Earlier versions are never overwritten.</p></div>
+    <div class="glass empty s8-inline-empty"><h3>No versions generated yet.</h3><p>{% if type == "gap_report" %}Existing gap report versions remain available here. Create a board report for new versions.{% else %}Generate a version to see it here. Earlier versions are never overwritten.{% endif %}</p></div>
   {% else %}
   <div class="solid rows s8-version-list"><table><tbody>
     {% for row in rows %}
@@ -75,48 +71,28 @@
 
 {% block content %}
 {% set design_preview = request.url.path.startswith("/design/pages/") %}
-{% set active_report_type = "board_report" if panel == "board" else "gap_report" %}
-{% set active_report_label = "board report" if panel == "board" else "gap report" %}
+{% set active_report_type = "board_report" %}
+{% set active_report_label = "board report" %}
 <div class="page-head"><div><h1>Report versions</h1><p class="meta-line">{{ basis.period_label }} · Evidence cut-off {{ basis.cutoff_label }}</p></div><div class="acts">{% if not design_preview %}<a class="btn ghost sm" href="/assessments/{{ assessment.id }}/workpaper">Workpaper (live) →</a>{% endif %}{% if show_generate %}<form data-report-generate hx-post="/api/assessments/{{ assessment.id }}/snapshots" hx-include="#reviewer-name"><input type="hidden" name="type" value="{{ active_report_type }}" data-report-type><button type="submit" class="btn primary" data-report-generate-label>Generate {{ active_report_label }}</button></form>{% elif preview == "error" %}<button class="btn primary" type="button" data-report-generate-label>Generate {{ active_report_label }}</button>{% endif %}</div></div>
 {{ assessment_tabs(assessment, "report") }}
 <div class="s8-report-seg">{{ report_seg(assessment, "versions") }}</div>
 
 <div class="s8-reviewer"><label class="label" for="reviewer-name">Consultant name</label><label class="field"><input id="reviewer-name" name="reviewer_name" value="{{ reviewer_name }}" placeholder="Your name" autocomplete="name"></label></div>
 
-{% if preview == "unreleased" or not release.released %}{{ alert("The report is not released", "Release the report before generating a gap report or a board report.", "medium", extra_class="s8-page-alert") }}{% endif %}
+{% if preview == "unreleased" or not release.released %}{{ alert("The report is not released", "Release the report before generating a board report.", "medium", extra_class="s8-page-alert") }}{% endif %}
 {% if preview == "error" %}{{ alert("The version was not generated", "The report service did not respond. Try again in a moment.", "noncompliant", extra_class="s8-page-alert") }}{% endif %}
 
 {% if preview == "loading" %}
 <div class="solid s8-loading" role="status" aria-label="Loading report versions">{{ skeleton("30%") }}{{ skeleton("85%", margin_top="14px") }}{{ skeleton("60%", margin_top="14px") }}</div>
 {% else %}
-<div class="s8-report-panels" data-scope>
-  <nav class="tabs" aria-label="Report version types"><a href="#" data-tab="gap" aria-selected="{{ 'true' if panel != 'board' else 'false' }}">Gap report</a><a href="#" data-tab="board" aria-selected="{{ 'true' if panel == 'board' else 'false' }}">Board report</a></nav>
-  <div data-panel="gap"{% if panel == "board" %} hidden{% endif %}>{{ snapshot_group("gap_report", groups.get("gap_report", [])) }}</div>
-  <div data-panel="board"{% if panel != "board" %} hidden{% endif %}>{{ snapshot_group("board_report", groups.get("board_report", [])) }}</div>
+<div class="s8-report-panels">
+  {{ snapshot_group("board_report", groups.get("board_report", [])) }}
+  {% if groups.get("gap_report") %}{{ snapshot_group("gap_report", groups.get("gap_report", [])) }}{% endif %}
 </div>
 {% if not design_preview %}{{ snapshot_group("workpaper", groups.get("workpaper", [])) }}{% endif %}
 {% endif %}
 
 {% if preview == "issue" %}
-<div class="scrim-modal" role="dialog" aria-modal="true"><div class="modal"><h2>Issue gap report version 2?</h2><p>Issued versions are permanent. You cannot change or withdraw them, and the client can receive this report.</p><div class="foot"><button class="btn ghost" type="button">Cancel</button><button class="btn secondary" type="button">Issue version 2</button></div></div></div>
+<div class="scrim-modal" role="dialog" aria-modal="true"><div class="modal"><h2>Issue board report version 2?</h2><p>Issued versions are permanent. You cannot change or withdraw them, and the client can receive this report.</p><div class="foot"><button class="btn ghost" type="button">Cancel</button><button class="btn secondary" type="button">Issue version 2</button></div></div></div>
 {% endif %}
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.querySelectorAll('[data-scope]').forEach((scope) => {
-  scope.addEventListener('click', (event) => {
-    const tab = event.target.closest('[data-tab]');
-    if (!tab) return;
-    event.preventDefault();
-    scope.querySelectorAll('[data-tab]').forEach((item) => item.setAttribute('aria-selected', item === tab ? 'true' : 'false'));
-    scope.querySelectorAll('[data-panel]').forEach((panel) => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; });
-    const form = document.querySelector('[data-report-generate]');
-    const type = form?.querySelector('[data-report-type]');
-    const label = form?.querySelector('[data-report-generate-label]');
-    if (type) type.value = tab.dataset.tab === 'board' ? 'board_report' : 'gap_report';
-    if (label) label.textContent = `Generate ${tab.dataset.tab} report`;
-  });
-});
-</script>
 {% endblock %}

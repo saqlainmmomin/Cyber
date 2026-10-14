@@ -2185,66 +2185,14 @@ async def save_scope(
 
 @router.get("/assessments/{assessment_id}/evidence-checklist/pdf")
 def download_evidence_checklist_pdf(assessment_id: str, db: Session = Depends(get_db)):
-    """Download the evidence request checklist as PDF."""
-    from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope_multi
-    from app.utils.evidence_checklist_export import generate_evidence_checklist_pdf
-
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment or not assessment.scope_answers:
-        raise HTTPException(404, "Scope not yet defined")
-
-    scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope_multi(
-        scope_answers,
-        _selected_framework_ids(assessment),
-    )
-
-    pdf_bytes = generate_evidence_checklist_pdf(
-        company_name=assessment.company_name,
-        checklist=result["evidence_checklist"],
-        flags=result["flags"],
-        has_dpdpa=result["has_dpdpa"],
-        framework_label=", ".join(_selected_framework_names(assessment)),
-    )
-    filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.pdf"
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": attachment_disposition(filename)},
-    )
+    """Return not found for the retired evidence checklist export."""
+    raise HTTPException(404, "Evidence checklists are no longer generated")
 
 
 @router.get("/assessments/{assessment_id}/evidence-checklist/docx")
 def download_evidence_checklist_docx(assessment_id: str, db: Session = Depends(get_db)):
-    """Download the evidence request checklist as DOCX."""
-    from fastapi.responses import Response
-    from app.services.scope_profiler import compute_scope_multi
-    from app.utils.evidence_checklist_export import generate_evidence_checklist_docx
-
-    assessment = db.get(Assessment, assessment_id)
-    if not assessment or not assessment.scope_answers:
-        raise HTTPException(404, "Scope not yet defined")
-
-    scope_answers = json.loads(assessment.scope_answers)
-    result = compute_scope_multi(
-        scope_answers,
-        _selected_framework_ids(assessment),
-    )
-
-    docx_bytes = generate_evidence_checklist_docx(
-        company_name=assessment.company_name,
-        checklist=result["evidence_checklist"],
-        flags=result["flags"],
-        has_dpdpa=result["has_dpdpa"],
-        framework_label=", ".join(_selected_framework_names(assessment)),
-    )
-    filename = f"Evidence-Request-{assessment.company_name.replace(' ', '-')}.docx"
-    return Response(
-        content=docx_bytes,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": attachment_disposition(filename)},
-    )
+    """Return not found for the retired evidence checklist export."""
+    raise HTTPException(404, "Evidence checklists are no longer generated")
 
 
 # --- Document upload (HTMX) ---
@@ -3447,7 +3395,7 @@ def snapshots_page(
             "release": approved_report.release_state(db, assessment),
             "report_basis": report_basis.current_basis(db, assessment),
             "preview_state": request.query_params.get("state", "") if request.url.path.startswith("/design/pages/") else "",
-            "report_panel": request.query_params.get("panel", "gap") if request.url.path.startswith("/design/pages/") else "gap",
+            "report_panel": request.query_params.get("panel", "board") if request.url.path.startswith("/design/pages/") else "board",
         },
     )
 

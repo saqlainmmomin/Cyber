@@ -31,8 +31,6 @@
       <div><h2>Evidence request</h2><p class="sub">Evidence to collect before analysis starts.</p></div>
       {% if preview_state not in ("loading", "error") %}
       <div class="hrow">
-        <a class="btn secondary sm lead" href="/assessments/{{ assessment.id }}/evidence-checklist/pdf">{{ icon("download") }}PDF</a>
-        <a class="btn secondary sm lead" href="/assessments/{{ assessment.id }}/evidence-checklist/docx">{{ icon("download") }}DOCX</a>
         <a class="btn secondary sm" href="/assessments/{{ assessment.id }}/rfi" data-rfi-link>Prepare RFI</a>
       </div>
       {% endif %}

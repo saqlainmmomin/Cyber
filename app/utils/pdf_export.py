@@ -1513,9 +1513,18 @@ def generate_pdf(
 
     scope_as_of = generated
 
+    scope_count = len(gap_items)
     if dpdpa_only:
+        try:
+            applicable = json.loads(getattr(assessment, "applicable_requirements", None) or "null")
+        except (json.JSONDecodeError, TypeError):
+            applicable = None
+        if isinstance(applicable, list):
+            scope_count = len(applicable)
+
+    if dpdpa_only and scope_count == len(FrameworkRegistry.get_all_controls("dpdpa")):
         scope_of_coverage = (
-            "The assessment evaluates the organization's compliance posture against 41 requirements "
+            f"The assessment evaluates the organization's compliance posture against {scope_count} requirements "
             "derived from the Digital Personal Data Protection Act, 2023 (DPDPA). These requirements span "
             "six domains: (1) Obligations of Data Fiduciary, (2) Rights of Data Principal, (3) Special "
             "Provisions for Children and Significant Data Fiduciaries, (4) Consent Management, (5) "
@@ -1523,7 +1532,7 @@ def generate_pdf(
         )
     else:
         scope_of_coverage = (
-            f"The assessment evaluates the organization's compliance posture against {len(gap_items)} "
+            f"The assessment evaluates the organization's compliance posture against {scope_count} "
             f"requirements across the following framework(s): {frameworks_label}."
         )
 

@@ -28,6 +28,8 @@ from pathlib import Path
 
 import pdfplumber
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
@@ -880,7 +882,10 @@ def test_scenario_9_stored_versions_are_never_re_rendered(db, http, gate, monkey
     board = _board()
     standalone = _standalone()
     assessment, conclusions, dp, iso = _engagement_fixture(db, http, gate, monkeypatch)
-    ids = {kind: _generate(http, assessment, kind).json()["snapshot_id"] for kind in ("gap_report", "workpaper", "board_report")}
+    ids = {
+        "gap_report": stored_gap_snapshot(db, assessment).id,
+        **{kind: _generate(http, assessment, kind).json()["snapshot_id"] for kind in ("workpaper", "board_report")},
+    }
     hashes = {
         kind: hashlib.sha256(report_snapshots.read_snapshot_bytes(db, db.get(ReportSnapshot, sid))).hexdigest()
         for kind, sid in ids.items()
