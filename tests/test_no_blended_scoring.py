@@ -95,9 +95,23 @@ def client(db_session, monkeypatch):
         templates.env.globals["settings"] = previous_settings
 
 
-def _assessment(db_session, framework_ids, *, company_name="Acme"):
+def make_engagement(db, name):
+    from app.models.client import Client
+    from app.models.engagement import Engagement
+
+    company = Client(name=name, industry="it_services", size="sme")
+    db.add(company)
+    db.flush()
+    engagement = Engagement(client_id=company.id, name=name, status="active")
+    db.add(engagement)
+    db.commit()
+    return engagement
+
+
+def _assessment(db_session, framework_ids, *, company_name="Acme", engagement_id=None):
     assessment = Assessment(
         company_name=company_name,
+        engagement_id=engagement_id,
         industry="it_services",
         company_size="sme",
         selected_frameworks=json.dumps(framework_ids),
@@ -480,8 +494,9 @@ def test_score_supports_order_deduplication_and_shared_clusters(db_session):
 
 
 def test_comparison_renders_framework_deltas_and_missing_scores(client, db_session):
-    old = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Delta Co")
-    new = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Delta Co")
+    engagement = make_engagement(db_session, "Delta Co")
+    old = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Delta Co", engagement_id=engagement.id)
+    new = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Delta Co", engagement_id=engagement.id)
     _report(db_session, old, {"dpdpa": _scores("dpdpa"), "iso27001": _scores("iso27001", "partially_compliant")})
     _report(db_session, new, {"dpdpa": _scores("dpdpa", "partially_compliant"), "iso27001": _scores("iso27001")})
 
@@ -489,11 +504,12 @@ def test_comparison_renders_framework_deltas_and_missing_scores(client, db_sessi
     assert response.status_code == 200
     assert "Framework Scores" in response.text
     assert "Overall Score" not in response.text
-    assert "+50.0%" in response.text
-    assert "-50.0%" in response.text
+    assert "+50.0 points" in response.text
+    assert "-50.0 points" in response.text
 
-    old_single = _assessment(db_session, ["dpdpa"], company_name="Missing Co")
-    new_multi = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Missing Co")
+    missing_engagement = make_engagement(db_session, "Missing Co")
+    old_single = _assessment(db_session, ["dpdpa"], company_name="Missing Co", engagement_id=missing_engagement.id)
+    new_multi = _assessment(db_session, ["dpdpa", "iso27001"], company_name="Missing Co", engagement_id=missing_engagement.id)
     _report(db_session, old_single, {"dpdpa": _scores("dpdpa")})
     _report(db_session, new_multi, {"dpdpa": _scores("dpdpa"), "iso27001": _scores("iso27001")})
     missing = client.get(f"/assessments/{new_multi.id}/compare/{old_single.id}")

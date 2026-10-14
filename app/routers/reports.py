@@ -256,8 +256,12 @@ def get_comparable_assessments(assessment_id: str, db: Session = Depends(get_db)
 def compare_assessments(assessment_id: str, other_id: str, db: Session = Depends(get_db)):
     current, current_view = _assessment_and_view(assessment_id, db)
     previous, previous_view = _assessment_and_view(other_id, db)
-    if current.company_name != previous.company_name:
-        raise HTTPException(400, "Assessments must belong to the same company")
+    if (
+        current.engagement_id is None
+        or previous.engagement_id is None
+        or current.engagement_id != previous.engagement_id
+    ):
+        raise HTTPException(400, "Assessments must belong to the same engagement")
     if current.status != "completed" or previous.status != "completed":
         raise HTTPException(400, "Both assessments must be completed")
     result = compute_delta(list(current_view.rows), list(previous_view.rows))
@@ -276,11 +280,19 @@ def compare_assessments(assessment_id: str, other_id: str, db: Session = Depends
             else None
         )
         framework = FrameworkRegistry.get_or_none(framework_id)
+        current_rows = current_view.framework_reviews.get(framework_id)
+        previous_rows = previous_view.framework_reviews.get(framework_id)
+        framework_result = compute_delta(
+            list(current_rows.rows) if current_rows else [],
+            list(previous_rows.rows) if previous_rows else [],
+        )
         framework_deltas.append({
             "framework_id": framework_id,
             "name": framework.name if framework else framework_id.upper(),
             "current": current_value,
             "previous": previous_value,
+            "scope": framework_result["scope"],
+            "shared_average_change": framework_result["shared_average_change"],
             "delta": (
                 round(current_value - previous_value, 1)
                 if current_value is not None and previous_value is not None

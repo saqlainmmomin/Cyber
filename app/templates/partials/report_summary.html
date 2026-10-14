@@ -78,7 +78,7 @@
       <div class="domains rp-impact">
         <div><span>Critical or high gaps</span><span class="big-n num">{{ selected_metrics.high_risk }}</span></div>
         <div><span>{{ terms.unit | capitalize }}s needing action</span><span class="big-n num">{{ impact.needing }}</span></div>
-        {% if active_framework == "dpdpa" and business_impact.has_dpdpa_exposure %}<div><span>Regulatory exposure</span><span class="big-n">Up to ₹{{ business_impact.max_penalty_cr }} crore</span></div>{% endif %}
+        {% if active_framework == "dpdpa" and business_impact.has_dpdpa_exposure %}<div><span>Maximum statutory penalty</span><span>{{ penalty_exposure_text }}</span></div>{% endif %}
         {% if impact.chapters %}<div><span>{{ terms.group | capitalize }}s affected</span><span class="muted">{{ impact.chapters | join(", ") }}</span></div>{% endif %}
       </div>
     </section>
@@ -121,7 +121,7 @@
   {% endif %}
 
   {% if not fw.failed %}
-  <div class="sec"><h2>Executive summary</h2><div class="acts"><button class="btn ghost sm lead" type="button" data-copy-trigger="executive-summary">Copy</button>{% if comparable_assessments %}<a class="btn ghost sm" href="/assessments/{{ assessment_id }}/compare">Compare with last year</a>{% endif %}</div></div>
+  <div class="sec"><h2>Executive summary</h2><div class="acts"><button class="btn ghost sm lead" type="button" data-copy-trigger="executive-summary">Copy</button>{% if comparable_assessments %}<a class="btn ghost sm" href="/assessments/{{ assessment_id }}/compare/{{ comparable_assessments[0].id }}">Compare with last year</a>{% endif %}</div></div>
   <div class="glass rp-summary" data-executive-summary data-copy-target="executive-summary">{% for paragraph in summary_text.split("\n\n") if paragraph.strip() %}<p>{{ paragraph.strip() }}</p>{% endfor %}</div>
 
   {% include "partials/remediation_summary.html" %}
