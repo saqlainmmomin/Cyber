@@ -945,7 +945,8 @@ def generate_pdf(
     report_findings=None,
 ) -> bytes:
     """Generate a board-level PDF report."""
-    selected_frameworks = selected_frameworks or ["dpdpa"]
+    if not selected_frameworks:
+        raise ValueError("generate_pdf requires the assessment's selected frameworks")
     basis = basis_for(assessment)
     generated = datetime.now(timezone.utc)
     dpdpa_only = selected_frameworks == ["dpdpa"]

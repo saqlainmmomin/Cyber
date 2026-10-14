@@ -749,7 +749,8 @@ def test_penalty_exposure_is_dpdpa_only_and_claim_is_removed(db, http):
     assert _compute_business_impact([dpdpa_gap])["max_penalty_cr"] == 250
     assert _compute_business_impact([dpdpa_gap])["has_dpdpa_exposure"] is True
     assert _compute_business_impact([unknown_dpdpa_gap])["max_penalty_cr"] == 50
-    assert _compute_business_impact([legacy_gap])["max_penalty_cr"] == 250
+    # NULL framework ids no longer mean DPDPA: the migration made them explicit.
+    assert _compute_business_impact([legacy_gap])["max_penalty_cr"] == 0
     assert _compute_business_impact([clean])["has_gaps"] is False
 
     for index, item in enumerate((iso_gap, dpdpa_gap)):
