@@ -60,6 +60,7 @@ def setup_novapay(session) -> tuple[str, dict]:
     assessment = Assessment(
         id=assessment_id,
         company_name=fixture["company_name"] + " [TEST]",
+        selected_frameworks=json_dumps(["dpdpa"]),
         industry=fixture["industry"],
         company_size=fixture["company_size"],
         description=fixture["description"],
@@ -104,6 +105,7 @@ def setup_novapay(session) -> tuple[str, dict]:
         session.add(DeskReviewFinding(
             assessment_id=assessment_id,
             finding_type=finding["finding_type"],
+            framework_id="dpdpa",
             requirement_id=finding["requirement_id"],
             document_id=doc_id_by_key.get(finding["document_key"]) if finding["document_key"] else None,
             content=finding["content"],

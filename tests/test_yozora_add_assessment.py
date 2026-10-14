@@ -18,6 +18,7 @@ from app.routers import web
 from app.services.engagement_factory import add_assessment_to_engagement
 from app.services import retention
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
+    PREVIOUS_REVISION,
     _register_frameworks,
     alembic_config,
     db,
@@ -163,10 +164,10 @@ def test_name_column_migration_and_guarded_downgrade(tmp_path):
             "VALUES ('a1', 'Acme', 'Technology', 'small', 'created', '2026-10-03', '2026-10-03', 1, 'Head office')"
         )
     with pytest.raises(RuntimeError, match="assessments.name=1"):
-        command.downgrade(config, "-1")
+        command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:
         connection.execute("UPDATE assessments SET name = NULL")
-    command.downgrade(config, "-1")
+    command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:
         assert "name" not in {row[1] for row in connection.execute("PRAGMA table_info(assessments)")}
         assert connection.execute("SELECT company_name FROM assessments WHERE id='a1'").fetchone() == ("Acme",)

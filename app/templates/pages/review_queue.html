@@ -14,7 +14,7 @@
 {%- endmacro %}
 
 {% macro requirement_reference(conclusion) -%}
-  {{ vocab.reference_with_framework(conclusion.framework_id, conclusion.requirement_id) }}
+  {{ vocab.section_reference(conclusion.framework_id, conclusion.requirement_id, include_framework=true) }}
 {%- endmacro %}
 
 {% block title %}{{ page_title }} · {{ assessment.display_name }}{% endblock %}

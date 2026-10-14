@@ -163,8 +163,8 @@ def get_questionnaire_sections(
         context_profile = json.loads(assessment.context_profile)
 
     # Multi-framework: use cluster-based questionnaire builder
-    selected_frameworks = _get_selected_frameworks(assessment)
-    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+    selected_frameworks = assessment.frameworks
+    is_multi = selected_frameworks != ["dpdpa"]
 
     if is_multi:
         from app.frameworks.questionnaire_builder import (
@@ -200,8 +200,8 @@ def get_questionnaire_section(
     if assessment.context_profile:
         context_profile = json.loads(assessment.context_profile)
 
-    selected_frameworks = _get_selected_frameworks(assessment)
-    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+    selected_frameworks = assessment.frameworks
+    is_multi = selected_frameworks != ["dpdpa"]
 
     if is_multi:
         from app.frameworks.questionnaire_builder import (
@@ -315,16 +315,6 @@ def get_responses(assessment_id: str, db: Session = Depends(get_db)):
 
 
 # --- Helpers ---
-
-
-def _get_selected_frameworks(assessment: Assessment) -> list[str]:
-    """Read selected_frameworks from assessment, default to ["dpdpa"]."""
-    if assessment.selected_frameworks:
-        try:
-            return json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
-    return ["dpdpa"]
 
 
 def _group_multi_into_sections(questions: list[dict]) -> list[QuestionnaireSection]:

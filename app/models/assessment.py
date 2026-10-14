@@ -52,14 +52,14 @@ class Assessment(Base):
 
     @property
     def frameworks(self) -> list[str]:
-        """Return the selected framework ids, including the legacy DPDPA default."""
-        if not self.selected_frameworks:
-            return ["dpdpa"]
+        """Return the explicitly stored framework list."""
         try:
             frameworks = json.loads(self.selected_frameworks)
-        except (json.JSONDecodeError, TypeError):
-            return ["dpdpa"]
-        return frameworks if isinstance(frameworks, list) and frameworks else ["dpdpa"]
+        except (json.JSONDecodeError, TypeError) as exc:
+            raise ValueError("Assessment frameworks must be stored explicitly as a JSON list") from exc
+        if not isinstance(frameworks, list) or not frameworks:
+            raise ValueError("Assessment frameworks must be a non-empty JSON list")
+        return frameworks
 
     @validates("selected_frameworks")
     def validate_selected_frameworks(self, _key: str, value: str | None) -> str | None:

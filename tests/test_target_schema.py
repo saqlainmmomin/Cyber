@@ -159,6 +159,7 @@ def test_assessment_engagement_is_nullable_and_versions_default_to_one(migrated_
 
     assessment = Assessment(
         company_name="LegacyCo",
+        selected_frameworks='["dpdpa"]',
         industry="Technology",
         company_size="small",
     )

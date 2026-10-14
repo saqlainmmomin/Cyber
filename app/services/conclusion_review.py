@@ -424,7 +424,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
         .where(GapReport.assessment_id == assessment_id)
     ).scalars().all()
     legacy_by_key = {
-        (item.framework_id or "dpdpa", item.requirement_id): item
+        (item.framework_id, item.requirement_id): item
         for item in legacy_items
     }
     titles = _requirement_titles({row.framework_id for row in ordered})

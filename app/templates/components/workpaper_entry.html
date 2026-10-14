@@ -32,8 +32,8 @@
 {%- endmacro %}
 {% macro entry_meta(entry) -%}
 {% set card = entry.card %}
-{% set reference = vocab.reference_with_framework(card.conclusion.framework_id, card.conclusion.requirement_id) %}
-{% set control_reference = vocab.display_reference(card.conclusion.framework_id, card.conclusion.requirement_id) %}
+{% set reference = vocab.section_reference(card.conclusion.framework_id, card.conclusion.requirement_id, include_framework=true) %}
+{% set control_reference = vocab.section_reference(card.conclusion.framework_id, card.conclusion.requirement_id) %}
 <div class="meta">{% if reference != control_reference %}<span class="chip">{{ framework_label(card.conclusion.framework_id) }}</span>{% endif %}<span class="ref" style="margin-left:0">{{ control_reference }} · Conclusion version {{ card.conclusion.version }}</span>
 <span>{%- if not entry.in_scope %}<span class="pill c-insuf">Excluded by scope enforcement</span>
 {%- else %}{{ outcome_pill(card.conclusion.outcome) }}{{ decision_status(card) }}{% if card.locked and not card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-lock"/></svg>Locked, re-analysis will not overwrite</span>{% endif %}{% endif %}</span></div>

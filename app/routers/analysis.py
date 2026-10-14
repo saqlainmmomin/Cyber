@@ -135,14 +135,9 @@ def trigger_analysis(
     # Gather documents
     documents = analysis_documents(db, assessment_id)
 
-    _selected_fw = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            _selected_fw = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    _selected_fw = assessment.frameworks
 
-    _is_multi = len(_selected_fw) > 1 or _selected_fw != ["dpdpa"]
+    _is_multi = _selected_fw != ["dpdpa"]
 
     if _is_multi:
         from app.frameworks.questionnaire_builder import (
@@ -250,14 +245,9 @@ def trigger_analysis(
             logger.warning("Invalid JSON in applicable_requirements for assessment %s", assessment_id)
 
     # Determine frameworks for this assessment
-    selected_frameworks = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            selected_frameworks = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            logger.warning("Invalid JSON in selected_frameworks for assessment %s", assessment_id)
+    selected_frameworks = assessment.frameworks
 
-    is_multi = len(selected_frameworks) > 1 or selected_frameworks != ["dpdpa"]
+    is_multi = selected_frameworks != ["dpdpa"]
 
     if is_multi:
         return _run_multi_framework_analysis(
@@ -797,7 +787,7 @@ def _persist_multi_framework_analysis(
             root_cause_category=a.get("root_cause_category"),
             evidence_quote=a.get("evidence_quote"),
             evidence_confidence=_evidence_confidence(req_id),
-            framework_id=a.get("framework_id"),
+            framework_id=a["framework_id"],
             control_reference=a.get("control_reference"),
             review_status="draft",
             needs_review=a.get("needs_review", False),

@@ -192,6 +192,7 @@ def test_single_framework_analysis_persists_needs_review_flag(tmp_path, monkeypa
     try:
         assessment = Assessment(
             company_name="Acme",
+            selected_frameworks='["dpdpa"]',
             industry="saas",
             company_size="sme",
             status="questionnaire_done",

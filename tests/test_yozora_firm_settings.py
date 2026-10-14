@@ -37,6 +37,8 @@ from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     upload_root,
 )
 
+ALEMBIC_HEAD = "e2c8f6a4d901"
+
 MIGRATION_PATH = REPO_ROOT / "alembic" / "versions" / f"{YOZORA_REVISION}_yozora_backend_features.py"
 
 
@@ -339,7 +341,7 @@ def _firm_row(path):
 
 def test_revision_is_the_head_on_top_of_v3a(tmp_path):
     scripts = ScriptDirectory.from_config(alembic_config(tmp_path / "x.sqlite3"))
-    assert scripts.get_current_head() == YOZORA_REVISION
+    assert scripts.get_current_head() == ALEMBIC_HEAD
     assert scripts.get_revision(YOZORA_REVISION).down_revision == PREVIOUS_REVISION
 
 
@@ -387,7 +389,7 @@ def test_migration_schema_is_reversible_and_keeps_data(tmp_path):
             )
         with pytest.raises(sqlite3.IntegrityError):
             connection.execute("UPDATE firm_settings SET archived_retention_years = 51")
-    command.downgrade(config, "-1")
+    command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:
         tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert "firm_settings" not in tables
@@ -402,7 +404,7 @@ def test_downgrade_refuses_to_drop_a_stored_contact_email(tmp_path):
     with sqlite3.connect(path) as connection:
         connection.execute("UPDATE firm_settings SET contact_email = 'partner@northgate.example'")
     with pytest.raises(RuntimeError, match="Refusing to downgrade past Yozora backend revision"):
-        command.downgrade(config, "-1")
+        command.downgrade(config, PREVIOUS_REVISION)
     assert _firm_row(path)[0][1] == "partner@northgate.example"
 
 

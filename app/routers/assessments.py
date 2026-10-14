@@ -141,12 +141,7 @@ def get_frameworks(assessment_id: str, db: Session = Depends(get_db)):
     if not assessment:
         raise HTTPException(404, "Assessment not found")
 
-    selected = ["dpdpa"]
-    if assessment.selected_frameworks:
-        try:
-            selected = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    selected = assessment.frameworks
 
     frameworks_info = []
     for fw_id in selected:

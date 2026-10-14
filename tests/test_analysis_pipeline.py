@@ -1036,7 +1036,7 @@ def test_claim_quality_scope_and_duplicates(db, gate, monkeypatch):
     db.add(DeskReviewSummary(assessment_id=a.id, status="completed", coverage_summary="{}"))
     for req, kind in ((REQS[0], "signal"), (REQS[0], "signal"), (REQS[1], "absence"), (REQS[3], "evidence")):
         db.add(DeskReviewFinding(
-            assessment_id=a.id, finding_type=kind, requirement_id=req, content=f"{kind} finding",
+            assessment_id=a.id, framework_id="dpdpa", finding_type=kind, requirement_id=req, content=f"{kind} finding",
             severity="high", citations_json="[]",
         ))
     db.commit()

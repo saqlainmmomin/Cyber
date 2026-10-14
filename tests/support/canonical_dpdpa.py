@@ -296,7 +296,7 @@ def materialize_report(session: Session, assessment: Assessment, analyzer_output
             id=f"00000000-0000-4000-8000-{index:012d}",
             report_id=report.id,
             requirement_id=item["requirement_id"],
-            framework_id=None,
+            framework_id="dpdpa",
             cluster_id=None,
             control_reference=None,
             chapter=requirement["chapter"],

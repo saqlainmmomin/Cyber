@@ -101,8 +101,7 @@ def _with_toast(response, message: str, toast_type: str = "success"):
 
 
 def _selected_framework_ids(assessment: Assessment) -> list[str]:
-    """Resolve the assessment's selected framework ids. Legacy rows without a
-    selection predate multi-framework support and default to DPDPA."""
+    """Return the assessment's explicit stored framework selection."""
     return assessment.frameworks
 
 
@@ -1699,7 +1698,7 @@ def evidence_inventory_page(
             "inventory_filtered": bool(engagement_id or source or status or query.get("search")),
             "inventory_path": "/evidence",
             "request_assessment_id": None,
-            "doc_categories": [item.value for item in DocumentCategory],
+            "doc_categories": [],
             "cross_engagement": True,
         },
     )
@@ -1713,6 +1712,8 @@ def _render_evidence_inventory_page(
     selected_assessment: Assessment | None = None,
     assessment_chrome: bool = False,
 ):
+    from app.services.document_categories import upload_categories
+
     engagement_id = engagement.id
     client = db.get(Client, engagement.client_id)
     assessments = (
@@ -1796,7 +1797,10 @@ def _render_evidence_inventory_page(
             "engagement_archived": engagement.status == "archived",
             "read_only": engagement.status == "archived",
             "assessment_chrome": assessment_chrome,
-            "doc_categories": [item.value for item in DocumentCategory],
+            "doc_categories": upload_categories(upload_assessment.frameworks) if upload_assessment else [],
+            "assessment_upload_categories": {
+                item.id: upload_categories(item.frameworks) for item in assessments
+            },
             "cross_engagement": False,
         },
     )
@@ -1870,6 +1874,8 @@ def render_assessment_detail(
     re-renders the scope form with the submitted answers and the
     per-question errors after an incomplete save.
     """
+    from app.services.document_categories import upload_categories
+
     if preview_state not in ASSESSMENT_PREVIEW_STATES:
         preview_state = None
     assessment = db.get(Assessment, assessment_id)
@@ -2044,7 +2050,7 @@ def render_assessment_detail(
             "screening_available": screening_applies(assessment),
             "screening_unavailable_message": SCREENING_UNAVAILABLE_COPY,
             "context_error": context_error,
-            "doc_categories": [c.value for c in DocumentCategory],
+            "doc_categories": upload_categories(assessment.frameworks),
             "selected_frameworks": selected_frameworks_info,
             "active_framework": active_framework,
             "report_view_mode": report_view_mode,
@@ -2207,9 +2213,17 @@ async def upload_document_web(
 
     db: Session = Depends(get_db),
 ):
+    from app.routers.documents import UNKNOWN_CATEGORY_MESSAGE
+    from app.services.document_categories import upload_categories
+
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404)
+    if category not in upload_categories(assessment.frameworks):
+        return templates.TemplateResponse(
+            "partials/upload_status.html",
+            {"request": request, "error": UNKNOWN_CATEGORY_MESSAGE.format(category=category[:50])},
+        )
     try:
         result = evidence_service.ingest_upload(
             db,
@@ -3631,9 +3645,12 @@ def desk_review_status_view(
         for framework_id in assessment.frameworks
         if any(control.id in coverage for control in FrameworkRegistry.get(framework_id).all_controls())
     ]
+    from app.services.vocabulary import section_reference
+
     requirement_details = {
-        requirement_id: {"title": control.title, "reference": control.reference}
-        for requirement_id, control in controls.items()
+        control.id: {"title": control.title, "reference": section_reference(framework_id, control.id)}
+        for framework_id in assessment.frameworks
+        for control in FrameworkRegistry.get(framework_id).all_controls()
     }
     from app.services.desk_review import budget_partial_filenames, budget_skipped_filenames
 

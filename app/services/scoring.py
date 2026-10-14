@@ -573,8 +573,22 @@ def _name_initiative(cluster: str, req_ids: list[str], default_title: str) -> st
     return f"{default_title} Remediation Program"
 
 
-def _build_approach(cluster: str, req_ids: list[str]) -> str:
+def _build_approach(cluster: str, req_ids: list[str], framework_id: str = "dpdpa") -> str:
     """Build a concise suggested approach for an initiative."""
+    if framework_id != "dpdpa":
+        from app.frameworks.registry import FrameworkRegistry
+
+        framework = FrameworkRegistry.get(framework_id)
+        titles = []
+        for requirement_id in req_ids:
+            control = framework.get_control(requirement_id)
+            titles.append(control.title if control else requirement_id)
+        return (
+            f"Review {cluster} controls covering {', '.join(titles)}. "
+            "Assign remediation owners, document the required changes, and verify "
+            "implementation with supporting evidence."
+        )
+
     approaches = {
         "policy": (
             f"Engage a privacy counsel to draft/update {len(req_ids)} policy documents. "
@@ -765,7 +779,14 @@ def generate_multi_framework_initiatives(
             "combined_effort": effort,
             "combined_timeline_weeks": max_timeline,
             "priority": max_priority,
-            "suggested_approach": _build_approach(cluster, req_ids),
+            "suggested_approach": " ".join(
+                _build_approach(
+                    cluster,
+                    [item["requirement_id"] for item in items if item["framework_id"] == fw_id],
+                    fw_id,
+                )
+                for fw_id in fw_ids
+            ),
         })
 
     initiatives.sort(key=lambda x: x["priority"])

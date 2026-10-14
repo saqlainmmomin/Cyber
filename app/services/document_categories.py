@@ -45,3 +45,26 @@ def document_categories(framework_ids: Sequence[str]) -> tuple[str, ...]:
                 categories.append(value)
     categories.append(OTHER_CATEGORY)
     return tuple(categories)
+
+
+def upload_categories(framework_ids: Sequence[str]) -> tuple[str, ...]:
+    """Upload vocabulary for the assessment's explicit framework selection."""
+    categories: list[str] = []
+    if "dpdpa" in framework_ids:
+        categories.extend(
+            category for category in LEGACY_UPLOAD_CATEGORIES if category != OTHER_CATEGORY
+        )
+    for framework_id in framework_ids:
+        values = (
+            DPDPA_DOCUMENT_TYPES
+            if framework_id == "dpdpa"
+            else tuple(
+                request.document_type
+                for request in FrameworkRegistry.get(framework_id).evidence_requests
+            )
+        )
+        for value in values:
+            if value not in categories and value != OTHER_CATEGORY:
+                categories.append(value)
+    categories.append(OTHER_CATEGORY)
+    return tuple(categories)

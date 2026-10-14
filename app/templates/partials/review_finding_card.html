@@ -9,7 +9,7 @@
 <div class="solid card" data-review-card data-review-status="{{ review_state }}" data-risk-level="{{ item.risk_level }}" id="review-card-{{ item.id }}">
   <div class="d-title">
     <div>
-      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="muted">{{ vocab.display_reference(item.framework_id, item.requirement_id) if item.framework_id else (item.chapter or item.requirement_id) }}</span></div>
+      <div class="hrow">{% if item.framework_id %}{{ chip(item.framework_id|upper) }}{% endif %}<span class="muted">{{ vocab.section_reference(item.framework_id, item.requirement_id) }}</span></div>
       <h3 class="rfc-title">{{ item.requirement_title }}</h3>
     </div>
     {% if review_state == "accepted" %}<span class="status">{{ icon("check") }}Accepted</span>

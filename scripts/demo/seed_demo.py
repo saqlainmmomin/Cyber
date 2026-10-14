@@ -675,10 +675,16 @@ def _content_type(path: Path) -> str:
 
 def _upload_bytes(db, http, assessment_id: str, path: Path, category: str, received: int | None, anchor: date, *, allow_skip: bool = False, skipped: list[str]) -> str | None:
     from contextlib import nullcontext
+    from app.models.assessment import Assessment
+    from app.services.document_categories import upload_categories
     from app.services import document_processor
     from app.services import evidence as evidence_service
     from scripts.demo.files import source_text
     from scripts.demo.scenario import DOCUMENTS
+
+    assessment = db.get(Assessment, assessment_id)
+    if category not in upload_categories(assessment.frameworks):
+        category = "other"
 
     key = next(key for key, spec in DOCUMENTS.items() if spec["filename"] == path.name)
     spec = DOCUMENTS[key]

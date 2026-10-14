@@ -58,6 +58,8 @@ from tests.test_p6_8_board_report_v2 import _require_renderer
 
 YOZORA_REVISION = "b7d41c9e2a63"  # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 
+ALEMBIC_HEAD = "e2c8f6a4d901"
+
 ACTOR = f"consultant:{REVIEWER}"
 FONT_DIR = REPO_ROOT / "app" / "assets" / "fonts" / "noto"
 NOTO_FILES = {
@@ -114,7 +116,7 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
     path = tmp_path / "v3a.sqlite3"
     config = _alembic_config(path)
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_current_head() == YOZORA_REVISION  # Yozora backend features sits on V3-A
+    assert scripts.get_current_head() == ALEMBIC_HEAD  # Explicit frameworks follows Yozora
     assert scripts.get_revision(YOZORA_REVISION).down_revision == V3A_REVISION
     assert scripts.get_revision(V3A_REVISION).down_revision == PREVIOUS_REVISION
 
@@ -147,7 +149,7 @@ def test_scenario_1_migration_adds_the_columns_and_table_keeps_data_and_is_rever
             "SELECT title, owner, responsibility FROM actions WHERE id='x1'"
         ).fetchone() == ("Kept action", "Anita", None)
         assert connection.execute("SELECT board_asks_json FROM assessments WHERE id='a1'").fetchone() == (None,)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (YOZORA_REVISION,)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (ALEMBIC_HEAD,)
         # One metadata row per (assessment, group): a second insert with the same pair is refused.
         connection.execute(
             "INSERT INTO initiative_metadata (id, assessment_id, group_id, created_at, updated_at) "
