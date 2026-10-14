@@ -512,18 +512,11 @@ def _evidence_basis_line(
                 segments.append((f"{label}: ", unique(documents), ""))
         partial_docs = [d for d in read if d.get("status") == "partial"]
     else:
-        from app.frameworks.registry import FrameworkRegistry
-        try:
-            from app.services.vocabulary import framework_display_name
-        except ImportError:  # vocabulary module not on this branch yet
-            def framework_display_name(framework_id: str) -> str:
-                framework = FrameworkRegistry.get_or_none(framework_id)
-                return framework.name if framework else framework_id
         segments.append(("Analysis document input", [], ""))
         partial_docs = {}
         for fid in frameworks:
             read, unread = split(by_framework[fid])
-            head = f"{framework_display_name(fid)}: {counts(read, unread)}"
+            head = f"{vocab.framework_display_name(fid)}: {counts(read, unread)}"
             if unread:
                 segments.append((head + " (not read: ", unique(unread), ")"))
             else:
