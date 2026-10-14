@@ -32,17 +32,18 @@
     </section>
     {% if engagement_rows %}
       <div class="solid"><table>
-        <thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th class="hide-sm">Stage</th><th class="n"><span class="hide-sm">Open high-severity findings</span><span class="show-sm">High severity</span></th><th class="hide-sm"></th></tr></thead>
+        <thead><tr><th>Engagement</th><th class="hide-sm">Frameworks</th><th class="hide-sm">Earliest stage</th><th class="n">Critical and high gaps</th><th class="hide-sm"></th></tr></thead>
         <tbody>{% for row in engagement_rows %}
           <tr data-href="{{ row.href }}">
             <td><a class="t-title" href="{{ row.href }}">{{ row.name }}</a><div class="t-sub">{{ row.client_name }}</div></td>
             <td class="hide-sm"><div class="chips">{% for badge in row.framework_badges %}{{ chip(badge.name) }}{% endfor %}</div></td>
-            <td class="hide-sm">{% if row.stage_label == "In review" %}{{ status(row.stage_label, tone="accent") }}{% elif row.stage_label == "Report draft" %}{{ status(row.stage_label, tone="neutral") }}{% else %}{{ status(row.stage_label, "in_progress") }}{% endif %}</td>
+            <td class="hide-sm">{{ status(row.stage_label, tone="accent" if row.stage == "review" else "neutral") }}{% if row.summary != row.stage_label %}<div class="t-sub">{{ row.summary }}</div>{% endif %}{% if row.earliest_note %}<div class="t-sub">{{ row.earliest_note }}</div>{% endif %}</td>
             <td class="n num big-n">{{ row.high_findings }}</td>
             <td class="go hide-sm"><a href="{{ row.href }}" aria-label="Open {{ row.name }}">{{ icon("chev-r") }}</a></td>
           </tr>
         {% endfor %}</tbody>
       </table></div>
+      {% if total_engagement_count > 8 %}<div style="margin-top:var(--s-4)">{{ link_button("View all engagements", "/engagements", "ghost", "sm") }}</div>{% endif %}
     {% else %}
       {{ empty_state("No engagements yet", "Start an engagement to see it here.", "Start an engagement", "/engagements/new", "briefcase") }}
     {% endif %}
@@ -52,7 +53,7 @@
 
   {# These hooks remain for the legacy HTMX expansion contract. #}
   <div hidden aria-hidden="true">
-    {% for legacy in legacy_engagements %}<a href="{{ legacy.href }}">{{ legacy.name }}</a><span>{{ legacy.status_label }}</span><span>{{ legacy.progress_pct }}%</span>{% endfor %}
+    {% for legacy in legacy_engagements %}<a href="{{ legacy.href }}">{{ legacy.name }}</a><span>{{ legacy.status_label }}</span>{% endfor %}
     {% for client_id in legacy_client_ids %}
       <a href="/clients/{{ client_id }}">Open client</a>
       <a href="/engagements/new?client_id={{ client_id }}">New engagement</a>

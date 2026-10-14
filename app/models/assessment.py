@@ -83,7 +83,13 @@ class Assessment(Base):
 
     @property
     def display_name(self) -> str:
-        return self.name or self.company_name
+        if self.name:
+            return self.name
+        from app.services.vocabulary import framework_display_name
+
+        frameworks = " + ".join(framework_display_name(framework) for framework in self.frameworks)
+        moment = self.created_at or _utcnow()
+        return f"{frameworks} · {moment.day} {moment:%b %Y}"
 
     @property
     def is_multi_framework(self) -> bool:

@@ -140,9 +140,15 @@ def test_s3_seed_variants_and_portfolio_contract(tmp_path):
             client = seeded.get(Client, ids["meridian_client"])
             cards = web_router._engagement_cards_for_client(seeded, client.id)
             assert [(card["name"], card["stage_label"]) for card in cards] == [
-                ("FY2026 DPDPA and ISO 27001 programme", "In review"),
-                ("FY2025 ISO 27001 surveillance audit", "Report released"),
-                ("Vendor risk review", "Scoping"),
+                ("FY2026 DPDPA and ISO 27001 programme", "Evidence"),
+                ("FY2025 ISO 27001 surveillance audit", "Report"),
+                ("Vendor risk review", "Scope"),
+            ]
+
+            assert [card["summary"] for card in cards] == [
+                "4 assessments: 1 in evidence, 2 in questionnaire, 1 in review",
+                "Issued",
+                "2 assessments: 1 in scope, 1 in evidence",
             ]
 
             retention_view = retention.client_retention_view(seeded, client)
@@ -159,7 +165,7 @@ def test_s3_seed_variants_and_portfolio_contract(tmp_path):
             by_id = {row.id: row for row in clients}
             attention = web_router._home_attention_rows(seeded, engagements, assessments, by_id)
             assert [row["title"] for row in attention] == [
-                "Approve 3 conclusions",
+                "Review 3 conclusions",
                 "Sign off board report",
                 "Waiting on client evidence",
             ]
@@ -168,6 +174,8 @@ def test_s3_seed_variants_and_portfolio_contract(tmp_path):
             home_rows = web_router._home_engagement_rows(seeded, engagements, assessments, by_id)
             assert [(row["client_name"], row["high_findings"]) for row in home_rows] == [
                 ("Meridian Ledger Technologies", 3),
+                ("Meridian Ledger Technologies", 0),
+                ("Meridian Ledger Technologies", 0),
                 ("Loomwire Labs Inc.", 1),
                 ("Orchard Lane Retail", 0),
             ]

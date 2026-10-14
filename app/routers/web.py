@@ -54,6 +54,7 @@ from app.schemas.assessment import DocumentCategory
 from app.services import (
     actions_export,
     assessment_stage,
+    rollup,
     evidence_inventory,
     evidence as evidence_service,
     findings as finding_service,
@@ -82,6 +83,7 @@ logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 configure_templates(templates)
+templates.env.globals["assessment_status"] = rollup.status_for_assessment
 
 ENABLED_ASSESSMENT_FRAMEWORKS = ("dpdpa", "iso27001", "nist_csf")
 ROADMAP_FRAMEWORKS = ("gdpr", "hipaa", "pci_dss")
@@ -256,26 +258,6 @@ def _overview_hub_state(db: Session, assessment: Assessment) -> str:
 # --- Yozora portfolio helpers ---
 
 
-def _display_stage(db: Session, assessment_rows: list[Assessment], fallback: str) -> str:
-    """Map the canonical assessment stage to the compact portfolio copy."""
-    if assessment_rows:
-        latest = max(assessment_rows, key=lambda row: row.updated_at)
-        current = assessment_stage.stage(db, latest)
-        if current.stage == "scope":
-            return "Scoping"
-        if current.stage == "review":
-            return "In review"
-        if current.stage == "report":
-            if current.next_label == assessment_stage.RELEASE_REPORT:
-                return "Report draft"
-            if current.next_label in {assessment_stage.GENERATE_BOARD_REPORT, None}:
-                return "Report released"
-            return "Report"
-        if current.stage == "evidence":
-            return "Desk review"
-    return fallback
-
-
 def _portfolio_data(db: Session) -> tuple[list[Client], list[Engagement], dict[str, list[Assessment]]]:
     clients = db.query(Client).order_by(Client.created_at, Client.id).all()
     engagements = (
@@ -302,11 +284,7 @@ def _home_engagement_rows(
     clients_by_id: dict[str, Client],
 ) -> list[dict]:
     rows = []
-    seen_clients = set()
-    for engagement in engagements:
-        if engagement.client_id in seen_clients:
-            continue
-        seen_clients.add(engagement.client_id)
+    for engagement in sorted(engagements, key=lambda row: (row.created_at, row.id), reverse=True):
         assessments = assessments_by_engagement[engagement.id]
         card = build_engagement_card(engagement, assessments)
         assessment_ids = [assessment.id for assessment in assessments]
@@ -324,15 +302,12 @@ def _home_engagement_rows(
             {
                 "client_name": clients_by_id[engagement.client_id].name,
                 "client_id": engagement.client_id,
-                "stage_label": _display_stage(db, assessments, card["derived_status_label"]),
                 "high_findings": high_findings,
                 "href": f"/engagements/{engagement.id}",
             }
         )
         rows.append(card)
-    # The home table is a compact recent-work queue; the full client portfolio
-    # remains available from Clients and each client detail page.
-    return rows[:3]
+    return rows[:8]
 
 
 def _home_attention_rows(
@@ -350,16 +325,14 @@ def _home_attention_rows(
             reverse=True,
         )
         for assessment in assessments:
-            current = assessment_stage.stage(db, assessment)
-            badges = framework_badges(assessment.frameworks, compact=True)
-            frameworks = ", ".join(badge["name"] for badge in badges)
+            current = rollup.assessment_status(db, assessment)
+            object_name = f"{rollup.assessment_label(assessment, assessments)} · {client.name}"
             if current.stage == "review":
                 label = current.next_label or "Review"
-                title = label.replace("Review", "Approve", 1)
                 rows.append(
                     {
-                        "title": title,
-                        "body": f"{client.name} · {frameworks}",
+                        "title": label,
+                        "body": object_name,
                         "action_label": "Review",
                         "href": current.next_href,
                         "icon_id": "check",
@@ -372,7 +345,7 @@ def _home_attention_rows(
                 rows.append(
                     {
                         "title": "Sign off board report" if current.next_label == assessment_stage.RELEASE_REPORT else current.next_label,
-                        "body": f"{client.name} · {frameworks}",
+                        "body": object_name,
                         "action_label": "Open",
                         "href": current.next_href,
                         "icon_id": "report",
@@ -389,7 +362,7 @@ def _home_attention_rows(
                 rows.append(
                     {
                         "title": "Waiting on client evidence",
-                        "body": f"{client.name} · {summary.received} of {summary.items} files received{expiry}",
+                        "body": f"{object_name} · {summary.received} of {summary.items} files received{expiry}",
                         "action_label": "View link",
                         "href": f"/engagements/{engagement.id}",
                         "icon_id": "clock",
@@ -483,7 +456,6 @@ def _engagement_cards_for_client(db: Session, client_id: str) -> list[dict]:
     for engagement in engagements:
         assessments_for_engagement = assessments_by_engagement[engagement.id]
         card = build_engagement_card(engagement, assessments_for_engagement)
-        card["stage_label"] = _display_stage(db, assessments_for_engagement, card["derived_status_label"])
         card["href"] = f"/engagements/{engagement.id}"
         cards.append(card)
     return cards
@@ -569,12 +541,12 @@ def clients_page(
     )
 
 
-def _assessment_stage_row(db: Session, assessment: Assessment) -> dict:
-    current_stage = assessment_stage.stage(db, assessment)
+def _assessment_stage_row(db: Session, assessment: Assessment, siblings=()) -> dict:
+    current_stage = rollup.assessment_status(db, assessment)
     return {
         "id": assessment.id,
         "company_name": assessment.company_name,
-        "display_name": assessment.display_name,
+        "display_name": rollup.assessment_label(assessment, siblings),
         "description": assessment.description,
         "status": assessment.status,
         "created_at": assessment.created_at,
@@ -612,33 +584,8 @@ def _engagement_list_rows(
         client_name = client.name if client else ""
         if search_folded and search_folded not in f"{engagement.name} {client_name}".casefold():
             continue
-        framework_ids = []
-        for assessment in assessments:
-            for framework_id in assessment.frameworks:
-                if framework_id not in framework_ids:
-                    framework_ids.append(framework_id)
-        current_assessment = assessments[0] if assessments else None
-        current_stage = (
-            assessment_stage.stage(db, current_assessment)
-            if current_assessment is not None
-            else None
-        )
-        rows.append(
-            {
-                "id": engagement.id,
-                "name": engagement.name,
-                "client_name": client_name,
-                "framework_badges": framework_badges(framework_ids),
-                "stage": current_stage,
-                "analysis_failed": current_assessment is not None and current_assessment.status == "error",
-                "progress_pct": build_engagement_card(engagement, assessments)["progress_pct"],
-                "last_activity": (
-                    assessments[0].updated_at
-                    if assessments
-                    else engagement.updated_at
-                ),
-            }
-        )
+        card = build_engagement_card(engagement, assessments)
+        rows.append({**card, "client_name": client_name})
     return rows
 
 
@@ -814,21 +761,11 @@ def engagement_detail(
         )
     card = build_engagement_card(engagement, assessments)
     retention_state = retention.retention_state(db, engagement)
-    assessment_cards = [_assessment_stage_row(db, assessment) for assessment in assessments]
+    assessment_cards = [_assessment_stage_row(db, assessment, assessments) for assessment in assessments]
     action_rollup = remediation_rollup.engagement_rollup(db, engagement)
     evidence_count = db.query(func.count(Evidence.id)).filter(
         Evidence.engagement_id == engagement.id,
     ).scalar() or 0
-    issued_integrated = (
-        db.query(ReportSnapshot)
-        .filter(
-            ReportSnapshot.engagement_id == engagement.id,
-            ReportSnapshot.assessment_id.is_(None),
-            ReportSnapshot.type == "integrated_report",
-            ReportSnapshot.is_issued.is_(True),
-        )
-        .count()
-    )
     return templates.TemplateResponse(
         "pages/engagement_detail.html",
         {
@@ -844,7 +781,7 @@ def engagement_detail(
             "summary": {
                 "evidence_count": evidence_count,
                 "open_actions": action_rollup.counts["open"] + action_rollup.counts["in_progress"],
-                "latest_report": f"Version {issued_integrated}" if issued_integrated else "None",
+                "integrated_report": rollup.integrated_report_label(db, engagement),
             },
         },
     )
@@ -852,6 +789,7 @@ def engagement_detail(
 
 # --- Add assessment to an engagement (Yozora) ---
 
+ADD_ASSESSMENT_NAME_REQUIRED = "Assessment name is required."
 ADD_ASSESSMENT_NO_FRAMEWORK = "Select at least one framework to assess against."
 ADD_ASSESSMENT_UNKNOWN_FRAMEWORK = "One or more selected frameworks are not available for assessment yet."
 ADD_ASSESSMENT_NAME_TOO_LONG = "Assessment name must be 255 characters or fewer."
@@ -938,6 +876,8 @@ async def create_engagement_assessment(
         error = ADD_ASSESSMENT_NO_FRAMEWORK
     elif any(framework_id not in ENABLED_ASSESSMENT_FRAMEWORKS for framework_id in framework_ids):
         error = ADD_ASSESSMENT_UNKNOWN_FRAMEWORK
+    elif not form_values["name"]:
+        error = ADD_ASSESSMENT_NAME_REQUIRED
     elif len(form_values["name"]) > 255:
         error = ADD_ASSESSMENT_NAME_TOO_LONG
     elif form_values["name"] and _assessment_name_taken(db, engagement, form_values["name"]):

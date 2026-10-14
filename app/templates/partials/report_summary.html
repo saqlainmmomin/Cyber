@@ -48,7 +48,7 @@
 
 <div id="review-banner" data-release-state="{{ release_status }}" data-view-mode="{{ view_mode }}"{% if failed_frameworks %} data-analysis-incomplete-banner{% endif %}>
   {% if release_status == "released" %}
-  <div class="alert c-ok">{{ icon("circle-check") }}<div><b>Released by {{ release.released_by }} on {{ release.released_at | display_date }}</b>Exports use the conclusions as they were approved at release.</div></div>
+  <div class="alert c-ok">{{ icon("circle-check") }}<div><b>{{ assessment_status(assessment).release_label }}</b>Released by {{ release.released_by }} on {{ release.released_at | display_date }}. Exports use the conclusions as they were approved at release.</div></div>
   {% elif release_status == "stale" %}
   {{ alert("Released version is out of date", "An in-scope conclusion or scope changed after release. Release again to reopen exports.", "medium", "alert") }}
   {% else %}

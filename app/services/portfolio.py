@@ -1,58 +1,12 @@
-"""Pure helpers for the Client -> Engagement portfolio views."""
+"""Card helpers for the Client -> Engagement portfolio views."""
 
 from collections.abc import Sequence
 from datetime import datetime
+from dataclasses import asdict
 
+from sqlalchemy.orm import object_session
 
-STAGE_RANK = {
-    "created": 0,
-    "scoped": 1,
-    "documents_uploaded": 2,
-    "context_gathered": 3,
-    "questionnaire_done": 4,
-    "analyzing": 5,
-    "completed": 6,
-}
-STAGE_RANK_MAX = 6
-
-_STATUS_LABELS = {
-    "empty": "No assessments",
-    "error": "Error",
-    "completed": "Completed",
-    "analyzing": "Analyzing…",
-    "created": "New",
-    "scoped": "Scoping",
-    "documents_uploaded": "Documents Uploaded",
-    "context_gathered": "Context Gathered",
-    "questionnaire_done": "Questionnaire Done",
-}
-
-
-def derive_status(assessments) -> str:
-    """Derive an engagement status from its non-archived assessments."""
-    if not assessments:
-        return "empty"
-    if any(assessment.status == "error" for assessment in assessments):
-        return "error"
-    if all(assessment.status == "completed" for assessment in assessments):
-        return "completed"
-    if any(assessment.status == "analyzing" for assessment in assessments):
-        return "analyzing"
-    return min(
-        assessments,
-        key=lambda assessment: STAGE_RANK.get(assessment.status, 0),
-    ).status
-
-
-def derive_progress_pct(assessments) -> int:
-    """Return the stage-weighted average progress for an engagement."""
-    if not assessments:
-        return 0
-    return round(
-        100
-        * sum(STAGE_RANK.get(assessment.status, 0) for assessment in assessments)
-        / (STAGE_RANK_MAX * len(assessments))
-    )
+from app.services.rollup import engagement_rollup
 
 
 def derive_last_activity(assessments, fallback: datetime) -> datetime:
@@ -93,11 +47,6 @@ def framework_badges(
     return badges
 
 
-def engagement_status_label(status: str) -> str:
-    """Return the label shared by the engagement status badge and card context."""
-    return _STATUS_LABELS.get(status, status.replace("_", " ").title())
-
-
 def build_engagement_card(engagement, assessments) -> dict:
     """Build the template-safe engagement card contract."""
     active_assessments = [
@@ -111,15 +60,17 @@ def build_engagement_card(engagement, assessments) -> dict:
                 seen_framework_ids.add(framework_id)
                 framework_ids.append(framework_id)
 
-    derived_status = derive_status(active_assessments)
+    current = engagement_rollup(object_session(engagement), engagement, active_assessments)
     return {
         "id": engagement.id,
         "name": engagement.name,
         "type": engagement.type,
         "status": engagement.status,
-        "derived_status": derived_status,
-        "derived_status_label": engagement_status_label(derived_status),
-        "progress_pct": derive_progress_pct(active_assessments),
+        **asdict(current),
+        # The dashboard's legacy context still requests these keys; neither is
+        # used to derive or display a second status or a progress percentage.
+        "derived_status_label": current.summary,
+        "progress_pct": None,
         "assessment_count": len(active_assessments),
         "framework_ids": framework_ids,
         "framework_badges": framework_badges(framework_ids, compact=True),

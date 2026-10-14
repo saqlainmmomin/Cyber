@@ -1,6 +1,7 @@
 """Integration coverage for the Client -> Engagement portfolio surface."""
 
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -11,12 +12,12 @@ from app.models.assessment import Assessment
 from app.models.assessment_pack import AssessmentPack
 from app.models.client import Client
 from app.models.engagement import Engagement
+from app.services import assessment_stage, approved_report, rollup
+from app.services.vocabulary import framework_display_name
 from app.services.portfolio import (
     build_client_card,
     build_engagement_card,
     derive_last_activity,
-    derive_progress_pct,
-    derive_status,
 )
 
 
@@ -98,47 +99,83 @@ def test_dashboard_renders_clients_engagements_and_no_linked_assessment_cards(cl
         assert f"/assessments/{assessment_id}" not in response.text
 
 
-def test_derived_status_uses_least_advanced_wins_and_rendered_badges(client, db_session):
-    assert derive_status([SimpleNamespace(status="completed"), SimpleNamespace(status="context_gathered")]) == "context_gathered"
-    assert derive_status([SimpleNamespace(status="completed"), SimpleNamespace(status="error")]) == "error"
-    assert derive_status([SimpleNamespace(status="completed"), SimpleNamespace(status="completed")]) == "completed"
-    assert derive_status([SimpleNamespace(status="analyzing"), SimpleNamespace(status="created")]) == "analyzing"
-
+def test_canonical_stage_uses_least_advanced_assessment_across_portfolio_views(client, db_session):
     company = _client(db_session, "Status Co")
-    context_engagement = _engagement(db_session, company, "Context work")
-    error_engagement = _engagement(db_session, company, "Failed work")
-    analyzing_engagement = _engagement(db_session, company, "Running work")
-    _assessment(db_session, context_engagement, status="completed")
-    _assessment(db_session, context_engagement, status="context_gathered")
-    _assessment(db_session, error_engagement, status="completed")
-    _assessment(db_session, error_engagement, status="error")
-    _assessment(db_session, analyzing_engagement, status="analyzing")
-    _assessment(db_session, analyzing_engagement, status="created")
+    engagement = _engagement(db_session, company, "Mixed work")
+    scope = _assessment(db_session, engagement, status="completed")
+    evidence = _assessment(db_session, engagement, status="error")
+    evidence.scope_answers = "{}"
     db_session.commit()
 
-    response = client.get("/")
+    status = rollup.engagement_rollup(db_session, engagement, [scope, evidence])
+    assert status.stage == "scope"
+    assert status.stage_label == "Scope"
+    assert status.summary == "2 assessments: 1 in scope, 1 in evidence"
+    for path in ("/", "/engagements", f"/clients/{company.id}", f"/engagements/{engagement.id}"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert status.summary in response.text
+        assert re.search(r">\s*\d+%\s*<", response.text) is None
+        assert "Context Gathered" not in response.text
 
-    assert response.status_code == 200
-    assert "Context Gathered" in response.text
-    assert "Error" in response.text
-    assert "Analyzing" in response.text
 
-
-def test_derived_progress_excludes_archived_assessments():
-    assert derive_progress_pct([SimpleNamespace(status="created"), SimpleNamespace(status="completed")]) == 50
-    assert derive_progress_pct([SimpleNamespace(status="questionnaire_done")]) == 67
-    assert derive_progress_pct([]) == 0
-    assert derive_status([]) == "empty"
-    assert derive_progress_pct([SimpleNamespace(status="completed")]) == 100
-    assert derive_progress_pct([SimpleNamespace(status="created")]) == 0
-
-    engagement = SimpleNamespace(id="engagement", name="Engagement", type="gap_assessment", status="active", updated_at=datetime.now())
-    active = SimpleNamespace(status="completed", frameworks=["dpdpa"], updated_at=datetime.now())
-    archived = SimpleNamespace(status="archived", frameworks=["iso27001"], updated_at=datetime.now())
+def test_engagement_card_excludes_archived_assessments(db_session):
+    company = _client(db_session)
+    engagement = _engagement(db_session, company)
+    active = _assessment(db_session, engagement, status="completed")
+    archived = _assessment(db_session, engagement, status="archived", frameworks=("iso27001",))
+    db_session.commit()
     card = build_engagement_card(engagement, [active, archived])
     assert card["assessment_count"] == 1
-    assert card["progress_pct"] == 100
+    assert card["stage_label"] == "Scope"
+    assert card["summary"] == "Scope"
+    assert card["progress_pct"] is None
     assert card["framework_ids"] == ["dpdpa"]
+
+
+def test_rollup_agrees_with_assessment_status_and_disambiguates_legacy_names(db_session, monkeypatch):
+    company = _client(db_session)
+    engagement = _engagement(db_session, company)
+    assessments = [_assessment(db_session, engagement) for _ in range(3)]
+    created = datetime(2026, 10, 14, 9, tzinfo=timezone.utc)
+    for index, assessment in enumerate(assessments):
+        assessment.created_at = created + timedelta(minutes=index)
+    db_session.commit()
+
+    def canonical_stage(_db, assessment):
+        key = "review" if assessment.id == assessments[0].id else "report"
+        return assessment_stage.Stage(
+            key, assessment_stage.STAGE_LABELS[key], "1 of 2 approved" if key == "review" else "2 of 2 approved",
+            "Review 1 conclusion" if key == "review" else None, None,
+        )
+
+    def release_state(_db, assessment):
+        return approved_report.ReleaseState(
+            blockers=(), releasable=True, released=assessment.id != assessments[0].id,
+            stale=False, release_event_id="release-event" if assessment.id != assessments[0].id else None,
+            released_by=None, released_at=None,
+        )
+
+    monkeypatch.setattr(assessment_stage, "stage", canonical_stage)
+    monkeypatch.setattr(approved_report, "release_state", release_state)
+    monkeypatch.setattr(
+        approved_report, "latest_release_event",
+        lambda _db, assessment_id: None if assessment_id == assessments[0].id else SimpleNamespace(id="release-event"),
+    )
+    statuses = [rollup.assessment_status(db_session, assessment) for assessment in assessments]
+    engagement_status = rollup.engagement_rollup(db_session, engagement, assessments)
+    assert engagement_status.stage == statuses[0].stage == "review"
+    assert engagement_status.stage_label == statuses[0].stage_label == "Review"
+    assert engagement_status.earliest_note == statuses[0].note == "1 of 2 approved"
+    assert [status.release_state for status in statuses] == ["draft", "released", "released"]
+    assert engagement_status.summary == "3 assessments: 1 in review, 2 released"
+    assert engagement_status.counts_by_stage["review"] == 1
+    assert engagement_status.counts_by_release["released"] == 2
+    fallback = f"{framework_display_name('dpdpa')} · 14 Oct 2026"
+    assert assessments[0].display_name == rollup.assessment_label(assessments[0]) == fallback
+    assert rollup.assessment_label(assessments[0], reversed(assessments)) == fallback
+    assert rollup.assessment_label(assessments[1], reversed(assessments)) == f"{fallback} (2)"
+    assert rollup.assessment_label(assessments[2], assessments) == f"{fallback} (3)"
 
 
 def test_last_activity_uses_assessments_then_engagements_for_client(db_session):
@@ -329,7 +366,7 @@ def test_zero_row_edges_and_global_empty_state(client, db_session):
 
     dashboard = client.get("/")
     assert "No assessments" in dashboard.text
-    assert "0%" in dashboard.text
+    assert "0%" not in dashboard.text
     assert client.get(f"/engagements/{engagement.id}").status_code == 200
 
     db_session.delete(engagement)
