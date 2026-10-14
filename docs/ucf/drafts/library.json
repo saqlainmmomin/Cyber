@@ -1,0 +1,9 @@
+{
+  "library_version": "0.0.2-draft",
+  "status": "draft, unsigned",
+  "frameworks": {
+    "iso27001": "ISO/IEC 27001:2022 with Amd 1:2024",
+    "nist_csf": "NIST CSF 2.0",
+    "dpdpa": "DPDP Act 2023 with Rules 2025"
+  }
+}

@@ -1,0 +1,7 @@
+ADDENDUM for the NIST-layer controls (overrides fw_prompt.txt where they differ).
+- Your controls have origin nist: either NIST-only slots (no base control covers them) or remainder slots (note says "Remainder of UC-xxx": complete a base control that covers part of an ask). Briefs are in /private/tmp/claude-501/-Users-saqlainmomin-dpdpa-ucf/6a2c7628-04a0-434b-9ee2-884bfe0504a3/scratchpad/briefs_nist/ (use this folder where the main instructions mention briefs).
+- Remainder slots: read the base control's fields (docs/ucf/drafts/fields_<DOMAIN>.csv) first. Your statement covers only what the base control does not and must not repeat it. Mixed slots (remainder for some atoms, NIST-only for others) still have one goal; write to that goal.
+- Never name the framework (no NIST, CSF, "Govern", "Identify", function or category names, no subcategory codes such as GV.OC-01 or PR.AA-05). Use plain language.
+- Numbers and timeframes: none unless the brief's signed criteria state one; if you use one, put it in key_settings under layer `nist_csf:` and the same wording must appear in the text. Prefer "on a defined cycle".
+- Several of these slots carry many atoms from the brief. The control still has one goal and one test: write the statement and test around the common core, and list the sub-asks in good_looks_like.
+- Output files: docs/ucf/drafts/fields_<DOMAIN>_nist.csv (for example fields_GOV_nist.csv). Do not touch existing fields files.

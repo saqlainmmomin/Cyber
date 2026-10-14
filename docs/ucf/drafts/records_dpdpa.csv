@@ -1,0 +1,42 @@
+framework,record_id,reference,title,kind,group
+dpdpa,CH2.CONSENT.1,"Section 6(1), 6(3)","Lawful basis for processing with free, specific, informed consent",requirement,Obligations of Data Fiduciary / Consent Management
+dpdpa,CH2.CONSENT.2,Section 6(1),Itemised consent for multiple purposes,requirement,Obligations of Data Fiduciary / Consent Management
+dpdpa,CH2.CONSENT.3,"Section 6(4), 6(6)",Consent withdrawal mechanism,requirement,Obligations of Data Fiduciary / Consent Management
+dpdpa,CH2.CONSENT.4,Section 6(8)-(9),Consent Manager registration and interoperability,requirement,Obligations of Data Fiduciary / Consent Management
+dpdpa,CH2.CONSENT.5,Section 9(1),Verifiable parental consent for children's data,requirement,Obligations of Data Fiduciary / Consent Management
+dpdpa,CH2.NOTICE.1,Section 5(1); DPDP Rules 2025 r.3,Notice accompanying the consent request,requirement,Obligations of Data Fiduciary / Notice Requirements
+dpdpa,CH2.NOTICE.2,Section 5(2),Notice for previously collected data,requirement,Obligations of Data Fiduciary / Notice Requirements
+dpdpa,CH2.NOTICE.3,"Section 6(3), 8(9); DPDP Rules 2025 r.9",Notice contains contact details of DPO or grievance officer,requirement,Obligations of Data Fiduciary / Notice Requirements
+dpdpa,CH2.PURPOSE.1,Section 4(1),Processing only for stated purpose,requirement,Obligations of Data Fiduciary / Purpose Limitation
+dpdpa,CH2.PURPOSE.2,Section 7,Legitimate uses without consent properly identified,requirement,Obligations of Data Fiduciary / Purpose Limitation
+dpdpa,CH2.MINIMIZE.1,Section 6(1),Collection limited to what is necessary,requirement,Obligations of Data Fiduciary / Data Minimization & Storage Limitation
+dpdpa,CH2.MINIMIZE.2,Section 8(7),Data retention limited to purpose fulfilment,requirement,Obligations of Data Fiduciary / Data Minimization & Storage Limitation
+dpdpa,CH2.MINIMIZE.3,Section 8(7); DPDP Rules 2025 r.8(3),Retention schedule and deletion procedures,requirement,Obligations of Data Fiduciary / Data Minimization & Storage Limitation
+dpdpa,CH2.ACCURACY.1,Section 8(3),Data accuracy ensured for decision-making and onward disclosure,requirement,Obligations of Data Fiduciary / Data Accuracy
+dpdpa,CH2.SECURITY.1,Section 8(5),Reasonable security safeguards implemented,requirement,Obligations of Data Fiduciary / Security Safeguards
+dpdpa,CH2.SECURITY.2,Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b),Encryption and access controls,requirement,Obligations of Data Fiduciary / Security Safeguards
+dpdpa,CH2.SECURITY.3,Section 8(2),Data Processor contractual safeguards,requirement,Obligations of Data Fiduciary / Security Safeguards
+dpdpa,CH3.ACCESS.1,Section 11(1),Summary of personal data and processing activities,requirement,Rights of Data Principal / Right to Access Information
+dpdpa,CH3.CORRECT.1,Section 12(1),Mechanism for correction and completion of data,requirement,Rights of Data Principal / Right to Correction & Erasure
+dpdpa,CH3.CORRECT.2,Section 12(3),Mechanism for erasure of personal data,requirement,Rights of Data Principal / Right to Correction & Erasure
+dpdpa,CH3.GRIEVANCE.1,Section 13(1),Grievance redressal mechanism available,requirement,Rights of Data Principal / Grievance Redressal
+dpdpa,CH3.GRIEVANCE.2,Section 13(2),Timely response to grievances,requirement,Rights of Data Principal / Grievance Redressal
+dpdpa,CH3.NOMINATE.1,Section 14,Nomination mechanism for death or incapacity,requirement,Rights of Data Principal / Right of Nomination
+dpdpa,CH4.CHILD.1,Section 9(3),No tracking or behavioural monitoring of children,requirement,Special Provisions / Children's Data Protection
+dpdpa,CH4.CHILD.2,Section 9(2),No processing detrimental to child's well-being,requirement,Special Provisions / Children's Data Protection
+dpdpa,CH4.CHILD.3,Section 9,Age verification mechanism,requirement,Special Provisions / Children's Data Protection
+dpdpa,CH4.SDF.1,Section 10(2)(a),Data Protection Officer (DPO) appointed,requirement,Special Provisions / Significant Data Fiduciary (SDF) Obligations
+dpdpa,CH4.SDF.2,Section 10(2)(b),Independent Data Auditor appointed,requirement,Special Provisions / Significant Data Fiduciary (SDF) Obligations
+dpdpa,CH4.SDF.3,Section 10(2)(c)(i),Data Protection Impact Assessment (DPIA) conducted,requirement,Special Provisions / Significant Data Fiduciary (SDF) Obligations
+dpdpa,CH4.SDF.4,Section 10(2)(c)(ii),Periodic audit completed,requirement,Special Provisions / Significant Data Fiduciary (SDF) Obligations
+dpdpa,CM.RECORDS.1,Section 6,Consent records maintained,requirement,Consent Management (Detailed) / Consent Records & Lifecycle
+dpdpa,CM.RECORDS.2,Section 6(1),Fresh consent for a new or changed purpose,requirement,Consent Management (Detailed) / Consent Records & Lifecycle
+dpdpa,CM.GRANULAR.1,Section 6(1),Granular consent options available,requirement,Consent Management (Detailed) / Granular Consent Controls
+dpdpa,CM.GRANULAR.2,Section 6(1),No consent bundling with service access,requirement,Consent Management (Detailed) / Granular Consent Controls
+dpdpa,CB.TRANSFER.1,Section 16(1),Data transfers only to non-restricted jurisdictions,requirement,Cross-Border Data Transfer / Transfer Restrictions & Controls
+dpdpa,CB.TRANSFER.2,Section 16,Transfers comply with s.16 restrictions and stricter sectoral law,requirement,Cross-Border Data Transfer / Transfer Restrictions & Controls
+dpdpa,CB.TRANSFER.3,Section 16,Data localisation where required,requirement,Cross-Border Data Transfer / Transfer Restrictions & Controls
+dpdpa,BN.NOTIFY.1,Section 8(6); DPDP Rules 2025 r.7(2),Breach notification to Data Protection Board,requirement,Breach Notification / Breach Detection & Notification
+dpdpa,BN.NOTIFY.2,Section 8(6); DPDP Rules 2025 r.7(1),Breach notification to affected Data Principals,requirement,Breach Notification / Breach Detection & Notification
+dpdpa,BN.NOTIFY.3,Section 8(4)-(6),Incident response plan documented,requirement,Breach Notification / Breach Detection & Notification
+dpdpa,BN.NOTIFY.4,Section 8(6),Breach register maintained,requirement,Breach Notification / Breach Detection & Notification

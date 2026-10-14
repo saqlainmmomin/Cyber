@@ -1,0 +1,300 @@
+framework,record_id,atom_id,source_ref,paraphrase,needs_verification
+iso27001,ISO.A5.1,ISO.A5.1-a,Annex A.5.1,Define a set of security policies and have management approve them.,false
+iso27001,ISO.A5.1,ISO.A5.1-b,Annex A.5.1,Publish the policies and have personnel and relevant outside parties acknowledge them.,false
+iso27001,ISO.A5.1,ISO.A5.1-c,Annex A.5.1,Review each policy at planned intervals and after significant change.,false
+iso27001,ISO.A5.2,ISO.A5.2-a,Annex A.5.2,Define security roles and their responsibilities.,false
+iso27001,ISO.A5.2,ISO.A5.2-b,Annex A.5.2,"Allocate each security role to a named, current person.",false
+iso27001,ISO.A5.3,ISO.A5.3-a,Annex A.5.3,Identify duties that conflict and require them to be separated.,false
+iso27001,ISO.A5.3,ISO.A5.3-b,Annex A.5.3,Show through system roles or approvals that different people perform each side of a conflicting pair.,false
+iso27001,ISO.A5.3,ISO.A5.3-c,Annex A.5.3,Document compensating measures where separation is not feasible.,false
+iso27001,ISO.A5.4,ISO.A5.4-a,Annex A.5.4,"Require, in a document personnel receive, that staff follow security policies and procedures.",false
+iso27001,ISO.A5.4,ISO.A5.4-b,Annex A.5.4,"Have managers brief or require their teams to comply, with records.",false
+iso27001,ISO.A5.5,ISO.A5.5-a,Annex A.5.5,Keep a current list of relevant authorities and verify it regularly.,false
+iso27001,ISO.A5.5,ISO.A5.5-b,Annex A.5.5,Define who may contact authorities and within what timelines for reportable events.,false
+iso27001,ISO.A5.6,ISO.A5.6-a,Annex A.5.6,Record which specialist forums and professional groups the organization joins.,false
+iso27001,ISO.A5.6,ISO.A5.6-b,Annex A.5.6,Take part actively and circulate what is learned.,false
+iso27001,ISO.A5.7,ISO.A5.7-a,Annex A.5.7,Define the threat information sources and how they are analyzed for relevance.,false
+iso27001,ISO.A5.7,ISO.A5.7-b,Annex A.5.7,Produce threat intelligence outputs in the period.,false
+iso27001,ISO.A5.7,ISO.A5.7-c,Annex A.5.7,"Act on threat intelligence, for example by updating the risk register or blocking rules.",false
+iso27001,ISO.A5.8,ISO.A5.8-a,Annex A.5.8,"Require security requirements and risks to be addressed at set stages of every project, whatever its type.",false
+iso27001,ISO.A5.8,ISO.A5.8-b,Annex A.5.8,Keep project records showing a security assessment or requirements sign-off.,false
+iso27001,ISO.A5.9,ISO.A5.9-a,Annex A.5.9,Maintain an inventory of information and associated assets in scope.,false
+iso27001,ISO.A5.9,ISO.A5.9-b,Annex A.5.9,Assign an owner to every inventory entry.,false
+iso27001,ISO.A5.9,ISO.A5.9-c,Annex A.5.9,Keep the inventory updated and matching live assets.,false
+iso27001,ISO.A5.10,ISO.A5.10-a,Annex A.5.10,Set rules for acceptable and prohibited use of information and assets.,false
+iso27001,ISO.A5.10,ISO.A5.10-b,Annex A.5.10,Document how information is handled at each classification level.,false
+iso27001,ISO.A5.10,ISO.A5.10-c,Annex A.5.10,Have users acknowledge the rules.,false
+iso27001,ISO.A5.11,ISO.A5.11-a,Annex A.5.11,"Require return of all organizational assets on leaving or on change of role, contract or agreement.",false
+iso27001,ISO.A5.11,ISO.A5.11-b,Annex A.5.11,Check returned assets against the inventory.,false
+iso27001,ISO.A5.12,ISO.A5.12-a,Annex A.5.12,Define classification levels and the criteria for assigning them.,false
+iso27001,ISO.A5.12,ISO.A5.12-b,Annex A.5.12,Assign a classification to information assets.,false
+iso27001,ISO.A5.13,ISO.A5.13-a,Annex A.5.13,"Define how each classification level is marked, consistent with the scheme.",false
+iso27001,ISO.A5.13,ISO.A5.13-b,Annex A.5.13,"Apply labels to documents, systems and media as the procedure requires.",false
+iso27001,ISO.A5.14,ISO.A5.14-a,Annex A.5.14,"Set rules for each transfer channel used, stating the protection required.",false
+iso27001,ISO.A5.14,ISO.A5.14-b,Annex A.5.14,Cover transfers with external parties by agreements containing security terms.,false
+iso27001,ISO.A5.14,ISO.A5.14-c,Annex A.5.14,Enforce the rules through technical settings on the main channels.,false
+iso27001,ISO.A5.15,ISO.A5.15-a,Annex A.5.15,Set rules for physical and logical access based on business and security needs.,false
+iso27001,ISO.A5.15,ISO.A5.15-b,Annex A.5.15,Apply the rules in actual access configurations.,false
+iso27001,ISO.A5.16,ISO.A5.16-a,Annex A.5.16,"Manage creation, change and removal of identities, each linked to one person or an owned account.",false
+iso27001,ISO.A5.16,ISO.A5.16-b,Annex A.5.16,Reconcile active accounts against the HR roster so departed staff have no active identity.,false
+iso27001,ISO.A5.16,ISO.A5.16-c,Annex A.5.16,Assign an owner to every service and other non-person account.,false
+iso27001,ISO.A5.17,ISO.A5.17-a,Annex A.5.17,"Control issuing, resetting and revoking of authentication information, verifying identity before reset.",false
+iso27001,ISO.A5.17,ISO.A5.17-b,Annex A.5.17,Give users written guidance on keeping authentication information confidential.,false
+iso27001,ISO.A5.17,ISO.A5.17-c,Annex A.5.17,Change default vendor credentials on installation.,false
+iso27001,ISO.A5.18,ISO.A5.18-a,Annex A.5.18,Require access to be requested and approved before it is provisioned or changed.,false
+iso27001,ISO.A5.18,ISO.A5.18-b,Annex A.5.18,Review access at the defined frequency and remove inappropriate access.,false
+iso27001,ISO.A5.18,ISO.A5.18-c,Annex A.5.18,Remove or adjust access within the set timeframe when people leave or change role.,false
+iso27001,ISO.A5.19,ISO.A5.19-a,Annex A.5.19,"Define how suppliers are identified, risk-rated and selected.",false
+iso27001,ISO.A5.19,ISO.A5.19-b,Annex A.5.19,"Keep a register of suppliers with access to information or systems, each with a risk rating.",false
+iso27001,ISO.A5.19,ISO.A5.19-c,Annex A.5.19,Complete a security due-diligence assessment before contract signature or access.,false
+iso27001,ISO.A5.20,ISO.A5.20-a,Annex A.5.20,"Keep a standard set of supplier security clauses, varied by supplier type or risk.",false
+iso27001,ISO.A5.20,ISO.A5.20-b,Annex A.5.20,Agree security terms in contracts with high-risk suppliers.,false
+iso27001,ISO.A5.21,ISO.A5.21-a,Annex A.5.21,Require ICT suppliers to pass security requirements to sub-suppliers and disclose critical components.,false
+iso27001,ISO.A5.21,ISO.A5.21-b,Annex A.5.21,"Assess the supply chain of key ICT suppliers, for example through sub-processor lists or component provenance.",false
+iso27001,ISO.A5.22,ISO.A5.22-a,Annex A.5.22,Set how often each supplier risk tier is reviewed and what the review covers.,false
+iso27001,ISO.A5.22,ISO.A5.22-b,Annex A.5.22,Review high-risk suppliers at that frequency.,false
+iso27001,ISO.A5.22,ISO.A5.22-c,Annex A.5.22,Assess the security impact of material changes to supplier services.,false
+iso27001,ISO.A5.23,ISO.A5.23-a,Annex A.5.23,"Define how cloud services are selected, used, managed and exited, including shared responsibilities.",false
+iso27001,ISO.A5.23,ISO.A5.23-b,Annex A.5.23,Keep a register of cloud services with provider assurance reviewed in the period.,false
+iso27001,ISO.A5.23,ISO.A5.23-c,Annex A.5.23,"Plan exit for critical cloud services, covering data return and deletion.",false
+iso27001,ISO.A5.24,ISO.A5.24-a,Annex A.5.24,Document an incident management procedure covering detection through closure.,false
+iso27001,ISO.A5.24,ISO.A5.24-b,Annex A.5.24,Define incident roles with named people and contact details.,false
+iso27001,ISO.A5.24,ISO.A5.24-c,Annex A.5.24,Communicate the procedure and roles and exercise the plan.,false
+iso27001,ISO.A5.25,ISO.A5.25-a,Annex A.5.25,Write criteria and severity levels that decide when an event is an incident.,false
+iso27001,ISO.A5.25,ISO.A5.25-b,Annex A.5.25,Assess logged events and record the decision on each.,false
+iso27001,ISO.A5.26,ISO.A5.26-a,Annex A.5.26,"Respond under documented procedures covering containment, eradication, recovery and escalation.",false
+iso27001,ISO.A5.26,ISO.A5.26-b,Annex A.5.26,Record the steps followed and close each incident.,false
+iso27001,ISO.A5.26,ISO.A5.26-c,Annex A.5.26,"Notify internal and external parties, including legal and contractual notification, within the required time.",false
+iso27001,ISO.A5.27,ISO.A5.27-a,Annex A.5.27,Require a post-incident review for significant incidents.,false
+iso27001,ISO.A5.27,ISO.A5.27-b,Annex A.5.27,Track resulting control improvements to completion.,false
+iso27001,ISO.A5.28,ISO.A5.28-a,Annex A.5.28,"Define how evidence of security events is identified, collected, acquired and preserved, including chain of custody.",false
+iso27001,ISO.A5.28,ISO.A5.28-b,Annex A.5.28,Keep chain-of-custody or evidence-handling records where evidence was collected.,false
+iso27001,ISO.A5.29,ISO.A5.29-a,Annex A.5.29,"Plan how security controls are kept, or compensated, during a disruption.",false
+iso27001,ISO.A5.29,ISO.A5.29-b,Annex A.5.29,Show that continuity tests or real disruptions considered and kept security requirements in place.,false
+iso27001,ISO.A5.30,ISO.A5.30-a,Annex A.5.30,Define recovery time and recovery point objectives for critical IT services from an impact analysis.,false
+iso27001,ISO.A5.30,ISO.A5.30-b,Annex A.5.30,Maintain recovery plans for the critical services.,false
+iso27001,ISO.A5.30,ISO.A5.30-c,Annex A.5.30,"Test the recovery plans, compare results with the objectives and act on gaps.",false
+iso27001,ISO.A5.31,ISO.A5.31-a,Annex A.5.31,"List every legal, regulatory and contractual requirement that bears on information security.",false
+iso27001,ISO.A5.31,ISO.A5.31-b,Annex A.5.31,"Record how each requirement is met, with an owner or control reference.",false
+iso27001,ISO.A5.31,ISO.A5.31-c,Annex A.5.31,Review and update the list at least yearly and after relevant legal change.,false
+iso27001,ISO.A5.32,ISO.A5.32-a,Annex A.5.32,"Define how intellectual property is protected, including legitimate software sources and license compliance.",false
+iso27001,ISO.A5.32,ISO.A5.32-b,Annex A.5.32,Reconcile software licenses against installed or subscribed software.,false
+iso27001,ISO.A5.33,ISO.A5.33-a,Annex A.5.33,"Define record types, retention periods and storage requirements reflecting legal and contractual needs.",false
+iso27001,ISO.A5.33,ISO.A5.33-b,Annex A.5.33,"Protect stored records from deletion, tampering and unauthorized access for the retention period.",false
+iso27001,ISO.A5.34,ISO.A5.34-a,Annex A.5.34,Identify the privacy laws and contractual terms that apply to personal data processing.,false
+iso27001,ISO.A5.34,ISO.A5.34-b,Annex A.5.34,Assign a person or role responsible for privacy and personal data protection.,false
+iso27001,ISO.A5.34,ISO.A5.34-c,Annex A.5.34,Keep a current record of personal data processing for the scope.,false
+iso27001,ISO.A5.35,ISO.A5.35-a,Annex A.5.35,Plan when security is independently reviewed and what triggers an unscheduled review.,false
+iso27001,ISO.A5.35,ISO.A5.35-b,Annex A.5.35,Perform the independent review within the planned interval and report the results to management.,false
+iso27001,ISO.A5.36,ISO.A5.36-a,Annex A.5.36,Assign managers or control owners to check compliance with policies and standards at a set frequency.,false
+iso27001,ISO.A5.36,ISO.A5.36-b,Annex A.5.36,Perform compliance reviews and record non-compliances with actions.,false
+iso27001,ISO.A5.37,ISO.A5.37-a,Annex A.5.37,Document operating procedures for key IT activities.,false
+iso27001,ISO.A5.37,ISO.A5.37-b,Annex A.5.37,Make the current approved procedures available to those who need them.,false
+iso27001,ISO.A6.1,ISO.A6.1-a,Annex A.6.1,Define the background checks required before a person joins.,false
+iso27001,ISO.A6.1,ISO.A6.1-b,Annex A.6.1,Complete the checks before the start date or before access is granted.,false
+iso27001,ISO.A6.1,ISO.A6.1-c,Annex A.6.1,State when re-screening is performed.,false
+iso27001,ISO.A6.1,ISO.A6.1-d,Annex A.6.1,"Scale the depth of checks to role, information accessed and risk.",false
+iso27001,ISO.A6.2,ISO.A6.2-a,Annex A.6.2,Include security responsibilities of the individual and the organization in employment and contractor agreement templates.,false
+iso27001,ISO.A6.2,ISO.A6.2-b,Annex A.6.2,Have current staff and contractors sign agreements containing those terms.,false
+iso27001,ISO.A6.3,ISO.A6.3-a,Annex A.6.3,"Define an awareness and training programme with content, audiences and frequency.",false
+iso27001,ISO.A6.3,ISO.A6.3-b,Annex A.6.3,Have in-scope personnel complete awareness training within the set period and follow up non-completers.,false
+iso27001,ISO.A6.3,ISO.A6.3-c,Annex A.6.3,Give technical and privileged roles role-specific training.,false
+iso27001,ISO.A6.3,ISO.A6.3-d,Annex A.6.3,Update personnel when relevant policies or procedures change.,false
+iso27001,ISO.A6.4,ISO.A6.4-a,Annex A.6.4,Document a disciplinary process that covers security policy violations.,false
+iso27001,ISO.A6.4,ISO.A6.4-b,Annex A.6.4,Communicate the process to personnel.,false
+iso27001,ISO.A6.5,ISO.A6.5-a,Annex A.6.5,Define the security responsibilities that continue after termination or change of employment.,false
+iso27001,ISO.A6.5,ISO.A6.5-b,Annex A.6.5,Communicate the continuing obligations to leavers at exit.,false
+iso27001,ISO.A6.6,ISO.A6.6-a,Annex A.6.6,Keep confidentiality agreement templates for staff and external parties reflecting protection needs.,false
+iso27001,ISO.A6.6,ISO.A6.6-b,Annex A.6.6,"Have staff, contractors and external parties with access sign the agreements.",false
+iso27001,ISO.A6.6,ISO.A6.6-c,Annex A.6.6,Review the templates at the defined interval.,false
+iso27001,ISO.A6.7,ISO.A6.7-a,Annex A.6.7,Set security requirements for working outside the premises.,false
+iso27001,ISO.A6.7,ISO.A6.7-b,Annex A.6.7,Enforce the requirements technically for remote access.,false
+iso27001,ISO.A6.8,ISO.A6.8-a,Annex A.6.8,Define and publish a channel for personnel to report security events.,false
+iso27001,ISO.A6.8,ISO.A6.8-b,Annex A.6.8,Show that personnel report events through the channel in a timely way.,false
+iso27001,ISO.A6.8,ISO.A6.8-c,Annex A.6.8,Tell personnel what to report and how.,false
+iso27001,ISO.A7.1,ISO.A7.1-a,Annex A.7.1,Define physical perimeters for each in-scope site with the protection each needs.,false
+iso27001,ISO.A7.1,ISO.A7.1-b,Annex A.7.1,Confirm the perimeters exist as described.,false
+iso27001,ISO.A7.1,ISO.A7.1-c,Annex A.7.1,Record where no own premises are in scope and rely on provider assurance for hosting.,false
+iso27001,ISO.A7.2,ISO.A7.2-a,Annex A.7.2,Define entry controls and who may enter each secure area.,false
+iso27001,ISO.A7.2,ISO.A7.2-b,Annex A.7.2,Record visitors and escort them where required.,false
+iso27001,ISO.A7.2,ISO.A7.2-c,Annex A.7.2,Review physical access rights and deactivate leavers' badges.,false
+iso27001,ISO.A7.3,ISO.A7.3-a,Annex A.7.3,"Specify physical security measures for offices, rooms and facilities.",false
+iso27001,ISO.A7.3,ISO.A7.3-b,Annex A.7.3,Confirm the measures are in place for rooms holding sensitive information or equipment.,false
+iso27001,ISO.A7.4,ISO.A7.4-a,Annex A.7.4,Define monitoring for unauthorized physical access and who responds.,false
+iso27001,ISO.A7.4,ISO.A7.4-b,Annex A.7.4,Keep monitoring systems operational throughout the period.,false
+iso27001,ISO.A7.5,ISO.A7.5-a,Annex A.7.5,Assess physical and environmental threats for each in-scope site.,false
+iso27001,ISO.A7.5,ISO.A7.5-b,Annex A.7.5,Install and maintain the protection the assessment identifies.,false
+iso27001,ISO.A7.6,ISO.A7.6-a,Annex A.7.6,Document rules for working in secure areas.,false
+iso27001,ISO.A7.6,ISO.A7.6-b,Annex A.7.6,Make authorized personnel aware of the rules.,false
+iso27001,ISO.A7.7,ISO.A7.7-a,Annex A.7.7,"Set clear desk and clear screen rules for papers, removable media and unattended screens.",false
+iso27001,ISO.A7.7,ISO.A7.7-b,Annex A.7.7,Enforce automatic screen lock after inactivity by configuration.,false
+iso27001,ISO.A7.7,ISO.A7.7-c,Annex A.7.7,Check compliance with the rules and follow up findings.,false
+iso27001,ISO.A7.8,ISO.A7.8-a,Annex A.7.8,Define siting requirements for equipment.,false
+iso27001,ISO.A7.8,ISO.A7.8-b,Annex A.7.8,Confirm sampled equipment locations meet the requirements.,false
+iso27001,ISO.A7.9,ISO.A7.9-a,Annex A.7.9,Document rules for protecting assets taken off premises.,false
+iso27001,ISO.A7.9,ISO.A7.9-b,Annex A.7.9,Protect portable devices used off-site with full-disk encryption and remote wipe.,false
+iso27001,ISO.A7.10,ISO.A7.10-a,Annex A.7.10,"Define how storage media are acquired, used, transported and stored according to classification.",false
+iso27001,ISO.A7.10,ISO.A7.10-b,Annex A.7.10,Restrict or encrypt removable media on endpoints in line with the procedure.,false
+iso27001,ISO.A7.10,ISO.A7.10-c,Annex A.7.10,"Record media disposals, for example with destruction certificates.",false
+iso27001,ISO.A7.11,ISO.A7.11-a,Annex A.7.11,Define protection against power and other utility failures for critical facilities.,false
+iso27001,ISO.A7.11,ISO.A7.11-b,Annex A.7.11,"Keep maintenance and test records for UPS, generators or equivalents.",false
+iso27001,ISO.A7.12,ISO.A7.12-a,Annex A.7.12,Define protection requirements for cabling.,false
+iso27001,ISO.A7.12,ISO.A7.12-b,Annex A.7.12,Confirm sampled cabling and communications rooms meet the requirements.,false
+iso27001,ISO.A7.13,ISO.A7.13-a,Annex A.7.13,Define maintenance requirements and schedules for in-scope equipment.,false
+iso27001,ISO.A7.13,ISO.A7.13-b,Annex A.7.13,Perform maintenance by authorized personnel and clear sensitive information from equipment sent off-site.,false
+iso27001,ISO.A7.14,ISO.A7.14-a,Annex A.7.14,Require data and licensed software to be removed or overwritten before equipment is disposed of or reused.,false
+iso27001,ISO.A7.14,ISO.A7.14-b,Annex A.7.14,Keep verified wipe or destruction records for disposed or reissued devices.,false
+iso27001,ISO.A8.1,ISO.A8.1-a,Annex A.8.1,Set security requirements for user endpoint devices.,false
+iso27001,ISO.A8.1,ISO.A8.1-b,Annex A.8.1,Verify devices meet the required settings.,false
+iso27001,ISO.A8.2,ISO.A8.2-a,Annex A.8.2,"Authorize privileged access separately, limit it to those who need it and hold it in separate accounts.",false
+iso27001,ISO.A8.2,ISO.A8.2-b,Annex A.8.2,"Keep a current list of privileged accounts, each with a recorded authorization.",false
+iso27001,ISO.A8.2,ISO.A8.2-c,Annex A.8.2,Review privileged access and remove unneeded rights.,false
+iso27001,ISO.A8.3,ISO.A8.3-a,Annex A.8.3,Configure access controls in each system by role or group in line with the access rules.,false
+iso27001,ISO.A8.3,ISO.A8.3-b,Annex A.8.3,Test that sampled users cannot reach information or functions outside their role.,false
+iso27001,ISO.A8.4,ISO.A8.4-a,Annex A.8.4,"Define who may read and write source code repositories, build tools and libraries.",false
+iso27001,ISO.A8.4,ISO.A8.4-b,Annex A.8.4,Limit write access to authorized developers and require review before merge.,false
+iso27001,ISO.A8.5,ISO.A8.5-a,Annex A.8.5,"Set authentication strength by system sensitivity, including multi-factor where needed.",false
+iso27001,ISO.A8.5,ISO.A8.5-b,Annex A.8.5,Enforce the required methods in the identity provider or systems.,false
+iso27001,ISO.A8.5,ISO.A8.5-c,Annex A.8.5,Configure log-on protections such as lockout after failed attempts.,false
+iso27001,ISO.A8.6,ISO.A8.6-a,Annex A.8.6,Define capacity requirements and thresholds for critical systems.,false
+iso27001,ISO.A8.6,ISO.A8.6-b,Annex A.8.6,Monitor resource use and adjust capacity when thresholds are approached.,false
+iso27001,ISO.A8.7,ISO.A8.7-a,Annex A.8.7,Define the malware protection required for each system type.,false
+iso27001,ISO.A8.7,ISO.A8.7-b,Annex A.8.7,"Keep protection installed, active and current on in-scope systems.",false
+iso27001,ISO.A8.7,ISO.A8.7-c,Annex A.8.7,Deliver awareness material on malware risks such as phishing and suspicious attachments.,false
+iso27001,ISO.A8.8,ISO.A8.8-a,Annex A.8.8,"Define sources of vulnerability information, how exposure is assessed and fix deadlines by severity.",false
+iso27001,ISO.A8.8,ISO.A8.8-b,Annex A.8.8,Run vulnerability scans or equivalent assessments at the set frequency.,false
+iso27001,ISO.A8.8,ISO.A8.8-c,Annex A.8.8,Fix critical and high findings within deadlines or record a risk acceptance.,false
+iso27001,ISO.A8.8,ISO.A8.8-d,Annex A.8.8,Penetration test internet-facing systems within the last 12 months and track findings to closure.,false
+iso27001,ISO.A8.9,ISO.A8.9-a,Annex A.8.9,Document secure configuration baselines for each in-scope technology type.,false
+iso27001,ISO.A8.9,ISO.A8.9-b,Annex A.8.9,Monitor systems against the baselines and remediate drift.,false
+iso27001,ISO.A8.9,ISO.A8.9-c,Annex A.8.9,Review the baselines within their review interval.,false
+iso27001,ISO.A8.10,ISO.A8.10-a,Annex A.8.10,"Define when information must be deleted from systems, devices and media and by what method.",false
+iso27001,ISO.A8.10,ISO.A8.10-b,Annex A.8.10,"Delete information on schedule and keep records, such as deletion logs.",false
+iso27001,ISO.A8.11,ISO.A8.11-a,Annex A.8.11,"Define which data must be masked, pseudonymized or anonymized and in which contexts.",false
+iso27001,ISO.A8.11,ISO.A8.11-b,Annex A.8.11,"Apply masking as the rules require in non-production, support screens and reports.",false
+iso27001,ISO.A8.12,ISO.A8.12-a,Annex A.8.12,Identify the sensitive information to protect and the channels it could leak through.,false
+iso27001,ISO.A8.12,ISO.A8.12-b,Annex A.8.12,Configure leakage prevention measures on those channels.,false
+iso27001,ISO.A8.12,ISO.A8.12-c,Annex A.8.12,Review and act on leakage alerts.,false
+iso27001,ISO.A8.13,ISO.A8.13-a,Annex A.8.13,"Set a backup policy covering scope, frequency, retention, location and protection.",false
+iso27001,ISO.A8.13,ISO.A8.13-b,Annex A.8.13,Run backups as the policy requires and investigate failures.,false
+iso27001,ISO.A8.13,ISO.A8.13-c,Annex A.8.13,Perform and record restore tests at the set frequency.,false
+iso27001,ISO.A8.14,ISO.A8.14-a,Annex A.8.14,Define availability requirements for critical systems and document the redundancy that meets them.,false
+iso27001,ISO.A8.14,ISO.A8.14-b,Annex A.8.14,Test failover at least yearly or observe it in a real event.,false
+iso27001,ISO.A8.15,ISO.A8.15-a,Annex A.8.15,Define which events are logged for each system type and how long logs are kept.,false
+iso27001,ISO.A8.15,ISO.A8.15-b,Annex A.8.15,Produce the defined logs and forward them to central storage.,false
+iso27001,ISO.A8.15,ISO.A8.15-c,Annex A.8.15,"Protect logs from tampering and unauthorized access, including by administrators.",false
+iso27001,ISO.A8.15,ISO.A8.15-d,Annex A.8.15,"Analyze logs, through alert rules or periodic review, and record the review.",false
+iso27001,ISO.A8.16,ISO.A8.16-a,Annex A.8.16,"Define what monitoring covers, what is anomalous and who responds.",false
+iso27001,ISO.A8.16,ISO.A8.16-b,Annex A.8.16,Triage alerts and pass those warranting it to the incident process.,false
+iso27001,ISO.A8.17,ISO.A8.17-a,Annex A.8.17,Name the approved reference time sources for in-scope systems.,false
+iso27001,ISO.A8.17,ISO.A8.17-b,Annex A.8.17,Configure systems to synchronize with the approved sources.,false
+iso27001,ISO.A8.18,ISO.A8.18-a,Annex A.8.18,Identify utility programs that can override controls and limit their use to authorized people.,false
+iso27001,ISO.A8.18,ISO.A8.18-b,Annex A.8.18,Log use of those utilities.,false
+iso27001,ISO.A8.19,ISO.A8.19-a,Annex A.8.19,"Define who may install software on operational systems, from which sources and with what approval.",false
+iso27001,ISO.A8.19,ISO.A8.19-b,Annex A.8.19,Enforce installation restrictions technically on servers and endpoints.,false
+iso27001,ISO.A8.20,ISO.A8.20-a,Annex A.8.20,Define how networks and network devices are secured and managed.,false
+iso27001,ISO.A8.20,ISO.A8.20-b,Annex A.8.20,Keep an up-to-date network diagram of the in-scope environment.,false
+iso27001,ISO.A8.20,ISO.A8.20-c,Annex A.8.20,Review firewall and security group rules and remove unneeded or permissive ones.,false
+iso27001,ISO.A8.21,ISO.A8.21-a,Annex A.8.21,"Document the security features, service levels and requirements of each network service used.",false
+iso27001,ISO.A8.21,ISO.A8.21-b,Annex A.8.21,Monitor network services against the agreed levels.,false
+iso27001,ISO.A8.22,ISO.A8.22-a,Annex A.8.22,Define network segments by trust level or function and the traffic allowed between them.,false
+iso27001,ISO.A8.22,ISO.A8.22-b,Annex A.8.22,"Enforce the segmentation in firewall, VLAN or security group settings.",false
+iso27001,ISO.A8.23,ISO.A8.23-a,Annex A.8.23,Define which categories of external website are blocked and how access is managed.,false
+iso27001,ISO.A8.23,ISO.A8.23-b,Annex A.8.23,"Keep web filtering active for in-scope users, including remote users.",false
+iso27001,ISO.A8.24,ISO.A8.24-a,Annex A.8.24,Define where encryption is required and which algorithms and key lengths are approved.,false
+iso27001,ISO.A8.24,ISO.A8.24-b,Annex A.8.24,"Configure encryption on data stores, endpoints and transport as the rules require.",false
+iso27001,ISO.A8.24,ISO.A8.24-c,Annex A.8.24,"Define key management rules covering generation, storage, distribution, rotation, revocation and destruction.",false
+iso27001,ISO.A8.24,ISO.A8.24-d,Annex A.8.24,Hold keys in a controlled store and rotate them as the rules require.,false
+iso27001,ISO.A8.25,ISO.A8.25-a,Annex A.8.25,Set security rules for each phase of the development life cycle.,false
+iso27001,ISO.A8.25,ISO.A8.25-b,Annex A.8.25,Show releases completed the required security steps.,false
+iso27001,ISO.A8.26,ISO.A8.26-a,Annex A.8.26,"Require security requirements to be identified, specified and approved when applications are developed or acquired.",false
+iso27001,ISO.A8.26,ISO.A8.26-b,Annex A.8.26,"Keep a documented, approved set of requirements for sampled applications.",false
+iso27001,ISO.A8.27,ISO.A8.27-a,Annex A.8.27,Document secure engineering principles and keep them current.,false
+iso27001,ISO.A8.27,ISO.A8.27-b,Annex A.8.27,Apply the principles in design or architecture reviews.,false
+iso27001,ISO.A8.28,ISO.A8.28-a,Annex A.8.28,Maintain a secure coding standard that applies to in-house and outsourced code.,false
+iso27001,ISO.A8.28,ISO.A8.28-b,Annex A.8.28,Run code review or automated scanning on code changes and address findings before release.,false
+iso27001,ISO.A8.28,ISO.A8.28-c,Annex A.8.28,Give developers secure coding training at least yearly.,false
+iso27001,ISO.A8.29,ISO.A8.29-a,Annex A.8.29,Define the security tests required at each stage and acceptance criteria before go-live.,false
+iso27001,ISO.A8.29,ISO.A8.29-b,Annex A.8.29,Keep test results and an acceptance sign-off before production release.,false
+iso27001,ISO.A8.30,ISO.A8.30-a,Annex A.8.30,Set security requirements in outsourced development contracts.,false
+iso27001,ISO.A8.30,ISO.A8.30-b,Annex A.8.30,Monitor and review the outsourced work and keep records.,false
+iso27001,ISO.A8.31,ISO.A8.31-a,Annex A.8.31,"Separate development, test and production environments with rules for promoting changes.",false
+iso27001,ISO.A8.31,ISO.A8.31-b,Annex A.8.31,"Limit developers' standing write access to production, or approve and log it.",false
+iso27001,ISO.A8.31,ISO.A8.31-c,Annex A.8.31,Secure non-production environments to the level of the data they hold.,false
+iso27001,ISO.A8.32,ISO.A8.32-a,Annex A.8.32,"Define a change procedure covering recording, impact and risk assessment, authorization, testing, rollback and communication.",false
+iso27001,ISO.A8.32,ISO.A8.32-b,Annex A.8.32,Authorize production changes before implementation and keep testing evidence.,false
+iso27001,ISO.A8.32,ISO.A8.32-c,Annex A.8.32,Record emergency changes and review and approve them afterwards.,false
+iso27001,ISO.A8.33,ISO.A8.33-a,Annex A.8.33,"Set rules for selecting and using test data, requiring masking or authorization for production or personal data.",false
+iso27001,ISO.A8.33,ISO.A8.33-b,Annex A.8.33,Authorize copies of production data to test and delete them after testing.,false
+iso27001,ISO.A8.34,ISO.A8.34-a,Annex A.8.34,Require audit and assurance tests on operational systems to be planned and approved by responsible management.,false
+iso27001,ISO.A8.34,ISO.A8.34-b,Annex A.8.34,Keep authorization or rules-of-engagement records for tests on live systems.,false
+iso27001,ISO.C4.1,ISO.C4.1-a,Clause 4.1,Determine the external and internal issues that matter to the organization's purpose and affect its security outcomes.,true
+iso27001,ISO.C4.1,ISO.C4.1-b,Clause 4.1,Decide whether climate change is a relevant issue.,true
+iso27001,ISO.C4.2,ISO.C4.2-a,Clause 4.2,Determine the interested parties that are relevant to the security program.,true
+iso27001,ISO.C4.2,ISO.C4.2-b,Clause 4.2,"Determine the requirements of those parties, which can include legal, regulatory and contractual ones and, under the 2024 amendment, climate-related ones.",true
+iso27001,ISO.C4.2,ISO.C4.2-c,Clause 4.2,Decide which of those requirements the security program will address.,true
+iso27001,ISO.C4.3,ISO.C4.3-a,Clause 4.3,"Determine the boundaries and applicability of the program, considering issues, requirements and dependencies.",true
+iso27001,ISO.C4.3,ISO.C4.3-b,Clause 4.3,Keep the scope as documented information.,true
+iso27001,ISO.C4.4,ISO.C4.4-a,Clause 4.4,"Establish and implement the security management system, with the processes it needs and their interactions.",true
+iso27001,ISO.C4.4,ISO.C4.4-b,Clause 4.4,Maintain and continually improve the system.,true
+iso27001,ISO.C5.1,ISO.C5.1-a,Clause 5.1,Make sure the security policy and objectives are set and fit the organization's strategic direction.,true
+iso27001,ISO.C5.1,ISO.C5.1-b,Clause 5.1,Build security program requirements into business processes.,true
+iso27001,ISO.C5.1,ISO.C5.1-c,Clause 5.1,Make sure the resources the program needs are available.,true
+iso27001,ISO.C5.1,ISO.C5.1-d,Clause 5.1,"Communicate the importance of effective security, direct and support people and promote continual improvement.",true
+iso27001,ISO.C5.1,ISO.C5.1-e,Clause 5.1,Make sure the program achieves its intended outcomes.,true
+iso27001,ISO.C5.1,ISO.C5.1-f,Clause 5.1,Support other managers in showing leadership in their own areas.,true
+iso27001,ISO.C5.2,ISO.C5.2-a,Clause 5.2,Set a top-level policy suited to the organization's purpose that frames objectives and commits to meeting requirements and improving.,true
+iso27001,ISO.C5.2,ISO.C5.2-b,Clause 5.2,"Keep the policy as documented information, communicate it and make it available to interested parties.",true
+iso27001,ISO.C5.3,ISO.C5.3-a,Clause 5.3,Assign and communicate responsibilities and authorities for relevant security roles.,true
+iso27001,ISO.C5.3,ISO.C5.3-b,Clause 5.3,Assign responsibility for conformity of the program and for reporting its performance to top management.,true
+iso27001,ISO.C6.1.1,ISO.C6.1.1-a,Clause 6.1.1,"Considering the context issues and interested-party requirements, determine the risks and opportunities that must be addressed to achieve outcomes, prevent undesired effects and improve.",true
+iso27001,ISO.C6.1.1,ISO.C6.1.1-b,Clause 6.1.1,Plan actions to address them and build the actions into program processes.,true
+iso27001,ISO.C6.1.1,ISO.C6.1.1-c,Clause 6.1.1,Plan how to evaluate whether the actions work.,true
+iso27001,ISO.C6.1.2,ISO.C6.1.2-a,Clause 6.1.2,Define and apply a risk assessment process with risk acceptance criteria and criteria for performing assessments.,true
+iso27001,ISO.C6.1.2,ISO.C6.1.2-b,Clause 6.1.2,"Make sure repeated assessments give consistent, valid and comparable results.",true
+iso27001,ISO.C6.1.2,ISO.C6.1.2-c,Clause 6.1.2,"Identify risks to confidentiality, integrity and availability within scope and assign risk owners.",true
+iso27001,ISO.C6.1.2,ISO.C6.1.2-d,Clause 6.1.2,Analyze likelihood and consequence and evaluate and prioritize risks against the criteria.,true
+iso27001,ISO.C6.1.2,ISO.C6.1.2-e,Clause 6.1.2,Keep documented information about the risk assessment process.,true
+iso27001,ISO.C6.1.3,ISO.C6.1.3-a,Clause 6.1.3,Select risk treatment options for the assessed risks.,true
+iso27001,ISO.C6.1.3,ISO.C6.1.3-b,Clause 6.1.3,Determine all controls needed to implement the chosen treatment options and compare them with Annex A to check none is missed.,true
+iso27001,ISO.C6.1.3,ISO.C6.1.3-c,Clause 6.1.3,"Produce a statement of applicability listing the necessary controls, why each is included, whether each is implemented and why any Annex A control is excluded.",true
+iso27001,ISO.C6.1.3,ISO.C6.1.3-d,Clause 6.1.3,Formulate a risk treatment plan.,true
+iso27001,ISO.C6.1.3,ISO.C6.1.3-e,Clause 6.1.3,"Get risk owner approval of the plan and acceptance of residual risk, and keep documented information.",true
+iso27001,ISO.C6.2,ISO.C6.2-a,Clause 6.2,"Set measurable security objectives at relevant functions, consistent with policy, taking risk results into account, and monitor, communicate, update and document them.",true
+iso27001,ISO.C6.2,ISO.C6.2-b,Clause 6.2,"Plan what will be done, with what resources, by whom, by when and how results are evaluated.",true
+iso27001,ISO.C6.3,ISO.C6.3-a,Clause 6.3,Carry out needed changes to the security management system in a planned way.,true
+iso27001,ISO.C7.1,ISO.C7.1-a,Clause 7.1,"Determine and provide the resources needed to establish, run, maintain and improve the program.",true
+iso27001,ISO.C7.2,ISO.C7.2-a,Clause 7.2,Determine the competence needed by people who affect security performance.,true
+iso27001,ISO.C7.2,ISO.C7.2-b,Clause 7.2,"Ensure those people are competent through education, training or experience.",true
+iso27001,ISO.C7.2,ISO.C7.2-c,Clause 7.2,Take action to gain missing competence and evaluate whether it worked.,true
+iso27001,ISO.C7.2,ISO.C7.2-d,Clause 7.2,Keep evidence of competence.,true
+iso27001,ISO.C7.3,ISO.C7.3-a,Clause 7.3,Make people aware of the security policy.,true
+iso27001,ISO.C7.3,ISO.C7.3-b,Clause 7.3,Make people aware of their contribution to the program and the benefit of better performance.,true
+iso27001,ISO.C7.3,ISO.C7.3-c,Clause 7.3,Make people aware of the consequences of not conforming.,true
+iso27001,ISO.C7.4,ISO.C7.4-a,Clause 7.4,"Decide what internal and external security communication is needed, when, with whom and how.",true
+iso27001,ISO.C7.5,ISO.C7.5-a,Clause 7.5,Include the documented information the standard requires and the organization judges necessary.,true
+iso27001,ISO.C7.5,ISO.C7.5-b,Clause 7.5,"When creating or updating documents, set identification, format, review and approval.",true
+iso27001,ISO.C7.5,ISO.C7.5-c,Clause 7.5,"Control documents so they are available, protected, distributed, stored, version controlled, retained and disposed of.",true
+iso27001,ISO.C7.5,ISO.C7.5-d,Clause 7.5,Identify and control documents of external origin that the program needs.,true
+iso27001,ISO.C8.1,ISO.C8.1-a,Clause 8.1,"Plan, implement and control the processes needed to meet security requirements and carry out the planned actions, setting criteria for the processes.",true
+iso27001,ISO.C8.1,ISO.C8.1-b,Clause 8.1,Keep documented information giving confidence that processes ran as planned.,true
+iso27001,ISO.C8.1,ISO.C8.1-c,Clause 8.1,Control planned changes and review the effect of unintended changes.,true
+iso27001,ISO.C8.1,ISO.C8.1-d,Clause 8.1,"Make sure externally provided processes, products or services that matter to the program are controlled.",true
+iso27001,ISO.C8.2,ISO.C8.2-a,Clause 8.2,Perform risk assessments at planned intervals or when significant changes are proposed or occur.,true
+iso27001,ISO.C8.2,ISO.C8.2-b,Clause 8.2,Keep the results of the assessments.,true
+iso27001,ISO.C8.3,ISO.C8.3-a,Clause 8.3,Implement the risk treatment plan.,true
+iso27001,ISO.C8.3,ISO.C8.3-b,Clause 8.3,Keep the results of the treatment.,true
+iso27001,ISO.C9.1,ISO.C9.1-a,Clause 9.1,"Determine what to monitor and measure, and the methods, which must give valid, comparable and reproducible results.",true
+iso27001,ISO.C9.1,ISO.C9.1-b,Clause 9.1,"Determine when monitoring is done, when results are analyzed, and who does each; then evaluate security performance and the effectiveness of the program.",true
+iso27001,ISO.C9.1,ISO.C9.1-c,Clause 9.1,Keep evidence of the results.,true
+iso27001,ISO.C9.2,ISO.C9.2-a,Clause 9.2,Conduct internal audits at planned intervals to show whether the program meets the organization's own requirements and the standard's and is effectively implemented and maintained.,true
+iso27001,ISO.C9.2,ISO.C9.2-b,Clause 9.2,"Plan and run an audit program covering frequency, methods, responsibilities, planning and reporting, taking account of how important the processes are and past audit results.",true
+iso27001,ISO.C9.2,ISO.C9.2-c,Clause 9.2,Define audit criteria and scope and choose auditors who are objective and impartial.,true
+iso27001,ISO.C9.2,ISO.C9.2-d,Clause 9.2,Report audit results to relevant management and keep evidence.,true
+iso27001,ISO.C9.3,ISO.C9.3-a,Clause 9.3,Have top management review the program at planned intervals.,true
+iso27001,ISO.C9.3,ISO.C9.3-b,Clause 9.3,"Cover in the review the status of past actions, changes in issues and in interested-party needs, performance trends (nonconformities, measurements, audits, objectives), feedback from interested parties, risk results and treatment status, and improvement opportunities.",true
+iso27001,ISO.C9.3,ISO.C9.3-c,Clause 9.3,Record decisions on improvement and needed changes and keep evidence.,true
+iso27001,ISO.C10.1,ISO.C10.1-a,Clause 10.1,"Continually improve the suitability, adequacy and effectiveness of the program.",true
+iso27001,ISO.C10.2,ISO.C10.2-a,Clause 10.2,React to a nonconformity by controlling and correcting it and dealing with the consequences.,true
+iso27001,ISO.C10.2,ISO.C10.2-b,Clause 10.2,"Evaluate the need to remove causes, act, review the effectiveness of the action and change the program if needed.",true
+iso27001,ISO.C10.2,ISO.C10.2-c,Clause 10.2,Keep evidence of the nonconformities and the actions taken.,true

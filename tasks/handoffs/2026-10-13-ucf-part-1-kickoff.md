@@ -122,3 +122,91 @@ It must print per-subset counts and pass checks 1 to 7 on everything that exists
 ## Report back
 
 Append `## Results` to this file: what exists and where, counts per subset from the validator, the list of ISO clause paraphrases marked `needs_verification`, records that could not be placed cleanly, merges and splits you made to Annex A controls, and anything you could not do.
+
+## Results
+
+Run date 13 Oct 2026, branch `claude/ucf-part-1`. Nothing is committed or loaded into the app. Drafting subagents ran on Sonnet, as the session instruction said (this file says Opus). All three tracks reached "signable tables plus validator". `python3.13 scripts/ucf/validate.py` exits 0 and passes checks 0 to 7 on everything that exists.
+
+### What exists and where
+
+| Path | What |
+|---|---|
+| `docs/ucf/drafts/FORMAT.md` | The data contract the agents wrote to. Read this first |
+| `docs/ucf/drafts/` | 18 domains, roles, 265 records, 692 atoms, 195 control skeletons, 723 mapping rows, 195 field rows (CSV) |
+| `docs/ucf/drafts/notes_*.md` | Agent notes: DPDPA atom flags, NIST and DPDPA mapping judgment calls |
+| `docs/ucf/signoff/` | One table per domain (GOV is two files), plus `README.md` with counts. Regenerate with `python3 scripts/ucf/make_signoff.py` |
+| `app/frameworks/ucf/` | Schema and loader (stdlib only). Nothing outside it reads it |
+| `scripts/ucf/validate.py`, `make_signoff.py` | The validator and the sign-off generator |
+
+Rows: ISO 125 controls (297 atoms over 93 Annex A records and 25 clause records); NIST 297 atoms over 106 subcategories, 307 rows, 25 new controls plus 2 added after review (27 in all); DPDPA 98 atoms over 41 requirements, 119 rows, 43 new controls (8 remainder slots, 35 privacy-only). Mapping coverage: ISO 297 full; NIST 295 full, 12 partial; DPDPA 100 full, 19 partial. No `none` rows: every record found a home.
+
+### Counts per framework subset (validator output)
+
+| Subset | Controls shown | Records covered | Atoms mapped |
+|---|---|---|---|
+| ISO 27001 | 125 | 118 of 118 | 297 of 297 |
+| NIST CSF | 103 | 106 of 106 | 297 of 297 |
+| DPDPA | 54 | 41 of 41 | 98 of 98 |
+| ISO + NIST | 152 | 224 of 224 | 594 of 594 |
+| ISO + DPDPA | 168 | 159 of 159 | 395 of 395 |
+| NIST + DPDPA | 149 | 147 of 147 | 395 of 395 |
+| All three | 195 | 265 of 265 | 692 of 692 |
+
+These are controls, not questions to ask in the questionnaire (depth tiers still apply). They answer Q8. The all-three total (195) is inside the first estimate of 150 to 250, not below it. ISO plus NIST is 152, and NIST adds 27 controls on top of ISO, which fits your overlap point. Per-domain counts are in `docs/ucf/signoff/README.md`.
+
+### ISO clause paraphrases marked `needs_verification`
+
+All 25 clause records (68 atoms) in `records_iso_clauses.csv` and `atoms_iso.csv`, written from knowledge, none checked against the standard: 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 6.1.1, 6.1.2, 6.1.3, 6.2, 6.3, 7.1, 7.2, 7.3, 7.4, 7.5 (one record for 7.5.1 to 7.5.3), 8.1, 8.2, 8.3, 9.1, 9.2, 9.3, 10.1, 10.2. 4.1 and 4.2 include the 2024 climate wording. 9.2 and 9.3 are single records, not split by sub-clause. The `needs_verification` flag lives on atoms, not on control fields. Controls that are clause-derived are marked "Clause only" in their `note`.
+
+### Merges and splits to Annex A and clauses
+
+Splits (test differs): A.5.18 into IAM-04 provision, IAM-05 review, IAM-06 removal; A.5.19 into SUP-01 register and tiering and SUP-02 due diligence; A.5.26 into INC-03 response and INC-04 notification; A.5.30 into RES-02 objectives and plans and RES-03 testing; A.6.3 into PPL-03 awareness and PPL-04 role-based training; A.8.8 into OPS-04 vulnerabilities and OPS-05 penetration testing; A.8.13 into RES-04 backup and RES-05 restore testing; A.8.15 into OPS-01 log production and OPS-02 log protection; A.8.24 into CRY-01 use and CRY-02 key management; clause 6.1.3 into RSK-02 treatment plan and RSK-03 applicable-controls statement.
+
+Merges (clause with Annex A): 5.2 with A.5.1 into GOV-06; 5.3 with A.5.2 into GOV-07; 7.3 with the all-staff part of A.6.3 into PPL-03; 9.2 with A.5.35 into RSK-09. No two Annex A controls were merged.
+
+Changes I made after review: UC-OPS-03 narrowed to monitoring and raising alerts (its goal, statement, test and question rewritten); alert analysis, correlation and routing moved to the new NIST slot UC-OPS-41 (8 NIST atoms). Recovery management (criteria, roles, start and end of recovery) moved from UC-INC-03 to the new NIST slot UC-INC-42 (8 atoms), because INC-03 carried 18 NIST atoms and OPS-03 carried 16. After the moves INC-03 carries 10 NIST atoms and OPS-03 carries 8. INC-03 still holds basic recovery for the ISO atom, so check the INC-03 and INC-42 boundary when you sign. Importance of OPS-05 and PPL-04 set to high (they inherited critical from the parent record).
+
+### Records and atoms that could not be placed cleanly
+
+No record is unplaced. Judgment-heavy rows (all marked full or partial, listed in `notes_nist_mapping.md` and `notes_dpdpa_mapping.md`):
+- About ten NIST atoms are marked full but are soft: DE.CM-01-c, DE.AE-07-b, DE.AE-06-c, GV.SC-06-b, PR.PS-06-d, ID.IM-01-a, DE.CM-03-c and similar. NIST coverage of 295 full of 307 rows is high because the slots were written for the atoms; treat the soft ones as the places to challenge.
+- DPDPA SECURITY.1-a and -b are umbrella asks, mapped partial to GOV-04 and OPS-01. BN.NOTIFY.3-a and -c map full to INC-01, which is generous.
+- Three immaterial remainders: NIST GV.OC-03-b (RSK-06), NIST PR.AT-01-d (PPL-03), DPDPA SECURITY.1-a to RES-04.
+- The signed inactivity-erasure criterion (conditional, with a warning period) has no atom. It sits in UC-AST-70 fields. Add an atom if you want it traceable.
+- Soft overlaps to decide: UC-PGV-04 and UC-RSK-09; PNC-05, 06, 07 share source criteria; DPDPA CONSENT.2 and CM.GRANULAR.1 duplicate each other.
+- Most base-control change suggestions in the notes files were not applied (RSK-06 owner, PPL-03 effectiveness checks, AST-01 scope, GOV-06 context, SUP-03 access scope, INC-04 affected individuals, OPS-01 sensitive-data events). Decide at sign-off.
+
+### Pack against Act: your legal items (no id would change, so the stop condition did not trigger)
+
+Flags from the DPDPA agent, for you to verify (references only): CONSENT.3 and CONSENT.4 stored as s.6(6) and 6(8) to (9) while the consent manager text may sit at s.6(7); NOTICE.3, MINIMIZE.1, SECURITY.1 and CHILD.1/2 references the signed criteria already call earlier errors; CHILD.3 stored as a bare "Section 9" though the age and guardian checks come from Rules r.10 to r.12; SECURITY.2 requires encryption though the Rules accept any of four measures; CORRECT.2 scopes erasure narrowly; CB.TRANSFER.2 and .3 require transfer contracts and localization that are practice, not s.16(1) text; the 72-hour breach period, incident plan and breach register come from the Rules and practice; CM.RECORDS.2 "refresh after a reasonable period" has no basis in the Act and was not atomized. Full list in `notes_dpdpa_atoms.md`.
+
+### Schema choices you did not specify (confirm or change)
+
+1. A `question` field was added to each control. Check 6 needs a client-facing question and `how_to_ask` is direction plus a probe. The curated DPDPA text seeds most privacy questions; the five compound questions (CONSENT.2, NOTICE.1, MINIMIZE.3, TRANSFER.1, TRANSFER.2) were split across controls.
+2. Mapping rows gained `record_id`, `remainder_immaterial` and `immaterial_reason`.
+3. "No source requirement maps to the same control twice" is enforced per atom. 236 (record, control) pairs are reached by two or more atoms of one record; that is allowed and reported as INFO.
+4. `key_settings` is `layer: setting | layer: setting`. Check 4 requires any number with a unit in shown text to appear there under `base` or a selected framework. Existing numbers: DPDPA 72-hour intimation, 90-day grievance cap, one-year logs, 12-month review, three-year inactivity erasure, child under 18, plus a few 12-month cycles in base controls.
+5. Id ranges: ISO 01 to 39, NIST 40 to 69, DPDPA 70 to 99 in base domains; privacy domains number from 01.
+6. A control's source reference is derived from its mapping rows.
+
+### Not done, or only partly
+
+- ISO scope question content (WP 3.1 mentions it) was not touched. Kickoff Track 1 did not list it.
+- Re-keying the 728 signed criteria was not done. They seeded `test` and `expected_evidence` by hand per control. Some signed criteria are not carried (for example PNC-10 re-confirmation at an interval).
+- `ids.lock.json` is not written. Run `validate.py --write-lock` at first signed version.
+- Not verified by the validator: the "strictest among selected frameworks" rule (no number conflicts exist yet because base controls carry no framework numbers), numbers written as words, and compound questions beyond the heuristics. Eleven earlier compound-question warnings were fixed; none remain.
+- Control fields were drafted by Sonnet agents and spot-checked only. Several controls were flagged by their writers as doing two jobs: PHY-02, PHY-09, PHY-12, SUP-05, SUP-06, INC-01, INC-04, RES-06, IAM-03, AST-02, AST-07, GOV-16, RSK-08, PGV-03, PSC-02, GOV-41, RSK-41, RSK-42, AST-43, CRY-40, NET-40, INC-42, SUP-40, RES-42. Consider these at sign-off.
+- Sign-off tables run up to 18 controls (AST, 18; GOV has 24 and is split in two files). The "about 15" target is exceeded in AST and GOV.
+
+### Addendum, 13 Oct 2026 (after your first review pass)
+
+- **Clauses checked against the ISO PDF** (`~/Downloads/ISO IEC 27001 2022.pdf`, the 2022 edition without Amendment 1:2024): 14 of 25 clause records matched; 11 were adjusted, 8 for real errors or gaps (5.1, 6.1.2, 6.1.3, 7.4, 8.1, 9.1, 9.2, 9.3). Atoms, mappings and the affected controls (GOV-05, 14, 16, 17, 18; RSK-01, 03, 09) were corrected. Annex A numbering matches (93 of 93). The climate wording in 4.1 and 4.2 is still unverified. `needs_verification` flags are unchanged: they are yours to clear.
+- **Statements are role-neutral.** All 195 statements were rewritten after your feedback that compliance cannot depend on a named role doing the work. The owner lives only in `owner_role`. "Top management" stays where the requirement itself is about management. The validator now fails any statement that names a listed role (CHECK 2) and warns on generic implementers. Only the `statement` column changed, apart from one `good_looks_like` line in UC-IAM-05.
+- Totals are unchanged (195 controls, 725 mapping rows, 694 atoms). The review page and sign-off tables were regenerated; `library_version` is unchanged so saved review decisions in the browser still apply.
+
+### Addendum, 14 Oct 2026 (after your exported review comments)
+
+- Your 35 Change comments: 30 were already resolved by the 13 Oct role-neutral rewrite (your page predated it); 3 needed small wording (GOV-08, RSK-02, RSK-42), 2 were content asks (RSK-10 rewritten as "Practice checked against policy"; GOV-14 is two jobs and waits for your call, see D14). 33 controls were edited in all, including a sweep of consultant-facing text. `library_version` is now 0.0.2-draft; the review page keeps its old browser key so saved decisions survive.
+- The 16 DPDPA legal items default to "Confirmed (provisional)" until you have outside information. This is a placeholder, not a legal verification; ids and pack text are unchanged.
+- D09 to D12 now carry plain-language explanations on the review page. D11 has a Split or Keep choice per control. New decisions D14 to D18 (GOV-14 and a new INC-43, small calls, RSK-10 independence, management words and the owner badge, authority of signed criteria versus the drafted test).
+- Not applied, waiting for you: the 17 proposed splits (library would grow from 195 to about 215), GOV-14 narrowing plus UC-INC-43, the D09 text and mapping fixes, the primary rule R2, the validator guard on generic implementers.

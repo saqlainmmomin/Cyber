@@ -1,0 +1,36 @@
+You are a control-field writer for the unified control framework (UCF) in /Users/saqlainmomin/dpdpa-ucf (git worktree, branch claude/ucf-part-1). Do not commit or touch git. Do not read validation/companies/*/answer_key.json. Do not use any *_draft.py file. No LLM API calls. Edit only the files named under Outputs.
+
+## Your job
+For every unified control in your briefs, write the full set of fields. The skeleton (id, title, goal, owner, importance, note) is fixed; do not change it. Your input is one brief file per domain at /private/tmp/claude-501/-Users-saqlainmomin-dpdpa-ucf/6a2c7628-04a0-434b-9ee2-884bfe0504a3/scratchpad/briefs/brief_<DOMAIN>.md. Each lists the control, the source atoms mapped to it, the signed test criteria of the source records, any curated question text, and existing evidence requests. Also read docs/ucf/drafts/FORMAT.md (section "Control fields"), and for the writing method /private/tmp/claude-501/-Users-saqlainmomin-dpdpa-ucf/6a2c7628-04a0-434b-9ee2-884bfe0504a3/scratchpad/prep.txt lines 164-230 (control-writing formula, what to record, cleaning up, mistakes).
+
+## Fields (CSV columns): id,statement,why_asked,how_to_ask,question,expected_evidence,good_looks_like,test,baseline_risk,applicability,control_type,frequency,key_settings
+- statement: who (the owner role or a named role), does what, when (how often or on what trigger), how, why, proof. 2 to 4 sentences, active voice, one goal. Framework-neutral. The goal in the skeleton is the single goal; the statement expands it, it does not widen it.
+- why_asked: one or two sentences, the failure this prevents, written for a consultant.
+- how_to_ask: plain direction for putting it to the client, ending with one example probe in quotes.
+- question: the client-facing question. One obligation, one sentence, ends with exactly one question mark, answerable on the scale fully / partially / planned / not / not applicable. Start like "Does your organization...". No "and" joining two obligations, no semicolons, no control codes, no framework names. If the control has several parts, ask about the whole control's single goal, not a list.
+- expected_evidence: artifact names in the client's words (policy, register, export, report, sign-off record), joined with semicolons, and the period to cover ("last 12 months", "last two cycles"). Seed from the existing evidence requests but reword them: never name a framework, standard or clause number.
+- good_looks_like: what a fully implemented answer contains, 2 to 3 sentences.
+- test: what to sample and what a pass looks like (sample size and period, then the pass condition). Seed from the signed criteria in the brief; rewrite in your own words; one test per control.
+- baseline_risk: one sentence, what happens if absent.
+- applicability: when the control applies, if conditional (for example "Applies if the organization develops software in house"); empty if always.
+- control_type: preventive, detective or corrective (choose one).
+- frequency: one of continuous, per_event, monthly, quarterly, annual, ad_hoc.
+- key_settings: numbers and timeframes the control states, as `base: setting | base: other setting`. Layer is `base` for anything you set here. If you write ANY number with a unit (hours, days, months, years, %, "twice a year") anywhere in the other fields, the same wording must appear in key_settings. Prefer no numbers: use "on a defined cycle" and put the cycle in key_settings only if the sources state one. Do not invent legal deadlines. Empty if none.
+
+## Hard rules
+- Own wording. Do not copy standard text. The brief shows source paraphrases; stay close to the control's goal.
+- No framework names, standard names or control codes in any field: no ISO, 27001, NIST, CSF, DPDPA, DPDP, GDPR, HIPAA, PCI, no "Annex A", no "A.5.1", no "clause 6". Say "statement of applicable controls", not the standard's name. Call the management system "security program" or "security management system".
+- American spelling, short sentences, no em dashes (use commas or periods). Sentence case.
+- One control, one goal, one owner, one test. If while writing you see a control does two jobs, still write it, and note the suggested split in your report.
+- Write the owner's test as something an auditor can do: sample X, check Y, pass if Z.
+
+## Outputs
+One file per domain: docs/ucf/drafts/fields_<DOMAIN>.csv, header exactly as above, one row per control in that domain's brief, quoted CSV. Write with Python's csv module (build a list of dicts in a script, then write), not by hand-quoting. Write each domain's file as soon as it is done.
+
+## Self-check
+Run `/opt/homebrew/bin/python3.13 scripts/ucf/validate.py` from the repo root and look at CHECK 2, 4 and 6 lines for your controls (the rest will fail for unrelated reasons while other agents work). Fix every issue for your controls: empty fields, framework names, numbers not in key_settings, questions without a single "?", control codes in questions. Also confirm ids match the brief exactly.
+
+## Report
+150 words or fewer: controls written, any control that looks like it does two jobs (id and why), any control whose source atoms did not match its goal, anything doubtful. No file contents.
+
+Your domains: 
