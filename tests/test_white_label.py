@@ -107,7 +107,7 @@ def test_login_uses_configured_firm_name(monkeypatch, tmp_path):
 
 
 def test_pdf_exports_use_configured_brand(monkeypatch):
-    from app.utils import evidence_checklist_export, pdf_export, rfi_export
+    from app.utils import pdf_export, rfi_export
 
     configured = Settings(
         firm_name="Momin & Co",
@@ -117,7 +117,6 @@ def test_pdf_exports_use_configured_brand(monkeypatch):
     )
     monkeypatch.setattr(pdf_export, "settings", configured)
     monkeypatch.setattr(rfi_export, "settings", configured)
-    monkeypatch.setattr(evidence_checklist_export, "settings", configured)
 
     report = SimpleNamespace(
         overall_score=0,
@@ -147,16 +146,8 @@ def test_pdf_exports_use_configured_brand(monkeypatch):
             framework_label="DPDPA",
         )
     )
-    checklist_text = _pdf_text(
-        evidence_checklist_export.generate_evidence_checklist_pdf(
-            company_name="Example Client",
-            checklist=[],
-            flags={},
-        )
-    )
-    for text in (rfi_text, checklist_text):
-        assert "Momin & Co" in text
-        assert "CyberAssess" not in text
+    assert "Momin & Co" in rfi_text
+    assert "CyberAssess" not in rfi_text
 
     rfi_docx = Document(
         io.BytesIO(
@@ -169,24 +160,14 @@ def test_pdf_exports_use_configured_brand(monkeypatch):
             )
         )
     )
-    checklist_docx = Document(
-        io.BytesIO(
-            evidence_checklist_export.generate_evidence_checklist_docx(
-                company_name="Example Client",
-                checklist=[],
-                flags={},
-            )
-        )
+    body = "\n".join(paragraph.text for paragraph in rfi_docx.paragraphs)
+    footer = "\n".join(
+        paragraph.text
+        for section in rfi_docx.sections
+        for paragraph in section.footer.paragraphs
     )
-    for document in (rfi_docx, checklist_docx):
-        body = "\n".join(paragraph.text for paragraph in document.paragraphs)
-        footer = "\n".join(
-            paragraph.text
-            for section in document.sections
-            for paragraph in section.footer.paragraphs
-        )
-        assert "Momin & Co" in body
-        assert "Momin & Co" in footer
+    assert "Momin & Co" in body
+    assert "Momin & Co" in footer
 
 
 def test_no_hardcoded_product_name_in_client_surfaces():
@@ -200,7 +181,6 @@ def test_no_hardcoded_product_name_in_client_surfaces():
             "app/templates/",
             "app/utils/pdf_export.py",
             "app/utils/rfi_export.py",
-            "app/utils/evidence_checklist_export.py",
         ],
         capture_output=True,
         text=True,

@@ -833,7 +833,7 @@ def test_scenario_12_generic_snapshot_routes_do_not_adopt_rfi(db, http):
     assert refused.status_code == 400 and refused.json()["detail"] == rfi_requests.RFI_WRONG_ROUTE_MESSAGE
     assert not db.get(ReportSnapshot, snapshot_id).is_issued
     page = http.get(f"/assessments/{assessment.id}/snapshots")
-    assert page.text.count("data-snapshot-type=") == 3  # P6-8: + board_report
+    assert page.text.count("data-snapshot-type=") == 2  # board_report + workpaper; empty gap group is hidden
     assert "data-snapshot-type=\"rfi\"" not in page.text
     file_response = http.get(f"/api/assessments/{assessment.id}/snapshots/{snapshot_id}/file")
     assert "_rfi_v1_" in file_response.headers["Content-Disposition"]

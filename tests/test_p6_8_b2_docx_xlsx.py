@@ -25,6 +25,8 @@ from datetime import date, datetime
 
 import pytest
 
+from tests.support.gap_snapshots import stored_gap_snapshot
+
 from app.models.assessment import Assessment
 from app.models.audit_event import AuditEvent
 from app.models.conclusion import Conclusion
@@ -806,7 +808,10 @@ def test_scenario_6_only_intact_board_report_versions_export(db, http, gate, mon
     """Scenario 6 (D-P6-8-B2-G): 404 for other types and assessments; 500 when tampered; 409 when unsupported."""
     exports = _exports()
     assessment, snapshot, document, sha, *_ = _version(db, http, gate, monkeypatch)
-    other_types = {kind: _generate(http, assessment, kind).json()["snapshot_id"] for kind in ("gap_report", "workpaper")}
+    other_types = {
+        "gap_report": stored_gap_snapshot(db, assessment).id,
+        "workpaper": _generate(http, assessment, "workpaper").json()["snapshot_id"],
+    }
     stranger = _seed(db, frameworks=["dpdpa"], applicable=[], company="Other Co")
 
     for fmt in ("docx", "xlsx"):
@@ -921,7 +926,10 @@ def test_scenario_8_versions_page_links_exports_on_board_report_rows_only(db, ht
     """Scenario 8 (D-P6-8-B2-G): DOCX and XLSX links on each board_report row, nowhere else."""
     assessment, first, *_ = _version(db, http, gate, monkeypatch)
     second = _generate(http, assessment).json()["snapshot_id"]
-    others = [_generate(http, assessment, kind).json()["snapshot_id"] for kind in ("gap_report", "workpaper")]
+    others = [
+        stored_gap_snapshot(db, assessment).id,
+        _generate(http, assessment, "workpaper").json()["snapshot_id"],
+    ]
     page = http.get(f"/assessments/{assessment.id}/snapshots")
     assert page.status_code == 200
     for fmt in ("docx", "xlsx"):

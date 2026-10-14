@@ -16,8 +16,11 @@ from pathlib import Path
 
 import pdfplumber
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
@@ -662,11 +665,13 @@ def test_scenario_14_snapshots_bind_generation_to_release(db, http, monkeypatch)
 
     monkeypatch.setattr(reports_router, "generate_pdf", lambda *_args, **_kwargs: b"%PDF-1.4 approved")
     assessment, row = _one_control_assessment(db)
-    before = http.post(f"/api/assessments/{assessment.id}/snapshots", data={"type": "gap_report"})
-    assert before.status_code == 403
+    with pytest.raises(HTTPException) as before:
+        stored_gap_snapshot(db, assessment)
+    assert before.value.status_code == 403
+    assert before.value.detail == "Report not yet approved for release. Complete the review process first."
     _decision(db, row)
     _release(db, assessment)
-    v1 = http.post(f"/api/assessments/{assessment.id}/snapshots", data={"type": "gap_report"}).json()["snapshot_id"]
+    v1 = stored_gap_snapshot(db, assessment).id
     assert http.post(f"/api/assessments/{assessment.id}/snapshots/{v1}/issue").status_code == 200
     snapshot = db.get(ReportSnapshot, v1)
     bytes_before = (Path(settings.upload_dir) / snapshot.storage_path).read_bytes()
@@ -676,7 +681,7 @@ def test_scenario_14_snapshots_bind_generation_to_release(db, http, monkeypatch)
     old_issue = http.post(f"/api/assessments/{assessment.id}/snapshots/{v1}/issue")
     assert old_issue.status_code == 409
     assert old_issue.json()["detail"] == report_snapshots.SNAPSHOT_STALE_MESSAGE
-    v3 = http.post(f"/api/assessments/{assessment.id}/snapshots", data={"type": "gap_report"}).json()["snapshot_id"]
+    v3 = stored_gap_snapshot(db, assessment).id
     assert http.post(f"/api/assessments/{assessment.id}/snapshots/{v3}/issue").status_code == 200
     assert (Path(settings.upload_dir) / snapshot.storage_path).read_bytes() == bytes_before
     assert set(report_snapshots.source_manifest(db, assessment)) == {"gap_report_id", "conclusion_versions"}

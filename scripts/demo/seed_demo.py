@@ -852,17 +852,40 @@ def _release_and_snapshot(db, http, assessment, skipped: list[str]) -> None:
         f"release {assessment.description}",
     )
     for snapshot_type in ("workpaper", "gap_report"):
-        response = http.post(
-            f"/api/assessments/{assessment.id}/snapshots",
-            data={"type": snapshot_type, "reviewer_name": REVIEWER},
-        )
-        if snapshot_type == "gap_report" and response.status_code == 503:
-            message = "gap_report skipped: renderer unavailable"
-            print(message)
-            skipped.append(message)
-            continue
-        _expect(response, 200, f"generate {snapshot_type} snapshot")
-        snapshot_id = response.json()["snapshot_id"]
+        if snapshot_type == "gap_report":
+            from fastapi import HTTPException
+
+            from app.routers import reports
+            from app.services import report_snapshots
+            from app.services.conclusion_review import reviewer_actor
+
+            try:
+                response = reports._download_pdf_response(
+                    assessment_id=assessment.id, db=db, allow_failed_draft=True
+                )
+            except HTTPException as exc:
+                if exc.status_code != 503:
+                    raise
+                message = "gap_report skipped: renderer unavailable"
+                print(message)
+                skipped.append(message)
+                continue
+            snapshot = report_snapshots.create_snapshot(
+                db,
+                assessment=assessment,
+                snapshot_type="gap_report",
+                content=bytes(response.body),
+                actor=reviewer_actor(REVIEWER),
+            )
+            db.commit()
+            snapshot_id = snapshot.id
+        else:
+            response = http.post(
+                f"/api/assessments/{assessment.id}/snapshots",
+                data={"type": snapshot_type, "reviewer_name": REVIEWER},
+            )
+            _expect(response, 200, f"generate {snapshot_type} snapshot")
+            snapshot_id = response.json()["snapshot_id"]
         _expect(
             http.post(
                 f"/api/assessments/{assessment.id}/snapshots/{snapshot_id}/issue",

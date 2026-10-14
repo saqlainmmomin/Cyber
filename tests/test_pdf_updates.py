@@ -14,6 +14,8 @@ from urllib.parse import unquote
 
 import pdfplumber
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
@@ -788,12 +790,7 @@ def test_scenario_4_gap_snapshots_capture_new_findings_without_changing_old_byte
     assessment, conclusion = _run_one(
         db, gate, monkeypatch, item=_item(REQS[0], "non_compliant"), approved=True
     )
-    first_response = http.post(
-        f"/api/assessments/{assessment.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    )
-    assert first_response.status_code == 200
-    first_id = first_response.json()["snapshot_id"]
+    first_id = stored_gap_snapshot(db, assessment).id
     first_file = http.get(f"/api/assessments/{assessment.id}/snapshots/{first_id}/file")
     assert "Approved Findings" not in _pdf_text(first_file.content)
     first_hash = first_file.headers["X-Snapshot-Sha256"]
@@ -801,11 +798,7 @@ def test_scenario_4_gap_snapshots_capture_new_findings_without_changing_old_byte
     _approved_finding(db, http, gate, monkeypatch, assessment, conclusion)
     approved_report.record_release(db, assessment, actor="consultant:Priya")
     db.commit()
-    second_response = http.post(
-        f"/api/assessments/{assessment.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    )
-    second_id = second_response.json()["snapshot_id"]
+    second_id = stored_gap_snapshot(db, assessment).id
     second_file = http.get(f"/api/assessments/{assessment.id}/snapshots/{second_id}/file")
     assert "Finding title" in _pdf_text(second_file.content)
     assert "Grounded quote" in _pdf_text(second_file.content)
@@ -966,10 +959,7 @@ def test_scenario_7_validation_and_snapshot_scoping(db, http, gate, monkeypatch)
     assert http.get(
         f"/api/engagements/{second_engagement.id}/integrated-reports/{first_snapshot}/file"
     ).status_code == 404
-    assessment_snapshot = http.post(
-        f"/api/assessments/{first.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    ).json()["snapshot_id"]
+    assessment_snapshot = stored_gap_snapshot(db, first).id
     assert http.get(
         f"/api/engagements/{second_engagement.id}/integrated-reports/{assessment_snapshot}/file"
     ).status_code == 404
@@ -1103,3 +1093,43 @@ def test_scenario_11_pdf_sanitizes_and_wraps_long_finding_text(db, http, gate, m
 # Scenario 12 is the full-suite verification required by the handoff. The existing
 # P3-1, P3-2, scoring, pipeline, golden, white-label, and workpaper files remain
 # unmodified and are run by the implementation verification command.
+
+
+@pytest.mark.parametrize("frameworks", [["iso27001"], ["dpdpa", "iso27001"]])
+def test_scope_copy_is_generic_for_non_dpdpa_and_mixed_frameworks(frameworks):
+    report = GapReport(
+        chapter_scores="{}", framework_scores="{}", executive_summary="Synthetic summary"
+    )
+    text_value = _pdf_text(
+        pdf_export.generate_pdf(report, [], "Scope Client", selected_frameworks=frameworks)
+    )
+    scope_text = text_value.split("Scope of Coverage:", 1)[1].split("What Is Not Covered:", 1)[0]
+    assert "requirements across the following framework(s):" in scope_text
+    assert "six domains" not in scope_text
+    assert "derived from the Digital Personal Data Protection Act" not in scope_text
+    if frameworks == ["iso27001"]:
+        for phrase in ("Digital Personal Data Protection", "Data Fiduciary", "41 requirements"):
+            assert phrase not in text_value
+    assert "on-site inspection" in text_value
+    assert "physical security review" not in text_value
+
+
+def test_dpdpa_scope_copy_counts_scoped_requirements_not_report_rows():
+    from types import SimpleNamespace
+
+    report = GapReport(
+        chapter_scores="{}", framework_scores="{}", executive_summary="Synthetic summary"
+    )
+    assessment = SimpleNamespace(
+        frameworks=["dpdpa"], applicable_requirements=json.dumps(REQS[:2])
+    )
+    text_value = _pdf_text(
+        pdf_export.generate_pdf(
+            report, [], "Scope Client", selected_frameworks=["dpdpa"], assessment=assessment
+        )
+    )
+    scope_text = text_value.split("Nature of Assessment:", 1)[1].split("Assessment Methodology", 1)[0]
+    assert "against 2 requirements" in scope_text
+    assert "41 requirements" not in scope_text
+    assert "six domains" not in scope_text
+    assert "physical security review" in scope_text

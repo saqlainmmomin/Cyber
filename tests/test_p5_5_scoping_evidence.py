@@ -1,12 +1,9 @@
-import io
 import json
 import re
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 
-import pdfplumber
 import pytest
-from docx import Document
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, func
@@ -41,10 +38,6 @@ from app.services.scope_profiler import (
     compute_scope,
     compute_scope_multi,
     propose_not_applicable,
-)
-from app.utils.evidence_checklist_export import (
-    generate_evidence_checklist_docx,
-    generate_evidence_checklist_pdf,
 )
 
 
@@ -144,9 +137,13 @@ def registered_frameworks():
 
 @pytest.fixture
 def client(db_session):
+    from app.main import _http_error_page
+    from starlette.exceptions import HTTPException
+
     previous_settings = templates.env.globals.get("settings")
     templates.env.globals["settings"] = settings
     app = FastAPI()
+    app.add_exception_handler(HTTPException, _http_error_page)
     app.include_router(router)
     app.include_router(assessments_router.router)
     app.include_router(questionnaire_router.router)
@@ -179,11 +176,6 @@ def _assessment(db_session, framework_ids):
 
 def _item(result, document_type):
     return next(item for item in result["evidence_checklist"] if item["document_type"] == document_type)
-
-
-def _pdf_text(pdf_bytes):
-    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-        return "\n".join(page.extract_text() or "" for page in pdf.pages)
 
 
 def test_schema_types_are_frozen_and_framework_defaults_are_empty():
@@ -483,37 +475,29 @@ def test_scope_card_gates_dpdpa_flags_and_renders_proposals(client, db_session):
     mixed_response = client.get(f"/assessments/{mixed.id}?tab=scope")
     assert all(label in mixed_response.text for label in ("Cross-border transfers", "Children's data", "Significant data fiduciary obligations", "Third-party processors"))
     assert mixed_response.text.count("Breach notification procedure / incident response plan") == 1
+    for response in (iso_response, dpdpa_response, mixed_response):
+        assert "Prepare RFI" in response.text
+        assert "/evidence-checklist/pdf" not in response.text
+        assert "/evidence-checklist/docx" not in response.text
 
 
-def test_exports_are_framework_aware_and_legacy_generator_calls_still_work(client, db_session):
-    iso = _assessment(db_session, ["iso27001"])
-    iso.scope_answers = json.dumps({})
-    db_session.commit()
-    pdf_response = client.get(f"/assessments/{iso.id}/evidence-checklist/pdf")
-    docx_response = client.get(f"/assessments/{iso.id}/evidence-checklist/docx")
-    assert pdf_response.status_code == docx_response.status_code == 200
-    pdf_text = _pdf_text(pdf_response.content)
-    assert "Frameworks: ISO 27001" in pdf_text
-    assert "Statement of Applicability" in pdf_text
-    assert all(term not in pdf_text for term in ("Cross-border transfers", "SDF obligations", "[N/A]"))
-    doc = Document(io.BytesIO(docx_response.content))
-    docx_text = "\n".join(paragraph.text for paragraph in doc.paragraphs)
-    assert "Frameworks: ISO 27001" in docx_text
-    assert "Statement of Applicability" in docx_text
-    assert all(term not in docx_text for term in ("Cross-border transfers", "Children's data", "SDF obligations", "Third-party processors", "[Not applicable]"))
+@pytest.mark.parametrize("export_format", ["pdf", "docx"])
+@pytest.mark.parametrize("assessment_exists", [True, False])
+def test_retired_checklist_routes_render_not_found(client, db_session, export_format, assessment_exists):
+    if assessment_exists:
+        assessment = _assessment(db_session, ["iso27001"])
+        assessment.scope_answers = json.dumps({})
+        db_session.commit()
+        assessment_id = assessment.id
+    else:
+        assessment_id = "missing-assessment"
 
-    dpdpa = _assessment(db_session, ["dpdpa"])
-    dpdpa.scope_answers = json.dumps({})
-    db_session.commit()
-    dpdpa_pdf = _pdf_text(client.get(f"/assessments/{dpdpa.id}/evidence-checklist/pdf").content)
-    dpdpa_docx = "\n".join(paragraph.text for paragraph in Document(io.BytesIO(client.get(f"/assessments/{dpdpa.id}/evidence-checklist/docx").content)).paragraphs)
-    assert "Frameworks: India DPDPA" in dpdpa_pdf and "Frameworks: India DPDPA" in dpdpa_docx
-    assert all(label in dpdpa_pdf and label in dpdpa_docx for label in ("Cross-border transfers", "Children's data", "SDF obligations", "Third-party processors"))
-
-    legacy_pdf = _pdf_text(generate_evidence_checklist_pdf("Acme", [], {}))
-    legacy_docx = "\n".join(paragraph.text for paragraph in Document(io.BytesIO(generate_evidence_checklist_docx("Acme", [], {}))).paragraphs)
-    assert "ASSESSMENT SCOPE" not in legacy_pdf
-    assert "Assessment Scope" not in legacy_docx
+    response = client.get(f"/assessments/{assessment_id}/evidence-checklist/{export_format}")
+    assert response.status_code == 404
+    assert response.headers["content-type"].startswith("text/html")
+    assert '<h1>Page not found</h1>' in response.text
+    assert 'data-error-variant="page"' in response.text
+    assert "content-disposition" not in response.headers
 
 
 def test_scope_is_suggestion_only_and_profiler_has_no_evidence_use_dependency(client, db_session):

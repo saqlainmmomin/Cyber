@@ -24,6 +24,9 @@ def test_s8_versions_templates_keep_report_seg_and_page_contracts():
 
     assert '{{ report_seg(assessment, "versions") }}' in snapshots
     assert 'data-report-type' in snapshots and 'board_report' in snapshots
+    assert 'data-tab="gap"' not in snapshots
+    assert 'data-panel="gap"' not in snapshots
+    assert 'snapshot_group("gap_report", groups.get("gap_report", []))' in snapshots
     assert 'Workpaper (live)' in snapshots and 'href="/assessments/{{ assessment.id }}/compare/{{ assessment.id }}"' not in snapshots
     assert '{{ report_seg(assessment, "applicability") }}' in soa
     assert 'data-soa-save' in soa and 'fetch(form.getAttribute(' in soa

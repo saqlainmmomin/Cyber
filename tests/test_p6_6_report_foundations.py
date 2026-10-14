@@ -22,6 +22,8 @@ from urllib.parse import unquote
 
 import pdfplumber
 import pytest
+
+from tests.support.gap_snapshots import stored_gap_snapshot
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
@@ -1013,8 +1015,6 @@ def test_scenario_13_content_disposition_is_escaped(db, http, gate, monkeypatch)
     db.commit()
     for path in (
         f"/api/assessments/{assessment.id}/report/pdf",
-        f"/assessments/{assessment.id}/evidence-checklist/pdf",
-        f"/assessments/{assessment.id}/evidence-checklist/docx",
     ):
         response = http.get(path)
         assert response.status_code == 200, (path, response.text)
@@ -1066,12 +1066,8 @@ def test_scenario_15_snapshot_captures_basis_immutably(db, http, gate, monkeypat
     _approve_http(http, db, assessment, conclusion)
     _release(db, assessment)
 
-    generated = http.post(
-        f"/api/assessments/{assessment.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    )
-    assert generated.status_code == 200, generated.text
-    first = db.get(ReportSnapshot, generated.json()["snapshot_id"])
+    first = stored_gap_snapshot(db, assessment)
+    assert first.type == "gap_report"
     first_bytes = report_snapshots.read_snapshot_bytes(db, first)
     first_hash = hashlib.sha256(first_bytes).hexdigest()
     assert CUTOFF_TEXT in _pdf_text(first_bytes)
@@ -1099,12 +1095,8 @@ def test_scenario_15_snapshot_captures_basis_immutably(db, http, gate, monkeypat
     db.expire_all()
     _approve_http(http, db, assessment, db.get(Conclusion, conclusion.id))
     _release(db, assessment)
-    regenerated = http.post(
-        f"/api/assessments/{assessment.id}/snapshots",
-        data={"type": "gap_report", "reviewer_name": "Priya"},
-    )
-    assert regenerated.status_code == 200, regenerated.text
-    second = db.get(ReportSnapshot, regenerated.json()["snapshot_id"])
+    second = stored_gap_snapshot(db, assessment)
+    assert second.type == "gap_report"
 
     db.expire_all()
     first = db.get(ReportSnapshot, first.id)
