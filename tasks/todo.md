@@ -2,9 +2,24 @@
 
 ## Wave 1 (2026-10-13, lane C, Codex)
 
-- [x] WP 1.1 vocabulary module: PR #145, verified 1,749 passed / 29 skipped, waits for click-through. Merge last (rebase on 1.3).
-- [x] WP 1.3 reads stage 1, truthful cut: PR #144, verified 1,759 passed / 29 skipped, waits for click-through.
-- [x] WP 2.2 statute citations from the pack: PR #143, verified 1,749 passed / 29 skipped, waits for click-through. Merge first.
+| WP | PR | State | Tests | Still open |
+|---|---|---|---|---|
+| 2.2 statute citations | #143 | Merged by Saqlain | 1,749 passed / 29 skipped | Legal review of pack text "Section 8(4)-(6)" (BN.NOTIFY.3); `questionnaire.py:90` and `clusters.py:1013`, `1026` differ from the pack |
+| 1.3 reads stage 1, truthful cut | #144 | Merged | 1,761 passed / 29 skipped | PPTX/XLSX evidence line, duplicate-filename notice polish, replaced-file notice, extraction-failure marker; the framework display-name try-import fallback in `approved_report.py` can now be deleted (first cleanup) |
+| 1.1 vocabulary module | #145 | Merged | 1,750 passed / 29 skipped | Unconverted templates allowlist, legacy outcome maps until WP 2.3, `framework_label(full=True)`, guard blind spots, `board_derive.is_overdue` label compare |
+
+All three are merged. Test counts are per branch; run the full suite on main first. Full detail: `tasks/handoffs/2026-10-13-next-session-start-here.md`.
+
+### Next
+
+- [ ] WP 1.2 stage and status rollup (lane C, unblocked)
+- [ ] WP 1.4 non-prompt parts (lane C, unblocked); 1.4 prompt part (lane O, waits for Phase 0 sign-offs)
+- [ ] WP 2.3 score band switch to Readiness (lane C, unblocked; moves goldens)
+- [ ] WP 2.4 to 2.8 (lane C, unblocked)
+- [ ] WP 3.5 (lane C, after the orchestrator writes the spec)
+- [ ] Lane O: Phase 0 sign-offs, evaluation gates
+- [ ] Lane T: UCF part 1 (`tasks/handoffs/2026-10-13-ucf-part-1-kickoff.md`, branch `claude/ucf-part-1`, worktree `~/dpdpa-ucf`)
+- [ ] Known defect: HTML board report preview 500 on the Veldhara demo (`app/services/board_view.py:201`)
 
 ## Evidence fixes Part B: viewer (2026-10-08)
 

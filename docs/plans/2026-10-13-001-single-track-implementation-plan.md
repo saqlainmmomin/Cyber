@@ -201,6 +201,8 @@ Sizes are working sessions, my estimates, not measured. S is one or less, M is t
 | 1.3 | Reads stage 1: truthful cut (already approved, E7 and E8). | None | S | Manifest matches what prompts contained. |
 | 1.4 | Reads stage 2, in its three parts: 2a explicit frameworks, 2b follow-up engine (narrow non-DPDPA prompt changes; the follow-up engine stays even when the context wizard goes), 2c upload categories, initiative text, section refs. Not yet built: the clean-up session never produced code. Lane O does the prompt part and runs the live gate on the reduced company set. | 1.3 | M | DPDPA goldens pass byte for byte at the point the gate runs, with WP 2.3 and 2.5 not yet merged. Gate passes. |
 
+Status, 13 Oct 2026: WP 1.1 is PR #145 (merged; 1,750 passed / 29 skipped on its branch). WP 1.3 is PR #144 (merged; 1,761 passed / 29 skipped on its branch). WP 1.2, WP 1.4 non-prompt parts and WP 2.3 to 2.8 are unblocked. The combined suite on main is not yet run. Details in `tasks/handoffs/2026-10-13-next-session-start-here.md`.
+
 ### Phase 2. Durable defects (backend and exports; no new screens)
 
 Theme T1. Most are independent of the UCF and the port.
@@ -215,6 +217,8 @@ Theme T1. Most are independent of the UCF and the port.
 | 2.6 | Retire the gap report and evidence checklist as selectable exports. Keep stored `gap_report` snapshots downloadable and keep `generate_pdf` (the DPDPA golden renders it). Remove hard-coded DPDPA counts and the DPDPA paragraph from Scope and Limitations when DPDPA is out of scope. | F-F10, F-F11, F-F18, F-F21 | 1.1 | S |
 | 2.7 | Export hygiene: placeholders, hidden duplicate text, truncation without ellipsis, workpaper dead link and UUID, raw ids and "Snapshot" wording in board text, limits and sign-off section order, accepted framework narratives made visible, PPTX and XLSX aligned to the PDF (board asks moved off the Definitions sheet, rationale and citation text back in, one decimal rule). The severity legend and the cover subtitle become framework-conditional. | F-F12 to F-F16, F-F19, F-F23, F-F26 to F-F30 | 1.1, 2.3 | M |
 | 2.8 | Reject requires a stored reason (the Jinja Reject form sends "Not stated" until the port; A7); undo added to the API (reopen already exists); reviewer name defaults from Settings. | F-A16 | 1.1 | S |
+
+Status, 13 Oct 2026: WP 2.2 is PR #143 (merged, 1,749 passed / 29 skipped). The pack text "Section 8(4)-(6)" is still to be corrected after Saqlain's legal verification.
 
 ### Phase 3. Unified control framework and data model
 
@@ -558,3 +562,17 @@ All items in the open-items review were answered. The raw export is in `tasks/20
 | P5 | Yes, start the first terminal session (UCF part 1). Kickoff: `tasks/handoffs/2026-10-13-ucf-part-1-kickoff.md`. |
 
 Phase 0 status: 0.1 to 0.5 are answered. WP 0.6 (the decision record that edits the session record's rules) is next.
+
+### Answers recorded, 13 Oct 2026 (wave 1)
+
+| Topic | Decision |
+|---|---|
+| Citations | De-duplicated, concise but traceable. Legal items verified by Saqlain later. |
+| Priority | One numeric map: critical 1, high 2, medium 3, low 4 (`vocabulary.PRIORITY_BY_RISK`). |
+| Remediation timeframe | Immediate, Short-term, Medium-term, Long-term name the timeframe (PDF windows 0-4 weeks, 1-3 months, 3-6 months, 6-12 months). Field label "Remediation timeframe" in the finding editor and actions export. |
+| Closure wording | Findings and actions use Verified and "Closed and awaiting verification". "Resolved" is retired. |
+| Board initiatives | Priority unified to the same map, stored 1 to 4, shown as the word. Board document and deck goldens re-recorded. |
+| Older findings | Not migrated. |
+| PDF evidence basis | Line sits under "Documents analyzed:" before the Disclaimer. The report states per-framework counts when cuts differ. |
+| Edition names | Short in chips and headings; shown in full where a document names the standard. |
+| Issued snapshots | Re-exports use the new word. WP 2.1 will freeze wording at issue time. |
