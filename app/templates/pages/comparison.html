@@ -14,26 +14,45 @@
 {%- endmacro %}
 
 {% macro framework_panel(framework) -%}
+{% set scope = framework.scope %}
+{% set scope_differs = scope.added or scope.removed %}
+{% set changed = framework.deltas|rejectattr("is_new")|selectattr("status_changed")|list %}
+{% set added = framework.deltas|selectattr("is_new")|list %}
 <section class="s8-comparison-panel" data-framework="{{ framework.framework_id }}">
   <div class="s8-section-title"><div><span class="eyebrow">Framework</span><h2>{{ framework.name }}</h2></div><span class="sub">{{ framework.summary.improved }} improved · {{ framework.summary.regressed }} regressed</span></div>
   <div class="s8-score-card">
-    <div><span class="eyebrow">Current score</span>{% if framework.current is none %}<strong class="s8-score-value">—</strong>{% else %}<strong class="s8-score-value">{{ framework.current|round(0)|int }}%</strong>{% endif %}</div>
-    <div class="s8-score-stats"><span>Previous <b>{% if framework.previous is none %}—{% else %}{{ framework.previous|round(0)|int }}%{% endif %}</b></span><span>Change <b class="{% if framework.delta is not none and framework.delta > 0 %}positive{% elif framework.delta is not none and framework.delta < 0 %}negative{% endif %}">{% if framework.delta is none %}—{% elif framework.delta > 0 %}+{% endif %}{% if framework.delta is not none %}{{ framework.delta|round(1) }}%{% endif %}</b></span></div>
+    <div><span class="eyebrow">Current score</span>{% if framework.current is none %}<strong class="s8-score-value">—</strong><span>of {{ scope.compared + scope.added }} controls</span>{% else %}<strong class="s8-score-value">{{ framework.current|round(0)|int }}%</strong><span> of {{ scope.compared + scope.added }} controls</span>{% endif %}</div>
+    <div class="s8-score-stats"><span>Previous <b>{% if framework.previous is none %}—{% else %}{{ framework.previous|round(0)|int }}%{% endif %} of {{ scope.compared + scope.removed }} controls</b></span>{% if not scope_differs %}<span>Change <b class="{% if framework.delta is not none and framework.delta > 0 %}positive{% elif framework.delta is not none and framework.delta < 0 %}negative{% endif %}">{% if framework.delta is none %}—{% elif framework.delta > 0 %}+{% endif %}{% if framework.delta is not none %}{{ framework.delta|round(1) }} points{% endif %}</b></span>{% endif %}</div>
   </div>
+  {% if scope_differs %}
+  <p>Shared controls: {{ scope.compared }} compared, {{ framework.summary.improved }} improved, {{ framework.summary.regressed }} regressed, {{ framework.summary.unchanged }} unchanged, average change {% if framework.shared_average_change is none %}unavailable{% else %}{% if framework.shared_average_change > 0 %}+{% endif %}{{ framework.shared_average_change|round(1) }} points{% endif %}</p>
+  <p>Newly assessed: {{ scope.added }} · No longer assessed: {{ scope.removed }}</p>
+  <p>These reports cover different scopes, so the overall scores are not a like-for-like change.</p>
+  {% endif %}
   <div class="s8-change-list">
-    <div class="s8-section-title compact"><h3>Requirement changes</h3><span class="sub">{{ framework.deltas|selectattr("status_changed")|list|length }} changed</span></div>
-    {% set changed = framework.deltas|selectattr("status_changed")|list %}
+    <div class="s8-section-title compact"><h3>Requirement changes</h3><span class="sub">{{ changed|length }} changed</span></div>
     {% if not changed %}
-      <div class="glass empty s8-inline-empty"><h3>No changes</h3><p>Every approved requirement has the same status in both reports.</p></div>
+      <div class="glass empty s8-inline-empty"><h3>No changes</h3><p>Every shared control has the same status in both reports.</p></div>
     {% else %}
       {% for delta in changed %}
       <article>
         <div class="s8-change-copy"><b>{{ delta.requirement_title }}</b><span class="sub num">{{ delta.requirement_id }}</span></div>
-        <div class="s8-change-status">{% if delta.is_new %}<span class="sub">New</span>{% else %}{{ pill(status_label(delta.old_status), status_tone(delta.old_status)) }}{{ icon("arrow-r") }}{% endif %}{{ pill(status_label(delta.new_status), status_tone(delta.new_status)) }}</div>
+        <div class="s8-change-status">{{ pill(status_label(delta.old_status), status_tone(delta.old_status)) }}{{ icon("arrow-r") }}{{ pill(status_label(delta.new_status), status_tone(delta.new_status)) }}</div>
       </article>
       {% endfor %}
     {% endif %}
   </div>
+  {% if added %}
+  <details class="s8-change-list">
+    <summary>Newly assessed, {{ added|length }}</summary>
+    {% for delta in added %}
+    <article>
+      <div class="s8-change-copy"><b>{{ delta.requirement_title }}</b><span class="sub num">{{ delta.requirement_id }}</span></div>
+      <div class="s8-change-status">{{ pill(status_label(delta.new_status), status_tone(delta.new_status)) }}</div>
+    </article>
+    {% endfor %}
+  </details>
+  {% endif %}
 </section>
 {%- endmacro %}
 
@@ -52,7 +71,7 @@
 {% if preview == "empty" %}{{ empty_state("No previous report", "Generate and release another report before comparing versions.", "Back to versions", "/assessments/" ~ assessment.id ~ "/snapshots", "file") }}{% endif %}
 {% if preview == "loading" %}<div class="solid s8-loading" role="status" aria-label="Loading report comparison">{{ skeleton("32%") }}{{ skeleton("72%", margin_top="14px") }}{{ skeleton("52%", margin_top="14px") }}</div>{% else %}
 <main class="s8-comparison">
-  <section class="s8-summary-strip"><div><span class="eyebrow">Report comparison</span><h2>{{ previous_report.generated_at|display_date }} <span>to</span> {{ current_report.generated_at|display_date }}</h2></div><div class="s8-summary-stats"><span><b>{{ delta_summary.improved }}</b> improved</span><span><b>{{ delta_summary.regressed }}</b> regressed</span><span><b>{{ delta_summary.unchanged }}</b> unchanged</span></div></section>
+  <section class="s8-summary-strip"><div><span class="eyebrow">Report comparison</span><h2>{{ previous_report.generated_at|display_date }} <span>to</span> {{ current_report.generated_at|display_date }}</h2></div><div class="s8-summary-stats"><span>Shared controls:</span><span><b>{{ delta_summary.improved }}</b> improved</span><span><b>{{ delta_summary.regressed }}</b> regressed</span><span><b>{{ delta_summary.unchanged }}</b> unchanged</span></div></section>
   <div class="s8-section-title"><div><span class="eyebrow">Score movement</span><h2>Framework Scores</h2></div><span class="sub">Scores are shown separately for each framework.</span></div>
   <div class="s8-framework-grid">{% for framework in framework_deltas %}{{ framework_panel(framework) }}{% endfor %}</div>
 </main>

@@ -396,7 +396,18 @@ def compute_delta(current_items: list, previous_items: list) -> dict:
             }
         )
 
+    shared = [delta for delta in deltas if not delta["is_new"]]
+    current_requirements = {item.requirement_id for item in current_items}
     return {
+        "scope": {
+            "compared": len(shared),
+            "added": len(deltas) - len(shared),
+            "removed": len(previous_by_requirement.keys() - current_requirements),
+        },
+        "shared_average_change": (
+            sum(delta["score_delta"] for delta in shared) / len(shared)
+            if shared else None
+        ),
         "deltas": sorted(
             deltas,
             key=lambda delta: (

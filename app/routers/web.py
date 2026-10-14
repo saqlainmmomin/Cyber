@@ -3053,6 +3053,18 @@ def _compute_chapter_status_counts(gap_items) -> dict:
     return counts
 
 
+def penalty_exposure_text(max_penalty_cr: int, as_of) -> str:
+    """Date the statutory ceiling using the readiness note's as-of date."""
+    from app.dpdpa.framework import DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE
+
+    text = f"Maximum statutory penalty under the DPDP Act schedule: up to ₹{max_penalty_cr} crore"
+    if as_of < DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE:
+        commencement = DPDPA_FIDUCIARY_OBLIGATIONS_COMMENCE
+        label = f"{commencement.day} {commencement.strftime('%B %Y')}"
+        text += f" (penalty provisions apply from {label})"
+    return text
+
+
 def _compute_business_impact(gap_items) -> dict:
     """Regulatory exposure tier, affected domains, and high-severity count."""
     max_penalty = 0
@@ -3173,8 +3185,9 @@ def report_summary(
     quick_wins = []
 
     has_dpdpa = "dpdpa" in assessment.frameworks
+    as_of = datetime.now(timezone.utc).date()
     show_dpdpa_readiness_note = dpdpa_readiness_note_applies(
-        assessment.frameworks, datetime.now(timezone.utc).date()
+        assessment.frameworks, as_of
     )
 
     remediation_counts = remediation_rollup.assessment_action_counts(db, assessment_id)
@@ -3182,7 +3195,8 @@ def report_summary(
     comparable_candidates = (
         db.query(Assessment)
         .filter(
-            Assessment.company_name == assessment.company_name,
+            Assessment.engagement_id == assessment.engagement_id,
+            Assessment.engagement_id.is_not(None),
             Assessment.id != assessment_id,
             Assessment.status == "completed",
         )
@@ -3236,6 +3250,7 @@ def report_summary(
             "status_counts": status_counts,
             "chapter_status_counts": chapter_status_counts,
             "business_impact": business_impact,
+            "penalty_exposure_text": penalty_exposure_text(business_impact["max_penalty_cr"], as_of),
             "critical_findings": critical_findings,
             "quick_wins": quick_wins,
             "quick_wins_available": False,
@@ -3464,8 +3479,12 @@ def comparison_page(
 ):
     assessment = require_review_approval(assessment_id, db)
     previous_assessment = require_review_approval(other_id, db)
-    if assessment.company_name != previous_assessment.company_name:
-        raise HTTPException(400, "Assessments must belong to the same company")
+    if (
+        assessment.engagement_id is None
+        or previous_assessment.engagement_id is None
+        or assessment.engagement_id != previous_assessment.engagement_id
+    ):
+        raise HTTPException(400, "Assessments must belong to the same engagement")
     if assessment.status != "completed" or previous_assessment.status != "completed":
         raise HTTPException(400, "Both assessments must be completed")
 
@@ -3498,6 +3517,8 @@ def comparison_page(
             ),
             "deltas": framework_result["deltas"],
             "summary": framework_result["summary"],
+            "scope": framework_result["scope"],
+            "shared_average_change": framework_result["shared_average_change"],
         })
 
     return templates.TemplateResponse(

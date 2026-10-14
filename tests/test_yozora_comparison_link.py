@@ -8,6 +8,7 @@ from tests.test_no_blended_scoring import (  # noqa: F401 - fixtures are used by
     _assessment,
     _report,
     _scores,
+    make_engagement,
     client,
     db_session,
     registered_frameworks,
@@ -15,8 +16,9 @@ from tests.test_no_blended_scoring import (  # noqa: F401 - fixtures are used by
 
 
 def test_comparison_page_links_the_current_report(client, db_session):
-    old = _assessment(db_session, ["dpdpa"], company_name="Link Co")
-    new = _assessment(db_session, ["dpdpa"], company_name="Link Co")
+    engagement = make_engagement(db_session, "Link Co")
+    old = _assessment(db_session, ["dpdpa"], company_name="Link Co", engagement_id=engagement.id)
+    new = _assessment(db_session, ["dpdpa"], company_name="Link Co", engagement_id=engagement.id)
     _report(db_session, old, {"dpdpa": _scores("dpdpa", "partially_compliant")})
     _report(db_session, new, {"dpdpa": _scores("dpdpa")})
 
