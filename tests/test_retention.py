@@ -621,7 +621,7 @@ def test_scenario_1_constants_structure_and_fk_order(db):
     heads = subprocess.run(
         [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
     ).stdout
-    assert "e2c8f6a4d901 (head)" in heads  # Yozora backend features migration
+    assert "f3a7c9d2e810 (head)" in heads  # Yozora backend features migration
     assert not list(REPO_ROOT.joinpath("app/models").rglob("*.py")) or all(
         "relationship(" not in path.read_text() for path in REPO_ROOT.joinpath("app/models").rglob("*.py")
     )

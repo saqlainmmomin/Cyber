@@ -655,7 +655,7 @@ def test_lock_rule_is_the_latest_human_decision(db, actions, locked):
     action is in HUMAN_DECISION_ACTIONS has an action in LOCKING_ACTIONS.
     System revisions (proposed / proposal_withheld) never unlock."""
     P = pl()
-    assert P.HUMAN_DECISION_ACTIONS == ("approved", "edited", "rejected", "reopened")
+    assert P.HUMAN_DECISION_ACTIONS == ("approved", "edited", "rejected", "reopened", "undone")
     assert P.LOCKING_ACTIONS == ("approved", "edited")
 
     a = _seed(db)

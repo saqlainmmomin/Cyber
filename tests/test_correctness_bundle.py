@@ -852,7 +852,7 @@ def test_p5_1_structural_guards_and_signatures():
 
     assert subprocess.run(
         [sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
-    ).stdout.strip() == "e2c8f6a4d901 (head)"  # Yozora backend features head
+    ).stdout.strip() == "f3a7c9d2e810 (head)"  # Yozora backend features head
     parameter_names = list(inspect.signature(analysis._run_multi_framework_analysis).parameters)
     assert parameter_names == [
         "assessment",

@@ -43,11 +43,13 @@ LIGHT_PANEL_HEX = "#F0F1F6"
 WHITE_HEX = "#FFFFFF"
 MIN_CONTRAST_RATIO = 4.5
 MAX_EMAIL_CHARS = 254
+MAX_REVIEWER_NAME_CHARS = 200
 
 AUDIT_ENTITY_TYPE = "firm_settings"
 UPDATED_EVENT = "firm_settings.updated"
 
 EMAIL_INVALID = "Enter an email address like name@example.com."
+REVIEWER_NAME_INVALID = "Default reviewer name must be 200 characters or fewer."
 RETENTION_INVALID = "Retention must be a whole number of years from 1 to 50."
 ACCENT_INVALID = "Choose one of the accent themes."
 HEX_INVALID = "Enter a colour as a six-digit hex code like #1C3A72."
@@ -65,6 +67,7 @@ _HEX_PATTERN = re.compile(r"^#?([0-9A-Fa-f]{6})$")
 class FirmSettingsView:
     firm_name: str
     contact_email: str | None
+    default_reviewer_name: str | None
     archived_retention_years: int
     accent_theme: str
     accent_custom_hex: str | None
@@ -163,6 +166,7 @@ def get(db: Session) -> FirmSettingsView:
     return FirmSettingsView(
         firm_name=firm_name,
         contact_email=(row.contact_email or None) if row is not None else None,
+        default_reviewer_name=row.default_reviewer_name if row is not None else None,
         archived_retention_years=retention_years,
         accent_theme=accent_theme,
         accent_custom_hex=custom_hex,
@@ -190,12 +194,16 @@ def validate(
     archived_retention_years: str | int | None,
     accent_theme: str | None,
     accent_custom_hex: str | None,
+    default_reviewer_name: str | None = None,
 ) -> dict:
     """Validated, normalized values, or FirmSettingsValidationError with one message per field."""
     errors: dict[str, str] = {}
     email = (contact_email or "").strip()
     if email and not valid_email(email):
         errors["contact_email"] = EMAIL_INVALID
+    reviewer_name = (default_reviewer_name or "").strip()
+    if len(reviewer_name) > MAX_REVIEWER_NAME_CHARS:
+        errors["default_reviewer_name"] = REVIEWER_NAME_INVALID
     years = _parse_retention(archived_retention_years)
     if years is None:
         errors["archived_retention_years"] = RETENTION_INVALID
@@ -215,6 +223,7 @@ def validate(
         raise FirmSettingsValidationError(errors)
     return {
         "contact_email": email or None,
+        "default_reviewer_name": reviewer_name or None,
         "archived_retention_years": years,
         "accent_theme": theme if theme != CUSTOM_ACCENT else None,
         "accent_custom_hex": custom,
@@ -228,6 +237,7 @@ def update(
     archived_retention_years: str | int | None,
     accent_theme: str | None,
     accent_custom_hex: str | None = None,
+    default_reviewer_name: str | None = None,
     actor: str,
 ) -> tuple[FirmSettingsView, dict[str, dict]]:
     """Validate and store the settings; returns the new view and {field: {"from", "to"}} for what changed.
@@ -240,6 +250,7 @@ def update(
         archived_retention_years=archived_retention_years,
         accent_theme=accent_theme,
         accent_custom_hex=accent_custom_hex,
+        default_reviewer_name=default_reviewer_name,
     )
     before = get(db)
     row = _row(db)
@@ -247,6 +258,7 @@ def update(
         row = FirmSettings(
             id=FIRM_SETTINGS_ID,
             contact_email=before.contact_email,
+            default_reviewer_name=before.default_reviewer_name,
             archived_retention_years=before.archived_retention_years,
             accent_theme=before.accent_theme,
             accent_custom_hex=before.accent_custom_hex,
@@ -254,6 +266,7 @@ def update(
         db.add(row)
     new_values = {
         "contact_email": values["contact_email"],
+        "default_reviewer_name": values["default_reviewer_name"],
         "archived_retention_years": values["archived_retention_years"],
         "accent_theme": values["accent_theme"] or before.accent_theme,
         "accent_custom_hex": values["accent_custom_hex"],

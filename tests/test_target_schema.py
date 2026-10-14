@@ -227,3 +227,43 @@ def test_downgrade_refuses_when_p1_2_data_is_present(migrated_db):
         }
 
     assert {"engagement_id", "version"} <= assessment_columns
+
+
+def test_review_reason_and_default_name_migration_round_trip(tmp_path):
+    path = tmp_path / "review-settings.sqlite3"
+    config = _alembic_config(path)
+    command.upgrade(config, "e2c8f6a4d901")
+    engine = _fresh_engine(path)
+    try:
+        command.upgrade(config, "head")
+        revision_columns = {
+            column["name"]: column
+            for column in inspect(engine).get_columns("conclusion_revisions")
+        }
+        settings_columns = {
+            column["name"]: column
+            for column in inspect(engine).get_columns("firm_settings")
+        }
+        assert revision_columns["reason"]["nullable"] is True
+        assert settings_columns["default_reviewer_name"]["nullable"] is True
+        assert settings_columns["default_reviewer_name"]["type"].length == 200
+        with engine.connect() as connection:
+            assert connection.execute(text(
+                "SELECT default_reviewer_name FROM firm_settings WHERE id = 1"
+            )).scalar() is None
+        command.downgrade(config, "e2c8f6a4d901")
+        assert "reason" not in {
+            column["name"] for column in inspect(engine).get_columns("conclusion_revisions")
+        }
+        assert "default_reviewer_name" not in {
+            column["name"] for column in inspect(engine).get_columns("firm_settings")
+        }
+        command.downgrade(config, "base")
+        assert set(inspect(engine).get_table_names()) <= {"alembic_version"}
+        command.upgrade(config, "head")
+        with engine.connect() as connection:
+            assert connection.execute(text(
+                "SELECT version_num FROM alembic_version"
+            )).scalar() == "f3a7c9d2e810"
+    finally:
+        engine.dispose()

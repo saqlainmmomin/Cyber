@@ -37,7 +37,7 @@ from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
     upload_root,
 )
 
-ALEMBIC_HEAD = "e2c8f6a4d901"
+ALEMBIC_HEAD = "f3a7c9d2e810"
 
 MIGRATION_PATH = REPO_ROOT / "alembic" / "versions" / f"{YOZORA_REVISION}_yozora_backend_features.py"
 
@@ -146,6 +146,7 @@ def test_get_falls_back_to_defaults_without_a_row(tmp_path):
     try:
         view = firm_settings.get(session)
         assert view.contact_email is None
+        assert view.default_reviewer_name is None
         assert view.archived_retention_years == firm_settings.DEFAULT_RETENTION_YEARS == 7
         assert view.accent_theme == firm_settings.DEFAULT_ACCENT_THEME == "midnight"
         assert view.accent_custom_hex is None and view.accent_hex == "#1C3A72"
@@ -252,6 +253,44 @@ def test_invalid_email_is_refused_and_nothing_is_stored(db, http):
     assert 'value="partner-at-northgate"' in response.text  # the form keeps what was typed
     db.expire_all()
     assert firm_settings.get(db).contact_email is None
+
+
+def test_default_reviewer_name_is_saved_trimmed_shown_and_audited(db, http):
+    response = _save(http, default_reviewer_name="  Priya Rao  ")
+    assert response.status_code == 303
+    db.expire_all()
+    assert firm_settings.get(db).default_reviewer_name == "Priya Rao"
+    page = http.get("/settings").text
+    assert "Default reviewer name" in page
+    assert 'id="default-reviewer-name" name="default_reviewer_name" value="Priya Rao" maxlength="200"' in page
+    event = db.execute(
+        text("SELECT metadata_json FROM audit_events WHERE action = 'firm_settings.updated' ORDER BY rowid DESC LIMIT 1")
+    ).scalar_one()
+    assert json.loads(event) == {
+        "changes": {"default_reviewer_name": {"from": None, "to": "Priya Rao"}}
+    }
+    assert _save(http, default_reviewer_name=" \t ").status_code == 303
+    db.expire_all()
+    assert db.get(FirmSettings, 1).default_reviewer_name is None
+
+
+def test_default_reviewer_name_limit_refuses_save_and_keeps_typed_name(db, http):
+    assert _save(http, default_reviewer_name="P" * 200).status_code == 303
+    event_count = db.execute(
+        text("SELECT count(*) FROM audit_events WHERE action = 'firm_settings.updated'")
+    ).scalar_one()
+    response = _save(http, default_reviewer_name="P" * 201, contact_email="changed@example.com")
+    assert response.status_code == 422
+    assert firm_settings.REVIEWER_NAME_INVALID in response.text
+    assert 'value="' + "P" * 201 + '"' in response.text
+    assert response.headers["X-Toast-Type"] == "error"
+    db.expire_all()
+    view = firm_settings.get(db)
+    assert view.default_reviewer_name == "P" * 200
+    assert view.contact_email is None
+    assert db.execute(
+        text("SELECT count(*) FROM audit_events WHERE action = 'firm_settings.updated'")
+    ).scalar_one() == event_count
 
 
 def test_custom_accent_failing_contrast_shows_the_ratio(db, http):
@@ -377,8 +416,9 @@ def test_migration_schema_is_reversible_and_keeps_data(tmp_path):
     command.upgrade(config, "head")
     columns = _columns(path, "firm_settings")
     assert set(columns) == {
-        "id", "contact_email", "archived_retention_years", "accent_theme", "accent_custom_hex", "updated_at",
+        "id", "contact_email", "default_reviewer_name", "archived_retention_years", "accent_theme", "accent_custom_hex", "updated_at",
     }
+    assert columns["default_reviewer_name"] == ("VARCHAR(200)", True)
     assert columns["contact_email"][1] and columns["accent_custom_hex"][1]  # nullable
     assert not columns["archived_retention_years"][1] and not columns["accent_theme"][1]
     with sqlite3.connect(path) as connection:

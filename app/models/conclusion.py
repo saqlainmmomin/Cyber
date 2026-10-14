@@ -49,6 +49,7 @@ class ConclusionRevision(Base):
     )
     actor: Mapped[str] = mapped_column(String(255))
     action: Mapped[str] = mapped_column(String(30))
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     previous_outcome: Mapped[str | None] = mapped_column(String(40), nullable=True)
     previous_rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
     citations_json: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -58,7 +58,7 @@ from tests.test_p6_8_board_report_v2 import _require_renderer
 
 YOZORA_REVISION = "b7d41c9e2a63"  # Yozora backend features (tasks/handoffs/2026-10-03-yozora-backend-features.md)
 
-ALEMBIC_HEAD = "e2c8f6a4d901"
+ALEMBIC_HEAD = "f3a7c9d2e810"
 
 ACTOR = f"consultant:{REVIEWER}"
 FONT_DIR = REPO_ROOT / "app" / "assets" / "fonts" / "noto"

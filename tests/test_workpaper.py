@@ -978,7 +978,7 @@ def test_scenario_10_reuses_conclusion_cards_once_and_preserves_states(
     ).one()
     assert http.post(
         _url(assessment, conclusion, "reject"),
-        data={"expected_version": 1, "reviewer_name": "Priya"},
+        data={"expected_version": 1, "reviewer_name": "Priya", "reason": "Evidence does not support the conclusion"},
     ).status_code == 200
     real = conclusion_review.conclusion_cards
     calls = []
@@ -1022,7 +1022,7 @@ def test_scenario_11_counts_cover_every_decision_scope_and_run_bucket(
     }
     assert http.post(
         _url(assessment, rows[concluded[1]], "reject"),
-        data={"expected_version": 1, "reviewer_name": "Priya"},
+        data={"expected_version": 1, "reviewer_name": "Priya", "reason": "Evidence does not support the conclusion"},
     ).status_code == 200
     assert http.post(
         _url(assessment, rows[concluded[2]], "approve"),
@@ -1116,7 +1116,7 @@ def test_smoke_full_assessment_traceability(db, http, gate, monkeypatch, capsys)
     ).status_code == 200
     assert http.post(
         _url(assessment, conclusions[ALL_REQS[2]], "reject"),
-        data={"expected_version": 1, "reviewer_name": "Priya"},
+        data={"expected_version": 1, "reviewer_name": "Priya", "reason": "Evidence does not support the conclusion"},
     ).status_code == 200
     gate.trigger_analysis(assessment.id, db)
     gate.trigger_analysis(assessment.id, db)

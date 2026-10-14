@@ -807,4 +807,4 @@ def test_scenario_19_source_and_migration_guards(db_path):
         and not (isinstance(node, ast.Import) and any(alias.name in forbidden for alias in node.names))
         for node in ast.walk(tree)
     )
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "e2c8f6a4d901 (head)"  # Yozora backend features head
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "f3a7c9d2e810 (head)"  # Yozora backend features head

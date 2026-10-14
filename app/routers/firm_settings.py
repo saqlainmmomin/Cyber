@@ -78,6 +78,7 @@ def _render(
     if preview_state == "contrast" and not errors:
         form_values = {
             "contact_email": current.contact_email or "",
+            "default_reviewer_name": current.default_reviewer_name or "",
             "archived_retention_years": str(current.archived_retention_years),
             "accent_theme": firm_settings.CUSTOM_ACCENT,
             "accent_custom_hex": "#F2D14B",
@@ -85,6 +86,7 @@ def _render(
         try:
             firm_settings.validate(
                 contact_email=form_values["contact_email"],
+                default_reviewer_name=form_values["default_reviewer_name"],
                 archived_retention_years=form_values["archived_retention_years"],
                 accent_theme=form_values["accent_theme"],
                 accent_custom_hex=form_values["accent_custom_hex"],
@@ -95,6 +97,7 @@ def _render(
         saved = "Branding saved"
     values = form_values or {
         "contact_email": current.contact_email or "",
+        "default_reviewer_name": current.default_reviewer_name or "",
         "archived_retention_years": str(current.archived_retention_years),
         "accent_theme": current.accent_choice,
         "accent_custom_hex": current.accent_custom_hex or "",
@@ -140,6 +143,7 @@ async def save_settings(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     form_values = {
         "contact_email": str(form.get("contact_email") or ""),
+        "default_reviewer_name": str(form.get("default_reviewer_name") or ""),
         "archived_retention_years": str(form.get("archived_retention_years") or ""),
         "accent_theme": str(form.get("accent_theme") or ""),
         "accent_custom_hex": str(form.get("accent_custom_hex") or ""),
@@ -148,6 +152,7 @@ async def save_settings(request: Request, db: Session = Depends(get_db)):
         _view, changes = firm_settings.update(
             db,
             contact_email=form_values["contact_email"],
+            default_reviewer_name=form_values["default_reviewer_name"],
             archived_retention_years=form_values["archived_retention_years"],
             accent_theme=form_values["accent_theme"],
             accent_custom_hex=form_values["accent_custom_hex"],

@@ -33,20 +33,9 @@ def _toast(response, message: str, toast_type: str):
 
 
 def _latest_reviewer_name(db: Session, assessment_id: str) -> str:
-    event = (
-        db.query(ConclusionRevision)
-        .join(Conclusion, ConclusionRevision.conclusion_id == Conclusion.id)
-        .filter(
-            Conclusion.assessment_id == assessment_id,
-            ConclusionRevision.actor.startswith("consultant:"),
-        )
-        .order_by(
-            ConclusionRevision.created_at.desc(),
-            literal_column("conclusion_revisions.rowid").desc(),
-        )
-        .first()
-    )
-    return event.actor.removeprefix("consultant:") if event else ""
+    from app.services.conclusion_review import default_reviewer_name
+
+    return default_reviewer_name(db, assessment_id)
 
 
 @router.get("/assessments/{assessment_id}/soa", response_class=HTMLResponse)

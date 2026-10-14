@@ -27,7 +27,7 @@ _LATER_REVISION_TEMPLATE = textwrap.dedent(
     import sqlalchemy as sa
 
     revision = "zzzz_review_probe"
-    down_revision = "e2c8f6a4d901"  # Yozora backend features is the head
+    down_revision = "f3a7c9d2e810"  # Yozora backend features is the head
     branch_labels = None
     depends_on = None
 
@@ -88,7 +88,7 @@ _LATER_COLUMN_REVISION_TEMPLATE = textwrap.dedent(
     import sqlalchemy as sa
 
     revision = "zzzz_later_column_probe"
-    down_revision = "e2c8f6a4d901"  # Yozora backend features is the head
+    down_revision = "f3a7c9d2e810"  # Yozora backend features is the head
     branch_labels = None
     depends_on = None
 

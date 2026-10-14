@@ -953,7 +953,7 @@ def test_scenario_13_structure_and_provenance_guards(db):
     assert "llm_client" not in findings_source and "app.services.desk_review" not in findings_source
     assert UNCONFIRMED_ANSWER_SOURCES == ("document", "inferred")
     assert GROUNDED_CITATION_LOCATION_TYPE == "text_span"
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "e2c8f6a4d901 (head)"  # Yozora backend features head
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "f3a7c9d2e810 (head)"  # Yozora backend features head
     for template in (
         "app/templates/partials/questionnaire_tab.html",
         "app/templates/partials/screening_form.html",

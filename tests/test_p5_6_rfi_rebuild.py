@@ -1300,4 +1300,4 @@ def test_scenario_22_source_schema_signature_and_migration_guards(db):
         [sys.executable, "-m", "alembic", "heads"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     )
-    assert heads.returncode == 0 and "e2c8f6a4d901" in heads.stdout  # Yozora backend features migration is the head
+    assert heads.returncode == 0 and "f3a7c9d2e810" in heads.stdout  # Yozora backend features migration is the head
