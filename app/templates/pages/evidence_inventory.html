@@ -159,10 +159,21 @@
     const progressBar = document.getElementById('upload-progress-bar');
     const percent = document.querySelector('[data-upload-percent]');
     const fragmentQuery = {{ fragment_query|tojson }};
+    const assessmentCategories = {{ assessment_upload_categories|default({})|tojson }};
+    const uploadCategory = document.getElementById('upload-category');
     const updateUploadTarget = () => {
       if (!uploadAssessment || !uploadForm) return;
       const suffix = fragmentQuery ? `?${fragmentQuery}` : '';
       const target = `/assessments/${encodeURIComponent(uploadAssessment.value)}/upload${suffix}`;
+      if (uploadCategory) {
+        const selected = uploadCategory.value;
+        const categories = assessmentCategories[uploadAssessment.value] || [];
+        uploadCategory.replaceChildren(...categories.map((category) => {
+          const label = category.replaceAll('_', ' ');
+          return new Option(label.charAt(0).toUpperCase() + label.slice(1), category);
+        }));
+        if (categories.includes(selected)) uploadCategory.value = selected;
+      }
       uploadForm.action = target;
       uploadForm.setAttribute('hx-post', target);
       if (window.htmx) window.htmx.process(uploadForm);

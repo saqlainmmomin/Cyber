@@ -848,12 +848,10 @@ def _pdf_arguments(db: Session, assessment_id: str):
         .filter(QuestionnaireResponse.assessment_id == assessment_id)
         .all()
     }
-    selected_frameworks = ["dpdpa"]
-    if assessment and assessment.selected_frameworks:
-        try:
-            selected_frameworks = json.loads(assessment.selected_frameworks)
-        except json.JSONDecodeError:
-            pass
+    if assessment is None:
+        raise ValueError("Report assessment not found")
+    selected_frameworks = assessment.frameworks
+
     return (
         report,
         items,

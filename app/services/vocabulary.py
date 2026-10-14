@@ -110,9 +110,20 @@ def score_band(score: float) -> str:
 
 
 def display_reference(framework_id: str, requirement_id: str) -> str:
+    return section_reference(framework_id, requirement_id)
+
+
+def section_reference(
+    framework_id: str, requirement_id: str, *, include_framework: bool = False
+) -> str:
+    """Resolve a control reference, preserving each screen's framework prefix."""
     framework = FrameworkRegistry.get_or_none(framework_id)
     control = framework.get_control(requirement_id) if framework else None
-    return control.reference if control and control.reference else requirement_id
+    reference = control.reference if control and control.reference else requirement_id
+    if not include_framework:
+        return reference
+    name = framework_display_name(framework_id)
+    return reference if reference.startswith(name) else f"{name} {reference}"
 
 
 def framework_display_name(framework_id: str) -> str:
@@ -123,6 +134,13 @@ def framework_display_name(framework_id: str) -> str:
 
 
 def reference_with_framework(framework_id: str, requirement_id: str) -> str:
-    reference = display_reference(framework_id, requirement_id)
-    name = framework_display_name(framework_id)
-    return reference if reference.startswith(name) else f"{name} {reference}"
+    return section_reference(framework_id, requirement_id, include_framework=True)
+
+
+def upload_category_label(category: str) -> str:
+    """Use registry labels while retaining unknown stored category strings."""
+    for framework_id in FrameworkRegistry.all_ids():
+        for request in FrameworkRegistry.get(framework_id).evidence_requests:
+            if request.document_type == category:
+                return request.label
+    return category

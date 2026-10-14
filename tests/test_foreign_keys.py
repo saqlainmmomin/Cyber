@@ -30,7 +30,7 @@ def db(tmp_path):
 
 
 def _make_assessment(db):
-    a = Assessment(company_name="FKCo", industry="Tech", company_size="small")
+    a = Assessment(company_name="FKCo", industry="Tech", company_size="small", selected_frameworks='["dpdpa"]')
     db.add(a)
     db.commit()
     return a.id

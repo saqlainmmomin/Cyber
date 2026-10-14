@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.assessment import Assessment, AssessmentDocument
 from app.schemas.assessment import DocumentResponse
 from app.services import evidence as evidence_service
-from app.services.document_categories import document_categories
+from app.services.document_categories import upload_categories
 
 router = APIRouter(prefix="/api/assessments/{assessment_id}/documents", tags=["documents"])
 UNKNOWN_CATEGORY_MESSAGE = "Unknown document category '{category}' for this assessment's frameworks."
@@ -38,7 +38,7 @@ async def upload_document(
     assessment = db.get(Assessment, assessment_id)
     if assessment is None:
         raise HTTPException(404, "Assessment not found")
-    if category not in document_categories(assessment.frameworks):
+    if category not in upload_categories(assessment.frameworks):
         raise HTTPException(422, UNKNOWN_CATEGORY_MESSAGE.format(category=category[:50]))
     try:
         result = evidence_service.ingest_upload(

@@ -233,11 +233,10 @@ def test_scenario_1_routing_and_no_desk_review_baseline(db):
     from app.services.question_engine import build_adaptive_questionnaire, is_dpdpa_only
     from app.services.tier_engine import compute_tier_stats
 
-    legacy = _seed(db, None)
     dpdpa = _seed(db, ("dpdpa",))
     iso = _seed(db, ("iso27001",))
     mixed = _seed(db, ("dpdpa", "iso27001"))
-    assert is_dpdpa_only(legacy) and is_dpdpa_only(dpdpa)
+    assert is_dpdpa_only(dpdpa)
     assert not is_dpdpa_only(iso) and not is_dpdpa_only(mixed)
 
     for assessment in (iso, mixed):
@@ -338,7 +337,7 @@ def test_scenario_3_cluster_deepen(db):
 
     _set_review(db, assessment, findings=[_add_finding(
         db, assessment, finding_type="signal", requirement_id="CH4.SDF.1",
-        framework_id=None, content="Legacy signal", quote="", citations="[]",
+        framework_id="dpdpa", content="Legacy signal", quote="", citations="[]",
     )])
     assert _question(build_adaptive_questionnaire(assessment.id, db), "CLUSTER_002")["status"] == "deepened"
 
@@ -504,7 +503,7 @@ def test_scenario_5_framework_quarantine_and_dp5c(db):
 
     mixed = _seed(db, ("dpdpa", "iso27001"))
     _set_review(db, mixed, coverage={"CH2.NOTICE.2": "adequate"}, findings=[
-        _add_finding(db, mixed, requirement_id="CH2.NOTICE.2", framework_id=None),
+        _add_finding(db, mixed, requirement_id="CH2.NOTICE.2", framework_id="dpdpa"),
     ])
     assert _question(build_adaptive_questionnaire(mixed.id, db), "CLUSTER_021")["status"] == "pre_filled"
 
@@ -954,7 +953,7 @@ def test_scenario_13_structure_and_provenance_guards(db):
     assert "llm_client" not in findings_source and "app.services.desk_review" not in findings_source
     assert UNCONFIRMED_ANSWER_SOURCES == ("document", "inferred")
     assert GROUNDED_CITATION_LOCATION_TYPE == "text_span"
-    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "b7d41c9e2a63 (head)"  # Yozora backend features head
+    assert subprocess.run([sys.executable, "-m", "alembic", "heads"], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout.strip() == "e2c8f6a4d901 (head)"  # Yozora backend features head
     for template in (
         "app/templates/partials/questionnaire_tab.html",
         "app/templates/partials/screening_form.html",

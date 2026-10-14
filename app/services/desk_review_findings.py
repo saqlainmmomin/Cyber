@@ -6,7 +6,6 @@ from app.frameworks.registry import FrameworkRegistry
 from app.models.desk_review import DeskReviewFinding, DeskReviewSummary
 
 
-LEGACY_FINDING_FRAMEWORK_ID = "dpdpa"
 GROUNDED_CITATION_LOCATION_TYPE = "text_span"
 
 
@@ -26,8 +25,10 @@ def finding_has_grounded_citation(finding: DeskReviewFinding) -> bool:
 
 
 def finding_framework_id(finding: DeskReviewFinding) -> str:
-    """Return the finding's framework, treating legacy NULL rows as DPDPA."""
-    return finding.framework_id or LEGACY_FINDING_FRAMEWORK_ID
+    """Return the finding's explicitly stored framework."""
+    if not finding.framework_id:
+        raise ValueError("Desk-review finding framework_id must be stored explicitly")
+    return finding.framework_id
 
 
 def scoped_findings(db, assessment, *, framework_ids: list[str] | None = None) -> list[DeskReviewFinding]:
@@ -36,13 +37,7 @@ def scoped_findings(db, assessment, *, framework_ids: list[str] | None = None) -
     query = db.query(DeskReviewFinding).filter(
         DeskReviewFinding.assessment_id == assessment.id
     )
-    if LEGACY_FINDING_FRAMEWORK_ID in selected:
-        query = query.filter(
-            (DeskReviewFinding.framework_id.in_(selected))
-            | (DeskReviewFinding.framework_id.is_(None))
-        )
-    else:
-        query = query.filter(DeskReviewFinding.framework_id.in_(selected))
+    query = query.filter(DeskReviewFinding.framework_id.in_(selected))
     return query.order_by(DeskReviewFinding.id).all()
 
 

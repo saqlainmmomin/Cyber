@@ -645,7 +645,7 @@ def _render_remediation_actions(pdf: FPDF, company_name: str, report_findings, g
     finding_keys = set()
     if report_findings is not None:
         for finding in report_findings.findings:
-            finding_keys.add((finding.framework_id or "dpdpa", finding.requirement_id))
+            finding_keys.add((finding.framework_id, finding.requirement_id))
             for action in finding.actions:
                 actions.append((finding, action))
     severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -720,7 +720,7 @@ def _render_remediation_actions(pdf: FPDF, company_name: str, report_findings, g
 
     unplanned = sum(
         item.compliance_status in GAP_STATUSES
-        and (item.framework_id or "dpdpa", item.requirement_id) not in finding_keys
+        and (item.framework_id, item.requirement_id) not in finding_keys
         for item in gap_items
     )
     if unplanned:

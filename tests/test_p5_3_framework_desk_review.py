@@ -226,7 +226,7 @@ def _analysis_payload(framework_id):
 def test_scenario_1_alembic_schema_backfill_and_guarded_downgrade(tmp_path):
     """Scenario 1: P5-3 is the sole head, backfills legacy rows, and refuses lossy downgrades."""
     scripts = ScriptDirectory.from_config(_cfg(tmp_path / "unused.sqlite3"))
-    assert scripts.get_current_head() == "b7d41c9e2a63"  # Yozora backend, on P6-8 V3-A; REVISION is V3-A's parent
+    assert scripts.get_current_head() == "e2c8f6a4d901"  # Yozora backend, on P6-8 V3-A; REVISION is V3-A's parent
     assert scripts.get_revision("5e9a2c7d4b18").down_revision == REVISION
     assert scripts.get_revision(REVISION).down_revision == PREVIOUS_REVISION
 
@@ -246,7 +246,7 @@ def test_scenario_1_alembic_schema_backfill_and_guarded_downgrade(tmp_path):
             "('a1', 'evidence', 'CH2.CONSENT.1', 'quote', 'info', CURRENT_TIMESTAMP), "
             "('a1', 'signal', 'CH2.CONSENT.1', 'flag', 'high', CURRENT_TIMESTAMP)"
         ))
-    command.upgrade(cfg, "head")
+    command.upgrade(cfg, REVISION)
     columns = {c["name"]: c for c in inspect(eng).get_columns("desk_review_findings")}
     assert str(columns["framework_id"]["type"]) == "VARCHAR(50)"
     assert str(columns["flag_type"]["type"]) == "VARCHAR(100)"
@@ -270,7 +270,7 @@ def test_scenario_1_alembic_schema_backfill_and_guarded_downgrade(tmp_path):
     ):
         path = tmp_path / f"guard-{column}.sqlite3"
         case_cfg = _cfg(path)
-        command.upgrade(case_cfg, "head")
+        command.upgrade(case_cfg, REVISION)
         case_eng = create_engine(f"sqlite:///{path}")
         with case_eng.begin() as conn:
             conn.execute(text(
@@ -615,7 +615,7 @@ def test_scenario_7_signal_type_is_not_inferred_from_content(db):
 
     db.query(DeskReviewFinding).delete()
     db.add(DeskReviewFinding(
-        assessment_id=assessment.id, framework_id=None, finding_type="signal",
+        assessment_id=assessment.id, framework_id="dpdpa", finding_type="signal",
         requirement_id="CH2.CONSENT.1", flag_type=None, content="template scope GDPR gap", severity="high",
     ))
     db.commit()
@@ -777,7 +777,7 @@ def test_scenario_11_legacy_findings_are_quarantined(db, http, monkeypatch):
         coverage_summary=json.dumps({"CH2.CONSENT.1": "adequate"}),
     ))
     db.add_all([
-        DeskReviewFinding(assessment_id=assessment.id, framework_id=None, finding_type="signal", requirement_id="CH2.CONSENT.1", content="legacy", severity="high"),
+        DeskReviewFinding(assessment_id=assessment.id, framework_id="dpdpa", finding_type="signal", requirement_id="CH2.CONSENT.1", content="legacy", severity="high"),
         DeskReviewFinding(assessment_id=assessment.id, framework_id="dpdpa", finding_type="evidence", requirement_id="CH2.CONSENT.1", content="legacy", severity="info"),
     ])
     db.commit()

@@ -12,7 +12,6 @@ from collections.abc import Sequence
 
 from app.frameworks.registry import FrameworkRegistry
 from app.frameworks.schema import FrameworkDefinition, RedFlagPattern
-from app.services.desk_review_findings import LEGACY_FINDING_FRAMEWORK_ID
 from app.services.followup_responses import decode as decode_followup
 
 
@@ -538,7 +537,7 @@ def build_framework_user_prompt(
                 or (
                     not f.get("requirement_ids")
                     and not f.get("requirement_id")
-                    and (f.get("framework_id") or LEGACY_FINDING_FRAMEWORK_ID)
+                    and f.get("framework_id")
                     == framework_id
                 )
             ]

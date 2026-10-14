@@ -112,7 +112,7 @@ def test_same_passage_cited_twice_shows_once_and_untagged_findings_use_the_asses
                         lambda db: seed(db, frameworks=('iso27001',)))
     assessment, evidence, version = upload(db, http, monkeypatch, 'Access is reviewed quarterly.')
     _desk_review(db, assessment, version)
-    db.add(DeskReviewFinding(assessment_id=assessment.id, finding_type='evidence', framework_id=None,
+    db.add(DeskReviewFinding(assessment_id=assessment.id, finding_type='evidence', framework_id='iso27001',
                              requirement_id='ISO.A5.18', content='Same quote again',
                              citations_json=json.dumps([{'evidence_version_id': version.id, 'location_type': 'chars',
                                                          'location_ref': 'chars:0-6', 'excerpt': 'Access'}])))

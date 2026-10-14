@@ -16,6 +16,7 @@ from alembic import command
 from app.models.magic_link import MagicLink
 from app.services import firm_settings, magic_links, rfi_requests
 from tests.yozora_support import (  # noqa: F401 - fixtures are used by name
+    PREVIOUS_REVISION,
     _register_frameworks,
     alembic_config,
     db,
@@ -199,6 +200,6 @@ def test_contact_columns_migration(tmp_path):
         columns = {row[1]: row for row in connection.execute("PRAGMA table_info(magic_links)")}
     assert columns["contact_name"][2].upper() == "VARCHAR(200)" and columns["contact_name"][3] == 0
     assert columns["contact_email"][2].upper() == "VARCHAR(254)" and columns["contact_email"][3] == 0
-    command.downgrade(config, "-1")
+    command.downgrade(config, PREVIOUS_REVISION)
     with sqlite3.connect(path) as connection:
         assert "contact_name" not in {row[1] for row in connection.execute("PRAGMA table_info(magic_links)")}
