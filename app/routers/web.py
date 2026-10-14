@@ -3037,7 +3037,7 @@ def _compute_business_impact(gap_items) -> dict:
         if item.compliance_status not in ("non_compliant", "partially_compliant"):
             continue
         req_id = item.requirement_id or ""
-        if (item.framework_id or "dpdpa") == "dpdpa":
+        if item.framework_id == "dpdpa":
             for prefix, penalty in _PENALTY_MAP:
                 if req_id.startswith(prefix):
                     max_penalty = max(max_penalty, penalty)
@@ -3187,7 +3187,7 @@ def report_summary(
                 "evidence_confidence",
             )
         ):
-            legacy_remediation[(item.framework_id or "dpdpa", item.requirement_id)] = item
+            legacy_remediation[(item.framework_id, item.requirement_id)] = item
     release = approved.release
     release_status = "released" if release.released else "stale" if release.stale else "not_released"
     timeline_steps = [
