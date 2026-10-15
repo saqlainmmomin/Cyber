@@ -1,0 +1,2152 @@
+{
+ "ISO.A5.1": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "The policy is approved, versioned and distributed to relevant personnel, but six current acknowledgements were outstanding at cutoff. Acknowledgement is not complete for six recipients.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/932503f7-1d31-4d23-a1e3-1078db08dccf",
+    "name": "Veldhara_Policy_Acknowledgement_Export_Q2.xlsx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/65ea66f7-c3e9-493a-9c5a-6f923740cbe2",
+    "name": "Veldhara_Board_Risk_Minutes_Approval_2026-07-01.pdf",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.2": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Security duties are assigned to current roles and reviewed by management.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/7f0a208c-009f-42e2-bce5-c34347ff51dd",
+    "name": "Veldhara_Board_Risk_Committee_Minutes_Q2_2026.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.3": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Approval, implementation and independent review duties are separated with documented compensating checks for small teams.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/8192e19f-a96c-484e-b4fa-e26a6ba4f3f3",
+    "name": "Veldhara_Change_and_Release_Procedure_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/469bbcde-5f41-408a-ad01-ca5d9496572a",
+    "name": "Veldhara_Change_Ticket_CHG-26-0918.png",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.4": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Management requires personnel to follow security procedures and uses tracked briefings and policy acknowledgements.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/932503f7-1d31-4d23-a1e3-1078db08dccf",
+    "name": "Veldhara_Policy_Acknowledgement_Export_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.5": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Authority and emergency contacts are identified, but only the provider number has a current verification record. The authority and emergency entries were not all reconfirmed within the current review period.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/22c304db-b960-4d29-b431-0b865870893b",
+    "name": "Veldhara_Incident_Response_Plan_v1.pdf",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.6": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Threat sources are listed and advisories are circulated, but no specialist group membership or active participation is recorded. No maintained record shows participation in a specialist security forum.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/3af35245-963a-4f68-990f-fdbbe189a477",
+    "name": "Veldhara_Threat_Advisory_Digest_Q2_2026.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.7": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Security advisories are collected, assessed for service relevance and assigned to owners.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/77a58683-d7ad-4f14-9035-a8b1bb2cdfc8",
+    "name": "Veldhara_Vulnerability_and_Patch_Report_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/3af35245-963a-4f68-990f-fdbbe189a477",
+    "name": "Veldhara_Threat_Advisory_Digest_Q2_2026.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.8": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Security impact, ownership and tests are built into project and change approval for new or changed services.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/357d1951-b2be-472d-9648-1902ea7246c8",
+    "name": "Veldhara_Application_Security_Test_Report_Q2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/8192e19f-a96c-484e-b4fa-e26a6ba4f3f3",
+    "name": "Veldhara_Change_and_Release_Procedure_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/96cc0f5b-fa89-4edc-a944-59bd937990e2",
+    "name": "Veldhara_Secure_Development_Standard_v1.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/469bbcde-5f41-408a-ad01-ca5d9496572a",
+    "name": "Veldhara_Change_Ticket_CHG-26-0918.png",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.9": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "An owner-maintained inventory identifies production services, information classes, suppliers and dependencies.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/effa1e7a-34e3-4cf9-ba25-773c5c927aab",
+    "name": "Veldhara_Information_Asset_Inventory_Q2.xlsx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.10": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Acceptable use and handling rules are communicated for company information and devices.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/dee783de-af4b-4839-8676-86d0c3a18568",
+    "name": "Veldhara_Remote_Work_and_Endpoint_Standard_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/0d00e001-dd04-40ec-ac98-0b01d8c698fb",
+    "name": "Veldhara_Security_Awareness_Completion_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/932503f7-1d31-4d23-a1e3-1078db08dccf",
+    "name": "Veldhara_Policy_Acknowledgement_Export_Q2.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.11": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "The leaver procedure calls for asset return and tracking, but current access exceptions show incomplete closure across the service estate. Four terminated identities remained enabled and asset-return evidence was not attached to all sampled leaver records.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f0b31042-da39-4940-a8ce-c5a17b8b4b76",
+    "name": "Veldhara_User_Access_Review_Export.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A5.18": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Access rights are provisioned and reviewed by policy, but the quarter contains two incomplete cycles, two omitted systems and open removals. Eight approved removal actions remained open at 30 September, including four enabled terminated users; July and August lack signed reviews.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f0b31042-da39-4940-a8ce-c5a17b8b4b76",
+    "name": "Veldhara_User_Access_Review_Export.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/508e0b3d-ccc0-40bc-9d78-48edaa412ebb",
+    "name": "Veldhara_Access_Review_Q2_FY26.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bd50e04c-2dca-4170-a996-e7e4558a079d",
+    "name": "Veldhara_Access_Review_September_Followup.png",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": {
+   "title": "Monthly access review cycles and remediation are incomplete",
+   "action": "Finish all removal tickets and obtain signed decisions for TMS and the driver app in every monthly cycle.",
+   "severity": "High",
+   "status": "Open",
+   "owner": "Arjun Mehta",
+   "target": "30 Sep 2026"
+  }
+ },
+ "ISO.A5.24": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "The response plan assigns roles and steps, but no tabletop or incident simulation was performed in the assessment period. No exercise showed whether owners can use the plan and call tree under incident conditions.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/22c304db-b960-4d29-b431-0b865870893b",
+    "name": "Veldhara_Incident_Response_Plan_v1.pdf",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bcde39a0-9414-4a8b-b129-4608244414d3",
+    "name": "Veldhara_Information_Security_Incident_Log_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": {
+   "title": "Incident response plan has not been exercised",
+   "action": "Run the scheduled tabletop, record decisions and close assigned plan updates.",
+   "severity": "High",
+   "status": "Open",
+   "owner": "Arjun Mehta",
+   "target": "6 Nov 2026"
+  }
+ },
+ "ISO.A5.30": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "The dispatch recovery capability was exercised within its target and reviewed by the responsible operator.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/effa1e7a-34e3-4cf9-ba25-773c5c927aab",
+    "name": "Veldhara_Information_Asset_Inventory_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/8192e19f-a96c-484e-b4fa-e26a6ba4f3f3",
+    "name": "Veldhara_Change_and_Release_Procedure_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/ba07165f-0012-4b9e-970c-6019d5cdc2cf",
+    "name": "Veldhara_DR_Failover_Test_Report.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A6.1": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Employees with access to scoped information are screened before access is granted and screening records have restricted ownership.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/932503f7-1d31-4d23-a1e3-1078db08dccf",
+    "name": "Veldhara_Policy_Acknowledgement_Export_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A6.2": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Employment terms define security responsibilities and confidentiality obligations for personnel.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/932503f7-1d31-4d23-a1e3-1078db08dccf",
+    "name": "Veldhara_Policy_Acknowledgement_Export_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/194d8843-9957-4540-b012-8f335e2a608f",
+    "name": "Veldhara_Supplier_Security_Schedules_Extract.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A6.3": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "An annual security programme exists, but the 2026 refresher lapsed and completion was 81 percent at cutoff. Fifty-two personnel were overdue at cutoff and manager sign-off was missing for two depot groups.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/954f23aa-8fbb-4906-b191-f7626acc7a9a",
+    "name": "Veldhara_Management_Review_2026-09-24.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/0d00e001-dd04-40ec-ac98-0b01d8c698fb",
+    "name": "Veldhara_Security_Awareness_Completion_Q2.xlsx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": {
+   "title": "Annual security awareness training lapsed",
+   "action": "Run the scheduled depot sessions, close the overdue list and report verified completion.",
+   "severity": "Medium",
+   "status": "Open",
+   "owner": "Arjun Mehta",
+   "target": "6 Nov 2026"
+  }
+ },
+ "ISO.A6.4": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "A disciplinary process covers security breaches, but no current-period case sample demonstrated its operation. No security disciplinary case or manager acknowledgement of the process was supplied for this period.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/aee7b074-6215-4107-8d41-8e2a6d0437bb",
+    "name": "Veldhara_Internal_Audit_ISMS_2026.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bcde39a0-9414-4a8b-b129-4608244414d3",
+    "name": "Veldhara_Information_Security_Incident_Log_Q2.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A6.5": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Post-termination duties and disable steps are documented, but four terminated users remained enabled at quarter end. Leaver responsibilities and access removal were not completed for four sampled identities by cutoff.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/508e0b3d-ccc0-40bc-9d78-48edaa412ebb",
+    "name": "Veldhara_Access_Review_Q2_FY26.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f0b31042-da39-4940-a8ce-c5a17b8b4b76",
+    "name": "Veldhara_User_Access_Review_Export.xlsx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A6.6": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Confidentiality obligations are included in employee terms and supplier developer agreements.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/194d8843-9957-4540-b012-8f335e2a608f",
+    "name": "Veldhara_Supplier_Security_Schedules_Extract.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/24cb6f28-eec5-4a42-a64b-ee7e17e372bd",
+    "name": "Veldhara_Outsourced_Development_Oversight_Q2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/7bf035c1-7b28-43bf-81ad-a2b29843f14d",
+    "name": "Veldhara_Legal_Contract_and_IP_Register_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/ee02e410-80a5-458b-ba2d-e2f903964fd7",
+    "name": "Veldhara_People_Security_Procedures_v2.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A7.1": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Staffed offices and depots use defined facility boundaries and badge-controlled entry.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/55a8d23d-9aa5-4daa-8ae3-e14231f0af0d",
+    "name": "Veldhara_Facilities_Security_Inspection_Q2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/0585ed35-3c9c-48f4-8672-ca11e2227139",
+    "name": "Veldhara_Control_Operations_Sample_Q2.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A7.2": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Physical entry is managed through staff badges, visitor registration and host escort.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/55a8d23d-9aa5-4daa-8ae3-e14231f0af0d",
+    "name": "Veldhara_Facilities_Security_Inspection_Q2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A7.3": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Office, depot and network spaces use locked rooms and assigned facility owners.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/effa1e7a-34e3-4cf9-ba25-773c5c927aab",
+    "name": "Veldhara_Information_Asset_Inventory_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/55a8d23d-9aa5-4daa-8ae3-e14231f0af0d",
+    "name": "Veldhara_Facilities_Security_Inspection_Q2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A7.4": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Door alarms and camera coverage are checked during facility shifts and exceptions are sent to the facility owner.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/55a8d23d-9aa5-4daa-8ae3-e14231f0af0d",
+    "name": "Veldhara_Facilities_Security_Inspection_Q2.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/0585ed35-3c9c-48f4-8672-ca11e2227139",
+    "name": "Veldhara_Control_Operations_Sample_Q2.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A7.5": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Environmental safeguards cover the staffed premises and have current inspection and maintenance records.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/55a8d23d-9aa5-4daa-8ae3-e14231f0af0d",
+    "name": "Veldhara_Facilities_Security_Inspection_Q2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.1": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Managed endpoints are assigned to users and protected through encryption, updates and malware controls.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/effa1e7a-34e3-4cf9-ba25-773c5c927aab",
+    "name": "Veldhara_Information_Asset_Inventory_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a82746ac-5eb8-4609-b55e-482a5fb5b7df",
+    "name": "Veldhara_Secure_Configuration_Baseline_v3.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/dee783de-af4b-4839-8676-86d0c3a18568",
+    "name": "Veldhara_Remote_Work_and_Endpoint_Standard_v2.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.2": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Administrator membership is restricted, but two privileged accounts lacked an owner review decision. Two privileged identities remained without an affirmative reviewer decision at cutoff.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/f0b31042-da39-4940-a8ce-c5a17b8b4b76",
+    "name": "Veldhara_User_Access_Review_Export.xlsx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bc07ad20-bc42-4b43-8515-0190d5b80786",
+    "name": "Veldhara_Logging_and_Monitoring_Review_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a82746ac-5eb8-4609-b55e-482a5fb5b7df",
+    "name": "Veldhara_Secure_Configuration_Baseline_v3.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.3": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Role groups and service owner approvals restrict information access, but the access review did not include every production service. The TMS and driver app were omitted and open leaver actions weaken assurance that restrictions remain current.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/f0b31042-da39-4940-a8ce-c5a17b8b4b76",
+    "name": "Veldhara_User_Access_Review_Export.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/508e0b3d-ccc0-40bc-9d78-48edaa412ebb",
+    "name": "Veldhara_Access_Review_Q2_FY26.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/a799c6f3-9f77-4f59-93b1-6f27aa4d8835",
+    "name": "Veldhara_Security_Roles_and_RACI_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Partially compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.4": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Private repositories use protected branches, named accounts and separated merge approval.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/194d8843-9957-4540-b012-8f335e2a608f",
+    "name": "Veldhara_Supplier_Security_Schedules_Extract.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/96cc0f5b-fa89-4edc-a944-59bd937990e2",
+    "name": "Veldhara_Secure_Development_Standard_v1.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/357d1951-b2be-472d-9648-1902ea7246c8",
+    "name": "Veldhara_Application_Security_Test_Report_Q2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/24cb6f28-eec5-4a42-a64b-ee7e17e372bd",
+    "name": "Veldhara_Outsourced_Development_Oversight_Q2.docx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.5": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Authentication uses multifactor requirements and controlled administrator identities, with current samples of access activity.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/dee783de-af4b-4839-8676-86d0c3a18568",
+    "name": "Veldhara_Remote_Work_and_Endpoint_Standard_v2.docx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bc07ad20-bc42-4b43-8515-0190d5b80786",
+    "name": "Veldhara_Logging_and_Monitoring_Review_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/f09d8bb2-17cc-45e0-b3b8-2160e300ca08",
+    "name": "Veldhara_Information_Security_Policy_v3.1.pdf",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/8ef7a205-8eaa-4170-b31b-1d7a89e5042e",
+    "name": "Veldhara_Cloud_Service_Review_Q2_2026.docx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.6": {
+  "answer": "Partially Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Service owners review resource utilization and forecast demand before capacity headroom becomes constrained.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/bc221272-4db4-4598-8b09-25e2ee147ed3",
+    "name": "Veldhara_ISMS_Objectives_and_Metrics_Q2.xlsx",
+    "relevance": "Supporting"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/af31fef2-9ba1-42f7-a181-e8bf133acd6d",
+    "name": "Veldhara_Service_Capacity_and_Utilization_Q2.xlsx",
+    "relevance": "Direct"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ },
+ "ISO.A8.7": {
+  "answer": "Fully Implemented",
+  "answer_source": "Questionnaire",
+  "confidence": "Medium",
+  "submitted": "6 Oct 2026",
+  "shared_question": true,
+  "client_note": "Production images and endpoints receive managed malware protection and alerts are reviewed.",
+  "evidence": [
+   {
+    "href": "http://127.0.0.1:8011/evidence/a82746ac-5eb8-4609-b55e-482a5fb5b7df",
+    "name": "Veldhara_Secure_Configuration_Baseline_v3.docx",
+    "relevance": "Direct"
+   },
+   {
+    "href": "http://127.0.0.1:8011/evidence/bc07ad20-bc42-4b43-8515-0190d5b80786",
+    "name": "Veldhara_Logging_and_Monitoring_Review_Q2.xlsx",
+    "relevance": "Supporting"
+   }
+  ],
+  "proposal": {
+   "outcome": "Compliant",
+   "model": "deepseek/deepseek-v4-flash",
+   "started": "6 Oct 2026, 09:00",
+   "checks": [
+    [
+     "Citations",
+     "1"
+    ],
+    [
+     "Evidence quote found in the document",
+     "Grounded"
+    ],
+    [
+     "Unsupported assertion",
+     "None"
+    ],
+    [
+     "Flagged for review by the model",
+     "No"
+    ],
+    [
+     "Desk-review red flags",
+     "0"
+    ],
+    [
+     "Contradictions",
+     "Not assessed"
+    ]
+   ]
+  },
+  "history": [
+   [
+    "Proposed by the AI",
+    "ISO 27001 run · 6 Oct 2026"
+   ],
+   [
+    "Approved",
+    "Meera Joshi · 6 Oct 2026"
+   ]
+  ],
+  "remediation": null
+ }
+}
