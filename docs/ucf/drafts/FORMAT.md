@@ -17,6 +17,8 @@ Framework keys: `iso27001`, `nist_csf`, `dpdpa`. Source codes in file names: `is
 | `controls_<src>.csv` | `id,title,domain,iso_theme,goal,owner_role,importance,origin,note` | drafting agents |
 | `mappings_<src>.csv` | `source_framework,record_id,source_ref,atom_id,unified_control_id,match_type,coverage,reason,primary,remainder_of,remainder_immaterial,immaterial_reason` | drafting agents |
 | `fields_<DOMAINCODE>.csv` | `id,statement,why_asked,how_to_ask,question,expected_evidence,good_looks_like,test,baseline_risk,applicability,control_type,frequency,key_settings` | field writers |
+| `criteria_map.csv` | `criterion_id,record_id,unified_control_id,basis,reason` (`csv.QUOTE_ALL`) | `scripts/ucf/make_criteria_map.py`; `decided` rows from Saqlain's review |
+| `scope_proposals.csv` | `question,answer,unified_control_id,source_records,reason` (`csv.QUOTE_ALL`) | `scripts/ucf/make_scope_proposals.py` |
 
 A unified control is the join of its `controls_*` row and its `fields_*` row on `id`. Sign-off tables show the join.
 
@@ -75,6 +77,25 @@ Write all of these for every control in the domain. Control statements never nam
 | `control_type` | `preventive`, `detective` or `corrective`. |
 | `frequency` | `continuous`, `per_event`, `monthly`, `quarterly`, `annual`, `ad_hoc`. |
 | `key_settings` | Numbers and timeframes in the control, written `layer: setting` and joined with ` | `. Layer is `base`, `iso27001`, `nist_csf` or `dpdpa`. Empty if none. A setting under a framework layer applies only when that framework is selected. |
+
+## Criteria map (`criteria_map.csv`)
+
+Attaches every signed test criterion (`app/frameworks/criteria/{iso27001,nist_csf,dpdpa}.py`) to exactly one unified control. The signed criteria are the authoritative tests under each control (decision D18); their ids and text never change, and this file never duplicates one.
+
+- `criterion_id`: the signed id, `<record_id>.TC<n>`. Each appears exactly once.
+- `record_id`: the record the criterion was signed under.
+- `unified_control_id`: one control the record maps to (full or partial). Empty only while a criterion is flagged as testing two controls.
+- `basis`: `auto` (the record maps to one control), `proposed` (two or more; a word-match pick awaiting Saqlain) or `decided` (his choice). A re-run of the script keeps `decided` rows as they are.
+- `reason`: one line. For `proposed`, the matched atom and shared words, plus "close call" or "weak match" where relevant.
+
+## Scope proposals (`scope_proposals.csv`)
+
+The ISO scope answers re-keyed from Annex A ids to unified controls. Draft data only; the app still reads the Annex A proposals in `app/frameworks/definitions/iso27001.py` until WP 5.5.
+
+- `question`, `answer`: the scope question id and option value, as in the app (`ISO.SCP.2`, `no`).
+- `unified_control_id`: proposed as likely not applicable for that answer. The consultant confirms; nothing is removed automatically.
+- `source_records`: space-separated records the control carries. All are Annex A ids excluded by the same answer.
+- A control that also carries a clause 4 to 10 record, another Annex A record, or a NIST or DPDPA record is never proposed. Those cases are listed in `notes_scope_rekey.md`.
 
 ## Validator behavior this format supports
 
