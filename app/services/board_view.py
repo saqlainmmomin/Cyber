@@ -236,10 +236,15 @@ def view(document: Mapping) -> dict:
     concluded = sum(framework["concluded"] for framework in frameworks)
     posture_title = f"{met} of {concluded} concluded requirements are met; {gaps} have gaps to close"
     all_domains = [(framework["short"], domain) for framework in frameworks for domain in framework["domains"]]
-    weakest = sorted(all_domains, key=lambda item: item[1].get("score") or 0)[:2]
-    domain_title = " and ".join(
-        f"{domain['title']} ({domain.get('score', 0):.0f}%)" for _, domain in weakest
-    ) + (" are the weakest areas" if len(weakest) > 1 else " is the weakest area")
+    # Only scored domains can be the weakest; an unscored domain is not "0%".
+    scored_domains = [item for item in all_domains if item[1].get("score") is not None]
+    weakest = sorted(scored_domains, key=lambda item: item[1]["score"])[:2]
+    domain_title = (
+        " and ".join(f"{domain['title']} ({vocab.score_text(domain['score'])})" for _, domain in weakest)
+        + (" are the weakest areas" if len(weakest) > 1 else " is the weakest area")
+        if weakest
+        else "No area has a score yet"
+    )
     by_critical_high = sorted(all_domains, key=lambda item: -(item[1].get("crit_high", 0) or 0))
     top_critical_high = by_critical_high[0] if by_critical_high and by_critical_high[0][1].get("crit_high") else None
     risk_title = (

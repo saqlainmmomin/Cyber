@@ -66,3 +66,26 @@ def test_executive_copy_uses_ready_and_framework_gap_counts():
             sum(row["risk_level"] == "critical" for row in own),
             sum(row["risk_level"] == "high" for row in own),
         )
+
+
+def _status_domains(document):
+    return [
+        domain
+        for row in document["status_board"]
+        for domain in row.get("domains", [])
+        if domain.get("in_scope")
+    ]
+
+
+def test_unscored_domain_is_never_named_weakest():
+    document = load_deck_document()
+    domains = _status_domains(document)
+    unscored = domains[0]
+    unscored["score"] = None
+    title = board_view.view(document)["titles"]["domain"]
+    assert unscored["title"] not in title
+    assert "(0.0%)" not in title and "(0%)" not in title
+
+    for domain in domains:
+        domain["score"] = None
+    assert board_view.view(document)["titles"]["domain"] == "No area has a score yet"
