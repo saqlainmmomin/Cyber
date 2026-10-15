@@ -275,6 +275,7 @@ def test_followup_generation_tags_and_caps_questions():
             "not_implemented",
             "critical",
             ["CH2.CONSENT.1"],
+            framework_ids=["dpdpa"],
         )
 
     assert result == [
@@ -298,7 +299,8 @@ def test_followup_generation_returns_empty_for_malformed_response():
 
     with patch.object(followup_engine, "_call_claude_followups", return_value="not json"):
         result = followup_engine.generate_followups(
-            "Is it implemented?", "CH2.CONSENT.1", "planned", "low", []
+            "Is it implemented?", "CH2.CONSENT.1", "planned", "low", [],
+            framework_ids=["dpdpa"],
         )
 
     assert result == []
@@ -309,7 +311,8 @@ def test_followup_generation_skips_provider_for_non_triggering_answer():
 
     with patch.object(followup_engine, "_call_claude_followups") as call:
         result = followup_engine.generate_followups(
-            "Is it implemented?", "CH2.CONSENT.1", "not_applicable", "critical", []
+            "Is it implemented?", "CH2.CONSENT.1", "not_applicable", "critical", [],
+            framework_ids=["dpdpa"],
         )
 
     assert result == []
@@ -323,7 +326,7 @@ def test_followup_call_seam_returns_provider_text():
         "app.services.followup_engine._call_llm",
         return_value=_response('{"followups": []}'),
     ):
-        assert _call_claude_followups("prompt") == '{"followups": []}'
+        assert _call_claude_followups("prompt", system="system") == '{"followups": []}'
 
 
 def test_vision_call_seam_returns_provider_text():

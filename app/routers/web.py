@@ -2733,6 +2733,7 @@ async def generate_followup_questions(
             desk_review_evidence=target_q.get("desk_review_evidence"),
             desk_review_note=target_q.get("desk_review_note"),
             guidance=target_q.get("guidance", ""),
+            framework_ids=assessment.frameworks,
         )
     except Exception:
         # Follow-up generation is best-effort — don't block the questionnaire

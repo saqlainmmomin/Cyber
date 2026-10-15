@@ -17,7 +17,36 @@ Follow-up count is DYNAMIC based on answer content:
 
 import json
 
+from app.frameworks.registry import FrameworkRegistry
 from app.services import llm_client
+
+_DPDPA_SYSTEM_PROMPT = (
+    "You are an expert DPDPA compliance auditor conducting a gap assessment. "
+    "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
+    "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
+    "Respond ONLY with valid JSON. No markdown fences, no commentary."
+)
+
+
+def _is_dpdpa_only(framework_ids: list[str]) -> bool:
+    return list(framework_ids) == ["dpdpa"]
+
+
+def _system_prompt(framework_ids: list[str]) -> str:
+    """DPDPA-only assessments keep their original wording; every other scope
+    names its own frameworks instead."""
+    if _is_dpdpa_only(framework_ids):
+        return _DPDPA_SYSTEM_PROMPT
+    names = [
+        fw.name if (fw := FrameworkRegistry.get_or_none(fid)) else fid
+        for fid in framework_ids
+    ]
+    return (
+        f"You are an expert compliance auditor conducting a gap assessment against {', '.join(names)}. "
+        "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
+        "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
+        "Respond ONLY with valid JSON. No markdown fences, no commentary."
+    )
 
 
 def generate_followups(
@@ -29,9 +58,14 @@ def generate_followups(
     desk_review_evidence: list[dict] | None = None,
     desk_review_note: str | None = None,
     guidance: str = "",
+    *,
+    framework_ids: list[str],
 ) -> list[dict]:
     """
     Generate follow-up questions based on the answer and context.
+
+    ``framework_ids`` is the assessment's explicit framework scope; it decides
+    the auditor persona and guidance label in the prompt.
 
     Returns a list of follow-up question dicts:
     [{"id": "FU.{question_id}.1", "text": "...", "reason": "..."}]
@@ -39,6 +73,8 @@ def generate_followups(
     Returns empty list if no follow-up is needed.
     """
     # Determine if follow-up is warranted
+    if not framework_ids:
+        raise ValueError("generate_followups needs the assessment's framework_ids")
     trigger = _assess_trigger(answer, criticality, desk_review_evidence, desk_review_note)
     if trigger["level"] == "none":
         return []
@@ -52,9 +88,10 @@ def generate_followups(
         desk_review_evidence=desk_review_evidence,
         desk_review_note=desk_review_note,
         guidance=guidance,
+        framework_ids=framework_ids,
     )
 
-    raw = _call_claude_followups(prompt)
+    raw = _call_claude_followups(prompt, system=_system_prompt(framework_ids))
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
     if raw.endswith("```"):
@@ -87,19 +124,14 @@ def _call_llm(*, tier: str, stream: bool = False, **request) -> dict:
     return llm_client.call_llm(tier, stream=stream, **request)
 
 
-def _call_claude_followups(prompt: str) -> str:
+def _call_claude_followups(prompt: str, system: str) -> str:
     """Call the LLM for follow-up questions and return raw response text."""
     with llm_client.call_tag(stage="followups"):
         response = _call_llm(
             tier="extract",
             max_tokens=512,
             temperature=0.3,
-            system=(
-                "You are an expert DPDPA compliance auditor conducting a gap assessment. "
-                "Generate targeted follow-up questions that probe deeper into the respondent's answer. "
-                "Be specific, not generic. Reference concrete evidence gaps or contradictions when present. "
-                "Respond ONLY with valid JSON. No markdown fences, no commentary."
-            ),
+            system=system,
             messages=[{"role": "user", "content": prompt}],
         )
     return response["text"]
@@ -166,6 +198,7 @@ def _build_followup_prompt(
     desk_review_evidence: list[dict] | None,
     desk_review_note: str | None,
     guidance: str,
+    framework_ids: list[str],
 ) -> str:
     """Build the follow-up generation prompt for Claude."""
     answer_labels = {
@@ -185,7 +218,8 @@ def _build_followup_prompt(
     ]
 
     if guidance:
-        parts.append(f"**DPDPA Guidance:** {guidance}\n")
+        label = "DPDPA Guidance" if _is_dpdpa_only(framework_ids) else "Guidance"
+        parts.append(f"**{label}:** {guidance}\n")
 
     if desk_review_evidence:
         parts.append("\n## Document Review Evidence\n")
