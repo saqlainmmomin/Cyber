@@ -119,3 +119,128 @@ The smoke test checks the page loads, counts of cards, filters, saving, and expo
 ## Report back
 
 Append `## Results` to this file: what changed (controls added by id, controls edited, atoms re-pointed), counts per subset from the validator before and after, how you handled the GOV-16 split and any judgment call, anything you could not do, and the list of controls he must re-review. End with the next steps toward signing: his review of the changed cards, then per-domain sign-off, then `ids.lock.json`, then the criteria re-key (316 criteria need a per-control choice; a script should list them for him), then the ISO scope question re-key, then load into the app (WP 5.1).
+
+## Results
+
+Applied on 14 Oct 2026. How I read the export: blank D11 rows follow my recommendation, and SUP-05 is KEEP. That gives 16 splits and 8 keeps. Nothing is committed. `git diff` against 2d45e2b shows every change.
+
+### Outcome
+
+- The validator passes: `/opt/homebrew/bin/python3.13 scripts/ucf/validate.py` exits 0, checks 0 to 7 pass, and there are zero warnings.
+- The library is 0.0.3-draft, with 211 controls (was 195), 697 atoms (was 694) and 730 mapping rows (was 725). All 265 records are still covered.
+- The sign-off tables and the review page are regenerated. The page smoke test passes all 26 checks.
+- The page works as a review of changes only. 47 controls are flagged "Changed in round 2" with a one-line reason each. They get a fresh decision key (`c2:<id>`), so his round-1 approval of the old text is ignored. The other 164 keep their approval.
+- The Controls tab opens on a new "Needs your review" filter. `REVIEW_KEY` is unchanged.
+
+Controls per subset, from the validator (before, then after):
+
+| Subset | Before | After |
+|---|---|---|
+| iso27001 | 125 | 134 |
+| nist_csf | 103 | 112 |
+| dpdpa | 54 | 54 |
+| iso27001+nist_csf | 152 | 168 |
+| iso27001+dpdpa | 168 | 177 |
+| nist_csf+dpdpa | 149 | 158 |
+| all three | 195 | 211 |
+
+The handoff expected 212 to 214 controls. The count is 211 because GOV-16 needed no new control (see D19 below).
+
+### Controls added (16)
+
+| New control | Split from |
+|---|---|
+| UC-PHY-13 | PHY-02 |
+| UC-PHY-14 | PHY-12 |
+| UC-SUP-07 | SUP-06 |
+| UC-INC-09 | INC-01 |
+| UC-RES-07 | RES-06 |
+| UC-IAM-13 | IAM-03 |
+| UC-AST-13 | AST-02 |
+| UC-AST-14 | AST-07 |
+| UC-RSK-11 | RSK-08 |
+| UC-RSK-44 | RSK-41 |
+| UC-AST-44 | AST-43 |
+| UC-CRY-41 | CRY-40 |
+| UC-CRY-42 | CRY-40 |
+| UC-SUP-42 | SUP-40 |
+| UC-RES-43 | RES-42 |
+| UC-INC-43 | GOV-14 (D14) |
+
+The first nine are ISO-origin and use the ISO number range. The other seven are NIST-origin and use the NIST range.
+
+### Controls edited
+
+- **Split originals, narrowed to one job:** PHY-02, PHY-12, SUP-06, INC-01, RES-06, IAM-03, AST-02, AST-07, GOV-16, RSK-08, RSK-41, RSK-42, AST-43, CRY-40, SUP-40, RES-42.
+- **Other text edits:**
+  - GOV-14 (D14).
+  - SUP-05: tightened to one review with two triggers, a set interval and a change to the scope of service. Its new text now also covers outside services, mapped from clause 8.1 d (D19).
+  - D09: OPS-03, SUP-03, AST-02, GOV-02, GOV-17.
+  - D08: AST-01, GOV-06, SUP-03.
+  - D17(a): GOV-40, RSK-40, RSK-41. SUP-40 had no "leadership" left.
+  - RSK-40 now covers opportunities (D09).
+  - RSK-10 now says violations are recorded and handled.
+  - SDC-09 now reviews unintended changes (D19).
+- **Gained a mapped ask, text unchanged:** AST-04, OPS-01, RSK-06. RSK-06's text was then extended by the review fix described below.
+- **Review fixes:** a fresh Sonnet agent reviewed all 47 changed controls. It found 18 problems. I applied 16, which covered 15 controls. The main pattern: asks mapped to a control (moved there this round or already there) were missing from its statement or test. For example, OPS-03 did not cover user activity, vendor remote access or cloud audit logs, and SDC-09 did not cover the risk assessment before approval. SUP-42 also re-tested an information-sharing ask that SUP-03 owns.
+- **Review findings I skipped:**
+  - AST-04 frequency and approval check: that text predates this round.
+  - "for example internal audit" in RSK-10's how_to_ask: he approved it in D16.
+
+### Atoms and mappings
+
+- **Atoms split:** ISO.A7.13-b into b1 and b2; NIST.GV.PO.01-d into d1 and d2; NIST.PR.PS.04-c into c1 and c2.
+- **Re-pointed:**
+  - Every atom listed in triage section C.3, moved to its new control.
+  - RS.CO.03-a, -b and -c and RC.CO.03-a and -b to INC-43. I also moved the optional -b from INC-03.
+  - A5.34-a to RSK-06.
+  - C8.1-c to SDC-09 and C8.1-d to SUP-05.
+  - GV.SC.08-b to INC-09, with its INC-40 remainder pointer following it. INC-40's note changed too, so it is the one changed control not flagged for review.
+- **D09 mapping fixes:**
+  - ID.AM-07-c also maps to AST-04.
+  - PR.PS-06-d is partial on GOV-17, with the remainder marked immaterial and a reason given.
+  - GV.RM-07 is partial on GOV-10, with the remainder in RSK-40.
+  - ID.IM-01-a stays full on RSK-09, with a stricter-than-source note.
+- **Rule R2:** applied to 7 records: MINIMIZE.2 and .3, SECURITY.1 and .3, BN.NOTIFY.1, .2 and .4. The handoff guessed about 10; the other three it named already had a full primary. After the splits I re-checked, and no DPDPA record is left with a partial primary on a base control.
+- **Clause flags:** `needs_verification` is cleared on all 70 clause atoms, including the climate atoms C4.1-b and C4.2-b. FORMAT.md is updated to match.
+
+### Judgment calls (on the page as D19 and D20, both need his decision)
+
+- **D19, GOV-16:** no new controls. Change control maps to SDC-09, which gained one sentence on unintended changes. Externally provided processes map to SUP-05.
+- **D20, primaries outside rule R2:** I moved two record primaries. A.5.34 now sits on RSK-08's processing-record ask, and GV.RM-07 sits on RSK-40. NIST records whose primary is a partial row were left alone, because R2 was approved for DPDPA records only.
+- **D20, PHY-14 owner:** Head of IT Operations, since clearing data from equipment is IT work. Other new controls inherit the original's owner.
+- **Key settings that moved:** the yearly exercise setting from INC-01 to INC-09, and the yearly failover test from RES-06 to RES-07.
+- **INC-01 frequency:** set to annual.
+
+### Review page
+
+- The D08, D09, D10, D11, D14, D15 and D17 cards now say what was applied.
+- D11's split-or-keep boxes are gone, replaced by a results table.
+- The clause cards say "verified by you".
+- In the generator, `ROUND2_CHANGES` replaces `REVIEWED_CHANGE_IDS` and the stale `CHANGED_FILE`.
+- The smoke test now seeds round-1 approvals for every control and checks that exactly the 47 changed controls come back as undecided.
+
+### Not done
+
+- I could not look at the page in Chrome: the extension is not connected (account mismatch). It is tested headlessly only.
+- No validator guard on generic words such as "leadership" (triage B.4). It was not in this handoff.
+- Nothing was loaded into the app, `ids.lock.json` was not written, and the criteria were not re-keyed.
+
+### Controls he must re-review (47)
+
+New:
+AST-13, AST-14, AST-44, CRY-41, CRY-42, IAM-13, INC-09, INC-43, PHY-13, PHY-14, RES-07, RES-43, RSK-11, RSK-44, SUP-07, SUP-42.
+
+Changed:
+AST-01, AST-02, AST-04, AST-07, AST-43, CRY-40, GOV-02, GOV-06, GOV-14, GOV-16, GOV-17, GOV-40, IAM-03, INC-01, OPS-01, OPS-03, PHY-02, PHY-12, RES-06, RES-42, RSK-06, RSK-08, RSK-10, RSK-40, RSK-41, RSK-42, SDC-09, SUP-03, SUP-05, SUP-06, SUP-40.
+
+Plus decision cards D19 and D20.
+
+### Next steps toward signing
+
+1. He reviews the 47 flagged cards and D19 and D20 on `tasks/2026-10-13-ucf-review.html`.
+2. Per-domain sign-off on `docs/ucf/signoff/`. AST now spans two files, AST-1 and AST-2.
+3. Write `ids.lock.json` with `validate.py --write-lock`.
+4. Re-key the criteria. About 316 criteria need a per-control choice, and the splits add more. A script should list them for him.
+5. Re-key the ISO scope questions to unified control ids.
+6. Load into the app (WP 5.1).

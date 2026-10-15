@@ -48,7 +48,8 @@ nist_csf,NIST.GV.RR.04,NIST.GV.RR.04-c,GV.RR-04,"Employment terms or acknowledge
 nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-a,GV.PO-01,"The organization maintains a documented cybersecurity risk policy approved by senior management.",false
 nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-b,GV.PO-01,"The policy is based on the organization's context, strategy and priorities.",false
 nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-c,GV.PO-01,"The organization communicates the policy to personnel.",false
-nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-d,GV.PO-01,"The organization enforces the policy and records exceptions and violations with how each was handled.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-d1,GV.PO-01,"The organization records exceptions to the policy and how each was handled.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-d2,GV.PO-01,"The organization enforces the policy and records violations and how each was handled.",false
 nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-a,GV.PO-02,"The organization reviews the policy on a set frequency and after defined trigger events.",false
 nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-b,GV.PO-02,"Each policy update records the change in requirements, threats, technology or mission that drove it.",false
 nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-c,GV.PO-02,"The organization re-communicates updated policy versions to personnel.",false
@@ -195,7 +196,8 @@ nist_csf,NIST.PR.PS.03,NIST.PR.PS.03-b,PR.PS-03,"The organization plans replacem
 nist_csf,NIST.PR.PS.03,NIST.PR.PS.03-c,PR.PS-03,"The organization disposes of retired hardware with recorded data sanitization.",false
 nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-a,PR.PS-04,"The organization defines which events must be logged for each system type.",false
 nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-b,PR.PS-04,"The organization sends logs from systems and services to a central platform for monitoring.",false
-nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-c,PR.PS-04,"The organization retains logs for a defined period and protects them from alteration.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-c1,PR.PS-04,"The organization retains logs for a defined period.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-c2,PR.PS-04,"The organization protects retained logs from alteration.",false
 nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-a,PR.PS-05,"Policy limits software installation and execution to approved software.",false
 nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-b,PR.PS-05,"Technical controls on devices stop users installing or running unapproved software.",false
 nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-c,PR.PS-05,"The organization checks the source and integrity of new software before installation.",false

@@ -23,15 +23,59 @@ sys.path.insert(0, str(ROOT))
 from app.frameworks.ucf.loader import load_library  # noqa: E402
 from app.frameworks.ucf.schema import FRAMEWORK_SUBSETS, subset_label  # noqa: E402
 
-# Controls he marked CHANGE in the 13 Oct export (before the role-neutral rewrite reached his page).
-REVIEWED_CHANGE_IDS = (
-    "UC-GOV-01 UC-GOV-02 UC-GOV-03 UC-GOV-04 UC-GOV-07 UC-GOV-08 UC-GOV-09 UC-GOV-10 UC-GOV-11 UC-GOV-12 "
-    "UC-GOV-13 UC-GOV-14 UC-GOV-15 UC-GOV-16 UC-GOV-17 UC-GOV-19 UC-GOV-20 UC-GOV-40 UC-GOV-41 UC-GOV-42 "
-    "UC-GOV-70 UC-RSK-01 UC-RSK-02 UC-RSK-03 UC-RSK-04 UC-RSK-05 UC-RSK-10 UC-RSK-40 UC-RSK-41 UC-RSK-42 "
-    "UC-RSK-43 UC-AST-01 UC-AST-02 UC-AST-03 UC-AST-04"
-).split()
 REVIEW_KEY = "ucf-review-0.0.1-draft"  # fixed so saved browser decisions survive library version bumps
-CHANGED_FILE = Path("/private/tmp/claude-501/-Users-saqlainmomin-dpdpa-ucf/6a2c7628-04a0-434b-9ee2-884bfe0504a3/scratchpad/changed_ids.txt")
+ROUND = 2
+# Controls changed or added in this round, with a one-line reason. The page gives these a fresh decision key,
+# so his earlier approval of the old text does not carry over. Every other control keeps its saved decision.
+ROUND2_CHANGES: dict[str, str] = {
+    'UC-AST-01': 'Wording (D08): covers software, services and systems, and records location and classification for information.',
+    'UC-AST-02': 'Split (D11): narrowed to acceptable use rules acknowledged, which now state that use is monitored (D09); the other half is now UC-AST-13.',
+    'UC-AST-04': 'Gained a mapped ask (D09): the classification-scheme half of a NIST data classification ask. Text unchanged.',
+    'UC-AST-07': 'Split (D11): narrowed to the records retention schedule; the other half is now UC-AST-14.',
+    'UC-AST-13': 'New: split from UC-AST-02 (D11). Handling rules by classification level.',
+    'UC-AST-14': 'New: split from UC-AST-07 (D11). Protection of records.',
+    'UC-AST-43': 'Split (D11): narrowed to unsupported and unneeded software; the other half is now UC-AST-44.',
+    'UC-AST-44': 'New: split from UC-AST-43 (D11). Hardware end-of-life replacement and disposal; completes UC-PHY-12.',
+    'UC-CRY-40': 'Split (D11): narrowed to the data in use standard; the other half is now UC-CRY-41 and UC-CRY-42.',
+    'UC-CRY-41': 'New: split from UC-CRY-40 (D11). Secrets kept out of code and logs.',
+    'UC-CRY-42': 'New: split from UC-CRY-40 (D11). Tenant data isolation.',
+    'UC-GOV-02': 'Soft NIST ask (D09): the register now feeds scope, policy and risk decisions.',
+    'UC-GOV-06': "Wording (D08): the top-level policy reflects the organization's context.",
+    'UC-GOV-14': 'Narrowed (D14) to the general communication plan; incident and recovery communication moved to UC-INC-43.',
+    'UC-GOV-16': 'Split (D11, D19): narrowed to processes planned and run; change control maps to UC-SDC-09, outside processes to UC-SUP-05.',
+    'UC-GOV-17': 'Soft NIST ask (D09): secure development measures map here as partial, and how_to_ask prompts for them.',
+    'UC-GOV-40': "Wording (D17): 'leadership' became 'top management'.",
+    'UC-IAM-03': 'Split (D11): narrowed to credential issue, reset and revocation; the other half is now UC-IAM-13.',
+    'UC-IAM-13': 'New: split from UC-IAM-03 (D11). Default credentials changed on installation.',
+    'UC-INC-01': 'Split (D11): narrowed to the incident procedure and roles; the other half is now UC-INC-09.',
+    'UC-INC-09': 'New: split from UC-INC-01 (D11). The plan communicated and exercised; the yearly exercise setting moved here.',
+    'UC-INC-43': 'New (D14): incident and recovery communication, moved out of UC-GOV-14.',
+    'UC-OPS-01': 'Gained a mapped ask (D09): NIST log retention, split from a retention-and-protection ask. Text unchanged.',
+    'UC-OPS-03': 'Soft NIST ask (D09): monitoring now covers unauthorized devices and wireless access points.',
+    'UC-PHY-02': 'Split (D11): narrowed to entry rules and visitor control; the other half is now UC-PHY-13.',
+    'UC-PHY-12': 'Split (D11): narrowed to scheduled maintenance by authorized personnel; the other half is now UC-PHY-14.',
+    'UC-PHY-13': 'New: split from UC-PHY-02 (D11). Physical access rights review and leaver badge removal.',
+    'UC-PHY-14': 'New: split from UC-PHY-12 (D11). Data cleared before equipment leaves for repair. Owner set to Head of IT Operations (D20).',
+    'UC-RES-06': 'Split (D11): narrowed to redundancy for critical systems; the other half is now UC-RES-07.',
+    'UC-RES-07': 'New: split from UC-RES-06 (D11). Failover testing; the yearly test setting moved here.',
+    'UC-RES-42': 'Split (D11): narrowed to backups checked before restore; the other half is now UC-RES-43.',
+    'UC-RES-43': 'New: split from UC-RES-42 (D11). Restored systems verified before return to production.',
+    'UC-RSK-06': 'Gained a mapped ask (D11): identifying applicable privacy laws, moved from UC-RSK-08. Text unchanged.',
+    'UC-RSK-08': 'Split (D11): narrowed to the record of personal data processing; the other half is now UC-RSK-11; the laws ask moved to UC-RSK-06.',
+    'UC-RSK-10': 'The violations half of the policy-exceptions ask now maps here (D11); the text says violations are recorded and handled.',
+    'UC-RSK-11': 'New: split from UC-RSK-08 (D11). Responsibility for privacy assigned.',
+    'UC-RSK-40': "D09 and D17: now treats opportunities as a risk category and carries that NIST record; 'leadership' became 'top management'.",
+    'UC-RSK-41': "Split (D11): narrowed to cyber and supplier risk in the enterprise risk process ('top management', D17); the other half is now UC-RSK-44.",
+    'UC-RSK-42': 'Policy exceptions only (D11): the violations half of the source ask moved to UC-RSK-10.',
+    'UC-RSK-44': 'New: split from UC-RSK-41 (D11). Risk escalation criteria and channels.',
+    'UC-SDC-09': 'D19: change control from the operational planning clause maps here; unintended changes are now reviewed.',
+    'UC-SUP-03': 'Wording (D08, D09): each agreement states the scope of access and data granted.',
+    'UC-SUP-05': 'Kept (D11) on your reason and rewritten as one review with two triggers: a set interval and a change of scope. Also carries outside processes (D19).',
+    'UC-SUP-06': 'Split (D11): narrowed to cloud rules, register and provider assurance; the other half is now UC-SUP-07.',
+    'UC-SUP-07': 'New: split from UC-SUP-06 (D11). Cloud exit plans.',
+    'UC-SUP-40': 'Split (D11): narrowed to the documented, approved supplier risk program; the other half is now UC-SUP-42.',
+    'UC-SUP-42': 'New: split from UC-SUP-40 (D11). Supply chain security responsibilities assigned and communicated.',
+}
 
 FW_NAME = {"iso27001": "ISO 27001", "nist_csf": "NIST CSF", "dpdpa": "DPDPA"}
 
@@ -78,12 +122,13 @@ DECISIONS = [
         "rec": "Approve, or note which to change.",
     },
     {
-        "id": "D08", "title": "Wording suggestions for base controls (not applied)",
+        "id": "D08", "title": "Wording suggestions for base controls (three applied in round 2)",
         "body": "The mapping agents suggested these edits to ISO base controls and I left them: RSK-06 name an owner per entry; PPL-03 add checks that awareness worked; AST-01 cover software, services and systems and record location and classification; GOV-06 policy reflects organizational context; SUP-03 name the scope of access and data granted; INC-04 add affected individuals; OPS-01 add access to sensitive data to logged events plus a review step; GOV-04 a base control for measures scaled to data risk; AST-07 and AST-08 retention triggers and erasure on request. Applying them would shrink some DPDPA and NIST remainder slots.",
-        "rec": "Decide per suggestion in the note box. My view: apply AST-01, GOV-06 and SUP-03 now, leave the rest.",
+        "after": "Applied in round 2, as you agreed: UC-AST-01 now covers software, services and systems and records location and classification for information; UC-GOV-06 says the top-level policy reflects the organization's context; UC-SUP-03 says each agreement states the scope of access and data granted. The others are left as they were.",
+        "rec": "Applied. The three cards are in your review list.",
     },
     {
-        "id": "D09", "title": "NIST asks marked full that are soft",
+        "id": "D09", "title": "NIST asks marked full that are soft (applied in round 2)",
         "intro": [
             "Words used here. A record is one line of a source framework (a NIST subcategory such as GV.OC-02). An atom is one single ask inside it (GV.OC-02 asks three things, so it has atoms a, b and c). A mapping row says: this atom is answered by this control. Full coverage means: if the client passes the control's test, the atom is satisfied.",
             "Soft means the row says full, but a client could pass the control and still fail the NIST ask. NIST shows 295 full rows of 307 mainly because the new NIST slot controls were written to fit their atoms. The rows below are the places where no slot was written and the match was stretched. My choices: K keep as full; E keep full but edit the control text or add a mapping row so full is true (no new control); P mark partial.",
@@ -101,8 +146,8 @@ DECISIONS = [
             ["GV.RM-07-a, -b", "Treat opportunities (upside risk) as a category in the risk method and record them in risk discussions.", "UC-GOV-10 Risks and opportunities", "ISO clause 6.1 uses 'opportunities' for ways to improve the security program. NIST means upside in enterprise risk decisions. Same word, different idea.", "P with the remainder in UC-RSK-40 (extend risk direction to cover opportunities), or accept as nearest home. Low stakes (see D15)."],
             ["PR.PS-04-c", "Keep logs for a defined period and protect them from alteration.", "UC-OPS-02 Log protection only", "Two asks in one atom. Protection is in OPS-02, retention is in OPS-01. Only one half is mapped.", "E. Mapping only: split the atom or add a second row to OPS-01."],
         ]},
-        "after": "Result: 2 are fine as they are, 6 become honest with a text edit or one extra mapping row and need no new control, 1 is a stricter-than-NIST note, 2 become partial. No new control is needed. I have not applied any of these yet: this is the explanation you asked for.",
-        "rec": "Approve the recommendations, or say which atoms you want handled differently.",
+        "after": "Applied in round 2, as recommended. Text edits: OPS-03 (unauthorized devices and wireless access points), SUP-03 (scope of access and data), AST-02 (rules state that use is monitored), GOV-02 (the register feeds scope, policy and risk decisions). Mapping: ID.AM-07-c also maps to AST-04; PR.PS-04-c is split into c1 retention (OPS-01) and c2 protection (OPS-02); PR.PS-06-d is partial on GOV-17 with an immaterial remainder, and GOV-17's how_to_ask now prompts for secure development measures; GV.RM-07-a and -b are partial on GOV-10 with the remainder in RSK-40, whose text now covers opportunities, so RSK-40 is the record's primary; ID.IM-01-a stays full on RSK-09 with a stricter-than-source note on the mapping row. DE.AE-07-b and DE.AE-06-c are unchanged. No new control.",
+        "rec": "Applied. Nothing to decide here; the changed cards are in your review list.",
     },
     {
         "id": "D10", "title": "DPDPA mapping judgment calls",
@@ -117,44 +162,35 @@ DECISIONS = [
             ["PGV-04 (CH4.SDF.4)", "A significant data fiduciary has an independent audit of its compliance each period and sends significant findings to the Board.", "Own control UC-PGV-04, not RSK-09.", "Looks close to ISO internal audit (RSK-09). Kept apart because the test differs: an independent data auditor and a Board submission.", "Accept. Make sure RSK-09's question never counts for DPDPA."],
             ["PNC-05, 06, 07 (CONSENT.1)", "Consent is a clear action, given freely, and states a specific purpose.", "One record split into three controls.", "The signed criteria were written for the whole record and must be shared out among three controls later.", "Accept. Handled when criteria are re-keyed."],
             ["CONSENT.2 and CM.GRANULAR.1", "List each purpose separately and let people choose per purpose.", "Both map to PNC-08 and PNC-09.", "Two repo records say the same thing.", "Accept. Keep both records for traceability, one control carries both."],
-            ["Primary calls", "SECURITY.1 to GOV-04; MINIMIZE.2 and .3 to AST-08 and AST-07; SECURITY.3 to SUP-03; CORRECT.2 to PRT-04; BN.NOTIFY.1, .2, .4 to INC-04 and INC-03; CB.TRANSFER.2 to PSC-05; ACCESS.1 to PRT-02.", "In about half of these the primary row is a partial row on a base control, while a full row exists on a slot (BN.NOTIFY.1: primary INC-04 partial, but INC-70 is full and carries the record).", "Two rules are possible. R1: primary is the base control, so ISO-only clients see the record's home. R2: primary is the control with full coverage of the record's main ask.", "R2 for DPDPA overlap records. It changes about 10 primary flags and nothing else (see D15)."],
+            ["Primary calls", "SECURITY.1 to GOV-04; MINIMIZE.2 and .3 to AST-08 and AST-07; SECURITY.3 to SUP-03; CORRECT.2 to PRT-04; BN.NOTIFY.1, .2, .4 to INC-04 and INC-03; CB.TRANSFER.2 to PSC-05; ACCESS.1 to PRT-02.", "In about half of these the primary row is a partial row on a base control, while a full row exists on a slot (BN.NOTIFY.1: primary INC-04 partial, but INC-70 is full and carries the record).", "Two rules are possible. R1: primary is the base control, so ISO-only clients see the record's home. R2: primary is the control with full coverage of the record's main ask.", "Applied in round 2: R2. Seven records qualified (the other three I had named already had a full primary): MINIMIZE.2 to AST-70, MINIMIZE.3 to AST-71, SECURITY.1 to GOV-70, SECURITY.3 to SUP-70, BN.NOTIFY.1 to INC-70, BN.NOTIFY.2 to INC-71, BN.NOTIFY.4 to INC-72. Only primary flags changed. The CH2.SECURITY.2 legal question stays open; CRY-01 is not widened."],
         ]},
-        "rec": "Approve, or note the item you want changed.",
+        "rec": "Applied as approved. Nothing to decide.",
     },
     {
-        "id": "D11", "title": "Controls their writers flagged as doing two jobs",
+        "id": "D11", "title": "Controls doing two jobs: splits applied in round 2",
         "intro": [
-            "You are right that a control cannot do two jobs: one control, one requirement, one test. The 24 below were flagged by the people who drafted them. I applied one test: can a client pass one half and fail the other? If yes, the halves need different tests, so split. If the second half is the same duty applied to several items, or the design and operation of one thing sampled in one pass, keep.",
-            "Common pattern: (1) a rule or plan bundled with its test or exercise (incident plan and exercise; redundancy and failover test), the same split already made for backup and restore test; (2) a thing bundled with its periodic or event review; (3) one Annex A control that is really three sub-requirements, which the drafters kept whole because the brief said to split only where the test differs; (4) NIST slots built as buckets, several subcategories poured into one control (RSK-41 carries 10 asks); (5) a policy bundled with a register or a person.",
-            "Verdict: 17 split (12 firm, 5 borderline), 7 keep. Splitting adds about 19 controls, so the library would grow from 195 to about 215. Make your call on each row below with Split or Keep; nothing is split until you decide.",
+            "You approved the card and marked PHY-02, AST-43 and SUP-40 Split and SUP-05 Keep. The other 20 rows were blank, so they followed my recommendation. Result: 16 splits, 8 keeps. Each split has its own test now. The source asks were moved to the half that tests them, and the remainder slots were re-pointed. 15 new controls, plus UC-INC-43 from D14: the library grows from 195 to 211.",
+            "Keeps: PHY-09, INC-04, PGV-03, PSC-02, GOV-41, NET-40, INC-42, and SUP-05 on your reason (a supplier review happens at a set interval or when the scope of service changes). SUP-05 is now written as one requirement with those two triggers.",
         ],
-        "table": {"head": ["Control", "The jobs", "My verdict", "If split"], "decide": True, "rows": [
-            ["UC-PHY-02 Physical entry controls", "Entry rules and visitor control; review of access rights and removal of leavers' badges", "SPLIT", "Entry rules and visitor control | Physical access rights review and leaver badge removal"],
-            ["UC-PHY-09 Assets off premises", "Rules for assets off site; encryption and remote wipe on portable devices", "KEEP", "Rule and technical enforcement of one duty, tested in one pass"],
-            ["UC-PHY-12 Equipment maintenance", "Maintenance on a schedule; clearing data before equipment leaves for repair", "SPLIT (borderline)", "Scheduled maintenance | Data cleared before repair (the source ask itself bundles both and must be split)"],
-            ["UC-SUP-05 Supplier monitoring and change review", "Periodic review of suppliers by tier; assessment of changes to supplier services", "SPLIT", "Periodic supplier review | Supplier service change assessment"],
-            ["UC-SUP-06 Cloud service security", "Cloud rules, register and provider assurance; exit plan for critical services", "SPLIT (borderline)", "Cloud governance and provider assurance | Cloud exit plans"],
-            ["UC-INC-01 Incident management planning", "Procedure and roles; communicating and exercising the plan", "SPLIT", "Incident procedure and roles | Plan communicated and exercised"],
-            ["UC-INC-04 Incident notification duties", "Who may notify and the timelines; notifying in time", "KEEP", "One requirement: notify in time. The procedure is the design, the incident sample is the operation"],
-            ["UC-RES-06 Redundancy of processing facilities", "Redundancy design; failover testing", "SPLIT", "Redundancy for critical systems | Failover testing"],
-            ["UC-IAM-03 Authentication credentials management", "Issue, reset and revoke; user guidance; default vendor credentials changed", "SPLIT (borderline)", "Credential issue, reset and revocation | Default credentials changed on installation"],
-            ["UC-AST-02 Acceptable use and handling rules", "Acceptable-use rules acknowledged; handling rules per classification level", "SPLIT", "Acceptable use rules acknowledged | Handling rules by classification level"],
-            ["UC-AST-07 Protection of records", "Retention schedule; protection of stored records", "SPLIT", "Records retention schedule | Protection of records"],
-            ["UC-GOV-16 Operational planning and control", "Processes planned and run to criteria; changes controlled; externally provided processes controlled", "SPLIT (borderline)", "Processes planned and run | check first whether change control and external-process control already live in SDC-09 and the supplier controls"],
-            ["UC-RSK-08 Privacy and personal data protection", "Applicable privacy laws identified; responsibility for privacy assigned; record of processing", "SPLIT", "Record of processing | Responsibility for privacy assigned (the laws ask re-maps to the legal register RSK-06)"],
-            ["UC-PGV-03 Data protection impact assessment", "Assess risks; repeat on a cycle", "KEEP", "Assess and repeat is one requirement with a frequency. (Its statement also mentions a Board report and algorithmic software that no source ask backs: to verify against the Act, not a split.)"],
-            ["UC-PSC-02 Verifiable guardian consent", "Parent consent for a child; guardian consent for a person with a disability; verifying the adult", "KEEP", "One requirement: verifiable consent from the responsible adult, one sample"],
-            ["UC-GOV-41 Risk direction communicated", "Deliver four items (risk direction, method, roles, planned responses) to those who act on them", "KEEP", "The same duty applied to four items, one test"],
-            ["UC-RSK-41 Integration with enterprise risk management", "Cyber and supplier risk sits in the enterprise register; escalation criteria and channels", "SPLIT", "Cyber and supplier risk in the enterprise risk process | Risk escalation criteria and channels (10 asks in one control today)"],
-            ["UC-RSK-42 Policy exceptions and time-limited risk acceptance", "Exceptions approved with expiry; policy violations recorded and handled", "SPLIT the ask, no new control", "Violations move to UC-RSK-10, which already records non-compliance with actions. RSK-42 becomes pure exceptions"],
-            ["UC-AST-43 End-of-life replacement and removal", "Unsupported or unneeded software removed; hardware replacement and disposal at end of life", "SPLIT", "Software removal | Hardware end-of-life replacement and disposal"],
-            ["UC-CRY-40 Protection of data in use", "Standard for data in use; secrets kept out of code and logs; tenant isolation", "SPLIT", "Data in use standard | Secrets kept out of code and logs | Tenant data isolation (three different tests)"],
-            ["UC-NET-40 Authenticity of acquired items", "Hardware genuine before acquisition; software integrity before install", "KEEP", "One duty: acquired items are genuine and unaltered, one sample"],
-            ["UC-INC-42 Incident recovery and its closure", "Criteria for starting recovery; recording actions; declaring recovery over", "KEEP", "One lifecycle tested on the same incident sample."],
-            ["UC-SUP-40 Supplier risk management program", "A documented, approved program; accountability and shared responsibilities assigned and communicated", "SPLIT", "Supplier risk program documented and approved | Supply chain security responsibilities assigned and communicated"],
-            ["UC-RES-42 Integrity of backups and restored assets", "Backups checked before restoring; restored systems verified before return to production", "SPLIT", "Backups checked before restore | Restored systems verified before return to production"],
+        "table": {"head": ["Control", "Now", "New control"], "rows": [
+            ["UC-PHY-02", "Physical entry rules and visitor control", "UC-PHY-13 Physical access rights review and leaver badge removal"],
+            ["UC-PHY-12", "Scheduled equipment maintenance (source ask A.7.13-b split into b1 and b2)", "UC-PHY-14 Data cleared before equipment leaves for repair"],
+            ["UC-SUP-06", "Cloud governance and provider assurance", "UC-SUP-07 Cloud exit plans"],
+            ["UC-INC-01", "Incident procedure and roles", "UC-INC-09 Incident plan communicated and exercised (the yearly exercise setting moved with it)"],
+            ["UC-RES-06", "Redundancy for critical systems", "UC-RES-07 Failover testing (the yearly test setting moved with it)"],
+            ["UC-IAM-03", "Credential issue, reset and revocation", "UC-IAM-13 Default credentials changed on installation"],
+            ["UC-AST-02", "Acceptable use rules acknowledged", "UC-AST-13 Handling rules by classification level"],
+            ["UC-AST-07", "Records retention schedule (AST-71 completes it for personal data)", "UC-AST-14 Protection of records"],
+            ["UC-GOV-16", "Security processes planned and run", "None. Change control maps to SDC-09, externally provided processes to SUP-05 (see D19)"],
+            ["UC-RSK-08", "Record of personal data processing", "UC-RSK-11 Responsibility for privacy assigned. The laws ask re-maps to RSK-06"],
+            ["UC-RSK-41", "Cyber and supplier risk in the enterprise risk process", "UC-RSK-44 Risk escalation criteria and channels"],
+            ["UC-RSK-42", "Policy exceptions only", "None. Source ask GV.PO-01-d split: d1 exceptions stay, d2 violations map to RSK-10"],
+            ["UC-AST-43", "Unsupported and unneeded software removed", "UC-AST-44 Hardware end-of-life replacement and disposal (remainder of PHY-12)"],
+            ["UC-CRY-40", "Data in use standard", "UC-CRY-41 Secrets kept out of code and logs; UC-CRY-42 Tenant data isolation"],
+            ["UC-SUP-40", "Supplier risk program documented and approved", "UC-SUP-42 Supply chain security responsibilities assigned and communicated"],
+            ["UC-RES-42", "Backups checked before restore", "UC-RES-43 Restored systems verified before return to production"],
         ]},
-        "rec": "Approve the 12 firm splits and the 5 borderline ones, keep the 7. Your call per row.",
+        "rec": "Applied. Review the changed and new cards on the Controls tab (they open first).",
     },
     {
         "id": "D12", "title": "Not done in this slice (what each item is)",
@@ -175,12 +211,13 @@ DECISIONS = [
     {
         "id": "D14", "title": "Security communication (UC-GOV-14) is two jobs: narrow it and add an incident slot",
         "body": "You asked: if this is about incidents, say so. The ISO clause behind it (7.4) asks only for a plan for what security matters are communicated, when, to whom and how: policy changes, results, audit outcomes, requirements passed to suppliers. It is not about incidents. But four NIST incident and recovery communication asks were mapped into it (who receives incident information and what may be shared; updates to leadership during recovery), so the card read like both. It duplicates neither INC-04 (legal notification deadlines) nor GOV-41 (delivery of risk artifacts). Proposal: narrow GOV-14 to the general communication plan, and add a new control UC-INC-43 'Incident and recovery communication' for the four NIST asks. Cost: one control (196), four mapping rows moved.",
-        "rec": "Approve. Not applied yet; it waits for you.",
+        "after": "Applied in round 2. UC-GOV-14 is now 'Security communication plan' (clause 7.4 only) and no longer appears for NIST-only clients. New UC-INC-43 'Incident and recovery communication' carries RS.CO-03 a, b and c and RC.CO-03 a and b, and is the primary for both records. I also moved RS.CO-03-b (status updates to top management) from INC-03, as the optional step suggested.",
+        "rec": "Applied. Review UC-GOV-14 and UC-INC-43.",
     },
     {
         "id": "D15", "title": "Smaller calls from D09 and D10",
         "body": "(a) NIST ID.IM-01-a (regular evaluation, self-assessment accepted) is carried by UC-RSK-09, which requires an independent review: accept it as stricter than NIST? (b) NIST GV.RM-07 opportunities: make it partial with the remainder in UC-RSK-40, or accept the nearest home? (c) Primary rule for DPDPA overlap records: R1 primary is the base control; R2 primary is the control with full coverage. I recommend R2; it changes about 10 primary flags and nothing else.",
-        "rec": "Yes to (a), yes to (b), R2 for (c).",
+        "rec": "Applied as approved: (a) a note on the mapping row; (b) partial, remainder in RSK-40; (c) R2 on seven records (see D10).",
     },
     {
         "id": "D16", "title": "UC-RSK-10 rewritten: who does the check is not named",
@@ -190,12 +227,27 @@ DECISIONS = [
     {
         "id": "D17", "title": "Management words and the owner badge",
         "body": "(a) 'Top management' stays only where the requirement is itself about management (leadership, policy approval, review, risk acceptance). 'Leadership' used elsewhere (GOV-40, RSK-40, RSK-41, SUP-40) would be replaced with 'top management' for one term. (b) Each card shows an owner badge from the owner field (CISO, Head of IT Operations and so on). It is routing information, never part of the requirement. I would keep it on the sign-off tables and hide it on anything the client sees.",
-        "rec": "Yes to (a). Keep the badge on sign-off, hide it client-side.",
+        "rec": "(a) Applied in round 2 to GOV-40, RSK-40 and RSK-41; SUP-40 had no 'leadership' left. (b) No action now: the badge stays on sign-off, and hiding it client-side is a later concern.",
     },
     {
         "id": "D18", "title": "What is the authoritative test: signed criteria or the drafted paragraph?",
         "body": "You signed 728 criteria. Each control also has a drafted test paragraph. Recommendation: keep the signed criteria as the list of tests under each control (original criterion ids preserved) and treat the drafted paragraph as a readable summary. You then decide only the 316 criteria whose record maps to more than one control; a script will list them for you.",
         "rec": "Approve.",
+    },
+    {
+        "id": "D19", "title": "GOV-16: change control and outside processes found homes (no new control)",
+        "body": "The clause 8.1 control did three jobs. Planning and running processes to set criteria stays in UC-GOV-16, now 'Security processes planned and run'. Controlling planned changes and reviewing unintended ones (8.1 c) now maps to UC-SDC-09 Change management; I added one sentence to SDC-09 so unintended changes are reviewed for their effect, which makes the match full. Controlling externally provided processes, products and services (8.1 d) maps to UC-SUP-05 Supplier service review, because reviewing suppliers against the agreed terms is how that is shown. Zero new controls instead of up to two.",
+        "rec": "Approve, or tell me to create the two controls instead.",
+    },
+    {
+        "id": "D20", "title": "Other judgment calls made while applying round 2",
+        "intro": [
+            "Ids: ISO-origin splits took the next free number in the ISO range (PHY-13, PHY-14, SUP-07, INC-09, RES-07, IAM-13, AST-13, AST-14, RSK-11); NIST-origin splits took the next free NIST number (RSK-44, AST-44, CRY-41, CRY-42, SUP-42, RES-43). New controls inherit the original's owner and importance, except UC-PHY-14, which I gave to Head of IT Operations because clearing data from equipment is IT work.",
+            "Primary moves outside R2: ISO A.5.34 now has its primary on the processing-record ask in RSK-08 (the laws ask moved to RSK-06). NIST GV.RM-07 now has its primary on RSK-40, the control that fully carries it after D09. NIST records whose primary is a partial row with a full remainder slot (for example PR.PS-03 on PHY-12, completed by AST-44) were left as they are: R2 was approved for DPDPA records only.",
+            "Source asks split into numbered parts because each bundled two asks: ISO A.7.13-b (b1 maintenance by authorized people, b2 data cleared before repair), NIST GV.PO-01-d (d1 exceptions, d2 violations), NIST PR.PS-04-c (c1 retention, c2 protection). NIST ID.AM-07-c maps to two controls, both full: AST-04 for the scheme and AST-05 for the labels.",
+            "Clause flags: all 70 clause asks are now marked verified, including the climate asks in 4.1 and 4.2, which your PDF could not show but you verified.",
+        ],
+        "rec": "Approve, or note any you want changed.",
     },
 ]
 
@@ -299,6 +351,7 @@ def build(data_dir: Path) -> dict:
             "id": rid, "ref": rec.reference, "title": rec.title,
             "atoms": [{"id": a.atom_id, "text": a.paraphrase} for a in lib.atoms_by_record.get(rid, [])],
             "controls": sorted({r.unified_control_id for r in lib.rows_by_record.get(rid, []) if r.unified_control_id}),
+            "nv": any(a.needs_verification for a in lib.atoms_by_record.get(rid, [])),
             "check": CLAUSE_CHECK.get(rid, ("", ""))[0], "checknote": CLAUSE_CHECK.get(rid, ("", ""))[1],
         })
 
@@ -310,19 +363,15 @@ def build(data_dir: Path) -> dict:
         trace.append({"fw": rec.framework, "id": rid, "ref": rec.reference, "title": rec.title,
                       "prim": prim, "others": others, "atoms": len(lib.atoms_by_record.get(rid, []))})
 
-    reviewed = set(REVIEWED_CHANGE_IDS)
-    changed_now = set()
-    if CHANGED_FILE.exists():
-        changed_now = {l.strip() for l in CHANGED_FILE.read_text().split() if l.strip()}
+    ids = {c["id"] for c in controls}
+    unknown = sorted(set(ROUND2_CHANGES) - ids)
+    if unknown:
+        raise SystemExit(f"ROUND2_CHANGES names unknown controls: {unknown}")
     for c in controls:
-        if c["id"] in changed_now:
-            c["flag"] = "Changed on 14 Oct after your review. Re-read it, then approve or comment."
-        elif c["id"] in reviewed:
-            c["flag"] = "You marked this Change. The role name is already gone from the statement (13 Oct rewrite). Re-check it, then approve."
-        else:
-            c["flag"] = ""
+        c["r2"] = ROUND2_CHANGES.get(c["id"], "")
     return {
         "reviewKey": REVIEW_KEY,
+        "round": ROUND,
         "version": lib.library_version,
         "date": datetime.date.today().isoformat(),
         "counts": counts,
@@ -345,7 +394,8 @@ def main() -> int:
     html = (ROOT / "scripts/ucf/review_template.html").read_text(encoding="utf-8").replace("/*__DATA__*/null", blob)
     Path(args.out).write_text(html, encoding="utf-8")
     print(f"wrote {args.out}: {len(data['controls'])} controls, {len(data['decisions'])} decisions, "
-          f"{len(data['clauses'])} clauses, {len(data['legal'])} legal items, {len(html) // 1024} KB")
+          f"{len(data['clauses'])} clauses, {len(data['legal'])} legal items, "
+          f"{sum(1 for c in data['controls'] if c['r2'])} changed in round {ROUND}, {len(html) // 1024} KB")
     return 0
 
 

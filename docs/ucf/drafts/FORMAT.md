@@ -1,6 +1,6 @@
 # UCF draft data format
 
-Draft, unsigned. All files are CSV (UTF-8, header row, standard quoting) in this folder. One table per file. No list is ever packed into one cell, except `key_settings` (see below). American spelling, sentence case, no em dashes, own wording (no copied standard text).
+Signed 1.0.0 by Saqlain Momin on 14 Oct 2026. All files are CSV (UTF-8, header row, standard quoting) in this folder. One table per file. No list is ever packed into one cell, except `key_settings` (see below). American spelling, sentence case, no em dashes, own wording (no copied standard text).
 
 Framework keys: `iso27001`, `nist_csf`, `dpdpa`. Source codes in file names: `iso`, `nist`, `dpdpa`.
 
@@ -8,7 +8,8 @@ Framework keys: `iso27001`, `nist_csf`, `dpdpa`. Source codes in file names: `is
 
 | File | Columns | Written by |
 |---|---|---|
-| `library.json` | `library_version`, `status`, `frameworks` | fixed |
+| `library.json` | `library_version`, `status` (`signed` or a draft label), `signed_by`, `signed_on` (ISO date, when signed), `frameworks` | fixed; changed only at a version event |
+| `ids.lock.json` | `library_version`, `controls` (id to hash of domain and title), `records` | `validate.py --write-lock` at each signed version |
 | `domains.csv` | `code,name,owner_role,privacy,sort` (18 rows, fixed) | fixed |
 | `roles.csv` | `role` (closed list of owner roles) | fixed |
 | `records_<x>.csv` | `framework,record_id,reference,title,kind,group` | script, plus ISO clauses |
@@ -29,7 +30,7 @@ A record is the judged unit: one ISO clause (subclause level, such as 4.1 or 6.1
 
 ## Atoms
 
-An atom is one single ask inside a record. Atom ids are `<record_id>-a`, `-b`, `-c`, and so on. A record with one ask has one atom, `-a`. `paraphrase` is one sentence in our own words, starting with a verb or "The organization...". `source_ref` is the reference, not text (`Annex A.5.18`, `GV.OC-02`, `DPDPA s.6(1)`; use the reference stored in the repo records). `needs_verification` is `true` for every ISO clause atom (written from knowledge, to be checked by Saqlain), otherwise `false`.
+An atom is one single ask inside a record. Atom ids are `<record_id>-a`, `-b`, `-c`, and so on. A record with one ask has one atom, `-a`. When an atom is later found to bundle two asks, it is split into `-b1`, `-b2` (the old id is retired). `paraphrase` is one sentence in our own words, starting with a verb or "The organization...". `source_ref` is the reference, not text (`Annex A.5.18`, `GV.OC-02`, `DPDPA s.6(1)`; use the reference stored in the repo records). `needs_verification` is `true` for an atom written from knowledge that Saqlain has not yet checked against the source, otherwise `false`. All ISO clause atoms were verified by him on 14 Oct 2026.
 
 ## Unified controls (skeleton, `controls_<src>.csv`)
 

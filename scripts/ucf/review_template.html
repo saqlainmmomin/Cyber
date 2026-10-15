@@ -123,6 +123,8 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 const FW = { iso27001: "ISO 27001", nist_csf: "NIST CSF", dpdpa: "DPDPA" };
+// Controls changed or added in this round get a fresh key, so an approval of the earlier text does not carry over.
+const ckey = c => (c.r2 ? "c2:" : "c:") + c.id;
 const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 // ---------- state (browser only) ----------
@@ -145,7 +147,7 @@ DATA.decisions.forEach(d => ITEMS.push({ key: "d:" + d.id, kind: "decision", gro
 DATA.decisions.forEach(d => { if (d.table && d.table.decide) d.table.rows.forEach(r => ITEMS.push({ key: "s:" + r[0].split(" ")[0], kind: "sk", group: "Decisions", label: d.id + " split or keep " + r[0] })); });
 DATA.clauses.forEach(c => ITEMS.push({ key: "v:" + c.id, kind: "verify", group: "ISO clauses", label: c.ref + " " + c.title }));
 DATA.legal.forEach(l => ITEMS.push({ key: "l:" + l.id, kind: "legal", group: "Legal items", label: l.ref }));
-DATA.controls.forEach(c => ITEMS.push({ key: "c:" + c.id, kind: "control", group: "Controls", label: c.id + " " + c.title }));
+DATA.controls.forEach(c => ITEMS.push({ key: ckey(c), kind: "control", group: "Controls", label: c.id + " " + c.title }));
 const GROUPS = ["Decisions", "ISO clauses", "Legal items", "Controls"];
 
 function updateProgress() {
@@ -197,7 +199,7 @@ function overview() {
   return mkPanel("overview",
     h("h2", null, "What this is"),
     h("p", null, "The first slice of the unified control framework: the ISO 27001 base, plus the NIST CSF 2.0 and DPDPA layers mapped onto it. Library version " + DATA.version + ", generated " + DATA.date + ". Nothing here is loaded into the app. Your sign-off is the gate."),
-    h("div", { class: "rec" }, h("b", null, "Changed since you started: "), "all 195 statements are now role-neutral (see decision D13), and the clause paraphrases were checked against your ISO PDF and corrected (see the ISO clauses tab). Your saved decisions are kept. If you already approved a control, re-skim only its statement."),
+    h("div", { class: "rec" }, h("b", null, "Round " + DATA.round + ": "), "your decisions from round 1 are applied: the splits (D11), the communication change (D14), the soft NIST asks (D09), the three wording edits (D08), primary rule R2 (D10) and 'top management' (D17). The library has " + DATA.controls.length + " controls now. Only the " + DATA.controls.filter(c => c.r2).length + " changed or new controls need a fresh decision; the Controls tab opens on them. Everything else keeps your saved approval. Two new decision cards, D19 and D20, list the calls I made while applying."),
     h("h3", null, "How to review"),
     h("p", null, "Work the tabs left to right, or jump to Controls if you only want the sign-off tables. Every item takes Approve (or Verified), Change or Reject, with a note for the last two. Decisions save in this browser as you go. When done, export the JSON, save it as tasks/2026-10-13-ucf-review-decisions.json and tell me; I will apply every Change and Reject and regenerate."),
     h("div", { class: "grid3" },
@@ -238,18 +240,18 @@ function decisionsPanel() {
     d.after ? h("p", null, d.after) : null,
     h("div", { class: "rec" }, h("b", null, "My recommendation: "), d.rec),
     decBox("d:" + d.id, "decision")));
-  return mkPanel("decisions", h("h2", null, "Decisions"), h("p", { class: "mute" }, "Choices I made or that need your call. Change and Reject need a note. D09 to D12 now carry the plain-language explanations you asked for."), cards);
+  return mkPanel("decisions", h("h2", null, "Decisions"), h("p", { class: "mute" }, "Choices I made or that need your call. Change and Reject need a note. D08 to D11, D14, D15 and D17 now say what was applied in round " + DATA.round + ". D19 and D20 are new and need your decision."), cards);
 }
 
 function clausesPanel() {
   const cards = DATA.clauses.map(c => h("div", { class: "card", "data-card": "v:" + c.id },
-    h("div", { class: "head" }, h("span", { class: "id" }, c.ref), h("span", { class: "t" }, c.title), h("span", { class: "chip" }, "needs verification")),
+    h("div", { class: "head" }, h("span", { class: "id" }, c.ref), h("span", { class: "t" }, c.title), h("span", { class: "chip" }, c.nv ? "needs verification" : "verified by you")),
     h("ul", null, c.atoms.map(a => h("li", null, h("span", { class: "mute small" }, a.id.replace(c.id, "") + " "), a.text))),
     c.controls.length ? h("p", { class: "small mute" }, "Maps to: " + c.controls.join(", ")) : null,
     c.checknote ? h("div", { class: "rec" }, h("b", null, (c.check === "fixed" ? "Checked against your PDF, corrected: " : "Checked against your PDF, matches: ")), c.checknote) : null,
     decBox("v:" + c.id, "verify")));
   return mkPanel("clauses", h("h2", null, "ISO clauses 4 to 10"),
-    h("p", { class: "mute" }, "These paraphrases were first written from knowledge, then cross-checked on 13 Oct 2026 against the ISO/IEC 27001:2022 PDF in your Downloads. Eleven were adjusted (eight for real errors or gaps, three for small additions), and the fixes are already in the atoms and controls below. The PDF has no Amendment 1:2024, so the climate wording in 4.1 and 4.2 is still unchecked. Mark each Verified, or Needs change with your correction."), cards);
+    h("p", { class: "mute" }, "You marked all 25 Verified in round 1, and the verification flags are now cleared in the data. These paraphrases were first written from knowledge, then cross-checked on 13 Oct 2026 against the ISO/IEC 27001:2022 PDF in your Downloads. Eleven were adjusted (eight for real errors or gaps, three for small additions), and the fixes are already in the atoms and controls below. The PDF has no Amendment 1:2024, so the climate wording in 4.1 and 4.2 is still unchecked. Mark each Verified, or Needs change with your correction."), cards);
 }
 
 function legalPanel() {
@@ -287,21 +289,21 @@ function controlCard(c) {
     kv("Type and frequency", [c.type, c.freq].filter(Boolean).join(", ")),
     kv("Key settings", c.ks), kv("Skeleton goal", c.goal), kv("Draft note", c.note),
     h("div", { class: "lbl" }, "Sources"), srcBlock);
-  return h("article", { class: "card", id: "c-" + c.id, "data-card": "c:" + c.id, "data-id": c.id },
+  return h("article", { class: "card", id: "c-" + c.id, "data-card": ckey(c), "data-id": c.id },
     h("div", { class: "head" },
       h("span", { class: "id" }, c.id), h("span", { class: "t" }, c.title),
       h("span", { class: "chip " + (imp === "critical" ? "crit" : imp === "high" ? "high" : "") }, imp),
       c.theme ? h("span", { class: "chip" }, c.theme) : null, fwChips,
       h("span", { class: "chip" }, c.owner)),
-    c.flag ? h("div", { class: "rec" }, h("b", null, "Since your review: "), c.flag) : null,
+    c.r2 ? h("div", { class: "rec" }, h("b", null, "Changed in round " + DATA.round + ": "), c.r2) : null,
     h("div", { class: "lbl" }, "Question"), h("div", { class: "q" }, c.q),
     h("div", { class: "lbl" }, "Statement"), h("div", null, c.statement),
     h("div", { class: "lbl" }, "Test"), h("div", null, c.test),
-    det, decBox("c:" + c.id, "control"));
+    det, decBox(ckey(c), "control"));
 }
 
 const SCOPES = [["all", "All controls"]].concat(DATA.counts.map(c => [c.key, c.label]));
-const fstate = { scope: "all", status: "all", q: "", imp: "all" };
+const fstate = { scope: "all", status: "review", q: "", imp: "all" };
 function controlsPanel() {
   const list = h("div", { id: "ctlist" });
   const sel = (id, label, opts, key) => h("label", null, label,
@@ -309,13 +311,13 @@ function controlsPanel() {
       opts.map(([v, t]) => h("option", { value: v }, t))));
   const filters = h("div", { class: "filters" },
     sel("fScope", "Frameworks selected", SCOPES, "scope"),
-    sel("fStatus", "Status", [["all", "All"], ["none", "Undecided"], ["approve", "Approved"], ["change", "Change"], ["reject", "Reject"]], "status"),
+    sel("fStatus", "Status", [["review", "Needs your review"], ["all", "All"], ["none", "Undecided"], ["approve", "Approved"], ["change", "Change"], ["reject", "Reject"]], "status"),
     sel("fImp", "Importance", [["all", "All"], ["critical", "Critical"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]], "imp"),
     h("label", null, "Search", h("input", { type: "search", id: "fQ", placeholder: "id, title, text", oninput: e => { fstate.q = e.target.value.toLowerCase(); renderControls(); } })),
     h("label", null, "Jump to domain", h("select", { id: "fJump", onchange: e => { const t = document.getElementById("dom-" + e.target.value); if (t) t.scrollIntoView(); } },
       [h("option", { value: "" }, "Choose")].concat(DATA.domains.map(d => h("option", { value: d.code }, d.code + " " + d.name))))));
   const p = mkPanel("controls", h("h2", null, "Controls"),
-    h("p", { class: "mute" }, "One card per unified control. Read the question, statement and test; open the details for evidence and sources. The Frameworks filter shows what a client would see with only those frameworks selected."),
+    h("p", { class: "mute" }, "One card per unified control. The list opens on Needs your review: only the controls changed or added in round " + DATA.round + ", which need a fresh decision. Every other control keeps your earlier approval; set Status to All to see them. The Frameworks filter shows what a client would see with only those frameworks selected."),
     filters, list);
   return p;
 }
@@ -325,9 +327,9 @@ function matches(c) {
     if (!c.fws.some(f => fw.includes(f))) return false;
   }
   if (fstate.imp !== "all" && c.imp !== fstate.imp) return false;
-  const s = get("c:" + c.id).s;
-  if (fstate.status === "none" && s) return false;
-  if (fstate.status !== "all" && fstate.status !== "none" && s !== fstate.status) return false;
+  const s = get(ckey(c)).s;
+  if ((fstate.status === "none" || fstate.status === "review") && s) return false;
+  if (!["all", "none", "review"].includes(fstate.status) && s !== fstate.status) return false;
   if (fstate.q) {
     const hay = (c.id + " " + c.title + " " + c.q + " " + c.statement + " " + c.test + " " + c.evidence + " " + c.owner).toLowerCase();
     if (!hay.includes(fstate.q)) return false;
@@ -347,12 +349,12 @@ function renderControls() {
       h("h3", null, d.code + ": " + d.name),
       h("div", { class: "small mute" }, "Owner: " + d.owner + " . " + cs.length + (cs.length !== all ? " of " + all : "") + " controls ",
         h("button", { class: "btn ghost", type: "button", onclick: () => {
-          cs.forEach(c => { if (!get("c:" + c.id).s) state["c:" + c.id] = Object.assign({}, get("c:" + c.id), { s: "approve" }); });
+          cs.forEach(c => { if (!get(ckey(c)).s) state[ckey(c)] = Object.assign({}, get(ckey(c)), { s: "approve" }); });
           save(); renderControls(); updateProgress();
         } }, "Approve undecided in this list"))));
     cs.forEach(c => list.append(controlCard(c)));
   });
-  if (!shown) list.append(h("p", { class: "mute" }, "No controls match the filters."));
+  if (!shown) list.append(h("p", { class: "mute" }, fstate.status === "review" ? "Nothing left to review. Set Status to All to see every control." : "No controls match the filters."));
   updateProgress();
 }
 
@@ -415,7 +417,7 @@ document.getElementById("exportJson").addEventListener("click", () => {
 });
 document.getElementById("exportMd").addEventListener("click", () => {
   const { out, n } = summary();
-  const L = ["# UCF part 1 review", "", "Library " + DATA.version + ". Approved " + n.approve + ", change " + n.change + ", reject " + n.reject + ", undecided " + n.none + ".", ""];
+  const L = ["# UCF part 1 review, round " + DATA.round, "", "Library " + DATA.version + ". Approved " + n.approve + ", change " + n.change + ", reject " + n.reject + ", undecided " + n.none + ".", ""];
   const sk = Object.entries(out).filter(([k]) => k.startsWith("s:") && out[k].status);
   if (sk.length) { L.push("## D11 split or keep", ""); sk.forEach(([k, v]) => L.push("- " + v.status.toUpperCase() + " " + k.slice(2) + (v.note ? ": " + v.note.replace(/\n/g, " ") : ""))); L.push(""); }
   GROUPS.forEach(g => {

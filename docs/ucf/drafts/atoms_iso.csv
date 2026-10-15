@@ -141,7 +141,8 @@ iso27001,ISO.A7.11,ISO.A7.11-b,Annex A.7.11,"Keep maintenance and test records f
 iso27001,ISO.A7.12,ISO.A7.12-a,Annex A.7.12,Define protection requirements for cabling.,false
 iso27001,ISO.A7.12,ISO.A7.12-b,Annex A.7.12,Confirm sampled cabling and communications rooms meet the requirements.,false
 iso27001,ISO.A7.13,ISO.A7.13-a,Annex A.7.13,Define maintenance requirements and schedules for in-scope equipment.,false
-iso27001,ISO.A7.13,ISO.A7.13-b,Annex A.7.13,Perform maintenance by authorized personnel and clear sensitive information from equipment sent off-site.,false
+iso27001,ISO.A7.13,ISO.A7.13-b1,Annex A.7.13,Have maintenance performed only by authorized personnel.,false
+iso27001,ISO.A7.13,ISO.A7.13-b2,Annex A.7.13,Clear or protect sensitive information on equipment before it is sent off site for repair.,false
 iso27001,ISO.A7.14,ISO.A7.14-a,Annex A.7.14,Require data and licensed software to be removed or overwritten before equipment is disposed of or reused.,false
 iso27001,ISO.A7.14,ISO.A7.14-b,Annex A.7.14,Keep verified wipe or destruction records for disposed or reissued devices.,false
 iso27001,ISO.A8.1,ISO.A8.1-a,Annex A.8.1,Set security requirements for user endpoint devices.,false
@@ -228,73 +229,73 @@ iso27001,ISO.A8.33,ISO.A8.33-a,Annex A.8.33,"Set rules for selecting and using t
 iso27001,ISO.A8.33,ISO.A8.33-b,Annex A.8.33,Authorize copies of production data to test and delete them after testing.,false
 iso27001,ISO.A8.34,ISO.A8.34-a,Annex A.8.34,Require audit and assurance tests on operational systems to be planned and approved by responsible management.,false
 iso27001,ISO.A8.34,ISO.A8.34-b,Annex A.8.34,Keep authorization or rules-of-engagement records for tests on live systems.,false
-iso27001,ISO.C4.1,ISO.C4.1-a,Clause 4.1,Determine the external and internal issues that matter to the organization's purpose and affect its security outcomes.,true
-iso27001,ISO.C4.1,ISO.C4.1-b,Clause 4.1,Decide whether climate change is a relevant issue.,true
-iso27001,ISO.C4.2,ISO.C4.2-a,Clause 4.2,Determine the interested parties that are relevant to the security program.,true
-iso27001,ISO.C4.2,ISO.C4.2-b,Clause 4.2,"Determine the requirements of those parties, which can include legal, regulatory and contractual ones and, under the 2024 amendment, climate-related ones.",true
-iso27001,ISO.C4.2,ISO.C4.2-c,Clause 4.2,Decide which of those requirements the security program will address.,true
-iso27001,ISO.C4.3,ISO.C4.3-a,Clause 4.3,"Determine the boundaries and applicability of the program, considering issues, requirements and dependencies.",true
-iso27001,ISO.C4.3,ISO.C4.3-b,Clause 4.3,Keep the scope as documented information.,true
-iso27001,ISO.C4.4,ISO.C4.4-a,Clause 4.4,"Establish and implement the security management system, with the processes it needs and their interactions.",true
-iso27001,ISO.C4.4,ISO.C4.4-b,Clause 4.4,Maintain and continually improve the system.,true
-iso27001,ISO.C5.1,ISO.C5.1-a,Clause 5.1,Make sure the security policy and objectives are set and fit the organization's strategic direction.,true
-iso27001,ISO.C5.1,ISO.C5.1-b,Clause 5.1,Build security program requirements into business processes.,true
-iso27001,ISO.C5.1,ISO.C5.1-c,Clause 5.1,Make sure the resources the program needs are available.,true
-iso27001,ISO.C5.1,ISO.C5.1-d,Clause 5.1,"Communicate the importance of effective security, direct and support people and promote continual improvement.",true
-iso27001,ISO.C5.1,ISO.C5.1-e,Clause 5.1,Make sure the program achieves its intended outcomes.,true
-iso27001,ISO.C5.1,ISO.C5.1-f,Clause 5.1,Support other managers in showing leadership in their own areas.,true
-iso27001,ISO.C5.2,ISO.C5.2-a,Clause 5.2,Set a top-level policy suited to the organization's purpose that frames objectives and commits to meeting requirements and improving.,true
-iso27001,ISO.C5.2,ISO.C5.2-b,Clause 5.2,"Keep the policy as documented information, communicate it and make it available to interested parties.",true
-iso27001,ISO.C5.3,ISO.C5.3-a,Clause 5.3,Assign and communicate responsibilities and authorities for relevant security roles.,true
-iso27001,ISO.C5.3,ISO.C5.3-b,Clause 5.3,Assign responsibility for conformity of the program and for reporting its performance to top management.,true
-iso27001,ISO.C6.1.1,ISO.C6.1.1-a,Clause 6.1.1,"Considering the context issues and interested-party requirements, determine the risks and opportunities that must be addressed to achieve outcomes, prevent undesired effects and improve.",true
-iso27001,ISO.C6.1.1,ISO.C6.1.1-b,Clause 6.1.1,Plan actions to address them and build the actions into program processes.,true
-iso27001,ISO.C6.1.1,ISO.C6.1.1-c,Clause 6.1.1,Plan how to evaluate whether the actions work.,true
-iso27001,ISO.C6.1.2,ISO.C6.1.2-a,Clause 6.1.2,Define and apply a risk assessment process with risk acceptance criteria and criteria for performing assessments.,true
-iso27001,ISO.C6.1.2,ISO.C6.1.2-b,Clause 6.1.2,"Make sure repeated assessments give consistent, valid and comparable results.",true
-iso27001,ISO.C6.1.2,ISO.C6.1.2-c,Clause 6.1.2,"Identify risks to confidentiality, integrity and availability within scope and assign risk owners.",true
-iso27001,ISO.C6.1.2,ISO.C6.1.2-d,Clause 6.1.2,Analyze likelihood and consequence and evaluate and prioritize risks against the criteria.,true
-iso27001,ISO.C6.1.2,ISO.C6.1.2-e,Clause 6.1.2,Keep documented information about the risk assessment process.,true
-iso27001,ISO.C6.1.3,ISO.C6.1.3-a,Clause 6.1.3,Select risk treatment options for the assessed risks.,true
-iso27001,ISO.C6.1.3,ISO.C6.1.3-b,Clause 6.1.3,Determine all controls needed to implement the chosen treatment options and compare them with Annex A to check none is missed.,true
-iso27001,ISO.C6.1.3,ISO.C6.1.3-c,Clause 6.1.3,"Produce a statement of applicability listing the necessary controls, why each is included, whether each is implemented and why any Annex A control is excluded.",true
-iso27001,ISO.C6.1.3,ISO.C6.1.3-d,Clause 6.1.3,Formulate a risk treatment plan.,true
-iso27001,ISO.C6.1.3,ISO.C6.1.3-e,Clause 6.1.3,"Get risk owner approval of the plan and acceptance of residual risk, and keep documented information.",true
-iso27001,ISO.C6.2,ISO.C6.2-a,Clause 6.2,"Set measurable security objectives at relevant functions, consistent with policy, taking risk results into account, and monitor, communicate, update and document them.",true
-iso27001,ISO.C6.2,ISO.C6.2-b,Clause 6.2,"Plan what will be done, with what resources, by whom, by when and how results are evaluated.",true
-iso27001,ISO.C6.3,ISO.C6.3-a,Clause 6.3,Carry out needed changes to the security management system in a planned way.,true
-iso27001,ISO.C7.1,ISO.C7.1-a,Clause 7.1,"Determine and provide the resources needed to establish, run, maintain and improve the program.",true
-iso27001,ISO.C7.2,ISO.C7.2-a,Clause 7.2,Determine the competence needed by people who affect security performance.,true
-iso27001,ISO.C7.2,ISO.C7.2-b,Clause 7.2,"Ensure those people are competent through education, training or experience.",true
-iso27001,ISO.C7.2,ISO.C7.2-c,Clause 7.2,Take action to gain missing competence and evaluate whether it worked.,true
-iso27001,ISO.C7.2,ISO.C7.2-d,Clause 7.2,Keep evidence of competence.,true
-iso27001,ISO.C7.3,ISO.C7.3-a,Clause 7.3,Make people aware of the security policy.,true
-iso27001,ISO.C7.3,ISO.C7.3-b,Clause 7.3,Make people aware of their contribution to the program and the benefit of better performance.,true
-iso27001,ISO.C7.3,ISO.C7.3-c,Clause 7.3,Make people aware of the consequences of not conforming.,true
-iso27001,ISO.C7.4,ISO.C7.4-a,Clause 7.4,"Decide what internal and external security communication is needed, when, with whom and how.",true
-iso27001,ISO.C7.5,ISO.C7.5-a,Clause 7.5,Include the documented information the standard requires and the organization judges necessary.,true
-iso27001,ISO.C7.5,ISO.C7.5-b,Clause 7.5,"When creating or updating documents, set identification, format, review and approval.",true
-iso27001,ISO.C7.5,ISO.C7.5-c,Clause 7.5,"Control documents so they are available, protected, distributed, stored, version controlled, retained and disposed of.",true
-iso27001,ISO.C7.5,ISO.C7.5-d,Clause 7.5,Identify and control documents of external origin that the program needs.,true
-iso27001,ISO.C8.1,ISO.C8.1-a,Clause 8.1,"Plan, implement and control the processes needed to meet security requirements and carry out the planned actions, setting criteria for the processes.",true
-iso27001,ISO.C8.1,ISO.C8.1-b,Clause 8.1,Keep documented information giving confidence that processes ran as planned.,true
-iso27001,ISO.C8.1,ISO.C8.1-c,Clause 8.1,Control planned changes and review the effect of unintended changes.,true
-iso27001,ISO.C8.1,ISO.C8.1-d,Clause 8.1,"Make sure externally provided processes, products or services that matter to the program are controlled.",true
-iso27001,ISO.C8.2,ISO.C8.2-a,Clause 8.2,Perform risk assessments at planned intervals or when significant changes are proposed or occur.,true
-iso27001,ISO.C8.2,ISO.C8.2-b,Clause 8.2,Keep the results of the assessments.,true
-iso27001,ISO.C8.3,ISO.C8.3-a,Clause 8.3,Implement the risk treatment plan.,true
-iso27001,ISO.C8.3,ISO.C8.3-b,Clause 8.3,Keep the results of the treatment.,true
-iso27001,ISO.C9.1,ISO.C9.1-a,Clause 9.1,"Determine what to monitor and measure, and the methods, which must give valid, comparable and reproducible results.",true
-iso27001,ISO.C9.1,ISO.C9.1-b,Clause 9.1,"Determine when monitoring is done, when results are analyzed, and who does each; then evaluate security performance and the effectiveness of the program.",true
-iso27001,ISO.C9.1,ISO.C9.1-c,Clause 9.1,Keep evidence of the results.,true
-iso27001,ISO.C9.2,ISO.C9.2-a,Clause 9.2,Conduct internal audits at planned intervals to show whether the program meets the organization's own requirements and the standard's and is effectively implemented and maintained.,true
-iso27001,ISO.C9.2,ISO.C9.2-b,Clause 9.2,"Plan and run an audit program covering frequency, methods, responsibilities, planning and reporting, taking account of how important the processes are and past audit results.",true
-iso27001,ISO.C9.2,ISO.C9.2-c,Clause 9.2,Define audit criteria and scope and choose auditors who are objective and impartial.,true
-iso27001,ISO.C9.2,ISO.C9.2-d,Clause 9.2,Report audit results to relevant management and keep evidence.,true
-iso27001,ISO.C9.3,ISO.C9.3-a,Clause 9.3,Have top management review the program at planned intervals.,true
-iso27001,ISO.C9.3,ISO.C9.3-b,Clause 9.3,"Cover in the review the status of past actions, changes in issues and in interested-party needs, performance trends (nonconformities, measurements, audits, objectives), feedback from interested parties, risk results and treatment status, and improvement opportunities.",true
-iso27001,ISO.C9.3,ISO.C9.3-c,Clause 9.3,Record decisions on improvement and needed changes and keep evidence.,true
-iso27001,ISO.C10.1,ISO.C10.1-a,Clause 10.1,"Continually improve the suitability, adequacy and effectiveness of the program.",true
-iso27001,ISO.C10.2,ISO.C10.2-a,Clause 10.2,React to a nonconformity by controlling and correcting it and dealing with the consequences.,true
-iso27001,ISO.C10.2,ISO.C10.2-b,Clause 10.2,"Evaluate the need to remove causes, act, review the effectiveness of the action and change the program if needed.",true
-iso27001,ISO.C10.2,ISO.C10.2-c,Clause 10.2,Keep evidence of the nonconformities and the actions taken.,true
+iso27001,ISO.C4.1,ISO.C4.1-a,Clause 4.1,Determine the external and internal issues that matter to the organization's purpose and affect its security outcomes.,false
+iso27001,ISO.C4.1,ISO.C4.1-b,Clause 4.1,Decide whether climate change is a relevant issue.,false
+iso27001,ISO.C4.2,ISO.C4.2-a,Clause 4.2,Determine the interested parties that are relevant to the security program.,false
+iso27001,ISO.C4.2,ISO.C4.2-b,Clause 4.2,"Determine the requirements of those parties, which can include legal, regulatory and contractual ones and, under the 2024 amendment, climate-related ones.",false
+iso27001,ISO.C4.2,ISO.C4.2-c,Clause 4.2,Decide which of those requirements the security program will address.,false
+iso27001,ISO.C4.3,ISO.C4.3-a,Clause 4.3,"Determine the boundaries and applicability of the program, considering issues, requirements and dependencies.",false
+iso27001,ISO.C4.3,ISO.C4.3-b,Clause 4.3,Keep the scope as documented information.,false
+iso27001,ISO.C4.4,ISO.C4.4-a,Clause 4.4,"Establish and implement the security management system, with the processes it needs and their interactions.",false
+iso27001,ISO.C4.4,ISO.C4.4-b,Clause 4.4,Maintain and continually improve the system.,false
+iso27001,ISO.C5.1,ISO.C5.1-a,Clause 5.1,Make sure the security policy and objectives are set and fit the organization's strategic direction.,false
+iso27001,ISO.C5.1,ISO.C5.1-b,Clause 5.1,Build security program requirements into business processes.,false
+iso27001,ISO.C5.1,ISO.C5.1-c,Clause 5.1,Make sure the resources the program needs are available.,false
+iso27001,ISO.C5.1,ISO.C5.1-d,Clause 5.1,"Communicate the importance of effective security, direct and support people and promote continual improvement.",false
+iso27001,ISO.C5.1,ISO.C5.1-e,Clause 5.1,Make sure the program achieves its intended outcomes.,false
+iso27001,ISO.C5.1,ISO.C5.1-f,Clause 5.1,Support other managers in showing leadership in their own areas.,false
+iso27001,ISO.C5.2,ISO.C5.2-a,Clause 5.2,Set a top-level policy suited to the organization's purpose that frames objectives and commits to meeting requirements and improving.,false
+iso27001,ISO.C5.2,ISO.C5.2-b,Clause 5.2,"Keep the policy as documented information, communicate it and make it available to interested parties.",false
+iso27001,ISO.C5.3,ISO.C5.3-a,Clause 5.3,Assign and communicate responsibilities and authorities for relevant security roles.,false
+iso27001,ISO.C5.3,ISO.C5.3-b,Clause 5.3,Assign responsibility for conformity of the program and for reporting its performance to top management.,false
+iso27001,ISO.C6.1.1,ISO.C6.1.1-a,Clause 6.1.1,"Considering the context issues and interested-party requirements, determine the risks and opportunities that must be addressed to achieve outcomes, prevent undesired effects and improve.",false
+iso27001,ISO.C6.1.1,ISO.C6.1.1-b,Clause 6.1.1,Plan actions to address them and build the actions into program processes.,false
+iso27001,ISO.C6.1.1,ISO.C6.1.1-c,Clause 6.1.1,Plan how to evaluate whether the actions work.,false
+iso27001,ISO.C6.1.2,ISO.C6.1.2-a,Clause 6.1.2,Define and apply a risk assessment process with risk acceptance criteria and criteria for performing assessments.,false
+iso27001,ISO.C6.1.2,ISO.C6.1.2-b,Clause 6.1.2,"Make sure repeated assessments give consistent, valid and comparable results.",false
+iso27001,ISO.C6.1.2,ISO.C6.1.2-c,Clause 6.1.2,"Identify risks to confidentiality, integrity and availability within scope and assign risk owners.",false
+iso27001,ISO.C6.1.2,ISO.C6.1.2-d,Clause 6.1.2,Analyze likelihood and consequence and evaluate and prioritize risks against the criteria.,false
+iso27001,ISO.C6.1.2,ISO.C6.1.2-e,Clause 6.1.2,Keep documented information about the risk assessment process.,false
+iso27001,ISO.C6.1.3,ISO.C6.1.3-a,Clause 6.1.3,Select risk treatment options for the assessed risks.,false
+iso27001,ISO.C6.1.3,ISO.C6.1.3-b,Clause 6.1.3,Determine all controls needed to implement the chosen treatment options and compare them with Annex A to check none is missed.,false
+iso27001,ISO.C6.1.3,ISO.C6.1.3-c,Clause 6.1.3,"Produce a statement of applicability listing the necessary controls, why each is included, whether each is implemented and why any Annex A control is excluded.",false
+iso27001,ISO.C6.1.3,ISO.C6.1.3-d,Clause 6.1.3,Formulate a risk treatment plan.,false
+iso27001,ISO.C6.1.3,ISO.C6.1.3-e,Clause 6.1.3,"Get risk owner approval of the plan and acceptance of residual risk, and keep documented information.",false
+iso27001,ISO.C6.2,ISO.C6.2-a,Clause 6.2,"Set measurable security objectives at relevant functions, consistent with policy, taking risk results into account, and monitor, communicate, update and document them.",false
+iso27001,ISO.C6.2,ISO.C6.2-b,Clause 6.2,"Plan what will be done, with what resources, by whom, by when and how results are evaluated.",false
+iso27001,ISO.C6.3,ISO.C6.3-a,Clause 6.3,Carry out needed changes to the security management system in a planned way.,false
+iso27001,ISO.C7.1,ISO.C7.1-a,Clause 7.1,"Determine and provide the resources needed to establish, run, maintain and improve the program.",false
+iso27001,ISO.C7.2,ISO.C7.2-a,Clause 7.2,Determine the competence needed by people who affect security performance.,false
+iso27001,ISO.C7.2,ISO.C7.2-b,Clause 7.2,"Ensure those people are competent through education, training or experience.",false
+iso27001,ISO.C7.2,ISO.C7.2-c,Clause 7.2,Take action to gain missing competence and evaluate whether it worked.,false
+iso27001,ISO.C7.2,ISO.C7.2-d,Clause 7.2,Keep evidence of competence.,false
+iso27001,ISO.C7.3,ISO.C7.3-a,Clause 7.3,Make people aware of the security policy.,false
+iso27001,ISO.C7.3,ISO.C7.3-b,Clause 7.3,Make people aware of their contribution to the program and the benefit of better performance.,false
+iso27001,ISO.C7.3,ISO.C7.3-c,Clause 7.3,Make people aware of the consequences of not conforming.,false
+iso27001,ISO.C7.4,ISO.C7.4-a,Clause 7.4,"Decide what internal and external security communication is needed, when, with whom and how.",false
+iso27001,ISO.C7.5,ISO.C7.5-a,Clause 7.5,Include the documented information the standard requires and the organization judges necessary.,false
+iso27001,ISO.C7.5,ISO.C7.5-b,Clause 7.5,"When creating or updating documents, set identification, format, review and approval.",false
+iso27001,ISO.C7.5,ISO.C7.5-c,Clause 7.5,"Control documents so they are available, protected, distributed, stored, version controlled, retained and disposed of.",false
+iso27001,ISO.C7.5,ISO.C7.5-d,Clause 7.5,Identify and control documents of external origin that the program needs.,false
+iso27001,ISO.C8.1,ISO.C8.1-a,Clause 8.1,"Plan, implement and control the processes needed to meet security requirements and carry out the planned actions, setting criteria for the processes.",false
+iso27001,ISO.C8.1,ISO.C8.1-b,Clause 8.1,Keep documented information giving confidence that processes ran as planned.,false
+iso27001,ISO.C8.1,ISO.C8.1-c,Clause 8.1,Control planned changes and review the effect of unintended changes.,false
+iso27001,ISO.C8.1,ISO.C8.1-d,Clause 8.1,"Make sure externally provided processes, products or services that matter to the program are controlled.",false
+iso27001,ISO.C8.2,ISO.C8.2-a,Clause 8.2,Perform risk assessments at planned intervals or when significant changes are proposed or occur.,false
+iso27001,ISO.C8.2,ISO.C8.2-b,Clause 8.2,Keep the results of the assessments.,false
+iso27001,ISO.C8.3,ISO.C8.3-a,Clause 8.3,Implement the risk treatment plan.,false
+iso27001,ISO.C8.3,ISO.C8.3-b,Clause 8.3,Keep the results of the treatment.,false
+iso27001,ISO.C9.1,ISO.C9.1-a,Clause 9.1,"Determine what to monitor and measure, and the methods, which must give valid, comparable and reproducible results.",false
+iso27001,ISO.C9.1,ISO.C9.1-b,Clause 9.1,"Determine when monitoring is done, when results are analyzed, and who does each; then evaluate security performance and the effectiveness of the program.",false
+iso27001,ISO.C9.1,ISO.C9.1-c,Clause 9.1,Keep evidence of the results.,false
+iso27001,ISO.C9.2,ISO.C9.2-a,Clause 9.2,Conduct internal audits at planned intervals to show whether the program meets the organization's own requirements and the standard's and is effectively implemented and maintained.,false
+iso27001,ISO.C9.2,ISO.C9.2-b,Clause 9.2,"Plan and run an audit program covering frequency, methods, responsibilities, planning and reporting, taking account of how important the processes are and past audit results.",false
+iso27001,ISO.C9.2,ISO.C9.2-c,Clause 9.2,Define audit criteria and scope and choose auditors who are objective and impartial.,false
+iso27001,ISO.C9.2,ISO.C9.2-d,Clause 9.2,Report audit results to relevant management and keep evidence.,false
+iso27001,ISO.C9.3,ISO.C9.3-a,Clause 9.3,Have top management review the program at planned intervals.,false
+iso27001,ISO.C9.3,ISO.C9.3-b,Clause 9.3,"Cover in the review the status of past actions, changes in issues and in interested-party needs, performance trends (nonconformities, measurements, audits, objectives), feedback from interested parties, risk results and treatment status, and improvement opportunities.",false
+iso27001,ISO.C9.3,ISO.C9.3-c,Clause 9.3,Record decisions on improvement and needed changes and keep evidence.,false
+iso27001,ISO.C10.1,ISO.C10.1-a,Clause 10.1,"Continually improve the suitability, adequacy and effectiveness of the program.",false
+iso27001,ISO.C10.2,ISO.C10.2-a,Clause 10.2,React to a nonconformity by controlling and correcting it and dealing with the consequences.,false
+iso27001,ISO.C10.2,ISO.C10.2-b,Clause 10.2,"Evaluate the need to remove causes, act, review the effectiveness of the action and change the program if needed.",false
+iso27001,ISO.C10.2,ISO.C10.2-c,Clause 10.2,Keep evidence of the nonconformities and the actions taken.,false
