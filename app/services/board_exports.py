@@ -476,9 +476,9 @@ def _render_docx_not_assessed(word, source: dict) -> None:
 def _render_docx_frameworks(word, source: dict) -> None:
     for framework in source["framework_sections"]:
         _add_docx_heading(word, f"{framework['name']} ({framework['version']})", 1)
-        score = framework["score"] if framework["score"] is not None else "Not scored"
+        score = vocab.score_text(framework["score"])
         rating = f" ({framework['rating']})" if framework["rating"] else ""
-        _add_docx_paragraph(word, f"Score: {score}{rating}")
+        _add_docx_paragraph(word, framework.get("headline") or f"Score: {score}{rating}")
         _add_docx_heading(word, "Domains", 2)
         _docx_table(
             word,
@@ -486,7 +486,7 @@ def _render_docx_frameworks(word, source: dict) -> None:
             [
                 [
                     domain["title"],
-                    domain["score"] if domain["score"] is not None else vocab.OUTCOMES["not_applicable"],
+                    vocab.score_text(domain["score"]) if domain["score"] is not None else vocab.OUTCOMES["not_applicable"],
                     domain["rating"] or vocab.OUTCOMES["not_applicable"],
                 ]
                 for domain in framework["domains"]
@@ -662,6 +662,7 @@ def _render_docx_soa(word, source: dict, schema_version: int) -> None:
 
 
 def render_docx(document: dict, *, document_sha256: str) -> bytes:
+    document = board_view.readiness_document(document)
     schema_version = _schema(document)
     if schema_version >= 3:
         raise DocumentSuperseded(DOCX_SUPERSEDED_MESSAGE)
@@ -814,6 +815,7 @@ def _render_xlsx_framework_summary(book, document: dict) -> None:
                 )],
             ],
         )
+        sheet.cell(row=row_number, column=4).number_format = "0.0"
     _style_xlsx_table(sheet, 1, len(XLSX_COLUMNS[sheet.title]))
 
 
@@ -1090,18 +1092,8 @@ V3_SEVERITY_COLORS = {
     "medium": "#F0A030",
     "low": "#3C9D6B",
 }
-V3_RATING_COLORS = {
-    vocab.LEGACY_OUTCOMES["compliant"]: V3_OUTCOME_COLORS["compliant"],
-    vocab.LEGACY_OUTCOMES["partially_compliant"]: V3_OUTCOME_COLORS["partially_compliant"],
-    "Needs Significant Improvement": V3_SEVERITY_COLORS["high"],
-    vocab.LEGACY_OUTCOMES["non_compliant"]: V3_OUTCOME_COLORS["non_compliant"],
-}
-V3_RATING_BANDS = (
-    ("0-40 Non-compliant", "Scores from 0 up to 40 are Non-compliant."),
-    ("40-60 Needs significant improvement", "Scores from 40 up to 60 need significant improvement."),
-    ("60-80 Partially compliant", "Scores from 60 up to 80 are Partially compliant."),
-    ("80-100 Compliant", "Scores from 80 up to 100 are Compliant."),
-)
+V3_RATING_COLORS = board_view.RATING_COLORS
+V3_RATING_BANDS = tuple((line.split(":", 1)[0], line.split(": ", 1)[1]) for line in vocab.score_threshold_lines())
 V3_OUTCOME_TEXT_COLORS = {
     V3_OUTCOME_COLORS["compliant"]: "FFFFFF",
     V3_OUTCOME_COLORS["non_compliant"]: "FFFFFF",
@@ -1258,9 +1250,11 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     for row_number, framework in enumerate(document["summary"]["frameworks"], start=7):
         coverage = framework["coverage"]
         _write_xlsx_row(summary, row_number, [
-            framework["name"], framework["score"], framework["rating"], coverage["in_scope"],
+            framework["name"], framework["score"], framework.get("headline"), coverage["in_scope"],
             coverage["partially_compliant"] + coverage["non_compliant"], coverage["insufficient_evidence"],
         ])
+        summary.cell(row=row_number, column=2).number_format = "0.0"
+        summary.row_dimensions[row_number].height = 60
     summary_last_row = 6 + len(document["summary"]["frameworks"])
     note_row = max(10, summary_last_row + 2)
     _set_xlsx_cell(summary.cell(row=note_row, column=1), board_report.board_view.NEVER_COMBINED_NOTE)
@@ -1282,7 +1276,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         _write_xlsx_row(summary, row_number, [
             framework.get("name"),
             framework.get("score"),
-            rating,
+            framework.get("headline") or rating,
             _v3_delta_text(prior.get("score_delta"), compared=compared),
         ])
         _v3_fill_and_label(
@@ -1291,6 +1285,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             white_text=rating in V3_RATING_COLORS,
         )
         summary.cell(row=row_number, column=2).number_format = "0.0"
+        summary.row_dimensions[row_number].height = 60
 
     outcome_title_row = posture_header_row + max(len(document["summary"]["frameworks"]), 1) + 3
     _set_xlsx_cell(summary.cell(row=outcome_title_row, column=1), "Requirement outcomes by framework")
@@ -1473,6 +1468,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         (vocab.RISK_LABELS["high"], "Significant exposure. Act this quarter."),
         (vocab.RISK_LABELS["medium"], "Moderate exposure. Plan within six months."),
         (vocab.RISK_LABELS["low"], "Limited exposure. Fix in the normal course."),
+        ("Score display", vocab.SCORE_DISPLAY_NOTE),
         ("How to read ratings", "A framework score is a weighted average of its domain scores. A met requirement counts in full and a partly met one counts half. Scores are deterministic and never combined across frameworks."),
         ("Remediation timeframe", "Set by the most serious gap the fix closes."),
         ("Effort", "High is over 40 person-hours or a cross-team change."),
@@ -1582,6 +1578,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
 
 
 def render_xlsx(document: dict, *, document_sha256: str) -> bytes:
+    document = board_view.readiness_document(document)
     schema_version = _schema(document)
     if schema_version >= 3:
         return _render_xlsx_v3(document, document_sha256=document_sha256)
@@ -1626,7 +1623,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         return fallback if value in (None, "") else _clean(value)
 
     def score_text(value):
-        return "Not scored" if value is None else f"{float(value):.1f}%"
+        return vocab.score_text(value)
 
     def delta_text(value):
         if value is None:
@@ -1770,7 +1767,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         chart = chart_shape.chart
         chart.has_legend = False
         style_chart(chart, [primary], max_scale=100)
-        text_box(slide, "Rating bands: 0–40 Non-compliant · 40–60 Needs significant improvement · 60–80 Partially compliant · 80–100 Compliant", 14, 143, 310, 10, size=11, color=muted)
+        text_box(slide, vocab.score_threshold_text(), 14, 143, 310, 10, size=11, color=muted)
 
     def outcome_chart(slide):
         frameworks = view["fw"] or [{"short": "No framework", "coverage": {}}]
@@ -1921,8 +1918,8 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             for index, (_low, _high, band_label, colour) in enumerate(board_view.RATING_BANDS):
                 x = 14 + index * 77
                 rect(slide, x, 126, 74, 14, fill=_pptx_color(colour), border=line, name="Rating band legend")
-                text_box(slide, band_label.title(), x + 2, 129, 70, 7, size=10, color=ink, bold=True, align=PP_ALIGN.CENTER)
-            text_box(slide, "Scores are deterministic and never combined across frameworks. Remediation timeframe, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
+                text_box(slide, vocab.score_threshold_lines()[3 - index], x + 2, 129, 70, 7, size=10, color=ink, bold=True, align=PP_ALIGN.CENTER)
+            text_box(slide, f"{vocab.SCORE_DISPLAY_NOTE} Scores are deterministic and never combined across frameworks. Remediation timeframe, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
         elif name == "overview":
             totals = (document.get("summary") or {}).get("totals", {})
             text_box(slide, f"Scope, the evidence we used and how every outcome was approved. {totals.get('requirements', 0)} requirements across {len(document.get('frameworks', []))} framework(s).", 14, 34, 310, 10, size=12, color=ink2)
@@ -1941,7 +1938,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             text_box(slide, f"{totals.get('requirements', 0)} requirements · {totals.get('gaps', 0)} approved gaps · {board_view.NEVER_COMBINED_NOTE}", 14, 34, 310, 12, size=12, color=ink2, bold=True)
             prior = (document.get("prior_period") or {}).get("frameworks", [])
             prior_by_id = {item.get("framework_id"): item for item in prior}
-            native_table(slide, ["Framework", "Score", "Rating", "Change"], [[framework.get("name", ""), score_text(framework.get("score")), framework.get("rating") or "Not scored", delta_text(prior_by_id.get(framework.get("framework_id"), {}).get("score_delta")) if prior_by_id.get(framework.get("framework_id"), {}).get("compared") else "First report"] for framework in summary.get("frameworks", [])], top=50, width=160, height=52, column_widths=[60, 25, 45, 30])
+            native_table(slide, ["Framework", "Score", "Rating", "Change"], [[framework.get("name", ""), score_text(framework.get("score")), framework.get("headline") or "Not scored", delta_text(prior_by_id.get(framework.get("framework_id"), {}).get("score_delta")) if prior_by_id.get(framework.get("framework_id"), {}).get("compared") else "First report"] for framework in summary.get("frameworks", [])], top=50, width=160, height=52, column_widths=[30, 20, 90, 20])
             brief = "\n".join(sentence.get("text", "") for sentence in ((summary.get("narrative") or {}).get("executive") or []))
             text_box(slide, f"In brief\n{brief or summary.get('basis_of_assessment', '')}", 184, 50, 140, 48, size=11, color=ink2, fill=panel, border=accent)
             observations = document.get("observations") or []
@@ -2080,6 +2077,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
 
 
 def render_pptx(document: dict, *, document_sha256: str) -> bytes:
+    document = board_view.readiness_document(document)
     if _schema(document) != 3:
         raise UnsupportedDocument(UNSUPPORTED_DOCUMENT_MESSAGE)
     return _render_pptx_v3c3(document, document_sha256=document_sha256)

@@ -251,8 +251,11 @@ def _framework_summary(review) -> dict:
     coverage = review.coverage
     if review.status == "scored":
         headline = (
-            f"{review.score['overall_score']:.0f}% ({review.score['overall_rating']}); "
-            f"{coverage['insufficient_evidence']} requirement(s) insufficient evidence"
+            vocab.readiness_headline(
+                review.framework_id, review.score["overall_score"],
+                sum(row.compliance_status in GAP_STATUSES and row.risk_level == "critical" for row in review.rows),
+                sum(row.compliance_status in GAP_STATUSES and row.risk_level == "high" for row in review.rows),
+            )
         )
     elif review.status == "not_scored":
         headline = (
@@ -266,7 +269,7 @@ def _framework_summary(review) -> dict:
         "name": review.name,
         "status": review.status,
         "score": review.score.get("overall_score"),
-        "rating": review.score.get("overall_rating"),
+        "rating": vocab.score_band(review.score["overall_score"]) if review.score.get("overall_score") is not None else None,
         "coverage": coverage,
         "headline": headline,
         "narrative": None,
@@ -285,7 +288,7 @@ def _framework_section(review) -> dict:
                 "domain_id": domain_id,
                 "title": domain["title"],
                 "score": score.get("score") if applicable else None,
-                "rating": score.get("rating") if applicable else None,
+                "rating": vocab.score_band(score["score"]) if applicable else None,
             }
         )
     return {
@@ -294,7 +297,7 @@ def _framework_section(review) -> dict:
         "version": framework.version,
         "status": review.status,
         "score": review.score.get("overall_score"),
-        "rating": review.score.get("overall_rating"),
+        "rating": vocab.score_band(review.score["overall_score"]) if review.score.get("overall_score") is not None else None,
         "domains": domains,
         "gaps": [
             {
@@ -670,6 +673,7 @@ def render_html(document: dict, *, embed_fonts: bool) -> str:
         for initiative in document.get("initiatives", []):
             if initiative.get("owner") is None:
                 initiative["owner"] = ""
+    document = board_view.readiness_document(document)
     presentation = board_view.view(document)
     presentation.update(
         {

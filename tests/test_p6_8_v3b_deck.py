@@ -180,8 +180,8 @@ def test_scenario_4_scores_are_per_framework_and_never_combined():
     assert not _tree(html).xpath('//*[@data-combined-score]')
     for framework in document["summary"]["frameworks"]:
         score = _one(summary, f'.//*[@data-framework-score="{framework["framework_id"]}"]')
-        assert f"{framework['score']:.0f}" in _text(score)
-        assert framework["rating"] in _text(summary)
+        assert f"{framework['score']:.1f}" in _text(score)
+        assert vocab.score_band(framework["score"]) in _text(summary)
         assert _one(summary, f'.//*[@data-outcome-bar="{framework["framework_id"]}"]') is not None
     total = _text(_one(summary, ".//*[@data-total-requirements]"))
     assert str(document["summary"]["totals"]["requirements"]) in total
@@ -197,7 +197,7 @@ def test_scenario_5_domain_status_matches_the_document():
     assert document["takeaways"]["status_board"] in _text(_one(board, './/*[@data-takeaway="status-board"]'))
     for framework in document["status_board"]:
         column = _one(board, f'.//*[@data-status-framework="{framework["framework_id"]}"]')
-        assert framework["name"] in _text(column) and f"{framework['score']:.0f}" in _text(column)
+        assert framework["name"] in _text(column) and f"{framework['score']:.1f}" in _text(column)
         for domain in framework["domains"]:
             row = _text(_one(column, f'.//*[@data-status-domain="{domain["title"]}"]'))
             if domain["in_scope"] == 0:

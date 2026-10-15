@@ -316,7 +316,7 @@ def integrated_report(db: Session, engagement: Engagement) -> IntegratedReport:
                 ScoreLine(
                     framework_name=_framework_name(framework_id),
                     score=score_data["overall_score"],
-                    rating=score_data.get("overall_rating", "N/A"),
+                    rating=vocab.score_band(score_data["overall_score"]),
                 )
             )
         sections.append(

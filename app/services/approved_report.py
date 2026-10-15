@@ -344,9 +344,15 @@ def _summary_text(
         name = review.name
         coverage = review.coverage
         if review.status == "scored":
+            gaps = [row for row in review.rows if row.compliance_status in ("partially_compliant", "non_compliant")]
+            headline = vocab.readiness_headline(
+                framework_id, review.score["overall_score"],
+                sum(row.risk_level == "critical" for row in gaps),
+                sum(row.risk_level == "high" for row in gaps),
+            )
             lines.append(
-                f"{name}: {review.score['overall_score']:.0f}% "
-                f"({review.score['overall_rating']}), {coverage['scored']} of "
+                f"{headline} "
+                f"{coverage['scored']} of "
                 f"{coverage['in_scope']} in-scope requirements scored; "
                 f"{coverage['compliant']} compliant, "
                 f"{coverage['partially_compliant']} partially compliant, "

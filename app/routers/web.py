@@ -154,6 +154,7 @@ def _framework_display(
 ) -> dict[str, dict]:
     """Build ordered, template-safe framework score display data."""
     from app.frameworks.registry import FrameworkRegistry
+    from app.services import vocabulary as vocab
 
     display = {}
     for framework_id in assessment.frameworks:
@@ -163,8 +164,14 @@ def _framework_display(
             "name": framework.name if framework else framework_id.upper(),
             "version": framework.version if framework else "",
             "score": scores.get("overall_score"),
-            "rating": scores.get("overall_rating"),
-            "domain_scores": scores.get("domain_scores", {}),
+            "rating": vocab.score_band(scores["overall_score"]) if scores.get("overall_score") is not None else None,
+            "domain_scores": {
+                domain_id: {
+                    **domain,
+                    "rating": vocab.score_band(domain["score"]) if domain.get("score") is not None else None,
+                }
+                for domain_id, domain in scores.get("domain_scores", {}).items()
+            },
             "status": scores.get("status", "scored"),
             "coverage": scores.get("coverage"),
             "failed": scores.get("status") == "failed",
