@@ -23,6 +23,7 @@ class FirmSettings(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=FIRM_SETTINGS_ID)
     contact_email: Mapped[str | None] = mapped_column(String(254), nullable=True)
+    default_reviewer_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     archived_retention_years: Mapped[int] = mapped_column(Integer, default=7)
     accent_theme: Mapped[str] = mapped_column(String(20), default="midnight")
     accent_custom_hex: Mapped[str | None] = mapped_column(String(7), nullable=True)

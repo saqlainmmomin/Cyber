@@ -452,7 +452,7 @@ def test_scenario_2_eligibility_and_page_membership(db, http, gate, monkeypatch)
     rejected_a, rejected = _run_one(
         db, gate, monkeypatch, client_name="Rejected", item=_item(REQS[0], "non_compliant")
     )
-    assert _decide(http, rejected_a, rejected, "reject").status_code == 200
+    assert _decide(http, rejected_a, rejected, "reject", reason="Evidence does not support the conclusion").status_code == 200
     db.refresh(rejected)
     before = _nothing_snapshot(db)
     response = _create(http, rejected_a, rejected)
@@ -1148,6 +1148,7 @@ def test_scenario_12_existing_contract_surfaces_remain_registered():
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/edit"),
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/reject"),
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/reopen"),
+        ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/undo"),
     }
     workpaper_routes = {
         (method, route.path)

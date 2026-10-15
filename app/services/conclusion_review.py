@@ -14,7 +14,7 @@ from app.models.analysis_run import AnalysisRun
 from app.models.assessment import Assessment
 from app.models.conclusion import Conclusion, ConclusionRevision
 from app.models.report import GapItem, GapReport
-from app.services import analysis_pipeline, report_basis, requirement_card
+from app.services import analysis_pipeline, firm_settings, report_basis, requirement_card
 from app.services.analysis_pipeline import ConclusionConflict
 from app.services.citations import loads_citations, resolve_citations
 
@@ -45,12 +45,13 @@ ACTION_BY_ROUTE = {
     "edit": "edited",
     "reject": "rejected",
     "reopen": "reopened",
+    "undo": "undone",
 }
 ALLOWED_ACTIONS = {
     "pending": ("approved", "edited", "rejected"),
-    "rejected": ("approved", "edited"),
-    "approved": ("reopened",),
-    "edited": ("reopened",),
+    "rejected": ("approved", "edited", "undone"),
+    "approved": ("reopened", "undone"),
+    "edited": ("reopened", "undone"),
 }
 
 EVIDENCE_NOT_CAPTURED = (
@@ -99,12 +100,38 @@ class ConclusionCard:
     withheld_proposal: dict | None
     legacy_report_status: str | None
     previous_outcome: str | None = None
+    report_released: bool = False
     requirement: requirement_card.RequirementCard | None = None
 
 
 def reviewer_actor(reviewer_name: str | None) -> str:
     name = (reviewer_name or "").strip()[:200] or DEFAULT_REVIEWER_NAME
     return f"{REVIEWER_ACTOR_PREFIX}{name}"
+
+
+def reviewer_actor_for(db: Session, reviewer_name: str | None) -> str:
+    name = (reviewer_name or "").strip() or firm_settings.get(db).default_reviewer_name
+    return reviewer_actor(name)
+
+
+def default_reviewer_name(db: Session, assessment_id: str) -> str:
+    configured = firm_settings.get(db).default_reviewer_name
+    if configured:
+        return configured
+    latest = db.execute(
+        select(ConclusionRevision)
+        .join(Conclusion, ConclusionRevision.conclusion_id == Conclusion.id)
+        .where(
+            Conclusion.assessment_id == assessment_id,
+            ConclusionRevision.actor.startswith(REVIEWER_ACTOR_PREFIX),
+        )
+        .order_by(
+            ConclusionRevision.created_at.desc(),
+            literal_column("conclusion_revisions.rowid").desc(),
+        )
+        .limit(1)
+    ).scalar_one_or_none()
+    return latest.actor.removeprefix(REVIEWER_ACTOR_PREFIX) if latest else ""
 
 
 def _revisions(db: Session, conclusion_ids: list[str]) -> list[ConclusionRevision]:
@@ -212,6 +239,7 @@ def decide(
     expected_version: int,
     actor: str,
     edits: dict[str, str] | None = None,
+    reason: str = "",
 ) -> ConclusionRevision:
     conclusion = db.get(Conclusion, conclusion_id)
     if conclusion is None or conclusion.assessment_id != assessment_id:
@@ -226,11 +254,24 @@ def decide(
         raise ConclusionConflict(conclusion.id)
 
     revisions = _revisions(db, [conclusion.id])
-    decision_state, _ = _decision_state(revisions, locked=state.locked)
+    decision_state, latest_human = _decision_state(revisions, locked=state.locked)
     if action not in ALLOWED_ACTIONS[decision_state]:
         raise InvalidDecision(
             f"The {action} action is not allowed while this conclusion is {decision_state}."
         )
+
+    revision_reason = None
+    if action == "rejected":
+        revision_reason = reason.strip()
+        if not revision_reason:
+            raise InvalidDecision("Give a reason for rejecting this conclusion.")
+    elif action == "undone":
+        from app.services import approved_report
+
+        assessment = db.get(Assessment, conclusion.assessment_id)
+        if approved_report.is_released(db, assessment):
+            raise InvalidDecision("This report is released. Undo is not available.")
+        revision_reason = f"Undid {latest_human.action}"
 
     if action in analysis_pipeline.LOCKING_ACTIONS:
         period_blocker = report_basis.approval_blocker(
@@ -269,6 +310,7 @@ def decide(
         conclusion_id=conclusion.id,
         actor=actor,
         action=action,
+        reason=revision_reason,
         previous_outcome=previous_outcome,
         previous_rationale=previous_rationale,
         citations_json=None,
@@ -440,6 +482,9 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
         [row.id for row in ordered],
     )
 
+    from app.services import approved_report
+
+    report_released = approved_report.is_released(db, assessment)
     cards: list[ConclusionCard] = []
     for conclusion in ordered:
         row_revisions = revisions_by_conclusion[conclusion.id]
@@ -471,6 +516,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
                 actor_display = actor_display[len(REVIEWER_ACTOR_PREFIX) :]
             last_decision = {
                 "action": latest_human.action,
+                "reason": latest_human.reason,
                 "actor_display": actor_display,
                 "created_at": latest_human.created_at,
             }
@@ -529,6 +575,7 @@ def conclusion_cards(db: Session, assessment_id: str) -> list[ConclusionCard]:
                     edited_revision.previous_outcome if edited_revision else None
                 ),
                 requirement=requirement,
+                report_released=report_released,
             )
         )
     return cards

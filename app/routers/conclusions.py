@@ -28,6 +28,7 @@ _SUCCESS_MESSAGES = {
     "edit": "Conclusion edited and approved",
     "reject": "Conclusion rejected",
     "reopen": "Conclusion reopened",
+    "undo": "Decision undone",
 }
 
 
@@ -98,8 +99,9 @@ async def _decide(
             conclusion_id=conclusion_id,
             action=conclusion_review.ACTION_BY_ROUTE[route_name],
             expected_version=body.expected_version,
-            actor=conclusion_review.reviewer_actor(body.reviewer_name),
+            actor=conclusion_review.reviewer_actor_for(db, body.reviewer_name),
             edits=edits,
+            reason=body.reason,
         )
     except conclusion_review.ConclusionNotFound as exc:
         db.rollback()
@@ -220,5 +222,21 @@ async def reopen_conclusion(
         assessment_id=assessment_id,
         conclusion_id=conclusion_id,
         route_name="reopen",
+        db=db,
+    )
+
+
+@router.post("/{assessment_id}/conclusions/{conclusion_id}/undo")
+async def undo_conclusion(
+    request: Request,
+    assessment_id: str,
+    conclusion_id: str,
+    db: Session = Depends(get_db),
+):
+    return await _decide(
+        request,
+        assessment_id=assessment_id,
+        conclusion_id=conclusion_id,
+        route_name="undo",
         db=db,
     )

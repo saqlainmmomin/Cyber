@@ -168,7 +168,7 @@ def test_lifespan_and_health_against_fresh_database(monkeypatch, tmp_path):
     try:
         with engine.connect() as conn:
             version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-        assert version == "e2c8f6a4d901"  # Yozora backend features migration is the head
+        assert version == "f3a7c9d2e810"  # Yozora backend features migration is the head
     finally:
         engine.dispose()
 
@@ -206,7 +206,7 @@ def test_lifespan_and_health_against_valid_legacy_copy_database(monkeypatch, tmp
     try:
         with engine.connect() as conn:
             version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert version == "e2c8f6a4d901"  # Yozora backend features migration is the head
+            assert version == "f3a7c9d2e810"  # Yozora backend features migration is the head
             assert conn.execute(text("SELECT COUNT(*) FROM assessments")).scalar() == 1
             fks = conn.execute(text("PRAGMA foreign_key_list(gap_items)")).fetchall()
             assert len(fks) == 1, "legacy gap_items should have been FK-rebuilt on startup"

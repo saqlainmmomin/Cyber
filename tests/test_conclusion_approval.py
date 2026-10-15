@@ -442,7 +442,7 @@ def test_scenario_6_reject_transitions_and_new_proposal(db, http, gate, monkeypa
     """Scenario 6: reject is non-locking, can be approved, and a rerun supersedes rejection."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
     content = _snapshot(db, conclusion)
-    response = http.post(_url(assessment, conclusion, "reject"), data={"expected_version": 1})
+    response = http.post(_url(assessment, conclusion, "reject"), data={"expected_version": 1, "reason": "Evidence does not support this conclusion."})
     assert response.status_code == 200 and 'data-state="rejected"' in response.text
     db.refresh(conclusion)
     assert conclusion.version == 2 and conclusion.outcome == content["outcome"]
@@ -450,7 +450,7 @@ def test_scenario_6_reject_transitions_and_new_proposal(db, http, gate, monkeypa
         db, assessment_id=assessment.id, framework_id="dpdpa"
     )[conclusion.requirement_id].locked is False
     assert http.post(
-        _url(assessment, conclusion, "reject"), data={"expected_version": 2}
+        _url(assessment, conclusion, "reject"), data={"expected_version": 2, "reason": "Evidence does not support this conclusion."}
     ).status_code == 400
     assert http.post(
         _url(assessment, conclusion, "approve"), data={"expected_version": 2}
@@ -458,7 +458,7 @@ def test_scenario_6_reject_transitions_and_new_proposal(db, http, gate, monkeypa
 
     other, other_conclusion = _run_one(db, gate, monkeypatch, client_name="Rerun Corp")
     assert http.post(
-        _url(other, other_conclusion, "reject"), data={"expected_version": 1}
+        _url(other, other_conclusion, "reject"), data={"expected_version": 1, "reason": "Evidence does not support this conclusion."}
     ).status_code == 200
     _stub_single(monkeypatch, [_item(REQS[0], "compliant", gap="", risk="low", action="")])
     result = gate.trigger_analysis(other.id, db)
@@ -496,7 +496,7 @@ def test_scenario_7_reopen_only_unlocks_approved_content(db, http, gate, monkeyp
 
 
 @pytest.mark.parametrize("state", ["pending", "rejected", "approved", "edited"])
-@pytest.mark.parametrize("route", ["approve", "edit", "reject", "reopen"])
+@pytest.mark.parametrize("route", ["approve", "edit", "reject", "reopen", "undo"])
 def test_scenario_8_state_machine_matrix(db, http, gate, monkeypatch, state, route):
     """Scenario 8: every state/action pair follows the exact allowed-action matrix."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
@@ -506,7 +506,7 @@ def test_scenario_8_state_machine_matrix(db, http, gate, monkeypatch, state, rou
     payload = (
         _edit_payload(conclusion.version)
         if route == "edit"
-        else {"expected_version": conclusion.version}
+        else {"expected_version": conclusion.version, "reason": "Evidence does not support this conclusion."}
     )
     response = http.post(_url(assessment, conclusion, route), data=payload)
     allowed = conclusion_review.ACTION_BY_ROUTE[route] in conclusion_review.ALLOWED_ACTIONS[state]
@@ -521,9 +521,9 @@ def test_scenario_8_state_machine_matrix(db, http, gate, monkeypatch, state, rou
     )
     assert conclusion_review.ALLOWED_ACTIONS == {
         "pending": ("approved", "edited", "rejected"),
-        "rejected": ("approved", "edited"),
-        "approved": ("reopened",),
-        "edited": ("reopened",),
+        "rejected": ("approved", "edited", "undone"),
+        "approved": ("reopened", "undone"),
+        "edited": ("reopened", "undone"),
     }
 
 
@@ -546,7 +546,7 @@ def test_scenario_9_approval_guard_and_explicit_absence(db, http, gate, monkeypa
     page = http.get(f"/assessments/{assessment.id}/conclusions")
     assert "Evidence support was not captured" in page.text and "disabled" in page.text
     assert http.post(
-        _url(assessment, conclusion, "reject"), data={"expected_version": 1}
+        _url(assessment, conclusion, "reject"), data={"expected_version": 1, "reason": "Evidence does not support this conclusion."}
     ).status_code == 200
 
     supported, compliant = _run_one(
@@ -598,7 +598,7 @@ def test_scenario_10_legacy_bulk_approval_is_flagged_and_replaced(db, http, gate
     assert 'data-count="approved">1<' in page.text
 
 
-@pytest.mark.parametrize("route", ["approve", "edit", "reject", "reopen"])
+@pytest.mark.parametrize("route", ["approve", "edit", "reject", "reopen", "undo"])
 def test_scenario_11_stale_foreign_and_unknown_ids(db, http, gate, monkeypatch, route):
     """Scenario 11: every route rejects stale, foreign-assessment and unknown ids."""
     assessment, conclusion = _run_one(db, gate, monkeypatch)
@@ -632,6 +632,7 @@ def test_scenario_12_individual_only_structural_guards():
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/edit"),
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/reject"),
         ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/reopen"),
+        ("POST", "/api/assessments/{assessment_id}/conclusions/{conclusion_id}/undo"),
     }
     assert all("{conclusion_id}" in path for method, path in routes if method == "POST")
     signature = inspect.signature(conclusion_review.decide)
@@ -691,7 +692,7 @@ def test_scenario_13_legacy_path_and_status_are_untouched(db, http, gate, monkey
         _url(assessment, conclusions[1], "edit"), data=_edit_payload(1)
     ).status_code == 200
     assert http.post(
-        _url(assessment, conclusions[2], "reject"), data={"expected_version": 1}
+        _url(assessment, conclusions[2], "reject"), data={"expected_version": 1, "reason": "Evidence does not support this conclusion."}
     ).status_code == 200
     for item in items:
         db.refresh(item)
@@ -841,3 +842,136 @@ def test_scenario_15_swap_conclusion_is_cas_and_pipeline_suite_is_unchanged(
         )
     db.rollback()
     _assert_snapshot(db, conclusion, before)
+
+
+@pytest.mark.parametrize("reason", ["", "   "])
+def test_reject_requires_reason_without_saving(db, http, gate, monkeypatch, reason):
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    before = _snapshot(db, conclusion)
+    response = http.post(
+        _url(assessment, conclusion, "reject"),
+        data={"expected_version": 1, "reason": reason},
+    )
+    message = "Give a reason for rejecting this conclusion."
+    assert response.status_code == 400
+    assert response.json()["detail"] == message
+    assert response.headers["X-Toast-Message"] == message.replace(" ", "%20")
+    assert response.headers["X-Toast-Type"] == "error"
+    _assert_snapshot(db, conclusion, before)
+
+
+def test_reject_reason_is_trimmed_stored_and_escaped(db, http, gate, monkeypatch):
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    response = http.post(
+        _url(assessment, conclusion, "reject"),
+        data={"expected_version": 1, "reviewer_name": "Priya", "reason": "  <script>Unsupported</script>  "},
+    )
+    assert response.status_code == 200
+    assert _revisions(db, conclusion.id)[-1].reason == "<script>Unsupported</script>"
+    assert '&lt;script&gt;Unsupported&lt;/script&gt;' in response.text
+    assert '<script>Unsupported</script>' not in response.text
+    assert 'Rejected by Priya on ' in response.text
+    assert ': "&lt;script&gt;Unsupported&lt;/script&gt;".' in response.text
+    assert '/undo"' in response.text
+
+
+@pytest.mark.parametrize("previous_action", ["approved", "edited", "rejected"])
+def test_undo_returns_pending_preserving_content_and_history(
+    db, http, gate, monkeypatch, previous_action
+):
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    route = {"approved": "approve", "edited": "edit", "rejected": "reject"}[previous_action]
+    payload = _edit_payload(1) if route == "edit" else {
+        "expected_version": 1, "reason": "Unsupported conclusion",
+    }
+    assert http.post(_url(assessment, conclusion, route), data=payload).status_code == 200
+    before = _snapshot(db, conclusion)
+    response = http.post(
+        _url(assessment, conclusion, "undo"),
+        data={"expected_version": 2, "reviewer_name": "Ravi"},
+    )
+    assert response.status_code == 200
+    assert response.headers["X-Toast-Message"] == "Decision undone"
+    assert 'data-state="pending"' in response.text
+    assert f'Undid {previous_action}.' in response.text
+    after = _snapshot(db, conclusion)
+    assert after["version"] == before["version"] + 1
+    assert len(after["revision_ids"] - before["revision_ids"]) == 1
+    assert before["revision_ids"] <= after["revision_ids"]
+    for field in conclusion_review.EDITABLE_FIELDS:
+        assert after[field] == before[field]
+    revision = _revisions(db, conclusion.id)[-1]
+    assert revision.action == "undone"
+    assert revision.actor == "consultant:Ravi"
+    assert revision.reason == f"Undid {previous_action}"
+    assert revision.created_at is not None
+    assert analysis_pipeline.load_conclusion_state(
+        db, assessment_id=assessment.id, framework_id="dpdpa"
+    )[conclusion.requirement_id].locked is False
+    assert '/undo"' not in response.text
+    pending = _snapshot(db, conclusion)
+    assert http.post(
+        _url(assessment, conclusion, "undo"), data={"expected_version": 3}
+    ).status_code == 400
+    _assert_snapshot(db, conclusion, pending)
+
+
+def test_undo_refused_after_release_without_saving(db, http, gate, monkeypatch):
+    assessment, conclusion = _run_one(
+        db, gate, monkeypatch,
+        item=_item(REQS[0], "compliant", gap="", risk="low", action=""),
+    )
+    assert http.post(
+        _url(assessment, conclusion, "approve"),
+        data={"expected_version": 1, "reviewer_name": "Priya"},
+    ).status_code == 200
+    approved_report.record_release(db, assessment, actor="consultant:Priya")
+    db.commit()
+    assert approved_report.is_released(db, assessment)
+    page = http.get(f"/assessments/{assessment.id}/conclusions")
+    assert '/undo"' not in page.text
+    before = _snapshot(db, conclusion)
+    response = http.post(
+        _url(assessment, conclusion, "undo"), data={"expected_version": 2}
+    )
+    message = "This report is released. Undo is not available."
+    assert response.status_code == 400
+    assert response.json()["detail"] == message
+    assert response.headers["X-Toast-Type"] == "error"
+    assert response.headers["X-Toast-Message"] == message.replace(" ", "%20")
+    _assert_snapshot(db, conclusion, before)
+    assert approved_report.is_released(db, assessment)
+
+
+def test_settings_reviewer_default_prefill_and_actor_fallback(db, http, gate, monkeypatch):
+    from app.models.firm_settings import FirmSettings
+
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    assert conclusion_review.default_reviewer_name(db, assessment.id) == ""
+    assert conclusion_review.reviewer_actor_for(db, "") == "consultant:Manager Review"
+    assert conclusion_review.reviewer_actor(" ") == "consultant:Manager Review"
+    firm = db.get(FirmSettings, 1)
+    firm.default_reviewer_name = "Firm reviewer"
+    db.commit()
+    page = http.get(f"/assessments/{assessment.id}/conclusions")
+    assert 'value="Firm reviewer"' in page.text
+    assert http.post(
+        _url(assessment, conclusion, "reject"),
+        data={"expected_version": 1, "reviewer_name": "   ", "reason": "Unsupported"},
+    ).status_code == 200
+    assert _revisions(db, conclusion.id)[-1].actor == "consultant:Firm reviewer"
+    assert http.post(
+        _url(assessment, conclusion, "undo"),
+        data={"expected_version": 2, "reviewer_name": "Typed reviewer"},
+    ).status_code == 200
+    assert _revisions(db, conclusion.id)[-1].actor == "consultant:Typed reviewer"
+    assert conclusion_review.default_reviewer_name(db, assessment.id) == "Firm reviewer"
+    firm.default_reviewer_name = None
+    db.commit()
+    page = http.get(f"/assessments/{assessment.id}/conclusions")
+    assert 'value="Typed reviewer"' in page.text
+    assert http.post(
+        _url(assessment, conclusion, "reject"),
+        data={"expected_version": 3, "reviewer_name": "", "reason": "Unsupported"},
+    ).status_code == 200
+    assert _revisions(db, conclusion.id)[-1].actor == "consultant:Manager Review"

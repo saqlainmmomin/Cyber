@@ -2,7 +2,7 @@
 {% set outcome_labels = vocab.OUTCOMES %}
 {% set outcome_tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf"} %}
 {% set risk_tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}
-{% set decision_labels = vocab.REVIEW_ACTION_LABELS %}
+{% set decision_labels = dict(vocab.REVIEW_ACTION_LABELS, undone="Undone") %}
 {% set card_editing = card_editing|default(false) %}
 {% set edit_focus = edit_focus|default(false) %}
 {% set can_edit = "edited" in card.allowed_actions %}
@@ -76,7 +76,7 @@
     {% if card.legacy_bulk_approval and card.last_decision %}
     <p class="sub cc-foot">Approved in bulk on {{ card.last_decision.created_at.day }} {{ card.last_decision.created_at.strftime("%b %Y") }}.</p>
     {% elif card.last_decision %}
-    <p class="sub cc-foot">{{ decision_labels.get(card.last_decision.action, card.last_decision.action|capitalize) }} by {{ card.last_decision.actor_display }} on {{ when(card.last_decision.created_at) }}.{% if card.last_decision.action == "edited" and card.previous_outcome %} The AI proposed {{ outcome_labels.get(card.previous_outcome, card.previous_outcome) }}.{% endif %}{% if card.last_decision.action == "rejected" %} It is left out of the report until it is approved.{% endif %}</p>
+    <p class="sub cc-foot">{{ decision_labels.get(card.last_decision.action, card.last_decision.action|capitalize) }} by {{ card.last_decision.actor_display }} on {{ when(card.last_decision.created_at) }}{% if card.last_decision.action == "rejected" and card.last_decision.reason %}: "{{ card.last_decision.reason }}"{% endif %}.{% if card.last_decision.action == "undone" and card.last_decision.reason %} {{ card.last_decision.reason }}.{% endif %}{% if card.last_decision.action == "edited" and card.previous_outcome %} The AI proposed {{ outcome_labels.get(card.previous_outcome, card.previous_outcome) }}.{% endif %}{% if card.last_decision.action == "rejected" %} It is left out of the report until approved.{% endif %}</p>
     {% endif %}
     {% endif %}
 
@@ -112,7 +112,15 @@
     {% if "rejected" in card.allowed_actions %}
     <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/reject" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
       <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+      <label class="label" for="reject-reason-{{ card.conclusion.id }}">Reason for rejecting</label>
+      <label class="field"><input id="reject-reason-{{ card.conclusion.id }}" name="reason" required maxlength="2000"></label>
       <button type="submit" class="btn danger">Reject</button>
+    </form>
+    {% endif %}
+    {% if "undone" in card.allowed_actions and not card.report_released %}
+    <form hx-post="/api/assessments/{{ assessment.id }}/conclusions/{{ card.conclusion.id }}/undo" hx-target="#conclusion-card-{{ card.conclusion.id }}" hx-swap="outerHTML" hx-include="#reviewer-name">
+      <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
+      <button type="submit" class="btn ghost">Undo</button>
     </form>
     {% endif %}
     {% if "reopened" in card.allowed_actions %}

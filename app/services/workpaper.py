@@ -32,6 +32,7 @@ ACTION_LABELS = {
     "edited": vocab.review_label("edited"),
     "rejected": vocab.review_label("rejected"),
     "reopened": "Reopened",
+    "undone": "Undone",
 }
 LEGACY_BULK_LABEL = "Legacy bulk approval, not individually reviewed"
 

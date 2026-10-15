@@ -3259,27 +3259,9 @@ def review_page(
 
 
 def _latest_reviewer_name(db: Session, assessment_id: str) -> str:
-    latest_consultant = (
-        db.query(ConclusionRevision)
-        .join(
-            Conclusion,
-            ConclusionRevision.conclusion_id == Conclusion.id,
-        )
-        .filter(
-            Conclusion.assessment_id == assessment_id,
-            ConclusionRevision.actor.startswith("consultant:"),
-        )
-        .order_by(
-            ConclusionRevision.created_at.desc(),
-            literal_column("conclusion_revisions.rowid").desc(),
-        )
-        .first()
-    )
-    return (
-        latest_consultant.actor.removeprefix("consultant:")
-        if latest_consultant
-        else ""
-    )
+    from app.services.conclusion_review import default_reviewer_name
+
+    return default_reviewer_name(db, assessment_id)
 
 
 @router.get("/assessments/{assessment_id}/conclusions", response_class=HTMLResponse)

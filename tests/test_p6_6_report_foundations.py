@@ -46,7 +46,7 @@ from app.services import approved_report, conclusion_review, report_snapshots
 from app.utils import pdf_export
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-ALEMBIC_HEAD = "e2c8f6a4d901"  # P6-6 added no migration (D-P6-6-A); P6-8 V3-A adds 5e9a2c7d4b18, Yozora backend b7d41c9e2a63
+ALEMBIC_HEAD = "f3a7c9d2e810"  # P6-6 added no migration (D-P6-6-A); P6-8 V3-A adds 5e9a2c7d4b18, Yozora backend b7d41c9e2a63
 PERIOD = {
     "period_start": date(2026, 4, 1),
     "period_end": date(2026, 6, 30),
@@ -612,7 +612,7 @@ def test_scenario_4_approval_gate_blocks_approve_and_edit(db, http, gate, monkey
     assert excinfo.value.message == PERIOD_REQUIRED
     db.rollback()
 
-    rejected = _post_decision(http, assessment, third, "reject")
+    rejected = _post_decision(http, assessment, third, "reject", reason="Evidence does not support the conclusion")
     assert rejected.status_code == 200
 
     cards = {card.conclusion.id: card for card in conclusion_review.conclusion_cards(db, assessment.id)}

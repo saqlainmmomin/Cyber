@@ -59,7 +59,7 @@ OUTCOME_BY_STATUS = {
     "not_assessed": "insufficient_evidence",
 }
 UNKNOWN_STATUS_OUTCOME = "insufficient_evidence"
-HUMAN_DECISION_ACTIONS = ("approved", "edited", "rejected", "reopened")
+HUMAN_DECISION_ACTIONS = ("approved", "edited", "rejected", "reopened", "undone")
 LOCKING_ACTIONS = ("approved", "edited")
 SUPPORTING_OUTCOMES = ("compliant", "partially_compliant")
 

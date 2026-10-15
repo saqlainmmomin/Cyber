@@ -57,24 +57,9 @@ def _error(db: Session, exc: board_inputs.BoardInputError) -> JSONResponse:
 
 
 def _latest_reviewer_name(db: Session, assessment_id: str) -> str:
-    event = (
-        db.query(AuditEvent)
-        .filter(
-            AuditEvent.entity_id == assessment_id,
-            AuditEvent.actor.startswith("consultant:"),
-            AuditEvent.action.in_(
-                (
-                    board_inputs.AUDIT_FINDING,
-                    board_inputs.AUDIT_ACTION,
-                    board_inputs.AUDIT_INITIATIVE,
-                    board_inputs.AUDIT_ASKS,
-                )
-            ),
-        )
-        .order_by(AuditEvent.created_at.desc())
-        .first()
-    )
-    return event.actor.removeprefix("consultant:") if event else ""
+    from app.services.conclusion_review import default_reviewer_name
+
+    return default_reviewer_name(db, assessment_id)
 
 
 @router.get("/assessments/{assessment_id}/board-inputs", response_class=HTMLResponse)
