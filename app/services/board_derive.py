@@ -155,7 +155,7 @@ def build_status_board(framework_sections: Sequence[Mapping], register: Sequence
                     "crit_high": severity["critical"] + severity["high"],
                     "ie": sum(row.get("outcome") == "insufficient_evidence" for row in domain_rows),
                     "score": domain.get("score"),
-                    "rating": domain.get("rating"),
+                    "rating": vocab.score_band(domain["score"]) if domain.get("score") is not None else None,
                 }
             )
         result.append(
@@ -164,7 +164,7 @@ def build_status_board(framework_sections: Sequence[Mapping], register: Sequence
                 "name": section.get("name"),
                 "version": section.get("version"),
                 "score": section.get("score"),
-                "rating": section.get("rating"),
+                "rating": vocab.score_band(section["score"]) if section.get("score") is not None else None,
                 "in_scope": len(rows),
                 "domains": domains,
             }

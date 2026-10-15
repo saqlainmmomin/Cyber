@@ -554,8 +554,8 @@ def test_pdf_has_one_score_section_per_framework_and_no_total(db_session):
     assert "Overall Score" not in text
     assert "DPDPA" in text
     assert "ISO 27001" in text
-    assert "100%" in text
-    assert "50%" in text
+    assert "100.0%" in text
+    assert "50.0%" in text
 
 
 def test_legacy_reader_falls_back_only_for_single_framework(client, db_session):

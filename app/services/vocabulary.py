@@ -102,7 +102,7 @@ def remediation_label(key: str | None) -> str:
 
 
 def score_band(score: float) -> str:
-    """Band the unrounded score; exports switch to these labels in WP 2.3."""
+    """Return the readiness band for the unrounded score."""
     for threshold, label in reversed(SCORE_BANDS):
         if score >= threshold:
             return label
@@ -144,3 +144,47 @@ def upload_category_label(category: str) -> str:
             if request.document_type == category:
                 return request.label
     return category
+
+
+READINESS_TARGETS = {
+    "dpdpa": "Readiness for DPDP Act obligations",
+    "iso27001": "Readiness for ISO 27001 certification",
+    "nist_csf": "Readiness against NIST CSF 2.0 target profile",
+    "gdpr": "Readiness for GDPR obligations",
+    "hipaa": "Readiness for HIPAA Security Rule safeguards",
+    "pci_dss": "Readiness for PCI DSS v4.0 assessment",
+}
+
+
+def score_text(score: float | None) -> str:
+    return "Not scored" if score is None else f"{score:.1f}%"
+
+
+def readiness_headline(framework_id: str, score: float, critical: int, high: int) -> str:
+    gaps = (
+        "No critical or high gaps open."
+        if critical + high == 0
+        else f"{critical} critical and {high} high {'gap' if critical + high == 1 else 'gaps'} open."
+    )
+    return f"{READINESS_TARGETS[framework_id]}: {score_band(score)} ({score_text(score)}). {gaps}"
+
+
+def score_threshold_lines() -> tuple[str, ...]:
+    lines = []
+    for index in range(len(SCORE_BANDS) - 1, -1, -1):
+        threshold, label = SCORE_BANDS[index]
+        if index == len(SCORE_BANDS) - 1:
+            span = f"{threshold}% and above"
+        elif index == 0:
+            span = f"below {SCORE_BANDS[index + 1][0]}%"
+        else:
+            span = f"{threshold}% to below {SCORE_BANDS[index + 1][0]}%"
+        lines.append(f"{label}: {span}.")
+    return tuple(lines)
+
+
+SCORE_DISPLAY_NOTE = "The band uses the exact score; scores are shown to one decimal."
+
+
+def score_threshold_text() -> str:
+    return " ".join(score_threshold_lines()) + " " + SCORE_DISPLAY_NOTE

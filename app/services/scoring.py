@@ -31,12 +31,7 @@ DENOMINATOR_EXCLUDED_OUTCOMES = ("not_applicable", "insufficient_evidence")
 # All statuses Claude is allowed to return. Anything outside this set is unexpected.
 KNOWN_STATUSES = frozenset(STATUS_SCORES) | {"not_assessed", "not_applicable"}
 
-RATING_THRESHOLDS = [
-    (80, vocab.LEGACY_OUTCOMES["compliant"]),
-    (60, vocab.LEGACY_OUTCOMES["partially_compliant"]),
-    (40, "Needs Significant Improvement"),
-    (0, vocab.LEGACY_OUTCOMES["non_compliant"]),
-]
+RATING_THRESHOLDS = list(reversed(vocab.SCORE_BANDS))
 
 MATURITY_STATUS_SCORES = {
     "not_implemented": 0.0,
@@ -424,10 +419,7 @@ def compute_delta(current_items: list, previous_items: list) -> dict:
 
 
 def get_rating(score: float) -> str:
-    for threshold, rating in RATING_THRESHOLDS:
-        if score >= threshold:
-            return rating
-    return vocab.LEGACY_OUTCOMES["non_compliant"]
+    return vocab.score_band(score)
 
 
 def compute_scores(assessments: list[dict]) -> dict:
@@ -675,10 +667,10 @@ def compute_framework_scores(assessments: list[dict], framework_id: str) -> dict
             overall_numerator += domain_scores[domain_key]["score"] * domain["weight"]
             overall_denominator += domain["weight"]
 
-    overall_score = round(overall_numerator / overall_denominator, 1) if overall_denominator > 0 else 0.0
+    overall_score = overall_numerator / overall_denominator if overall_denominator > 0 else 0.0
 
     return {
-        "overall_score": overall_score,
+        "overall_score": round(overall_score, 1),
         "overall_rating": get_rating(overall_score),
         "domain_scores": domain_scores,
     }

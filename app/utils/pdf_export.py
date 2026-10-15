@@ -19,7 +19,6 @@ from app.frameworks.registry import FrameworkRegistry
 from app.services import vocabulary as vocab
 from app.services.report_basis import EMPTY_BASIS, ReportBasis, basis_for
 from app.services.scoring import (
-    RATING_THRESHOLDS,
     is_failed_framework_score,
     report_framework_scores,
 )
@@ -65,12 +64,10 @@ ANSWER_SOURCE_CONFIG = {
 }
 
 # Rating colors
-RATING_COLORS = {
-    vocab.LEGACY_OUTCOMES["non_compliant"]: (231, 76, 60),
-    "Needs Significant Improvement": (230, 126, 34),
-    vocab.LEGACY_OUTCOMES["partially_compliant"]: (241, 196, 15),
-    vocab.LEGACY_OUTCOMES["compliant"]: (39, 174, 96),
-}
+RATING_COLORS = dict(zip(
+    (label for _, label in vocab.SCORE_BANDS),
+    ((231, 76, 60), (230, 126, 34), (241, 196, 15), (39, 174, 96)),
+))
 
 # Priority config
 PRIORITY_CONFIG = {
@@ -248,11 +245,6 @@ def methodology_text(framework_ids, requirement_count: int | None) -> str:
         if requirement_count is not None
         else ""
     )
-    thresholds = []
-    upper = 100
-    for threshold, rating in RATING_THRESHOLDS:
-        thresholds.append(f"- {threshold}-{upper}%: {rating}")
-        upper = threshold - 1
     return f"""This assessment evaluates compliance against the following framework(s): {_framework_label(framework_ids)}{count_clause}.
 
 Basis of Assessment:
@@ -273,7 +265,7 @@ Framework Structure and Weights:
 Requirements are referenced by clause or control identifier for each selected framework; requirement descriptions are summarised for assessment purposes and do not reproduce the source standard. Scores are computed and reported independently for each framework; no score is combined across frameworks.
 
 Rating Thresholds:
-{chr(10).join(thresholds)}
+{vocab.score_threshold_text()}
 
 Risk Classification:
 Each gap carries the risk level (Critical, High, Medium, Low) approved by the consultant, reflecting {_risk_basis(framework_ids)}. Remediation priority on each gap is derived from its approved risk level.
@@ -342,10 +334,7 @@ def _set_font_to_fit(
 
 
 def _rating_color(rating: str) -> tuple[int, int, int]:
-    for key, color in RATING_COLORS.items():
-        if key in rating:
-            return color
-    return NAVY
+    return RATING_COLORS.get(rating, NAVY)
 
 
 # ---------------------------------------------------------------------------
@@ -377,7 +366,7 @@ def _draw_score_ring(pdf: FPDF, cx: float, cy: float, radius: float,
     # Score text in center
     pdf.set_font("Helvetica", "B", int(radius * 0.9))
     pdf.set_text_color(*NAVY)
-    score_text = f"{score:.0f}%"
+    score_text = vocab.score_text(score)
     tw = pdf.get_string_width(score_text)
     pdf.text(cx - tw / 2, cy + radius * 0.25, score_text)
 
@@ -438,7 +427,7 @@ def _draw_h_bar(pdf: FPDF, x: float, y: float, w: float, h: float,
     pdf.set_font("Helvetica", "B", 9)
     r, g, b = _rating_color(rating)
     pdf.set_text_color(r, g, b)
-    score_text = f"{score:.0f}%"
+    score_text = vocab.score_text(score)
     pdf.text(bar_x + bar_w + 3, y + h * 0.65, score_text)
 
 
@@ -632,7 +621,7 @@ def _draw_heatmap_row(pdf: FPDF, x: float, y: float, label: str,
     pdf.set_font("Helvetica", "B", 9)
     r, g, b = _rating_color(rating)
     pdf.set_text_color(r, g, b)
-    pdf.text(x + CW - 22, y + 4, S(f"{score:.0f}%"))
+    pdf.text(x + CW - 22, y + 4, S(vocab.score_text(score)))
 
     # Rating text
     pdf.set_font("Helvetica", "", 7)
@@ -965,6 +954,8 @@ def generate_pdf(
     else:
         cover_title = "Multi-Framework Compliance"
     chapter_scores = json.loads(report.chapter_scores or "{}")
+    for chapter in chapter_scores.values():
+        chapter["rating"] = vocab.score_band(chapter.get("score", 0))
     score_assessment = assessment or SimpleNamespace(frameworks=selected_frameworks)
     framework_scores = report_framework_scores(report, score_assessment)
     approved_input = any(
@@ -980,7 +971,7 @@ def generate_pdf(
             framework_id,
             framework_name,
             scores["overall_score"],
-            scores.get("overall_rating", "N/A"),
+            vocab.score_band(scores["overall_score"]),
         ))
     failed_framework_names = [
         framework_name
@@ -1100,6 +1091,17 @@ def generate_pdf(
         label_width = pdf.get_string_width(framework_label)
         pdf.text(cx - label_width / 2, cy + ring_radius + 10, framework_label)
 
+    for index, (framework_id, _name, score, _rating) in enumerate(framework_score_rows):
+        own_gaps = [item for item in gap_items if getattr(item, "framework_id", "dpdpa") == framework_id and item.compliance_status in GAP_STATUSES]
+        headline = vocab.readiness_headline(
+            framework_id, score,
+            sum(item.risk_level == "critical" for item in own_gaps),
+            sum(item.risk_level == "high" for item in own_gaps),
+        )
+        pdf.set_font("Helvetica", "", 7)
+        pdf.set_text_color(*MID_TEXT)
+        pdf.text(PM, 168 + index * 4, S(headline))
+
     # Summary stats below ring
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*MID_TEXT)
@@ -1108,7 +1110,7 @@ def generate_pdf(
         f"({critical_count + high_count} critical or high)"
     )
     tw = pdf.get_string_width(summary_text)
-    pdf.text((PW - tw) / 2, 182, S(summary_text))
+    pdf.text((PW - tw) / 2, max(182, 168 + (ring_count - 1) * 4 + 8), S(summary_text))
 
     # Bottom section: chapter score preview bars
     bar_y = 202
@@ -1435,8 +1437,7 @@ def generate_pdf(
     # ===================================================================
     for chapter_key, items in chapters_grouped.items():
         chapter_title = chapter_scores.get(chapter_key, {}).get("title", chapter_key)
-        chapter_score = chapter_scores.get(chapter_key, {}).get("score", 0)
-        chapter_rating = chapter_scores.get(chapter_key, {}).get("rating", "")
+        chapter_score = chapter_scores.get(chapter_key, {}).get("score")
 
         pdf.add_page()
         _page_header(pdf, f"Appendix: {S(chapter_title)}")
@@ -1446,11 +1447,14 @@ def generate_pdf(
         pdf.set_text_color(*NAVY)
         pdf.text(PM, pdf.get_y() + 5, S(chapter_title))
 
-        r, g, b = _rating_color(chapter_rating)
-        score_text = f"{chapter_score:.0f}% - {chapter_rating}"
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(r, g, b)
-        pdf.text(PW - PM - pdf.get_string_width(S(score_text)), pdf.get_y() + 5, S(score_text))
+        # A chapter with no score of its own gets no band: never print "Not ready (0.0%)" for a missing score.
+        if chapter_score is not None:
+            chapter_rating = vocab.score_band(chapter_score)
+            r, g, b = _rating_color(chapter_rating)
+            score_text = f"{chapter_rating} ({vocab.score_text(chapter_score)})"
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_text_color(r, g, b)
+            pdf.text(PW - PM - pdf.get_string_width(S(score_text)), pdf.get_y() + 5, S(score_text))
 
         pdf.set_y(pdf.get_y() + 10)
         pdf.set_draw_color(*DIVIDER)

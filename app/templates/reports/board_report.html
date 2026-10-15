@@ -283,8 +283,8 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       <div class="h3">3 · How a score becomes a rating</div>
       <div style="font-size:9.6pt; color:var(--ink2); margin-bottom:2.4mm">A framework's score is a weighted average of its domain scores, where a met requirement counts in full and a partly met one counts half. Scores are computed in code, never by AI, and never combined across frameworks.</div>
       {{ bullet(57, 150, 9) }}
-      <div style="display:flex; width:150mm; margin-top:1mm">{% for lo, hi, lbl, col in v.bands %}<div style="width:{{ (hi - lo) * 1.5 }}mm; font-size:8.4pt; padding-right:1mm"><b>{{ lo }} to {{ hi }}%</b><br><span class="mut">{{ lbl }}</span></div>{% endfor %}</div>
-      <div style="font-size:8.6pt; color:var(--mut); margin-top:1.6mm">Read a bar like this: the dark bar is the score (here 57%), the shaded bands are the rating thresholds behind it.</div>
+      <div style="width:150mm; margin-top:1mm; font-size:8.4pt">{{ v.threshold_text }}</div>
+      <div style="font-size:8.6pt; color:var(--mut); margin-top:1.6mm">Read a bar like this: the dark bar is the score (here 57.0%), the shaded bands are the rating thresholds behind it.</div>
       <div class="h3" style="margin-top:5mm">4 · How we rate each fix</div>
       <table class="t" style="margin-bottom:3mm">
         <tr><th style="width:36mm">Dimension</th><th>What it means</th></tr>
@@ -343,9 +343,9 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     <div style="display:flex; gap:7mm">
       <div style="width:176mm; flex:none">
         {% for f in v.fw %}
-        <div class="fwcard" style="height:{{ v.lay.fwcard }}mm">
-          <div class="nm"><b>{{ f.name }}</b><span style="font-size:9pt; color:{{ f.rating_col }}; font-weight:700"><span class="sq" style="background:{{ f.rating_col }}"></span>{{ f.rating }}</span></div>
-          <div class="score" data-framework-score="{{ f.framework_id }}" style="color:var(--p1)">{{ '%.0f'|format(f.score or 0) }}%</div>
+        <div class="fwcard" style="height:{{ v.lay.fwcard }}mm; flex-wrap:wrap">
+          <div class="nm" style="width:100%; display:flex; align-items:baseline; gap:2mm"><b>{{ f.name }}</b><span style="font-size:9pt; color:{{ f.rating_col }}; font-weight:700"><span class="sq" style="background:{{ f.rating_col }}"></span>{{ f.headline }}</span></div>
+          <div class="score" data-framework-score="{{ f.framework_id }}" style="color:var(--p1); font-size:30pt">{{ v.score_text(f.score) }}</div>
           <div class="trend">{% if f.prior %}<b class="{{ 'up' if f.delta >= 0 else 'down' }}">{{ '▲' if f.delta >= 0 else '▼' }} {{ '%+.0f'|format(f.delta) }} pts</b><span class="mut">from {{ '%.0f'|format(f.prior.prior_score) }}% last report</span>{% else %}<b class="mut">First report</b><span class="mut">no trend yet</span>{% endif %}</div>
           <div style="flex:1" data-outcome-bar="{{ f.framework_id }}">{{ bullet(f.score or 0, 66, 7, f.prior.prior_score if f.prior else None) }}{{ scale(66) }}</div>
         </div>
@@ -388,7 +388,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
         <div class="mut" style="font-size:8pt; margin-top:1.4mm">Columns of ten, filled from the top</div>
       </div>
       <div style="flex:1; min-width:64mm">
-        <div style="display:flex; align-items:baseline; margin:7mm 0 2mm"><span class="disp" style="font-weight:700; font-size:30pt; color:var(--p1); line-height:1">{{ '%.0f'|format(f.score) }}%</span><span style="margin-left:2mm; font-size:9.6pt; font-weight:700; color:{{ f.rating_col }}">{{ f.rating }}</span></div>
+        <div style="display:flex; align-items:baseline; margin:7mm 0 2mm"><span class="disp" style="font-weight:700; font-size:30pt; color:var(--p1); line-height:1">{{ v.score_text(f.score) }}</span><span style="margin-left:2mm; font-size:9.6pt; font-weight:700; color:{{ f.rating_col }}">{{ f.headline }}</span></div>
         <div class="wlist">{% for o in f.outcomes if o.n or o.k != 'not_applicable' %}
           <div class="r"><span><span class="sq" style="background:{{ o.col }}"></span>{{ o.label }}</span><span class="n">{{ o.n }}</span><span class="p">{{ o.pct }}%</span></div>{% endfor %}</div>
       </div>
@@ -406,7 +406,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
   <div class="body" style="display:flex; gap:10mm">
     {% for f in v.fw %}
     <div class="dcol" data-status-framework="{{ f.framework_id }}">
-      <div class="dhead"><b>{{ f.name }}</b><span style="margin-left:auto; font-size:10pt; font-weight:700">{{ '%.0f'|format(f.score or 0) }}% · <span style="color:{{ f.rating_col }}">{{ f.rating }}</span></span></div>
+      <div class="dhead"><b>{{ f.name }}</b><span style="margin-left:auto; font-size:10pt; font-weight:700">{{ v.score_text(f.score) }} · <span style="color:{{ f.rating_col }}">{{ f.headline }}</span></span></div>
       <div style="display:flex"><div style="width:60mm"></div>{{ scale(v.lay.dom_bar) }}</div>
       {% for dm in f.domains %}
       <div class="drow" data-status-domain="{{ dm.title }}" style="height:{{ v.lay.dom_row }}mm">
@@ -645,7 +645,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       <div style="display:flex; gap:2.5mm; margin-bottom:4mm">{% for f in v.fw %}<div class="card" style="flex:1"><div class="disp" style="font-weight:700; font-size:30pt; line-height:1; color:#5A6385">{{ f.coverage.insufficient_evidence }}</div><div style="font-size:9.4pt">not concluded · {{ f.name }}</div></div>{% endfor %}</div>
       <div class="h3">Open evidence requests ({{ doc.not_assessed.rfi.version_label }})</div>
       <table class="t init">{% for i in doc.not_assessed.rfi['items'] %}<tr><td style="width:16mm"><b>{{ i.item_id }}</b></td><td>{{ i.title }}</td><td style="width:24mm"><span class="pill" style="background:{{ v.theme.p2 if i.required else '#6E7591' }}">{{ 'Required' if i.required else 'Recommended' }}</span></td></tr>{% endfor %}</table>
-      <div class="mut" style="font-size:8.4pt; margin-top:2mm">The full list is in Annexure A2 (outcome "Insufficient evidence").</div>
+      <div class="mut" style="font-size:8.4pt; margin-top:2mm">The full list is in Annexure A2 (outcome "{{ v.outcome_labels.insufficient_evidence }}").</div>
     </div>
     <div style="flex:1.3">
       <div class="h3">Limitations</div>
@@ -713,7 +713,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     <div style="flex:1.2">
       <div class="h3">A4 · Statement of Applicability ({{ doc.soa.framework_name }} {{ doc.soa.framework_version }}, {{ doc.soa.totals.controls }} controls)</div>
       <div class="semantic-note" style="margin-bottom:2mm">Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</div>
-      {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined','Not applicable','Not assessed'] %}
+      {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined',v.outcome_labels.not_applicable,'Not assessed'] %}
       <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="text-align:right">{{ c }}</th>{% endfor %}</tr>
       {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
       <div class="h3" style="margin-top:3mm">Excluded controls</div>

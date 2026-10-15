@@ -640,7 +640,7 @@ def test_scenario_1_multiframework_pdf_has_findings_and_no_blend(
     text_value = _pdf_text(response.content)
     report = db.query(GapReport).filter_by(assessment_id=assessment.id).one()
     for framework_id, scores in report_framework_scores(report, assessment).items():
-        assert f"{scores['overall_score']:.0f}%" in text_value
+        assert f"{scores['overall_score']:.1f}%" in text_value
     assert "Framework Scores" in text_value
     assert FrameworkRegistry.get("dpdpa").name in text_value
     assert FrameworkRegistry.get("iso27001").name in text_value
@@ -856,7 +856,7 @@ def test_scenario_5_integrated_report_happy_path(db, http, gate, monkeypatch, up
     assert "Integrated Engagement Report" in text_value
     assert "Assessment A" in text_value and "Assessment B" in text_value
     assert "Framework Scores (this assessment only)" in text_value
-    assert all(value in text_value for value in ("0%", "50%"))
+    assert all(value in text_value for value in ("0.0%", "50.0%"))
     assert "Assessment A finding" in text_value and "Assessment B finding" in text_value
     assert "Assessments Not Included" in text_value
     assert "Assessment C" in text_value and "Not approved for release" in text_value

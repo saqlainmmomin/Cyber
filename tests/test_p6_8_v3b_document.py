@@ -18,6 +18,8 @@ from datetime import date, timedelta
 import pytest
 
 from app.config import settings
+from app.services import vocabulary as vocab
+
 from tests.p6_8_v3_support import (  # noqa: F401 - fixtures are used by name
     REPO_ROOT,
     REVIEWER,
@@ -99,7 +101,12 @@ def test_scenario_3_status_board_risk_matrix_and_dashboard_equal_the_register():
     document = load_deck_document()
     sections, register = document["framework_sections"], document["appendices"]["requirement_register"]
     board = bd.build_status_board(sections, register)
-    assert board == document["status_board"]
+    expected_board = copy.deepcopy(document["status_board"])
+    for framework in expected_board:
+        framework["rating"] = vocab.score_band(framework["score"])
+        for domain in framework["domains"]:
+            domain["rating"] = vocab.score_band(domain["score"]) if domain["score"] is not None else None
+    assert board == expected_board
     gap_outcomes = ("partially_compliant", "non_compliant")
     for framework in board:
         rows = [r for r in register if r["framework_id"] == framework["framework_id"]]

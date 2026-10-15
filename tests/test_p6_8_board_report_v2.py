@@ -651,7 +651,7 @@ def test_scenario_4_document_is_built_from_approved_data_only(db, http, gate, mo
     summary = {f["framework_id"]: f for f in document["summary"]["frameworks"]}
     assert summary["dpdpa"]["status"] == "scored" and summary["dpdpa"]["narrative"] is None
     assert summary["dpdpa"]["coverage"]["insufficient_evidence"] == 1
-    assert "1 requirement(s) insufficient evidence" in summary["dpdpa"]["headline"]
+    assert summary["dpdpa"]["headline"] == "Readiness for DPDP Act obligations: Partly ready (50.0%). 0 critical and 1 high gap open."
     assert "%" in summary["dpdpa"]["headline"]
     assert document["summary"]["totals"] == {
         "requirements": 5, "gaps": 2, "critical_high_gaps": 2,

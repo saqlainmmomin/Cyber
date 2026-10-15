@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from math import ceil
+import re
 from typing import Mapping
 
 from app.services import vocabulary as vocab
@@ -29,17 +31,13 @@ SEVERITY_COLORS = {
     "medium": "#F0A030",
     "low": "#3C9D6B",
 }
-RATING_COLORS = {
-    vocab.LEGACY_OUTCOMES["compliant"]: "#0E8F86",
-    vocab.LEGACY_OUTCOMES["partially_compliant"]: "#E39A1F",
-    "Needs Significant Improvement": "#D9481E",
-    vocab.LEGACY_OUTCOMES["non_compliant"]: "#C0392B",
-}
-RATING_BANDS = (
-    (0, 40, vocab.OUTCOMES["non_compliant"], "#CDD2DE"),
-    (40, 60, "Needs significant improvement", "#DCE0E9"),
-    (60, 80, vocab.OUTCOMES["partially_compliant"], "#E9ECF2"),
-    (80, 100, vocab.OUTCOMES["compliant"], "#F5F6F9"),
+RATING_COLORS = dict(zip(
+    (label for _, label in vocab.SCORE_BANDS),
+    ("#C0392B", "#D9481E", "#E39A1F", "#0E8F86"),
+))
+RATING_BANDS = tuple(
+    (low, vocab.SCORE_BANDS[index + 1][0] if index + 1 < len(vocab.SCORE_BANDS) else 100, label, color)
+    for index, ((low, label), color) in enumerate(zip(vocab.SCORE_BANDS, ("#CDD2DE", "#DCE0E9", "#E9ECF2", "#F5F6F9")))
 )
 LEVELS = {"high": 3, "medium": 2, "low": 1}
 HORIZONS = (
@@ -121,7 +119,43 @@ def _date_label(value) -> str | None:
     return date.fromisoformat(str(value)[:10]).strftime("%d %b %Y")
 
 
+def readiness_document(document: Mapping) -> dict:
+    """Derive display wording from numeric scores without changing issued data."""
+    result = deepcopy(document)
+    register = result.get("register") or result.get("appendices", {}).get("requirement_register", [])
+    sections = {row["framework_id"]: row for row in result.get("framework_sections", [])}
+    for rows in (
+        result.get("summary", {}).get("frameworks", []),
+        result.get("framework_sections", []),
+        result.get("status_board", []),
+    ):
+        for row in rows:
+            score = row.get("score")
+            row["rating"] = vocab.score_band(score) if score is not None else None
+            for domain in row.get("domains", []):
+                value = domain.get("score")
+                domain["rating"] = vocab.score_band(value) if value is not None else None
+            if score is not None:
+                framework_id = row["framework_id"]
+                gaps = [item for item in register if item.get("framework_id") == framework_id and item.get("outcome") in {"partially_compliant", "non_compliant"}]
+                if not register:
+                    gaps = sections.get(framework_id, {}).get("gaps", [])
+                row["headline"] = vocab.readiness_headline(
+                    framework_id, score,
+                    sum(item.get("risk_level") == "critical" for item in gaps),
+                    sum(item.get("risk_level") == "high" for item in gaps),
+                )
+    appendices = result.get("appendices", {})
+    if isinstance(appendices.get("methodology"), str):
+        appendices["methodology"] = re.sub(
+            r"(?<=Rating Thresholds:\n).*?(?=\n\n|$)",
+            lambda _: vocab.score_threshold_text(), appendices["methodology"], flags=re.S,
+        )
+    return result
+
+
 def view(document: Mapping) -> dict:
+    document = readiness_document(document)
     observations = list(document.get("observations") or [])
     register = list(
         document.get("register")
@@ -184,28 +218,33 @@ def view(document: Mapping) -> dict:
             }
         )
 
-    below = [framework for framework in frameworks if framework.get("rating") != vocab.OUTCOMES["compliant"]]
+    below = [framework for framework in frameworks if framework.get("rating") != vocab.score_band(80)]
     critical_high = int(totals.get("critical_high_gaps", 0) or 0)
     gaps = int(totals.get("gaps", 0) or 0)
     framework_count = len(frameworks)
     if framework_count and len(below) == framework_count:
         below_copy = (
-            "neither framework is yet rated Compliant"
+            "neither framework is yet rated Ready"
             if framework_count == 2
-            else "no framework is yet rated Compliant"
+            else "no framework is yet rated Ready"
         )
     else:
-        below_copy = f"{', '.join(framework['short'] for framework in below) or 'no framework'} is below Compliant"
+        below_copy = f"{', '.join(framework['short'] for framework in below) or 'no framework'} is below Ready"
     exec_title = f"{critical_high} of {gaps} gaps are critical or high, and {below_copy}"
 
     met = sum(int(framework.get("coverage", {}).get("compliant", 0) or 0) for framework in frameworks)
     concluded = sum(framework["concluded"] for framework in frameworks)
     posture_title = f"{met} of {concluded} concluded requirements are met; {gaps} have gaps to close"
     all_domains = [(framework["short"], domain) for framework in frameworks for domain in framework["domains"]]
-    weakest = sorted(all_domains, key=lambda item: item[1].get("score") or 0)[:2]
-    domain_title = " and ".join(
-        f"{domain['title']} ({domain.get('score', 0):.0f}%)" for _, domain in weakest
-    ) + (" are the weakest areas" if len(weakest) > 1 else " is the weakest area")
+    # Only scored domains can be the weakest; an unscored domain is not "0%".
+    scored_domains = [item for item in all_domains if item[1].get("score") is not None]
+    weakest = sorted(scored_domains, key=lambda item: item[1]["score"])[:2]
+    domain_title = (
+        " and ".join(f"{domain['title']} ({vocab.score_text(domain['score'])})" for _, domain in weakest)
+        + (" are the weakest areas" if len(weakest) > 1 else " is the weakest area")
+        if weakest
+        else "No area has a score yet"
+    )
     by_critical_high = sorted(all_domains, key=lambda item: -(item[1].get("crit_high", 0) or 0))
     top_critical_high = by_critical_high[0] if by_critical_high and by_critical_high[0][1].get("crit_high") else None
     risk_title = (
@@ -349,6 +388,9 @@ def view(document: Mapping) -> dict:
         "out": OUTCOMES,
         "out_col": OUTCOME_COLORS,
         "bands": RATING_BANDS,
+        "threshold_text": vocab.score_threshold_text(),
+        "score_text": vocab.score_text,
+        "outcome_labels": vocab.OUTCOMES,
         "level": LEVELS,
         "priority_labels": vocab.PRIORITY_LABELS,
         "sev": SEVERITIES,

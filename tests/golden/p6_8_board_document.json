@@ -18,7 +18,7 @@
         "version_number": 1
       }
     ],
-    "methodology": "This assessment evaluates compliance against the following framework(s): India DPDPA, ISO 27001, across 5 in-scope requirements.\n\nBasis of Assessment:\nEach in-scope requirement receives one conclusion. The analysis engine reviews the submitted documents and questionnaire responses and proposes an outcome with cited evidence. A consultant reviews the evidence and individually approves, edits or rejects every proposal. Only individually approved conclusions appear in this report; no outcome, score or finding is produced by the AI on its own.\n\nOutcome Definitions:\n- Compliant: the requirement is met and supported by evidence\n- Partially Compliant: the requirement is met in part\n- Non-Compliant: the requirement is not met\n- Insufficient Evidence: the evidence provided does not support a conclusion either way\n- Not Applicable: the requirement does not apply within the assessed scope\n\nScoring Basis:\nScores are computed only from conclusions a consultant has individually approved. Each approved outcome counts as follows: Compliant 100 points, Partially Compliant 50 points, Non-Compliant 0 points. Not Applicable and Insufficient Evidence are excluded from the scoring denominator. Insufficient Evidence is not treated as Non-Compliant; the number of requirements with insufficient evidence is reported next to each framework score. Requirements excluded at scoping are not scored. A framework is scored only when every in-scope requirement has an approved conclusion. Section scores are the average of their requirement points; domain and framework scores are weighted averages using the published weights below.\n\nFramework Structure and Weights:\n- India DPDPA (2023): 41 requirements in 6 domains. Domain weights: Obligations of Data Fiduciary 30%, Rights of Data Principal 20%, Special Provisions 20%, Consent Management (Detailed) 10%, Cross-Border Data Transfer 10%, Breach Notification 10%.\n- ISO 27001 (2022): 93 requirements in 4 domains. Domain weights: Organizational Controls 35%, People Controls 15%, Physical Controls 15%, Technological Controls 35%.\nRequirements are referenced by clause or control identifier for each selected framework; requirement descriptions are summarised for assessment purposes and do not reproduce the source standard. Scores are computed and reported independently for each framework; no score is combined across frameworks.\n\nRating Thresholds:\n- 80-100%: Compliant\n- 60-79%: Partially Compliant\n- 40-59%: Needs Significant Improvement\n- 0-39%: Non-Compliant\n\nRisk Classification:\nEach gap carries the risk level (Critical, High, Medium, Low) approved by the consultant, reflecting regulatory exposure, potential penalties under INDIA DPDPA and impact on affected individuals (for INDIA DPDPA), and likely impact on the confidentiality, integrity and availability of information (for ISO 27001). Remediation priority on each gap is derived from its approved risk level.\n\nDisclaimer:\nThis assessment provides guidance based on the information and evidence provided and is not legal advice. Consult qualified legal counsel for definitive compliance determinations under INDIA DPDPA. For ISO 27001, it is not a certification audit; certification decisions rest with an accredited certification body or qualified assessor.",
+    "methodology": "This assessment evaluates compliance against the following framework(s): India DPDPA, ISO 27001, across 5 in-scope requirements.\n\nBasis of Assessment:\nEach in-scope requirement receives one conclusion. The analysis engine reviews the submitted documents and questionnaire responses and proposes an outcome with cited evidence. A consultant reviews the evidence and individually approves, edits or rejects every proposal. Only individually approved conclusions appear in this report; no outcome, score or finding is produced by the AI on its own.\n\nOutcome Definitions:\n- Compliant: the requirement is met and supported by evidence\n- Partially Compliant: the requirement is met in part\n- Non-Compliant: the requirement is not met\n- Insufficient Evidence: the evidence provided does not support a conclusion either way\n- Not Applicable: the requirement does not apply within the assessed scope\n\nScoring Basis:\nScores are computed only from conclusions a consultant has individually approved. Each approved outcome counts as follows: Compliant 100 points, Partially Compliant 50 points, Non-Compliant 0 points. Not Applicable and Insufficient Evidence are excluded from the scoring denominator. Insufficient Evidence is not treated as Non-Compliant; the number of requirements with insufficient evidence is reported next to each framework score. Requirements excluded at scoping are not scored. A framework is scored only when every in-scope requirement has an approved conclusion. Section scores are the average of their requirement points; domain and framework scores are weighted averages using the published weights below.\n\nFramework Structure and Weights:\n- India DPDPA (2023): 41 requirements in 6 domains. Domain weights: Obligations of Data Fiduciary 30%, Rights of Data Principal 20%, Special Provisions 20%, Consent Management (Detailed) 10%, Cross-Border Data Transfer 10%, Breach Notification 10%.\n- ISO 27001 (2022): 93 requirements in 4 domains. Domain weights: Organizational Controls 35%, People Controls 15%, Physical Controls 15%, Technological Controls 35%.\nRequirements are referenced by clause or control identifier for each selected framework; requirement descriptions are summarised for assessment purposes and do not reproduce the source standard. Scores are computed and reported independently for each framework; no score is combined across frameworks.\n\nRating Thresholds:\nReady: 80% and above. Mostly ready: 60% to below 80%. Partly ready: 40% to below 60%. Not ready: below 40%. The band uses the exact score; scores are shown to one decimal.\n\nRisk Classification:\nEach gap carries the risk level (Critical, High, Medium, Low) approved by the consultant, reflecting regulatory exposure, potential penalties under INDIA DPDPA and impact on affected individuals (for INDIA DPDPA), and likely impact on the confidentiality, integrity and availability of information (for ISO 27001). Remediation priority on each gap is derived from its approved risk level.\n\nDisclaimer:\nThis assessment provides guidance based on the information and evidence provided and is not legal advice. Consult qualified legal counsel for definitive compliance determinations under INDIA DPDPA. For ISO 27001, it is not a certification audit; certification decisions rest with an accredited certification body or qualified assessor.",
     "requirement_register": [
       {
         "citation": "privacy-policy.pdf v1, whole",
@@ -117,7 +117,7 @@
       "domains": [
         {
           "domain_id": "chapter_2",
-          "rating": "Needs Significant Improvement",
+          "rating": "Partly ready",
           "score": 50.0,
           "title": "Obligations of Data Fiduciary"
         },
@@ -163,7 +163,7 @@
         }
       ],
       "name": "India DPDPA",
-      "rating": "Needs Significant Improvement",
+      "rating": "Partly ready",
       "score": 50.0,
       "status": "scored",
       "version": "2023"
@@ -172,7 +172,7 @@
       "domains": [
         {
           "domain_id": "organizational",
-          "rating": "Needs Significant Improvement",
+          "rating": "Partly ready",
           "score": 50.0,
           "title": "Organizational Controls"
         },
@@ -206,7 +206,7 @@
         }
       ],
       "name": "ISO 27001",
-      "rating": "Needs Significant Improvement",
+      "rating": "Partly ready",
       "score": 50.0,
       "status": "scored",
       "version": "2022"
@@ -1812,7 +1812,7 @@
           "gaps": 1,
           "ie": 1,
           "in_scope": 3,
-          "rating": "Needs Significant Improvement",
+          "rating": "Partly ready",
           "score": 50.0,
           "title": "Obligations of Data Fiduciary"
         },
@@ -1865,7 +1865,7 @@
       "framework_id": "dpdpa",
       "in_scope": 3,
       "name": "India DPDPA",
-      "rating": "Needs Significant Improvement",
+      "rating": "Partly ready",
       "score": 50.0,
       "version": "2023"
     },
@@ -1876,7 +1876,7 @@
           "gaps": 1,
           "ie": 0,
           "in_scope": 2,
-          "rating": "Needs Significant Improvement",
+          "rating": "Partly ready",
           "score": 50.0,
           "title": "Organizational Controls"
         },
@@ -1911,7 +1911,7 @@
       "framework_id": "iso27001",
       "in_scope": 2,
       "name": "ISO 27001",
-      "rating": "Needs Significant Improvement",
+      "rating": "Partly ready",
       "score": 50.0,
       "version": "2022"
     }
@@ -1935,10 +1935,10 @@
           "scored": 2
         },
         "framework_id": "dpdpa",
-        "headline": "50% (Needs Significant Improvement); 1 requirement(s) insufficient evidence",
+        "headline": "Readiness for DPDP Act obligations: Partly ready (50.0%). 0 critical and 1 high gap open.",
         "name": "India DPDPA",
         "narrative": null,
-        "rating": "Needs Significant Improvement",
+        "rating": "Partly ready",
         "score": 50.0,
         "status": "scored"
       },
@@ -1957,10 +1957,10 @@
           "scored": 1
         },
         "framework_id": "iso27001",
-        "headline": "50% (Needs Significant Improvement); 0 requirement(s) insufficient evidence",
+        "headline": "Readiness for ISO 27001 certification: Partly ready (50.0%). 1 critical and 0 high gap open.",
         "name": "ISO 27001",
         "narrative": null,
-        "rating": "Needs Significant Improvement",
+        "rating": "Partly ready",
         "score": 50.0,
         "status": "scored"
       }

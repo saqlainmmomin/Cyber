@@ -296,7 +296,7 @@ def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict
             "current_score": current_summary_row.get("score"),
             "score_delta": None,
             "prior_rating": None,
-            "current_rating": current_summary_row.get("rating"),
+            "current_rating": vocab.score_band(current_summary_row["score"]) if current_summary_row.get("score") is not None else None,
             "counts": None,
             "domains": [],
         }
@@ -321,7 +321,7 @@ def build_comparison(db: Session, assessment: Assessment, current: dict) -> dict
 
         current_entry["compared"] = True
         current_entry["prior_score"] = prior_summary_row.get("score")
-        current_entry["prior_rating"] = prior_summary_row.get("rating")
+        current_entry["prior_rating"] = vocab.score_band(prior_summary_row["score"]) if prior_summary_row.get("score") is not None else None
         if (
             current_summary_row.get("status") == "scored"
             and prior_summary_row.get("status") == "scored"
