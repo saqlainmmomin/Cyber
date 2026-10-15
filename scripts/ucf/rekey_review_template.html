@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UCF re-key review</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1b1f27; --mute: #5b6472; --line: #dde1e8;
+  --accent: #2455c8; --accent-ink: #ffffff;
+  --ok: #1d7a46; --ok-bg: #e3f4ea; --chg: #9a5b00; --chg-bg: #fdf0d9; --rej: #b3261e; --rej-bg: #fbe4e2;
+  --chip: #eef1f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --panel: #1c2027; --ink: #e8ebf0; --mute: #9aa4b2; --line: #2d333d;
+    --accent: #7ba3ff; --accent-ink: #0d1117;
+    --ok: #5fd08d; --ok-bg: #173826; --chg: #f0b45a; --chg-bg: #3b2c12; --rej: #ff8a80; --rej-bg: #44211f;
+    --chip: #262b34;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --panel: #1c2027; --ink: #e8ebf0; --mute: #9aa4b2; --line: #2d333d;
+  --accent: #7ba3ff; --accent-ink: #0d1117;
+  --ok: #5fd08d; --ok-bg: #173826; --chg: #f0b45a; --chg-bg: #3b2c12; --rej: #ff8a80; --rej-bg: #44211f;
+  --chip: #262b34;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 130px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+header.top { position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.bar h1 { font-size: 17px; margin: 0; }
+.bar .grow { flex: 1; min-width: 160px; }
+.meter { height: 8px; background: var(--chip); border-radius: 4px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--ok); width: 0; }
+.prog { font-size: 13px; color: var(--mute); }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: 8px; }
+nav.tabs button { border: 0; background: none; color: var(--mute); padding: 8px 12px; font: inherit; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+nav.tabs .n { font-size: 12px; color: var(--mute); margin-left: 4px; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+section.panel[hidden] { display: none; }
+h2 { font-size: 20px; margin: 8px 0 4px; }
+h3 { font-size: 16px; margin: 20px 0 6px; }
+p { margin: 6px 0; }
+.mute { color: var(--mute); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+.card.s-approve { border-left: 5px solid var(--ok); }
+.card.s-change { border-left: 5px solid var(--chg); }
+.card.s-reject { border-left: 5px solid var(--rej); }
+.head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.head .id { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--mute); }
+.head .t { font-weight: 600; font-size: 16px; }
+.chip { display: inline-block; font-size: 12px; background: var(--chip); border-radius: 999px; padding: 1px 9px; color: var(--mute); }
+.chip.crit { background: var(--rej-bg); color: var(--rej); }
+.chip.high { background: var(--chg-bg); color: var(--chg); }
+.lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); margin-top: 10px; }
+.q { font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); }
+.tablewrap { overflow-x: auto; }
+.dec { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin-top: 12px; }
+.dec .btns { display: flex; gap: 6px; }
+.dec button { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.dec button[aria-pressed="true"].approve { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.dec button[aria-pressed="true"].change { background: var(--chg-bg); border-color: var(--chg); color: var(--chg); font-weight: 600; }
+.dec button[aria-pressed="true"].reject { background: var(--rej-bg); border-color: var(--rej); color: var(--rej); font-weight: 600; }
+.dec textarea { flex: 1; min-width: 220px; min-height: 34px; font: inherit; font-size: 14px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--accent); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; margin: 10px 0; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--mute); gap: 2px; }
+.filters select, .filters input { font: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.btn { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.domhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline; margin-top: 28px; border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+.domhead h3 { margin: 0; }
+.rec { background: var(--chip); border-radius: 6px; padding: 6px 10px; margin-top: 8px; font-size: 14px; }
+.flag { color: var(--chg); font-weight: 600; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.src-fw { font-weight: 600; margin-top: 8px; font-size: 13px; }
+.small { font-size: 13px; }
+@media (max-width: 640px) { main { padding: 12px; } .dec textarea { min-width: 100%; } }
+.recblock { margin-top: 28px; }
+.recblock > .head { border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+.cand { background: var(--chip); border-radius: 6px; padding: 6px 10px; margin-top: 6px; font-size: 14px; }
+.cand ul { margin: 4px 0 0; padding-left: 18px; }
+.choices { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.choices label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; cursor: pointer; }
+.choices input { margin: 0; }
+.tag { font-size: 12px; color: var(--ok); font-weight: 600; }
+.why { font-size: 13px; color: var(--mute); margin-top: 4px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <h1>UCF 1.0.0: criteria and scope re-key review</h1>
+    <div class="grow">
+      <div class="meter" role="progressbar" aria-label="Review progress" id="meter"><i id="meterfill"></i></div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <button class="btn" id="exportJson">Export decisions (JSON)</button>
+    <button class="btn ghost" id="exportMd">Export summary (Markdown)</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+<main id="main"></main>
+
+<script>
+"use strict";
+const DATA = /*__DATA__*/null;
+
+// ---------- helpers ----------
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const FW = { iso27001: "ISO 27001", nist_csf: "NIST CSF", dpdpa: "DPDPA" };
+const FLAG = "FLAG";
+
+// ---------- state (browser only) ----------
+const KEY = DATA.reviewKey;
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+let saveWarned = false;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { if (!saveWarned) { saveWarned = true; alert("This browser cannot save your decisions. Export before closing the page."); } }
+}
+const get = k => state[k] || { s: "", n: "", c: "" };
+function set(k, patch) { state[k] = Object.assign({}, get(k), patch); save(); updateProgress(); }
+
+// ---------- item registry ----------
+const CRITS = [];
+DATA.records.forEach(r => r.crits.forEach(c => CRITS.push(Object.assign({ rec: r }, c))));
+const ITEMS = [];
+CRITS.forEach(c => ITEMS.push({ key: "t:" + c.id, group: "Criteria", label: c.id }));
+DATA.scope.forEach(p => ITEMS.push({ key: "p:" + p.key, group: "Scope", label: p.q + " = " + p.answer + ": " + p.cid + " " + p.title }));
+ITEMS.push({ key: "h:held", group: "Scope", label: "Held-back scope cases" });
+ITEMS.push({ key: "q:four", group: "Scope", label: "Are four ISO scope questions enough?" });
+const GROUPS = ["Criteria", "Scope"];
+
+function cardClass(s) { return s === "accept" || s === "approve" || s === "enough" || s === "keep_out" ? "s-approve" : s === "flag" ? "s-reject" : s ? "s-change" : ""; }
+function updateProgress() {
+  let done = 0; const per = {};
+  GROUPS.forEach(g => per[g] = { n: 0, d: 0 });
+  ITEMS.forEach(it => { const d = get(it.key).s ? 1 : 0; done += d; per[it.group].n++; per[it.group].d += d; });
+  const total = ITEMS.length, pct = Math.round(100 * done / total);
+  document.getElementById("meterfill").style.width = pct + "%";
+  document.getElementById("meter").setAttribute("aria-valuenow", pct);
+  document.getElementById("prog").textContent = done + " of " + total + " items decided (" + pct + "%). Saved in this browser only; export to keep.";
+  document.querySelectorAll("[data-tabcount]").forEach(el => { const g = el.getAttribute("data-tabcount"); el.textContent = per[g].d + "/" + per[g].n; });
+  document.querySelectorAll("[data-card]").forEach(card => {
+    card.classList.remove("s-approve", "s-change", "s-reject");
+    const c = cardClass(get(card.getAttribute("data-card")).s); if (c) card.classList.add(c);
+  });
+}
+
+function noteBox(key, placeholder) {
+  const ta = h("textarea", { "aria-label": "Note", placeholder, oninput: e => set(key, { n: e.target.value }) });
+  ta.value = get(key).n || "";
+  return ta;
+}
+// Buttons for a two- or three-way choice. defs: [[value, label, class]]
+function choiceBox(key, defs, placeholder) {
+  const btns = h("div", { class: "btns", role: "group", "aria-label": "Decision" });
+  const ta = noteBox(key, placeholder);
+  const refresh = () => defs.forEach(([v], i) => btns.children[i].setAttribute("aria-pressed", get(key).s === v ? "true" : "false"));
+  defs.forEach(([v, label, cls]) => btns.append(h("button", {
+    class: cls, type: "button", "aria-pressed": "false",
+    onclick: () => { set(key, { s: get(key).s === v ? "" : v }); refresh(); if (cls !== "approve" && get(key).s) ta.focus(); }
+  }, label)));
+  refresh();
+  return h("div", { class: "dec" }, btns, ta);
+}
+
+// ---------- panels ----------
+const PANELS = {};
+function mkPanel(id, ...kids) { const s = h("section", { class: "panel", id: "p-" + id, hidden: true }, ...kids); PANELS[id] = s; return s; }
+
+function overview() {
+  const nOpen = CRITS.length;
+  return mkPanel("overview",
+    h("h2", null, "What this is"),
+    h("p", null, "The library is signed at " + DATA.version + ". Two things still point at framework ids instead of unified controls: the 728 signed test criteria and the ISO scope proposals. This page settles both. Generated " + DATA.date + ". Nothing here is loaded into the app."),
+    h("h3", null, "Test criteria"),
+    h("p", null, "Each signed criterion must sit under exactly one unified control. When its record maps to one control, it was attached automatically. When the record maps to two or more, a script picked the control whose mapped asks and text share the most distinctive words with the criterion. You confirm or change those " + nOpen + " picks. Criterion ids and text never change."),
+    h("div", { class: "tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, ["Framework", "Criteria", "Attached automatically", "Proposed, need your call", "Already decided"].map(t => h("th", null, t)))),
+      h("tbody", null, DATA.counts.map(c => h("tr", null, h("td", null, FW[c.fw]), h("td", null, c.total), h("td", null, c.auto), h("td", null, c.proposed), h("td", null, c.decided)))))),
+    h("p", { class: "small mute" }, "Picks marked \"close call\" had a second candidate within 15% of the best; \"weak match\" means fewer than three shared words. Look at those first (filter on the Criteria tab)."),
+    h("h3", null, "Controls with no criteria"),
+    h("p", null, DATA.zero.length + " controls end up with no signed criterion. Their drafted test text stands for now (decision D18); no action needed on this page. They are the gaps a criteria-coverage check (WP 3.4) will report."),
+    h("ul", { class: "small" }, DATA.zero.map(z => h("li", null, z.id + " " + z.title))),
+    h("h3", null, "Scope proposals"),
+    h("p", null, "The four ISO scope answers propose Annex A controls as likely not applicable. Re-keyed, a unified control is proposed only when every record it carries is excluded by the same answer. " + DATA.scope.length + " proposals are clean. " + DATA.held.length + " cases are held back because the control also carries a NIST record (or another Annex A control), so excluding it would drop a test another framework needs. One card asks what to do with those, one asks whether four questions are enough."),
+    h("h3", null, "How to review"),
+    h("p", null, "Criteria tab: each card has the proposed control pre-selected. Accept it, pick another, or flag the criterion as testing two controls (with a note). The \"Accept proposals\" buttons accept every undecided card in a record or in the current list. Scope tab: approve or change each proposal, then the two decision cards. Export the JSON, save it as tasks/2026-10-14-ucf-rekey-decisions.json and tell me; I will write your choices into criteria_map.csv as basis decided."));
+}
+
+// ---------- criteria ----------
+const cf = { fw: "all", status: "open", q: "", hard: false };
+function critCard(c) {
+  const key = "t:" + c.id;
+  const name = "r-" + c.id;
+  const opts = c.rec.cands.map(k => [k.id, k.id + " " + k.title, k.id === c.prop]).concat([[FLAG, "Tests two controls: flag it (say which in the note)", false]]);
+  const cur = () => get(key).c || c.prop;
+  const choices = h("div", { class: "choices", role: "radiogroup", "aria-label": "Control for " + c.id });
+  opts.forEach(([v, label, isProp]) => {
+    const input = h("input", { type: "radio", name, value: v, onchange: () => {
+      set(key, { c: v, s: v === FLAG ? "flag" : v === c.prop ? "accept" : "change" });
+      if (v === FLAG) ta.focus();
+    } });
+    input.checked = cur() === v;
+    choices.append(h("label", null, input, h("span", null, label), isProp ? h("span", { class: "tag" }, "proposed") : null));
+  });
+  const ta = noteBox(key, "Note (needed for a flag)");
+  return h("article", { class: "card", "data-card": key, id: "t-" + c.id },
+    h("div", { class: "head" }, h("span", { class: "id" }, c.id), h("span", { class: "chip" }, c.kind),
+      /close call|weak|no word/.test(c.reason) ? h("span", { class: "chip high" }, /close call/.test(c.reason) ? "close call" : "weak match") : null),
+    h("div", { class: "q" }, c.stmt),
+    c.hint ? h("div", { class: "small mute" }, "Evidence: " + c.hint) : null,
+    h("div", { class: "why" }, "Why proposed: " + c.reason),
+    choices,
+    h("div", { class: "dec" }, h("div", { class: "btns" }, h("button", { class: "approve", type: "button", "aria-pressed": get(key).s === "accept" ? "true" : "false",
+      onclick: () => { set(key, { c: c.prop, s: "accept" }); renderCriteria(); } }, "Accept proposed")), ta));
+}
+function critMatches(c) {
+  if (cf.fw !== "all" && c.rec.fw !== cf.fw) return false;
+  const s = get("t:" + c.id).s;
+  if (cf.status === "open" && s) return false;
+  if (!["all", "open"].includes(cf.status) && s !== cf.status) return false;
+  if (cf.hard && !/close call|weak|no word/.test(c.reason)) return false;
+  if (cf.q) {
+    const hay = (c.id + " " + c.stmt + " " + c.rec.ref + " " + c.rec.title + " " + c.rec.cands.map(k => k.id + " " + k.title).join(" ")).toLowerCase();
+    if (!hay.includes(cf.q)) return false;
+  }
+  return true;
+}
+function acceptAll(list) {
+  list.forEach(c => { const k = "t:" + c.id; if (!get(k).s) state[k] = Object.assign({}, get(k), { c: c.prop, s: "accept" }); });
+  save(); renderCriteria();
+}
+function criteriaPanel() {
+  const sel = (id, label, opts, key) => h("label", null, label,
+    h("select", { id, onchange: e => { cf[key] = e.target.value; renderCriteria(); } }, opts.map(([v, t]) => h("option", { value: v }, t))));
+  return mkPanel("criteria", h("h2", null, "Test criteria with more than one candidate control"),
+    h("p", { class: "mute" }, "Grouped by framework record. Each record lists its candidate controls once, with the record's asks that map to each. The list opens on undecided cards."),
+    h("div", { class: "filters" },
+      sel("cFw", "Framework", [["all", "All"], ["iso27001", "ISO 27001"], ["nist_csf", "NIST CSF"], ["dpdpa", "DPDPA"]], "fw"),
+      sel("cStatus", "Status", [["open", "Undecided"], ["all", "All"], ["accept", "Accepted"], ["change", "Changed"], ["flag", "Flagged"]], "status"),
+      h("label", null, "Only close calls and weak matches", h("input", { type: "checkbox", id: "cHard", onchange: e => { cf.hard = e.target.checked; renderCriteria(); } })),
+      h("label", null, "Search", h("input", { type: "search", id: "cQ", placeholder: "id, text, control", oninput: e => { cf.q = e.target.value.toLowerCase(); renderCriteria(); } })),
+      h("button", { class: "btn ghost", type: "button", id: "acceptShown", onclick: () => acceptAll(CRITS.filter(critMatches)) }, "Accept proposals for every undecided card shown")),
+    h("div", { id: "crlist" }));
+}
+function renderCriteria() {
+  const list = document.getElementById("crlist");
+  list.replaceChildren();
+  let shown = 0;
+  DATA.records.forEach(r => {
+    const cs = CRITS.filter(c => c.rec === r && critMatches(c));
+    if (!cs.length) return;
+    shown += cs.length;
+    list.append(h("div", { class: "recblock", id: "rec-" + r.id },
+      h("div", { class: "head" }, h("span", { class: "id" }, FW[r.fw] + " " + r.ref), h("span", { class: "t" }, r.title),
+        h("span", { class: "small mute" }, cs.length + " of " + r.crits.length + " shown"),
+        h("button", { class: "btn ghost", type: "button", onclick: () => acceptAll(cs) }, "Accept proposals in this record")),
+      r.cands.map(k => h("div", { class: "cand" },
+        h("b", null, k.id + " " + k.title), k.primary ? h("span", { class: "chip" }, "primary for this record") : null,
+        h("div", { class: "small" }, k.statement),
+        h("ul", { class: "small mute" }, k.asks.map(a => h("li", null, a))))),
+      cs.map(critCard)));
+  });
+  if (!shown) list.append(h("p", { class: "mute" }, cf.status === "open" ? "Nothing undecided here. Set Status to All to see every card." : "No cards match the filters."));
+  updateProgress();
+}
+
+// ---------- scope ----------
+function scopePanel() {
+  const cards = DATA.scope.map(p => h("div", { class: "card", "data-card": "p:" + p.key },
+    h("div", { class: "head" }, h("span", { class: "id" }, p.q + " = " + p.answer), h("span", { class: "t" }, p.cid + " " + p.title)),
+    h("div", { class: "small" }, p.statement),
+    h("p", { class: "small mute" }, p.reason),
+    choiceBox("p:" + p.key, [["approve", "Approve", "approve"], ["change", "Change", "change"]], "Note (needed for Change)")));
+  const held = h("div", { class: "card", "data-card": "h:held" },
+    h("div", { class: "head" }, h("span", { class: "id" }, "Decision S1"), h("span", { class: "t" }, "What to do with the " + DATA.held.length + " held-back cases")),
+    h("p", null, "These controls used to sit behind an Annex A id that a scope answer proposes as not applicable. Each also carries another record, so the rule I was given keeps them out of the proposals. Six Annex A ids now have no clean control left: A.8.4, A.8.25 and A.8.33 (no development), and A.7.2, A.7.4 and A.7.5 (fully remote)."),
+    h("div", { class: "tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, ["Question = answer", "Control", "Reached from", "Also carries"].map(t => h("th", null, t)))),
+      h("tbody", null, DATA.held.map(x => h("tr", null, h("td", { class: "small" }, x.q + " = " + x.answer), h("td", { class: "small" }, x.cid + " " + x.title),
+        h("td", { class: "small" }, x.via), h("td", { class: "small" }, x.block.join("; "))))))),
+    h("div", { class: "rec" }, h("b", null, "My recommendation: "), "Keep them out, as the rule says. The other option is to propose them only when ISO 27001 is the sole framework selected: then the NIST record is not in play. That needs a framework condition on each proposal row, which the app wiring (WP 5.5) would have to support. UC-PPL-04 stays out either way: it also carries A.6.3 (awareness training), which no scope answer excludes."),
+    choiceBox("h:held", [["keep_out", "Keep them out", "approve"], ["propose_iso_only", "Propose when ISO is the only framework", "change"]], "Note (optional)"));
+  const four = h("div", { class: "card", "data-card": "q:four" },
+    h("div", { class: "head" }, h("span", { class: "id" }, "Decision S2"), h("span", { class: "t" }, "Are four ISO scope questions enough?")),
+    h("ol", null, DATA.questions.map(q => h("li", null, q.q, h("div", { class: "small mute" }, "Answers: " + q.options.join("; "))))),
+    h("p", null, "Only questions 2 to 4 drive proposals; question 1 records the management system scope. Areas a further question could cover: remote working (whether staff work off site), own network infrastructure (versus fully managed or cloud), and removable media."),
+    h("div", { class: "rec" }, h("b", null, "My recommendation: "), "Four is enough for 1.0. The extra areas apply to nearly every client, so a question would rarely exclude anything. Revisit after the first real assessments show which controls clients mark not applicable."),
+    choiceBox("q:four", [["enough", "Four is enough", "approve"], ["more", "Add questions", "change"]], "Note (which questions to add)"));
+  return mkPanel("scope", h("h2", null, "ISO scope proposals"),
+    h("p", { class: "mute" }, "Each row proposes a unified control as likely not applicable when the client gives that answer. The consultant still confirms; nothing is removed automatically. Wiring into the app is WP 5.5."),
+    cards, h("h3", null, "Decisions"), held, four);
+}
+
+// ---------- tabs ----------
+const TABS = [["overview", "Overview", null], ["criteria", "Criteria", "Criteria"], ["scope", "Scope", "Scope"]];
+function showTab(id) {
+  TABS.forEach(([t]) => { PANELS[t].hidden = t !== id; });
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === id ? "true" : "false"));
+  try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  if (id === "criteria") renderCriteria();
+  window.scrollTo(0, 0);
+}
+
+// ---------- export ----------
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = h("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function collect() {
+  const criteria = {}, scope = {}, n = { accept: 0, change: 0, flag: 0, open: 0 };
+  CRITS.forEach(c => {
+    const d = get("t:" + c.id);
+    n[d.s || "open"]++;
+    if (d.s || d.n) criteria[c.id] = { record_id: c.rec.id, status: d.s, unified_control_id: d.s === "flag" ? "" : (d.c || c.prop), proposed: c.prop, note: d.n || "" };
+  });
+  DATA.scope.forEach(p => { const d = get("p:" + p.key); if (d.s || d.n) scope[p.key] = { status: d.s, note: d.n || "" }; });
+  return { criteria, scope, n, held: get("h:held"), four: get("q:four") };
+}
+document.getElementById("exportJson").addEventListener("click", () => {
+  const x = collect();
+  download("ucf-rekey-decisions.json", JSON.stringify({ library_version: DATA.version, exported_at: new Date().toISOString(),
+    totals: x.n, criteria: x.criteria, scope: x.scope,
+    held_back: { status: x.held.s || "", note: x.held.n || "" }, four_questions: { status: x.four.s || "", note: x.four.n || "" } }, null, 2), "application/json");
+});
+document.getElementById("exportMd").addEventListener("click", () => {
+  const x = collect();
+  const L = ["# UCF " + DATA.version + " re-key review", "", "Criteria: accepted " + x.n.accept + ", changed " + x.n.change + ", flagged " + x.n.flag + ", undecided " + x.n.open + ".", ""];
+  const ch = Object.entries(x.criteria).filter(([, v]) => v.status === "change" || v.status === "flag");
+  L.push("## Criteria changed or flagged", "");
+  if (!ch.length) L.push("None.");
+  ch.forEach(([id, v]) => L.push("- " + v.status.toUpperCase() + " " + id + ": " + (v.status === "flag" ? "" : v.proposed + " to " + v.unified_control_id) + (v.note ? (v.status === "flag" ? "" : ". ") + v.note.replace(/\n/g, " ") : "")));
+  L.push("", "## Scope proposals", "");
+  const sc = DATA.scope.map(p => [p, get("p:" + p.key)]);
+  sc.forEach(([p, d]) => L.push("- " + (d.s || "undecided").toUpperCase() + " " + p.q + " = " + p.answer + ": " + p.cid + " " + p.title + (d.n ? ". " + d.n.replace(/\n/g, " ") : "")));
+  L.push("", "## Decisions", "");
+  L.push("- S1 held-back cases: " + (x.held.s || "undecided") + (x.held.n ? ". " + x.held.n.replace(/\n/g, " ") : ""));
+  L.push("- S2 four scope questions: " + (x.four.s || "undecided") + (x.four.n ? ". " + x.four.n.replace(/\n/g, " ") : ""), "");
+  download("ucf-rekey-summary.md", L.join("\n"), "text/markdown");
+});
+
+// ---------- boot ----------
+const main = document.getElementById("main");
+[overview(), criteriaPanel(), scopePanel()].forEach(p => main.append(p));
+const tabs = document.getElementById("tabs");
+TABS.forEach(([id, label, grp]) => tabs.append(h("button", { type: "button", role: "tab", "data-tab": id, "aria-selected": "false", onclick: () => showTab(id) },
+  label, grp ? h("span", { class: "n", "data-tabcount": grp }) : null)));
+updateProgress();
+const start = (location.hash || "").slice(1);
+showTab(TABS.some(t => t[0] === start) ? start : "overview");
+</script>
+</body>
+</html>

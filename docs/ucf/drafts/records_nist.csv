@@ -1,0 +1,107 @@
+framework,record_id,reference,title,kind,group
+nist_csf,NIST.GV.OC.01,GV.OC-01,Organizational mission understanding,subcategory,Govern (GV) / Organizational Context
+nist_csf,NIST.GV.OC.02,GV.OC-02,Internal and external stakeholders,subcategory,Govern (GV) / Organizational Context
+nist_csf,NIST.GV.OC.03,GV.OC-03,Legal and regulatory requirements,subcategory,Govern (GV) / Organizational Context
+nist_csf,NIST.GV.OC.04,GV.OC-04,Critical objectives and dependencies,subcategory,Govern (GV) / Organizational Context
+nist_csf,NIST.GV.OC.05,GV.OC-05,Organizational dependencies,subcategory,Govern (GV) / Organizational Context
+nist_csf,NIST.GV.RM.01,GV.RM-01,Risk management objectives,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.02,GV.RM-02,Risk appetite and tolerance,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.03,GV.RM-03,Risk management activities,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.04,GV.RM-04,Strategic risk direction,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.05,GV.RM-05,Risk communication lines,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.06,GV.RM-06,Standardized risk method,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RM.07,GV.RM-07,Positive risk consideration,subcategory,Govern (GV) / Risk Management Strategy
+nist_csf,NIST.GV.RR.01,GV.RR-01,Organizational leadership responsibility,subcategory,"Govern (GV) / Roles, Responsibilities & Authorities"
+nist_csf,NIST.GV.RR.02,GV.RR-02,Cybersecurity roles and responsibilities,subcategory,"Govern (GV) / Roles, Responsibilities & Authorities"
+nist_csf,NIST.GV.RR.03,GV.RR-03,Adequate resourcing,subcategory,"Govern (GV) / Roles, Responsibilities & Authorities"
+nist_csf,NIST.GV.RR.04,GV.RR-04,Cybersecurity in HR practices,subcategory,"Govern (GV) / Roles, Responsibilities & Authorities"
+nist_csf,NIST.GV.PO.01,GV.PO-01,Cybersecurity policy,subcategory,Govern (GV) / Policy
+nist_csf,NIST.GV.PO.02,GV.PO-02,Policy review and update,subcategory,Govern (GV) / Policy
+nist_csf,NIST.GV.OV.01,GV.OV-01,Risk management strategy review,subcategory,Govern (GV) / Oversight
+nist_csf,NIST.GV.OV.02,GV.OV-02,Risk strategy coverage review,subcategory,Govern (GV) / Oversight
+nist_csf,NIST.GV.OV.03,GV.OV-03,Risk management performance evaluation,subcategory,Govern (GV) / Oversight
+nist_csf,NIST.GV.SC.01,GV.SC-01,Supply chain risk management program,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.02,GV.SC-02,Supply chain roles and responsibilities,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.03,GV.SC-03,Supply chain integration,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.04,GV.SC-04,Supplier criticality prioritization,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.05,GV.SC-05,Supply chain requirements in contracts,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.06,GV.SC-06,Supplier pre-engagement due diligence,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.07,GV.SC-07,Supplier risk management over the relationship,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.08,GV.SC-08,Suppliers in incident planning and recovery,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.09,GV.SC-09,Supply chain security across the life cycle,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.GV.SC.10,GV.SC-10,Supplier exit provisions,subcategory,Govern (GV) / Supply Chain Risk Management
+nist_csf,NIST.ID.AM.01,ID.AM-01,Hardware asset inventory,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.02,ID.AM-02,Software asset inventory,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.03,ID.AM-03,Network communication mapping,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.04,ID.AM-04,External service inventory,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.05,ID.AM-05,Asset prioritization,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.07,ID.AM-07,Data inventory and classification,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.AM.08,ID.AM-08,Asset life-cycle management,subcategory,Identify (ID) / Asset Management
+nist_csf,NIST.ID.RA.01,ID.RA-01,Vulnerability identification,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.02,ID.RA-02,Threat intelligence receipt,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.03,ID.RA-03,Threat identification,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.04,ID.RA-04,Impact and likelihood assessment,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.05,ID.RA-05,Risk determination,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.06,ID.RA-06,Risk response selection,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.07,ID.RA-07,Change and exception management,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.08,ID.RA-08,Vulnerability disclosure handling,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.09,ID.RA-09,Hardware and software integrity verification,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.RA.10,ID.RA-10,Critical supplier pre-acquisition assessment,subcategory,Identify (ID) / Risk Assessment
+nist_csf,NIST.ID.IM.01,ID.IM-01,Improvement from evaluations,subcategory,Identify (ID) / Improvement
+nist_csf,NIST.ID.IM.02,ID.IM-02,Improvement from testing,subcategory,Identify (ID) / Improvement
+nist_csf,NIST.ID.IM.03,ID.IM-03,Improvement from execution,subcategory,Identify (ID) / Improvement
+nist_csf,NIST.ID.IM.04,ID.IM-04,Incident response and operational cyber plans,subcategory,Identify (ID) / Improvement
+nist_csf,NIST.PR.AA.01,PR.AA-01,Identity and credential management,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AA.02,PR.AA-02,Identity proofing,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AA.03,PR.AA-03,Authentication,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AA.04,PR.AA-04,Identity assertions,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AA.05,PR.AA-05,Access permissions and authorizations,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AA.06,PR.AA-06,Physical access management,subcategory,"Protect (PR) / Identity Management, Authentication & Access Control"
+nist_csf,NIST.PR.AT.01,PR.AT-01,Security awareness,subcategory,Protect (PR) / Awareness & Training
+nist_csf,NIST.PR.AT.02,PR.AT-02,Specialized role training,subcategory,Protect (PR) / Awareness & Training
+nist_csf,NIST.PR.DS.01,PR.DS-01,Data-at-rest protection,subcategory,Protect (PR) / Data Security
+nist_csf,NIST.PR.DS.02,PR.DS-02,Data-in-transit protection,subcategory,Protect (PR) / Data Security
+nist_csf,NIST.PR.DS.10,PR.DS-10,Data-in-use protection,subcategory,Protect (PR) / Data Security
+nist_csf,NIST.PR.DS.11,PR.DS-11,Backup management,subcategory,Protect (PR) / Data Security
+nist_csf,NIST.PR.PS.01,PR.PS-01,Configuration management practices,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.PS.02,PR.PS-02,Software maintenance,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.PS.03,PR.PS-03,Hardware maintenance,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.PS.04,PR.PS-04,Log record generation,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.PS.05,PR.PS-05,Installation and execution prevention,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.PS.06,PR.PS-06,Secure software development,subcategory,Protect (PR) / Platform Security
+nist_csf,NIST.PR.IR.01,PR.IR-01,Network and environment protection,subcategory,Protect (PR) / Technology Infrastructure Resilience
+nist_csf,NIST.PR.IR.02,PR.IR-02,Environmental threat protection,subcategory,Protect (PR) / Technology Infrastructure Resilience
+nist_csf,NIST.PR.IR.03,PR.IR-03,Resilience mechanisms,subcategory,Protect (PR) / Technology Infrastructure Resilience
+nist_csf,NIST.PR.IR.04,PR.IR-04,Adequate resource capacity,subcategory,Protect (PR) / Technology Infrastructure Resilience
+nist_csf,NIST.DE.CM.01,DE.CM-01,Network monitoring,subcategory,Detect (DE) / Continuous Monitoring
+nist_csf,NIST.DE.CM.02,DE.CM-02,Physical environment monitoring,subcategory,Detect (DE) / Continuous Monitoring
+nist_csf,NIST.DE.CM.03,DE.CM-03,Personnel activity monitoring,subcategory,Detect (DE) / Continuous Monitoring
+nist_csf,NIST.DE.CM.06,DE.CM-06,External service provider monitoring,subcategory,Detect (DE) / Continuous Monitoring
+nist_csf,NIST.DE.CM.09,DE.CM-09,Computing hardware and software monitoring,subcategory,Detect (DE) / Continuous Monitoring
+nist_csf,NIST.DE.AE.02,DE.AE-02,Adverse event analysis,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.DE.AE.03,DE.AE-03,Event correlation,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.DE.AE.04,DE.AE-04,Impact estimation,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.DE.AE.06,DE.AE-06,Adverse event information distribution,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.DE.AE.07,DE.AE-07,Threat information integration,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.DE.AE.08,DE.AE-08,Incident declaration,subcategory,Detect (DE) / Adverse Event Analysis
+nist_csf,NIST.RS.MA.01,RS.MA-01,Incident response plan execution,subcategory,Respond (RS) / Incident Management
+nist_csf,NIST.RS.MA.02,RS.MA-02,Incident triage and validation,subcategory,Respond (RS) / Incident Management
+nist_csf,NIST.RS.MA.03,RS.MA-03,Incident categorization and prioritization,subcategory,Respond (RS) / Incident Management
+nist_csf,NIST.RS.MA.04,RS.MA-04,Incident escalation,subcategory,Respond (RS) / Incident Management
+nist_csf,NIST.RS.MA.05,RS.MA-05,Recovery initiation criteria,subcategory,Respond (RS) / Incident Management
+nist_csf,NIST.RS.AN.03,RS.AN-03,Root cause analysis,subcategory,Respond (RS) / Incident Analysis
+nist_csf,NIST.RS.AN.06,RS.AN-06,Investigation actions,subcategory,Respond (RS) / Incident Analysis
+nist_csf,NIST.RS.AN.07,RS.AN-07,Incident data collection and preservation,subcategory,Respond (RS) / Incident Analysis
+nist_csf,NIST.RS.AN.08,RS.AN-08,Incident scope estimation,subcategory,Respond (RS) / Incident Analysis
+nist_csf,NIST.RS.CO.02,RS.CO-02,Stakeholder incident notification,subcategory,Respond (RS) / Incident Response Reporting & Communication
+nist_csf,NIST.RS.CO.03,RS.CO-03,Incident information sharing,subcategory,Respond (RS) / Incident Response Reporting & Communication
+nist_csf,NIST.RS.MI.01,RS.MI-01,Incident containment,subcategory,Respond (RS) / Incident Mitigation
+nist_csf,NIST.RS.MI.02,RS.MI-02,Incident eradication,subcategory,Respond (RS) / Incident Mitigation
+nist_csf,NIST.RC.RP.01,RC.RP-01,Recovery plan execution,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.RP.02,RC.RP-02,Recovery action selection,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.RP.03,RC.RP-03,Restoration asset integrity verification,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.RP.04,RC.RP-04,Mission function consideration,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.RP.05,RC.RP-05,Recovery completeness verification,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.RP.06,RC.RP-06,End of recovery declaration,subcategory,Recover (RC) / Incident Recovery Plan Execution
+nist_csf,NIST.RC.CO.03,RC.CO-03,Recovery activity communication,subcategory,Recover (RC) / Incident Recovery Communication
+nist_csf,NIST.RC.CO.04,RC.CO-04,Public update communication,subcategory,Recover (RC) / Incident Recovery Communication

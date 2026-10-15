@@ -1,0 +1,19 @@
+code,name,owner_role,privacy,sort
+GOV,ISMS and governance,CISO,false,1
+RSK,Risk and compliance,Risk and Compliance Manager,false,2
+AST,Assets and information,Head of IT Operations,false,3
+IAM,Identity and access,Identity and Access Lead,false,4
+CRY,Cryptography,Security Engineering Lead,false,5
+NET,Network and infrastructure,Network and Infrastructure Lead,false,6
+OPS,"Operations, logging and monitoring",Security Operations Lead,false,7
+SDC,Secure development and change,Head of Application Development,false,8
+PHY,Physical and environmental,Head of Facilities,false,9
+PPL,People,HR Head,false,10
+SUP,Suppliers and third parties,Head of Procurement,false,11
+INC,Incident and breach management,Incident Response Lead,false,12
+RES,Resilience and continuity,Business Continuity Manager,false,13
+PNC,Privacy: notice and consent,Data Protection Officer,true,14
+PRT,Privacy: principal rights and grievance,Data Protection Officer,true,15
+PUR,"Privacy: purpose, minimization and accuracy",Data Protection Officer,true,16
+PGV,Privacy: fiduciary governance,Data Protection Officer,true,17
+PSC,Privacy: special categories and transfers,Data Protection Officer,true,18
