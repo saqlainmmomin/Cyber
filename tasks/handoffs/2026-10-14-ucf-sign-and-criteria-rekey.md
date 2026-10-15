@@ -154,3 +154,93 @@ End with the next steps:
 3. WP 3.4 (the validator gains a criteria-coverage check).
 4. The evaluation gate WP 4.6.
 5. Load into the app (WP 5.1).
+
+## Results
+
+Run on 15 Oct 2026. All six done-items are met, except opening the page in a real browser.
+
+### Commits and PR
+
+- `b57ffa9`: signs the library 1.0.0 and adds the lock and all the uncommitted round-2 work (data, generators, sign-off tables, review page, FORMAT.md, smoke test).
+- `2940859`: adds the re-key drafts (criteria map, scope proposals, review page, scripts, FORMAT.md sections).
+- A third commit adds this Results section.
+- PR: https://github.com/saqlainmmomin/Cyber/pull/157. It was already open for this branch, so I updated its title and description instead of opening a new PR. Not merged.
+
+### Signing and lock
+
+- `library.json` now reads: `library_version` 1.0.0, `status` signed, `signed_by` Saqlain Momin, `signed_on` 2026-10-14. The loader already accepted extra keys, so the schema did not change.
+- `make_signoff.py` prints "Signed 1.0.0 by Saqlain Momin on 14 Oct 2026" on the README and every domain table, and ticks each Sign cell.
+- The README says the 16 DPDPA legal items are confirmed provisionally and are not legally verified.
+- `ids.lock.json` covers 211 controls (a hash of domain and title for each) and 265 records. Validator check 7 reports "lock 1.0.0 enforced: 211 controls, 265 records". The validator exits 0 with zero warnings.
+- Lock test: on a temporary copy, renaming UC-CRY-01's title made check 7 fail with "domain or title changed since lock 1.0.0" and exit 1. The copy is deleted.
+- No control content changed.
+
+### Criteria map (`docs/ucf/drafts/criteria_map.csv`)
+
+All 728 criterion ids appear exactly once. A re-run keeps `decided` rows unchanged, which I tested on a copy.
+
+| Framework | Criteria | Auto | Proposed | Records with criteria | Records with 2+ controls |
+|---|---|---|---|---|---|
+| ISO 27001 | 230 | 163 | 67 | 93 | 22 |
+| NIST CSF | 348 | 152 | 196 | 106 | 56 |
+| DPDPA | 150 | 68 | 82 | 41 | 20 |
+| Total | 728 | 383 | 345 | 240 | 98 |
+
+- These match the handoff's numbers.
+- No record with criteria lacks a control.
+- How proposals were made: words weighted by rarity, matched against the record's atoms mapped to each candidate control (atoms count double) and the control's text. No LLM was used.
+- 18 proposals are marked "close call": a second candidate scored within 15% of the best.
+- 2 are marked "weak match": fewer than three shared words.
+- In a spot check of 22 proposals, all were sensible picks.
+
+**13 controls are left with zero criteria (gaps):**
+- No mapped record has signed criteria. These are the ISO clause controls, whose drafted `test` text stands under D18: UC-GOV-01, GOV-03, GOV-12, GOV-14, GOV-15, GOV-16, GOV-20, PPL-05, RSK-03, RSK-04.
+- They are candidates on a criteria record, but the proposal chose a partner control: UC-GOV-04 (Security management system operated), UC-GOV-10 (Risks and opportunities of the program), UC-PSC-06 (Cross-border flow inventory). Saqlain's choices on the page can change these.
+
+### Scope proposals (`scope_proposals.csv`, `notes_scope_rekey.md`)
+
+There are 11 clean proposals:
+- ISO.SCP.2 = no: UC-SUP-07.
+- ISO.SCP.3 = no: UC-SDC-05, SDC-07, SDC-08.
+- ISO.SCP.3 = inhouse: UC-SDC-07.
+- ISO.SCP.4 = fully_remote: UC-PHY-01, 03, 06, 08, 10, 11.
+
+**Not re-keyable cleanly (9 held back):**
+- **Held back because a NIST record also needs them:**
+  - UC-SUP-06, via A.5.23 (NIST PR.IR-02).
+  - UC-IAM-10 and UC-SDC-02, via A.8.4 and A.8.25 (NIST PR.PS-06).
+  - UC-SDC-10, via A.8.33 (NIST PR.DS-02).
+  - UC-PHY-02 and UC-PHY-13, via A.7.2 (NIST PR.AA-06).
+  - UC-PHY-04, via A.7.4 (NIST DE.CM-02 and PR.AA-06).
+  - UC-PHY-05, via A.7.5 (NIST PR.IR-02).
+- **Held back for an extra reason:** UC-PPL-04 (via A.8.28) also carries A.6.3 and NIST PR.AT-02.
+- **Annex A ids left with no clean control:** A.8.4, A.8.25 and A.8.33 (no development), and A.7.2, A.7.4 and A.7.5 (fully remote).
+- No proposal touches a clause 4 to 10 control.
+
+### Review page
+
+- **Page:** `tasks/2026-10-14-ucf-rekey-review.html`.
+- **Built by:** `scripts/ucf/make_rekey_review_html.py` with `rekey_review_template.html`. It uses the browser storage key `ucf-rekey-review-1.0.0`.
+- **Smoke test:** `scripts/ucf/authoring/smoke_rekey_review_page.js`. All 23 checks pass. It covers loading with no errors, cards matching the 345 proposed rows across 98 records, pre-selection, choosing another control, flagging, accepting, filters, bulk accept, scope cards, and JSON and Markdown export.
+
+### Not done
+
+- I did not open the page in a real browser. The Chrome extension was still not connected because of the same account mismatch as last session.
+- No subagents were used; the word-match script was enough.
+
+### Decisions Saqlain makes on the page
+
+1. For each of the 345 criteria, accept the proposed control, pick another candidate, or flag that it tests two controls. Start with the 20 marked close call or weak match; there is a filter for them. There is also a bulk accept per record or per filtered list.
+2. Approve or change each of the 11 scope proposals.
+3. S1: for the 9 held-back cases, either keep them out (my recommendation) or propose them only when ISO 27001 is the sole framework selected. The second option needs a framework condition in the WP 5.5 wiring.
+4. S2: are four ISO scope questions enough? My recommendation is yes for 1.0, and to revisit after the first real assessments.
+
+He exports the JSON and saves it as `tasks/2026-10-14-ucf-rekey-decisions.json`.
+
+### Next steps
+
+1. Saqlain's re-key review on the page.
+2. Apply his choices: write them into `criteria_map.csv` as `basis: decided`, then update `scope_proposals.csv`.
+3. WP 3.4: the validator gains a criteria-coverage check, which reports the 13 zero-criteria controls.
+4. The evaluation gate, WP 4.6.
+5. Load into the app, WP 5.1.
