@@ -102,4 +102,18 @@ Write a short `## Results` section at the end of this file: PRs opened, test cou
 
 ## Results
 
-_To be filled by the next session._
+Filled 16 Oct 2026.
+
+- **PRs opened (not merged):** #163 (Codex brief, docs only) and #164 (WP 2.5 code, branch `codex/wp-2-5-na-and-risk`).
+- **Decisions (Saqlain, 15 Oct; all recommended options):** the reason is kept in the rationale field (no new column); answer-specific reason text with "Outside the recorded assessment scope." as the fallback; a risk level is needed to approve every outcome except not applicable; a missing rating shows "Not rated" and is never counted; old rows are blanked when read, with no data migration.
+- **Tests:** baseline 1,845 passed / 29 skipped. Final full suite (run by the orchestrator) 1,870 passed / 29 skipped, so 25 new tests.
+- **Golden changes:** board document only, one line: ISO.A5.2 (not applicable) risk `low` becomes `""`. Canonical DPDPA fixtures unchanged after an offline capture. Diff saved at `~/cyberassess-runs/wave3/WP-2.5-board-document.diff`.
+- **Codex stops (2):** both were in `tests/test_p6_8_b2_docx_xlsx.py`, a v2 test adapter and an XLSX assertion that assumed every register row has a risk. Approved: `.get()` for the register priority, and an empty cell compared as `None`. No production export code changed for these.
+- **Smoke (seeded demo with CH4.CHILD.1 taken out of scope):** passed. The scope-enforced row stores the SCP.2 reason and blank gap, risk and action. Model-proposed N/A rows keep their rationale and blank the rest. A gap with its risk blanked shows "Not rated", and approval returns the existing blocker. Board report PDF, PPTX and XLSX export for both years; N/A rows show no risk; the out-of-scope row is not in the register. Scripts and logs are in `~/cyberassess-runs/wave3/wp25-*`.
+- **Open items for Saqlain:**
+  - Merge #163, then #164.
+  - WP 2.7: the board XLSX register prints the existing "Not recorded" placeholder in the risk cell for N/A rows.
+  - `app/services/findings.py` still prefills a finding's severity as medium. After this WP only old approved data could reach it unrated; decide whether to fix it in 2.7 or later.
+  - Budget unchanged (offline WP): about $3.47 left on the OpenRouter key, less than the ~$5.50 the plan assumes for later live checks.
+- **Next:** WP 2.7 (export clean-up) after #164 merges.
+- **Clean-up:** remove the worktree `/Users/saqlainmomin/dpdpa-wp25` after #164 merges.
