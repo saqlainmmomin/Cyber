@@ -71,10 +71,6 @@ table.t tr:nth-child(even) td { background: #F7F8FB; }
 .semantic-note { font-size: 9pt; color: var(--mut); flex: none; }
 .brief .narrative { background: transparent; border-left: 0; padding: 0; margin: 0; }
 .brief .narrative p { margin: 0 0 2.2mm; }
-[data-narrative^="framework-"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; padding: 0; background: transparent; color: transparent; font-size: 1px; }
-[data-total-requirements], [data-takeaway] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.risk-narrative { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.semantic-only { display: none; }
 
 /* ---------- cover ---------- */
 .cover { background: var(--p1); }
@@ -96,9 +92,9 @@ table.t tr:nth-child(even) td { background: #F7F8FB; }
 .toc-l h1 { position: absolute; left: 18mm; top: 70mm; color: #fff; font-family: 'Display'; font-weight: 700; font-size: 44pt; margin: 0; }
 .toc-l .bar { position: absolute; left: 18mm; top: 92mm; width: 30mm; height: 1.2mm; background: var(--acc); }
 .toc-r { position: absolute; left: 128mm; right: 18mm; top: 20mm; }
-.toc-row { display: flex; align-items: center; border-bottom: 0.3mm solid var(--line); padding: 4.4mm 0; }
-.toc-row .n { font-family: 'Display'; font-weight: 700; font-size: 30pt; color: var(--p2); width: 22mm; flex: none; line-height: 1; }
-.toc-row .l { font-family: 'Display'; font-weight: 600; font-size: 18pt; color: var(--ink); line-height: 1.1; }
+.toc-row { display: flex; align-items: center; border-bottom: 0.3mm solid var(--line); padding: 2.4mm 0; }
+.toc-row .n { font-family: 'Display'; font-weight: 700; font-size: 23pt; color: var(--p2); width: 22mm; flex: none; line-height: 1; }
+.toc-row .l { font-family: 'Display'; font-weight: 600; font-size: 15pt; color: var(--ink); line-height: 1.1; }
 .toc-row .s { font-size: 9pt; color: var(--mut); margin-top: 0.6mm; }
 .toc-row .p { margin-left: auto; padding-left: 6mm; font-size: 10pt; color: var(--mut); font-weight: 700; flex: none; }
 
@@ -125,7 +121,7 @@ table.t tr:nth-child(even) td { background: #F7F8FB; }
 .askstrip .a i { font-style: normal; color: var(--acc); font-family: 'Display'; font-size: 16pt; margin-right: 1.6mm; }
 
 /* ---------- posture ---------- */
-.wlist .r { display: flex; align-items: baseline; padding: 2.6mm 0; border-bottom: 0.25mm solid var(--line); font-size: 10pt; }
+.wlist .r { display: flex; align-items: baseline; padding: 1.6mm 0; border-bottom: 0.25mm solid var(--line); font-size: 10pt; }
 .wlist .r .n { margin-left: auto; font-family: 'Display'; font-weight: 700; font-size: 17pt; line-height: 1; width: 14mm; text-align: right; }
 .wlist .r .p { width: 13mm; text-align: right; color: var(--mut); font-size: 9pt; }
 
@@ -187,6 +183,7 @@ table.obs td.ti { font-weight: 700; color: var(--ink); }
 .mx td.ax { font-size: 9pt; color: var(--mut); text-align: center; font-weight: 700; }
 .mx td.ay { font-size: 9pt; color: var(--mut); font-weight: 700; text-align: right; width: 14mm; vertical-align: middle; }
 table.init td { font-size: 9pt; vertical-align: middle; padding: 1.5mm 2mm; }
+table.effort-table td { padding: 1mm 2mm; line-height: 1.25; }
 
 /* ---------- annex ---------- */
 .div { background: var(--p1); }
@@ -196,6 +193,7 @@ table.init td { font-size: 9pt; vertical-align: middle; padding: 1.5mm 2mm; }
 .cols2 { columns: 2; column-gap: 10mm; font-size: 9pt; line-height: 1.45; color: var(--ink2); white-space: pre-line; }
 table.reg { table-layout: fixed; }
 table.reg td { font-size: 9pt; padding: 0.9mm 1.8mm; white-space: normal; }
+td.wrap-any { overflow-wrap: anywhere; word-break: break-all; }
 table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 </style>
 </head>
@@ -208,7 +206,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 {%- endmacro %}
 {% macro foot() -%}{% set ns.pg = ns.pg + 1 %}
   <footer class="ft" data-slide-footer><div class="brand"><i></i>{{ doc.firm_name }}</div>
-  <div class="mid">{{ doc.company_name }} · Board report {{ doc.snapshot.version_label }} · Assessment period {{ doc.basis.period_label }} · Evidence cut-off {{ doc.basis.cutoff_label }} · Snapshot {{ (doc.snapshot.id or '')[:8] }} · Report generated: {{ doc.snapshot.generated_on }} · Confidential</div>
+  <div class="mid">{{ doc.company_name }} · Board report {{ doc.snapshot.version_label }} · Assessment period {{ doc.basis.period_label }} · Evidence cut-off {{ doc.basis.cutoff_label }} · Report ID {{ (doc.snapshot.id or '')[:8] }} · Report generated: {{ doc.snapshot.generated_on }} · Confidential</div>
   <div class="pg">Page {{ ns.pg }} of {{ v.slides|length }}</div></footer>
 {%- endmacro %}
 {% macro glyph(kind, lvl) -%}<span class="glyph g-{{ kind }}">{% for k in range(3) %}<i class="{{ 'on' if k < v.level.get(lvl, 0) }}"></i>{% endfor %}</span>{%- endmacro %}
@@ -218,7 +216,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <svg width="{{ w }}mm" height="{{ h }}mm" viewBox="0 0 100 10" preserveAspectRatio="none" style="display:block">
   {% for lo, hi, lbl, col in v.bands %}<rect x="{{ lo }}" y="0" width="{{ hi - lo }}" height="10" fill="{{ col }}"/>{% endfor %}
   {% for x in (40, 60, 80) %}<rect x="{{ x - 0.15 }}" y="0" width="0.3" height="10" fill="#FFFFFF"/>{% endfor %}
-  <rect x="0" y="3" width="{{ score }}" height="4" fill="{{ v.theme.p1 }}"/>
+  {% if score is not none %}<rect x="0" y="3" width="{{ score }}" height="4" fill="{{ v.theme.p1 }}"/>{% endif %}
   {% if prior is not none %}<rect x="{{ prior - 0.4 }}" y="1" width="0.8" height="8" fill="#9AA3B5"/>{% endif %}
 </svg>
 {%- endmacro %}
@@ -242,13 +240,13 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
   <div class="draft">DRAFT UNTIL ISSUED</div>
   <div class="eyebrow">Board report · {{ doc.engagement_name }}</div>
   <div class="client">{{ doc.company_name }}</div>
-  <div class="title">{% if v.has_dpdpa %}Privacy and information security{% else %}Information security{% endif %} compliance assessment</div>
+  <div class="title">{{ v.cover_subtitle }}</div>
   <div class="chips">{% for f in doc.frameworks %}<span>{{ f.name }} {{ f.version }}</span>{% endfor %}</div>
   <div class="meta">
     <div><div class="k">Assessment period</div><div class="v">{{ doc.basis.period_label }}</div></div>
     <div><div class="k">Evidence cut-off</div><div class="v">{{ doc.basis.cutoff_label }}</div></div>
     <div><div class="k">Version</div><div class="v">{{ doc.snapshot.version_label }} · {{ doc.snapshot.generated_on }}</div></div>
-    <div><div class="k">Snapshot</div><div class="v">{{ (doc.snapshot.id or '')[:8] }}</div></div>
+    <div><div class="k">Report ID</div><div class="v">{{ (doc.snapshot.id or '')[:8] }}</div></div>
 </div>
   {% if doc.theme.logo %}<img src="data:{{ doc.theme.logo.media_type }};base64,{{ doc.theme.logo.data_base64 }}" alt="{{ doc.firm_name }}" style="position:absolute;right:20mm;top:18mm;width:32mm;z-index:4">{% endif %}
   {{ foot() }}
@@ -258,7 +256,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <section class="slide" data-slide="contents">
   <div class="toc-l"><h1>Contents</h1><div class="bar"></div></div>
   <div class="toc-r">
-    {% for n, l, s, p in [('01','How to read this report','What the outcomes, risk levels and ratings mean', v.pg.read),('02','Executive summary','The position in one page, then posture, domains, risk and decisions', v.pg.exec),('03','Key observations','The ' ~ doc.observations|length ~ ' highest-ranked approved findings', v.pg.obs),('04','Remediation roadmap','Initiatives by horizon and owner, effort against benefit, change since the last report', v.pg.roadmap),('05','Annexure','Methodology, requirement and evidence registers' ~ (', Statement of Applicability' if doc.soa else ''), v.pg.annex)] %}
+    {% for n, l, s, p in v.contents %}
     <div class="toc-row"><div class="n">{{ n }}</div><div><div class="l">{{ l }}</div><div class="s">{{ s }}</div></div><div class="p">{{ p }}</div></div>
     {% endfor %}
   </div>
@@ -276,7 +274,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
         <div class="tx">{{ {'compliant':'Met, and the evidence shows it.','partially_compliant':'Met in part; a gap remains.','non_compliant':'Not met.','insufficient_evidence':'The evidence does not support a conclusion either way. Left out of scores, not counted as a failure.','not_applicable':'Does not apply within the assessed scope.'}[k] }}</div></div>
       {% endfor %}
       <div class="h3" style="margin-top:5mm">2 · How serious each gap is</div>
-      <div style="display:flex; gap:1.8mm">{% for s, txt in [('critical','Material regulatory or breach exposure. Act now.'),('high','Significant exposure. Act this quarter.'),('medium','Moderate exposure. Plan within six months.'),('low','Limited exposure. Fix in the normal course.')] %}
+      <div style="display:flex; gap:1.8mm">{% for s, txt in v.severity_legend.items() %}
         <div class="card" style="flex:1; padding:3.6mm 3mm; height:30mm"><span class="pill sev-{{ s }}">{{ s|cap }}</span><div style="font-size:9.2pt; margin-top:1.6mm; color:var(--ink2)">{{ txt }}</div></div>{% endfor %}</div>
     </div>
     <div style="flex:1">
@@ -299,8 +297,8 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 </section>
 
 <!-- 4 OVERVIEW -->
-<section class="slide" data-slide="overview">
-  {{ frame('01', 'We assessed ' ~ v.t.requirements ~ ' requirements across ' ~ doc.frameworks|length ~ ' framework' ~ ('s' if doc.frameworks|length > 1 else '') ~ ' against evidence received up to ' ~ doc.basis.cutoff_label, 'Scope, the evidence we used and how every outcome was approved.', 'Assessment overview') }}
+<section class="slide" data-slide="overview" data-total-requirements="{{ v.t.requirements }}">
+  {{ frame('01', 'We assessed ' ~ v.plural(v.t.requirements, 'requirement') ~ ' across ' ~ v.plural(doc.frameworks|length, 'framework') ~ ' against evidence received up to ' ~ doc.basis.cutoff_label, 'Scope, the evidence we used and how every outcome was approved.', 'Assessment overview') }}
   <div class="body" style="display:flex; gap:8mm">
     <div style="flex:1.1; display:flex; flex-direction:column; justify-content:space-between; padding-bottom:4mm">
       <div><div class="semantic-note" style="margin-bottom:1.5mm">Assessment overview</div><div class="h3">Scope</div>
@@ -335,18 +333,36 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
   {{ foot() }}
 </section>
 
+<!-- LIMITS -->
+<section class="slide" data-slide="limits">
+  {{ frame('01', v.plural(doc.not_assessed.insufficient_evidence|length, 'requirement') ~ ' could not be concluded; ' ~ v.plural(doc.not_assessed.rfi['items']|length, 'evidence request') ~ (' is' if doc.not_assessed.rfi['items']|length == 1 else ' are') ~ ' open', 'Insufficient evidence requirements are left out of scores, not counted as failures. The limits of this assessment follow.', 'Scope and limits') }}
+  <div class="body" style="display:flex; gap:8mm">
+    <div style="flex:0.9">
+      <div style="display:flex; gap:2.5mm; margin-bottom:4mm">{% for f in v.fw %}<div class="card" style="flex:1"><div class="disp" style="font-weight:700; font-size:30pt; line-height:1; color:#5A6385">{{ f.coverage.insufficient_evidence }}</div><div style="font-size:9.4pt">not concluded · {{ f.name }}</div></div>{% endfor %}</div>
+      <div class="h3">Open evidence requests ({{ doc.not_assessed.rfi.version_label }})</div>
+      <table class="t init">{% for i in doc.not_assessed.rfi['items'] %}<tr><td style="width:16mm"><b>{{ i.item_id }}</b></td><td>{{ i.title }}</td><td style="width:24mm"><span class="pill" style="background:{{ v.theme.p2 if i.required else '#6E7591' }}">{{ 'Required' if i.required else 'Recommended' }}</span></td></tr>{% endfor %}</table>
+      <div class="mut" style="font-size:8.4pt; margin-top:2mm">The full list is in Appendix A2 (outcome "{{ v.outcome_labels.insufficient_evidence }}").</div>
+    </div>
+    <div style="flex:1.3">
+      <div class="h3">Limitations</div>
+      <div style="columns:2; column-gap:7mm">{% for l in doc.summary.limitations %}<p style="font-size:9.2pt; color:var(--ink2); margin-bottom:3mm; padding-left:3mm; border-left:0.8mm solid var(--acc); break-inside:avoid">{{ l }}</p>{% endfor %}</div>
+    </div>
+  </div>
+  {{ foot() }}
+</section>
+
+
 <!-- 5 EXECUTIVE SUMMARY: the 30-second page -->
 <section class="slide" data-slide="executive-summary">
   {{ frame('02', v.titles.exec, '', 'Executive summary') }}
   <div class="body" style="top:34mm; display:flex; flex-direction:column; justify-content:space-between; padding-bottom:{{ 0 if v.fw|length > 1 else 6 }}mm">
-    <div class="card semantic-note" data-total-requirements><b>{{ v.t.requirements }}</b> requirements assessed · {{ v.t.gaps }} approved gaps · {{ v.t.critical_high_gaps }} critical/high · {{ v.never_combined_note }}</div>
     <div style="display:flex; gap:7mm">
       <div style="width:176mm; flex:none">
         {% for f in v.fw %}
         <div class="fwcard" style="height:{{ v.lay.fwcard }}mm; flex-wrap:wrap">
           <div class="nm" style="width:100%; display:flex; align-items:baseline; gap:2mm"><b>{{ f.name }}</b><span style="font-size:9pt; color:{{ f.rating_col }}; font-weight:700"><span class="sq" style="background:{{ f.rating_col }}"></span>{{ f.headline }}</span></div>
           <div class="score" data-framework-score="{{ f.framework_id }}" style="color:var(--p1); font-size:30pt">{{ v.score_text(f.score) }}</div>
-          <div class="trend">{% if f.prior %}<b class="{{ 'up' if f.delta >= 0 else 'down' }}">{{ '▲' if f.delta >= 0 else '▼' }} {{ '%+.0f'|format(f.delta) }} pts</b><span class="mut">from {{ '%.0f'|format(f.prior.prior_score) }}% last report</span>{% else %}<b class="mut">First report</b><span class="mut">no trend yet</span>{% endif %}</div>
+          <div class="trend">{% if f.prior %}<b>{{ v.delta_text(f.delta) }}</b><span class="mut">from {{ v.score_text(f.prior.prior_score) if f.prior.prior_score is not none else 'Not compared' }} last report</span>{% else %}<b class="mut">First report</b><span class="mut">no trend yet</span>{% endif %}</div>
           <div style="flex:1" data-outcome-bar="{{ f.framework_id }}">{{ bullet(f.score or 0, 66, 7, f.prior.prior_score if f.prior else None) }}{{ scale(66) }}</div>
         </div>
         {% endfor %}
@@ -354,7 +370,6 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       <div class="brief" style="flex:1">
         <div class="cap" style="margin-bottom:1.6mm">In brief</div>
         {{ narrative_block(doc.summary.narrative.executive, 'executive') }}
-        {% for f in v.fw %}{{ narrative_block(f.narrative, 'framework-' ~ f.framework_id) }}{% endfor %}
       </div>
     </div>
     <div style="display:flex; gap:2.5mm; margin-top:3mm{{ '; min-height:42mm' if v.fw|length == 1 }}">
@@ -366,9 +381,10 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       </div>
       {% endfor %}
     </div>
+    <div class="semantic-note">{{ v.never_combined_note }}</div>
     <div class="askstrip">
       <div class="lb">The board is asked to</div>
-      {% for a in doc.board_asks.consultant %}<div class="a"><i>{{ loop.index }}</i>{{ a }}</div>{% endfor %}
+      {% for a in doc.board_asks.consultant[:3] %}<div class="a"><i>{{ loop.index }}</i>{{ a }}</div>{% endfor %}
     </div>
   </div>
   {{ foot() }}
@@ -379,10 +395,10 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
   {{ frame('02', v.titles.posture, 'Each square is one requirement. Counts can be read across frameworks; scores cannot, so each framework has its own grid.', 'Executive summary') }}
   <div class="body" style="display:flex; gap:10mm">
     {% for f in v.fw %}
-    <div style="flex:{{ 1 if v.fw|length > 1 else 'none' }}; display:flex; gap:6mm">
+    <div style="flex:1; min-width:0"><div style="display:flex; gap:4mm">
       <div>
         <div style="font-weight:700; font-size:12pt; margin-bottom:2mm">{{ f.name }} <span class="mut" style="font-weight:400; font-size:9.4pt">· {{ f.coverage.in_scope }} requirements</span></div>
-        <svg width="{{ f.ncols * 9.6 }}mm" height="96mm" viewBox="0 0 {{ f.ncols * 8.2 }} 82">
+        <svg width="{{ f.ncols * 6.5 }}mm" height="65mm" viewBox="0 0 {{ f.ncols * 8.2 }} 82">
           {% for c in f.cells %}<rect x="{{ c.x * 8.2 }}" y="{{ c.y * 8.2 }}" width="7" height="7" rx="0.9" fill="{{ c.col }}"/>{% endfor %}
         </svg>
         <div class="mut" style="font-size:8pt; margin-top:1.4mm">Columns of ten, filled from the top</div>
@@ -392,9 +408,8 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
         <div class="wlist">{% for o in f.outcomes if o.n or o.k != 'not_applicable' %}
           <div class="r"><span><span class="sq" style="background:{{ o.col }}"></span>{{ o.label }}</span><span class="n">{{ o.n }}</span><span class="p">{{ o.pct }}%</span></div>{% endfor %}</div>
       </div>
-    </div>
+    </div>{{ narrative_block(f.narrative, 'framework-' ~ f.framework_id) }}</div>
     {% endfor %}
-    <div class="semantic-note" data-takeaway="status-board">{{ doc.takeaways.status_board }}</div>
     <div class="src">{{ v.source }} Insufficient evidence requirements are left out of the score.</div>
   </div>
   {{ foot() }}
@@ -410,16 +425,15 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       <div style="display:flex"><div style="width:60mm"></div>{{ scale(v.lay.dom_bar) }}</div>
       {% for dm in f.domains %}
       <div class="drow" data-status-domain="{{ dm.title }}" style="height:{{ v.lay.dom_row }}mm">
-        <div class="nm"><b>{{ dm.title }}</b><span>{{ dm.in_scope }} req · {% if dm.gaps %}{{ dm.gaps }} gaps · {{ dm.crit_high }} crit/high{% else %}No gaps{% endif %}{% if dm.ie %} · {{ dm.ie }} not concluded{% endif %}</span></div>
+        <div class="nm"><b>{{ dm.title }}</b><span>{{ dm.in_scope }} req · {% if dm.gaps %}{{ v.plural(dm.gaps, 'gap') }} · {{ dm.crit_high }} crit/high{% else %}No gaps{% endif %}{% if dm.ie %} · {{ dm.ie }} not concluded{% endif %}</span></div>
         <div style="width:{{ v.lay.dom_bar }}mm; flex:none">{{ bullet(dm.score, v.lay.dom_bar, 7 if v.fw|length > 1 else 9) }}</div>
-        <div class="pc">{{ '%.0f'|format(dm.score or 0) }}%</div>
+        <div class="pc">{{ v.score_text(dm.score) }}</div>
       </div>
       {% endfor %}
       {% for dm in f.out_domains %}<div class="drow" data-status-domain="{{ dm.title }}" style="color:var(--mut); height:{{ v.lay.dom_row }}mm"><div class="nm"><b style="color:var(--mut)">{{ dm.title }}</b><span>Out of scope</span></div></div>{% endfor %}
     </div>
     {% endfor %}
-    <div class="semantic-note" data-takeaway="status-board">{{ doc.takeaways.status_board }}</div>
-    <div class="src">{{ v.source }} Thresholds: 80% Compliant, 60% Partially compliant, 40% Needs significant improvement.</div>
+    <div class="src">{{ v.source }} {{ v.threshold_text }}</div>
   </div>
   {{ foot() }}
 </section>
@@ -428,23 +442,21 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <section class="slide" data-slide="risk-profile">
   {{ frame('02', v.titles.risk, 'Every approved gap carries one risk level. We count them; we do not estimate likelihood.', 'Executive summary') }}
   <div class="body" style="display:flex; flex-direction:column; justify-content:flex-start; padding-bottom:6mm">
-    <div class="semantic-note" data-takeaway="dashboard">{{ doc.takeaways.dashboard }}</div>
     <div style="display:flex; gap:2.5mm; flex:none">
       {% for s in v.sev %}
-      <div class="stile" data-severity-panel="{{ s }}" style="height:{{ 38 if v.fw|length > 1 else 50 }}mm; background:{{ v.sev_col[s] }}; {{ 'color:#0B0E26' if s == 'medium' }}">
+      <div class="stile" data-severity-panel="{{ s }}" style="height:{{ 29 if v.fw|length > 1 else 34 }}mm; background:{{ v.sev_col[s] }}; {{ 'color:#0B0E26' if s == 'medium' }}">
         <div class="n">{{ v.sev_tot[s] }}</div><div class="l">{{ s|cap }} risk gaps</div>
         <div class="s">{% for f in v.fw %}{{ f.sev[s] }} {{ f.short }}{{ ' · ' if not loop.last }}{% endfor %}</div>
-        <span class="semantic-only">{% for item in v.sev_top[s] %}{{ item.label }} {% endfor %}</span>
       </div>
       {% endfor %}
     </div>
-    <div style="display:flex; gap:10mm; margin-top:6mm; flex:none{{ '; align-items:center' if v.fw|length == 1 }}">
+    <div style="display:flex; gap:10mm; margin-top:3mm; flex:none{{ '; align-items:center' if v.fw|length == 1 }}">
       <div style="flex:1">
         <div class="h3">Gaps by risk level, per framework</div>
         {% for f in v.fw %}{% set tot = f.sev.values()|sum %}
-        <div style="margin-bottom:6mm">
+        <div style="margin-bottom:6mm" data-risk-matrix="{{ f.framework_id }}">
           <div style="font-weight:700; font-size:10.4pt; margin-bottom:1mm">{{ f.name }} <span class="mut" style="font-weight:400">· {{ tot }} gaps</span></div>
-          <div style="display:flex; height:{{ 13 if v.fw|length > 1 else 18 }}mm">{% for s in v.sev if f.sev[s] %}<div style="width:{{ 100 * f.sev[s] / tot }}%; background:{{ v.sev_col[s] }}; color:{{ '#0B0E26' if s == 'medium' else '#fff' }}; font-weight:700; font-size:10.4pt; line-height:{{ 13 if v.fw|length > 1 else 18 }}mm; text-align:center; border-right:0.6mm solid #fff">{{ f.sev[s] }}</div>{% endfor %}</div>
+          <div style="display:flex; height:{{ 13 if v.fw|length > 1 else 18 }}mm">{% for s in v.sev if f.sev[s] %}<div data-risk-level="{{ s }}" data-risk-count="{{ f.sev[s] }}" style="width:{{ 100 * f.sev[s] / tot }}%; background:{{ v.sev_col[s] }}; color:{{ '#0B0E26' if s == 'medium' else '#fff' }}; font-weight:700; font-size:10.4pt; line-height:{{ 13 if v.fw|length > 1 else 18 }}mm; text-align:center; border-right:0.6mm solid #fff">{{ f.sev[s] }}</div>{% endfor %}</div>
         </div>
         {% endfor %}
         <div style="font-size:8.6pt" class="mut">{% for s in v.sev %}<span class="sq" style="background:{{ v.sev_col[s] }}"></span>{{ s|cap }} &nbsp; {% endfor %}</div>
@@ -458,11 +470,9 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
           <div style="flex:1"><div style="width:{{ 88 * dm.crit_high / mx }}%; height:5mm; background:var(--p1); display:inline-block; vertical-align:middle"></div><b style="margin-left:2mm; font-size:10pt">{{ dm.crit_high }}</b></div>
         </div>
         {% endfor %}
-        <table class="t reg semantic-only"><tr><th>Framework</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th></tr>
-        {% for f in v.fw %}{% set counts = f.sev %}<tr data-risk-matrix="{{ f.framework_id }}"><td>{{ f.name }}</td><td>{{ counts.critical }}</td><td>{{ counts.high }}</td><td>{{ counts.medium }}</td><td>{{ counts.low }}</td></tr>{% endfor %}</table>
       </div>
     </div>
-    <div class="risk-narrative">{{ narrative_block(doc.summary.narrative.cross_framework, 'cross-framework') }}</div>
+    <div class="risk-narrative" style="margin-top:3mm; font-size:9.4pt">{{ narrative_block(doc.summary.narrative.cross_framework, 'cross-framework') }}</div>
     <div class="src">{{ v.source }}</div>
   </div>
   {{ foot() }}
@@ -495,7 +505,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       {% for o in page %}
       <tr data-observation="{{ o.ref }}">
         <td class="no">{{ o.ref }}</td>
-        <td>{{ marker(o.responsibility) }}{% if o.responsibility %}<span class="tag" data-responsibility="{{ o.responsibility }}">{{ o.responsibility|cap }}</span>{% endif %}<br><b>{{ o.domain }}</b><br><span class="tag">{{ o.framework_name }}</span></td>
+        <td>{{ marker(o.responsibility) }}{% if o.responsibility %}<span class="tag" data-responsibility="{{ o.responsibility }}">{{ v.responsibility_label(o.responsibility) }}</span>{% endif %}<br><b>{{ o.domain }}</b><br><span class="tag">{{ o.framework_name }}</span></td>
         <td><div class="ti">{{ o.title }}</div>{{ o.observation }}</td>
         <td>{% if o.risk %}{{ o.risk }}{% else %}<span class="mut not-recorded">Not recorded</span>{% endif %}</td>
         <td><span class="pill sev-{{ o.rating }}">{{ o.rating|cap }}</span></td>
@@ -513,7 +523,6 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <section class="slide" data-slide="roadmap">
   {{ frame('04', v.titles.roadmap, 'Each card is one initiative, placed by when it should be done and who does it.', 'Remediation roadmap') }}
   <div class="legbox"><span class="odtag">OVERDUE</span> past its target date</div>
-  <div class="semantic-note" data-takeaway="roadmap" style="position:absolute; right:14mm; top:36mm">{{ doc.takeaways.roadmap }}</div>
   <div class="body">
     {% if not doc.initiatives %}<div class="semantic-note">{{ v.empty_roadmap_text }}</div>{% endif %}
     <div class="sw" style="height:100%; grid-template-rows: auto repeat({{ v.lanes|length }}, 1fr); grid-template-columns: 18mm 1.45fr 1fr 1fr{{ ' 0.8fr' if v.horizons|length > 3 }}">
@@ -522,18 +531,15 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       {% for lk, llbl in v.lanes %}
         <div class="ln">{{ marker(lk) }}<br>{{ llbl }}</div>
         {% for hk, hl, hs in v.horizons %}
-        <div class="cell">{% for i in doc.initiatives if i.responsibility == lk and i.horizon == hk %}
+        <div class="cell" data-horizon-column="{{ hk }}">{% for i in doc.initiatives if i.responsibility == lk and i.horizon == hk %}
           <div class="box {{ 'od' if i.overdue }}" data-initiative="{{ i.ref }}">
             <div class="tt"><span class="ref">{{ i.ref }}</span>{{ i.title }}{% if i.overdue %}<span class="odtag">OVERDUE</span>{% endif %}</div>
-            <div class="mt">{% if i.cross_framework %}<b style="color:var(--ok)">Fixes once for both frameworks</b> · {% endif %}{{ i.owner or 'Owner not set' }} · {{ (i.target_date|display_date) or 'no date set' }} · closes {{ i.obs_refs|join(', ') }}</div>
+            <div class="mt">{% if i.cross_framework %}<b style="color:var(--ok)">Fixes once for {{ 'both frameworks' if i.frameworks|length == 2 else 'all ' ~ i.frameworks|length ~ ' frameworks' }}</b> · {% endif %}{{ i.owner or 'Owner not set' }} · {{ (i.target_date|display_date) or 'Not scheduled' }} · closes {{ i.obs_refs|join(', ') }}</div>
 
           </div>{% endfor %}</div>
         {% endfor %}
       {% endfor %}
     </div>
-  </div>
-  <div aria-hidden="true" style="display:none">
-    {% for hk, hl, hs in v.horizons %}<div data-horizon-column="{{ hk }}">{% for i in doc.initiatives if i.horizon == hk or (hk == 'long' and i.horizon == 'unscheduled') %}<span data-initiative="{{ i.ref }}">{{ i.title }} {{ i.owner or 'Owner not set' }} {{ (i.target_date|display_date) or 'No date set' }} closes {{ i.obs_refs|join(', ') }}{% if i.overdue %} OVERDUE{% endif %} {{ 'Not scheduled' if i.horizon == 'unscheduled' }}</span>{% endfor %}</div>{% endfor %}
   </div>
   {{ foot() }}
 </section>
@@ -552,9 +558,10 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
         <tr><td></td>{% for cx in ['low','medium','high'] %}<td class="ax">{{ cx|cap }} effort</td>{% endfor %}</tr>
       </table>
       <div class="mut" style="font-size:8.4pt; margin-top:1.6mm">Benefit is the exposure an initiative removes; effort is our estimate of the work.</div>
+      {% if v.unsized %}<p data-unsized style="font-size:9pt; margin-top:2mm">Not yet sized: {{ v.unsized|map(attribute='title')|join('; ') }}</p>{% endif %}
     </div>
     <div style="flex:1">
-      <table class="t init">
+      <table class="t init effort-table">
         <tr><th style="width:12mm">Ref</th><th>Initiative</th><th style="width:28mm">Horizon</th><th style="width:24mm">Remediation timeframe</th><th style="width:15mm">Effort</th><th style="width:16mm">Benefit</th></tr>
         {% for i in doc.initiatives %}
         <tr data-initiative-row="{{ i.ref }}">
@@ -573,7 +580,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <!-- SINCE THE LAST REPORT: dumbbell per domain -->
 <section class="slide" data-slide="comparison">
   {% if v.has_prior %}
-  {{ frame('04', v.titles.since, 'Grey dot: last report. Dark dot: this report. Compared within each framework only, from the stored earlier report.', 'Remediation roadmap') }}
+  {{ frame('05', v.titles.since, 'Gray dot: last report. Dark dot: this report. Compared within each framework only, from the stored earlier report.', 'Change since last report') }}
 
   <div class="body" style="display:flex; gap:9mm">
     <div style="flex:none; width:188mm">
@@ -589,7 +596,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
           <ellipse cx="{{ r.was }}" cy="3.5" rx="1.1" ry="2.2" fill="#9AA3B5"/>{% endif %}
           <ellipse cx="{{ r.now }}" cy="3.5" rx="1.1" ry="2.2" fill="{{ v.theme.p1 }}"/>
         </svg>
-        <div style="width:30mm; text-align:right; font-size:9.6pt; white-space:nowrap">{% if r.was is not none %}{% set dd = r.now - r.was %}<span class="{{ 'up' if dd > 0 else 'down' if dd < 0 else 'mut' }}">{{ '▲ %+.0f'|format(dd) if dd > 0 else ('▼ %+.0f'|format(dd) if dd < 0 else 'no change') }}</span>{% else %}<span class="mut">new</span>{% endif %} <b>{{ '%.0f'|format(r.now or 0) }}%</b></div>
+        <div style="width:30mm; text-align:right; font-size:9.6pt; white-space:nowrap">{% if r.was is not none %}{% set dd = r.now - r.was %}<span class="{{ 'up' if dd > 0 else 'down' if dd < 0 else 'mut' }}">{{ v.delta_text(dd) }}</span>{% else %}<span class="mut">Not compared</span>{% endif %} <b>{{ v.score_text(r.now) }}</b></div>
       </div>
       {% endfor %}
       {% endfor %}
@@ -597,22 +604,21 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
     <div style="flex:1">
       {% for p in doc.prior_period.frameworks %}
       <div class="card" style="margin-bottom:2.5mm; display:flex; align-items:center">
-        <div style="flex:1; min-width:35mm"><b style="font-size:11pt">{{ p.name }}</b><div class="mut" style="font-size:8.4pt">{{ '%.0f'|format(p.prior_score or 0) }}% → {{ '%.0f'|format(p.current_score or 0) }}%</div></div>
-        {% for k, lbl in [('improved','improved'),('regressed','regressed'),('new','new')] %}<div style="width:15mm; text-align:center"><div class="disp" style="font-weight:700; font-size:17pt; line-height:1">{{ p.counts[k] }}</div><div class="mut" style="font-size:7.8pt">{{ lbl }}</div></div>{% endfor %}
-        <div class="disp {{ 'up' if p.score_delta >= 0 else 'down' }}" style="width:34mm; text-align:right; font-size:13pt">{% if p.score_delta == 0 %}No change{% else %}{{ '▲' if p.score_delta >= 0 else '▼' }} {{ '%+.0f'|format(p.score_delta) }} pts{% endif %}</div>
-        <h2 class="semantic-only">{{ p.name }}</h2>
-        <span class="semantic-only">Current {{ '%.1f'|format(p.current_score or 0) }}% · Prior {{ '%.1f'|format(p.prior_score or 0) }}% +{{ '%.1f'|format(p.score_delta or 0) }} points Improved {{ p.counts.improved }} · Regressed {{ p.counts.regressed }} · New {{ p.counts.new }} Improved ({{ p.counts.improved }}) Regressed ({{ p.counts.regressed }}) Newly assessed ({{ p.counts.new }}) No longer assessed ({{ p.counts.no_longer_assessed }})</span>
+        <div style="flex:1; min-width:35mm"><b style="font-size:11pt">{{ p.name }}</b><div class="mut" style="font-size:8.4pt">Current {{ v.score_text(p.current_score) }} · Prior {{ v.score_text(p.prior_score) if p.prior_score is not none else 'Not compared' }}</div></div>
+        {% for k, lbl in [('improved','improved'),('regressed','regressed'),('new','new')] %}<div style="width:15mm; text-align:center"><div class="disp" style="font-weight:700; font-size:17pt; line-height:1" data-change-count="{{ k }}">{{ p.counts[k] }}</div><div class="mut" style="font-size:7.8pt">{{ lbl }}</div></div>{% endfor %}
+        <div data-score-delta class="disp" style="width:34mm; text-align:right; font-size:13pt">{{ v.delta_text(p.score_delta) }}</div>
       </div>
+      <div class="mut" style="font-size:8pt">No longer assessed ({{ p.counts.no_longer_assessed }})</div>
       {% endfor %}
       <div class="h3" style="margin-top:3mm">Requirements that changed outcome</div>
       <table class="t init"><tr><th>Requirement</th><th style="width:22mm">Change</th></tr>
-      {% for c in doc.prior_period.changes %}<tr data-comparison-list="{{ c.direction }}" data-comparison-requirement="{{ c.requirement_id }}"><td><b>{{ c.requirement_id }}</b> {{ c.requirement_title }}<br><span class="mut" style="font-size:9pt">{{ c.prior_outcome_label or 'Not previously assessed' }} → {{ c.current_outcome_label or 'No longer assessed' }}</span></td><td data-score-delta class="{{ 'up' if c.direction_label == 'Improved' else 'down' }}">{{ '▲' if c.direction_label == 'Improved' else '▼' }} {{ c.direction_label }}</td></tr>{% endfor %}
+      {% for c in doc.prior_period.changes %}<tr data-comparison-list="{{ c.direction }}" data-comparison-requirement="{{ c.requirement_id }}"><td><b>{{ v.display_reference(c.framework_id, c.requirement_id) }}</b> {{ c.requirement_title }}<br><span class="mut" style="font-size:9pt">{{ c.prior_outcome_label or 'Not previously assessed' }} → {{ c.current_outcome_label or 'No longer assessed' }}</span></td><td data-score-delta class="{{ 'up' if c.direction_label == 'Improved' else 'down' }}">{{ '▲' if c.direction_label == 'Improved' else '▼' }} {{ c.direction_label }}</td></tr>{% endfor %}
       </table>
     </div>
     <div class="src" data-prior-period-label>Compared with report {{ doc.prior_period.prior.version_label }} ({{ doc.prior_period.prior.period_label }}). Gaps: {{ doc.prior_period.totals.prior.gaps }} last report, {{ doc.prior_period.totals.current.gaps }} now.</div>
   </div>
   {% else %}
-  {{ frame('04', v.titles.since, 'This is the first issued report for this client. These domain scores are the baseline the next report is measured against.', 'Remediation roadmap') }}
+  {{ frame('05', v.titles.since, 'This is the first issued report for this client. These domain scores are the baseline the next report is measured against.', 'Change since last report') }}
   <div class="body" style="display:flex; gap:9mm">
     <div style="flex:none; width:188mm">
       <div style="display:flex"><div style="width:62mm"></div>{{ scale(96) }}</div>
@@ -625,7 +631,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
           {% for lo, hi, lbl, col in v.bands %}<rect x="{{ lo }}" y="0" width="{{ hi - lo }}" height="7" fill="{{ col }}"/>{% endfor %}
           <ellipse cx="{{ r.now }}" cy="3.5" rx="1.1" ry="2.2" fill="{{ v.theme.p1 }}"/>
         </svg>
-        <div style="width:30mm; text-align:right; font-size:9.6pt"><b>{{ '%.0f'|format(r.now) }}%</b></div>
+        <div style="width:30mm; text-align:right; font-size:9.6pt"><b>{{ v.score_text(r.now) }}</b></div>
       </div>
       {% endfor %}{% endfor %}
     </div>
@@ -637,27 +643,9 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
   {{ foot() }}
 </section>
 
-<!-- LIMITS -->
-<section class="slide" data-slide="limits">
-  {{ frame('04', doc.not_assessed.insufficient_evidence|length ~ ' requirements could not be concluded; ' ~ doc.not_assessed.rfi['items']|length ~ ' evidence requests are open', 'Insufficient evidence requirements are left out of scores, not counted as failures. The limits of this assessment follow.', 'Remediation roadmap') }}
-  <div class="body" style="display:flex; gap:8mm">
-    <div style="flex:0.9">
-      <div style="display:flex; gap:2.5mm; margin-bottom:4mm">{% for f in v.fw %}<div class="card" style="flex:1"><div class="disp" style="font-weight:700; font-size:30pt; line-height:1; color:#5A6385">{{ f.coverage.insufficient_evidence }}</div><div style="font-size:9.4pt">not concluded · {{ f.name }}</div></div>{% endfor %}</div>
-      <div class="h3">Open evidence requests ({{ doc.not_assessed.rfi.version_label }})</div>
-      <table class="t init">{% for i in doc.not_assessed.rfi['items'] %}<tr><td style="width:16mm"><b>{{ i.item_id }}</b></td><td>{{ i.title }}</td><td style="width:24mm"><span class="pill" style="background:{{ v.theme.p2 if i.required else '#6E7591' }}">{{ 'Required' if i.required else 'Recommended' }}</span></td></tr>{% endfor %}</table>
-      <div class="mut" style="font-size:8.4pt; margin-top:2mm">The full list is in Annexure A2 (outcome "{{ v.outcome_labels.insufficient_evidence }}").</div>
-    </div>
-    <div style="flex:1.3">
-      <div class="h3">Limitations</div>
-      <div style="columns:2; column-gap:7mm">{% for l in doc.summary.limitations %}<p style="font-size:9.2pt; color:var(--ink2); margin-bottom:3mm; padding-left:3mm; border-left:0.8mm solid var(--acc); break-inside:avoid">{{ l }}</p>{% endfor %}</div>
-    </div>
-  </div>
-  {{ foot() }}
-</section>
-
 <!-- SIGN-OFF -->
 <section class="slide" data-slide="sign-off">
-  {{ frame('04', 'Sign-off', 'Prepared and reviewed by the engagement team; the issue record lives in the version history.', 'Remediation roadmap') }}
+  {{ frame('06', 'Sign-off', 'Prepared and reviewed by the engagement team; the issue record lives in the version history.', 'Sign-off') }}
   <div class="body">
     <div style="display:flex; gap:6mm; margin-top:4mm">
       {% for k, val, sub in [('Prepared by', doc.sign_off.prepared_by, doc.firm_name), ('Reviewed by', doc.sign_off.reviewed_by, doc.firm_name), ('Released for reporting', doc.release.released_by, 'on ' ~ doc.release.released_on), ('Issue record', 'Version history', 'Issuer, date and file fingerprint')] %}
@@ -665,16 +653,16 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
       {% endfor %}
     </div>
     <div class="card" style="margin-top:10mm; font-size:9.6pt; color:var(--ink2); line-height:1.55; padding:5mm">
-      <b>Report version</b> {{ doc.snapshot.version_label }} · generated {{ doc.snapshot.generated_on }} · snapshot {{ doc.snapshot.id or '' }}<br>
+      <b>Report version</b> {{ doc.snapshot.version_label }} · generated {{ doc.snapshot.generated_on }} · Report ID {{ doc.snapshot.id or '' }}<br>
       {{ doc.sign_off.names_note }} {{ doc.summary.confidentiality }}
     </div>
   </div>
   {{ foot() }}
 </section>
 
-<!-- ANNEXURE DIVIDER -->
-<section class="slide div" data-slide="annexure">
-  <div class="n">05</div><div class="big">Annexure</div>
+<!-- APPENDIX DIVIDER -->
+<section class="slide div" data-slide="appendix">
+  <div class="n">A</div><div class="big">Appendix</div>
   <div class="list">A1 &nbsp;Methodology<br>A2 &nbsp;Requirement register<br>A3 &nbsp;Evidence register{% if doc.soa %}<br>A4 &nbsp;Statement of Applicability summary{% endif %}</div>
   <svg style="position:absolute; right:0; bottom:0" width="120mm" height="120mm" viewBox="0 0 120 120"><circle cx="120" cy="120" r="110" fill="{{ v.theme.p2 }}" opacity="0.7"/><circle cx="120" cy="120" r="72" fill="{{ v.theme.p3 }}" opacity="0.8"/><circle cx="120" cy="120" r="38" fill="{{ v.theme.acc }}"/></svg>
   {{ foot() }}
@@ -682,7 +670,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 
 <!-- A1 METHODOLOGY -->
 <section class="slide" data-slide="methodology">
-  {{ frame('A1', 'Methodology', '', 'Annexure') }}
+  {{ frame('A1', 'Methodology', '', 'Appendix') }}
   <div class="body" style="top:34mm"><div class="cols2">{{ doc.appendices.methodology }}<br><br>{{ narrative_note }}</div></div>
   {{ foot() }}
 </section>
@@ -690,7 +678,7 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 <!-- A2 REGISTER -->
 {% for page in v.reg_pages %}
 <section class="slide" data-slide="requirement-register">
-  {{ frame('A2', 'Requirement register (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', '', 'Annexure') }}
+  {{ frame('A2', 'Requirement register (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', '', 'Appendix') }}
   <div class="body" style="top:34mm">
     <table class="t reg"><tr><th style="width:21mm">Framework</th><th style="width:34mm">Requirement</th><th>Title</th><th style="width:34mm">Domain</th><th style="width:38mm">Outcome</th><th style="width:16mm">Risk</th><th style="width:42mm">Decision</th><th style="width:46mm">Evidence</th></tr>
     {% for r in page %}<tr data-register-row="{{ r.requirement_id }}"><td>{{ v.framework_names.get(r.framework_id, r.framework_id) }}</td><td><b>{{ r.requirement_id }}</b></td><td>{{ r.requirement_title }}</td><td>{{ r.domain_title.split(' — ')[-1] }}</td><td><span class="sq" style="background:{{ v.out_col[r.outcome] }}"></span>{{ r.outcome_label }}</td><td>{{ r.risk_level|cap }}</td><td>{{ r.decision_label }} · {{ r.decided_by }}, {{ r.decided_on|display_date }}</td><td class="mut">{{ r.citation or r.citation_note }}</td></tr>{% endfor %}
@@ -700,29 +688,40 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 </section>
 {% endfor %}
 
-<!-- A3 + A4 -->
-<section class="slide" data-slide="evidence-and-soa">
-  {{ frame('A3', 'Evidence register' ~ (' and Statement of Applicability' if doc.soa else ''), '', 'Annexure') }}
-  <div class="body" style="top:34mm; display:flex; gap:7mm">
-    <div style="flex:1">
-      <div class="h3">A3 · Evidence register</div>
-      <table class="t reg"><tr><th>Document</th><th>Version</th><th>Added</th><th>Fingerprint</th><th>Cited</th></tr>
-      {% for e in doc.appendices.evidence_register %}<tr><td>{{ e.filename }}</td><td>v{{ e.version_number }}</td><td>{{ e.added_on|display_date }}</td><td>{{ e.sha256_prefix }}</td><td>{{ 'Yes' if e.cited else 'No' }}</td></tr>{% endfor %}</table>
-    </div>
-    {% if doc.soa %}
-    <div style="flex:1.2">
-      <div class="h3">A4 · Statement of Applicability ({{ doc.soa.framework_name }} {{ doc.soa.framework_version }}, {{ doc.soa.totals.controls }} controls)</div>
-      <div class="semantic-note" style="margin-bottom:2mm">Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</div>
-      {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined',v.outcome_labels.not_applicable,'Not assessed'] %}
-      <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="text-align:right">{{ c }}</th>{% endfor %}</tr>
-      {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
-      <div class="h3" style="margin-top:3mm">Excluded controls</div>
-      <table class="t reg"><tr><th>Control</th><th>Justification</th></tr>{% for r in doc.soa.rows if r.applicability == 'excluded' %}<tr><td><b>{{ r.reference }}</b> {{ r.title }}</td><td>{{ r.justification or 'Not recorded' }}</td></tr>{% endfor %}</table>
-      <div class="mut" style="font-size:8pt; margin-top:2mm">The full {{ doc.soa.totals.controls }}-control statement, with a justification column to complete, is in the workbook.</div>
-    </div>
-    {% endif %}
+<!-- A3: evidence register, paginated like A2 -->
+{% for page in v.ev_pages %}
+<section class="slide" data-slide="evidence-register">
+  {{ frame('A3', 'Evidence register (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', '', 'Appendix') }}
+  <div class="body" style="top:34mm">
+    <table class="t reg"><tr><th>Document</th><th style="width:18mm">Version</th><th style="width:30mm">Added</th><th style="width:36mm">Fingerprint</th><th style="width:18mm">Cited</th></tr>
+    {% for e in page %}<tr data-evidence-row><td class="wrap-any">{{ e.filename }}</td><td>v{{ e.version_number }}</td><td>{{ e.added_on|display_date }}</td><td>{{ e.sha256_prefix }}</td><td>{{ 'Yes' if e.cited else 'No' }}</td></tr>{% else %}<tr><td colspan="5" class="mut">No evidence was recorded for this report.</td></tr>{% endfor %}
+    </table>
   </div>
   {{ foot() }}
 </section>
+{% endfor %}
+
+{% if doc.soa %}
+<!-- A4: Statement of Applicability summary -->
+<section class="slide" data-slide="statement-of-applicability">
+  {{ frame('A4', 'Statement of Applicability (' ~ doc.soa.framework_name ~ ' ' ~ doc.soa.framework_version ~ ', ' ~ doc.soa.totals.controls ~ ' controls)', '', 'Appendix') }}
+  <div class="body" style="top:34mm">
+    <div class="semantic-note" style="margin-bottom:2mm">Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</div>
+    {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined',v.outcome_labels.not_applicable,'Not assessed'] %}
+    <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="width:30mm; text-align:right">{{ c }}</th>{% endfor %}</tr>
+    {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
+    <div class="h3" style="margin-top:4mm">Excluded controls</div>
+    {% set excluded = doc.soa.rows|selectattr('applicability','equalto','excluded')|list %}
+    {% if excluded %}
+    <table class="t reg"><tr><th style="width:90mm">Control</th><th>Justification</th></tr>{% for r in excluded[:8] %}<tr><td><b>{{ r.reference }}</b> {{ r.title }}</td><td>{{ r.justification or 'Not recorded' }}</td></tr>{% endfor %}</table>
+    {% if excluded|length > 8 %}<div class="mut" style="font-size:8.4pt; margin-top:2mm">{{ v.plural(excluded|length - 8, 'more excluded control') }} {{ 'is' if excluded|length - 8 == 1 else 'are' }} listed in the workbook.</div>{% endif %}
+    {% else %}
+    <p class="mut" style="font-size:9.4pt">No controls are excluded.</p>
+    {% endif %}
+    <div class="mut" style="font-size:8pt; margin-top:2mm">The full {{ doc.soa.totals.controls }}-control statement, with a justification column to complete, is in the workbook.</div>
+  </div>
+  {{ foot() }}
+</section>
+{% endif %}
 </body>
 </html>

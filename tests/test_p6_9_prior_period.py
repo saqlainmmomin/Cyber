@@ -351,12 +351,13 @@ def test_scenario_6_comparison_section_renders_between_frameworks_and_sign_off(d
         html.index('data-slide="sign-off"'),
     ]
     assert positions == sorted(positions)
-    section = html[positions[1]:html.index('data-slide="limits"', positions[1])]
+    section = html[positions[1]:html.index('data-slide="sign-off"', positions[1])]
     # P6-8 V3-B: one card per framework with the current and prior score and the change counts.
     assert section.count('class="card"') == len(document["prior_period"]["frameworks"]) == 2
     for framework in document["prior_period"]["frameworks"]:
         assert framework["name"] in section
         assert f"Current {framework['current_score']}% \u00b7 Prior {framework['prior_score']}%" in section
         counts = framework["counts"]
-        assert f"Improved {counts['improved']} \u00b7 Regressed {counts['regressed']} \u00b7 New {counts['new']}" in section
+        for direction in ("improved", "regressed", "new"):
+            assert f'data-change-count="{direction}">{counts[direction]}' in section
     assert "combined" not in section.lower() and "overall" not in section.lower()

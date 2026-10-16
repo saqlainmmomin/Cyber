@@ -248,12 +248,13 @@ def test_scenario_4_soa_is_conditional_on_iso_and_rendered_as_appendix_d(db, htt
     document = build(db, dpdpa_only)
     assert document["soa"] is None
     html = board.render_html(document, embed_fonts=False)
-    assert 'data-slide="evidence-and-soa"' in html
+    assert 'data-slide="evidence-register"' in html
+    assert 'data-slide="statement-of-applicability"' not in html
     assert "Statement of Applicability" not in html
 
     assessment, _ = _fixture(db, http, gate, monkeypatch)
     html = board.render_html(build(db, assessment), embed_fonts=False)
-    section = html[html.index('data-slide="evidence-and-soa"'):]
+    section = html[html.index('data-slide="statement-of-applicability"'):]
     assert "Statement of Applicability" in section
     assert "Applicable 4 · Excluded 1 · Not determined 88" in section
     assert "Annex A.5.5" in section
