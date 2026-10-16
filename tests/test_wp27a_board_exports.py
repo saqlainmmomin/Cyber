@@ -201,3 +201,25 @@ def test_pptx_overflow_limits_and_unsized_initiatives():
         if data['slide'] == 'effort-benefit':
             assert 'Not yet sized:' in text
             assert all(item['title'] in text for item in document['initiatives'])
+
+
+def test_evidence_register_paginates_and_soa_has_its_own_page():
+    document = load_deck_document()
+    prototype = document['appendices']['evidence_register'][0]
+    document['appendices']['evidence_register'] = [
+        dict(prototype, filename=f'Veldhara_Access_Review_September_Followup_{i}.png') for i in range(25)
+    ]
+    for row in document['soa']['rows']:
+        if row.get('applicability') == 'excluded':
+            row['applicability'] = 'applicable'
+    names = [slide['slide'] for slide in board_view.view(document)['slides']]
+    assert names[-4:] == ['evidence-register'] * 3 + ['statement-of-applicability']
+    tree = _tree(document)
+    pages = [el for el in tree.xpath('//section[@data-slide="evidence-register"]')]
+    assert [len(el.xpath('.//tr[@data-evidence-row]')) for el in pages] == [12, 12, 1]
+    assert 'Evidence register (3 of 3)' in pages[2].text_content()
+    soa = _slide(tree, 'statement-of-applicability').text_content()
+    assert 'No controls are excluded.' in soa
+    deck_names = [data['slide'] for data in board_view.view(document)['slides']]
+    assert len(_deck(document).slides) == len(deck_names)
+

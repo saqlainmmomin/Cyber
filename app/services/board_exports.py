@@ -1607,7 +1607,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
     view = board_view.view(document)
     slides = view["slides"]
     provenance = derivation_label(document, document_sha256)
-    obs_index = reg_index = 0
+    obs_index = reg_index = ev_index = 0
 
     def shown(value, fallback="Not recorded"):
         return fallback if value in (None, "") else _clean(value)
@@ -2066,15 +2066,20 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             page = view["reg_pages"][reg_index]
             reg_index += 1
             native_table(slide, ["Framework", "Requirement", "Title", "Domain", "Outcome", "Risk", "Decision", "Evidence"], [[view["framework_names"].get(row.get("framework_id"), row.get("framework_id", "")), row.get("requirement_id", ""), row.get("requirement_title", ""), str(row.get("domain_title", "")).split(" — ")[-1], row.get("outcome_label") or vocab.OUTCOMES["insufficient_evidence"], vocab.risk_label(row.get("risk_level")), f"{shown(row.get('decision_label'), '')} · {shown(row.get('decided_by'), '')}, {shown(row.get('decided_on'), '')}", row.get("citation") or row.get("citation_note") or "Not recorded"] for row in page], top=43, height=132, font_size=9, column_widths=[35, 35, 65, 40, 38, 20, 55, 60])
-        elif name == "evidence-and-soa":
-            evidence = (document.get("appendices") or {}).get("evidence_register", [])
-            native_table(slide, ["Document", "Version", "Added", "Fingerprint", "Cited"], [[row.get("filename", ""), f"v{row.get('version_number', '')}", row.get("added_on", ""), row.get("sha256_prefix", ""), "Yes" if row.get("cited") else "No"] for row in evidence], top=48, width=190, height=112, column_widths=[72, 20, 30, 50, 18])
-            if document.get("soa"):
-                soa = document["soa"]
-                text_box(slide, f"Statement of Applicability\n{shown(soa.get('framework_name'), '')} {shown(soa.get('framework_version'), '')} · {soa.get('totals', {}).get('controls', 0)} controls", 210, 48, 114, 25, size=11, color=ink2, fill=panel)
-                native_table(slide, ["Applicability", "Count"], [["Applicable", soa.get("totals", {}).get("applicable", 0)], ["Excluded", soa.get("totals", {}).get("excluded", 0)], ["Not determined", soa.get("totals", {}).get("not_assessed", 0)]], top=78, left=210, width=114, height=40, column_widths=[80, 34])
+        elif name == "evidence-register":
+            page = view["ev_pages"][ev_index]
+            ev_index += 1
+            native_table(slide, ["Document", "Version", "Added", "Fingerprint", "Cited"], [[row.get("filename", ""), f"v{row.get('version_number', '')}", row.get("added_on", ""), row.get("sha256_prefix", ""), "Yes" if row.get("cited") else "No"] for row in page], top=43, height=132, font_size=9, column_widths=[160, 25, 40, 55, 30])
+        elif name == "statement-of-applicability":
+            soa = document["soa"]
+            totals = soa.get("totals", {})
+            text_box(slide, f"{shown(soa.get('framework_name'), '')} {shown(soa.get('framework_version'), '')} · {totals.get('controls', 0)} controls", 14, 43, 150, 12, size=12, color=ink2)
+            native_table(slide, ["Applicability", "Count"], [["Applicable", totals.get("applicable", 0)], ["Excluded", totals.get("excluded", 0)], ["Not determined", totals.get("not_assessed", 0)]], top=58, left=14, width=110, height=40, column_widths=[80, 30])
+            excluded = [row for row in soa.get("rows", []) if row.get("applicability") == "excluded"]
+            if excluded:
+                native_table(slide, ["Excluded control", "Justification"], [[f"{row.get('reference', '')} {row.get('title', '')}".strip(), row.get("justification") or "Not recorded"] for row in excluded[:8]], top=58, left=134, width=190, height=110, font_size=9, column_widths=[90, 100])
             else:
-                text_box(slide, "No Statement of Applicability is included in this report.", 210, 48, 114, 25, size=11, color=ink2, fill=panel)
+                text_box(slide, "No controls are excluded.", 134, 58, 190, 12, size=11, color=ink2)
         else:
             text_box(slide, (document.get("summary") or {}).get("basis_of_assessment", ""), 14, 42, 310, 100, size=12, color=ink2)
         footer(slide, slide_data, dark=dark)

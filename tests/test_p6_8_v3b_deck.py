@@ -30,14 +30,14 @@ EXPECTED_SLIDES = (
     + ["observations"] * 4
     + ["roadmap", "effort-benefit", "comparison", "sign-off", "appendix", "methodology"]
     + ["requirement-register"] * 10
-    + ["evidence-and-soa"]
+    + ["evidence-register", "statement-of-applicability"]
 )
 SECTION_OF = {
     "cover": "cover", "contents": "contents", "how-to-read": "01", "overview": "01",
     "executive-summary": "02", "posture": "02", "domain-status": "02", "risk-profile": "02", "board-asks": "02",
     "observations": "03",
     "roadmap": "04", "effort-benefit": "04", "comparison": "05", "limits": "01", "sign-off": "06",
-    "appendix": "", "methodology": "A1", "requirement-register": "A2", "evidence-and-soa": "A3",
+    "appendix": "", "methodology": "A1", "requirement-register": "A2", "evidence-register": "A3", "statement-of-applicability": "A4",
 }
 XLSX_SHEETS_V3 = (
     "Executive Summary", "Detailed Assessment", "Observation Register", "Remediation Tracker",
@@ -101,7 +101,7 @@ def test_scenario_1_slide_order_pagination_and_numbers():
     assert names == EXPECTED_SLIDES
     slides = _view().view(document)["slides"]
     assert [slide["slide"] for slide in slides] == EXPECTED_SLIDES
-    assert [slide["number"] for slide in slides] == list(range(1, 32))
+    assert [slide["number"] for slide in slides] == list(range(1, 33))
     assert {slide["slide"]: slide["section"] for slide in slides} == SECTION_OF
     assert all(isinstance(slide["title"], str) and slide["title"] for slide in slides)
 
@@ -109,6 +109,8 @@ def test_scenario_1_slide_order_pagination_and_numbers():
     assert observation_rows == [3, 3, 3, 1]
     register_rows = [len(el.xpath('.//tr[@data-register-row]')) for name, el in _slides(html) if name == "requirement-register"]
     assert register_rows == [12] * 10 and sum(register_rows) == 120
+    evidence_rows = [len(el.xpath('.//tr[@data-evidence-row]')) for name, el in _slides(html) if name == "evidence-register"]
+    assert evidence_rows == [len(document["appendices"]["evidence_register"])]
     contents = _text(_slide(html, "contents"))
     for section in ("01", "02", "03", "04", "05", "06", "Appendix"):
         assert section in contents
@@ -119,8 +121,8 @@ def test_scenario_1b_prior_period_slide_is_hidden_without_a_comparison():
     document = load_deck_document()
     document["prior_period"].update(status="no_prior", prior=None, frameworks=[], totals=None, changes=[])
     names = [name for name, _ in _slides(_html(document))]
-    assert "comparison" in names and len(names) == 31
-    assert [s["number"] for s in _view().view(document)["slides"]] == list(range(1, 32))
+    assert "comparison" in names and len(names) == 32
+    assert [s["number"] for s in _view().view(document)["slides"]] == list(range(1, 33))
 
 
 # ---------------------------------------------------------------------------

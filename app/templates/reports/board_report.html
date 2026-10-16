@@ -193,6 +193,7 @@ table.effort-table td { padding: 1mm 2mm; line-height: 1.25; }
 .cols2 { columns: 2; column-gap: 10mm; font-size: 9pt; line-height: 1.45; color: var(--ink2); white-space: pre-line; }
 table.reg { table-layout: fixed; }
 table.reg td { font-size: 9pt; padding: 0.9mm 1.8mm; white-space: normal; }
+td.wrap-any { overflow-wrap: anywhere; word-break: break-all; }
 table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 </style>
 </head>
@@ -687,29 +688,40 @@ table.reg th { font-size: 9pt; padding: 1.4mm 1.8mm; }
 </section>
 {% endfor %}
 
-<!-- A3 + A4 -->
-<section class="slide" data-slide="evidence-and-soa">
-  {{ frame('A3', 'Evidence register' ~ (' and Statement of Applicability' if doc.soa else ''), '', 'Appendix') }}
-  <div class="body" style="top:34mm; display:flex; gap:7mm">
-    <div style="flex:1">
-      <div class="h3">A3 · Evidence register</div>
-      <table class="t reg"><tr><th>Document</th><th>Version</th><th>Added</th><th>Fingerprint</th><th>Cited</th></tr>
-      {% for e in doc.appendices.evidence_register %}<tr><td>{{ e.filename }}</td><td>v{{ e.version_number }}</td><td>{{ e.added_on|display_date }}</td><td>{{ e.sha256_prefix }}</td><td>{{ 'Yes' if e.cited else 'No' }}</td></tr>{% endfor %}</table>
-    </div>
-    {% if doc.soa %}
-    <div style="flex:1.2">
-      <div class="h3">A4 · Statement of Applicability ({{ doc.soa.framework_name }} {{ doc.soa.framework_version }}, {{ doc.soa.totals.controls }} controls)</div>
-      <div class="semantic-note" style="margin-bottom:2mm">Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</div>
-      {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined',v.outcome_labels.not_applicable,'Not assessed'] %}
-      <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="text-align:right">{{ c }}</th>{% endfor %}</tr>
-      {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
-      <div class="h3" style="margin-top:3mm">Excluded controls</div>
-      <table class="t reg"><tr><th>Control</th><th>Justification</th></tr>{% for r in doc.soa.rows if r.applicability == 'excluded' %}<tr><td><b>{{ r.reference }}</b> {{ r.title }}</td><td>{{ r.justification or 'Not recorded' }}</td></tr>{% endfor %}</table>
-      <div class="mut" style="font-size:8pt; margin-top:2mm">The full {{ doc.soa.totals.controls }}-control statement, with a justification column to complete, is in the workbook.</div>
-    </div>
-    {% endif %}
+<!-- A3: evidence register, paginated like A2 -->
+{% for page in v.ev_pages %}
+<section class="slide" data-slide="evidence-register">
+  {{ frame('A3', 'Evidence register (' ~ loop.index ~ ' of ' ~ loop.length ~ ')', '', 'Appendix') }}
+  <div class="body" style="top:34mm">
+    <table class="t reg"><tr><th>Document</th><th style="width:18mm">Version</th><th style="width:30mm">Added</th><th style="width:36mm">Fingerprint</th><th style="width:18mm">Cited</th></tr>
+    {% for e in page %}<tr data-evidence-row><td class="wrap-any">{{ e.filename }}</td><td>v{{ e.version_number }}</td><td>{{ e.added_on|display_date }}</td><td>{{ e.sha256_prefix }}</td><td>{{ 'Yes' if e.cited else 'No' }}</td></tr>{% else %}<tr><td colspan="5" class="mut">No evidence was recorded for this report.</td></tr>{% endfor %}
+    </table>
   </div>
   {{ foot() }}
 </section>
+{% endfor %}
+
+{% if doc.soa %}
+<!-- A4: Statement of Applicability summary -->
+<section class="slide" data-slide="statement-of-applicability">
+  {{ frame('A4', 'Statement of Applicability (' ~ doc.soa.framework_name ~ ' ' ~ doc.soa.framework_version ~ ', ' ~ doc.soa.totals.controls ~ ' controls)', '', 'Appendix') }}
+  <div class="body" style="top:34mm">
+    <div class="semantic-note" style="margin-bottom:2mm">Applicable {{ doc.soa.totals.applicable }} · Excluded {{ doc.soa.totals.excluded }} · Not determined {{ doc.soa.totals.not_assessed }}</div>
+    {% set soa_cols = ['Implemented','Partially implemented','Not implemented','Not determined',v.outcome_labels.not_applicable,'Not assessed'] %}
+    <table class="t reg"><tr><th>Theme</th>{% for c in soa_cols %}<th style="width:30mm; text-align:right">{{ c }}</th>{% endfor %}</tr>
+    {% for th in doc.soa.rows|map(attribute='theme')|unique %}<tr><td><b>{{ th }}</b></td>{% for c in soa_cols %}{% set n = doc.soa.rows|selectattr('theme','equalto',th)|selectattr('implementation_label','equalto',c)|list|length %}<td style="text-align:right">{{ n or '·' }}</td>{% endfor %}</tr>{% endfor %}</table>
+    <div class="h3" style="margin-top:4mm">Excluded controls</div>
+    {% set excluded = doc.soa.rows|selectattr('applicability','equalto','excluded')|list %}
+    {% if excluded %}
+    <table class="t reg"><tr><th style="width:90mm">Control</th><th>Justification</th></tr>{% for r in excluded[:8] %}<tr><td><b>{{ r.reference }}</b> {{ r.title }}</td><td>{{ r.justification or 'Not recorded' }}</td></tr>{% endfor %}</table>
+    {% if excluded|length > 8 %}<div class="mut" style="font-size:8.4pt; margin-top:2mm">{{ v.plural(excluded|length - 8, 'more excluded control') }} {{ 'is' if excluded|length - 8 == 1 else 'are' }} listed in the workbook.</div>{% endif %}
+    {% else %}
+    <p class="mut" style="font-size:9.4pt">No controls are excluded.</p>
+    {% endif %}
+    <div class="mut" style="font-size:8pt; margin-top:2mm">The full {{ doc.soa.totals.controls }}-control statement, with a justification column to complete, is in the workbook.</div>
+  </div>
+  {{ foot() }}
+</section>
+{% endif %}
 </body>
 </html>

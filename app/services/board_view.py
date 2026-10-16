@@ -381,6 +381,7 @@ def view(document: Mapping) -> dict:
 
     observation_pages = _chunks(observations, 3)
     register_pages = _chunks(register, 12)
+    evidence_pages = _chunks(list(document.get("appendices", {}).get("evidence_register", [])), 12)
     has_prior = bool(prior_entries)
 
     slides: list[dict] = []
@@ -408,7 +409,10 @@ def view(document: Mapping) -> dict:
     add("methodology", "A1", "Methodology")
     for index in range(len(register_pages)):
         add("requirement-register", "A2", f"Requirement register ({index + 1} of {len(register_pages)})")
-    add("evidence-and-soa", "A3", "Evidence register")
+    for index in range(len(evidence_pages)):
+        add("evidence-register", "A3", f"Evidence register ({index + 1} of {len(evidence_pages)})")
+    if document.get("soa"):
+        add("statement-of-applicability", "A4", "Statement of Applicability")
 
     numbered = [{**item, "number": number} for number, item in enumerate(slides, 1)]
     page_map = {
@@ -463,6 +467,7 @@ def view(document: Mapping) -> dict:
         "lay": layout,
         "obs_pages": observation_pages,
         "reg_pages": register_pages,
+        "ev_pages": evidence_pages,
         "observation_pages": len(observation_pages),
         "register_pages": len(register_pages),
         "never_combined_note": NEVER_COMBINED_NOTE,
