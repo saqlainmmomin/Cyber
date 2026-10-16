@@ -1477,7 +1477,7 @@ def generate_pdf(
                 pdf.set_text_color(39, 174, 96)
                 pdf.text(PM + 4, cur_y + 3.8, S(f"COMPLIANT  {item.requirement_id}: {item.requirement_title[:70]}"))
                 pdf.set_y(cur_y + 7)
-            elif item.compliance_status in ("not_assessed", "insufficient_evidence"):
+            elif item.compliance_status in ("not_assessed", "insufficient_evidence", "not_applicable"):
                 status_color = (
                     "insufficient_evidence"
                     if item.compliance_status == "insufficient_evidence"
@@ -1490,7 +1490,7 @@ def generate_pdf(
                 label = (
                     vocab.OUTCOMES["insufficient_evidence"]
                     if item.compliance_status == "insufficient_evidence"
-                    else vocab.OUTCOME_SHORT["not_assessed"]
+                    else vocab.OUTCOME_SHORT[item.compliance_status]
                 )
                 pdf.text(
                     PM + 4,

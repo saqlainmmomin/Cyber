@@ -299,6 +299,7 @@ def _home_engagement_rows(
             .filter(
                 Conclusion.assessment_id.in_(assessment_ids),
                 Conclusion.risk_level.in_(("critical", "high")),
+                Conclusion.outcome != "not_applicable",
             )
             .count()
             if assessment_ids

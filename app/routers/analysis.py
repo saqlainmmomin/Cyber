@@ -14,6 +14,7 @@ from app.models.audit_event import AuditEvent
 from app.models.initiative import Initiative
 from app.models.questionnaire import QuestionnaireResponse
 from app.models.report import GapItem, GapReport
+from app.services import vocabulary as vocab
 from app.services import analysis_pipeline
 from app.services import llm_client
 from app.services.auto_answer import confirmed_response_clause
@@ -464,9 +465,9 @@ def _persist_single_analysis(
             requirement_title=_REQ_TITLES.get(req_id, req_id),
             compliance_status=a["compliance_status"],
             current_state=a.get("current_state", ""),
-            gap_description=a.get("gap_description", ""),
-            risk_level=a.get("risk_level", "medium"),
-            remediation_action=a.get("remediation_action", ""),
+            gap_description=vocab.applicable_text(a["compliance_status"], a.get("gap_description")),
+            risk_level=vocab.applicable_text(a["compliance_status"], vocab.normalize_risk(a.get("risk_level"))),
+            remediation_action=vocab.applicable_text(a["compliance_status"], a.get("remediation_action")),
             remediation_priority=a.get("remediation_priority", 3),
             remediation_effort=a.get("remediation_effort", "medium"),
             timeline_weeks=a.get("timeline_weeks", 8),
@@ -477,8 +478,8 @@ def _persist_single_analysis(
             review_status="draft",
             needs_review=a.get("needs_review", False),
             ai_compliance_status=a["compliance_status"],
-            ai_gap_description=a.get("gap_description", ""),
-            ai_risk_level=a.get("risk_level", "medium"),
+            ai_gap_description=vocab.applicable_text(a["compliance_status"], a.get("gap_description")),
+            ai_risk_level=vocab.applicable_text(a["compliance_status"], vocab.normalize_risk(a.get("risk_level"))),
         )
         db.add(item)
 
@@ -777,9 +778,9 @@ def _persist_multi_framework_analysis(
             requirement_title=a.get("requirement_title", req_id),
             compliance_status=a["compliance_status"],
             current_state=a.get("current_state", ""),
-            gap_description=a.get("gap_description", ""),
-            risk_level=a.get("risk_level", "medium"),
-            remediation_action=a.get("remediation_action", ""),
+            gap_description=vocab.applicable_text(a["compliance_status"], a.get("gap_description")),
+            risk_level=vocab.applicable_text(a["compliance_status"], vocab.normalize_risk(a.get("risk_level"))),
+            remediation_action=vocab.applicable_text(a["compliance_status"], a.get("remediation_action")),
             remediation_priority=a.get("remediation_priority", 3),
             remediation_effort=a.get("remediation_effort", "medium"),
             timeline_weeks=a.get("timeline_weeks", 8),
@@ -792,8 +793,8 @@ def _persist_multi_framework_analysis(
             review_status="draft",
             needs_review=a.get("needs_review", False),
             ai_compliance_status=a["compliance_status"],
-            ai_gap_description=a.get("gap_description", ""),
-            ai_risk_level=a.get("risk_level", "medium"),
+            ai_gap_description=vocab.applicable_text(a["compliance_status"], a.get("gap_description")),
+            ai_risk_level=vocab.applicable_text(a["compliance_status"], vocab.normalize_risk(a.get("risk_level"))),
         )
         db.add(item)
 

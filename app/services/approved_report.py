@@ -102,7 +102,7 @@ class ApprovedRow:
     gap_description: str
     risk_level: str
     remediation_action: str
-    remediation_priority: int
+    remediation_priority: int | None
     evidence_quote: str | None
     decision: str
     decided_by: str
@@ -276,7 +276,7 @@ def _row(
     control,
     framework_name: str,
 ) -> ApprovedRow:
-    risk_level = conclusion.risk_level or "medium"
+    risk_level = vocab.applicable_text(conclusion.outcome, vocab.normalize_risk(conclusion.risk_level))
     return ApprovedRow(
         id=conclusion.id,
         conclusion_id=conclusion.id,
@@ -289,10 +289,10 @@ def _row(
         control_reference=getattr(control, "reference", None),
         compliance_status=conclusion.outcome,
         current_state=conclusion.rationale or "",
-        gap_description=conclusion.gaps_identified or "",
+        gap_description=vocab.applicable_text(conclusion.outcome, conclusion.gaps_identified),
         risk_level=risk_level,
-        remediation_action=conclusion.recommended_action or "",
-        remediation_priority=PRIORITY_BY_RISK.get(risk_level, 3),
+        remediation_action=vocab.applicable_text(conclusion.outcome, conclusion.recommended_action),
+        remediation_priority=PRIORITY_BY_RISK.get(risk_level),
         evidence_quote=conclusion.evidence_summary or None,
         decision=decision.action,
         decided_by=decision.actor.removeprefix(conclusion_review.REVIEWER_ACTOR_PREFIX),

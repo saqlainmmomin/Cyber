@@ -310,7 +310,7 @@ def _v2(document: dict) -> dict:
         for gap in section["gaps"]:
             gap["priority"] = SEVERITY_PRIORITY[gap["risk_level"]]
     for row in old["appendices"]["requirement_register"]:
-        row["priority"] = SEVERITY_PRIORITY[row["risk_level"]]
+        row["priority"] = SEVERITY_PRIORITY.get(row["risk_level"])
     return old
 
 
@@ -615,7 +615,7 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     assert _sheet_rows(book["Requirement register"]) == [
         [
             names[row["framework_id"]], row["requirement_id"], row["requirement_title"], row["domain_title"],
-            row["outcome_label"], row["risk_level"], row["priority"], row["decision_label"], row["decided_by"],
+            row["outcome_label"], row["risk_level"] or None, row["priority"], row["decision_label"], row["decided_by"],
             row["decided_on"], row["citation"] or row["citation_note"],
         ]
         for row in document["appendices"]["requirement_register"]

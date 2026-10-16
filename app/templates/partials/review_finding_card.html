@@ -2,7 +2,7 @@
 {# All review_status == comparisons belong in partials/review_finding_card.html. #}
 {% set review_state = item.review_status or "draft" %}
 {% set compliance = item.ai_compliance_status or item.compliance_status or "non_compliant" %}
-{% set risk = item.ai_risk_level or item.risk_level or "medium" %}
+{% set risk = item.ai_risk_level if item.ai_risk_level is not none else item.risk_level %}
 {% set evidence = item.evidence_confidence or "weak" %}
 {% set notes_visible = notes_open|default(false) %}
 {% set compliance_labels = vocab.OUTCOMES %}
@@ -18,10 +18,10 @@
   </div>
   <div class="hrow rfc-facts">
     <div><span class="sub">AI status</span><div class="rfc-fact">{{ pill(compliance_labels.get(compliance, compliance|replace("_", " ")|capitalize), "non" if compliance == "non_compliant" else "part" if compliance == "partially_compliant" else "insuf" if compliance == "insufficient_evidence" else "ok") }}{% if item.needs_review %}<span class="warn" title="The model flagged this verdict for review because no evidence supports it." aria-label="Needs review">{{ icon("alert") }}Needs review</span>{% endif %}</div></div>
-    <div><span class="sub">AI risk level</span><div class="rfc-fact">{{ pill(vocab.risk_label(risk), "high" if risk == "high" else "medium" if risk == "medium" else "critical" if risk == "critical" else "low") }}</div></div>
+    <div><span class="sub">AI risk level</span><div class="rfc-fact">{% if vocab.risk_display(compliance, risk) %}{{ pill(vocab.risk_display(compliance, risk), risk if risk in vocab.RISK_LEVELS else "neutral") }}{% endif %}</div></div>
     <div><span class="sub">Evidence</span><div class="rfc-fact">{{ chip("No evidence" if not item.evidence_quote else evidence|title) }}</div></div>
   </div>
-  <p class="concl rfc-gap">{{ item.ai_gap_description or item.gap_description }}</p>
+  <p class="concl rfc-gap">{{ vocab.applicable_text(compliance, item.ai_gap_description or item.gap_description) }}</p>
   {% if item.evidence_quote %}<div class="cite rfc-gap"><div class="cite-head">{{ icon("file") }}<span>Evidence quote</span></div><blockquote>{{ item.evidence_quote[:300] }}{% if item.evidence_quote|length > 300 %}…{% endif %}</blockquote></div>{% endif %}
   {% if item.reviewer_notes and not notes_visible %}<div class="cite rfc-gap"><div class="cite-head"><span>Reviewer notes</span></div><blockquote>{{ item.reviewer_notes }}</blockquote></div>{% endif %}
   <div class="solid rfc-notes" data-notes-panel{% if not notes_visible %} hidden{% endif %}>
