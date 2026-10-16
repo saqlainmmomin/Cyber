@@ -560,7 +560,7 @@ def test_scenario_15_pptx_mirrors_the_deck_with_native_tables_charts_and_provena
     slides = _view().view(document)["slides"]
     assert len(deck.slides) == len(slides) == len(EXPECTED_SLIDES)
     assert abs(deck.slide_width - Mm(338.67)) < Mm(0.5) and abs(deck.slide_height - Mm(190.5)) < Mm(0.5)
-    label = exports.derivation_label(document, SHA).replace("Derived from board report, Report ID ", "Derived from board report snapshot ")
+    label = exports.derivation_label(document, SHA)
     tables = charts = 0
     for slide in deck.slides:
         assert slide.has_notes_slide and label in slide.notes_slide.notes_text_frame.text

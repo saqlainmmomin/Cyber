@@ -1606,10 +1606,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
     white = _pptx_color("#FFFFFF")
     view = board_view.view(document)
     slides = view["slides"]
-    provenance = (
-        "Derived from board report snapshot {snapshot_id8}, {version_label} (document SHA-256 "
-        "{sha_prefix}). Edits to this file do not change the report version it was derived from."
-    ).format(snapshot_id8=_clean(document["snapshot"]["id"][:8]), version_label=_clean(document["snapshot"]["version_label"]), sha_prefix=_clean(document_sha256[:board_report.SHA_PREFIX_CHARS]))
+    provenance = derivation_label(document, document_sha256)
     obs_index = reg_index = 0
 
     def shown(value, fallback="Not recorded"):
