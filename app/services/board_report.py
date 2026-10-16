@@ -72,7 +72,7 @@ NO_CITATION_NOTE = "No supporting citation"
 NOT_COVERED_TEXT = (
     "This assessment does not include technical penetration testing, source code review, "
     "network security assessment, or any form of independent technical verification. "
-    "Where the selected framework(s) include physical or environmental controls, findings "
+    "Where the selected frameworks include physical or environmental controls, findings "
     "on those controls are based on disclosed information and submitted documents, not on "
     "physical inspection or testing."
 )
@@ -183,6 +183,8 @@ def _register_row(row: ApprovedRow, card) -> tuple[dict, set[str]]:
                 row.compliance_status, row.compliance_status.replace("_", " ").title()
             ),
             "risk_level": row.risk_level,
+            "rationale": row.current_state,
+            "gap": row.gap_description,
             "decision_label": report_content.DECISION_LABELS.get(
                 row.decision, row.decision
             ),
@@ -260,7 +262,7 @@ def _framework_summary(review) -> dict:
     elif review.status == "not_scored":
         headline = (
             "Not scored: no in-scope requirement has a scoring outcome; "
-            f"{coverage['insufficient_evidence']} requirement(s) insufficient evidence"
+            f"{vocab.plural(coverage['insufficient_evidence'], 'requirement')} with insufficient evidence"
         )
     else:
         headline = "Not scored"
@@ -373,7 +375,7 @@ def build_document(
         key=lambda pair: (
             SEVERITY_RANK.get(pair[1].severity, 4),
             pair[1].priority,
-            pair[0],
+            vocab.display_reference(pair[1].framework_id, pair[1].requirement_id),
         )
     )
     top_risks = []
@@ -424,6 +426,7 @@ def build_document(
                 "finding_id": finding.finding_id,
                 "framework_id": finding.framework_id,
                 "framework_name": finding.framework_name,
+                "framework_short": vocab.framework_display_name(finding.framework_id),
                 "observation": finding.description,
                 "rank": rank,
                 "rating": finding.severity,
@@ -651,7 +654,7 @@ def build_document(
             "names_note": SIGN_OFF_NAMES_TEXT,
         },
         "appendices": {
-            "methodology": methodology_text(framework_ids, len(approved.rows)),
+            "methodology": methodology_text(framework_ids, len(approved.rows)).replace("framework(s)", "frameworks"),
             "requirement_register": register,
             "evidence_register": _evidence_register(db, assessment, cited_ids),
         },
@@ -782,13 +785,13 @@ def render_pdf(document: dict) -> bytes:
             cover_pdf.set_font("Noto Sans Devanagari", size=18)
             cover_pdf.text(52, 230, company)
             cover_pdf.set_font("Noto Sans", size=13)
-            cover_pdf.text(52, 275, "Privacy and information security compliance assessment")
+            cover_pdf.text(52, 275, vocab.cover_subtitle(f["framework_id"] for f in document.get("frameworks", [])))
             cover_pdf.set_font("Noto Sans", size=9)
             cover_pdf.text(52, 480, str(document["basis"]["period_label"]))
             cover_pdf.text(300, 480, str(document["basis"]["cutoff_label"]))
             cover_pdf.text(650, 480, str(document["snapshot"]["version_label"]))
             snapshot_id = document.get("snapshot", {}).get("id")
-            snapshot_label = f" · Snapshot {snapshot_id[:8]}" if snapshot_id else ""
+            snapshot_label = f" · Report ID {snapshot_id[:8]}" if snapshot_id else ""
             cover_pdf.set_font("Noto Sans", size=6)
             cover_pdf.text(
                 52,

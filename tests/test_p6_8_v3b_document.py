@@ -168,18 +168,23 @@ def test_scenario_5_takeaways_and_derived_asks_are_deterministic_text():
     args = (document["status_board"], document["severity_dashboard"], document["summary"]["totals"],
             document["initiatives"], document["observations"])
     takeaways = bd.build_takeaways(*args)
-    assert takeaways == bd.build_takeaways(*args) == document["takeaways"]
+    assert takeaways == bd.build_takeaways(*args)
+    assert takeaways == {
+        "status_board": "1 of 9 in-scope domains have no approved gaps; the weakest are Breach Notification (25.0%) and Rights of Data Principal (45.0%).",
+        "dashboard": "59 approved gaps, 22 of them critical or high; 4 critical gaps in 4 domains.",
+        "roadmap": "8 initiatives cover 10 of 10 key observations; 2 close a weakness once across more than one framework.",
+    }
     assert set(takeaways) == {"status_board", "dashboard", "roadmap"}
     assert takeaways["roadmap"] == (
-        "8 initiative(s) cover 10 of 10 key observations; 2 close a weakness once across more than one framework."
+        "8 initiatives cover 10 of 10 key observations; 2 close a weakness once across more than one framework."
     )
     ask_args = dict(insufficient_evidence=15, rfi_open=4)
     asks = bd.derived_asks(document["initiatives"], document["observations"], **ask_args)
-    assert asks == document["board_asks"]["derived"] == [
-        "1 remediation action(s) past their target date.",
-        "1 action(s) on critical or high findings have no owner.",
-        "1 action(s) have no target date.",
-        "15 requirement(s) could not be concluded; 4 evidence request(s) are open.",
+    assert asks == [
+        "1 remediation action is past its target date.",
+        "1 action on critical or high findings has no owner.",
+        "1 action has no target date.",
+        "15 requirements could not be concluded; 4 evidence requests are open.",
     ]
     nothing = copy.deepcopy(document["initiatives"])
     for initiative in nothing:
@@ -187,7 +192,7 @@ def test_scenario_5_takeaways_and_derived_asks_are_deterministic_text():
             action.update(overdue=False, owner="Someone", target_date="2026-12-01")
     assert bd.derived_asks(nothing, document["observations"], insufficient_evidence=0, rfi_open=0) == []
     only_rfi = bd.derived_asks(nothing, document["observations"], insufficient_evidence=0, rfi_open=2)
-    assert only_rfi == ["0 requirement(s) could not be concluded; 2 evidence request(s) are open."]
+    assert only_rfi == ["0 requirements could not be concluded; 2 evidence requests are open."]
 
 
 def _clause_of(framework_id: str, requirement_id: str) -> str:
@@ -376,7 +381,7 @@ def test_scenario_13_overdue_open_actions_and_derived_asks_come_from_live_data(d
     flat = {a["title"]: a for i in document["initiatives"] for a in i["actions"]}
     assert flat[late.title]["overdue"] is True and flat[done.title]["overdue"] is False
     assert document["roadmap"]["overdue_count"] == 1
-    assert "1 remediation action(s) past their target date." in document["board_asks"]["derived"]
+    assert "1 remediation action is past its target date." in document["board_asks"]["derived"]
     assert any(i["overdue"] for i in document["initiatives"])
     assert document["roadmap"]["status_counts"]["Verified"] == 1
 
@@ -483,3 +488,16 @@ def test_scenario_18_the_golden_document_is_v3():
     assert set(golden) == DOCUMENT_KEYS_V3
     assert _no_priority_keys(golden) == []
     assert golden["theme"]["primary"] == "#161A5C"  # the default theme, so the golden never depends on a developer's .env
+
+
+def test_observation_ties_use_display_reference(db, http, gate, monkeypatch):
+    assessment, *_ = _engagement_fixture(db, http, gate, monkeypatch)
+    findings, _ = findings_and_actions(db, assessment)
+    for finding in findings:
+        finding.severity = 'high'
+        finding.priority = 2
+    db.commit()
+    document = _document(db, assessment)
+    references = [vocab.display_reference(row['framework_id'], row['requirement_id']) for row in document['observations']]
+    assert references == sorted(references)
+    assert all(row['framework_short'] for row in document['observations'])

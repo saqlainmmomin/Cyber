@@ -179,6 +179,35 @@ def score_text(score: float | None) -> str:
     return "Not scored" if score is None else f"{score:.1f}%"
 
 
+def delta_text(delta: float | None) -> str:
+    if delta is None:
+        return "Not compared"
+    return "no change" if delta == 0 else f"{delta:+.1f} points"
+
+
+def plural(number: int, singular: str, plural: str | None = None) -> str:
+    return f"{number} {singular if number == 1 else (plural or singular + 's')}"
+
+
+def cover_subtitle(framework_ids) -> str:
+    prefix = "Privacy and information security" if {"dpdpa", "gdpr", "hipaa"}.intersection(framework_ids) else "Information security"
+    return f"{prefix} compliance assessment"
+
+
+def severity_legend(framework_ids) -> dict[str, str]:
+    exposure = "regulatory" if {"dpdpa", "gdpr", "hipaa"}.intersection(framework_ids) else "security"
+    return {
+        "critical": f"Material {exposure} or breach exposure. Act now.",
+        "high": "Significant exposure. Act this quarter.",
+        "medium": "Moderate exposure. Plan within six months.",
+        "low": "Limited exposure. Fix in the normal course.",
+    }
+
+
+def responsibility_label(value: str | None, firm_name: str | None) -> str:
+    return {"consultant": (firm_name or "").strip() or "Consultant", "client": "Client", "shared": "Shared"}.get(value, "")
+
+
 def readiness_headline(framework_id: str, score: float, critical: int, high: int) -> str:
     gaps = (
         "No critical or high gaps open."

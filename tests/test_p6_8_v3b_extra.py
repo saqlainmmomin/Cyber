@@ -70,9 +70,15 @@ def test_comparison_slide_restores_v2_scores_delta_label_and_requirement_lists()
     assert document["prior_period"]["prior"]["period_label"] in text
     assert "Current 57.0%" in text and "Prior 41.0%" in text
     assert "+16.0 points" in text
-    assert "Improved (9)" in text and "CH2.CONSENT.2" in text
-    assert "Regressed (2)" in text and "ISO.A5.18" in text
-    assert "Newly assessed (1)" in text and "CH2.CONSENT.NEW" in text
+    for change in document["prior_period"]["changes"]:
+        from app.services import vocabulary as vocab
+        assert vocab.display_reference(change.get("framework_id") or next(f["framework_id"] for f in document["frameworks"] if f["name"] == change["framework_name"]), change["requirement_id"]) in text
+        assert change["requirement_title"] in text
+    for framework in document["prior_period"]["frameworks"]:
+        for direction in ("improved", "regressed", "new"):
+            metric = slide.xpath(f'.//*[@data-change-count="{direction}"]')
+            assert str(framework["counts"][direction]) in [m.text_content() for m in metric]
+    assert "Newly assessed" in text and "CH2.CONSENT.NEW" in text
     assert "No longer assessed (1)" in text and "CH2.CONSENT.RETIRED" in text
     assert "combined" not in text.lower() and "overall" not in text.lower()
 
@@ -80,7 +86,7 @@ def test_comparison_slide_restores_v2_scores_delta_label_and_requirement_lists()
 def test_zero_score_delta_is_rendered_as_no_change():
     document = load_deck_document()
     document["prior_period"]["frameworks"][0]["score_delta"] = 0.0
-    assert "No change" in _text(_slide(_html(document), "comparison"))
+    assert "no change" in _text(_slide(_html(document), "comparison"))
 
 
 def test_empty_roadmap_uses_v2_sentence_without_an_empty_initiatives_slide():
@@ -107,7 +113,7 @@ def test_every_pdf_slide_footer_has_full_provenance_and_page_total():
             document["basis"]["period_label"],
             document["basis"]["cutoff_label"],
             document["snapshot"]["version_label"],
-            f"Snapshot {document['snapshot']['id'][:8]}",
+            f"Report ID {document['snapshot']['id'][:8]}",
             f"Report generated: {document['snapshot']['generated_on']}",
             "Confidential",
             f"Page {number} of {total}",
@@ -144,7 +150,7 @@ def test_pptx_comparison_slide_and_footers_mirror_the_pdf_content():
         footer = " ".join(
             shape.text_frame.text for shape in slide.shapes if shape.has_text_frame
         )
-        assert f"Snapshot {document['snapshot']['id'][:8]}" in footer
+        assert f"Report ID {document['snapshot']['id'][:8]}" in footer
         assert f"Report generated: {document['snapshot']['generated_on']}" in footer
         assert f"Page {number} of {len(slides)}" in footer
     assert all_text
@@ -156,6 +162,6 @@ def test_v3_xlsx_keeps_its_existing_sheets_and_carries_provenance_labels():
     assert tuple(book.sheetnames) == board_exports.XLSX_SHEETS_V3
     for sheet in book.worksheets:
         block = str(sheet["A3"].value)
-        assert f"(snapshot {document['snapshot']['id'][:8]})" in block
+        assert f"(Report ID {document['snapshot']['id'][:8]})" in block
         assert f"Report generated: {document['snapshot']['generated_on']}" in block
         assert "Confidential" in block

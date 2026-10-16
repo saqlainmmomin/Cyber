@@ -870,7 +870,7 @@ def test_scenario_8_snapshot_is_write_once_with_a_hashed_document_sidecar(db, ht
     page = http.get(f"/assessments/{assessment.id}/snapshots")
     assert page.status_code == 200
     assert 'data-snapshot-type="board_report"' in page.text
-    assert report_snapshots.TYPE_LABELS["board_report"] == "Board report v2 (PDF)"
+    assert report_snapshots.TYPE_LABELS["board_report"] == "Board report (PDF)"
     assert f"/api/assessments/{assessment.id}/board-report/preview" in page.text
 
 

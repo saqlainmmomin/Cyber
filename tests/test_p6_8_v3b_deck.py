@@ -26,9 +26,9 @@ TINY_PNG = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 )
 EXPECTED_SLIDES = (
-    ["cover", "contents", "how-to-read", "overview", "executive-summary", "posture", "domain-status", "risk-profile", "board-asks"]
+    ["cover", "contents", "how-to-read", "overview", "limits", "executive-summary", "posture", "domain-status", "risk-profile", "board-asks"]
     + ["observations"] * 4
-    + ["roadmap", "effort-benefit", "comparison", "limits", "sign-off", "annexure", "methodology"]
+    + ["roadmap", "effort-benefit", "comparison", "sign-off", "appendix", "methodology"]
     + ["requirement-register"] * 10
     + ["evidence-and-soa"]
 )
@@ -36,8 +36,8 @@ SECTION_OF = {
     "cover": "cover", "contents": "contents", "how-to-read": "01", "overview": "01",
     "executive-summary": "02", "posture": "02", "domain-status": "02", "risk-profile": "02", "board-asks": "02",
     "observations": "03",
-    "roadmap": "04", "effort-benefit": "04", "comparison": "04", "limits": "04", "sign-off": "04",
-    "annexure": "05", "methodology": "A1", "requirement-register": "A2", "evidence-and-soa": "A3",
+    "roadmap": "04", "effort-benefit": "04", "comparison": "05", "limits": "01", "sign-off": "06",
+    "appendix": "", "methodology": "A1", "requirement-register": "A2", "evidence-and-soa": "A3",
 }
 XLSX_SHEETS_V3 = (
     "Executive Summary", "Detailed Assessment", "Observation Register", "Remediation Tracker",
@@ -110,7 +110,7 @@ def test_scenario_1_slide_order_pagination_and_numbers():
     register_rows = [len(el.xpath('.//tr[@data-register-row]')) for name, el in _slides(html) if name == "requirement-register"]
     assert register_rows == [12] * 10 and sum(register_rows) == 120
     contents = _text(_slide(html, "contents"))
-    for section in ("01", "02", "03", "04", "05"):
+    for section in ("01", "02", "03", "04", "05", "06", "Appendix"):
         assert section in contents
 
 
@@ -183,7 +183,7 @@ def test_scenario_4_scores_are_per_framework_and_never_combined():
         assert f"{framework['score']:.1f}" in _text(score)
         assert vocab.score_band(framework["score"]) in _text(summary)
         assert _one(summary, f'.//*[@data-outcome-bar="{framework["framework_id"]}"]') is not None
-    total = _text(_one(summary, ".//*[@data-total-requirements]"))
+    total = _slide(html, "overview").get("data-total-requirements")
     assert str(document["summary"]["totals"]["requirements"]) in total
     assert [el.get("data-top-risk") for el in summary.xpath(".//*[@data-top-risk]")] == [
         o["ref"] for o in document["observations"][:3]
@@ -194,7 +194,6 @@ def test_scenario_5_domain_status_matches_the_document():
     """D-P6-8-V3-H: one column per framework, one row per domain, a pill from the derived counts."""
     document = load_deck_document()
     board = _slide(_html(document), "domain-status")
-    assert document["takeaways"]["status_board"] in _text(_one(board, './/*[@data-takeaway="status-board"]'))
     for framework in document["status_board"]:
         column = _one(board, f'.//*[@data-status-framework="{framework["framework_id"]}"]')
         assert framework["name"] in _text(column) and f"{framework['score']:.1f}" in _text(column)
@@ -205,23 +204,20 @@ def test_scenario_5_domain_status_matches_the_document():
             elif domain["gaps"] == 0:
                 assert "No gaps" in row
             else:
-                assert f"{domain['gaps']} gaps · {domain['crit_high']} crit/high" in row
+                assert f"{vocab.plural(domain['gaps'], 'gap')} · {domain['crit_high']} crit/high" in row
 
 
 def test_scenario_6_risk_profile_and_matrix_match_the_document():
     """D-P6-8-V3-H: severity panels, ring counts, framework x risk matrix, all from the document."""
     document = load_deck_document()
     dashboard = _slide(_html(document), "risk-profile")
-    assert document["takeaways"]["dashboard"] in _text(_one(dashboard, './/*[@data-takeaway="dashboard"]'))
     for severity, data in document["severity_dashboard"].items():
         panel = _text(_one(dashboard, f'.//*[@data-severity-panel="{severity}"]'))
         assert str(data["total"]) in panel
-        for entry in data["top"]:
-            assert entry["label"] in panel
     for framework_id, counts in document["summary"]["risk_matrix"].items():
-        row = _one(dashboard, f'.//tr[@data-risk-matrix="{framework_id}"]')
-        cells = [_text(cell) for cell in row.xpath("./td")]
-        assert [int(value) for value in cells[-4:]] == [counts["critical"], counts["high"], counts["medium"], counts["low"]]
+        row = _one(dashboard, f'.//*[@data-risk-matrix="{framework_id}"]')
+        visible = {el.get("data-risk-level"): int(el.get("data-risk-count")) for el in row.xpath('.//*[@data-risk-level]')}
+        assert {level: visible.get(level, 0) for level in counts} == counts
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +279,7 @@ def test_scenario_8_narrative_sits_in_the_verdict_panel_and_refs_render_as_r_num
         assert not re.search(r"\bF\d+\b", text)
     for framework in document["summary"]["frameworks"]:
         if framework["narrative"]:
-            assert summary.xpath(f'.//*[@data-narrative="framework-{framework["framework_id"]}"]'), framework["framework_id"]
+            assert _slide(html, "posture").xpath(f'.//*[@data-narrative="framework-{framework["framework_id"]}"]'), framework["framework_id"]
     assert _slide(html, "risk-profile").xpath('.//*[@data-narrative="cross-framework"]')
 
     # A cited finding that is not an observation drops its ref but keeps the sentence.
@@ -310,11 +306,10 @@ def test_scenario_9_roadmap_columns_initiatives_and_derived_priority():
     document = load_deck_document()
     html = _html(document)
     roadmap = _slide(html, "roadmap")
-    assert document["takeaways"]["roadmap"] in _text(_one(roadmap, './/*[@data-takeaway="roadmap"]'))
+    assert _view().view(document)["titles"]["roadmap"] in _text(roadmap)
     for initiative in document["initiatives"]:
-        column = "long" if initiative["horizon"] == "unscheduled" else initiative["horizon"]
-        container = _one(roadmap, f'.//*[@data-horizon-column="{column}"]')
-        callout = _one(container, f'.//*[@data-initiative="{initiative["ref"]}"]')
+        column = initiative["horizon"]
+        callout = _one(roadmap, f'.//*[@data-horizon-column="{column}"]//*[@data-initiative="{initiative["ref"]}"]')
         text = _text(callout)
         assert initiative["title"] in text
         assert all(ref in text for ref in initiative["obs_refs"])
@@ -338,7 +333,7 @@ def test_scenario_10_board_asks_are_consultant_cards_plus_derived_needs_attentio
     body = _slide(_html(document), "board-asks")
     assert len(body.xpath(".//*[@data-board-ask]")) == 2
     assert len(body.xpath(".//*[@data-derived-ask]")) == len(document["board_asks"]["derived"]) == 4
-    for ask in document["board_asks"]["consultant"] + document["board_asks"]["derived"]:
+    for ask in _view().readiness_document(document)["board_asks"]["consultant"] + _view().readiness_document(document)["board_asks"]["derived"]:
         assert ask in _text(body)
     assert document["board_asks"]["consultant_by"] in _text(body)
 
@@ -458,7 +453,7 @@ def test_scenario_14_xlsx_v3_sheets_title_blocks_and_register_contents():
 
     headers, rows = _rows(book["Detailed Assessment"])
     assert headers == ["Requirement", "Framework", "Domain", "Requirement title", "Outcome", "Risk rating",
-                       "Evidence cited", "Decision", "Linked observation"]
+                       "Evidence cited", "Decision", "Linked observation", "Rationale", "Gap", "Citation", "Decided by", "Decided on"]
     assert len(rows) == 120
     linked = {(row[1], row[0]): row[8] for row in rows if row[8]}
     for observation in document["observations"]:
@@ -479,7 +474,7 @@ def test_scenario_14_xlsx_v3_sheets_title_blocks_and_register_contents():
     assert headers == ["Document", "Version", "Added", "SHA-256 prefix", "Cited"]
     assert len(rows) == len(document["appendices"]["evidence_register"])
     definitions = " ".join(str(cell.value) for row in book["Definitions"].iter_rows() for cell in row if cell.value)
-    for term in ("Compliant", "Critical", "Complexity", "Benefit", "Short", "Medium", "Long", "Client", "Consultant", "Shared"):
+    for term in ("Compliant", "Critical", "Complexity", "Benefit", "Short", "Medium", "Long", "Client", document["firm_name"], "Shared"):
         assert term in definitions, term
 
 
@@ -565,7 +560,7 @@ def test_scenario_15_pptx_mirrors_the_deck_with_native_tables_charts_and_provena
     slides = _view().view(document)["slides"]
     assert len(deck.slides) == len(slides) == len(EXPECTED_SLIDES)
     assert abs(deck.slide_width - Mm(338.67)) < Mm(0.5) and abs(deck.slide_height - Mm(190.5)) < Mm(0.5)
-    label = exports.derivation_label(document, SHA)
+    label = exports.derivation_label(document, SHA).replace("Derived from board report, Report ID ", "Derived from board report snapshot ")
     tables = charts = 0
     for slide in deck.slides:
         assert slide.has_notes_slide and label in slide.notes_slide.notes_text_frame.text

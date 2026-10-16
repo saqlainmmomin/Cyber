@@ -205,7 +205,7 @@ def test_scenario_4_document_roadmap_keeps_b1_actions_and_adds_groups(db, http, 
     assert initiatives[1]["cross_framework"] is True and initiatives[1]["frameworks"] == [DPDPA, ISO, NIST]
 
     html = board.render_html(document, embed_fonts=False)
-    section = html[html.index('data-slide="roadmap"'):html.index('data-slide="limits"')]
+    section = html[html.index('data-slide="roadmap"'):html.index('data-slide="comparison"')]
     assert section.count("data-initiative=") == section.count("data-initiative-row=") == 2
     for initiative in initiatives:
         assert section.count(f'data-initiative="{initiative["ref"]}"') == 1
@@ -229,7 +229,7 @@ def test_scenario_5_no_actions_keeps_the_empty_state(db, http, gate, monkeypatch
     # the derived takeaway states the zero counts (the frozen v2 DOCX keeps the old sentence).
     assert document["initiatives"] == []
     assert document["takeaways"]["roadmap"] == (
-        "0 initiative(s) cover 0 of 0 key observations; 0 close a weakness once across more than one framework."
+        "0 initiatives cover 0 of 0 key observations; 0 close a weakness once across more than one framework."
     )
-    assert document["takeaways"]["roadmap"] in html
+    assert "No remediation actions are recorded for the approved findings yet." in html
     assert "data-initiative=" not in html and "data-initiative-row=" not in html

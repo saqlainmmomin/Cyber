@@ -46,7 +46,7 @@ HORIZONS = (
     ("long", "Long term", "after 180 days"),
     ("unscheduled", "Not scheduled", "no target date"),
 )
-LANES = (("client", "Client"), ("shared", "Shared"), ("consultant", "Firm"))
+LANES = (("client", "Client"), ("shared", "Shared"), ("consultant", "Consultant"), (None, "Not recorded"))
 
 
 def _pages(count: int, per_page: int) -> int:
@@ -59,10 +59,6 @@ def _chunks(items: list, size: int) -> list[list]:
 
 def _pct(number: int | float, denominator: int | float) -> int:
     return round(100 * number / denominator) if denominator else 0
-
-
-def _plural(number: int, singular: str, plural: str | None = None) -> str:
-    return f"{number} {singular if number == 1 else (plural or singular + 's')}"
 
 
 def _waffle(coverage: Mapping) -> tuple[list[dict], int]:
@@ -122,6 +118,26 @@ def _date_label(value) -> str | None:
 def readiness_document(document: Mapping) -> dict:
     """Derive display wording from numeric scores without changing issued data."""
     result = deepcopy(document)
+    for row in result.get("observations", []):
+        row.setdefault("framework_short", vocab.framework_display_name(row.get("framework_id", "")))
+    framework_ids_by_name = {row.get("name"): row.get("framework_id") for row in result.get("frameworks", [])}
+    for change in result.get("prior_period", {}).get("changes", []):
+        if not change.get("framework_id"):
+            change["framework_id"] = framework_ids_by_name.get(change.get("framework_name"), "")
+    summary = result.get("summary", {})
+    summary["limitations"] = [text.replace("framework(s)", "frameworks") for text in summary.get("limitations", [])]
+    if result.get("schema_version", 1) >= 3:
+        from app.services import board_derive
+
+        result["takeaways"] = board_derive.build_takeaways(
+            result.get("status_board", []), result.get("severity_dashboard", {}),
+            summary.get("totals", {}), result.get("initiatives", []), result.get("observations", []),
+        )
+        result.setdefault("board_asks", {})["derived"] = board_derive.derived_asks(
+            result.get("initiatives", []), result.get("observations", []),
+            insufficient_evidence=summary.get("totals", {}).get("insufficient_evidence", 0),
+            rfi_open=len(result.get("not_assessed", {}).get("rfi", {}).get("items", [])),
+        )
     register = result.get("register") or result.get("appendices", {}).get("requirement_register", [])
     sections = {row["framework_id"]: row for row in result.get("framework_sections", [])}
     for rows in (
@@ -147,6 +163,7 @@ def readiness_document(document: Mapping) -> dict:
                 )
     appendices = result.get("appendices", {})
     if isinstance(appendices.get("methodology"), str):
+        appendices["methodology"] = appendices["methodology"].replace("framework(s)", "frameworks")
         appendices["methodology"] = re.sub(
             r"(?<=Rating Thresholds:\n).*?(?=\n\n|$)",
             lambda _: vocab.score_threshold_text(), appendices["methodology"], flags=re.S,
@@ -218,23 +235,33 @@ def view(document: Mapping) -> dict:
             }
         )
 
-    below = [framework for framework in frameworks if framework.get("rating") != vocab.score_band(80)]
+    below = [framework for framework in frameworks if framework.get("score") is not None and framework.get("rating") != vocab.score_band(80)]
+    unscored = [framework for framework in frameworks if framework.get("score") is None]
     critical_high = int(totals.get("critical_high_gaps", 0) or 0)
     gaps = int(totals.get("gaps", 0) or 0)
     framework_count = len(frameworks)
+
+    def names(items):
+        labels = [framework["short"] for framework in items]
+        return labels[0] if len(labels) == 1 else ", ".join(labels[:-1]) + " and " + labels[-1]
+
     if framework_count and len(below) == framework_count:
-        below_copy = (
-            "neither framework is yet rated Ready"
-            if framework_count == 2
-            else "no framework is yet rated Ready"
-        )
+        below_copy = "neither framework is yet rated Ready" if framework_count == 2 else "no framework is yet rated Ready"
+    elif below:
+        below_copy = f"{names(below)} {'is' if len(below) == 1 else 'are'} below Ready"
     else:
-        below_copy = f"{', '.join(framework['short'] for framework in below) or 'no framework'} is below Ready"
-    exec_title = f"{critical_high} of {gaps} gaps are critical or high, and {below_copy}"
+        below_copy = "no scored framework is below Ready"
+    if unscored:
+        below_copy += f"; {names(unscored)} {'is' if len(unscored) == 1 else 'are'} not yet scored"
+    exec_title = (
+        f"No critical or high gaps are open, and {below_copy}"
+        if critical_high == 0
+        else f"{critical_high} of {vocab.plural(gaps, 'gap')} {'is' if gaps == 1 else 'are'} critical or high, and {below_copy}"
+    )
 
     met = sum(int(framework.get("coverage", {}).get("compliant", 0) or 0) for framework in frameworks)
     concluded = sum(framework["concluded"] for framework in frameworks)
-    posture_title = f"{met} of {concluded} concluded requirements are met; {gaps} have gaps to close"
+    posture_title = f"{met} of {vocab.plural(concluded, 'concluded requirement')} {'is' if concluded == 1 else 'are'} met; {gaps} {'has a gap' if gaps == 1 else 'have gaps'} to close"
     all_domains = [(framework["short"], domain) for framework in frameworks for domain in framework["domains"]]
     # Only scored domains can be the weakest; an unscored domain is not "0%".
     scored_domains = [item for item in all_domains if item[1].get("score") is not None]
@@ -250,35 +277,46 @@ def view(document: Mapping) -> dict:
     risk_title = (
         f"{top_critical_high[1]['title']} holds {top_critical_high[1]['crit_high']} of the {critical_high} critical or high gaps"
         if top_critical_high
-        else f"No critical or high gaps; {_plural(gaps, 'gap')} remain"
+        else f"No critical or high gaps; {vocab.plural(gaps, 'gap')} {'remains' if gaps == 1 else 'remain'}"
     )
 
     asks = document.get("board_asks") or {"consultant": [], "derived": []}
     decision_title = (
-        f"The board is asked to make {_plural(len(asks.get('consultant', [])), 'decision')}; "
-        f"{_plural(len(asks.get('derived', [])), 'item')} need management attention"
+        f"The board is asked to make {vocab.plural(len(asks.get('consultant', [])), 'decision')}; "
+        f"{vocab.plural(len(asks.get('derived', [])), 'item')} {'needs' if len(asks.get('derived', [])) == 1 else 'need'} management attention"
     )
 
     initiatives = list(document.get("initiatives") or [])
     short_initiatives = sum(1 for initiative in initiatives if initiative.get("horizon") == "short")
     overdue = sum(1 for initiative in initiatives if initiative.get("overdue"))
-    roadmap_title = f"{short_initiatives} of {len(initiatives)} initiatives fall in the next 90 days"
+    roadmap_title = f"{short_initiatives} of {vocab.plural(len(initiatives), 'initiative')} {'falls' if len(initiatives) == 1 else 'fall'} in the next 90 days"
     if overdue:
         roadmap_title += f"; {overdue} {'is' if overdue == 1 else 'are'} already overdue"
 
     grid = {f"{effort}-{benefit}": [] for effort in ("low", "medium", "high") for benefit in ("low", "medium", "high")}
+    unsized = []
     for initiative in initiatives:
         key = f"{initiative.get('complexity')}-{initiative.get('benefit')}"
         if key in grid:
             grid[key].append(initiative)
-    high_benefit = [initiative for initiative in initiatives if initiative.get("benefit") == "high"]
+        else:
+            unsized.append(initiative)
+    high_benefit = [initiative for initiative in initiatives if initiative.get("benefit") == "high" and initiative.get("complexity") in LEVELS]
     quick_wins = [initiative for initiative in high_benefit if initiative.get("complexity") == "low"]
-    matrix_title = (
-        f"{_plural(len(quick_wins), 'quick win')} among {len(high_benefit)} high-benefit initiatives"
-        if quick_wins
-        else f"No quick wins: all {len(high_benefit)} high-benefit initiatives need medium or high effort"
-    )
-    lanes = [lane for lane in LANES if any(initiative.get("responsibility") == lane[0] for initiative in initiatives)]
+    sized = len(initiatives) - len(unsized)
+    if quick_wins:
+        matrix_title = f"{vocab.plural(len(quick_wins), 'quick win')} among {vocab.plural(len(high_benefit), 'high-benefit initiative')}"
+    elif len(high_benefit) == 1:
+        matrix_title = "No quick wins: the one high-benefit initiative needs medium or high effort"
+    elif high_benefit:
+        matrix_title = f"No quick wins: all {len(high_benefit)} high-benefit initiatives need medium or high effort"
+    elif sized:
+        matrix_title = "No quick wins: no sized initiative is rated high benefit"
+    else:
+        matrix_title = "No initiative has been sized for effort and benefit yet"
+    if unsized and sized:
+        matrix_title += f"; {len(unsized)} not yet sized"
+    lanes = [(key, vocab.responsibility_label(key, document.get("firm_name")) or label) for key, label in LANES if any(initiative.get("responsibility") == key for initiative in initiatives)]
     horizons = [
         horizon
         for horizon in HORIZONS
@@ -300,16 +338,17 @@ def view(document: Mapping) -> dict:
             rows.append({"title": domain["title"], "now": now, "was": was})
         dumbbell.append({"name": framework.get("name"), "rows": sorted(rows, key=lambda row: row["now"])})
 
-    since_title = (
-        " and ".join(
-            f"{framework['short']} {'rose' if framework['delta'] >= 0 else 'fell'} {abs(framework['delta']):.0f} points"
-            for framework in frameworks
-            if framework.get("prior") and framework.get("delta") is not None
-        )
-        + " since the last report"
-        if prior_entries
-        else "This first report sets the baseline for future comparisons"
-    )
+    comparisons = [
+        f"{framework['short']} {'rose' if framework['delta'] >= 0 else 'fell'} {abs(framework['delta']):.1f} points"
+        for framework in frameworks if framework.get("delta") is not None
+    ]
+    if not prior_entries:
+        since_title = "This first report sets the baseline for future comparisons"
+    elif comparisons:
+        since_title = " and ".join(comparisons) + " since the last report"
+    else:
+        since_title = "No framework could be compared with the last report"
+
     severity_totals = {
         severity: sum(int(framework["sev"].get(severity, 0) or 0) for framework in frameworks)
         for severity in SEVERITIES
@@ -343,9 +382,6 @@ def view(document: Mapping) -> dict:
     observation_pages = _chunks(observations, 3)
     register_pages = _chunks(register, 12)
     has_prior = bool(prior_entries)
-    page_map = {"read": 3, "overview": 4, "exec": 5, "obs": 10}
-    page_map["roadmap"] = page_map["obs"] + len(observation_pages)
-    page_map["annex"] = page_map["roadmap"] + 5
 
     slides: list[dict] = []
 
@@ -356,6 +392,7 @@ def view(document: Mapping) -> dict:
     add("contents", "contents", "Contents")
     add("how-to-read", "01", "How to read this report")
     add("overview", "01", f"We assessed {totals.get('requirements', 0)} requirements")
+    add("limits", "01", "Scope and limits")
     add("executive-summary", "02", exec_title)
     add("posture", "02", posture_title)
     add("domain-status", "02", domain_title)
@@ -365,18 +402,38 @@ def view(document: Mapping) -> dict:
         add("observations", "03", f"Key observations ({index + 1} of {len(observation_pages)})")
     add("roadmap", "04", roadmap_title)
     add("effort-benefit", "04", matrix_title)
-    add("comparison", "04", since_title)
-    add("limits", "04", f"{len(document.get('not_assessed', {}).get('insufficient_evidence', []))} requirements could not be concluded")
-    add("sign-off", "04", "Sign-off")
-    add("annexure", "05", "Annexure")
+    add("comparison", "05", since_title)
+    add("sign-off", "06", "Sign-off")
+    add("appendix", "", "Appendix")
     add("methodology", "A1", "Methodology")
     for index in range(len(register_pages)):
         add("requirement-register", "A2", f"Requirement register ({index + 1} of {len(register_pages)})")
     add("evidence-and-soa", "A3", "Evidence register")
 
     numbered = [{**item, "number": number} for number, item in enumerate(slides, 1)]
+    page_map = {
+        key: next(item["number"] for item in numbered if item["slide"] == slide)
+        for key, slide in {"read": "how-to-read", "overview": "overview", "exec": "executive-summary", "obs": "observations", "roadmap": "roadmap", "since": "comparison", "sign_off": "sign-off", "appendix": "appendix"}.items()
+    }
+    contents = [
+        ("01", "How to read this report", "Assessment overview, scope and limits", page_map["read"]),
+        ("02", "Executive summary", "Position, posture, domains, risk and decisions", page_map["exec"]),
+        ("03", "Key observations", f"{len(observations)} approved findings", page_map["obs"]),
+        ("04", "Remediation roadmap", "Initiatives, effort and benefit", page_map["roadmap"]),
+        ("05", "Change since last report", "Comparison within each framework", page_map["since"]),
+        ("06", "Sign-off", "Prepared and reviewed by the engagement team", page_map["sign_off"]),
+        ("", "Appendix", "Methodology, requirement and evidence registers", page_map["appendix"]),
+    ]
     return {
         "slides": numbered,
+        "contents": contents,
+        "unsized": unsized,
+        "delta_text": vocab.delta_text,
+        "display_reference": vocab.display_reference,
+        "plural": vocab.plural,
+        "responsibility_label": lambda value: vocab.responsibility_label(value, document.get("firm_name")),
+        "severity_legend": vocab.severity_legend(f["framework_id"] for f in document.get("frameworks", [])),
+        "cover_subtitle": vocab.cover_subtitle(f["framework_id"] for f in document.get("frameworks", [])),
         "theme": {
             "p1": document.get("theme", {}).get("primary", "#161A5C"),
             "p2": document.get("theme", {}).get("secondary", "#2D3FD3"),
@@ -435,9 +492,8 @@ def view(document: Mapping) -> dict:
         },
         "source": (
             f"Source: approved outcomes in report {document.get('snapshot', {}).get('version_label')} "
-            f"(snapshot {str(document.get('snapshot', {}).get('id', ''))[:8]}), "
+            f"(Report ID {str(document.get('snapshot', {}).get('id', ''))[:8]}), "
             f"evidence cut-off {document.get('basis', {}).get('cutoff_label')}."
         ),
-        "has_dpdpa": any(framework.get("framework_id") == "dpdpa" for framework in document.get("frameworks", [])),
         "date_label": _date_label,
     }
