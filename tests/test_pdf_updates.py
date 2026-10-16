@@ -1133,3 +1133,17 @@ def test_dpdpa_scope_copy_counts_scoped_requirements_not_report_rows():
     assert "41 requirements" not in scope_text
     assert "six domains" not in scope_text
     assert "physical security review" in scope_text
+
+
+
+def test_wp25_legacy_pdf_na_appendix_has_no_gap_or_recommendation(db, gate, monkeypatch):
+    assessment, conclusion = _run_one(db, gate, monkeypatch, item=_item(REQS[0], "not_applicable"))
+    item = db.query(GapItem).join(GapReport).filter(GapReport.assessment_id == assessment.id).one()
+    item.gap_description = "Forbidden N/A gap description"
+    item.remediation_action = "Forbidden N/A recommendation"
+    item.risk_level = "low"
+    db.commit()
+    text_value = _pdf_text(_assessment_pdf(db, assessment))
+    assert "Forbidden N/A gap description" not in text_value
+    assert "Forbidden N/A recommendation" not in text_value
+    assert item.requirement_id in text_value

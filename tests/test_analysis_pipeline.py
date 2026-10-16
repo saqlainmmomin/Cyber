@@ -502,9 +502,9 @@ def test_first_run_writes_run_conclusions_and_proposals(db, engine, gate, monkey
 
         assert conclusion.outcome == expected_outcomes[req]
         assert conclusion.rationale == item["current_state"]
-        assert conclusion.gaps_identified == item["gap_description"]
-        assert conclusion.risk_level == item["risk_level"]
-        assert conclusion.recommended_action == item["remediation_action"]
+        assert conclusion.gaps_identified == ("" if conclusion.outcome == "not_applicable" else item["gap_description"])
+        assert conclusion.risk_level == ("" if conclusion.outcome == "not_applicable" else item["risk_level"])
+        assert conclusion.recommended_action == ("" if conclusion.outcome == "not_applicable" else item["remediation_action"])
         assert conclusion.evidence_summary == ""
         assert conclusion.cluster_id == clusters.get(req)
         assert conclusion.ai_proposed is True
@@ -1309,3 +1309,50 @@ def test_each_source_text_is_normalized_once_per_run(db, texts, gate, monkeypatc
         for r in _revisions(db, conclusion.id)
     ]
     assert all(len(x) == 1 for x in cited)
+
+
+@pytest.mark.parametrize("risk", [None, "missing", "urgent", " High "])
+def test_wp25_scope_and_missing_risk_persistence(db, risk):
+    P = pl()
+    child = "CH4.CHILD.1"
+    a = _seed(db, applicable=REQS[:2])
+    a.scope_answers = json.dumps({"SCP.2": "no"})
+    db.commit()
+    context = P.start_runs(db, assessment_id=a.id, framework_ids=["dpdpa"])
+    gap = _item(REQS[1], "partially_compliant", risk=risk)
+    if risk == "missing":
+        gap.pop("risk_level")
+    P.record_framework_run(
+        db, context, framework_id="dpdpa",
+        assessments=[_item(child, "non_compliant"), _item(REQS[0], "not_applicable"), gap],
+        desk_review_data=None, gap_report_id="synthetic-report",
+    )
+    db.commit()
+    rows = _conclusions(db, a.id)
+    assert rows[child].outcome == "not_applicable"
+    assert rows[child].rationale == "Out of scope: the organisation does not process children's personal data (scope answer SCP.2: No)."
+    assert rows[REQS[0]].rationale == f"State of {REQS[0]}"
+    for req in (child, REQS[0]):
+        assert (rows[req].gaps_identified, rows[req].risk_level, rows[req].recommended_action) == ("", "", "")
+    assert rows[REQS[1]].risk_level == ("high" if risk == " High " else "")
+
+
+@pytest.mark.parametrize("multi", [False, True])
+def test_wp25_legacy_gap_builders_blank_na_and_normalize_risk(db, gate, monkeypatch, multi):
+    frameworks = ("dpdpa", "iso27001") if multi else ("dpdpa",)
+    a = _seed(db, frameworks=frameworks)
+    items = [_item(REQS[0], "not_applicable"), _item(REQS[1], "partially_compliant", risk=None), _item(REQS[2], "non_compliant", risk=" High ")]
+    if multi:
+        _stub_multi(monkeypatch, {"dpdpa": items, "iso27001": [_item(_controls("iso27001")[0], "not_applicable")]})
+    else:
+        _stub_single(monkeypatch, items)
+    gate.trigger_analysis(a.id, db)
+    report = db.query(GapReport).filter_by(assessment_id=a.id).one()
+    rows = db.query(GapItem).filter_by(report_id=report.id).all()
+    for row in rows:
+        if row.compliance_status == "not_applicable":
+            assert (row.gap_description, row.risk_level, row.remediation_action, row.ai_gap_description, row.ai_risk_level) == ("", "", "", "", "")
+        elif row.requirement_id == REQS[1]:
+            assert row.risk_level == row.ai_risk_level == ""
+        else:
+            assert row.risk_level == row.ai_risk_level == "high"

@@ -6,8 +6,8 @@
 {% set tones = {"compliant": "c-ok", "partially_compliant": "c-part", "non_compliant": "c-non", "insufficient_evidence": "c-insuf"} %}
 <span class="pill {{ tones.get(outcome, 'c-neutral') }}">{{ outcome_label(outcome) }}</span>
 {%- endmacro %}
-{% macro risk_pill(risk) -%}
-{% if risk %}{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}<span class="pill {{ tones.get(risk|lower, 'c-neutral') }}">{{ vocab.risk_label(risk) }}</span>{% endif %}
+{% macro risk_pill(outcome, risk) -%}
+{% if vocab.risk_display(outcome, risk) %}{% set tones = {"critical": "c-critical", "high": "c-high", "medium": "c-medium", "low": "c-low"} %}<span class="pill {{ tones.get(risk|lower, 'c-neutral') }}">{{ vocab.risk_display(outcome, risk) }}</span>{% endif %}
 {%- endmacro %}
 {% macro decision_status(card) -%}
 {% if card.legacy_bulk_approval %}<span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy approval</span>
@@ -73,8 +73,8 @@
     {% if not entry.ai_proposal %}<p class="muted">No AI proposal recorded.</p>
     {% elif entry.ai_proposal.claim is none %}{{ citation_list(entry.ai_proposal.citations, entry.ai_proposal.citations_captured) }}
     {% else %}{% set claim = entry.ai_proposal.claim %}{% set item = claim.get("item") or {} %}{% set quality = claim.get("quality") or {} %}
-    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap">{{ outcome_pill(claim.get("outcome")) }}{% if claim.get("disposition") %}<span class="chip">{{ claim.get("disposition")|replace("_", " ")|capitalize }}</span>{% endif %}{{ risk_pill(item.get("risk_level")) }}</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{% if item.get("current_state") %}{{ field("Rationale", item.get("current_state"), true) }}{% endif %}{% if item.get("gap_description") %}{{ field("Gap", item.get("gap_description"), true) }}{% endif %}{% if item.get("remediation_action") %}{{ field("Remediation action", item.get("remediation_action"), true) }}{% endif %}{{ field("Model", entry.ai_proposal.run.model_id) }}{{ field("Started", entry.ai_proposal.run.started_at|display_date ~ ", " ~ entry.ai_proposal.run.started_at.strftime("%H:%M")) }}</div>
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap">{{ outcome_pill(claim.get("outcome")) }}{% if claim.get("disposition") %}<span class="chip">{{ claim.get("disposition")|replace("_", " ")|capitalize }}</span>{% endif %}{{ risk_pill(claim.get("outcome"), item.get("risk_level")) }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{% if item.get("current_state") %}{{ field("Rationale", item.get("current_state"), true) }}{% endif %}{% if vocab.applicable_text(claim.get("outcome"), item.get("gap_description")) %}{{ field("Gap", vocab.applicable_text(claim.get("outcome"), item.get("gap_description")), true) }}{% endif %}{% if vocab.applicable_text(claim.get("outcome"), item.get("remediation_action")) %}{{ field("Remediation action", vocab.applicable_text(claim.get("outcome"), item.get("remediation_action")), true) }}{% endif %}{{ field("Model", entry.ai_proposal.run.model_id) }}{{ field("Started", entry.ai_proposal.run.started_at|display_date ~ ", " ~ entry.ai_proposal.run.started_at.strftime("%H:%M")) }}</div>
     {% set grounded = quality.get("evidence_quote_grounded") %}{% set red_flags = quality.get("desk_review_red_flags", 0) %}{% set citation_count = quality.get("citation_count", 0) %}{% set contradictions = quality.get("contradictions") %}
     <div><h3 style="margin-bottom:var(--s-3)">Quality checks</h3><ul class="checks">
       <li><span class="ck {{ 'c-ok' if citation_count else 'c-part' }}"><svg class="i"><use href="#i-{{ 'check' if citation_count else 'alert' }}"/></svg></span>Citations<span class="res">{{ citation_count }}</span></li>
@@ -98,8 +98,8 @@
     {% elif card.legacy_bulk_approval %}
     <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="warn"><svg class="i"><use href="#i-alert"/></svg>Legacy bulk approval, not individually reviewed</span>{{ outcome_pill(card.conclusion.outcome) }}</div><p class="sub">Approved in bulk before decisions were recorded one by one.</p>
     {% else %}
-    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="chip">{{ "AI proposal" if card.conclusion.ai_proposed else "Consultant-edited" }}</span>{{ outcome_pill(card.conclusion.outcome) }}{{ risk_pill(card.conclusion.risk_level) }}</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{{ field("Rationale", card.conclusion.rationale, true) }}{{ field("Gaps identified", card.conclusion.gaps_identified, true) }}{{ field("Recommended action", card.conclusion.recommended_action, true) }}{{ field("Evidence summary", card.conclusion.evidence_summary or "No grounded supporting quote", true) }}</div>
+    <div style="display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap"><span class="chip">{{ "AI proposal" if card.conclusion.ai_proposed else "Consultant-edited" }}</span>{{ outcome_pill(card.conclusion.outcome) }}{{ risk_pill(card.conclusion.outcome, card.conclusion.risk_level) }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s-5) var(--s-6)">{{ field("Rationale", card.conclusion.rationale, true) }}{{ field("Gaps identified", vocab.applicable_text(card.conclusion.outcome, card.conclusion.gaps_identified), true) }}{{ field("Recommended action", vocab.applicable_text(card.conclusion.outcome, card.conclusion.recommended_action), true) }}{{ field("Evidence summary", card.conclusion.evidence_summary or "No grounded supporting quote", true) }}</div>
     {% set edited_note = not card.conclusion.ai_proposed and card.previous_outcome %}
     {% if edited_note or card.last_decision or card.state == "edited" %}<p class="sub">{% if edited_note %}The AI proposed {{ outcome_label(card.previous_outcome) }} before this edit. {% endif %}{% if card.last_decision %}{{ vocab.review_label(card.last_decision.action) }} by {{ card.last_decision.actor_display }}, {{ card.last_decision.created_at|display_date }}. {% endif %}{% if card.state == "edited" %}Edits carry no citations; the citations above belong to the AI proposal this edit replaced.{% endif %}</p>{% endif %}
     {% endif %}

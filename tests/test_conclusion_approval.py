@@ -975,3 +975,53 @@ def test_settings_reviewer_default_prefill_and_actor_fallback(db, http, gate, mo
         data={"expected_version": 3, "reviewer_name": "", "reason": "Unsupported"},
     ).status_code == 200
     assert _revisions(db, conclusion.id)[-1].actor == "consultant:Manager Review"
+
+
+@pytest.mark.parametrize("outcome, status", [("not_applicable", 200), ("partially_compliant", 400), ("compliant", 400)])
+def test_wp25_approval_requires_risk_except_na(db, http, gate, monkeypatch, outcome, status):
+    assessment, conclusion = _run_one(db, gate, monkeypatch, item=_item(REQS[0], outcome, risk=""))
+    response = http.post(_url(assessment, conclusion, "approve"), data={"expected_version": 1})
+    assert response.status_code == status, response.text
+    if status == 400:
+        assert response.json()["detail"] == conclusion_review.INCOMPLETE_CONCLUSION
+
+
+def test_wp25_edit_na_blanks_fields_and_approved_reader_hides_old_values(db, http, gate, monkeypatch):
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    response = http.post(_url(assessment, conclusion, "edit"), data=_edit_payload(1, outcome="not_applicable", risk_level="low"))
+    assert response.status_code == 200, response.text
+    db.refresh(conclusion)
+    assert (conclusion.gaps_identified, conclusion.risk_level, conclusion.recommended_action) == ("", "", "")
+    # Simulate an older stored N/A without migrating it.
+    conclusion.gaps_identified, conclusion.risk_level, conclusion.recommended_action = "Old gap", "low", "Old action"
+    db.commit()
+    row = approved_report.build_approved_report(db, assessment).rows[0]
+    assert (row.gap_description, row.risk_level, row.remediation_action, row.remediation_priority) == ("", "", "", None)
+    assert row.current_state == "Consultant rationale"
+
+
+def test_wp25_conclusions_html_hides_na_fields_and_labels_unrated(db, http, gate, monkeypatch):
+    import re
+
+    assessment = _seed(db, applicable=REQS[:2])
+    _stub_single(monkeypatch, [_item(REQS[0], "not_applicable"), _item(REQS[1], risk="")])
+    gate.trigger_analysis(assessment.id, db)
+    na = db.query(Conclusion).filter_by(assessment_id=assessment.id, requirement_id=REQS[0]).one()
+    na.gaps_identified, na.risk_level, na.recommended_action = "Hidden N/A gap", "critical", "Hidden N/A action"
+    db.commit()
+    response = http.get(f"/assessments/{assessment.id}/conclusions")
+    assert response.status_code == 200
+    row = re.search(rf'<tr[^>]*data-conclusion-row="{na.id}".*?</tr>', response.text).group()
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", row)
+    assert re.sub(r"<[^>]*>", "", cells[2]).strip() == ""
+    assert "Hidden N/A gap" not in response.text and "Hidden N/A action" not in response.text
+    assert "Not rated" in response.text
+
+
+def test_wp25_approved_row_never_defaults_blank_risk(db, gate, monkeypatch):
+    assessment, conclusion = _run_one(db, gate, monkeypatch)
+    _human_revision(db, conclusion, "approved")
+    conclusion.risk_level = ""
+    db.commit()
+    row = approved_report.build_approved_report(db, assessment).rows[0]
+    assert row.risk_level == "" and row.remediation_priority is None

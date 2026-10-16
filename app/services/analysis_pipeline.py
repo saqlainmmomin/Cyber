@@ -45,6 +45,8 @@ from app.services.citations import (
 from app.services.auto_answer import confirmed_response_clause
 from app.services.evidence import analysis_documents
 from app.services.run_state import mark_run_failed
+from app.services.scope_profiler import exclusion_reason
+from app.services import vocabulary as vocab
 
 logger = logging.getLogger(__name__)
 
@@ -352,6 +354,8 @@ def record_framework_run(
         raise AnalysisPipelineError(f"Analysis run for {framework_id} was not found.")
     envelope = json.loads(run.claims_json)
     applicable = envelope["inputs"]["applicable_requirements"]
+    assessment = db.get(Assessment, run.assessment_id)
+    scope_answers = json.loads(assessment.scope_answers or "{}") if assessment else {}
     state = load_conclusion_state(
         db,
         assessment_id=run.assessment_id,
@@ -374,17 +378,23 @@ def record_framework_run(
                 "Unknown compliance status for requirement %s; recording insufficient evidence",
                 requirement_id,
             )
+        scope_enforced = bool(applicable) and requirement_id not in applicable
+        if scope_enforced:
+            outcome = "not_applicable"
+        rationale = item.get("current_state") or ""
+        if scope_enforced:
+            rationale = exclusion_reason(requirement_id, scope_answers if framework_id == "dpdpa" else {})
         quote = item.get("evidence_quote") or ""
         citations = cite_quotes(list(context.sources), [quote]) if quote.strip() else []
         grounded = None if not quote.strip() else bool(citations)
         cluster_id = _cluster_id(framework_id, requirement_id)
         content = {
             "outcome": outcome,
-            "rationale": item.get("current_state") or "",
+            "rationale": rationale,
             "evidence_summary": quote if grounded else "",
-            "gaps_identified": item.get("gap_description") or "",
-            "risk_level": item.get("risk_level") or "medium",
-            "recommended_action": item.get("remediation_action") or "",
+            "gaps_identified": vocab.applicable_text(outcome, item.get("gap_description")),
+            "risk_level": vocab.applicable_text(outcome, vocab.normalize_risk(item.get("risk_level"))),
+            "recommended_action": vocab.applicable_text(outcome, item.get("remediation_action")),
             "cluster_id": cluster_id,
         }
 
@@ -438,7 +448,7 @@ def record_framework_run(
                 "requirement_id": requirement_id,
                 "cluster_id": cluster_id,
                 "outcome": outcome,
-                "scope_enforced": bool(applicable) and requirement_id not in applicable,
+                "scope_enforced": scope_enforced,
                 "item": item,
                 "quality": {
                     "citation_count": len(citations),

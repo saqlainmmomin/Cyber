@@ -19,5 +19,5 @@ class ConclusionEditIn(ConclusionDecisionIn):
     ]
     rationale: str
     gaps_identified: str
-    risk_level: Literal["critical", "high", "medium", "low"]
+    risk_level: Literal["", "critical", "high", "medium", "low"]
     recommended_action: str

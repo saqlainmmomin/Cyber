@@ -44,6 +44,19 @@ PROCESSOR_REQUIREMENT_IDS = {
 }
 
 
+def exclusion_reason(requirement_id: str, scope_answers: dict) -> str:
+    """Explain exclusions only from explicitly recorded DPDPA scope answers."""
+    for ids, question, reason in (
+        (CROSS_BORDER_REQUIREMENT_IDS, "SCP.1", "the organisation does not transfer personal data outside India"),
+        (CHILDREN_REQUIREMENT_IDS, "SCP.2", "the organisation does not process children's personal data"),
+        (SDF_REQUIREMENT_IDS, "SCP.3", "the organisation is not designated, or likely to be designated, a Significant Data Fiduciary"),
+        (PROCESSOR_REQUIREMENT_IDS, "SCP.5", "the organisation does not use third-party processors"),
+    ):
+        if requirement_id in ids and scope_answers.get(question) == "no":
+            return f"Out of scope: {reason} (scope answer {question}: No)."
+    return "Outside the recorded assessment scope."
+
+
 def compute_scope(scope_answers: dict) -> dict:
     """
     Compute applicable requirements and evidence checklist from scope answers.

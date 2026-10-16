@@ -15,7 +15,7 @@ class GapItemOut(BaseModel):
     gap_description: str
     risk_level: str
     remediation_action: str
-    remediation_priority: int
+    remediation_priority: int | None
     remediation_effort: str | None = None
     timeline_weeks: int | None = None
     maturity_level: int | None = None

@@ -23,7 +23,7 @@
     </div>
     <div class="meta">
       <span class="pill {{ outcome_tones.get(card.conclusion.outcome, "c-neutral") }}">{{ outcome_labels.get(card.conclusion.outcome, card.conclusion.outcome|replace("_", " ")|capitalize) }}</span>
-      {% if card.conclusion.risk_level %}<span class="pill {{ risk_tones.get(card.conclusion.risk_level, "c-neutral") }}">{{ vocab.risk_label(card.conclusion.risk_level) }}</span>{% endif %}
+      {% if vocab.risk_display(card.conclusion.outcome, card.conclusion.risk_level) %}<span class="pill {{ risk_tones.get(card.conclusion.risk_level, "c-neutral") }}">{{ vocab.risk_display(card.conclusion.outcome, card.conclusion.risk_level) }}</span>{% endif %}
       <span class="ai">{{ "AI proposed" if card.conclusion.ai_proposed else "Edited by consultant" }}</span>
       <span class="ref">{{ vocab.reference_with_framework(card.conclusion.framework_id, card.conclusion.requirement_id) }} · Version {{ card.conclusion.version }}</span>
       {% if not edit_focus %}<a class="btn ghost sm lead" href="/assessments/{{ assessment.id }}/workpaper#wp-{{ card.conclusion.framework_id }}-{{ card.conclusion.requirement_id }}">{{ icon("link") }}Workpaper trace</a>{% endif %}
@@ -51,8 +51,8 @@
     <div class="block cc-view">
       <h3>Conclusion</h3>
       <p class="concl cc-pre">{{ card.conclusion.rationale }}</p>
-      {% if card.conclusion.gaps_identified %}<p class="muted cc-pre cc-gaps">{{ card.conclusion.gaps_identified }}</p>{% endif %}
-      {% if card.conclusion.recommended_action %}<div class="rec">{{ icon("arrow-r") }}<div><b>Recommended action</b>{{ card.conclusion.recommended_action }}</div></div>{% endif %}
+      {% if vocab.applicable_text(card.conclusion.outcome, card.conclusion.gaps_identified) %}<p class="muted cc-pre cc-gaps">{{ vocab.applicable_text(card.conclusion.outcome, card.conclusion.gaps_identified) }}</p>{% endif %}
+      {% if vocab.applicable_text(card.conclusion.outcome, card.conclusion.recommended_action) %}<div class="rec">{{ icon("arrow-r") }}<div><b>Recommended action</b>{{ vocab.applicable_text(card.conclusion.outcome, card.conclusion.recommended_action) }}</div></div>{% endif %}
     </div>
 
     {% if not edit_focus %}
@@ -87,11 +87,11 @@
         <input type="hidden" name="expected_version" value="{{ card.conclusion.version }}">
         <div class="fw-grid">
           <div><label class="label" for="outcome-{{ card.conclusion.id }}">Outcome</label><label class="field"><select id="outcome-{{ card.conclusion.id }}" name="outcome">{% for value in vocab.OUTCOMES %}<option value="{{ value }}"{% if card.conclusion.outcome == value %} selected{% endif %}>{{ outcome_labels[value] }}</option>{% endfor %}</select></label></div>
-          <div><label class="label" for="risk-{{ card.conclusion.id }}">Risk level</label><label class="field"><select id="risk-{{ card.conclusion.id }}" name="risk_level">{% for value in vocab.RISK_LEVELS %}<option value="{{ value }}"{% if card.conclusion.risk_level == value %} selected{% endif %}>{{ vocab.risk_label(value) }}</option>{% endfor %}</select></label></div>
+          <div><label class="label" for="risk-{{ card.conclusion.id }}">Risk level</label><label class="field"><select id="risk-{{ card.conclusion.id }}" name="risk_level"><option value=""{% if not vocab.applicable_text(card.conclusion.outcome, vocab.normalize_risk(card.conclusion.risk_level)) %} selected{% endif %}>{{ vocab.risk_display(card.conclusion.outcome, "") }}</option>{% for value in vocab.RISK_LEVELS %}<option value="{{ value }}"{% if vocab.applicable_text(card.conclusion.outcome, vocab.normalize_risk(card.conclusion.risk_level)) == value %} selected{% endif %}>{{ vocab.risk_label(value) }}</option>{% endfor %}</select></label></div>
         </div>
         <div><label class="label" for="rationale-{{ card.conclusion.id }}">Rationale</label><label class="field area"><textarea id="rationale-{{ card.conclusion.id }}" name="rationale" rows="3">{{ card.conclusion.rationale }}</textarea></label></div>
-        <div><label class="label" for="gaps-{{ card.conclusion.id }}">Gaps identified</label><label class="field area"><textarea id="gaps-{{ card.conclusion.id }}" name="gaps_identified" rows="3">{{ card.conclusion.gaps_identified or "" }}</textarea></label></div>
-        {% with assessment_id=assessment.id, conclusion_id=card.conclusion.id, recommended_action=(recommended_action if recommended_action is defined and recommended_action is not none else card.conclusion.recommended_action), draft=(draft if draft is defined else None), error=(error if error is defined else None) %}
+        <div><label class="label" for="gaps-{{ card.conclusion.id }}">Gaps identified</label><label class="field area"><textarea id="gaps-{{ card.conclusion.id }}" name="gaps_identified" rows="3">{{ vocab.applicable_text(card.conclusion.outcome, card.conclusion.gaps_identified) or "" }}</textarea></label></div>
+        {% with assessment_id=assessment.id, conclusion_id=card.conclusion.id, recommended_action=(recommended_action if recommended_action is defined and recommended_action is not none else vocab.applicable_text(card.conclusion.outcome, card.conclusion.recommended_action)), draft=(draft if draft is defined else None), error=(error if error is defined else None) %}
         {% include "partials/remediation_draft.html" %}
         {% endwith %}
       </form>

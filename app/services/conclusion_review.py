@@ -191,7 +191,7 @@ def _approval_blocker(
     if (
         content.get("outcome") not in CONCLUSION_OUTCOMES
         or not content.get("rationale", "").strip()
-        or not content.get("risk_level", "").strip()
+        or (content.get("outcome") != "not_applicable" and content.get("risk_level") not in RISK_LEVELS)
     ):
         return INCOMPLETE_CONCLUSION
     if content["outcome"] in GAP_OUTCOMES and (
@@ -218,7 +218,10 @@ def _validated_edits(
     normalized = {field: edits[field].strip() for field in EDITABLE_FIELDS}
     if normalized["outcome"] not in CONCLUSION_OUTCOMES:
         raise InvalidDecision("Unknown conclusion outcome.")
-    if normalized["risk_level"] not in RISK_LEVELS:
+    if normalized["outcome"] == "not_applicable":
+        for field in ("gaps_identified", "risk_level", "recommended_action"):
+            normalized[field] = ""
+    elif normalized["risk_level"] not in RISK_LEVELS:
         raise InvalidDecision("Unknown risk level.")
     blocker = _approval_blocker(normalized, latest_proposal)
     if blocker:

@@ -24,7 +24,7 @@ class GapAssessmentItem(BaseModel):
     compliance_status: str
     current_state: str = ""
     gap_description: str = ""
-    risk_level: str = "medium"
+    risk_level: str = ""
     remediation_action: str = ""
     remediation_priority: int = 3
     remediation_effort: str = "medium"

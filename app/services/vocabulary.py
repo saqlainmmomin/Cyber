@@ -81,6 +81,25 @@ def outcome_label(key: str | None) -> str:
     return _label(OUTCOMES, key)
 
 
+NOT_RATED = "Not rated"
+
+
+def normalize_risk(value: str | None) -> str:
+    value = value.strip().lower() if isinstance(value, str) else ""
+    return value if value in RISK_LEVELS else ""
+
+
+def applicable_text(outcome: str | None, value: str | None) -> str:
+    """Hide gap, risk, and action text for current and older N/A rows."""
+    return "" if outcome == "not_applicable" else (value or "")
+
+
+def risk_display(outcome: str | None, risk: str | None) -> str:
+    if outcome == "not_applicable":
+        return ""
+    return RISK_LABELS.get(normalize_risk(risk), NOT_RATED)
+
+
 def risk_label(key: str | None) -> str:
     return _label(RISK_LABELS, key)
 
