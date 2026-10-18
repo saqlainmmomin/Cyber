@@ -61,7 +61,7 @@ OPENPYXL_PIN = "openpyxl==3.1.5"
 DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 LABEL = (
-    "Derived from board report snapshot {id8}, {version} (document SHA-256 {prefix}). "
+    "Derived from board report, Report ID {id8}, {version} (document SHA-256 {prefix}). "
     "Edits to this file do not change the report version it was derived from."
 )
 XLSX_SHEETS = (
@@ -112,7 +112,7 @@ ABOUT_KEYS = (
     "Assessment period",
     "Evidence cut-off",
     "Report version",
-    "Snapshot ID",
+    "Report ID",
     "Report generated",
     "Prior-period comparison",
     "Document SHA-256",
@@ -472,7 +472,7 @@ def test_scenario_2_docx_mirrors_the_board_report_sections_and_the_document(db, 
     assert RUPEE_TEXT in paragraphs
     everything = "\n".join(_docx_text(word))
     assert "�" not in everything and "Rs." not in everything
-    assert f"Version v1 | Snapshot {snapshot.id[:8]}" in paragraphs
+    assert f"Version v1 | Report ID {snapshot.id[:8]}" in paragraphs
     assert f"Assessment period: {document['basis']['period_label']} | Evidence cut-off: {document['basis']['cutoff_label']}" in paragraphs
     assert document["sign_off"]["issue_status"] in paragraphs
     for risk in document["top_risks"]:
@@ -590,7 +590,7 @@ def test_scenario_3_xlsx_sheets_columns_and_rows_equal_the_document(db, http, ga
     about_rows = {row[0].value: row[1].value for row in about.iter_rows(min_row=3) if row[0].value}
     assert tuple(about_rows) == ABOUT_KEYS
     assert about_rows["Company"] == DEVANAGARI_COMPANY
-    assert about_rows["Snapshot ID"] == snapshot.id
+    assert about_rows["Report ID"] == snapshot.id
     assert about_rows["Report version"] == "v1"
     assert about_rows["Document SHA-256"] == sha
     assert about_rows["Report generated"] == document["snapshot"]["generated_at"]
@@ -1059,13 +1059,13 @@ def test_scenario_11_schema_v1_and_v2_comparison_render_from_the_document(db, ht
     start = paragraphs.index(COMPARISON_HEADING)
     assert paragraphs[start + 1 : start + 3 + len(period["notes"])] == [
         period["intro"],
-        f"Compared with version v3 (snapshot abcdef12) for the assessment period {prior['period_label']}, "
+        f"Compared with version v3 (Report ID abcdef12) for the assessment period {prior['period_label']}, "
         f"evidence cut-off {prior['cutoff_label']}, generated {prior['generated_on']}.",
         *period["notes"],
     ]
     (frameworks_table,) = _table(word, DOCX_TABLE_HEADERS["comparison"])
     assert _body_rows(frameworks_table) == [
-        [dp_name, "40.0", "62.5", "+22.5 points", "1", "1", "0", "0", "0"],
+        [dp_name, "40.0%", "62.5%", "+22.5 points", "1", "1", "0", "0", "0"],
         [iso_name, *["Not compared"] * 8],  # one merged cell, as the PDF's colspan
     ]
     assert "Gaps identified: 3 in the prior period, 2 in this period." in paragraphs
@@ -1080,7 +1080,7 @@ def test_scenario_11_schema_v1_and_v2_comparison_render_from_the_document(db, ht
     book = _xlsx(exports.render_xlsx(new, document_sha256=sha))
     assert tuple(book.sheetnames) == (*XLSX_SHEETS, *XLSX_OPTIONAL_SHEETS)
     about = {row[0].value: row[1].value for row in book["About"].iter_rows(min_row=3) if row[0].value}
-    assert about["Prior-period comparison"] == "Compared with version v3 (snapshot abcdef12)"
+    assert about["Prior-period comparison"] == "Compared with version v3 (Report ID abcdef12)"
     assert _sheet_rows(book["Prior-period changes"]) == [
         [dp_name, "CH2.CONSENT.1", "Consent is free and specific", "Compliant", "Non-compliant", "Regressed"],
         [dp_name, "CH2.NOTICE.1", "Notice before processing", "Not assessed", "Compliant", "Newly assessed"],

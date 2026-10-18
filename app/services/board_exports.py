@@ -17,7 +17,7 @@ DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingm
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 DERIVATION_LABEL = (
-    "Derived from board report snapshot {snapshot_id8}, {version_label} (document SHA-256 "
+    "Derived from board report, Report ID {snapshot_id8}, {version_label} (document SHA-256 "
     "{sha_prefix}). Edits to this file do not change the report version it was derived from."
 )
 UNSUPPORTED_DOCUMENT_MESSAGE = (
@@ -316,7 +316,7 @@ def _render_docx_cover(word, source: dict, label: str) -> None:
     _add_docx_paragraph(word, f"Report generated: {source['snapshot']['generated_on']}")
     _add_docx_paragraph(
         word,
-        f"Version {source['snapshot']['version_label']} | Snapshot {source['snapshot']['id'][:8]}",
+        f"Version {source['snapshot']['version_label']} | Report ID {source['snapshot']['id'][:8]}",
     )
     if source["release"]["released_by"]:
         _add_docx_paragraph(
@@ -486,7 +486,7 @@ def _render_docx_frameworks(word, source: dict) -> None:
             [
                 [
                     domain["title"],
-                    vocab.score_text(domain["score"]) if domain["score"] is not None else vocab.OUTCOMES["not_applicable"],
+                    vocab.score_text(domain["score"]),
                     domain["rating"] or vocab.OUTCOMES["not_applicable"],
                 ]
                 for domain in framework["domains"]
@@ -523,7 +523,7 @@ def _render_docx_comparison(word, source: dict) -> None:
     prior = prior_period["prior"]
     _add_docx_paragraph(
         word,
-        f"Compared with version {prior['version_label']} (snapshot {prior['snapshot_id'][:8]}) "
+        f"Compared with version {prior['version_label']} (Report ID {prior['snapshot_id'][:8]}) "
         f"for the assessment period {prior['period_label']}, evidence cut-off {prior['cutoff_label']}, "
         f"generated {prior['generated_on']}.",
     )
@@ -541,13 +541,9 @@ def _render_docx_comparison(word, source: dict) -> None:
         cells = table.add_row().cells
         _fill_docx_cell(cells[0], framework["name"])
         if framework["compared"]:
-            _fill_docx_cell(cells[1], framework["prior_score"] if framework["prior_score"] is not None else "Not scored")
-            _fill_docx_cell(cells[2], framework["current_score"] if framework["current_score"] is not None else "Not scored")
-            change = (
-                f"{framework['score_delta']:+.1f} points"
-                if framework["score_delta"] is not None
-                else "Not compared"
-            )
+            _fill_docx_cell(cells[1], vocab.score_text(framework["prior_score"]) if framework["prior_score"] is not None else "Not compared")
+            _fill_docx_cell(cells[2], vocab.score_text(framework["current_score"]))
+            change = vocab.delta_text(framework["score_delta"])
             _fill_docx_cell(cells[3], change)
             counts = framework["counts"]
             for index, key in enumerate(("improved", "regressed", "changed", "new", "no_longer_assessed"), start=4):
@@ -760,7 +756,7 @@ def _render_xlsx_about(book, document: dict, label: str, document_sha256: str, s
         prior_period = document["prior_period"]
         if prior_period["status"] == "compared":
             prior = prior_period["prior"]
-            prior_value = f"Compared with version {prior['version_label']} (snapshot {prior['snapshot_id'][:8]})"
+            prior_value = f"Compared with version {prior['version_label']} (Report ID {prior['snapshot_id'][:8]})"
         else:
             prior_value = " ".join(prior_period["notes"])
     values = (
@@ -775,7 +771,7 @@ def _render_xlsx_about(book, document: dict, label: str, document_sha256: str, s
         ("Assessment period", document["basis"]["period_label"]),
         ("Evidence cut-off", document["basis"]["cutoff_label"]),
         ("Report version", document["snapshot"]["version_label"]),
-        ("Snapshot ID", document["snapshot"]["id"]),
+        ("Report ID", document["snapshot"]["id"]),
         ("Report generated", document["snapshot"]["generated_at"]),
         ("Prior-period comparison", prior_value),
         ("Document SHA-256", document_sha256),
@@ -1039,7 +1035,7 @@ def _v3_title_block(sheet, document: dict, title: str, purpose: str) -> None:
                 _clean(document["company_name"]),
                 _clean(document["basis"]["period_label"]),
                 _clean(document["basis"]["cutoff_label"]),
-                f"Board report {document['snapshot']['version_label']} (snapshot {document['snapshot']['id'][:8]})",
+                f"Board report {document['snapshot']['version_label']} (Report ID {document['snapshot']['id'][:8]})",
                 "Draft until issued",
             )
         ) + f" · Report generated: {_clean(document['snapshot']['generated_on'])} · Confidential",
@@ -1068,6 +1064,7 @@ def _v3_header(sheet, headers) -> None:
 V3_DETAILED_HEADERS = (
     "Requirement", "Framework", "Domain", "Requirement title", "Outcome", "Risk rating",
     "Evidence cited", "Decision", "Linked observation",
+    "Rationale", "Gap", "Citation", "Decided by", "Decided on",
 )
 V3_OBSERVATION_HEADERS = (
     "Obs.", "Domain", "Framework", "Observation", "Associated risk", "Risk rating",
@@ -1118,9 +1115,9 @@ def _v3_outcome_label(row: dict) -> str:
 
 
 def _v3_delta_text(delta, *, compared: bool = True) -> str:
-    if not compared or not isinstance(delta, (int, float)) or isinstance(delta, bool) or delta == 0:
-        return "–"
-    return f"{'▲' if delta > 0 else '▼'} {abs(delta):.1f}"
+    if not compared or not isinstance(delta, (int, float)) or isinstance(delta, bool):
+        return vocab.delta_text(None)
+    return vocab.delta_text(delta)
 
 
 def _v3_fill_and_label(cell, color: str, *, white_text: bool = False) -> None:
@@ -1245,12 +1242,22 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     _v3_title_block(book["Definitions"], document, "Definitions", "Report scales and interpretation")
 
     summary = book["Executive Summary"]
+    view = board_view.view(document)
+    summary.merge_cells("A4:F4")
+    _set_xlsx_cell(summary["A4"], view["titles"]["exec"])
+    summary["A4"].font = Font(bold=True, size=13, color="161A5C")
+    summary.row_dimensions[4].height = 45
+    brief = "\n".join(sentence.get("text", "") for sentence in (document.get("summary", {}).get("narrative", {}).get("executive") or []))
+    asks = document.get("board_asks", {}).get("consultant", [])[:3]
+    summary.merge_cells("A5:F5")
+    _set_xlsx_cell(summary["A5"], "\n".join([brief, "Board asks", *[f"{index}. {ask}" for index, ask in enumerate(asks, 1)]]).strip())
+    summary.row_dimensions[5].height = max(75, 15 * (len(brief) // 80 + sum(len(ask) // 80 + 1 for ask in asks) + 3))
     summary_headers = ("Framework", "Score (%)", "Rating", "In scope", "Approved gaps", vocab.OUTCOMES["insufficient_evidence"])
     _v3_header(summary, summary_headers)
     for row_number, framework in enumerate(document["summary"]["frameworks"], start=7):
         coverage = framework["coverage"]
         _write_xlsx_row(summary, row_number, [
-            framework["name"], framework["score"], framework.get("headline"), coverage["in_scope"],
+            framework["name"], framework["score"] if framework["score"] is not None else "Not scored", framework.get("headline"), coverage["in_scope"],
             coverage["partially_compliant"] + coverage["non_compliant"], coverage["insufficient_evidence"],
         ])
         summary.cell(row=row_number, column=2).number_format = "0.0"
@@ -1275,7 +1282,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         rating = framework.get("rating") or vocab.outcome_label("insufficient_evidence")
         _write_xlsx_row(summary, row_number, [
             framework.get("name"),
-            framework.get("score"),
+            framework.get("score") if framework.get("score") is not None else "Not scored",
             framework.get("headline") or rating,
             _v3_delta_text(prior.get("score_delta"), compared=compared),
         ])
@@ -1343,13 +1350,11 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             compared = bool(domain.get("compared"))
             if compared:
                 delta = _v3_delta_text(domain.get("score_delta"), compared=True)
-            elif domain.get("prior_score") is None and domain.get("current_score") is not None:
-                delta = "New"
             else:
                 delta = "Not compared"
             prior_domain_rows.append([
-                prior_framework.get("name"), domain.get("title"), domain.get("prior_score"),
-                domain.get("current_score"), delta,
+                prior_framework.get("name"), domain.get("title"), domain.get("prior_score") if domain.get("prior_score") is not None else "Not compared",
+                domain.get("current_score") if domain.get("current_score") is not None else "Not scored", delta,
             ])
     if prior_domain_rows:
         prior_title_row = severity_header_row + 7
@@ -1368,9 +1373,10 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     for row_number, row in enumerate(document["appendices"]["requirement_register"], start=7):
         _write_xlsx_row(detail, row_number, [
             row["requirement_id"], names.get(row["framework_id"], row["framework_id"]), row["domain_title"].split(" — ", 1)[-1],
-            row["requirement_title"], _v3_outcome_label(row), row["risk_level"] or "Not recorded", "Yes" if row.get("citation") else "No",
+            row["requirement_title"], _v3_outcome_label(row), ("" if row.get("outcome") == "not_applicable" else row.get("risk_level") or "Not recorded"), "Yes" if row.get("citation") else "No",
             row["decision_label"], linked.get((names.get(row["framework_id"], row["framework_id"]), row["requirement_id"])),
-        ])
+            row.get("rationale"), row.get("gap"), row.get("citation") or row.get("citation_note"), row.get("decided_by"), row.get("decided_on"),
+        ], date_columns=(14,))
     _v3_style_status_column(
         detail, "E", 7,
         [
@@ -1381,7 +1387,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
     )
     _v3_style_status_column(
         detail, "F", 7,
-        [row.get("risk_level") or "Not recorded" for row in document["appendices"]["requirement_register"]],
+        [("" if row.get("outcome") == "not_applicable" else row.get("risk_level") or "Not recorded") for row in document["appendices"]["requirement_register"]],
         V3_SEVERITY_COLORS,
     )
     _v3_header(book["Observation Register"], V3_OBSERVATION_HEADERS)
@@ -1391,7 +1397,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         _write_xlsx_row(observation_sheet, row_number, [
             observation["ref"], observation["domain"], observation["framework_name"], observation["observation"],
             observation["risk"] or "Not recorded", observation["rating"], observation["recommendation"] or "Not recorded",
-            refs, observation["responsibility"] or "Not recorded",
+            refs, vocab.responsibility_label(observation["responsibility"], document.get("firm_name")) or "Not recorded",
         ])
     _v3_style_status_column(
         observation_sheet, "F", 7,
@@ -1417,7 +1423,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         for action in initiative["actions"]:
             _write_xlsx_row(tracker, row_number, [
                 action["ref"], action["obs_ref"], next((o["domain"] for o in document["observations"] if o["ref"] == action["obs_ref"]), ""),
-                action["title"], action["owner"] or "Unassigned", action["responsibility"] or "Not recorded", priority_label[initiative["priority"]],
+                action["title"], action["owner"] or "Unassigned", vocab.responsibility_label(action["responsibility"], document.get("firm_name")) or "Not recorded", priority_label[initiative["priority"]],
                 horizon_label[initiative["horizon"]], action["target_date"], initiative["complexity"] or "Not recorded", initiative["benefit"] or "Not recorded",
                 action["status_label"], None, None,
             ], date_columns=(9,))
@@ -1463,37 +1469,29 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         (vocab.OUTCOMES["non_compliant"], "Not met."),
         (vocab.OUTCOMES["insufficient_evidence"], "The evidence does not support a conclusion either way."),
         (vocab.OUTCOMES["not_applicable"], "Does not apply within the assessed scope."),
-        ("How to read risk levels", "Every gap gets a risk level. Critical means material regulatory or breach exposure; High means significant exposure; Medium means moderate exposure; Low means limited exposure."),
-        (vocab.RISK_LABELS["critical"], "Material regulatory or breach exposure. Act now."),
-        (vocab.RISK_LABELS["high"], "Significant exposure. Act this quarter."),
-        (vocab.RISK_LABELS["medium"], "Moderate exposure. Plan within six months."),
-        (vocab.RISK_LABELS["low"], "Limited exposure. Fix in the normal course."),
+        ("How to read risk levels", " ".join(vocab.severity_legend(f["framework_id"] for f in document.get("frameworks", [])).values())),
+        *[(vocab.risk_label(key), meaning) for key, meaning in vocab.severity_legend(f["framework_id"] for f in document.get("frameworks", [])).items()],
         ("Score display", vocab.SCORE_DISPLAY_NOTE),
         ("How to read ratings", "A framework score is a weighted average of its domain scores. A met requirement counts in full and a partly met one counts half. Scores are deterministic and never combined across frameworks."),
         ("Remediation timeframe", "Set by the most serious gap the fix closes."),
-        ("Effort", "High is over 40 person-hours or a cross-team change."),
+        ("Complexity", "Implementation effort: high is over 40 person-hours or a cross-team change."),
         ("Benefit", "How much exposure the fix removes."),
         ("Short term", "Within 90 days."),
         ("Medium term", "91 to 180 days."),
         ("Long term", "After 180 days."),
         ("Not scheduled", "No target date."),
         ("Client", "Responsibility recorded against the client."),
-        ("Consultant", "Responsibility recorded against the firm."),
+        (vocab.responsibility_label("consultant", document.get("firm_name")), "Responsibility recorded against the firm."),
         ("Shared", "Responsibility recorded against both the client and the firm."),
-        (f"Fill legend · {vocab.OUTCOMES['compliant']}", "Outcome fill #0E8F86"),
-        (f"Fill legend · {vocab.OUTCOMES['partially_compliant']}", "Outcome fill #E39A1F"),
-        (f"Fill legend · {vocab.OUTCOMES['non_compliant']}", "Outcome fill #C0392B"),
-        (f"Fill legend · {vocab.OUTCOMES['insufficient_evidence']}", "Outcome fill #9AA3B5"),
-        (f"Fill legend · {vocab.OUTCOMES['not_applicable']}", "Outcome fill #D5D9E3"),
-        (f"Fill legend · {vocab.RISK_LABELS['critical']}", "Severity fill #9B1C1C"),
-        (f"Fill legend · {vocab.RISK_LABELS['high']}", "Severity fill #D9481E"),
-        (f"Fill legend · {vocab.RISK_LABELS['medium']}", "Severity fill #F0A030"),
-        (f"Fill legend · {vocab.RISK_LABELS['low']}", "Severity fill #3C9D6B"),
-        ("Critical / High / Medium / Low", "Risk rating scale used in the report."),
-        ("Complexity", "High, Medium or Low consultant assessment of implementation effort."),
-        ("Benefit", "High, Medium or Low expected risk-reduction benefit."),
-        ("Short / Medium / Long", "Remediation horizon derived from the target date."),
-        ("Client / Consultant / Shared", "Responsibility recorded against an action."),
+        (f"Fill legend · {vocab.OUTCOMES['compliant']}", "Teal: met requirements."),
+        (f"Fill legend · {vocab.OUTCOMES['partially_compliant']}", "Amber: requirements met in part."),
+        (f"Fill legend · {vocab.OUTCOMES['non_compliant']}", "Red: requirements not met."),
+        (f"Fill legend · {vocab.OUTCOMES['insufficient_evidence']}", "Gray: insufficient evidence."),
+        (f"Fill legend · {vocab.OUTCOMES['not_applicable']}", "Light gray: not applicable."),
+        (f"Fill legend · {vocab.RISK_LABELS['critical']}", "Dark red: critical exposure."),
+        (f"Fill legend · {vocab.RISK_LABELS['high']}", "Orange: high exposure."),
+        (f"Fill legend · {vocab.RISK_LABELS['medium']}", "Amber: moderate exposure."),
+        (f"Fill legend · {vocab.RISK_LABELS['low']}", "Green: limited exposure."),
     ]
     for row_number, values in enumerate(definitions_rows, start=7):
         _write_xlsx_row(definitions, row_number, values)
@@ -1510,14 +1508,6 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
             ), None)
         if color:
             _v3_fill_and_label(definitions.cell(row=row_number, column=1), color, white_text=color in V3_OUTCOME_TEXT_COLORS or color in V3_SEVERITY_TEXT_COLORS)
-    extra_row = 7 + len(definitions_rows)
-    for initiative in document["initiatives"]:
-        _write_xlsx_row(definitions, extra_row, ["Initiative title", initiative["title"]])
-        extra_row += 1
-    for ask in document["board_asks"].get("consultant", []):
-        _write_xlsx_row(definitions, extra_row, ["Board ask", ask])
-        extra_row += 1
-
     _v3_finalize_sheet(
         summary,
         header_row=6,
@@ -1530,7 +1520,7 @@ def _render_xlsx_v3(document: dict, *, document_sha256: str) -> bytes:
         detail,
         header_row=6,
         column_count=len(V3_DETAILED_HEADERS),
-        widths={"A": 20, "B": 22, "C": 32, "D": 58, "E": 22, "F": 16, "G": 15, "H": 18, "I": 22},
+        widths={"A": 20, "B": 22, "C": 32, "D": 58, "E": 22, "F": 16, "G": 15, "H": 18, "I": 22, "J": 58, "K": 58, "L": 48, "M": 24, "N": 15},
     )
     _v3_finalize_sheet(
         observation_sheet,
@@ -1617,7 +1607,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
     view = board_view.view(document)
     slides = view["slides"]
     provenance = derivation_label(document, document_sha256)
-    obs_index = reg_index = 0
+    obs_index = reg_index = ev_index = 0
 
     def shown(value, fallback="Not recorded"):
         return fallback if value in (None, "") else _clean(value)
@@ -1626,11 +1616,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         return vocab.score_text(value)
 
     def delta_text(value):
-        if value is None:
-            return "First report"
-        if value == 0:
-            return "No change"
-        return f"{'▲' if value > 0 else '▼'} {abs(float(value)):.1f} pts"
+        return vocab.delta_text(value)
 
     def text_box(slide, value, left, top, width, height, *, size=11, color=None, bold=False, align=None, fill=None, border=None, name=None):
         shape = slide.shapes.add_textbox(Mm(left), Mm(top), Mm(width), Mm(height))
@@ -1714,7 +1700,12 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
     def header(slide, slide_data, *, dark=False):
         rect(slide, 0, 0, 338.67, 4, fill=primary, name="Theme top rule")
         rect(slide, 0, 4, 28, 1.2, fill=accent, name="Theme accent rule")
-        text_box(slide, slide_data["title"], 14, 10, 310, 17, size=24, color=white if dark else ink, bold=True, name="Presenter action title")
+        text_box(slide, slide_data["title"], 14, 12, 284, 17, size=24, color=white if dark else ink, bold=True, name="Presenter action title")
+        section = slide_data["section"]
+        if section not in {"cover", "contents", ""}:
+            text_box(slide, section, 305, 12, 19, 12, size=19, color=white, bold=True, align=PP_ALIGN.CENTER, fill=primary, name="Section badge")
+            label = {"how-to-read": "How to read this report", "overview": "Assessment overview", "limits": "Scope and limits", "comparison": "Change since last report", "sign-off": "Sign-off"}.get(slide_data["slide"], {"02": "Executive summary", "03": "Key observations", "04": "Remediation roadmap"}.get(section, "Appendix"))
+            text_box(slide, label, 14, 6, 284, 5, size=8, color=muted, bold=True, name="Section label")
 
     def footer(slide, slide_data, *, dark=False):
         rect(slide, 0, 180, 338.67, 0.4, fill=_pptx_color("#6D78D8") if dark else line, name="Footer rule")
@@ -1724,7 +1715,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             f"{shown(document.get('firm_name'), '')} · {shown(document.get('company_name'), '')} · "
             f"Assessment period {shown(document.get('basis', {}).get('period_label'), '')} · "
             f"Evidence cut-off {shown(document.get('basis', {}).get('cutoff_label'), '')} · "
-            f"Snapshot {snapshot_id} · Report generated: {shown(snapshot.get('generated_on'), '')} · Confidential"
+            f"Report ID {snapshot_id} · Report generated: {shown(snapshot.get('generated_on'), '')} · Confidential"
         )
         text_box(slide, footer_text, 14, 182, 274, 5, size=7, color=_pptx_color("#C9D0FF") if dark else muted, name="Provenance footer")
         text_box(slide, f"Page {slide_data['number']} of {len(slides)}", 290, 181, 34, 6, size=8, color=white, bold=True, align=PP_ALIGN.CENTER, fill=primary, name="Page number")
@@ -1777,12 +1768,12 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         for key, label_text, colour in board_view.OUTCOMES:
             data.add_series(label_text, [int(framework.get("coverage", {}).get(key, 0) or 0) for framework in frameworks])
             colours.append(_pptx_color(colour))
-        chart_shape = slide.shapes.add_chart(XL_CHART_TYPE.BAR_STACKED, Mm(14), Mm(105), Mm(310), Mm(52), data)
+        chart_shape = slide.shapes.add_chart(XL_CHART_TYPE.BAR_STACKED, Mm(14), Mm(99), Mm(310), Mm(34), data)
         chart_shape.name = "Native framework outcomes stacked bar"
         chart = chart_shape.chart
         chart.has_legend = True
         style_chart(chart, colours)
-        text_box(slide, "Approved requirement outcomes by framework", 14, 97, 310, 8, size=12, color=ink2, bold=True)
+        text_box(slide, "Approved requirement outcomes by framework", 14, 92, 310, 7, size=12, color=ink2, bold=True)
 
     def waffle(slide, framework, left, top, width, height):
         cells = framework.get("cells") or []
@@ -1793,7 +1784,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         text_box(slide, f"{framework['short']} · {framework.get('coverage', {}).get('in_scope', 0)} requirements", left, top - 8, width, 7, size=12, color=ink, bold=True)
 
     def roadmap_grid(slide):
-        lanes = view["lanes"] or [("client", "Client"), ("shared", "Shared"), ("consultant", "Firm")]
+        lanes = view["lanes"] or [(key, vocab.responsibility_label(key, document.get("firm_name"))) for key, _ in board_view.LANES]
         horizons = view["horizons"] or board_view.HORIZONS[:3]
         left, top, label_width = 14, 48, 28
         cell_width = (310 - label_width) / len(horizons)
@@ -1811,6 +1802,9 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
                 rect(slide, x, y, cell_width - 1, row_height - 2, fill=panel, border=white, name="Roadmap lane cell")
                 matching = [item for item in document.get("initiatives", []) if item.get("responsibility") == lane_key and item.get("horizon") == horizon_key]
                 for item_index, initiative in enumerate(matching[:3]):
+                    if len(matching) > 3 and item_index == 2:
+                        text_box(slide, f"+{len(matching) - 3} more", x + 3, y + 20, cell_width - 7, 7, size=10, color=primary, bold=True)
+                        break
                     item_y = y + 2 + item_index * 9
                     overdue = bool(initiative.get("overdue"))
                     rect(slide, x + 2, item_y, cell_width - 5, 7.5, fill=white, border=_pptx_color("#9B1C1C" if overdue else "#2D3FD3"), name="Roadmap initiative")
@@ -1870,7 +1864,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
     for slide_data in slides:
         slide = presentation.slides.add_slide(blank)
         name = slide_data["slide"]
-        dark = name in {"cover", "annexure"}
+        dark = name in {"cover", "appendix"}
         if dark:
             rect(slide, 0, 0, 338.67, 190.5, fill=primary, name="Dark slide background")
         header(slide, slide_data, dark=dark)
@@ -1882,7 +1876,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
                 text_box(slide, "DRAFT UNTIL ISSUED", 18, 42, 54, 9, size=9, color=ink, bold=True, fill=_pptx_color("#F2C14E"), name="Draft badge")
             text_box(slide, shown(document.get("engagement_name"), "Board report"), 18, 57, 190, 10, size=11, color=accent, bold=True)
             text_box(slide, shown(document.get("company_name"), ""), 18, 70, 205, 25, size=30, color=white, bold=True)
-            title = "Privacy and information security compliance assessment" if any(framework.get("legal") for framework in document.get("frameworks", [])) else "Information security compliance assessment"
+            title = view["cover_subtitle"]
             text_box(slide, title, 18, 101, 220, 25, size=22, color=_pptx_color("#C9D0FF"), bold=True)
             x = 18
             for framework in document.get("frameworks", []):
@@ -1896,11 +1890,11 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             text_box(slide, f"Assessment period\n{shown(basis.get('period_label'), '')}", 18, 158, 68, 18, size=11, color=white, bold=True)
             text_box(slide, f"Evidence cut-off\n{shown(basis.get('cutoff_label'), '')}", 90, 158, 68, 18, size=11, color=white, bold=True)
             text_box(slide, f"Version\n{shown(snapshot.get('version_label'), '')} · {shown(snapshot.get('generated_on'), '')}", 162, 158, 78, 18, size=11, color=white, bold=True)
-            text_box(slide, f"Snapshot\n{str(snapshot.get('id') or '')[:8]}", 244, 158, 60, 18, size=11, color=white, bold=True)
+            text_box(slide, f"Report ID\n{str(snapshot.get('id') or '')[:8]}", 244, 158, 60, 18, size=11, color=white, bold=True)
         elif name == "contents":
-            rows = [("01", "How to read this report", "Outcomes, risk levels and ratings", view["pg"]["read"]), ("02", "Executive summary", "Position, posture, domains, risk and decisions", view["pg"]["exec"]), ("03", "Key observations", f"{len(document.get('observations', []))} approved findings", view["pg"]["obs"]), ("04", "Remediation roadmap", "Initiatives, effort, benefit and change", view["pg"]["roadmap"]), ("05", "Annexure", "Methodology, requirement and evidence registers", view["pg"]["annex"])]
+            rows = view["contents"]
             for index, (number, title, subtitle, page) in enumerate(rows):
-                y = 44 + index * 24
+                y = 37 + index * 19
                 text_box(slide, number, 26, y, 20, 16, size=26, color=secondary, bold=True)
                 text_box(slide, title, 50, y + 1, 150, 9, size=14, color=ink, bold=True)
                 text_box(slide, subtitle, 50, y + 11, 160, 8, size=10, color=muted)
@@ -1913,7 +1907,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             for index, severity in enumerate(board_view.SEVERITIES):
                 x, y = 184 + (index % 2) * 70, 61 + (index // 2) * 25
                 rect(slide, x, y, 64, 20, fill=_pptx_color(board_view.SEVERITY_COLORS[severity]), name="Risk level legend", rounded=True)
-                text_box(slide, f"{vocab.risk_label(severity)}\n{ {'critical': 'Material exposure. Act now.', 'high': 'Significant exposure. Act this quarter.', 'medium': 'Moderate exposure. Plan within six months.', 'low': 'Limited exposure. Fix normally.'}[severity] }", x + 2, y + 2, 60, 16, size=10, color=ink if severity == "medium" else white, bold=True)
+                text_box(slide, f"{vocab.risk_label(severity)}\n{view['severity_legend'][severity]}", x + 2, y + 2, 60, 16, size=10, color=ink if severity == "medium" else white, bold=True)
             text_box(slide, "Rating bands", 14, 113, 90, 9, size=14, color=secondary, bold=True)
             for index, (_low, _high, band_label, colour) in enumerate(board_view.RATING_BANDS):
                 x = 14 + index * 77
@@ -1922,7 +1916,7 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             text_box(slide, f"{vocab.SCORE_DISPLAY_NOTE} Scores are deterministic and never combined across frameworks. Remediation timeframe, effort and benefit describe remediation choices, not likelihood.", 14, 150, 310, 17, size=12, color=ink2, fill=panel)
         elif name == "overview":
             totals = (document.get("summary") or {}).get("totals", {})
-            text_box(slide, f"Scope, the evidence we used and how every outcome was approved. {totals.get('requirements', 0)} requirements across {len(document.get('frameworks', []))} framework(s).", 14, 34, 310, 10, size=12, color=ink2)
+            text_box(slide, f"Scope, the evidence we used and how every outcome was approved. {totals.get('requirements', 0)} requirements across {vocab.plural(len(document.get('frameworks', [])), 'framework')}.", 14, 34, 310, 10, size=12, color=ink2)
             scopes = (document.get("summary") or {}).get("scope", [])
             native_table(slide, ["Framework", "Version", "Scope", "Requirements"], [[framework.get("name", ""), framework.get("version", ""), scopes[index] if index < len(scopes) else "Not recorded", str((view["fw"][index].get("coverage") or {}).get("in_scope", 0))] for index, framework in enumerate(document.get("frameworks", []))], top=48, width=155, height=42, column_widths=[50, 25, 55, 25])
             text_box(slide, "Approach", 184, 48, 130, 9, size=14, color=secondary, bold=True)
@@ -1944,15 +1938,19 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             observations = document.get("observations") or []
             native_table(slide, ["Risk", "Observation", "Framework", "Rating"], [[item.get("ref", ""), item.get("title", ""), item.get("framework_short") or item.get("framework_name", ""), str(item.get("rating", "")).title()] for item in observations[:3]], top=107, width=190, height=30, column_widths=[20, 95, 45, 30])
             asks = (document.get("board_asks") or {}).get("consultant", [])
-            text_box(slide, "Board asks\n" + "\n".join(f"{index + 1}. {ask}" for index, ask in enumerate(asks[:2])), 210, 107, 114, 38, size=11, color=white, fill=primary)
+            text_box(slide, "Board asks\n" + "\n".join(f"{index + 1}. {ask}" for index, ask in enumerate(asks[:3])), 210, 107, 114, 38, size=11, color=white, fill=primary)
         elif name == "posture":
             if len(view["fw"]) <= 2:
                 for index, framework in enumerate(view["fw"]):
-                    waffle(slide, framework, 16 + index * 155, 58, 82, 86)
-                    native_table(slide, ["Outcome", "Count", "%"], [[item["label"], item["n"], f"{item['pct']}%"] for item in framework["outcomes"] if item["n"] or item["k"] != "not_applicable"], top=58, left=101 + index * 155, width=58, height=78, column_widths=[32, 13, 13])
+                    waffle(slide, framework, 16 + index * 155, 52, 82, 68)
+                    native_table(slide, ["Outcome", "Count", "%"], [[item["label"], item["n"], f"{item['pct']}%"] for item in framework["outcomes"] if item["n"] or item["k"] != "not_applicable"], top=52, left=101 + index * 155, width=58, height=68, column_widths=[32, 13, 13])
             else:
                 for index, framework in enumerate(view["fw"]):
                     waffle(slide, framework, 16 + (index % 3) * 105, 58 + (index // 3) * 61, 58, 43)
+            for index, framework in enumerate(view["fw"]):
+                narrative_text = "\n".join(sentence.get("text", "") for sentence in (framework.get("narrative") or []))
+                if narrative_text:
+                    text_box(slide, narrative_text, 16 + index * (310 / len(view["fw"])), 128, 300 / len(view["fw"]), 35, size=11, color=ink2, fill=panel, border=accent, name="Accepted framework narrative")
             text_box(slide, board_view.NEVER_COMBINED_NOTE, 14, 166, 310, 10, size=11, color=muted)
         elif name == "domain-status":
             domain_chart(slide)
@@ -1965,7 +1963,10 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
                 text_box(slide, f"{vocab.risk_label(severity)}\n{view['sev_tot'].get(severity, 0)} gaps", x + 2, 44, 70, 14, size=13, color=ink if severity == "medium" else white, bold=True, align=PP_ALIGN.CENTER)
             outcome_chart(slide)
             native_table(slide, ["Framework", vocab.RISK_LABELS["critical"], vocab.RISK_LABELS["high"], vocab.RISK_LABELS["medium"], vocab.RISK_LABELS["low"]], [[framework["short"], *[framework.get("sev", {}).get(severity, 0) for severity in board_view.SEVERITIES]] for framework in view["fw"]], top=48, left=14, width=150, height=44, column_widths=[65, 20, 20, 20, 20])
-            native_table(slide, ["Framework", "Domain", "Critical/high"], [[short, domain["title"], domain.get("crit_high", 0)] for short, domain in view["ch_doms"]], top=158, height=20, column_widths=[60, 190, 60])
+            native_table(slide, ["Framework", "Domain", "Critical/high"], [[short, domain["title"], domain.get("crit_high", 0)] for short, domain in view["ch_doms"]], top=136, height=18, column_widths=[60, 190, 60])
+            cross_text = "\n".join(sentence.get("text", "") for sentence in (document.get("summary", {}).get("narrative", {}).get("cross_framework") or []))
+            if cross_text:
+                text_box(slide, cross_text, 14, 155, 310, 23, size=11, color=ink2, fill=panel, border=accent, name="Accepted cross-framework narrative")
         elif name == "board-asks":
             asks = document.get("board_asks") or {}
             text_box(slide, "Board decisions\n" + "\n".join(f"{index + 1}. {ask}" for index, ask in enumerate(asks.get("consultant", [])[:3])), 18, 45, 170, 95, size=14, color=white, fill=primary)
@@ -1974,17 +1975,24 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
         elif name == "observations":
             page = view["obs_pages"][obs_index]
             obs_index += 1
-            native_table(slide, ["Ref", "Domain / framework", "Observation", "Risk", "Rating", "Recommendation"], [[item.get("ref", ""), f"{item.get('domain', '')}\n{item.get('framework_name', '')}", item.get("title", ""), item.get("risk") or "Not recorded", str(item.get("rating", "")).title(), item.get("recommendation") or "Not recorded"] for item in page], top=48, height=122, column_widths=[18, 48, 65, 55, 24, 100])
+            native_table(slide, ["Ref", "Domain / framework", "Observation", "Risk", "Rating", "Recommendation", "Reference"], [
+                [item.get("ref", ""), f"{item.get('domain', '')}\n{item.get('framework_name', '')}\n{vocab.responsibility_label(item.get('responsibility'), document.get('firm_name'))}",
+                 f"{item.get('title', '')}\n{item.get('observation', '')}", item.get("risk") or "Not recorded", vocab.risk_label(item.get("rating")), item.get("recommendation") or "Not recorded",
+                 "; ".join(f"{ref.get('framework_name') or ref.get('framework', '')}: {', '.join(ref.get('clauses', []))}" for ref in item.get("references", []))]
+                for item in page
+            ], top=48, height=122, column_widths=[15, 43, 65, 48, 22, 70, 47])
         elif name == "roadmap":
             text_box(slide, (document.get("takeaways") or {}).get("roadmap", view["titles"]["roadmap"]), 14, 34, 310, 10, size=12, color=ink2)
             roadmap_grid(slide)
         elif name == "effort-benefit":
             text_box(slide, "Each initiative is placed by the effort it needs and the exposure it removes. Top left is where to start.", 14, 34, 310, 10, size=12, color=ink2)
             effort_benefit_matrix(slide)
+            if view["unsized"]:
+                text_box(slide, "Not yet sized: " + "; ".join(item["title"] for item in view["unsized"]), 14, 148, 180, 28, size=10, color=ink2)
             native_table(slide, ["Ref", "Initiative", "Horizon", "Remediation timeframe", "Effort", "Benefit"], [[item.get("ref", ""), item.get("title", ""), str(item.get("horizon", "")).title(), vocab.priority_label(item.get("priority")), str(item.get("complexity", "")).title(), str(item.get("benefit", "")).title()] for item in document.get("initiatives", [])], top=48, left=205, width=119, height=113, column_widths=[14, 45, 22, 17, 17, 18])
         elif name == "comparison":
             prior = (document.get("prior_period") or {}).get("prior")
-            text_box(slide, f"Compared with {shown(prior.get('version_label'), '')} (snapshot {str(prior.get('snapshot_id') or '')[:8]}) for {shown(prior.get('period_label'), '')}." if prior else "First report baseline; no prior period is available for comparison.", 14, 34, 310, 10, size=11, color=ink2)
+            text_box(slide, f"Compared with {shown(prior.get('version_label'), '')} (Report ID {str(prior.get('snapshot_id') or '')[:8]}) for {shown(prior.get('period_label'), '')}." if prior else "First report baseline; no prior period is available for comparison.", 14, 34, 310, 10, size=11, color=ink2)
             left, top, width = 18, 50, 175
             row_y = top
             for group in view["dumb"]:
@@ -2010,15 +2018,15 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
                     row_y += 9
                 row_y += 3
             prior_frameworks = (document.get("prior_period") or {}).get("frameworks", [])
-            native_table(slide, ["Framework", "Current", "Prior", "Change"], [[item.get("name", ""), score_text(item.get("current_score")), score_text(item.get("prior_score")), delta_text(item.get("score_delta")) if item.get("compared") else "Not compared"] for item in prior_frameworks], top=48, left=205, width=119, height=42, column_widths=[48, 22, 22, 27])
+            native_table(slide, ["Framework", "Current", "Prior", "Change"], [[item.get("name", ""), score_text(item.get("current_score")), (score_text(item.get("prior_score")) if item.get("prior_score") is not None else "Not compared"), delta_text(item.get("score_delta")) if item.get("compared") else "Not compared"] for item in prior_frameworks], top=48, left=205, width=119, height=42, column_widths=[48, 22, 22, 27])
             changes = (document.get("prior_period") or {}).get("changes", [])
-            native_table(slide, ["Requirement", "Prior outcome", "Current outcome", "Change"], [[item.get("requirement_id", ""), item.get("prior_outcome_label") or "Not previously assessed", item.get("current_outcome_label") or "No longer assessed", item.get("direction_label") or "Not compared"] for item in changes], top=102, left=205, width=119, height=58, column_widths=[34, 30, 30, 25])
+            native_table(slide, ["Requirement", "Prior outcome", "Current outcome", "Change"], [[f"{vocab.display_reference(item.get('framework_id', ''), item.get('requirement_id', ''))} {item.get('requirement_title', '')}", item.get("prior_outcome_label") or "Not previously assessed", item.get("current_outcome_label") or "No longer assessed", item.get("direction_label") or "Not compared"] for item in changes], top=102, left=205, width=119, height=58, column_widths=[34, 30, 30, 25])
             comparison_summary = []
             for framework in prior_frameworks:
                 counts = framework.get("counts") or {}
-                change = "Not compared" if not framework.get("compared") else ("No change" if framework.get("score_delta") == 0 else f"{framework.get('score_delta', 0):+.1f} points")
+                change = vocab.delta_text(framework.get("score_delta") if framework.get("compared") else None)
                 framework_changes = [
-                    item.get("requirement_id", "")
+                    f"{vocab.display_reference(item.get('framework_id', ''), item.get('requirement_id', ''))} {item.get('requirement_title', '')}"
                     for item in changes
                     if item.get("framework_id") == framework.get("framework_id")
                     or item.get("framework_name") == framework.get("name")
@@ -2037,18 +2045,18 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             rfi = not_assessed.get("rfi") or {}
             text_box(slide, "Insufficient evidence requirements are left out of scores, not counted as failures.", 14, 34, 310, 10, size=12, color=ink2)
             native_table(slide, ["Framework", vocab.OUTCOMES["insufficient_evidence"]], [[framework["short"], str(framework.get("coverage", {}).get("insufficient_evidence", 0))] for framework in view["fw"]], top=48, width=115, height=40, column_widths=[85, 30])
-            native_table(slide, ["Open evidence request", "Type"], [[item.get("item_id", ""), "Required" if item.get("required") else "Recommended"] for item in rfi.get("items", [])], top=96, width=115, height=64, column_widths=[82, 33])
+            native_table(slide, ["Open evidence request", "Type"], [[f"{item.get('item_id', '')} {item.get('title', '')}", "Required" if item.get("required") else "Recommended"] for item in rfi.get("items", [])], top=96, width=115, height=64, column_widths=[82, 33])
             text_box(slide, "Limitations\n" + "\n".join(f"• {item}" for item in (document.get("summary") or {}).get("limitations", [])), 145, 48, 179, 112, size=11, color=ink2, fill=panel)
         elif name == "sign-off":
             sign_off = document.get("sign_off") or {}
             release = document.get("release") or {}
             native_table(slide, ["Sign-off role", "Recorded value"], [["Prepared by", sign_off.get("prepared_by") or "Not recorded"], ["Reviewed by", sign_off.get("reviewed_by") or "Not recorded"], ["Released for reporting", release.get("released_by") or "Not recorded"], ["Issue record", "Version history"]], top=50, width=180, height=58, column_widths=[75, 105])
             snapshot = document.get("snapshot") or {}
-            text_box(slide, f"Report version\n{shown(snapshot.get('version_label'), '')} · generated {shown(snapshot.get('generated_on'), '')}\nSnapshot {str(snapshot.get('id') or '')[:8]}\n{shown(sign_off.get('names_note'), '')}", 205, 50, 119, 58, size=11, color=ink2, fill=panel)
+            text_box(slide, f"Report version\n{shown(snapshot.get('version_label'), '')} · generated {shown(snapshot.get('generated_on'), '')}\nReport ID {str(snapshot.get('id') or '')[:8]}\n{shown(sign_off.get('names_note'), '')}", 205, 50, 119, 58, size=11, color=ink2, fill=panel)
             text_box(slide, shown(sign_off.get("issue_status"), ""), 14, 122, 310, 20, size=11, color=ink2)
-        elif name == "annexure":
-            text_box(slide, "05", 18, 60, 55, 20, size=26, color=accent, bold=True)
-            text_box(slide, "Annexure", 18, 84, 190, 28, size=40, color=white, bold=True)
+        elif name == "appendix":
+            text_box(slide, "A", 18, 60, 55, 20, size=26, color=accent, bold=True)
+            text_box(slide, "Appendix", 18, 84, 190, 28, size=40, color=white, bold=True)
             text_box(slide, "A1  Methodology\nA2  Requirement register\nA3  Evidence register" + ("\nA4  Statement of Applicability summary" if document.get("soa") else ""), 18, 122, 190, 32, size=14, color=_pptx_color("#C9D0FF"))
         elif name == "methodology":
             methodology = (document.get("appendices") or {}).get("methodology", "")
@@ -2058,15 +2066,20 @@ def _render_pptx_v3c3(document: dict, *, document_sha256: str) -> bytes:
             page = view["reg_pages"][reg_index]
             reg_index += 1
             native_table(slide, ["Framework", "Requirement", "Title", "Domain", "Outcome", "Risk", "Decision", "Evidence"], [[view["framework_names"].get(row.get("framework_id"), row.get("framework_id", "")), row.get("requirement_id", ""), row.get("requirement_title", ""), str(row.get("domain_title", "")).split(" — ")[-1], row.get("outcome_label") or vocab.OUTCOMES["insufficient_evidence"], vocab.risk_label(row.get("risk_level")), f"{shown(row.get('decision_label'), '')} · {shown(row.get('decided_by'), '')}, {shown(row.get('decided_on'), '')}", row.get("citation") or row.get("citation_note") or "Not recorded"] for row in page], top=43, height=132, font_size=9, column_widths=[35, 35, 65, 40, 38, 20, 55, 60])
-        elif name == "evidence-and-soa":
-            evidence = (document.get("appendices") or {}).get("evidence_register", [])
-            native_table(slide, ["Document", "Version", "Added", "Fingerprint", "Cited"], [[row.get("filename", ""), f"v{row.get('version_number', '')}", row.get("added_on", ""), row.get("sha256_prefix", ""), "Yes" if row.get("cited") else "No"] for row in evidence], top=48, width=190, height=112, column_widths=[72, 20, 30, 50, 18])
-            if document.get("soa"):
-                soa = document["soa"]
-                text_box(slide, f"Statement of Applicability\n{shown(soa.get('framework_name'), '')} {shown(soa.get('framework_version'), '')} · {soa.get('totals', {}).get('controls', 0)} controls", 210, 48, 114, 25, size=11, color=ink2, fill=panel)
-                native_table(slide, ["Applicability", "Count"], [["Applicable", soa.get("totals", {}).get("applicable", 0)], ["Excluded", soa.get("totals", {}).get("excluded", 0)], ["Not determined", soa.get("totals", {}).get("not_assessed", 0)]], top=78, left=210, width=114, height=40, column_widths=[80, 34])
+        elif name == "evidence-register":
+            page = view["ev_pages"][ev_index]
+            ev_index += 1
+            native_table(slide, ["Document", "Version", "Added", "Fingerprint", "Cited"], [[row.get("filename", ""), f"v{row.get('version_number', '')}", row.get("added_on", ""), row.get("sha256_prefix", ""), "Yes" if row.get("cited") else "No"] for row in page], top=43, height=132, font_size=9, column_widths=[160, 25, 40, 55, 30])
+        elif name == "statement-of-applicability":
+            soa = document["soa"]
+            totals = soa.get("totals", {})
+            text_box(slide, f"{shown(soa.get('framework_name'), '')} {shown(soa.get('framework_version'), '')} · {totals.get('controls', 0)} controls", 14, 43, 150, 12, size=12, color=ink2)
+            native_table(slide, ["Applicability", "Count"], [["Applicable", totals.get("applicable", 0)], ["Excluded", totals.get("excluded", 0)], ["Not determined", totals.get("not_assessed", 0)]], top=58, left=14, width=110, height=40, column_widths=[80, 30])
+            excluded = [row for row in soa.get("rows", []) if row.get("applicability") == "excluded"]
+            if excluded:
+                native_table(slide, ["Excluded control", "Justification"], [[f"{row.get('reference', '')} {row.get('title', '')}".strip(), row.get("justification") or "Not recorded"] for row in excluded[:8]], top=58, left=134, width=190, height=110, font_size=9, column_widths=[90, 100])
             else:
-                text_box(slide, "No Statement of Applicability is included in this report.", 210, 48, 114, 25, size=11, color=ink2, fill=panel)
+                text_box(slide, "No controls are excluded.", 134, 58, 190, 12, size=11, color=ink2)
         else:
             text_box(slide, (document.get("summary") or {}).get("basis_of_assessment", ""), 14, 42, 310, 100, size=12, color=ink2)
         footer(slide, slide_data, dark=dark)

@@ -295,11 +295,11 @@ def build_takeaways(
         (domain for domain in scoped if domain.get("score") is not None),
         key=lambda domain: (domain.get("score"), domain.get("title", "")),
     )[:2]
-    status = f"{clean} of {len(scoped)} in-scope domain(s) have no approved gaps"
+    status = f"{clean} of {vocab.plural(len(scoped), 'in-scope domain')} {'has' if len(scoped) == 1 else 'have'} no approved gaps"
     if len(weakest) == 2:
-        status += f"; the weakest are {weakest[0]['title']} ({weakest[0]['score']:.0f}%) and {weakest[1]['title']} ({weakest[1]['score']:.0f}%)."
+        status += f"; the weakest are {weakest[0]['title']} ({vocab.score_text(weakest[0]['score'])}) and {weakest[1]['title']} ({vocab.score_text(weakest[1]['score'])})."
     elif len(weakest) == 1:
-        status += f"; the weakest is {weakest[0]['title']} ({weakest[0]['score']:.0f}%)."
+        status += f"; the weakest is {weakest[0]['title']} ({vocab.score_text(weakest[0]['score'])})."
     else:
         status += "."
     covered = {
@@ -316,11 +316,11 @@ def build_takeaways(
     return {
         "status_board": status,
         "dashboard": (
-            f"{totals.get('gaps', 0)} approved gap(s), {totals.get('critical_high_gaps', 0)} of them critical or high; "
-            f"{severity_dashboard.get('critical', {}).get('total', 0)} critical gap(s) in "
-            f"{severity_dashboard.get('critical', {}).get('distinct', 0)} domain(s)."
+            f"{vocab.plural(totals.get('gaps', 0), 'approved gap')}, {totals.get('critical_high_gaps', 0)} of them critical or high; "
+            f"{vocab.plural(severity_dashboard.get('critical', {}).get('total', 0), 'critical gap')} in "
+            f"{vocab.plural(severity_dashboard.get('critical', {}).get('distinct', 0), 'domain')}."
         ),
-        "roadmap": f"{len(initiatives)} initiative(s) cover {len(covered)} of {len(observations)} key observations; {cross} close a weakness once across more than one framework.",
+        "roadmap": f"{vocab.plural(len(initiatives), 'initiative')} {'covers' if len(initiatives) == 1 else 'cover'} {len(covered)} of {len(observations)} key observations; {cross} {'closes' if cross == 1 else 'close'} a weakness once across more than one framework.",
     }
 
 
@@ -342,11 +342,11 @@ def derived_asks(
     unscheduled = sum(not action.get("target_date") for action in actions)
     result = []
     if overdue:
-        result.append(f"{overdue} remediation action(s) past their target date.")
+        result.append(f"{vocab.plural(overdue, 'remediation action')} {'is past its' if overdue == 1 else 'are past their'} target date.")
     if unowned:
-        result.append(f"{unowned} action(s) on critical or high findings have no owner.")
+        result.append(f"{vocab.plural(unowned, 'action')} on critical or high findings {'has' if unowned == 1 else 'have'} no owner.")
     if unscheduled:
-        result.append(f"{unscheduled} action(s) have no target date.")
+        result.append(f"{vocab.plural(unscheduled, 'action')} {'has' if unscheduled == 1 else 'have'} no target date.")
     if insufficient_evidence or rfi_open:
-        result.append(f"{insufficient_evidence} requirement(s) could not be concluded; {rfi_open} evidence request(s) are open.")
+        result.append(f"{vocab.plural(insufficient_evidence, 'requirement')} could not be concluded; {vocab.plural(rfi_open, 'evidence request')} {'is' if rfi_open == 1 else 'are'} open.")
     return result

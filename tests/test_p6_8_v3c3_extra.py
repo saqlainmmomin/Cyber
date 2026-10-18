@@ -40,7 +40,7 @@ def test_v3c3_xlsx_uses_labeled_outcome_and_severity_fills_with_print_setup():
 
     assert len(summary._charts) >= 2
     assert {type(chart).__name__ for chart in summary._charts} >= {"BarChart", "PieChart"}
-    assert "▲ 16.0" in _text(book) and "▲ 10.1" in _text(book)
+    assert "+16.0 points" in _text(book) and "+10.1 points" in _text(book)
     assert "None" not in _text(book)
     definitions = " ".join(
         str(cell.value)
@@ -102,8 +102,8 @@ def test_v3c3_xlsx_prior_domains_have_safe_delta_labels_and_noncompared_states()
     summary = book["Executive Summary"]
     values = [cell.value for row in summary.iter_rows() for cell in row]
     assert "Prior-period domain comparison" in values
-    assert "▲ 18.2" in values
-    assert "New" in values and "Not compared" in values
+    assert "+18.2 points" in values
+    assert "Not scored" in values and "Not compared" in values
     assert "None" not in _text(book)
 
 

@@ -36,7 +36,7 @@ TYPE_LABELS = {
     "gap_report": "Gap report (PDF)",
     "workpaper": "Workpaper (HTML)",
     "integrated_report": "Integrated engagement report (PDF)",
-    BOARD_REPORT_SNAPSHOT_TYPE: "Board report v2 (PDF)",
+    BOARD_REPORT_SNAPSHOT_TYPE: "Board report (PDF)",
     RFI_SNAPSHOT_TYPE: "Request for information (PDF)",
 }
 
