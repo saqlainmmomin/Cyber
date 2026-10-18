@@ -244,3 +244,22 @@ He exports the JSON and saves it as `tasks/2026-10-14-ucf-rekey-decisions.json`.
 3. WP 3.4: the validator gains a criteria-coverage check, which reports the 13 zero-criteria controls.
 4. The evaluation gate, WP 4.6.
 5. Load into the app, WP 5.1.
+
+### Addendum, 18 Oct 2026: criteria decided in bulk
+
+Saqlain chose to accept the recommended picks instead of reviewing all 345 cards. Before applying them, Claude re-read the 20 close calls and weak matches and the controls the picks left with no criteria. Eight picks were corrected:
+- NIST.ID.AM.07.TC3 to UC-AST-04.
+- NIST.ID.AM.08.TC3 to UC-AST-12.
+- NIST.ID.IM.03.TC3 to UC-GOV-19.
+- CH2.SECURITY.1.TC3 to UC-RES-04.
+- CH3.CORRECT.2.TC3 to UC-PRT-04.
+- CB.TRANSFER.2.TC2 to UC-PSC-05.
+- CB.TRANSFER.1.TC1 and CB.TRANSFER.1.TC4 to UC-PSC-06. This means UC-PSC-06 is no longer a zero-criteria gap.
+
+Also noted:
+- NIST.GV.PO.01.TC5 tests two controls (violations under RSK-10, exceptions under RSK-42). It stays on RSK-10, with a note.
+- The record of these choices is `tasks/2026-10-14-ucf-rekey-decisions.json`. `scripts/ucf/apply_rekey_decisions.py` applied it with `--accept-remaining`. All 345 rows are now `decided`: 336 as proposed, 8 corrected, 1 kept with a note.
+- 12 controls now have zero criteria: the ten clause controls, plus UC-GOV-04 and UC-GOV-10.
+- The review page now holds only the scope decisions: 11 proposals, S1 and S2.
+
+The 300 or so picks outside the uncertain set were accepted unread, apart from the original spot check of 22. Expect a few to sit under a neighboring control. They are cheap to fix later: change the row and re-run, and ids never change.

@@ -17,7 +17,7 @@ Framework keys: `iso27001`, `nist_csf`, `dpdpa`. Source codes in file names: `is
 | `controls_<src>.csv` | `id,title,domain,iso_theme,goal,owner_role,importance,origin,note` | drafting agents |
 | `mappings_<src>.csv` | `source_framework,record_id,source_ref,atom_id,unified_control_id,match_type,coverage,reason,primary,remainder_of,remainder_immaterial,immaterial_reason` | drafting agents |
 | `fields_<DOMAINCODE>.csv` | `id,statement,why_asked,how_to_ask,question,expected_evidence,good_looks_like,test,baseline_risk,applicability,control_type,frequency,key_settings` | field writers |
-| `criteria_map.csv` | `criterion_id,record_id,unified_control_id,basis,reason` (`csv.QUOTE_ALL`) | `scripts/ucf/make_criteria_map.py`; `decided` rows from Saqlain's review |
+| `criteria_map.csv` | `criterion_id,record_id,unified_control_id,basis,reason` (`csv.QUOTE_ALL`) | `scripts/ucf/make_criteria_map.py`; `decided` rows written by `scripts/ucf/apply_rekey_decisions.py` |
 | `scope_proposals.csv` | `question,answer,unified_control_id,source_records,reason` (`csv.QUOTE_ALL`) | `scripts/ucf/make_scope_proposals.py` |
 
 A unified control is the join of its `controls_*` row and its `fields_*` row on `id`. Sign-off tables show the join.

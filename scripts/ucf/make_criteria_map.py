@@ -184,8 +184,8 @@ def main(argv: list[str] | None = None) -> int:
               f"{multi:>21}  {none:>18}")
     print(f"{'total':<13} {len(rows):>8}  {sum(r['basis'] == 'auto' for r in rows):>4}  "
           f"{sum(r['basis'] == 'proposed' for r in rows):>8}  {sum(r['basis'] == 'decided' for r in rows):>7}")
-    close = sum("close call" in r["reason"] for r in rows)
-    weak = sum("weak match" in r["reason"] or "no word match" in r["reason"] for r in rows)
+    close = sum("close call" in r["reason"] for r in rows if r["basis"] == "proposed")
+    weak = sum(("weak match" in r["reason"] or "no word match" in r["reason"]) for r in rows if r["basis"] == "proposed")
     print(f"proposed rows marked close call: {close}; weak or no match: {weak}")
 
     per = Counter(r["unified_control_id"] for r in rows if r["unified_control_id"])

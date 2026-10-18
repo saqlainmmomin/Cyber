@@ -200,7 +200,7 @@ function overview() {
     h("h2", null, "What this is"),
     h("p", null, "The library is signed at " + DATA.version + ". Two things still point at framework ids instead of unified controls: the 728 signed test criteria and the ISO scope proposals. This page settles both. Generated " + DATA.date + ". Nothing here is loaded into the app."),
     h("h3", null, "Test criteria"),
-    h("p", null, "Each signed criterion must sit under exactly one unified control. When its record maps to one control, it was attached automatically. When the record maps to two or more, a script picked the control whose mapped asks and text share the most distinctive words with the criterion. You confirm or change those " + nOpen + " picks. Criterion ids and text never change."),
+    h("p", null, "Each signed criterion must sit under exactly one unified control. When its record maps to one control, it was attached automatically. When the record maps to two or more, a script picked the control whose mapped asks and text share the most distinctive words with the criterion. " + (nOpen ? "You confirm or change those " + nOpen + " picks." : "Every pick is now decided (see the table); nothing is left on the Criteria tab.") + " Criterion ids and text never change."),
     h("div", { class: "tablewrap" }, h("table", null,
       h("thead", null, h("tr", null, ["Framework", "Criteria", "Attached automatically", "Proposed, need your call", "Already decided"].map(t => h("th", null, t)))),
       h("tbody", null, DATA.counts.map(c => h("tr", null, h("td", null, FW[c.fw]), h("td", null, c.total), h("td", null, c.auto), h("td", null, c.proposed), h("td", null, c.decided)))))),
