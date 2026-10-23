@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UCF part 1 review</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1b1f27; --mute: #5b6472; --line: #dde1e8;
+  --accent: #2455c8; --accent-ink: #ffffff;
+  --ok: #1d7a46; --ok-bg: #e3f4ea; --chg: #9a5b00; --chg-bg: #fdf0d9; --rej: #b3261e; --rej-bg: #fbe4e2;
+  --chip: #eef1f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --panel: #1c2027; --ink: #e8ebf0; --mute: #9aa4b2; --line: #2d333d;
+    --accent: #7ba3ff; --accent-ink: #0d1117;
+    --ok: #5fd08d; --ok-bg: #173826; --chg: #f0b45a; --chg-bg: #3b2c12; --rej: #ff8a80; --rej-bg: #44211f;
+    --chip: #262b34;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --panel: #1c2027; --ink: #e8ebf0; --mute: #9aa4b2; --line: #2d333d;
+  --accent: #7ba3ff; --accent-ink: #0d1117;
+  --ok: #5fd08d; --ok-bg: #173826; --chg: #f0b45a; --chg-bg: #3b2c12; --rej: #ff8a80; --rej-bg: #44211f;
+  --chip: #262b34;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 130px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+header.top { position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.bar h1 { font-size: 17px; margin: 0; }
+.bar .grow { flex: 1; min-width: 160px; }
+.meter { height: 8px; background: var(--chip); border-radius: 4px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--ok); width: 0; }
+.prog { font-size: 13px; color: var(--mute); }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: 8px; }
+nav.tabs button { border: 0; background: none; color: var(--mute); padding: 8px 12px; font: inherit; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+nav.tabs .n { font-size: 12px; color: var(--mute); margin-left: 4px; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+section.panel[hidden] { display: none; }
+h2 { font-size: 20px; margin: 8px 0 4px; }
+h3 { font-size: 16px; margin: 20px 0 6px; }
+p { margin: 6px 0; }
+.mute { color: var(--mute); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+.card.s-approve { border-left: 5px solid var(--ok); }
+.card.s-change { border-left: 5px solid var(--chg); }
+.card.s-reject { border-left: 5px solid var(--rej); }
+.head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.head .id { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--mute); }
+.head .t { font-weight: 600; font-size: 16px; }
+.chip { display: inline-block; font-size: 12px; background: var(--chip); border-radius: 999px; padding: 1px 9px; color: var(--mute); }
+.chip.crit { background: var(--rej-bg); color: var(--rej); }
+.chip.high { background: var(--chg-bg); color: var(--chg); }
+.lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); margin-top: 10px; }
+.q { font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); }
+.tablewrap { overflow-x: auto; }
+.dec { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin-top: 12px; }
+.dec .btns { display: flex; gap: 6px; }
+.dec button { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.dec button[aria-pressed="true"].approve { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.dec button[aria-pressed="true"].change { background: var(--chg-bg); border-color: var(--chg); color: var(--chg); font-weight: 600; }
+.dec button[aria-pressed="true"].reject { background: var(--rej-bg); border-color: var(--rej); color: var(--rej); font-weight: 600; }
+.dec textarea { flex: 1; min-width: 220px; min-height: 34px; font: inherit; font-size: 14px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--accent); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; margin: 10px 0; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--mute); gap: 2px; }
+.filters select, .filters input { font: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.btn { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.domhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline; margin-top: 28px; border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+.domhead h3 { margin: 0; }
+.rec { background: var(--chip); border-radius: 6px; padding: 6px 10px; margin-top: 8px; font-size: 14px; }
+.flag { color: var(--chg); font-weight: 600; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.src-fw { font-weight: 600; margin-top: 8px; font-size: 13px; }
+.small { font-size: 13px; }
+@media (max-width: 640px) { main { padding: 12px; } .dec textarea { min-width: 100%; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <h1>Unified control framework, part 1: review</h1>
+    <div class="grow">
+      <div class="meter" role="progressbar" aria-label="Review progress" id="meter"><i id="meterfill"></i></div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <button class="btn" id="exportJson">Export decisions (JSON)</button>
+    <button class="btn ghost" id="exportMd">Export summary (Markdown)</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+<main id="main"></main>
+
+<script>
+"use strict";
+const DATA = /*__DATA__*/null;
+
+// ---------- helpers ----------
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const FW = { iso27001: "ISO 27001", nist_csf: "NIST CSF", dpdpa: "DPDPA" };
+// Controls changed or added in this round get a fresh key, so an approval of the earlier text does not carry over.
+const ckey = c => (c.r2 ? "c2:" : "c:") + c.id;
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+// ---------- state (browser only) ----------
+const KEY = DATA.reviewKey;
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+let saveWarned = false;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { if (!saveWarned) { saveWarned = true; alert("This browser cannot save your decisions. Export before closing the page."); } }
+}
+const DEFAULTS = {};
+DATA.legal.forEach(l => { DEFAULTS["l:" + l.id] = { s: "approve", n: "Confirmed provisionally on 14 Oct 2026 until outside information arrives. Not a legal verification; pack text and ids are unchanged." }; });
+const get = k => state[k] || DEFAULTS[k] || { s: "", n: "" };
+function set(k, patch) { state[k] = Object.assign({}, get(k), patch); save(); updateProgress(); }
+
+// ---------- item registry ----------
+const ITEMS = []; // {key, kind, group}
+DATA.decisions.forEach(d => ITEMS.push({ key: "d:" + d.id, kind: "decision", group: "Decisions", label: d.id + " " + d.title }));
+DATA.decisions.forEach(d => { if (d.table && d.table.decide) d.table.rows.forEach(r => ITEMS.push({ key: "s:" + r[0].split(" ")[0], kind: "sk", group: "Decisions", label: d.id + " split or keep " + r[0] })); });
+DATA.clauses.forEach(c => ITEMS.push({ key: "v:" + c.id, kind: "verify", group: "ISO clauses", label: c.ref + " " + c.title }));
+DATA.legal.forEach(l => ITEMS.push({ key: "l:" + l.id, kind: "legal", group: "Legal items", label: l.ref }));
+DATA.controls.forEach(c => ITEMS.push({ key: ckey(c), kind: "control", group: "Controls", label: c.id + " " + c.title }));
+const GROUPS = ["Decisions", "ISO clauses", "Legal items", "Controls"];
+
+function updateProgress() {
+  let done = 0;
+  const per = {};
+  GROUPS.forEach(g => per[g] = { n: 0, d: 0 });
+  ITEMS.forEach(it => { const d = get(it.key).s ? 1 : 0; done += d; per[it.group].n++; per[it.group].d += d; });
+  const total = ITEMS.length, pct = Math.round(100 * done / total);
+  document.getElementById("meterfill").style.width = pct + "%";
+  document.getElementById("meter").setAttribute("aria-valuenow", pct);
+  document.getElementById("prog").textContent = done + " of " + total + " items decided (" + pct + "%). Saved in this browser only; export to keep.";
+  document.querySelectorAll("[data-tabcount]").forEach(el => {
+    const g = el.getAttribute("data-tabcount"); el.textContent = per[g].d + "/" + per[g].n;
+  });
+  document.querySelectorAll("[data-card]").forEach(card => {
+    const s = get(card.getAttribute("data-card")).s;
+    card.classList.remove("s-approve", "s-change", "s-reject");
+    if (s) card.classList.add("s-" + s);
+  });
+}
+
+// ---------- decision box ----------
+function decBox(key, kind) {
+  const ok = kind === "legal" ? "Confirmed" : kind === "verify" ? "Verified" : "Approve";
+  const two = (kind === "legal" || kind === "verify");
+  const defs = kind === "sk" ? [["split", "Split"], ["keep", "Keep"]] : [["approve", ok], ["change", "Needs change"]].concat(two ? [] : [["reject", "Reject"]]);
+  const btns = h("div", { class: "btns", role: "group", "aria-label": "Decision" });
+  const ta = h("textarea", {
+    "aria-label": "Note", placeholder: "Note (needed for Change or Reject)",
+    oninput: e => set(key, { n: e.target.value })
+  });
+  ta.value = get(key).n;
+  const refresh = () => defs.forEach(([v], i) => btns.children[i].setAttribute("aria-pressed", get(key).s === v ? "true" : "false"));
+  defs.forEach(([v, label]) => btns.append(h("button", {
+    class: v, type: "button", "aria-pressed": "false",
+    onclick: () => { set(key, { s: get(key).s === v ? "" : v }); refresh(); if (v !== "approve" && v !== "keep" && get(key).s) ta.focus(); }
+  }, label)));
+  refresh();
+  return h("div", { class: "dec" }, btns, ta);
+}
+
+// ---------- panels ----------
+const PANELS = {};
+function mkPanel(id, ...kids) { const s = h("section", { class: "panel", id: "p-" + id, hidden: true }, ...kids); PANELS[id] = s; return s; }
+
+function overview() {
+  const rows = DATA.counts.map(c => h("tr", null,
+    h("td", null, c.label), h("td", null, c.controls), h("td", null, c.covered + " of " + c.records), h("td", null, c.atoms)));
+  return mkPanel("overview",
+    h("h2", null, "What this is"),
+    h("p", null, "The first slice of the unified control framework: the ISO 27001 base, plus the NIST CSF 2.0 and DPDPA layers mapped onto it. Library version " + DATA.version + ", generated " + DATA.date + ". Nothing here is loaded into the app. Your sign-off is the gate."),
+    h("div", { class: "rec" }, h("b", null, "Round " + DATA.round + ": "), "your decisions from round 1 are applied: the splits (D11), the communication change (D14), the soft NIST asks (D09), the three wording edits (D08), primary rule R2 (D10) and 'top management' (D17). The library has " + DATA.controls.length + " controls now. Only the " + DATA.controls.filter(c => c.r2).length + " changed or new controls need a fresh decision; the Controls tab opens on them. Everything else keeps your saved approval. Two new decision cards, D19 and D20, list the calls I made while applying."),
+    h("h3", null, "How to review"),
+    h("p", null, "Work the tabs left to right, or jump to Controls if you only want the sign-off tables. Every item takes Approve (or Verified), Change or Reject, with a note for the last two. Decisions save in this browser as you go. When done, export the JSON, save it as tasks/2026-10-13-ucf-review-decisions.json and tell me; I will apply every Change and Reject and regenerate."),
+    h("div", { class: "grid3" },
+      h("div", { class: "card" }, h("b", null, "1. Decisions"), h("p", { class: "small mute" }, DATA.decisions.length + " design and judgment calls. About 15 minutes.")),
+      h("div", { class: "card" }, h("b", null, "2. ISO clauses"), h("p", { class: "small mute" }, DATA.clauses.length + " clause records (clauses 4 to 10) written from knowledge, never checked. Your Lead Auditor read.")),
+      h("div", { class: "card" }, h("b", null, "3. Legal items"), h("p", { class: "small mute" }, DATA.legal.length + " DPDPA reference doubts. Provisionally confirmed until you have outside information; ids do not change.")),
+      h("div", { class: "card" }, h("b", null, "4. Controls"), h("p", { class: "small mute" }, DATA.controls.length + " unified controls in 18 domains. One card each, with statement, question, test, evidence and sources.")),
+      h("div", { class: "card" }, h("b", null, "5. Records"), h("p", { class: "small mute" }, "All " + DATA.trace.length + " framework records and the control each maps to. Read-only trace; change a mapping by noting it on the control card."))
+    ),
+    h("h3", null, "Size by framework subset"),
+    h("p", { class: "mute small" }, "Controls shown when only those frameworks are selected. These are controls, not questions asked: depth tiers still apply."),
+    h("div", { class: "tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", null, "Frameworks"), h("th", null, "Controls shown"), h("th", null, "Records covered"), h("th", null, "Atoms"))),
+      h("tbody", null, rows))),
+    h("h3", null, "What the validator proved"),
+    h("p", null, "Every record maps to at least one control with one primary; every control has a statement, test, owner and source; no control sits in two domains; no shown text names a framework or carries an unlayered number in any of the seven subsets; both directions of traceability resolve; every question is a single obligation; ids are well formed. It exits 0 on this data (python3 scripts/ucf/validate.py)."),
+    h("h3", null, "What the validator cannot prove"),
+    h("p", null, "That a mapping is right, that a control is the right grain, that wording is accurate, or that the clause paraphrases match the standard. That is what you are reviewing. Fields were drafted by Sonnet agents and spot-checked only."),
+    h("h3", null, "Not in this slice"),
+    h("p", null, "ISO scope question content, re-keying the 728 signed criteria, the ids lock file, and loading anything into the app.")
+  );
+}
+
+function renderTable(tb) {
+  const head = tb.head.concat(tb.decide ? ["Your call"] : []);
+  return h("div", { class: "tablewrap" }, h("table", null,
+    h("thead", null, h("tr", null, head.map(c => h("th", null, c)))),
+    h("tbody", null, tb.rows.map(r => h("tr", null,
+      r.map((c, i) => h("td", { class: "small" }, i === 0 && tb.decide ? h("b", null, c) : c)),
+      tb.decide ? h("td", { class: "small", "data-card": "s:" + r[0].split(" ")[0] }, decBox("s:" + r[0].split(" ")[0], "sk")) : null)))));
+}
+function decisionsPanel() {
+  const cards = DATA.decisions.map(d => h("div", { class: "card", "data-card": "d:" + d.id },
+    h("div", { class: "head" }, h("span", { class: "id" }, d.id), h("span", { class: "t" }, d.title)),
+    (d.intro || []).map(t => h("p", null, t)),
+    d.body ? h("p", null, d.body) : null,
+    d.table ? renderTable(d.table) : null,
+    d.after ? h("p", null, d.after) : null,
+    h("div", { class: "rec" }, h("b", null, "My recommendation: "), d.rec),
+    decBox("d:" + d.id, "decision")));
+  return mkPanel("decisions", h("h2", null, "Decisions"), h("p", { class: "mute" }, "Choices I made or that need your call. Change and Reject need a note. D08 to D11, D14, D15 and D17 now say what was applied in round " + DATA.round + ". D19 and D20 are new and need your decision."), cards);
+}
+
+function clausesPanel() {
+  const cards = DATA.clauses.map(c => h("div", { class: "card", "data-card": "v:" + c.id },
+    h("div", { class: "head" }, h("span", { class: "id" }, c.ref), h("span", { class: "t" }, c.title), h("span", { class: "chip" }, c.nv ? "needs verification" : "verified by you")),
+    h("ul", null, c.atoms.map(a => h("li", null, h("span", { class: "mute small" }, a.id.replace(c.id, "") + " "), a.text))),
+    c.controls.length ? h("p", { class: "small mute" }, "Maps to: " + c.controls.join(", ")) : null,
+    c.checknote ? h("div", { class: "rec" }, h("b", null, (c.check === "fixed" ? "Checked against your PDF, corrected: " : "Checked against your PDF, matches: ")), c.checknote) : null,
+    decBox("v:" + c.id, "verify")));
+  return mkPanel("clauses", h("h2", null, "ISO clauses 4 to 10"),
+    h("p", { class: "mute" }, "You marked all 25 Verified in round 1, and the verification flags are now cleared in the data. These paraphrases were first written from knowledge, then cross-checked on 13 Oct 2026 against the ISO/IEC 27001:2022 PDF in your Downloads. Eleven were adjusted (eight for real errors or gaps, three for small additions), and the fixes are already in the atoms and controls below. The PDF has no Amendment 1:2024, so the climate wording in 4.1 and 4.2 is still unchecked. Mark each Verified, or Needs change with your correction."), cards);
+}
+
+function legalPanel() {
+  const cards = DATA.legal.map(l => h("div", { class: "card", "data-card": "l:" + l.id },
+    h("div", { class: "head" }, h("span", { class: "id" }, l.id), h("span", { class: "t" }, l.ref)),
+    h("p", null, l.body),
+    decBox("l:" + l.id, "legal")));
+  return mkPanel("legal", h("h2", null, "DPDPA legal items"),
+    h("p", { class: "mute" }, "Raised by the DPDPA drafting agent comparing the repo pack with the Act and Rules. None would change an id. Stored references and pack text stay as they are until you verify. All 16 are marked Confirmed provisionally (14 Oct 2026) until you have outside information: that is a placeholder, not a legal verification. Change any of them to Needs change with the correction when you know."), cards);
+}
+
+function controlCard(c) {
+  const imp = c.imp;
+  const fwChips = c.fws.map(f => h("span", { class: "chip" }, FW[f]));
+  const srcByFw = {};
+  c.sources.forEach(s => (srcByFw[s.fw] = srcByFw[s.fw] || []).push(s));
+  const srcBlock = Object.keys(srcByFw).map(fw => h("div", null,
+    h("div", { class: "src-fw" }, FW[fw]),
+    h("div", { class: "tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", null, "Ref"), h("th", null, "Ask"), h("th", null, "Match"), h("th", null, "Why"))),
+      h("tbody", null, srcByFw[fw].map(s => h("tr", null,
+        h("td", { class: "small" }, s.ref + " ", h("span", { class: "mute" }, s.atom.slice(s.rec.length))),
+        h("td", { class: "small" }, s.text),
+        h("td", { class: "small" }, s.match + " / " + s.cov,
+          s.primary ? h("div", { class: "flag" }, "primary") : null,
+          s.rem ? h("div", null, "remainder of " + s.rem) : null,
+          s.imm ? h("div", null, "remainder immaterial: " + s.imm) : null),
+        h("td", { class: "small" }, s.reason))))))));
+  const kv = (l, v) => v ? [h("div", { class: "lbl" }, l), h("div", null, v)] : null;
+  const det = h("details", null,
+    h("summary", null, "All fields and sources (" + c.sources.length + " mapped asks)"),
+    kv("Why asked", c.why), kv("How to ask", c.how), kv("Expected evidence", c.evidence),
+    kv("Good looks like", c.good), kv("Baseline risk", c.risk),
+    kv("Applies when", c.applies),
+    kv("Type and frequency", [c.type, c.freq].filter(Boolean).join(", ")),
+    kv("Key settings", c.ks), kv("Skeleton goal", c.goal), kv("Draft note", c.note),
+    h("div", { class: "lbl" }, "Sources"), srcBlock);
+  return h("article", { class: "card", id: "c-" + c.id, "data-card": ckey(c), "data-id": c.id },
+    h("div", { class: "head" },
+      h("span", { class: "id" }, c.id), h("span", { class: "t" }, c.title),
+      h("span", { class: "chip " + (imp === "critical" ? "crit" : imp === "high" ? "high" : "") }, imp),
+      c.theme ? h("span", { class: "chip" }, c.theme) : null, fwChips,
+      h("span", { class: "chip" }, c.owner)),
+    c.r2 ? h("div", { class: "rec" }, h("b", null, "Changed in round " + DATA.round + ": "), c.r2) : null,
+    h("div", { class: "lbl" }, "Question"), h("div", { class: "q" }, c.q),
+    h("div", { class: "lbl" }, "Statement"), h("div", null, c.statement),
+    h("div", { class: "lbl" }, "Test"), h("div", null, c.test),
+    det, decBox(ckey(c), "control"));
+}
+
+const SCOPES = [["all", "All controls"]].concat(DATA.counts.map(c => [c.key, c.label]));
+const fstate = { scope: "all", status: "review", q: "", imp: "all" };
+function controlsPanel() {
+  const list = h("div", { id: "ctlist" });
+  const sel = (id, label, opts, key) => h("label", null, label,
+    h("select", { id, onchange: e => { fstate[key] = e.target.value; renderControls(); } },
+      opts.map(([v, t]) => h("option", { value: v }, t))));
+  const filters = h("div", { class: "filters" },
+    sel("fScope", "Frameworks selected", SCOPES, "scope"),
+    sel("fStatus", "Status", [["review", "Needs your review"], ["all", "All"], ["none", "Undecided"], ["approve", "Approved"], ["change", "Change"], ["reject", "Reject"]], "status"),
+    sel("fImp", "Importance", [["all", "All"], ["critical", "Critical"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]], "imp"),
+    h("label", null, "Search", h("input", { type: "search", id: "fQ", placeholder: "id, title, text", oninput: e => { fstate.q = e.target.value.toLowerCase(); renderControls(); } })),
+    h("label", null, "Jump to domain", h("select", { id: "fJump", onchange: e => { const t = document.getElementById("dom-" + e.target.value); if (t) t.scrollIntoView(); } },
+      [h("option", { value: "" }, "Choose")].concat(DATA.domains.map(d => h("option", { value: d.code }, d.code + " " + d.name))))));
+  const p = mkPanel("controls", h("h2", null, "Controls"),
+    h("p", { class: "mute" }, "One card per unified control. The list opens on Needs your review: only the controls changed or added in round " + DATA.round + ", which need a fresh decision. Every other control keeps your earlier approval; set Status to All to see them. The Frameworks filter shows what a client would see with only those frameworks selected."),
+    filters, list);
+  return p;
+}
+function matches(c) {
+  if (fstate.scope !== "all") {
+    const fw = fstate.scope.split("+");
+    if (!c.fws.some(f => fw.includes(f))) return false;
+  }
+  if (fstate.imp !== "all" && c.imp !== fstate.imp) return false;
+  const s = get(ckey(c)).s;
+  if ((fstate.status === "none" || fstate.status === "review") && s) return false;
+  if (!["all", "none", "review"].includes(fstate.status) && s !== fstate.status) return false;
+  if (fstate.q) {
+    const hay = (c.id + " " + c.title + " " + c.q + " " + c.statement + " " + c.test + " " + c.evidence + " " + c.owner).toLowerCase();
+    if (!hay.includes(fstate.q)) return false;
+  }
+  return true;
+}
+function renderControls() {
+  const list = document.getElementById("ctlist");
+  list.replaceChildren();
+  let shown = 0;
+  DATA.domains.forEach(d => {
+    const cs = DATA.controls.filter(c => c.domain === d.code && matches(c));
+    if (!cs.length) return;
+    shown += cs.length;
+    const all = DATA.controls.filter(c => c.domain === d.code).length;
+    list.append(h("div", { class: "domhead", id: "dom-" + d.code },
+      h("h3", null, d.code + ": " + d.name),
+      h("div", { class: "small mute" }, "Owner: " + d.owner + " . " + cs.length + (cs.length !== all ? " of " + all : "") + " controls ",
+        h("button", { class: "btn ghost", type: "button", onclick: () => {
+          cs.forEach(c => { if (!get(ckey(c)).s) state[ckey(c)] = Object.assign({}, get(ckey(c)), { s: "approve" }); });
+          save(); renderControls(); updateProgress();
+        } }, "Approve undecided in this list"))));
+    cs.forEach(c => list.append(controlCard(c)));
+  });
+  if (!shown) list.append(h("p", { class: "mute" }, fstate.status === "review" ? "Nothing left to review. Set Status to All to see every control." : "No controls match the filters."));
+  updateProgress();
+}
+
+const tr = { fw: "all", q: "" };
+function tracePanel() {
+  const body = h("tbody", { id: "trbody" });
+  const p = mkPanel("records", h("h2", null, "Records trace"),
+    h("p", { class: "mute" }, "Every framework record, the control that carries it (primary) and any other control that covers part or all of it. Read-only: if a mapping is wrong, note it on the control card."),
+    h("div", { class: "filters" },
+      h("label", null, "Framework", h("select", { onchange: e => { tr.fw = e.target.value; renderTrace(); } },
+        [["all", "All"], ["iso27001", "ISO 27001"], ["nist_csf", "NIST CSF"], ["dpdpa", "DPDPA"]].map(([v, t]) => h("option", { value: v }, t)))),
+      h("label", null, "Search", h("input", { type: "search", placeholder: "ref, title, control", oninput: e => { tr.q = e.target.value.toLowerCase(); renderTrace(); } }))),
+    h("div", { class: "tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", null, "Framework"), h("th", null, "Ref"), h("th", null, "Record"), h("th", null, "Asks"), h("th", null, "Primary control"), h("th", null, "Other controls"))),
+      body)));
+  return p;
+}
+function renderTrace() {
+  const body = document.getElementById("trbody");
+  body.replaceChildren();
+  DATA.trace.filter(t => (tr.fw === "all" || t.fw === tr.fw) &&
+    (!tr.q || (t.ref + " " + t.title + " " + t.prim + " " + t.others.join(" ") + " " + t.id).toLowerCase().includes(tr.q)))
+    .forEach(t => body.append(h("tr", null,
+      h("td", { class: "small" }, FW[t.fw]), h("td", { class: "small" }, t.ref), h("td", null, t.title),
+      h("td", { class: "small" }, t.atoms),
+      h("td", { class: "small" }, t.prim ? h("a", { href: "#c-" + t.prim, onclick: () => showTab("controls", t.prim) }, t.prim) : "none"),
+      h("td", { class: "small" }, t.others.join(", ")))));
+}
+
+// ---------- tabs ----------
+const TABS = [["overview", "Overview", null], ["decisions", "Decisions", "Decisions"], ["clauses", "ISO clauses", "ISO clauses"],
+  ["legal", "Legal items", "Legal items"], ["controls", "Controls", "Controls"], ["records", "Records trace", null]];
+function showTab(id, scrollTo) {
+  TABS.forEach(([t]) => { PANELS[t].hidden = t !== id; });
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === id ? "true" : "false"));
+  try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  if (id === "controls") {
+    // reset filters that would hide the target
+    if (scrollTo) { fstate.scope = "all"; fstate.status = "all"; fstate.q = ""; fstate.imp = "all";
+      ["fScope", "fStatus", "fImp"].forEach(i => { const e = document.getElementById(i); if (e) e.value = "all"; });
+      const q = document.getElementById("fQ"); if (q) q.value = ""; }
+    renderControls();
+    if (scrollTo) setTimeout(() => { const el = document.getElementById("c-" + scrollTo); if (el) el.scrollIntoView(); }, 0);
+  } else if (!scrollTo) window.scrollTo(0, 0);
+}
+
+// ---------- export ----------
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = h("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function summary() {
+  const out = {}; let n = { approve: 0, change: 0, reject: 0, none: 0 };
+  ITEMS.forEach(it => { const d = get(it.key); const k = d.s || "none"; n[k] = (n[k] || 0) + 1; if (d.s || d.n) out[it.key] = { status: d.s, note: d.n, label: it.label, group: it.group }; });
+  return { out, n };
+}
+document.getElementById("exportJson").addEventListener("click", () => {
+  const { out, n } = summary();
+  download("ucf-review-decisions.json", JSON.stringify({ library_version: DATA.version, exported_at: new Date().toISOString(), totals: n, decisions: out }, null, 2), "application/json");
+});
+document.getElementById("exportMd").addEventListener("click", () => {
+  const { out, n } = summary();
+  const L = ["# UCF part 1 review, round " + DATA.round, "", "Library " + DATA.version + ". Approved " + n.approve + ", change " + n.change + ", reject " + n.reject + ", undecided " + n.none + ".", ""];
+  const sk = Object.entries(out).filter(([k]) => k.startsWith("s:") && out[k].status);
+  if (sk.length) { L.push("## D11 split or keep", ""); sk.forEach(([k, v]) => L.push("- " + v.status.toUpperCase() + " " + k.slice(2) + (v.note ? ": " + v.note.replace(/\n/g, " ") : ""))); L.push(""); }
+  GROUPS.forEach(g => {
+    const rows = Object.entries(out).filter(([k, v]) => v.group === g && !k.startsWith("s:") && (v.status === "change" || v.status === "reject" || (v.note && v.status !== "approve")));
+    const und = ITEMS.filter(it => it.group === g && !get(it.key).s).length;
+    L.push("## " + g, "");
+    if (!rows.length) L.push("No changes or rejections.");
+    rows.forEach(([k, v]) => L.push("- " + v.status.toUpperCase() + " " + v.label + (v.note ? ": " + v.note.replace(/\n/g, " ") : "")));
+    if (und) L.push("", "Undecided: " + und);
+    L.push("");
+  });
+  download("ucf-review-summary.md", L.join("\n"), "text/markdown");
+});
+
+// ---------- boot ----------
+const main = document.getElementById("main");
+[overview(), decisionsPanel(), clausesPanel(), legalPanel(), controlsPanel(), tracePanel()].forEach(p => main.append(p));
+const tabs = document.getElementById("tabs");
+TABS.forEach(([id, label, grp]) => tabs.append(h("button", { type: "button", role: "tab", "data-tab": id, "aria-selected": "false", onclick: () => showTab(id) },
+  label, grp ? h("span", { class: "n", "data-tabcount": grp }) : null)));
+renderTrace();
+updateProgress();
+const start = (location.hash || "").slice(1);
+showTab(TABS.some(t => t[0] === start) ? start : "overview");
+</script>
+</body>
+</html>

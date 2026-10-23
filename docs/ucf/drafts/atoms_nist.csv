@@ -1,0 +1,300 @@
+framework,record_id,atom_id,source_ref,paraphrase,needs_verification
+nist_csf,NIST.GV.OC.01,NIST.GV.OC.01-a,GV.OC-01,"The organization documents its mission and has leadership approve it.",false
+nist_csf,NIST.GV.OC.01,NIST.GV.OC.01-b,GV.OC-01,"The organization ties its cybersecurity risk priorities to the mission or the services that deliver it.",false
+nist_csf,NIST.GV.OC.02,NIST.GV.OC.02-a,GV.OC-02,"The organization identifies its internal stakeholders and records what each expects from cybersecurity risk management.",false
+nist_csf,NIST.GV.OC.02,NIST.GV.OC.02-b,GV.OC-02,"The organization identifies its external stakeholders and records what each expects from cybersecurity risk management.",false
+nist_csf,NIST.GV.OC.02,NIST.GV.OC.02-c,GV.OC-02,"The organization factors stakeholder expectations into its strategy, policy and risk decisions.",false
+nist_csf,NIST.GV.OC.03,NIST.GV.OC.03-a,GV.OC-03,"The organization keeps a register of the legal, regulatory and contractual cybersecurity and privacy requirements that apply to it.",false
+nist_csf,NIST.GV.OC.03,NIST.GV.OC.03-b,GV.OC-03,"The organization assigns each requirement an owner and shows how the requirement is met.",false
+nist_csf,NIST.GV.OC.03,NIST.GV.OC.03-c,GV.OC-03,"The organization runs a process to detect new or changed requirements and keeps the register current.",false
+nist_csf,NIST.GV.OC.04,NIST.GV.OC.04-a,GV.OC-04,"The organization identifies the services external parties depend on and sets criteria for which of them are critical.",false
+nist_csf,NIST.GV.OC.04,NIST.GV.OC.04-b,GV.OC-04,"The organization sets resilience objectives for each critical service.",false
+nist_csf,NIST.GV.OC.04,NIST.GV.OC.04-c,GV.OC-04,"The organization tells the relying and delivering parties about its critical services and their resilience objectives.",false
+nist_csf,NIST.GV.OC.05,NIST.GV.OC.05-a,GV.OC-05,"The organization inventories the external resources and services it relies on and the functions they support.",false
+nist_csf,NIST.GV.OC.05,NIST.GV.OC.05-b,GV.OC-05,"The organization identifies and ranks dependencies, including single points of failure, by importance to critical services.",false
+nist_csf,NIST.GV.OC.05,NIST.GV.OC.05-c,GV.OC-05,"The organization shares dependency information with those responsible for continuity and risk.",false
+nist_csf,NIST.GV.RM.01,NIST.GV.RM.01-a,GV.RM-01,"The organization documents its cybersecurity risk management objectives with measurable targets.",false
+nist_csf,NIST.GV.RM.01,NIST.GV.RM.01-b,GV.RM-01,"Senior stakeholders formally agree the risk management objectives.",false
+nist_csf,NIST.GV.RM.01,NIST.GV.RM.01-c,GV.RM-01,"The organization reviews the objectives on a schedule and after major change.",false
+nist_csf,NIST.GV.RM.02,NIST.GV.RM.02-a,GV.RM-02,"Leadership approves a cybersecurity risk appetite statement.",false
+nist_csf,NIST.GV.RM.02,NIST.GV.RM.02-b,GV.RM-02,"The organization turns appetite into measurable risk tolerance limits.",false
+nist_csf,NIST.GV.RM.02,NIST.GV.RM.02-c,GV.RM-02,"The organization communicates appetite and tolerance to risk owners and reviews them on a set cycle.",false
+nist_csf,NIST.GV.RM.03,NIST.GV.RM.03-a,GV.RM-03,"The organization includes cybersecurity risks in its enterprise risk management process and register.",false
+nist_csf,NIST.GV.RM.03,NIST.GV.RM.03-b,GV.RM-03,"The organization sets criteria for escalating a cybersecurity risk into enterprise risk management.",false
+nist_csf,NIST.GV.RM.03,NIST.GV.RM.03-c,GV.RM-03,"Enterprise risk reporting to leadership covers cybersecurity risks.",false
+nist_csf,NIST.GV.RM.04,NIST.GV.RM.04-a,GV.RM-04,"The organization defines the available risk response options and when each is appropriate.",false
+nist_csf,NIST.GV.RM.04,NIST.GV.RM.04-b,GV.RM-04,"The organization sets criteria for accepting or avoiding risk and for acceptable shared-responsibility arrangements.",false
+nist_csf,NIST.GV.RM.04,NIST.GV.RM.04-c,GV.RM-04,"The organization communicates the risk response direction to those who make risk decisions.",false
+nist_csf,NIST.GV.RM.05,NIST.GV.RM.05-a,GV.RM-05,"The organization defines channels for raising and escalating cybersecurity risk across the organization.",false
+nist_csf,NIST.GV.RM.05,NIST.GV.RM.05-b,GV.RM-05,"The escalation channels cover risk that originates with suppliers and other third parties.",false
+nist_csf,NIST.GV.RM.05,NIST.GV.RM.05-c,GV.RM-05,"Risks that meet the escalation threshold are actually routed through those channels.",false
+nist_csf,NIST.GV.RM.06,NIST.GV.RM.06-a,GV.RM-06,"The organization documents one method for rating cybersecurity risk from likelihood and impact.",false
+nist_csf,NIST.GV.RM.06,NIST.GV.RM.06-b,GV.RM-06,"The method defines how risks are categorized and prioritized.",false
+nist_csf,NIST.GV.RM.06,NIST.GV.RM.06-c,GV.RM-06,"The organization applies the same method consistently across all recorded risks.",false
+nist_csf,NIST.GV.RM.06,NIST.GV.RM.06-d,GV.RM-06,"The organization communicates the method to the people who apply it.",false
+nist_csf,NIST.GV.RM.07,NIST.GV.RM.07-a,GV.RM-07,"The risk methodology treats opportunities (positive risks) as a category alongside threats.",false
+nist_csf,NIST.GV.RM.07,NIST.GV.RM.07-b,GV.RM-07,"The organization records and discusses identified opportunities in its risk discussions.",false
+nist_csf,NIST.GV.RR.01,NIST.GV.RR.01-a,GV.RR-01,"The organization formally names a senior leader or body accountable for cybersecurity risk.",false
+nist_csf,NIST.GV.RR.01,NIST.GV.RR.01-b,GV.RR-01,"Leadership reviews cybersecurity risk on a regular basis.",false
+nist_csf,NIST.GV.RR.01,NIST.GV.RR.01-c,GV.RR-01,"Leadership communicates expectations for a risk-aware, ethical, improvement-minded culture.",false
+nist_csf,NIST.GV.RR.02,NIST.GV.RR.02-a,GV.RR-02,"The organization documents cybersecurity roles, responsibilities and authorities.",false
+nist_csf,NIST.GV.RR.02,NIST.GV.RR.02-b,GV.RR-02,"The organization communicates these roles to role holders and confirms they understand them.",false
+nist_csf,NIST.GV.RR.02,NIST.GV.RR.02-c,GV.RR-02,"The organization enforces security duties through performance goals or follow-up on missed duties.",false
+nist_csf,NIST.GV.RR.03,NIST.GV.RR.03-a,GV.RR-03,"The organization plans and leadership approves a cybersecurity budget or resourcing tied to its risk strategy.",false
+nist_csf,NIST.GV.RR.03,NIST.GV.RR.03-b,GV.RR-03,"Management reviews whether people with security duties have the resources and authority they need.",false
+nist_csf,NIST.GV.RR.04,NIST.GV.RR.04-a,GV.RR-04,"HR procedures include security steps at screening, onboarding, role change and offboarding.",false
+nist_csf,NIST.GV.RR.04,NIST.GV.RR.04-b,GV.RR-04,"The organization runs background checks before placing people in sensitive roles.",false
+nist_csf,NIST.GV.RR.04,NIST.GV.RR.04-c,GV.RR-04,"Employment terms or acknowledgements oblige personnel to follow security policies.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-a,GV.PO-01,"The organization maintains a documented cybersecurity risk policy approved by senior management.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-b,GV.PO-01,"The policy is based on the organization's context, strategy and priorities.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-c,GV.PO-01,"The organization communicates the policy to personnel.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-d1,GV.PO-01,"The organization records exceptions to the policy and how each was handled.",false
+nist_csf,NIST.GV.PO.01,NIST.GV.PO.01-d2,GV.PO-01,"The organization enforces the policy and records violations and how each was handled.",false
+nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-a,GV.PO-02,"The organization reviews the policy on a set frequency and after defined trigger events.",false
+nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-b,GV.PO-02,"Each policy update records the change in requirements, threats, technology or mission that drove it.",false
+nist_csf,NIST.GV.PO.02,NIST.GV.PO.02-c,GV.PO-02,"The organization re-communicates updated policy versions to personnel.",false
+nist_csf,NIST.GV.OV.01,NIST.GV.OV.01-a,GV.OV-01,"The organization defines a process for leadership to review the outcomes of the risk strategy.",false
+nist_csf,NIST.GV.OV.01,NIST.GV.OV.01-b,GV.OV-01,"Leadership reviews strategy outcomes and records a decision to adjust or confirm direction.",false
+nist_csf,NIST.GV.OV.02,NIST.GV.OV.02-a,GV.OV-02,"The strategy review checks that the strategy still covers current requirements and risks.",false
+nist_csf,NIST.GV.OV.02,NIST.GV.OV.02-b,GV.OV-02,"The review considers audit findings and significant incidents and records the resulting adjustments.",false
+nist_csf,NIST.GV.OV.03,NIST.GV.OV.03-a,GV.OV-03,"The organization defines indicators for measuring risk management performance.",false
+nist_csf,NIST.GV.OV.03,NIST.GV.OV.03-b,GV.OV-03,"The organization reports these metrics to senior leadership.",false
+nist_csf,NIST.GV.OV.03,NIST.GV.OV.03-c,GV.OV-03,"The organization records needed adjustments with owners and traces improvements to lessons learned or assessments.",false
+nist_csf,NIST.GV.SC.01,NIST.GV.SC.01-a,GV.SC-01,"The organization documents a supply chain cybersecurity risk program with stated objectives.",false
+nist_csf,NIST.GV.SC.01,NIST.GV.SC.01-b,GV.SC-01,"The program defines supplier security processes across selection, contracting, monitoring and exit.",false
+nist_csf,NIST.GV.SC.01,NIST.GV.SC.01-c,GV.SC-01,"The relevant stakeholders formally agree the program.",false
+nist_csf,NIST.GV.SC.02,NIST.GV.SC.02-a,GV.SC-02,"The organization names the internal roles accountable for supplier cybersecurity risk.",false
+nist_csf,NIST.GV.SC.02,NIST.GV.SC.02-b,GV.SC-02,"The organization documents the cybersecurity responsibilities of suppliers, customers and partners and communicates them.",false
+nist_csf,NIST.GV.SC.02,NIST.GV.SC.02-c,GV.SC-02,"The organization defines rules for sharing and reporting security information with suppliers.",false
+nist_csf,NIST.GV.SC.03,NIST.GV.SC.03-a,GV.SC-03,"The organization records supplier risks in the same risk process and register as other cybersecurity risks.",false
+nist_csf,NIST.GV.SC.03,NIST.GV.SC.03-b,GV.SC-03,"The risk assessment method explicitly covers supply chain risk.",false
+nist_csf,NIST.GV.SC.03,NIST.GV.SC.03-c,GV.SC-03,"Material supply chain risks are escalated to senior management or enterprise risk reporting.",false
+nist_csf,NIST.GV.SC.04,NIST.GV.SC.04-a,GV.SC-04,"The organization keeps a complete register of its suppliers.",false
+nist_csf,NIST.GV.SC.04,NIST.GV.SC.04-b,GV.SC-04,"The organization defines criteria for supplier criticality.",false
+nist_csf,NIST.GV.SC.04,NIST.GV.SC.04-c,GV.SC-04,"The organization rates each supplier's criticality under those criteria.",false
+nist_csf,NIST.GV.SC.05,NIST.GV.SC.05-a,GV.SC-05,"The organization defines supplier cybersecurity requirements scaled to supplier criticality.",false
+nist_csf,NIST.GV.SC.05,NIST.GV.SC.05-b,GV.SC-05,"The organization builds cybersecurity clauses into standard contract templates.",false
+nist_csf,NIST.GV.SC.05,NIST.GV.SC.05-c,GV.SC-05,"Contracts with critical suppliers contain the required clauses, including incident notification within a stated time.",false
+nist_csf,NIST.GV.SC.06,NIST.GV.SC.06-a,GV.SC-06,"The organization requires a documented due-diligence procedure with a cybersecurity risk assessment before a supplier relationship starts.",false
+nist_csf,NIST.GV.SC.06,NIST.GV.SC.06-b,GV.SC-06,"The organization plans the relationship scope, including the access and data the supplier will have, before it begins.",false
+nist_csf,NIST.GV.SC.07,NIST.GV.SC.07-a,GV.SC-07,"The organization records the risk and priority of each supplier and its products and services.",false
+nist_csf,NIST.GV.SC.07,NIST.GV.SC.07-b,GV.SC-07,"The organization records a defined response to each supplier risk.",false
+nist_csf,NIST.GV.SC.07,NIST.GV.SC.07-c,GV.SC-07,"The organization reassesses supplier risk throughout the relationship, not only at onboarding.",false
+nist_csf,NIST.GV.SC.08,NIST.GV.SC.08-a,GV.SC-08,"The incident response and recovery plans name the suppliers and third parties who take part and their roles.",false
+nist_csf,NIST.GV.SC.08,NIST.GV.SC.08-b,GV.SC-08,"Relevant suppliers participate in incident exercises and real incidents.",false
+nist_csf,NIST.GV.SC.09,NIST.GV.SC.09-a,GV.SC-09,"Supply chain security practices are part of the cybersecurity and enterprise risk programs.",false
+nist_csf,NIST.GV.SC.09,NIST.GV.SC.09-b,GV.SC-09,"The organization monitors supply chain security performance across the life cycle of products and services.",false
+nist_csf,NIST.GV.SC.10,NIST.GV.SC.10-a,GV.SC-10,"The organization specifies in contracts or plans what must happen when a supplier relationship ends.",false
+nist_csf,NIST.GV.SC.10,NIST.GV.SC.10-b,GV.SC-10,"The organization follows those exit provisions when a relationship ends.",false
+nist_csf,NIST.ID.AM.01,NIST.ID.AM.01-a,ID.AM-01,"The organization maintains an inventory of the hardware it manages.",false
+nist_csf,NIST.ID.AM.01,NIST.ID.AM.01-b,ID.AM-01,"Each hardware entry has an owner.",false
+nist_csf,NIST.ID.AM.01,NIST.ID.AM.01-c,ID.AM-01,"The organization keeps the hardware inventory complete and current.",false
+nist_csf,NIST.ID.AM.02,NIST.ID.AM.02-a,ID.AM-02,"The organization maintains an inventory of software and services, including SaaS, cloud, APIs and in-house applications.",false
+nist_csf,NIST.ID.AM.02,NIST.ID.AM.02-b,ID.AM-02,"The organization maintains an inventory of its systems.",false
+nist_csf,NIST.ID.AM.02,NIST.ID.AM.02-c,ID.AM-02,"The organization keeps the software inventory complete and current.",false
+nist_csf,NIST.ID.AM.03,NIST.ID.AM.03-a,ID.AM-03,"The organization maintains network diagrams showing authorized communication paths, including external and third-party connections.",false
+nist_csf,NIST.ID.AM.03,NIST.ID.AM.03-b,ID.AM-03,"The organization maintains data flow diagrams for key systems showing internal and external flows.",false
+nist_csf,NIST.ID.AM.03,NIST.ID.AM.03-c,ID.AM-03,"The organization documents the expected ports, protocols and services between authorized systems and keeps the diagrams current.",false
+nist_csf,NIST.ID.AM.04,NIST.ID.AM.04-a,ID.AM-04,"The organization inventories the external services its suppliers provide.",false
+nist_csf,NIST.ID.AM.04,NIST.ID.AM.04-b,ID.AM-04,"The organization requires a new external service to be added to the inventory before use.",false
+nist_csf,NIST.ID.AM.05,NIST.ID.AM.05-a,ID.AM-05,"The organization defines criteria for prioritizing assets by classification, criticality, resources and mission impact.",false
+nist_csf,NIST.ID.AM.05,NIST.ID.AM.05-b,ID.AM-05,"The organization assigns each asset a priority and reviews priorities periodically.",false
+nist_csf,NIST.ID.AM.07,NIST.ID.AM.07-a,ID.AM-07,"The organization defines which data types it designates for inventory, such as personal, health, payment or proprietary data.",false
+nist_csf,NIST.ID.AM.07,NIST.ID.AM.07-b,ID.AM-07,"The data inventory records where each designated data type is held, who owns it and its classification.",false
+nist_csf,NIST.ID.AM.07,NIST.ID.AM.07-c,ID.AM-07,"The organization maintains a classification scheme and labels designated data accordingly.",false
+nist_csf,NIST.ID.AM.07,NIST.ID.AM.07-d,ID.AM-07,"The organization keeps the data inventory current.",false
+nist_csf,NIST.ID.AM.08,NIST.ID.AM.08-a,ID.AM-08,"The organization documents security procedures for each asset life cycle stage: acquisition or deployment, change and retirement.",false
+nist_csf,NIST.ID.AM.08,NIST.ID.AM.08-b,ID.AM-08,"Assets are configured to a secure baseline before going live.",false
+nist_csf,NIST.ID.AM.08,NIST.ID.AM.08-c,ID.AM-08,"The organization destroys data and sanitizes media when hardware is retired, reassigned or repaired, and records it.",false
+nist_csf,NIST.ID.RA.01,NIST.ID.RA.01-a,ID.RA-01,"The organization documents a procedure for identifying, validating and recording vulnerabilities in assets.",false
+nist_csf,NIST.ID.RA.01,NIST.ID.RA.01-b,ID.RA-01,"The organization scans or assesses in-scope assets for vulnerabilities on a regular basis.",false
+nist_csf,NIST.ID.RA.01,NIST.ID.RA.01-c,ID.RA-01,"The organization records each vulnerability in a tracker with a status and an owner.",false
+nist_csf,NIST.ID.RA.01,NIST.ID.RA.01-d,ID.RA-01,"The organization tests or reviews in-house software for vulnerabilities.",false
+nist_csf,NIST.ID.RA.02,NIST.ID.RA.02-a,ID.RA-02,"The organization subscribes to named cyber threat intelligence sources.",false
+nist_csf,NIST.ID.RA.02,NIST.ID.RA.02-b,ID.RA-02,"The organization assigns a role to review the intelligence received and acts on relevant items.",false
+nist_csf,NIST.ID.RA.03,NIST.ID.RA.03-a,ID.RA-03,"The risk assessment method requires internal and external threats, including insiders, to be identified.",false
+nist_csf,NIST.ID.RA.03,NIST.ID.RA.03-b,ID.RA-03,"The organization records identified threats in a register and updates them using threat intelligence.",false
+nist_csf,NIST.ID.RA.04,NIST.ID.RA.04-a,ID.RA-04,"The risk methodology defines scales for likelihood and impact.",false
+nist_csf,NIST.ID.RA.04,NIST.ID.RA.04-b,ID.RA-04,"Each recorded risk carries a likelihood and an impact estimate.",false
+nist_csf,NIST.ID.RA.04,NIST.ID.RA.04-c,ID.RA-04,"Business owners confirm the likelihood and impact estimates for their risks.",false
+nist_csf,NIST.ID.RA.05,NIST.ID.RA.05-a,ID.RA-05,"The risk methodology combines threat, vulnerability, likelihood and impact into an inherent risk rating.",false
+nist_csf,NIST.ID.RA.05,NIST.ID.RA.05-b,ID.RA-05,"Each recorded risk shows an inherent rating.",false
+nist_csf,NIST.ID.RA.05,NIST.ID.RA.05-c,ID.RA-05,"The organization uses the ratings to prioritize risk treatment and justifies departures in writing.",false
+nist_csf,NIST.ID.RA.06,NIST.ID.RA.06-a,ID.RA-06,"The organization requires a response decision for each risk, with criteria for choosing among accept, mitigate, transfer and avoid.",false
+nist_csf,NIST.ID.RA.06,NIST.ID.RA.06-b,ID.RA-06,"Each risk above tolerance has a recorded response, an owner and a target date.",false
+nist_csf,NIST.ID.RA.06,NIST.ID.RA.06-c,ID.RA-06,"The organization tracks progress on risk treatment.",false
+nist_csf,NIST.ID.RA.06,NIST.ID.RA.06-d,ID.RA-06,"The organization communicates planned risk responses to affected stakeholders.",false
+nist_csf,NIST.ID.RA.07,NIST.ID.RA.07-a,ID.RA-07,"Changes are assessed for cybersecurity risk impact before approval and tracked to closure.",false
+nist_csf,NIST.ID.RA.07,NIST.ID.RA.07-b,ID.RA-07,"The organization runs an exception process for departures from policy, with approval and an expiry or review date.",false
+nist_csf,NIST.ID.RA.07,NIST.ID.RA.07-c,ID.RA-07,"The organization keeps an exception register with an owner and a review date for each open exception.",false
+nist_csf,NIST.ID.RA.08,NIST.ID.RA.08-a,ID.RA-08,"The organization provides a channel for external parties to report vulnerabilities.",false
+nist_csf,NIST.ID.RA.08,NIST.ID.RA.08-b,ID.RA-08,"The organization analyzes each reported vulnerability and decides on a response.",false
+nist_csf,NIST.ID.RA.09,NIST.ID.RA.09-a,ID.RA-09,"The organization checks that hardware and software are authentic before acquiring them.",false
+nist_csf,NIST.ID.RA.09,NIST.ID.RA.09-b,ID.RA-09,"The organization checks the integrity of software, for example by signature or hash, before use.",false
+nist_csf,NIST.ID.RA.10,NIST.ID.RA.10-a,ID.RA-10,"The organization assesses suppliers judged critical before acquiring their products or services.",false
+nist_csf,NIST.ID.IM.01,NIST.ID.IM.01-a,ID.IM-01,"The organization schedules regular evaluations of its cybersecurity program, such as self-assessment or audit.",false
+nist_csf,NIST.ID.IM.01,NIST.ID.IM.01-b,ID.IM-01,"Each evaluation produces a list of improvements with owners.",false
+nist_csf,NIST.ID.IM.02,NIST.ID.IM.02-a,ID.IM-02,"The organization plans and schedules security tests and exercises.",false
+nist_csf,NIST.ID.IM.02,NIST.ID.IM.02-b,ID.IM-02,"Test and exercise reports record the improvements identified.",false
+nist_csf,NIST.ID.IM.02,NIST.ID.IM.02-c,ID.IM-02,"The organization assigns owners to those improvements and tracks them.",false
+nist_csf,NIST.ID.IM.02,NIST.ID.IM.02-d,ID.IM-02,"The organization involves critical suppliers and relevant third parties in tests and exercises.",false
+nist_csf,NIST.ID.IM.03,NIST.ID.IM.03-a,ID.IM-03,"The organization captures lessons learned from operations and incidents through a defined review step.",false
+nist_csf,NIST.ID.IM.03,NIST.ID.IM.03-b,ID.IM-03,"The organization turns lessons learned into updated policies, processes or procedures.",false
+nist_csf,NIST.ID.IM.04,NIST.ID.IM.04-a,ID.IM-04,"The organization maintains a written incident response plan naming roles, escalation steps and response phases.",false
+nist_csf,NIST.ID.IM.04,NIST.ID.IM.04-b,ID.IM-04,"The organization maintains other operational cybersecurity plans, such as business continuity and disaster recovery.",false
+nist_csf,NIST.ID.IM.04,NIST.ID.IM.04-c,ID.IM-04,"The organization communicates the plans to the people who would carry them out.",false
+nist_csf,NIST.ID.IM.04,NIST.ID.IM.04-d,ID.IM-04,"The organization keeps the plans current and improves them based on exercises and incidents.",false
+nist_csf,NIST.PR.AA.01,NIST.PR.AA.01-a,PR.AA-01,"The organization manages the creation, change and revocation of identities and credentials for users, service accounts and devices.",false
+nist_csf,NIST.PR.AA.01,NIST.PR.AA.01-b,PR.AA-01,"Access is approved before an account is created for a new joiner.",false
+nist_csf,NIST.PR.AA.01,NIST.PR.AA.01-c,PR.AA-01,"Leavers' accounts are disabled within the time the procedure sets.",false
+nist_csf,NIST.PR.AA.01,NIST.PR.AA.01-d,PR.AA-01,"The organization inventories non-human credentials such as service accounts, API keys, certificates and keys, each with an owner.",false
+nist_csf,NIST.PR.AA.02,NIST.PR.AA.02-a,PR.AA-02,"The organization verifies a person's identity before issuing credentials, with stronger proofing for higher-risk access.",false
+nist_csf,NIST.PR.AA.02,NIST.PR.AA.02-b,PR.AA-02,"Each person has their own credential, and shared accounts are prohibited or allowed only by recorded exception.",false
+nist_csf,NIST.PR.AA.03,NIST.PR.AA.03-a,PR.AA-03,"The organization defines how users, services and devices are authenticated.",false
+nist_csf,NIST.PR.AA.03,NIST.PR.AA.03-b,PR.AA-03,"The organization enforces multi-factor authentication for remote and privileged access, with exceptions recorded.",false
+nist_csf,NIST.PR.AA.03,NIST.PR.AA.03-c,PR.AA-03,"The organization sets and technically enforces minimum strength rules for passwords and other authenticators.",false
+nist_csf,NIST.PR.AA.04,NIST.PR.AA.04-a,PR.AA-04,"Applications using single sign-on or federation accept only signed identity assertions and validate the signature.",false
+nist_csf,NIST.PR.AA.04,NIST.PR.AA.04-b,PR.AA-04,"The organization limits assertion and token lifetimes and rotates signing keys on a schedule.",false
+nist_csf,NIST.PR.AA.05,NIST.PR.AA.05-a,PR.AA-05,"The organization defines access permissions and authorizations in a policy.",false
+nist_csf,NIST.PR.AA.05,NIST.PR.AA.05-b,PR.AA-05,"The organization manages and enforces access permissions, including justification and ownership of privileged accounts.",false
+nist_csf,NIST.PR.AA.05,NIST.PR.AA.05-c,PR.AA-05,"The organization reviews access periodically and removes access that is no longer needed.",false
+nist_csf,NIST.PR.AA.05,NIST.PR.AA.05-d,PR.AA-05,"The organization grants access on the least privilege principle.",false
+nist_csf,NIST.PR.AA.05,NIST.PR.AA.05-e,PR.AA-05,"The organization separates conflicting duties.",false
+nist_csf,NIST.PR.AA.06,NIST.PR.AA.06-a,PR.AA-06,"The organization sets physical access controls for facilities holding assets, stricter where risk is higher.",false
+nist_csf,NIST.PR.AA.06,NIST.PR.AA.06-b,PR.AA-06,"The organization monitors physical access through logs or visitor records and reviews them.",false
+nist_csf,NIST.PR.AA.06,NIST.PR.AA.06-c,PR.AA-06,"The organization reviews physical access rights periodically and withdraws badges or keys from leavers.",false
+nist_csf,NIST.PR.AT.01,NIST.PR.AT.01-a,PR.AT-01,"The organization runs a security awareness program covering all personnel, including contractors with access.",false
+nist_csf,NIST.PR.AT.01,NIST.PR.AT.01-b,PR.AT-01,"The awareness content covers phishing and social engineering, reporting, acceptable use and credential hygiene.",false
+nist_csf,NIST.PR.AT.01,NIST.PR.AT.01-c,PR.AT-01,"Personnel complete awareness training on a regular cycle.",false
+nist_csf,NIST.PR.AT.01,NIST.PR.AT.01-d,PR.AT-01,"The organization checks awareness through knowledge tests or phishing simulations.",false
+nist_csf,NIST.PR.AT.02,NIST.PR.AT.02-a,PR.AT-02,"The organization identifies roles that need specialized security training.",false
+nist_csf,NIST.PR.AT.02,NIST.PR.AT.02-b,PR.AT-02,"The organization defines role-based training content for each identified role.",false
+nist_csf,NIST.PR.AT.02,NIST.PR.AT.02-c,PR.AT-02,"Holders of those roles complete their role-based training.",false
+nist_csf,NIST.PR.DS.01,NIST.PR.DS.01-a,PR.DS-01,"The organization sets protection requirements for stored data according to its classification.",false
+nist_csf,NIST.PR.DS.01,NIST.PR.DS.01-b,PR.DS-01,"The organization encrypts sensitive data at rest, including backups, and endpoint disks.",false
+nist_csf,NIST.PR.DS.01,NIST.PR.DS.01-c,PR.DS-01,"The organization restricts the use of removable media.",false
+nist_csf,NIST.PR.DS.02,NIST.PR.DS.02-a,PR.DS-02,"The organization requires protection of data in transit, such as current TLS with valid certificates.",false
+nist_csf,NIST.PR.DS.02,NIST.PR.DS.02-b,PR.DS-02,"The organization blocks sensitive data from leaving through email or personal services.",false
+nist_csf,NIST.PR.DS.02,NIST.PR.DS.02-c,PR.DS-02,"The organization keeps production sensitive data out of non-production environments unless masked.",false
+nist_csf,NIST.PR.DS.10,NIST.PR.DS.10-a,PR.DS-10,"The data protection standard sets explicit requirements for data in use.",false
+nist_csf,NIST.PR.DS.10,NIST.PR.DS.10-b,PR.DS-10,"The organization keeps secrets and sensitive values out of logs and code and exposes them only as needed.",false
+nist_csf,NIST.PR.DS.10,NIST.PR.DS.10-c,PR.DS-10,"Shared or multi-tenant platforms isolate each user's or tenant's data from others.",false
+nist_csf,NIST.PR.DS.11,NIST.PR.DS.11-a,PR.DS-11,"The organization sets a backup policy covering scope, frequency and retention.",false
+nist_csf,NIST.PR.DS.11,NIST.PR.DS.11-b,PR.DS-11,"The organization runs backups at the defined frequency.",false
+nist_csf,NIST.PR.DS.11,NIST.PR.DS.11-c,PR.DS-11,"The organization keeps at least one backup copy offline, immutable or in a separate location.",false
+nist_csf,NIST.PR.DS.11,NIST.PR.DS.11-d,PR.DS-11,"The organization encrypts backups and limits access to them.",false
+nist_csf,NIST.PR.DS.11,NIST.PR.DS.11-e,PR.DS-11,"The organization tests restoring from backups and records the result.",false
+nist_csf,NIST.PR.PS.01,NIST.PR.PS.01-a,PR.PS-01,"The organization documents secure configuration baselines for the platform types it uses.",false
+nist_csf,NIST.PR.PS.01,NIST.PR.PS.01-b,PR.PS-01,"The organization checks that systems conform to their baselines.",false
+nist_csf,NIST.PR.PS.01,NIST.PR.PS.01-c,PR.PS-01,"The organization reviews and changes default settings on installation or upgrade.",false
+nist_csf,NIST.PR.PS.01,NIST.PR.PS.01-d,PR.PS-01,"The organization reviews network device configurations against security principles.",false
+nist_csf,NIST.PR.PS.02,NIST.PR.PS.02-a,PR.PS-02,"The organization sets patch deadlines by severity and applies patches within them.",false
+nist_csf,NIST.PR.PS.02,NIST.PR.PS.02-b,PR.PS-02,"The organization avoids unsupported software in production, or records an exception with a replacement plan.",false
+nist_csf,NIST.PR.PS.02,NIST.PR.PS.02-c,PR.PS-02,"The organization removes unauthorized or unneeded software.",false
+nist_csf,NIST.PR.PS.03,NIST.PR.PS.03-a,PR.PS-03,"The organization documents procedures for hardware maintenance, end-of-life replacement and secure disposal.",false
+nist_csf,NIST.PR.PS.03,NIST.PR.PS.03-b,PR.PS-03,"The organization plans replacement or records an exception for hardware past vendor support.",false
+nist_csf,NIST.PR.PS.03,NIST.PR.PS.03-c,PR.PS-03,"The organization disposes of retired hardware with recorded data sanitization.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-a,PR.PS-04,"The organization defines which events must be logged for each system type.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-b,PR.PS-04,"The organization sends logs from systems and services to a central platform for monitoring.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-c1,PR.PS-04,"The organization retains logs for a defined period.",false
+nist_csf,NIST.PR.PS.04,NIST.PR.PS.04-c2,PR.PS-04,"The organization protects retained logs from alteration.",false
+nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-a,PR.PS-05,"Policy limits software installation and execution to approved software.",false
+nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-b,PR.PS-05,"Technical controls on devices stop users installing or running unapproved software.",false
+nist_csf,NIST.PR.PS.05,NIST.PR.PS.05-c,PR.PS-05,"The organization checks the source and integrity of new software before installation.",false
+nist_csf,NIST.PR.PS.06,NIST.PR.PS.06-a,PR.PS-06,"The organization defines security activities for each stage of the software development life cycle.",false
+nist_csf,NIST.PR.PS.06,NIST.PR.PS.06-b,PR.PS-06,"Development teams perform those security activities on each release.",false
+nist_csf,NIST.PR.PS.06,NIST.PR.PS.06-c,PR.PS-06,"The organization restricts access to source repositories and build pipelines and protects them against tampering.",false
+nist_csf,NIST.PR.PS.06,NIST.PR.PS.06-d,PR.PS-06,"The organization tracks and reports secure development performance measures.",false
+nist_csf,NIST.PR.IR.01,NIST.PR.IR.01-a,PR.IR-01,"The organization documents how networks and environments are protected from unauthorized logical access.",false
+nist_csf,NIST.PR.IR.01,NIST.PR.IR.01-b,PR.IR-01,"The organization segments networks and cloud environments by trust level.",false
+nist_csf,NIST.PR.IR.01,NIST.PR.IR.01-c,PR.IR-01,"Firewall and security-group rules deny inbound traffic by default and allow only documented services.",false
+nist_csf,NIST.PR.IR.01,NIST.PR.IR.01-d,PR.IR-01,"The organization reviews firewall and security-group rules periodically and removes unjustified ones.",false
+nist_csf,NIST.PR.IR.02,NIST.PR.IR.02-a,PR.IR-02,"The organization protects facilities housing its equipment against environmental threats such as fire, heat, water and power loss.",false
+nist_csf,NIST.PR.IR.02,NIST.PR.IR.02-b,PR.IR-02,"The organization obtains provider assurance on environmental protection for cloud or colocation hosting.",false
+nist_csf,NIST.PR.IR.02,NIST.PR.IR.02-c,PR.IR-02,"The organization maintains and inspects environmental protection equipment.",false
+nist_csf,NIST.PR.IR.03,NIST.PR.IR.03-a,PR.IR-03,"The organization defines resilience requirements, such as availability and recovery targets, for critical systems.",false
+nist_csf,NIST.PR.IR.03,NIST.PR.IR.03-b,PR.IR-03,"The organization designs critical systems without single points of failure, using redundancy or failover.",false
+nist_csf,NIST.PR.IR.03,NIST.PR.IR.03-c,PR.IR-03,"The organization tests failover or resilience and compares results with the requirements.",false
+nist_csf,NIST.PR.IR.04,NIST.PR.IR.04-a,PR.IR-04,"The organization monitors storage, compute, network and power capacity against alert thresholds and acts on breaches.",false
+nist_csf,NIST.PR.IR.04,NIST.PR.IR.04-b,PR.IR-04,"The organization plans capacity to meet forecast future needs.",false
+nist_csf,NIST.DE.CM.01,NIST.DE.CM.01-a,DE.CM-01,"The organization defines which networks and network services it monitors for adverse events.",false
+nist_csf,NIST.DE.CM.01,NIST.DE.CM.01-b,DE.CM-01,"The organization runs network monitoring tools and reviews their alerts.",false
+nist_csf,NIST.DE.CM.01,NIST.DE.CM.01-c,DE.CM-01,"The organization detects connections from unauthorized devices and rogue wireless networks.",false
+nist_csf,NIST.DE.CM.02,NIST.DE.CM.02-a,DE.CM-02,"The organization defines physical monitoring, such as CCTV, alarms or guards, for facilities holding assets.",false
+nist_csf,NIST.DE.CM.02,NIST.DE.CM.02-b,DE.CM-02,"The organization reviews physical access logs for unusual access and failed attempts.",false
+nist_csf,NIST.DE.CM.02,NIST.DE.CM.02-c,DE.CM-02,"The organization tests and maintains its alarm and CCTV systems.",false
+nist_csf,NIST.DE.CM.03,NIST.DE.CM.03-a,DE.CM-03,"The organization defines how it monitors personnel activity and technology use.",false
+nist_csf,NIST.DE.CM.03,NIST.DE.CM.03-b,DE.CM-03,"The organization generates and reviews alerts on anomalous user activity.",false
+nist_csf,NIST.DE.CM.03,NIST.DE.CM.03-c,DE.CM-03,"The organization tells personnel that their use of its systems is monitored.",false
+nist_csf,NIST.DE.CM.06,NIST.DE.CM.06-a,DE.CM-06,"The organization defines how it monitors external service provider activity, such as vendor remote access.",false
+nist_csf,NIST.DE.CM.06,NIST.DE.CM.06-b,DE.CM-06,"The organization logs and reviews vendor remote-access sessions.",false
+nist_csf,NIST.DE.CM.06,NIST.DE.CM.06-c,DE.CM-06,"The organization collects and monitors audit logs from the cloud and SaaS services it uses.",false
+nist_csf,NIST.DE.CM.09,NIST.DE.CM.09-a,DE.CM-09,"The organization monitors endpoints, servers and runtime environments with EDR or anti-malware.",false
+nist_csf,NIST.DE.CM.09,NIST.DE.CM.09-b,DE.CM-09,"The organization monitors email and web traffic for malware, phishing and data exfiltration and reviews the alerts.",false
+nist_csf,NIST.DE.CM.09,NIST.DE.CM.09-c,DE.CM-09,"The organization detects and reports deviations from configuration baselines.",false
+nist_csf,NIST.DE.AE.02,NIST.DE.AE.02-a,DE.AE-02,"The organization defines procedures or runbooks for analyzing alerts and adverse events.",false
+nist_csf,NIST.DE.AE.02,NIST.DE.AE.02-b,DE.AE-02,"Analysts record the analysis performed and the conclusion for each alert.",false
+nist_csf,NIST.DE.AE.02,NIST.DE.AE.02-c,DE.AE-02,"The organization reviews logs not covered by automated monitoring on a defined schedule.",false
+nist_csf,NIST.DE.AE.03,NIST.DE.AE.03-a,DE.AE-03,"The organization configures detection rules that combine events from more than one source.",false
+nist_csf,NIST.DE.AE.03,NIST.DE.AE.03-b,DE.AE-03,"The organization lists the log sources feeding its central platform and includes critical systems.",false
+nist_csf,NIST.DE.AE.04,NIST.DE.AE.04-a,DE.AE-04,"The incident procedure requires estimating the impact and scope of an adverse event.",false
+nist_csf,NIST.DE.AE.04,NIST.DE.AE.04-b,DE.AE-04,"The organization records impact and scope estimates and revises them as the investigation progresses.",false
+nist_csf,NIST.DE.AE.06,NIST.DE.AE.06-a,DE.AE-06,"The organization documents how alerts are routed to named responders and into response tools.",false
+nist_csf,NIST.DE.AE.06,NIST.DE.AE.06-b,DE.AE-06,"Alerts become tickets assigned to an owner.",false
+nist_csf,NIST.DE.AE.06,NIST.DE.AE.06-c,DE.AE-06,"Incident responders have access to the log analysis platform.",false
+nist_csf,NIST.DE.AE.07,NIST.DE.AE.07-a,DE.AE-07,"The organization integrates threat intelligence feeds into its detection tools.",false
+nist_csf,NIST.DE.AE.07,NIST.DE.AE.07-b,DE.AE-07,"Analysts have asset inventory and criticality context available when investigating.",false
+nist_csf,NIST.DE.AE.08,NIST.DE.AE.08-a,DE.AE-08,"The organization documents criteria for when an adverse event becomes a declared incident.",false
+nist_csf,NIST.DE.AE.08,NIST.DE.AE.08-b,DE.AE-08,"The organization records when each incident was declared and which criterion it met.",false
+nist_csf,NIST.DE.AE.08,NIST.DE.AE.08-c,DE.AE-08,"The organization documents known false positives and considers them when applying the criteria.",false
+nist_csf,NIST.RS.MA.01,NIST.RS.MA.01-a,RS.MA-01,"The organization maintains an incident response plan with roles, phases and contact lists.",false
+nist_csf,NIST.RS.MA.01,NIST.RS.MA.01-b,RS.MA-01,"The plan names the third parties to coordinate with during an incident.",false
+nist_csf,NIST.RS.MA.01,NIST.RS.MA.01-c,RS.MA-01,"The organization executes the plan once an incident is declared, including coordination with third parties.",false
+nist_csf,NIST.RS.MA.02,NIST.RS.MA.02-a,RS.MA-02,"The organization defines how incident reports are triaged and validated.",false
+nist_csf,NIST.RS.MA.02,NIST.RS.MA.02-b,RS.MA-02,"The organization defines criteria for estimating incident severity.",false
+nist_csf,NIST.RS.MA.02,NIST.RS.MA.02-c,RS.MA-02,"The organization records the triage outcome and timing for each incident report.",false
+nist_csf,NIST.RS.MA.03,NIST.RS.MA.03-a,RS.MA-03,"The organization defines incident categories and prioritization criteria.",false
+nist_csf,NIST.RS.MA.03,NIST.RS.MA.03-b,RS.MA-03,"Each incident record carries a category and a priority.",false
+nist_csf,NIST.RS.MA.04,NIST.RS.MA.04-a,RS.MA-04,"The organization defines an escalation matrix by severity, including management and external parties.",false
+nist_csf,NIST.RS.MA.04,NIST.RS.MA.04-b,RS.MA-04,"The organization escalates incidents as the matrix requires and tracks the status of open incidents.",false
+nist_csf,NIST.RS.MA.05,NIST.RS.MA.05-a,RS.MA-05,"The organization documents criteria for starting incident recovery, including the disruption recovery itself may cause.",false
+nist_csf,NIST.RS.MA.05,NIST.RS.MA.05-b,RS.MA-05,"The organization records the decision to begin recovery and the criterion applied.",false
+nist_csf,NIST.RS.AN.03,NIST.RS.AN.03-a,RS.AN-03,"The incident procedure requires root cause analysis for incidents above a defined severity.",false
+nist_csf,NIST.RS.AN.03,NIST.RS.AN.03-b,RS.AN-03,"Post-incident reports set out the sequence of events, the root cause and, where known, the vulnerabilities and actors involved.",false
+nist_csf,NIST.RS.AN.06,NIST.RS.AN.06-a,RS.AN-06,"Responders record the actions they take during an investigation.",false
+nist_csf,NIST.RS.AN.06,NIST.RS.AN.06-b,RS.AN-06,"The organization protects the integrity and provenance of investigation records.",false
+nist_csf,NIST.RS.AN.07,NIST.RS.AN.07-a,RS.AN-07,"The organization defines evidence collection and chain-of-custody procedures.",false
+nist_csf,NIST.RS.AN.07,NIST.RS.AN.07-b,RS.AN-07,"The organization collects incident evidence with metadata and an integrity check, and restricts access to it.",false
+nist_csf,NIST.RS.AN.08,NIST.RS.AN.08-a,RS.AN-08,"The organization estimates the magnitude of each incident and validates the estimate, for example by sweeping other systems.",false
+nist_csf,NIST.RS.CO.02,NIST.RS.CO.02-a,RS.CO-02,"The incident response plan lists the internal and external parties to notify and when.",false
+nist_csf,NIST.RS.CO.02,NIST.RS.CO.02-b,RS.CO-02,"The organization builds contractual and regulatory notification obligations into the plan.",false
+nist_csf,NIST.RS.CO.02,NIST.RS.CO.02-c,RS.CO-02,"The organization notifies those parties when notification criteria are met and records who and when.",false
+nist_csf,NIST.RS.CO.03,NIST.RS.CO.03-a,RS.CO-03,"The communications plan states who receives incident information and what may be shared with each.",false
+nist_csf,NIST.RS.CO.03,NIST.RS.CO.03-b,RS.CO-03,"Leadership receives status updates on major incidents.",false
+nist_csf,NIST.RS.CO.03,NIST.RS.CO.03-c,RS.CO-03,"Information shared externally follows the agreed sharing rules.",false
+nist_csf,NIST.RS.MI.01,NIST.RS.MI.01-a,RS.MI-01,"The organization defines containment actions in playbooks for common incident types.",false
+nist_csf,NIST.RS.MI.01,NIST.RS.MI.01-b,RS.MI-01,"The organization configures automated containment or authorizes a third party in writing to contain on its behalf.",false
+nist_csf,NIST.RS.MI.01,NIST.RS.MI.01-c,RS.MI-01,"The organization carries out containment and records when it happened.",false
+nist_csf,NIST.RS.MI.02,NIST.RS.MI.02-a,RS.MI-02,"The organization defines eradication steps in its playbooks.",false
+nist_csf,NIST.RS.MI.02,NIST.RS.MI.02-b,RS.MI-02,"The organization completes and verifies eradication before closing an incident.",false
+nist_csf,NIST.RC.RP.01,NIST.RC.RP.01-a,RC.RP-01,"The incident response plan includes a recovery section or links to recovery and continuity plans, triggered from incident response.",false
+nist_csf,NIST.RC.RP.01,NIST.RC.RP.01-b,RC.RP-01,"The organization documents recovery roles and the authorizations each recovery step needs.",false
+nist_csf,NIST.RC.RP.01,NIST.RC.RP.01-c,RC.RP-01,"The organization starts recovery from the incident response process and records the hand-off.",false
+nist_csf,NIST.RC.RP.02,NIST.RC.RP.02-a,RC.RP-02,"Recovery plans set criteria for selecting and prioritizing recovery actions.",false
+nist_csf,NIST.RC.RP.02,NIST.RC.RP.02-b,RC.RP-02,"The organization performs recovery actions and records their scope, priority and completion.",false
+nist_csf,NIST.RC.RP.02,NIST.RC.RP.02-c,RC.RP-02,"The organization tests recovery actions on a regular basis.",false
+nist_csf,NIST.RC.RP.03,NIST.RC.RP.03-a,RC.RP-03,"The recovery procedure requires checking backups and other restoration assets for integrity and compromise before use.",false
+nist_csf,NIST.RC.RP.03,NIST.RC.RP.03-b,RC.RP-03,"The organization performs and records those integrity checks before restoring.",false
+nist_csf,NIST.RC.RP.04,NIST.RC.RP.04-a,RC.RP-04,"The organization uses a business impact analysis to set the restoration order of critical functions.",false
+nist_csf,NIST.RC.RP.04,NIST.RC.RP.04-b,RC.RP-04,"The organization defines how operations run right after an incident, with cybersecurity risk taken into account.",false
+nist_csf,NIST.RC.RP.04,NIST.RC.RP.04-c,RC.RP-04,"System owners confirm the return to operations after restoration in priority order.",false
+nist_csf,NIST.RC.RP.05,NIST.RC.RP.05-a,RC.RP-05,"The recovery procedure requires checking restored assets for integrity and confirming normal status before return to production.",false
+nist_csf,NIST.RC.RP.05,NIST.RC.RP.05-b,RC.RP-05,"The organization performs those checks and the asset owner signs off on restored systems.",false
+nist_csf,NIST.RC.RP.06,NIST.RC.RP.06-a,RC.RP-06,"The organization documents criteria for declaring the end of incident recovery.",false
+nist_csf,NIST.RC.RP.06,NIST.RC.RP.06-b,RC.RP-06,"An approver declares the end of recovery and records the date.",false
+nist_csf,NIST.RC.RP.06,NIST.RC.RP.06-c,RC.RP-06,"The organization completes an after-action report for each incident that reached recovery.",false
+nist_csf,NIST.RC.CO.03,NIST.RC.CO.03-a,RC.CO-03,"The recovery communication plan names the stakeholders to update and the channel for each.",false
+nist_csf,NIST.RC.CO.03,NIST.RC.CO.03-b,RC.CO-03,"The organization gives recovery progress updates to leadership and designated stakeholders.",false
+nist_csf,NIST.RC.CO.04,NIST.RC.CO.04-a,RC.CO-04,"The organization defines an approved procedure for public statements about incident recovery.",false
+nist_csf,NIST.RC.CO.04,NIST.RC.CO.04-b,RC.CO-04,"Each public recovery statement is issued under that procedure, with approval.",false
+nist_csf,NIST.RC.CO.04,NIST.RC.CO.04-c,RC.CO-04,"The public-update procedure is linked to the breach notification procedure.",false

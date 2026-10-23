@@ -1,0 +1,727 @@
+
+Control Library Prep
+  Control Library Prep
+    Start hereMappingISO 27001NIST CSFCISCrosswalkOther frameworksStoriesQuestionsAsk them
+    ◎ Practice
+    ↕ Open all
+    ◐
+  KPMG internal interview · Rahul Menon · AM
+  Cyber control library: interview prep
+  Goal: sound confident on control mapping, ISO 27001, NIST CSF 2.0 and CIS v8.1, and know the other frameworks well enough to talk about them.
+    ● Deep: mapping · ISO · CSF · CIS
+    ● Light: CAF · E8 · APRA · DORA · NIS2 · MAS
+    ● Facts checked Oct 2026
+  1
+Start here
+The whole interview on one screen. Read this last, right before you join.
+    The project in one line
+    Help a client rebuild its list of cyber controls so that every control links back to a rule it satisfies and forward to a test that proves it works.
+    Deliverable 1Control library
+The new master list of controls
+    Deliverable 2Gap register
+What's missing or weak today
+    Deliverable 3Uplift roadmap
+The plan to close the gaps
+    Deliverable 4Governance model
+How the library stays up to date
+      Your role as AM
+        Build the library and do the mapping
+        Attend the design workshops, but you're not running them
+        Turn workshop output into clean documents
+        Deadline mid-Dec, then client walk-throughs in Jan–Feb
+      Who the client probably is
+        APRA + Essential Eight point to an Australian bank or insurer
+        CAF, DORA, NIS2, MAS point to operations in the UK, EU and Singapore too
+        So "which rules apply to which entity" will matter a lot. Ask about it.
+  What they're really checking
+      Can you map properly? You explain how well two things match, not just that they share a word.
+      Can you write a good control? Clear, single-purpose and testable.
+      Do you know the frameworks? ISO, CSF and CIS in depth. The rest at a basic level.
+      Can you deliver as an AM? You produce clean work fast without needing to lead the room.
+      Are you clear? Short answers that start with the structure.
+  Your three selling points
+    1 · Done it beforeI've already built unified frameworks that combine standards and a regulation.
+ISO 27001, NIST CSF and DPDPA in one set of controls.
+    2 · Built at scaleI build libraries that are traceable and usable.
+Lab requirements library and governance docs across 300+ labs in 6+ regions.
+    3 · Auditor's eyeI know the main frameworks from the auditor's side.
+ISO 27001 Lead Auditor. ISO to zero-defect audit, NIST CSF maturity and roadmap, CIS benchmarking.
+  Your intro (about 40 seconds)
+    "I'm Saqlain, an Assistant Manager in Cyber Strategy and Governance, with about four and a half years of experience. Most of my work is exactly what this project needs: taking regulations and frameworks and turning them into controls that people can actually run and test.
+    The closest example is a unified control framework I built that brought ISO 27001, NIST CSF and India's DPDPA into one set of controls, so each control is tested once and counts for all three. I also built a requirements library with coverage mapping for a semiconductor R&D client with over 300 labs.
+    On top of that, I've taken ISO 27001 programmes to zero-defect certification, run NIST CSF maturity assessments and roadmaps, and done CIS benchmarking. I'm an ISO 27001 Lead Auditor, so I write every control with its test in mind."
+  Numbers to know by heart
+      ISO 27001:2022Clauses 4–10 · 93 controls in 4 groups (37 / 8 / 14 / 34) · 11 new · climate amendment 2024
+      NIST CSF 2.0Feb 2024 · 6 functions, 22 categories, 106 subcategories · tiers are not maturity levels
+      CIS v8.1June 2024 · 18 controls, 153 safeguards · IG1 = 56 · IG2 = 130 · IG3 = 153
+      NCSC CAF v4.0Aug 2025 · 4 objectives · 14 principles · 41 outcomes
+      Essential Eight8 strategies · maturity levels 0–3 · critical internet-facing patches in 48 hours
+      APRA CPS 234Since July 2019 · tell APRA within 72 hours of a material incident
+      APRA CPS 230Since 1 July 2025 · deadlines of 72 hours, 24 hours, 20 business days
+      DORASince 17 Jan 2025 · 5 pillars · incident reports at 4 hours / 72 hours / 1 month
+      NIS2Oct 2024 · 18 sectors · 10 security measures (Art 21) · 24 hours / 72 hours / 1 month
+      MAS TRMJan 2021 · tell MAS within 1 hour · max 4 hours of unplanned downtime a year
+  2
+How to map controls
+The core skill for this job. Spend the most time here.
+  The big ideaPick one master list of controls. Map every regulation and framework to that master list, once. Don't map the frameworks to each other. With 5 sources, that's 5 mappings instead of 10 side-by-side comparisons, and it stays manageable as sources are added.
+  The chain you're building
+    SourceA law, framework or internal policy
+    →
+    RequirementOne single "must", with its reference
+    →
+    ControlWhat the client actually does
+    →
+    TestHow you prove the control works
+  Every control also records its owner, the risk it reduces, and where it applies (which entity, which country, which systems). Links go many-to-many, so keep them in a separate mapping table rather than comma-separated in one cell.
+  The 10 steps
+    List your sourcesWrite down every regulation, framework and internal policy in scope, with its version, country and which entities it covers.
+    Break them into single requirementsOne "must" per row. Keep the exact wording and the reference (e.g. DORA-Art19-1). Split sentences that ask for several things.
+    Pick the master structure (the "anchor")Domains → control objectives → controls. Reuse a catalogue (NIST 800-53, ISO 27002, SCF) or build your own. My pick: the client's own domain names, ISO 27002 / 800-53 level of detail, and CSF 2.0 for reporting.
+    Map each requirement to controlsSay how well they match (equal, smaller, bigger, overlapping, none) and why. Then mark coverage as full, partial or none.
+    Clean up the listMerge duplicates, split controls that do two jobs, and remove controls that serve no rule and no risk. Where sources disagree on a number (like patch time), use the strictest and note where it came from.
+    Write the controls properlyUse the formula below. One control = one goal, one owner, one test.
+    Link everything upYou should be able to answer both ways: "Which controls cover DORA Article 9?" and "If I delete this control, which rule loses coverage?" This is called traceability.
+    Compare with today → gap registerCheck the client's current controls against the new library. Label each gap: missing, badly designed, not working, or not documented.
+    Plan the fixes → roadmapGroup gaps into projects. Order by deadline, risk, dependencies and effort. Quick wins first. Basics (asset list, access control, governance) early.
+    Keep it alive → governanceName an owner, set review dates, and agree what triggers an update (new law, audit finding, incident).
+  Worked example: the 10 steps for ISO 27001 + NIST CSF + CIS
+  The scenarioBuild one control library that lets a client stay ISO 27001 certified, report to the board on NIST CSF 2.0, and meet CIS v8.1 IG2. To keep it concrete, most examples follow one thread: access control. The IDs, names and numbers below are illustrative, not from a real client.
+  1List your sources
+    What you do: make one table of everything in scope, and decide early how each source will be used.
+      SourceTypeWhat's in itHow we'll use it
+      ISO/IEC 27001:2022 + Amd 1:2024Certifiable standardClauses 4–10 (must do) + Annex A, 93 controls (checklist)Must keep the certificate. Annex A drives the SoA.
+      NIST CSF 2.0Outcome framework6 functions, 22 categories, 106 subcategoriesBoard reporting and maturity scoring
+      CIS Controls v8.1Safeguard catalogue18 controls, 153 safeguardsTarget IG2 (130 safeguards). The source of concrete tests.
+    Early decisions to record: target IG (IG2, not IG3), CSF 2.0 rather than 1.1, and which entities the ISO scope covers.
+  2Break them into single requirements
+    What you do: split every clause, subcategory and safeguard until each row holds one ask. Give each row an ID.
+      OriginalBecomes
+      NIST CSF PR.AA-05: "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"6 rows: PR.AA-05-a defined in policy · -b managed · -c enforced · -d reviewed · -e least privilege · -f separation of duties
+      ISO A.5.18 Access rights: provide, review, change and remove access according to the access policy4 rows: A.5.18-a provide · -b review · -c change · -d remove
+      CIS 5.1: keep an inventory of all accounts and validate that active accounts are authorised at least quarterly2 rows: CIS-5.1-a account inventory · -b quarterly validation
+    Rule of thumb: CIS safeguards are already close to single asks. CSF subcategories often hide 3–6 asks each. ISO clauses 4–10 become governance and ISMS-process requirements.
+  3Pick the master structure (the anchor)
+    What you do: agree the domains, the ID format and one objective per domain before mapping anything.
+    Example domains (14):
+      GOV Governance & riskAST Asset managementIAM Identity & accessDAT Data protectionCFG Secure configurationVUL Vulnerability mgmtLOG Logging & monitoringNET Network securityAPP Application securitySUP SuppliersIR Incident responseRES Backup & resilienceAWR AwarenessPHY Physical
+        DomainIAM: Identity & access
+        ObjectiveAccess is granted, reviewed and removed based on least privilege
+        ControlsIAM-01 grant access · IAM-02 remove access · IAM-03 access review · IAM-04 account inventory · IAM-05 MFA · IAM-06 privileged access
+        CSF tagProtect → PR.AA (so the board view rolls up cleanly)
+    Why this works: CIS sets the level of detail, CSF sets the reporting roll-up, and ISO gets its SoA generated from the mappings.
+  4Map each requirement to controls
+    What you do: for every requirement row, name the control(s), the match type, the coverage and a one-line reason.
+    Example: what maps to IAM-03 Quarterly access review?
+      RequirementMatchCoverageWhy
+      CSF PR.AA-05-d "reviewed"EqualFullSame ask
+      ISO A.5.18-b review access rightsEqualFullSame ask, once split in step 2
+      CIS 5.1-b quarterly validationRequirement is smallerFullIAM-03 reviews accounts and their access levels, so it covers validation and more
+      CIS 5.1 (unsplit, if you skipped step 2)OverlapPartialThe inventory half belongs to IAM-04. This is why step 2 matters.
+  5Clean up the list
+    What you do: merge, split and remove controls, and set one value for every number the sources disagree on.
+      MergeVulnerability management shows up as ISO A.8.8, CSF ID.RA-01 and PR.PS-02, and CIS 7.1–7.7. Built source by source, that's 10+ controls. After merging: VUL-01 process, VUL-02 scanning, VUL-03 fixing.
+      SplitThe client's old control "Access is managed and reviewed" does three jobs. It becomes IAM-01 grant, IAM-02 remove, IAM-03 review.
+      Set the numbersCIS gives hard frequencies (internal scans at least quarterly, external monthly, fixes monthly). ISO and CSF just say "timely". So CIS sets the floor and the client's risk appetite sets anything stricter.
+      RemoveAn old "annual firewall rule sign-off" control with no requirement or risk behind it, already covered by NET-02's change review. Retired, with the reason logged.
+  6Write the controls properly
+    What you do: write each control with the formula (who · what · when · how · why · proof), then fill in its attributes.
+    IAM-03 Quarterly access review"The IT Security Manager runs a review of all user and privileged accounts on in-scope systems every quarter. System owners confirm each account is still needed and its access is correct. Access not confirmed within 10 working days is removed. This prevents excess or leftover access. Proof: signed review records and removal tickets."
+        TypeDetective + corrective · manual with tool support · quarterly · key control
+        ISO 27002 attributesConfidentiality, integrity · Protect · Identity & access management · Protection
+        TestPick 2 quarters and 5 systems. Check each review happened on time, covered all accounts, and every unconfirmed account was removed within 10 working days.
+  7Link everything up (traceability)
+    What you do: check the mapping table answers questions in both directions.
+      QuestionAnswer from the mapping table
+      Which controls deliver CSF PR.AA?IAM-01 to IAM-06
+      Which controls implement ISO A.5.18 (for the SoA)?IAM-01, IAM-02, IAM-03
+      If we retire IAM-03, what loses coverage?CSF PR.AA-05-d, ISO A.5.18-b and CIS 5.1-b all drop to uncovered. So it stays.
+      Are we at CIS IG2?Filter to the 130 IG2 safeguards and check each one has at least one control with full coverage and a passing test
+  8Compare with today → gap register
+    What you do: test the client's current state against each library control and log every gap with its type.
+      GapRules affectedTypeWhat's wrongRisk
+      GAP-014 · IAM-03ISO A.5.18 · CSF PR.AA-05 · CIS 5.1Not workingReviews exist but run once a year, on only 2 of 5 critical apps, with no privileged accounts in scopeHigh
+      GAP-021 · AST-01ISO A.5.9 · CSF ID.AM-01 · CIS 1.1MissingNo single asset inventory, just three partial lists that disagreeHigh
+      GAP-030 · VUL-02ISO A.8.8 · CSF ID.RA-01 · CIS 7.6Badly designedExternal scans run quarterly; CIS asks for at least monthlyMedium
+    One gap can hit all three sources at once. Showing that in the register is what makes the unified approach worth it.
+  9Plan the fixes → roadmap
+    What you do: group gaps into projects, then order them into waves by risk, dependency and effort.
+      Wave 1 · 0–3 monthsSingle asset inventory (GAP-021). Everything else depends on it.
+Quick win: disable dormant accounts (CIS 5.3)
+MFA for admin and remote access
+      Wave 2 · 3–9 monthsIdentity project: quarterly reviews in a tool, privileged access (GAP-014)
+Monthly external scans and fix deadlines (GAP-030)
+Central logging
+      Wave 3 · 9–18 monthsRemaining IG2 safeguards
+Supplier programme (CIS 15, CSF GV.SC)
+Re-score CSF maturity to show progress
+  10Keep it alive → governance
+    What you do: name an owner, set the rhythm, and list what forces an update.
+        OwnerHead of GRC owns the library. Each domain has a named control owner.
+        RhythmOwners confirm their controls every year. GRC checks for ISO, NIST and CIS updates every quarter. The mapping table is versioned (v1.0 at handover).
+        TriggersA new framework version · an ISO audit finding · a new major system · an incident · a change in risk appetite
+        ExampleWhen CIS moved to v8.1 and added Govern, the owner re-tagged the affected safeguards, re-ran coverage, and found no control changes were needed. A one-hour update instead of a re-mapping project.
+  How well do two things match?
+  These terms come from NIST's mapping guidance (NIST IR 8477). Always read them as "requirement → control".
+    Match typePlain meaningCoverageExample
+    EqualExactly the same thingFullRare. Be suspicious if you see lots of these.
+    Requirement is smallerThe control covers all of it, and moreFullCIS 1.1 (device inventory) sits inside ISO A.5.9 (inventory of all assets)
+    Requirement is biggerThe control only covers part of itPartialNIS2 asks for MFA and secure communications; the control only does MFA
+    They overlapEach has something the other doesn'tPartialDORA incident reporting vs a general incident control. DORA adds its own deadlines.
+    No matchNothing in commonNoneLogged as a gap, so a new control is needed
+  Bonus point: the Secure Controls Framework (SCF) uses the same idea and adds a 1–10 strength score.
+  The control-writing formula
+    1 · Whothe owner or role
+    2 · Does whata clear action
+    3 · Whenhow often or what triggers it
+    4 · Howthe method or standard
+    5 · Whythe risk it prevents
+    6 · Proofthe evidence it leaves
+  Worked example: MFA
+    ✗ Weak"Multi-factor authentication should be implemented where appropriate."
+No owner, no scope, no timing, nothing to test.
+    ✓ Strong"The IAM Lead makes sure phishing-resistant MFA is enforced through the company's login system for all remote access, all admin access and all internet-facing systems with sensitive data, every time someone logs in. The CISO approves any exception, and exceptions are reviewed every quarter. This prevents break-ins using stolen passwords. Proof: the login-policy export and the quarterly exception review."
+      GoalOnly the right people get into systems and data
+      TypePreventive · automated · always on (exceptions checked quarterly)
+      Maps toISO A.8.5 · CSF PR.AA-03 · CIS 6.3, 6.4, 6.5 · Essential Eight MFA · NIS2 Art 21(2)(j) · DORA Art 9(4)(d)
+      How you test itCheck the policy covers all three groups. Sample admin accounts and remote logins: zero without MFA. Every exception has an approval and a quarterly review.
+  Goal vs control vs test
+    Control objectiveThe result you want.
+"Only authorised people access systems."
+    ControlWhat someone does to get it.
+"The IAM Lead enforces MFA…"
+    Assessment indicatorHow you prove it works.
+"Sample 25 admin accounts: none without MFA."
+  What to record for each control
+  Good line to use: "I'd start with the five ISO 27002 attribute types, because they're a recognised standard, then add what this client needs."
+      ISO 27002 attributes
+        Control type: preventive, detective, corrective
+        Protects: confidentiality, integrity, availability
+        Cyber concept: identify, protect, detect, respond, recover (add "govern" from CSF 2.0)
+        Capability: 15 areas, such as asset management, access, continuity, suppliers
+        Security domain: governance, protection, defence, resilience
+      Add for real-world use
+        ID, title, goal, the control text
+        Owner and who runs it day to day
+        Manual or automated, and how often
+        Where it applies: entity, country, system type
+        Key settings (e.g. "patch within 48 hours") and their source
+        Linked rules and risks
+        How to test it and what evidence to collect
+        Last review date and change history
+  Cleaning up a messy library
+    If you see…Then…
+    Two controls doing the same jobMerge them; keep both sets of links
+    One control doing several jobsSplit it into single-purpose controls
+    A control linked to no rule and no riskRemove it, or justify why it stays
+    Something that reads like a principleMove it up into policy
+    Step-by-step instructionsMove it down into a procedure; keep the outcome as the control
+    Sources with different numbersUse the strictest, or make a country-specific version if they truly conflict
+  The gap register
+  Columns: Gap IDRule(s)ControlGap typeWhat's wrongEvidence todayRisk ratingRoot causeOwnerFixRoadmap projectDue dateStatus
+  Keeping it alive after handover
+    WhoOne library owner (usually the CISO office). Control owners confirm their controls each year. The risk team challenges and internal audit tests.
+    WhenA full review every year, a quick regulatory check every quarter, plus an update whenever a law, audit or incident triggers one.
+    HowVersion numbers and a change log. Someone watches for new regulations. Traceability shows what a change affects.
+    Health checks% of rules fully covered · controls with no owner or test · controls overdue for review.
+  Mistakes to avoid
+      Mapping frameworks to each other instead of to one master list. It gets unmanageable fast.
+      Matching on keywords. Two things both called "logging" can mean different things.
+      Calling partial matches full. That hides the real gaps.
+      Controls that do several things. You can't test them cleanly.
+      Copying one framework as the library. ISO's 93 controls won't hold DORA's deadlines or APRA's specifics.
+      Using the weakest number. Dropping E8's 48-hour patch time or DORA's 4-hour report.
+      Forgetting where rules apply in a group with many entities and countries.
+      No owner after handover. The library goes stale within a year.
+  3
+ISO 27001:2022
+Your home turf as a Lead Auditor. Be precise here.
+  The clauses (4–10)
+    ClauseWhat it coversMust be documented
+    4 · ContextInternal and external issues (now incl. climate), interested parties, scope, the ISMS itselfScope
+    5 · LeadershipTop management commitment, policy, rolesSecurity policy
+    6 · PlanningRisk assessment, risk treatment, Statement of Applicability, objectives, and 6.3 planning changes (new)Risk method, treatment method, SoA, objectives
+    7 · SupportResources, competence, awareness, communication, documentsProof of competence
+    8 · OperationRunning and controlling the processes, doing the risk workRisk assessment and treatment results
+    9 · PerformanceMonitoring, internal audit, management reviewResults, audit programme, review results
+    10 · ImprovementContinual improvement, nonconformities and fixesNonconformities and corrective actions
+  Annex A: 93 controls in 4 groups
+    37
+Organizational
+Policy, roles, assets, access, suppliers, incidents
+    8
+People
+Screening, awareness, remote work
+    14
+Physical
+Sites, entry, equipment, disposal
+    34
+Technological
+Endpoints, logging, backup, crypto, coding
+  Before 2022: 114 controls in 14 domains. The 2022 edition merged many of them and added 11 new ones.
+  The 11 new controls
+    5.7 Threat intelligence5.23 Cloud services security5.30 ICT readiness for business continuity7.4 Physical security monitoring8.9 Configuration management8.10 Information deletion8.11 Data masking8.12 Data leakage prevention8.16 Monitoring activities8.23 Web filtering8.28 Secure coding
+      Statement of Applicability (SoA)
+        Lists every control you need, from any source
+        Why each one is included
+        Whether it's in place
+        Why any Annex A control is left out
+      Use this in the interviewAnnex A is a checklist to compare against, not the control set itself. Controls come from risk treatment, which is how DORA or APRA controls can sit in the same SoA.
+      Certification cycle (3 years)
+        Stage 1: document and readiness review
+        Stage 2: does it actually work? → certificate
+        Year 1 and Year 2: surveillance audits
+        Year 3: recertification
+      A major nonconformity blocks the certificate; minor ones need a fix plan. Certification bodies follow ISO 17021-1 and 27006-1.
+    2024 amendmentAdds climate change: clause 4.1 asks whether it's a relevant issue, and 4.2 notes interested parties may have climate requirements.
+    Where things stand (Oct 2026)Still the 2022 edition + 2024 amendment. No newer version. The deadline to move off the 2013 version was 31 Oct 2025.
+  4
+NIST CSF 2.0
+Released Feb 2024. Six functions, 22 categories, 106 subcategories. Now meant for every organisation, not just critical infrastructure.
+      Govern (GV) · new
+      Sets direction and oversight. It sits at the centre of the other five.
+      GV.OC ContextGV.RM Risk strategyGV.RR RolesGV.PO PolicyGV.OV OversightGV.SC Supply chain
+      Identify (ID)
+      Know what you have and what could go wrong.
+      ID.AM AssetsID.RA Risk assessmentID.IM Improvement
+      Protect (PR)
+      Stop bad things happening.
+      PR.AA Identity & accessPR.AT Awareness & trainingPR.DS Data securityPR.PS Platform securityPR.IR Infrastructure resilience
+      Detect (DE)
+      Notice when something happens.
+      DE.CM Continuous monitoringDE.AE Adverse event analysis
+      Respond (RS)
+      Deal with the incident.
+      RS.MA Incident managementRS.AN AnalysisRS.CO Reporting & commsRS.MI Mitigation
+      Recover (RC)
+      Get back to normal.
+      RC.RP Recovery plan executionRC.CO Recovery comms
+  Changed from 1.1: Govern added, supply chain moved into Govern, "Improvement" added, Protect reorganised, plus online examples, references, quick-start guides and community profiles.
+      Tiers are not maturity levels
+        Partial: ad hoc
+        Risk Informed: approved, but not organisation-wide
+        Repeatable: formal policy, kept up to date
+        Adaptive: learns and adapts; part of the culture
+      Say this clearlyTiers describe how rigorous the organisation's overall approach is. NIST says CSF is not a maturity model. For maturity scores, define your own scale (e.g. 0–5) and say it's your method.
+      Profiles
+        Current profile: where you are now
+        Target profile: where you want to be
+        Community profile: a shared target for a sector
+        Gap = target − current, which becomes your action plan
+        The control library is the "how" behind each target outcome
+  Scoring several entities at once
+    Same scale everywhereOne scoring scale and one standard of evidence for every entity. Calibrate assessors on a pilot first.
+    Score shared controls onceGroup-wide controls (like a central login system or SOC) are scored once and inherited. Only local controls are scored per entity.
+    Roll up step by stepSubcategory → category → function, using a method you state up front.
+    Never show just the averageWeight by importance, but always show the weakest entity too. Averages hide the weak spot, and the weak spot is where the breach happens.
+    Different targets are fineA small subsidiary doesn't need the regulated parent's target. Measure each against its own.
+    Show it visuallyA heatmap of entity × category, plus gap-to-target bars.
+  Building the roadmap
+      Group gaps into projects, not one task per gap
+      Prioritise by gap size × importance × regulatory pressure
+      Basics first: governance, asset list, access control. Then detection and response.
+      Give each wave an owner, effort, cost range and a measure of success
+      Reassess on the same scale so progress is comparable year to year
+  5
+CIS Controls v8.1
+Released June 2024 and still current. 18 controls, 153 safeguards. Very practical and testable.
+  Implementation Groups (each builds on the last)
+    56
+IG1: basic hygiene
+The minimum for every organisation
+    130(+74)
+IG2
+Bigger organisations with sensitive data
+    153(+23)
+IG3
+Regulated data and skilled attackers
+    What changed in v8.1
+      Added a Govern function to line up with CSF 2.0
+      Added "Documentation" as an asset type
+      Clearer wording and definitions
+      Numbering and safeguard count unchanged
+  The 18 controls
+    #ControlSafeguards
+    1Inventory of enterprise assets5
+    2Inventory of software assets7
+    3Data protection14
+    4Secure configuration12
+    5Account management6
+    6Access control management8
+    7Continuous vulnerability management7
+    8Audit log management12
+    9Email and web browser protections7
+    10Malware defences7
+    11Data recovery5
+    12Network infrastructure management8
+    13Network monitoring and defence11
+    14Security awareness and skills training9
+    15Service provider management7
+    16Application software security14
+    17Incident response management9
+    18Penetration testing5
+      Controls vs Benchmarks
+      Controls = what to do. A prioritised list that works on any technology.
+      Benchmarks = how to configure one specific product (Windows, AWS, a database). Level 1 and Level 2 settings, checked with CIS-CAT.
+      Benchmarks are the detail behind Control 4 (secure configuration).
+      How CIS fits the library
+        Great source of tests, because safeguards are concrete
+        IGs work as a baseline level (e.g. "all entities meet IG1")
+        Light on governance and suppliers, so pair it with CSF or ISO
+  6
+Crosswalk: 10 common themes
+Shows you can move between frameworks. Treat it as a guide, not gospel.
+  Indicative onlyThis is a working map, not an official one. Before using it in client work, check it against NIST's official mappings, CIS's v8.1 mappings and ASD's Essential Eight documents.
+    ThemeISO 27001NIST CSF 2.0CIS v8.1Essential EightNIS2 Art 21
+    MFA8.5PR.AA-036.3, 6.4, 6.5MFA(j)
+    Asset inventory5.9ID.AM-01, 021.1, 2.1—(i)
+    Vulnerabilities & patching8.8ID.RA-01, PR.PS-027.1–7.7Patch apps, Patch OS(e)
+    Logging & monitoring8.15, 8.16PR.PS-04, DE.CM-01, 098, 13.1Partly (log rules at ML2–3)(b)*
+    Backup8.13PR.DS-1111.1–11.5Regular backups(c)
+    Suppliers5.19–5.23GV.SC15.1–15.7—(d)
+    Incident response5.24–5.28, 6.8RS.*, RC.RP17.1–17.9—(b)
+    Awareness & training6.3PR.AT-01, 0214.1–14.9—(g)
+    Secure configuration8.9, 8.19PR.PS-014.1–4.12App hardening, Office macros, App control(e), (g)
+    Privileged access8.2, 5.15, 5.18PR.AA-055.4, 6.5, 6.8Restrict admin privileges(i)
+  * implied, not stated outright. Talking point: Essential Eight is narrow and detailed, NIS2 is broad and high-level, and ISO, CSF and CIS sit in between. That spread is why you need one master list with adjustable settings.
+  7
+Other frameworks
+You need to know what each one is and how it fits, not every clause. If pushed, say honestly you haven't used it hands-on, then show you know the structure.
+    NCSC CAF v4.0 · UK
+      What it isAn outcome-based assessment framework from the UK's NCSC. Version 4.0 came out on 6 Aug 2025.
+      Who it coversUK critical services and their regulators, and UK government (via GovAssure)
+      How it's built4 objectives → 14 principles → 41 outcomes → "indicators of good practice". Each outcome is rated Achieved, Partially achieved or Not achieved.
+      New in v4.0Understanding threats (A2.b), secure software development (A4.b), understanding user and system behaviour (C1.f), threat hunting (C2.b), and AI risks. Up from 39 outcomes.
+      Fits the library asThe indicators are basically ready-made tests. Map each outcome to several controls.
+    Essential Eight · Australia
+      What it isEight priority defences from ASD, plus a maturity model (latest version: Nov 2023).
+      Who it coversRequired at Level 2 for Australian federal government agencies, and widely expected of regulated companies
+      The eightPatch apps · Patch OS · MFA · Restrict admin rights · Application control · Restrict Office macros · App hardening · Regular backups
+      LevelsML0 to ML3, based on how skilled the attacker is. You must reach a level across all eight before moving up.
+      NumbersCritical internet-facing patches within 48 hours. The 2023 update tightened MFA rules.
+      Fits the library asSettings and level tags on existing controls. It's not a full library: no governance, incident or supplier coverage.
+    APRA CPS 234 · Information security (Australia)
+      What it isA binding rule from APRA, in force since July 2019. Guidance is in CPG 234.
+      Who it coversAll APRA-regulated entities: banks, insurers, super funds
+      Key asksThe board is accountable · classify information assets by how critical and sensitive they are · controls to match · tested incident plans · regular independent control testing · check third parties
+      NumbersTell APRA within 72 hours of a material incident, and within 10 business days of a serious control weakness you can't fix quickly
+      Fits the library asAdds "asset criticality" and "testing" fields. The 72 hours becomes a setting on the incident control.
+    APRA CPS 230 · Operational risk (Australia)
+      What it isAn operational resilience rule, in force since 1 July 2025. It replaces the old outsourcing and business-continuity rules. Older supplier contracts must comply by 1 July 2026 at the latest.
+      Who it coversAll APRA-regulated entities (larger ones have extra requirements)
+      Key asksIdentify critical operations · set how much disruption is tolerable (time, data loss, service level) · business continuity plans · manage material service providers
+      Numbers72 hours for a material incident · 24 hours if a critical operation goes outside tolerance · 20 business days after signing a key supplier deal
+      Fits the library asAdd a "supports critical operation" field so cyber controls link to resilience. Map it together with CPS 234.
+    DORA · EU financial sector
+      What it isAn EU regulation (2022/2554) in force since 17 Jan 2025, with detailed technical standards beneath it
+      Who it covers20 types of EU financial firms, plus their ICT suppliers. The most critical suppliers (big cloud providers) are now supervised directly; the first list came out on 18 Nov 2025.
+      Five pillarsICT risk management · incident reporting · resilience testing (advanced pen-testing every 3 years for larger firms) · third-party risk (including a register of all ICT contracts) · information sharing
+      NumbersMajor incident reports: 4 hours after classifying it (max 24 hours from discovery) · 72 hours · 1 month
+      Fits the library asVery detailed, so many items become governance and process controls. Deadlines and the supplier register become settings and outputs. For financial firms, DORA takes priority over NIS2.
+    NIS2 · EU, all critical sectors
+      What it isAn EU directive that each country turns into its own law (deadline Oct 2024; many were late). In Jan 2026 the EU proposed simplifying amendments, still being negotiated.
+      Who it coversMedium and large organisations in 18 sectors (energy, transport, health, digital and more)
+      Key asksManagement must approve, oversee and be trained, and can be held liable · 10 minimum security measures (Art 21), e.g. risk policy, incidents, continuity, suppliers, secure development, training, crypto, access control, MFA
+      NumbersEarly warning in 24 hours · full notice in 72 hours · final report in 1 month · fines up to €10m or 2% of global turnover
+      Fits the library asThe 10 measures make natural domain headings.
+    MAS TRM · Singapore
+      What it isTechnology risk Guidelines (Jan 2021, expected practice) plus binding Notices on technology risk and cyber hygiene
+      Who it coversAll financial institutions regulated by MAS
+      CoversGovernance, risk framework, secure-by-design projects, software development, IT service management, resilience, access, cryptography, data and infrastructure security, cyber operations, testing, online services, IT audit
+      NumbersTell MAS within 1 hour of a relevant incident · root-cause report in 14 days · critical systems: max 4 hours unplanned downtime a year · 6 cyber hygiene basics (admin accounts, patching, security standards, firewalls, anti-malware, MFA)
+      LatestMAS consulted in Jun–Jul 2026 on tightening the Notices (change management, partial outages, offline backups)
+      Fits the library asGuidelines → control goals. Notices → hard settings. A live example of why the library needs update triggers.
+  If asked "how do these all fit together?"
+      Outcome frameworks (CSF, CAF) → the structure and the reporting
+      Control catalogues (ISO 27002, 800-53, CIS) → the level of detail and the tests
+      Regulations (APRA, DORA, NIS2, MAS) → the obligations, deadlines and who's covered
+      Baselines (Essential Eight, CIS IG1) → the minimum settings
+    "Each type answers a different question. The library has to hold all four without mixing them up."
+  8
+Your stories
+Each story is written the way you'd say it, in about 90 seconds. Follow the same five beats every time.
+    1 · ContextOne line: who, what problem
+    2 · My jobWhat I was asked to do and what I owned
+    3 · What I did3–5 moves, the key decision first
+    4 · ResultA number, plus what changed
+    5 · LinkWhy it matters for this role
+  Dotted underline = an example detail I filled inI don't have your real numbers or client details, so I used realistic ones to make each story complete. Like this. Before the interview, swap any that don't match what actually happened. KPMG interviewers may know these engagements.
+    1Unified control framework: ISO 27001, NIST CSF and DPDPA in one set of controls Lead with this
+      Mapping methodChoosing a basePartial matchesStandards + a law
+      How to say it
+        1
+"At KPMG I worked with a mid-sized Indian financial services client that had three things to satisfy at once. They were ISO 27001 certified, their board wanted cyber reporting on NIST CSF, and DPDPA had just come in. Each was handled separately, so the same control owners got three sets of questions and nobody could say what was actually covered."
+        2
+"I was asked to build one unified control framework, so every requirement from all three mapped to a single set of controls. I owned the requirement breakdown, the mapping and writing the new controls, working under my manager with one consultant."
+        3
+          "I did it in five moves.
+            The base. I chose ISO 27001 Annex A. The client already had a Statement of Applicability and the auditors knew it, so it meant the least change.
+            The breakdown. I split all three sources into single requirements (ISO clauses and Annex A, the CSF subcategories, and the DPDPA obligations), about 300 rows, each with its reference.
+            The mapping. I mapped every requirement to the Annex A-based controls and recorded how well it matched. ISO and CSF overlap heavily, so most CSF items matched fully. DPDPA was different: ISO covers privacy in a single control, A.5.34, so DPDPA mostly came out as partial.
+            The gaps. So I wrote around 15 privacy-specific controls: notice and consent, handling data principal requests, breach notification to the Data Protection Board and affected people, and retention and erasure.
+            One test for all three. I wrote each control so one test and one set of evidence counted for every source, and tagged each control to a CSF function so the board report came straight out of the library."
+        4
+"We ended up with about 110 controls covering around 300 requirements. Control owners got one evidence request per control instead of three, the client used the same library for its ISO surveillance audit and its CSF board report, and the DPDPA gaps went into a remediation plan."
+        5
+"This engagement is the same method at a bigger scale: more sources, several countries, and the client's own structure on top."
+      Likely follow-ups
+      "Why Annex A and not NIST CSF as the base?" CSF lists outcomes, not controls. You can't test "assets are inventoried" without someone defining the control. Annex A was already in their SoA and familiar to the auditors, so I used it as the base and kept CSF as a reporting tag on each control.
+      "Where did CSF ask for more than Annex A?" Mostly in Govern: things like organisational context and risk strategy. Those mapped to ISO clauses 4–6 rather than Annex A, which is why I included the clauses in the breakdown, not just Annex A.
+      "How did you check the mapping was right?" Two checks. Every requirement had to land on at least one control, and every control had to trace to at least one requirement or risk. Then my manager reviewed a sample, and we walked the control owners through their domains.
+      "What was hardest?" DPDPA, because it's a law, not a control framework. Its duties are written as outcomes for the organisation, so I had to translate each into something an owner could actually do and evidence, such as "the privacy team logs and answers data principal requests within the set timeline".
+    2Lab requirements library and coverage mapping (semiconductor R&D)
+      Building a libraryApplicabilityTraceabilityScale
+      How to say it
+        1
+"Another engagement was for a semiconductor R&D company with over 300 labs across 6+ regions. Security requirements for the labs were scattered across the company's global security standards, ISO 27001, and IP-protection clauses in customer contracts, and nobody could say which labs met which rules."
+        2
+"My job was to build a single requirements library and a coverage map showing, lab by lab, what was covered."
+        3
+            One library. I pulled every source into single requirements with fixed IDs and references, about 250 in total.
+            The key decision: applicability. A design lab with office-style IT is very different from a test lab full of instruments. So I tagged each requirement by lab type, region, and whether the lab was network-connected or isolated. That stopped labs being measured against rules that didn't apply to them.
+            Coverage. I mapped each requirement to the existing controls and documents as full, partial or none, in an Excel workbook with a mapping tab and pivot views, so the client could filter by lab or region."
+        4
+"For the first time, the client had a coverage view by lab and region: roughly 70% full, 20% partial and 10% not covered. The partial and missing items became the input to the governance documents I wrote next."
+        5
+"This client will need the same applicability tagging, just with entities and jurisdictions instead of lab types."
+      Likely follow-ups
+      "How did you pick the applicability dimensions?" I started from where requirements genuinely differed, then tested that with lab managers. I kept it to three dimensions, because every extra one multiplies the combinations and makes the library hard to maintain.
+      "How did you keep it maintainable?" Fixed IDs that never get reused, one row per requirement, a change log, and a named owner on the client side.
+    3Lab governance documents: controls people could actually follow
+      Control designStakeholdersPushbackCompensating controls
+      How to say it
+        1
+"For the same R&D client, I then wrote the cyber and operational-compliance policies, standards and procedures for the labs. The constraint was clear from day one: controls couldn't slow research down or make the cyber team's job harder."
+        2
+"My job was to turn the gaps from the coverage map into documents people would actually follow."
+        3
+            Three layers. Policy for the intent, standards for the measurable rules, procedures for the steps. Every requirement got an owner, a trigger and the evidence it produced, so it could be tested later.
+            The pushback. One draft standard required patching all lab systems within 30 days. Lab managers pushed back hard: many test instruments run old operating systems that the vendor won't let you patch, so patching would break them.
+            The fix. Rather than force the rule or drop it, I went back to the risk the patching was meant to address, and agreed compensating controls with the lab and cyber teams: isolate those instruments on their own network segment, block internet access, and scan USB media at a kiosk before use.
+            The wording. The standard then said: patch where you can. Where you can't, these controls apply, and the exception is recorded and reviewed."
+        4
+"The labs adopted the documents across all regions, and the exception process gave the cyber team visibility of every unpatchable system, instead of hidden non-compliance."
+        5
+"What I took from it: start from their constraint and keep the outcome. That will matter in the target-state workshops here."
+      Likely follow-ups
+      "How did you get the lab managers on side?" I asked what would actually break, rather than defending the rule. Once we agreed on the risk, the compensating controls were their idea as much as mine.
+      "Isn't an exception just a loophole?" Only if it's unmanaged. Each one had an owner, a reason, the compensating controls and a review date, so it was visible and time-bound.
+    4Framework depth: four short versions (about 30 seconds each)
+      ISO 27001: gap to zero-defect certification
+      "For a financial services client, I took ISO 27001 from gap analysis to certification. I ran the gap assessment against clauses 4–10 and Annex A, designed the controls and policies, set out the evidence each control needed, and followed owners through remediation. The external audit closed with zero nonconformities, and we got the same result on ISO 22301. Because I'm a Lead Auditor, I wrote each control knowing exactly how the auditor would test it."
+      NIST CSF: maturity across several entities
+      "I assessed NIST CSF maturity across five entities in a group. I used one 0–5 scale with defined evidence for each level. I scored shared group services, like the central identity platform and the SOC, once and let the entities inherit them. Then I rolled scores up from subcategory to function. In the board report, every entity was shown against its own target, and the weakest entity always sat next to the average. One subsidiary was well below the group on Detect, which the average alone would have hidden."
+      NIST roadmap
+      "From an enterprise-wide NIST CSF gap assessment, I built a three-phase improvement plan across policy, technology and operations: phase one foundations (governance, asset inventory and access), phase two detection and response, phase three metrics and optimisation. The client adopted it, and we tracked delivery against it."
+      CIS benchmarking
+      "I benchmarked clients against the CIS Controls, testing whether each safeguard was designed properly and actually working. I used real evidence: vulnerability scans from Qualys and Nessus, SIEM dashboards in Sentinel, patch reports and cloud settings. We scored the IG1 safeguards first, then IG2, which gave the client a clear, prioritised fix list."
+  Which story for which question
+    If they ask about…Use
+    A complex mapping problemStory 1
+    Building something big from scratchStory 2
+    A difficult stakeholder or pushbackStory 3 (the unpatchable instruments)
+    Attention to detailStory 4: ISO zero-defect
+    Turning analysis into advice for leadersStory 4: CSF across entities, and the roadmap
+    Working with incomplete informationStory 1: translating DPDPA into controls
+  9
+Practice questions
+Each answer has an opening line to say first, the detail to follow, and an example you can use. Turn on Practice (top right) to hide them.
+  Practice mode is onAll answers are hidden. Say yours out loud before opening each one.
+  Mapping and the library
+  Q1Walk me through how you'd build a unified control library. Most likely
+    "The core idea is simple: one master list, every source mapped to it once, and every control linked to a test. I'd do it in four phases."
+      Prepare: list every source and where it applies, break each into single requirements, and agree the master structure (domains, ID format, attributes).
+      Map: map each requirement to the controls with a match type and a reason, clean up duplicates, and write each control properly.
+      Prove: check traceability both ways, then compare against today's controls to build the gap register.
+      Plan and sustain: group gaps into a roadmap, and set up the governance that keeps it current.
+    Example you can use"I've done this with ISO 27001, NIST CSF and DPDPA. I used Annex A as the base, broke all three into single requirements, and mapped them. ISO and CSF overlapped heavily, while DPDPA was mostly partial, so I added privacy controls. In the end, one test counted for all three."
+    "What would you do in week one?" Build the source register, get the master structure agreed, and pilot one domain end to end, for example Identity & Access: break it down, map, write, test. That proves the method before scaling it to every domain.
+  Q2How do you choose the master framework (the anchor)?
+    "I use three tests: is it detailed enough to test, broad enough to cover every source, and familiar to the people who'll report on it?"
+      OptionStrengthWeakness
+      ISO 27001 Annex A / 27002Familiar, ties to certification, has attributesFairly high-level (93 controls)
+      NIST SP 800-53Very detailed, has adjustable settingsHeavy: over a thousand controls with enhancements
+      NIST CSF 2.0Great for board reportingOutcomes, not controls
+      CIS v8.1Very testableLight on governance and suppliers
+      Client's own domainsSpeaks the client's languageNeeds careful design up front
+    Example you can use"In my unified framework I used Annex A as the base because the client was already certified, so it meant the least change. I kept CSF as a reporting tag, not the base, because CSF lists outcomes, not controls."
+    "Would you use Annex A here too?" Probably not on its own. This client has APRA, DORA, NIS2 and MAS, with deadlines, registers and tolerance limits that Annex A can't hold without heavy extension. I'd use the client's own domains with ISO 27002 / 800-53 level of detail and CSF for reporting, and decide it in the first workshop.
+  Q3What makes a good control statement? Give an example.
+    "A good control says who does what, when, how, why, and what evidence it leaves, and it does only one thing."
+      Words I remove: "should", "where appropriate", "periodically", "as needed". Each one makes the control untestable.
+      Step-by-step detail goes into the procedure. The control keeps the outcome and the frequency.
+      My check: could an auditor write the test from the statement alone?
+      ✗ Weak"User access is reviewed periodically."
+      ✓ Strong"The IT Security Manager runs a review of all user and privileged accounts on in-scope systems every quarter. System owners confirm each account is still needed. Unconfirmed access is removed within 10 working days. This prevents excess access. Evidence: signed review records and removal tickets."
+    "Who decides the 10 days?" The client, based on risk appetite. I'd propose a value, cite any source that sets one, and record the decision.
+  Q4Two sources set different requirements for the same thing. What do you do?
+    "I keep one control and make the number a setting. The strictest value that applies wins, and I record where it came from."
+      That's the same idea as NIST 800-53's "organisation-defined parameters".
+      If the rules apply in different countries, I don't force the strictest on everyone. The setting varies by jurisdiction.
+      If the strictest isn't achievable, it becomes a gap with a plan, or a formally accepted risk. Never a quiet downgrade.
+    Example you can use: incident reporting deadlinesOne incident-notification control, with a settings table instead of four separate controls:
+        RegulationFirst report dueTo
+        MAS (Singapore)1 hourMAS
+        DORA (EU finance)4 hours after classifying it as major (max 24 hours)National regulator
+        NIS2 (EU)24-hour early warningNational CSIRT / authority
+        APRA CPS 23472 hoursAPRA
+  Q5The client has 800 controls. How do you slim it down?
+    "Map first, then cut. Duplicates only become visible once everything sits on the same structure."
+      Map every existing control to the master structure. Where several land on the same objective, you've found duplicates.
+      Merge them, split controls that do several jobs, push procedural detail down into procedures, and remove controls with no rule or risk behind them.
+      Before removing anything, check traceability: no requirement can lose coverage.
+      Give owners a before-and-after list with a reason for every change.
+    Example you can use"A common pattern is five password controls written after five different audits. They become one authentication control plus a password standard. Same coverage, and owners evidence it once instead of five times."
+    "How do you get owners to agree to losing 'their' control?" Show them two things: nothing loses coverage, and their evidence work goes down. That usually ends the argument.
+  Q6Control objective vs control vs assessment indicator?
+    "The objective is the result you want, the control is what someone does to get it, and the indicator is how you prove it works."
+    Example you can use: patching
+        ObjectiveVulnerabilities are fixed before they can be exploited
+        ControlIT Operations patches critical vulnerabilities on internet-facing systems within the agreed deadline (e.g. 14 days), tracked in the vulnerability tool
+        IndicatorDesign: the deadlines are defined and approved. Operating: sample 25 critical vulnerabilities and check each was fixed in time. Metric: % fixed within deadline (target ≥ 95%)
+    "KPI, KCI or KRI?" A KPI measures how a process performs, a KCI measures whether a control works, and a KRI tracks how risk exposure is trending. "% patched on time" is a KCI. "Number of exploitable internet-facing vulnerabilities" is a KRI.
+  Q7What would you record for each control?
+    "I start with the five ISO 27002 attribute types, because they're a recognised standard, then add what the client needs to run and test it."
+      ISO 27002: control type, what it protects (CIA), cyber concept, capability, security domain. Add "govern" from CSF 2.0.
+      Practical: owner, manual or automated, frequency, where it applies, settings and their source, linked requirements and risks, how to test it, evidence, review dates.
+    Example you can use: IAM-03 access reviewDetective · manual with tool support · quarterly · key control · owner: IT Security Manager · applies to: all entities, all in-scope systems · maps to ISO A.5.18, CSF PR.AA-05, CIS 5.1 · evidence: signed review records.
+    "How do you stop it turning into 40 columns?" Every field needs a user: a report, a filter or a test. If nobody will use it, it doesn't go in.
+  Q8How do you keep the library up to date after we leave?
+    "Three things: a named owner, a regular rhythm, and clear triggers for an update."
+      The library is owned by the second line (CISO office or GRC). Individual controls are owned by the first line.
+      Rhythm: a full yearly review, a quarterly regulatory check, and an annual sign-off by owners.
+      Triggers: a new law or framework version, an audit finding, an incident, a new major system.
+      Health checks: % of requirements fully covered, controls with no owner or test, and overdue reviews.
+    Example you can use"Take MAS's 2026 consultation on its technology-risk Notices. With a governed library, horizon scanning flags it, we map the changed requirements, traceability shows which controls are affected (change management and backup), we update the settings, and owners re-confirm. That's days of work, not a new project."
+  ISO 27001
+  Q9What changed in ISO 27001:2022?
+    "The big change was Annex A: 114 controls in 14 domains became 93 in 4 themes, with 11 new ones."
+      The four themes: Organizational 37, People 8, Physical 14, Technological 34.
+      The 11 new controls include threat intelligence, cloud security, configuration management, data leakage prevention and secure coding.
+      In the main clauses: new 6.3 planning of changes, more focus on processes in 4.4 and 8.1, and audit and management review split into sub-clauses.
+      The 2024 amendment added climate change to clauses 4.1 and 4.2. The deadline to move off the 2013 version was 31 Oct 2025.
+      ISO 27002:2022 added attributes to each control, which are useful for tagging a library.
+    Example you can use"In a typical transition, most of the work is re-mapping the old controls to the new numbering and updating the SoA. The real gaps are usually in the new controls, especially threat intelligence and configuration management, because those need actual processes, not just a renamed document."
+  Q10What goes in a Statement of Applicability? Can you leave Annex A controls out?
+    "The SoA lists the controls you need, why, whether they're in place, and why any Annex A control is excluded."
+      Yes, you can exclude Annex A controls, with a reason, usually because the risk doesn't exist.
+      Annex A is a checklist to compare against. The controls themselves come from risk treatment.
+      So the SoA can include controls from outside Annex A.
+    Example you can use"In my unified framework, the DPDPA privacy controls, like consent and breach notification to the Data Protection Board, sat in the same SoA as the Annex A controls. One document, one audit trail."
+    "Example of a valid exclusion?" Excluding 8.28 secure coding when there's no in-house development. But if development is outsourced, 8.30 (outsourced development) still applies, which is a common trap.
+  NIST CSF
+  Q11What's new in CSF 2.0, and why does Govern matter here?
+    "The headline is the new Govern function, which puts governance at the centre of the other five."
+      Govern has six categories: context, risk strategy, roles, policy, oversight and supply chain (moved there from Identify).
+      CSF 2.0 is now meant for all organisations, with implementation examples, quick-start guides and community profiles.
+    Example you can use"Govern ties straight into this project. GV.OC-03 says legal, regulatory and contractual requirements are understood and managed. The obligations register and the mapping we build are exactly the evidence for that."
+  Q12Are the CSF tiers a maturity model? How do you measure maturity then?
+    "No. Tiers describe how rigorous the organisation's overall approach is, and NIST says CSF isn't a maturity model."
+      Tiers: Partial → Risk Informed → Repeatable → Adaptive. They describe the whole organisation, not each subcategory.
+      For maturity, I define my own scale and say clearly that it's our method, not NIST's.
+    Example scale you can describe
+        0 · NoneNot in place
+        1 · Ad hocHappens, but depends on individuals
+        2 · DefinedDocumented and approved
+        3 · ImplementedDone consistently, with evidence
+        4 · MeasuredTracked with metrics
+        5 · OptimisedImproved using those metrics
+  Q13How did you combine maturity scores across several entities?
+    "Same scale everywhere, shared controls scored once, and I never show the average without the weakest entity."
+      Calibrate assessors on one entity first, with clear evidence required for each level.
+      Group-wide services (central identity, SOC) are scored once and inherited. Only local controls are scored per entity.
+      Roll up subcategory → category → function using a method stated up front.
+      Each entity is measured against its own target.
+    Example you can use"Say three entities score 3.2, 3.4 and 1.8 on Detect. The average is 2.8, which looks acceptable. But the entity at 1.8 is where an attack goes unnoticed. So the report shows all three against their targets, and the weak one gets its own roadmap item."
+    "What if two assessors disagree?" A calibration session, written evidence criteria for each level, and a review of outlier scores before anything is reported.
+  CIS Controls
+  Q14How would you use CIS v8.1 here? And Controls vs Benchmarks?
+    "I'd use CIS as the source of concrete tests and the IGs as a baseline level."
+      18 controls and 153 safeguards. IG1 = 56, IG2 = 130, IG3 = 153. v8.1 added Govern.
+      Safeguards are specific and testable, which makes them ideal as assessment indicators.
+      IG targets work as an applicability setting, e.g. "all entities meet IG1; regulated entities meet IG2".
+    Example you can use"CIS Control 4.1 says 'have a secure configuration process'. That's the control. The CIS Benchmark for Windows Server gives the actual settings, checked with CIS-CAT. That belongs in a technical standard. So the control library references the benchmark, it doesn't copy it."
+  Other frameworks
+  Q15How do DORA and NIS2 work together?
+    "For financial firms, DORA takes priority: it's the sector-specific law, so its ICT risk and incident rules apply instead of NIS2's."
+      Same spirit: management accountability, risk management, incident reporting, suppliers.
+      DORA is much more detailed: technical standards, threat-led pen testing every 3 years for larger firms, a register of all ICT contracts, and direct oversight of critical ICT suppliers.
+      The EU's 2026 proposals aim to cut overlapping incident reporting.
+    Example you can use"Picture a group with an EU bank and an EU cloud-hosting subsidiary. The bank falls under DORA, the subsidiary under NIS2. They share one incident-reporting control, and the applicability tag decides which regulator and which deadline apply."
+  Q16CPS 234 vs CPS 230: what does each add?
+    "CPS 234 is information security, and CPS 230 is operational resilience. Together they link cyber controls to the services that matter most."
+      CPS 234: classify assets by criticality and sensitivity, test controls independently, check third parties, and report material incidents within 72 hours.
+      CPS 230: critical operations, tolerance levels, continuity plans, material service providers. Deadlines of 72 hours, 24 hours and 20 business days.
+    Example you can use"Take payments as a critical operation. CPS 230 sets its tolerance, e.g. a maximum outage time. The backup, incident and supplier controls that keep payments running get tagged 'supports: payments', and CPS 234 says how often they're tested. Then the board can see which controls protect which critical service."
+  Q17How do you fit Essential Eight into a control library?
+    "Essential Eight isn't a library. It's eight technical defences with requirements per maturity level, so it becomes settings and tags on existing controls."
+      Map each strategy to existing controls: patching, MFA, admin rights, application control, macros, hardening, backups.
+      Store each level's requirements as settings, and tag the level each control meets.
+      Then "are we at Level 2?" is a filter on test results, not a separate assessment.
+    Example you can use"The patching control gets a setting: 'critical vulnerabilities on internet-facing systems patched within 48 hours', sourced from Essential Eight. CIS's monthly cycle covers everything else. One control, two sources, both met."
+    Watch out: maturity counts across all eight strategies, so one weak area holds back the whole rating.
+  Scenarios
+  Q18In a workshop, two owners both claim the same control and won't merge. What do you do?
+    "I'm not leading the room, so my job is to put the facts in front of the lead and offer an option."
+      The facts: both controls map to the same objective and requirements, shown from the mapping table.
+      The option: one control with one accountable owner, with the other as the person who runs it. Or a split by scope if they really cover different systems.
+      Then I write down the decision. If it's still open, it goes to the governance group, not into the library as a silent duplicate.
+    Example you can say"I'd pass the lead a note: 'Both controls cover ISO A.5.18 and CSF PR.AA-05 the same way. Option: IAM owns it, the app team runs the review for their systems.' Then I'd let the lead run the conversation."
+  Q19It's early December and the library is 60% done. What do you focus on?
+    "Complete beats broad. I'd finish the highest-stakes domains end to end and be upfront early about the rest."
+      Prioritise controls tied to regulatory deadlines and the primary regulator (APRA), then DORA and the others.
+      Make each finished domain fully complete: statement, attributes, mapping and test.
+      Tell the manager now, not on 14 December, what moves into the Jan–Feb window.
+      Keep the gap register and roadmap structure ready, so late controls drop straight in.
+    Example you can say"I'd send a one-line status: '9 of 14 domains complete including all APRA-linked controls; remaining 5 done by 20 Dec; proposing the 2 lowest-risk domains move to January review.'"
+  Q20The client uses Excel. How would you set up the workbook?
+    "Like a small database: linked tabs with fixed IDs and one row per relationship."
+      TabKey columns
+      SourcesSource ID, name, version, jurisdiction, applies to
+      RequirementsReq ID, source ID, reference, exact text, type
+      ControlsControl ID, domain, statement, owner, frequency, attributes
+      MappingReq ID, Control ID, match type, coverage, reason
+      TestsControl ID, test steps, evidence, last result
+      Gaps · Change logGap register, and every change with date and approver
+    Example you can use"I'd use drop-down lists for every set field and no merged cells. A simple COUNTIFS then flags any requirement without a full-coverage mapping. And because it's structured, it imports cleanly into ServiceNow, Archer or OneTrust later."
+  About you
+  Q21Why you for this project?
+    "Because I've already done the core of this work, and I design controls the way an auditor will test them."
+      I built a unified framework bringing ISO 27001, NIST CSF and DPDPA into one set of controls (story 1).
+      I built a requirements library with coverage mapping across 300+ labs (story 2), and wrote controls people actually follow (story 3).
+      As an ISO 27001 Lead Auditor, I write each control with its test in mind, which is the traceability this client is asking for.
+  Q22Tell me about disagreeing with a senior stakeholder.
+    "The best example is when lab managers pushed back on a patching standard I'd written."
+      Their concern: test instruments on old operating systems that can't be patched without breaking them.
+      What I couldn't drop: the risk the patching was there to address.
+      What we agreed: compensating controls: isolate the instruments, block internet access, scan USB media. Plus a recorded, reviewed exception.
+      The lesson: start from their constraint and keep the outcome, rather than defending the clause.
+  Q23You haven't used CAF, MAS TRM or CPS 230 hands-on. How would you get up to speed?
+    "I'll be straight: I know their structure and key requirements, but I haven't mapped them hands-on. The method doesn't change, though."
+      Read the regulator's own text and guidance first, not summaries.
+      Break it into single requirements and map them to the master list.
+      Flag what's genuinely new, then check my mapping with someone on the team who's done it before.
+    Example you can say"If I got CPS 230 tomorrow, I'd read the standard and its guidance, break it into requirements, and flag the three things most libraries don't have yet: critical operations, tolerance levels, and the material service provider register. The rest maps onto existing resilience and supplier controls."
+  Q24What's a weakness that's relevant to this role?
+    "I can over-build. My instinct is to capture every attribute and edge case."
+      My fix: every field has to have a user (a report, a filter or a test) before it goes in.
+      I also timebox the detail per domain and check with the manager before going deeper.
+      With a mid-December deadline, on-time and usable beats perfect.
+  10
+Questions to ask them
+Pick 3 or 4. Each one shows you know where these projects usually go wrong.
+      About the scope
+        What are the six focus areas? (My guess: governance and risk, access, data protection, detection and response, resilience, suppliers.)
+        Which countries and entities are in scope? Is APRA the main one?
+        Is there a preferred master framework, or will the workshops decide?
+      About today
+        How big is the current library, and what's driving the refresh?
+        Is it in Excel or a GRC tool? Does our output need to import into one?
+        Do tests already exist, or do we design those too?
+      After we hand over
+        Who owns the library afterwards, and are they in the workshops?
+        What does success look like at the Jan–Feb walk-throughs? Who signs off?
+      About the team
+        How is work split between Manager, AM and Consultant? Would I own specific focus areas?
+        What's tripped up similar projects at KPMG before?
+  Facts checked Oct 2026: NCSC CAF v4.0 (4 / 14 / 41); ISO 27001:2022 + 2024 amendment (no newer edition); CIS v8.1 (153 safeguards, same IGs); Essential Eight (latest found Nov 2023, so recheck cyber.gov.au before the call); APRA CPS 230 (in force 1 Jul 2025); DORA critical suppliers named 18 Nov 2025; NIS2 amendment proposal (Jan 2026); MAS TRM Notice consultation (Jun–Jul 2026). The crosswalk is a guide only. Purple bits need your own details.

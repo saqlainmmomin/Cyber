@@ -1,0 +1,94 @@
+framework,record_id,reference,title,kind,group
+iso27001,ISO.A5.1,Annex A.5.1,Policies for information security,annex,Organizational Controls / Information Security Policies
+iso27001,ISO.A5.2,Annex A.5.2,Information security roles and responsibilities,annex,Organizational Controls / Information Security Policies
+iso27001,ISO.A5.3,Annex A.5.3,Segregation of duties,annex,Organizational Controls / Information Security Policies
+iso27001,ISO.A5.4,Annex A.5.4,Management responsibilities,annex,Organizational Controls / Information Security Policies
+iso27001,ISO.A5.5,Annex A.5.5,Contact with authorities,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.6,Annex A.5.6,Contact with special interest groups,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.7,Annex A.5.7,Threat intelligence,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.8,Annex A.5.8,Information security in project management,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.9,Annex A.5.9,Inventory of information and other associated assets,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.10,Annex A.5.10,Acceptable use of information and other associated assets,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.11,Annex A.5.11,Return of assets,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.12,Annex A.5.12,Classification of information,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.13,Annex A.5.13,Labelling of information,annex,Organizational Controls / Threat Intelligence & Asset Management
+iso27001,ISO.A5.14,Annex A.5.14,Information transfer,annex,Organizational Controls / Access Control & Identity Management
+iso27001,ISO.A5.15,Annex A.5.15,Access control,annex,Organizational Controls / Access Control & Identity Management
+iso27001,ISO.A5.16,Annex A.5.16,Identity management,annex,Organizational Controls / Access Control & Identity Management
+iso27001,ISO.A5.17,Annex A.5.17,Authentication information,annex,Organizational Controls / Access Control & Identity Management
+iso27001,ISO.A5.18,Annex A.5.18,Access rights,annex,Organizational Controls / Access Control & Identity Management
+iso27001,ISO.A5.19,Annex A.5.19,Information security in supplier relationships,annex,Organizational Controls / Supplier & Third-Party Management
+iso27001,ISO.A5.20,Annex A.5.20,Addressing information security within supplier agreements,annex,Organizational Controls / Supplier & Third-Party Management
+iso27001,ISO.A5.21,Annex A.5.21,Managing information security in the ICT supply chain,annex,Organizational Controls / Supplier & Third-Party Management
+iso27001,ISO.A5.22,Annex A.5.22,"Monitoring, review and change management of supplier services",annex,Organizational Controls / Supplier & Third-Party Management
+iso27001,ISO.A5.23,Annex A.5.23,Information security for use of cloud services,annex,Organizational Controls / Supplier & Third-Party Management
+iso27001,ISO.A5.24,Annex A.5.24,Information security incident management planning and preparation,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.25,Annex A.5.25,Assessment and decision on information security events,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.26,Annex A.5.26,Response to information security incidents,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.27,Annex A.5.27,Learning from information security incidents,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.28,Annex A.5.28,Collection of evidence,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.29,Annex A.5.29,Information security during disruption,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.30,Annex A.5.30,ICT readiness for business continuity,annex,"Organizational Controls / Incident Management, Continuity & Compliance"
+iso27001,ISO.A5.31,Annex A.5.31,"Legal, statutory, regulatory and contractual requirements",annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.32,Annex A.5.32,Intellectual property rights,annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.33,Annex A.5.33,Protection of records,annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.34,Annex A.5.34,Privacy and protection of personal information,annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.35,Annex A.5.35,Independent review of information security,annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.36,Annex A.5.36,"Compliance with policies, rules and standards",annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A5.37,Annex A.5.37,Documented operating procedures,annex,"Organizational Controls / Legal, Regulatory & Policy Compliance"
+iso27001,ISO.A6.1,Annex A.6.1,Screening,annex,People Controls / Screening & Employment
+iso27001,ISO.A6.2,Annex A.6.2,Terms and conditions of employment,annex,People Controls / Screening & Employment
+iso27001,ISO.A6.3,Annex A.6.3,"Information security awareness, education and training",annex,People Controls / Screening & Employment
+iso27001,ISO.A6.4,Annex A.6.4,Disciplinary process,annex,People Controls / Screening & Employment
+iso27001,ISO.A6.5,Annex A.6.5,Responsibilities after termination or change of employment,annex,People Controls / Screening & Employment
+iso27001,ISO.A6.6,Annex A.6.6,Confidentiality or non-disclosure agreements,annex,People Controls / Remote Working & Reporting
+iso27001,ISO.A6.7,Annex A.6.7,Remote working,annex,People Controls / Remote Working & Reporting
+iso27001,ISO.A6.8,Annex A.6.8,Information security event reporting,annex,People Controls / Remote Working & Reporting
+iso27001,ISO.A7.1,Annex A.7.1,Physical security perimeters,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.2,Annex A.7.2,Physical entry,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.3,Annex A.7.3,"Securing offices, rooms and facilities",annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.4,Annex A.7.4,Physical security monitoring,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.5,Annex A.7.5,Protecting against physical and environmental threats,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.6,Annex A.7.6,Working in secure areas,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.7,Annex A.7.7,Clear desk and clear screen,annex,Physical Controls / Physical Perimeter & Access
+iso27001,ISO.A7.8,Annex A.7.8,Equipment siting and protection,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.9,Annex A.7.9,Security of assets off-premises,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.10,Annex A.7.10,Storage media,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.11,Annex A.7.11,Supporting utilities,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.12,Annex A.7.12,Cabling security,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.13,Annex A.7.13,Equipment maintenance,annex,Physical Controls / Equipment Security
+iso27001,ISO.A7.14,Annex A.7.14,Secure disposal or re-use of equipment,annex,Physical Controls / Equipment Security
+iso27001,ISO.A8.1,Annex A.8.1,User endpoint devices,annex,Technological Controls / Technical Access Control & Authentication
+iso27001,ISO.A8.2,Annex A.8.2,Privileged access rights,annex,Technological Controls / Technical Access Control & Authentication
+iso27001,ISO.A8.3,Annex A.8.3,Information access restriction,annex,Technological Controls / Technical Access Control & Authentication
+iso27001,ISO.A8.4,Annex A.8.4,Access to source code,annex,Technological Controls / Technical Access Control & Authentication
+iso27001,ISO.A8.5,Annex A.8.5,Secure authentication,annex,Technological Controls / Technical Access Control & Authentication
+iso27001,ISO.A8.6,Annex A.8.6,Capacity management,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.7,Annex A.8.7,Protection against malware,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.8,Annex A.8.8,Management of technical vulnerabilities,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.9,Annex A.8.9,Configuration management,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.10,Annex A.8.10,Information deletion,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.11,Annex A.8.11,Data masking,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.12,Annex A.8.12,Data leakage prevention,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.13,Annex A.8.13,Information backup,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.14,Annex A.8.14,Redundancy of information processing facilities,annex,Technological Controls / Operational & Network Security
+iso27001,ISO.A8.15,Annex A.8.15,Logging,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.16,Annex A.8.16,Monitoring activities,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.17,Annex A.8.17,Clock synchronization,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.18,Annex A.8.18,Use of privileged utility programs,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.19,Annex A.8.19,Installation of software on operational systems,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.20,Annex A.8.20,Networks security,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.21,Annex A.8.21,Security of network services,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.22,Annex A.8.22,Segregation of networks,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.23,Annex A.8.23,Web filtering,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.24,Annex A.8.24,Use of cryptography,annex,"Technological Controls / Logging, Monitoring & Cryptography"
+iso27001,ISO.A8.25,Annex A.8.25,Secure development life cycle,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.26,Annex A.8.26,Application security requirements,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.27,Annex A.8.27,Secure system architecture and engineering principles,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.28,Annex A.8.28,Secure coding,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.29,Annex A.8.29,Security testing in development and acceptance,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.30,Annex A.8.30,Outsourced development,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.31,Annex A.8.31,"Separation of development, test and production environments",annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.32,Annex A.8.32,Change management,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.33,Annex A.8.33,Test information,annex,Technological Controls / Secure Development & Testing
+iso27001,ISO.A8.34,Annex A.8.34,Protection of information systems during audit testing,annex,Technological Controls / Secure Development & Testing

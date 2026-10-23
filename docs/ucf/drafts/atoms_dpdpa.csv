@@ -1,0 +1,99 @@
+framework,record_id,atom_id,source_ref,paraphrase,needs_verification
+dpdpa,CH2.CONSENT.1,CH2.CONSENT.1-a,"Section 6(1), 6(3)","Obtain consent through a clear affirmative action by the data principal, never by silence, pre-ticked boxes or continued use.",false
+dpdpa,CH2.CONSENT.1,CH2.CONSENT.1-b,"Section 6(1), 6(3)","Make consent free and unconditional, with no term that waives a legal right or permits processing the law forbids.",false
+dpdpa,CH2.CONSENT.1,CH2.CONSENT.1-c,"Section 6(1), 6(3)",State the specified purpose in every consent request so the consent is informed.,false
+dpdpa,CH2.CONSENT.1,CH2.CONSENT.1-d,"Section 6(1), 6(3)","Write each consent request in clear, plain language.",false
+dpdpa,CH2.CONSENT.1,CH2.CONSENT.1-e,"Section 6(1), 6(3)",Offer the consent request in English or in a language from the Eighth Schedule at the data principal's choice.,false
+dpdpa,CH2.CONSENT.2,CH2.CONSENT.2-a,Section 6(1),List each purpose as a separate item in the consent request when data is used for more than one purpose.,false
+dpdpa,CH2.CONSENT.2,CH2.CONSENT.2-b,Section 6(1),Record the data principal's consent against each specific purpose rather than as one blanket consent.,false
+dpdpa,CH2.CONSENT.3,CH2.CONSENT.3-a,"Section 6(4), 6(6)",Let data principals withdraw consent as easily as they gave it.,false
+dpdpa,CH2.CONSENT.3,CH2.CONSENT.3-b,"Section 6(4), 6(6)","Stop processing, and have processors stop, once consent is withdrawn unless a law requires retention.",false
+dpdpa,CH2.CONSENT.4,CH2.CONSENT.4-a,Section 6(8)-(9),Use only Consent Managers that are registered with the Data Protection Board.,false
+dpdpa,CH2.CONSENT.4,CH2.CONSENT.4-b,Section 6(8)-(9),"Confirm the Consent Manager gives data principals an accessible, transparent and interoperable platform to manage consent.",false
+dpdpa,CH2.CONSENT.5,CH2.CONSENT.5-a,Section 9(1),Obtain verifiable consent from a parent before processing the personal data of a child under 18.,false
+dpdpa,CH2.CONSENT.5,CH2.CONSENT.5-b,Section 9(1),Obtain verifiable consent from a lawful guardian before processing the personal data of a person with a disability.,false
+dpdpa,CH2.CONSENT.5,CH2.CONSENT.5-c,Section 9(1),Verify that the person consenting is an identifiable adult parent or a validly appointed guardian.,false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-a,Section 5(1); DPDP Rules 2025 r.3,"Present a notice before or together with every consent request, not only in a site footer.",false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-b,Section 5(1); DPDP Rules 2025 r.3,Itemize in the notice the personal data to be collected.,false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-c,Section 5(1); DPDP Rules 2025 r.3,"State in the notice the specified purposes and the goods, services or uses each purpose enables.",false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-d,Section 5(1); DPDP Rules 2025 r.3,Tell the data principal in the notice how to withdraw consent and exercise their rights.,false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-e,Section 5(1); DPDP Rules 2025 r.3,Tell the data principal in the notice how to complain to the Data Protection Board.,false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-f,Section 5(1); DPDP Rules 2025 r.3,"Write the notice so it is understandable on its own, without reading other documents.",false
+dpdpa,CH2.NOTICE.1,CH2.NOTICE.1-g,Section 5(1); DPDP Rules 2025 r.3,Offer the notice in English or in a language from the Eighth Schedule at the data principal's choice.,false
+dpdpa,CH2.NOTICE.2,CH2.NOTICE.2-a,Section 5(2),"Give data principals a notice, as soon as reasonably practicable, for personal data collected before the Act applied.",false
+dpdpa,CH2.NOTICE.2,CH2.NOTICE.2-b,Section 5(2),Describe in that notice the personal data held and the purposes it is processed for.,false
+dpdpa,CH2.NOTICE.3,CH2.NOTICE.3-a,"Section 6(3), 8(9); DPDP Rules 2025 r.9",Include in the notice the contact details of the officer who answers data principals' questions.,false
+dpdpa,CH2.NOTICE.3,CH2.NOTICE.3-b,"Section 6(3), 8(9); DPDP Rules 2025 r.9",Publish those contact details prominently on the website or app.,false
+dpdpa,CH2.PURPOSE.1,CH2.PURPOSE.1-a,Section 4(1),Process personal data only for the purpose the data principal consented to.,false
+dpdpa,CH2.PURPOSE.1,CH2.PURPOSE.1-b,Section 4(1),"Where no consent is held, process personal data only for a purpose the Act treats as a legitimate use.",false
+dpdpa,CH2.PURPOSE.2,CH2.PURPOSE.2-a,Section 7,Identify every case where personal data is processed without consent under the legitimate-use provisions.,false
+dpdpa,CH2.PURPOSE.2,CH2.PURPOSE.2-b,Section 7,Document the legitimate-use basis relied on for each such case.,false
+dpdpa,CH2.MINIMIZE.1,CH2.MINIMIZE.1-a,Section 6(1),Collect only the personal data that is necessary for the stated purpose.,false
+dpdpa,CH2.MINIMIZE.2,CH2.MINIMIZE.2-a,Section 8(7),Erase personal data once the purpose it was collected for is no longer served.,false
+dpdpa,CH2.MINIMIZE.2,CH2.MINIMIZE.2-b,Section 8(7),"Retain personal data beyond that purpose only where a law requires it, and name the law.",false
+dpdpa,CH2.MINIMIZE.3,CH2.MINIMIZE.3-a,Section 8(7); DPDP Rules 2025 r.8(3),Maintain a documented retention schedule that sets a period or erasure trigger for each data category or purpose.,false
+dpdpa,CH2.MINIMIZE.3,CH2.MINIMIZE.3-b,Section 8(7); DPDP Rules 2025 r.8(3),Run systematic or automated procedures that erase personal data when the purpose ends or consent is withdrawn.,false
+dpdpa,CH2.MINIMIZE.3,CH2.MINIMIZE.3-c,Section 8(7); DPDP Rules 2025 r.8(3),"Retain personal data, traffic data and processing logs for at least the minimum period the Rules require before erasure.",false
+dpdpa,CH2.MINIMIZE.3,CH2.MINIMIZE.3-d,Section 8(7); DPDP Rules 2025 r.8(3),Check that retention and deletion settings on systems holding personal data match the schedule.,false
+dpdpa,CH2.ACCURACY.1,CH2.ACCURACY.1-a,Section 8(3),"Ensure personal data is complete, accurate and consistent before it is used to make a decision affecting the data principal.",false
+dpdpa,CH2.ACCURACY.1,CH2.ACCURACY.1-b,Section 8(3),"Ensure personal data is complete, accurate and consistent before it is disclosed to another data fiduciary.",false
+dpdpa,CH2.SECURITY.1,CH2.SECURITY.1-a,Section 8(5),Implement reasonable technical safeguards to protect personal data and prevent breaches.,false
+dpdpa,CH2.SECURITY.1,CH2.SECURITY.1-b,Section 8(5),Implement reasonable organizational safeguards to protect personal data and prevent breaches.,false
+dpdpa,CH2.SECURITY.2,CH2.SECURITY.2-a,Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b),Encrypt personal data at rest.,false
+dpdpa,CH2.SECURITY.2,CH2.SECURITY.2-b,Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b),Encrypt personal data in transit.,false
+dpdpa,CH2.SECURITY.2,CH2.SECURITY.2-c,Section 8(5); DPDP Rules 2025 r.6(1)(a)-(b),Restrict access to personal data to authorized personnel on a least-privilege basis.,false
+dpdpa,CH2.SECURITY.3,CH2.SECURITY.3-a,Section 8(2),Hold a valid written contract with every data processor that handles personal data for the organization.,false
+dpdpa,CH2.SECURITY.3,CH2.SECURITY.3-b,Section 8(2),Require each processor by contract to implement appropriate security safeguards.,false
+dpdpa,CH2.SECURITY.3,CH2.SECURITY.3-c,Section 8(2),Require each processor by contract to process personal data only on the organization's instructions.,false
+dpdpa,CH3.ACCESS.1,CH3.ACCESS.1-a,Section 11(1),Publish how a data principal can request information about their personal data and what identifier to give.,false
+dpdpa,CH3.ACCESS.1,CH3.ACCESS.1-b,Section 11(1),Provide on request a summary of the personal data being processed.,false
+dpdpa,CH3.ACCESS.1,CH3.ACCESS.1-c,Section 11(1),Provide on request a summary of the processing activities carried out on that data.,false
+dpdpa,CH3.ACCESS.1,CH3.ACCESS.1-d,Section 11(1),Identify on request the other data fiduciaries and processors the data was shared with and what was shared.,false
+dpdpa,CH3.CORRECT.1,CH3.CORRECT.1-a,Section 12(1),Correct personal data on request when it is inaccurate or misleading.,false
+dpdpa,CH3.CORRECT.1,CH3.CORRECT.1-b,Section 12(1),Complete personal data on request when it is incomplete.,false
+dpdpa,CH3.CORRECT.2,CH3.CORRECT.2-a,Section 12(3),"Let data principals request erasure of the personal data they gave consent for, at any time.",false
+dpdpa,CH3.CORRECT.2,CH3.CORRECT.2-b,Section 12(3),Erase the data on request unless retention is necessary for the specified purpose or to comply with law.,false
+dpdpa,CH3.GRIEVANCE.1,CH3.GRIEVANCE.1-a,Section 13(1),Provide an accessible way for data principals to register grievances.,false
+dpdpa,CH3.GRIEVANCE.1,CH3.GRIEVANCE.1-b,Section 13(1),Designate a person or officer who handles those grievances.,false
+dpdpa,CH3.GRIEVANCE.2,CH3.GRIEVANCE.2-a,Section 13(2),"Respond to each grievance within a reasonable, defined time.",false
+dpdpa,CH3.GRIEVANCE.2,CH3.GRIEVANCE.2-b,Section 13(2),Tell the data principal about their right to approach the Data Protection Board when a grievance is unresolved.,false
+dpdpa,CH3.NOMINATE.1,CH3.NOMINATE.1-a,Section 14,Let data principals nominate another individual to exercise their rights.,false
+dpdpa,CH3.NOMINATE.1,CH3.NOMINATE.1-b,Section 14,Honor the nominee's exercise of those rights on the data principal's death or incapacity.,false
+dpdpa,CH4.CHILD.1,CH4.CHILD.1-a,Section 9(3),Do not track children.,false
+dpdpa,CH4.CHILD.1,CH4.CHILD.1-b,Section 9(3),Do not carry out behavioral monitoring of children.,false
+dpdpa,CH4.CHILD.1,CH4.CHILD.1-c,Section 9(3),Do not direct targeted advertising at children.,false
+dpdpa,CH4.CHILD.2,CH4.CHILD.2-a,Section 9(2),Do not process children's personal data in a way that harms their well-being.,false
+dpdpa,CH4.CHILD.3,CH4.CHILD.3-a,Section 9,Verify the age of users in order to identify children.,false
+dpdpa,CH4.CHILD.3,CH4.CHILD.3-b,Section 9,"Apply the child protections, including parental consent, to every user identified as a child.",false
+dpdpa,CH4.SDF.1,CH4.SDF.1-a,Section 10(2)(a),Appoint a Data Protection Officer when designated a Significant Data Fiduciary.,false
+dpdpa,CH4.SDF.1,CH4.SDF.1-b,Section 10(2)(a),Ensure the Data Protection Officer is an individual based in India.,false
+dpdpa,CH4.SDF.1,CH4.SDF.1-c,Section 10(2)(a),"Make the Data Protection Officer responsible to the board or equivalent governing body, with the reporting line documented.",false
+dpdpa,CH4.SDF.1,CH4.SDF.1-d,Section 10(2)(a),Name the Data Protection Officer as the contact point for the grievance mechanism.,false
+dpdpa,CH4.SDF.2,CH4.SDF.2-a,Section 10(2)(b),Appoint an independent data auditor to evaluate compliance with the Act.,false
+dpdpa,CH4.SDF.3,CH4.SDF.3-a,Section 10(2)(c)(i),Conduct a data protection impact assessment of processing activities and the risks to data principals.,false
+dpdpa,CH4.SDF.3,CH4.SDF.3-b,Section 10(2)(c)(i),Repeat the impact assessment at the prescribed periodic interval.,false
+dpdpa,CH4.SDF.4,CH4.SDF.4-a,Section 10(2)(c)(ii),Audit compliance with the Act and Rules at the prescribed periodic interval.,false
+dpdpa,CH4.SDF.4,CH4.SDF.4-b,Section 10(2)(c)(ii),Have the auditor report significant observations to the Data Protection Board.,false
+dpdpa,CM.RECORDS.1,CM.RECORDS.1-a,Section 6,"Maintain auditable records of when, how and for what purpose each data principal gave consent.",false
+dpdpa,CM.RECORDS.2,CM.RECORDS.2-a,Section 6(1),Obtain fresh consent before processing personal data for a new or changed purpose.,false
+dpdpa,CM.GRANULAR.1,CM.GRANULAR.1-a,Section 6(1),"Give data principals working controls to give or withhold consent for each purpose, so partial consent is possible.",false
+dpdpa,CM.GRANULAR.2,CM.GRANULAR.2-a,Section 6(1),Keep access to the service independent of consent to processing that the service does not need.,false
+dpdpa,CM.GRANULAR.2,CM.GRANULAR.2-b,Section 6(1),Avoid dark patterns when collecting consent.,false
+dpdpa,CB.TRANSFER.1,CB.TRANSFER.1-a,Section 16(1),Transfer personal data outside India only to countries or territories not restricted by the Central Government.,false
+dpdpa,CB.TRANSFER.1,CB.TRANSFER.1-b,Section 16(1),Maintain an inventory of cross-border data flows.,false
+dpdpa,CB.TRANSFER.2,CB.TRANSFER.2-a,Section 16,Track Central Government notifications that restrict transfers to specific countries or territories.,false
+dpdpa,CB.TRANSFER.2,CB.TRANSFER.2-b,Section 16,Do not transfer personal data to a country or territory restricted by such a notification.,false
+dpdpa,CB.TRANSFER.2,CB.TRANSFER.2-c,Section 16,Comply with any stricter sectoral law in force in India on transfers outside India.,false
+dpdpa,CB.TRANSFER.3,CB.TRANSFER.3-a,Section 16,Store the categories of personal data in India that the Central Government requires to be localized.,false
+dpdpa,BN.NOTIFY.1,BN.NOTIFY.1-a,Section 8(6); DPDP Rules 2025 r.7(2),Notify the Data Protection Board promptly of any personal data breach.,false
+dpdpa,BN.NOTIFY.1,BN.NOTIFY.1-b,Section 8(6); DPDP Rules 2025 r.7(2),"Follow the prescribed form, content and timeline when reporting the breach to the Board.",false
+dpdpa,BN.NOTIFY.2,BN.NOTIFY.2-a,Section 8(6); DPDP Rules 2025 r.7(1),Notify each affected data principal of a personal data breach.,false
+dpdpa,BN.NOTIFY.2,BN.NOTIFY.2-b,Section 8(6); DPDP Rules 2025 r.7(1),Follow the prescribed form and content when notifying data principals.,false
+dpdpa,BN.NOTIFY.3,BN.NOTIFY.3-a,Section 8(4)-(6),Cover detection of personal data breaches in a documented incident response plan.,false
+dpdpa,BN.NOTIFY.3,BN.NOTIFY.3-b,Section 8(4)-(6),Cover containment of personal data breaches in the documented plan.,false
+dpdpa,BN.NOTIFY.3,BN.NOTIFY.3-c,Section 8(4)-(6),Cover investigation of personal data breaches in the documented plan.,false
+dpdpa,BN.NOTIFY.3,BN.NOTIFY.3-d,Section 8(4)-(6),Cover notification of regulators and data principals in the documented plan.,false
+dpdpa,BN.NOTIFY.3,BN.NOTIFY.3-e,Section 8(4)-(6),Cover remediation of personal data breaches in the documented plan.,false
+dpdpa,BN.NOTIFY.4,BN.NOTIFY.4-a,Section 8(6),Maintain a register of all personal data breaches.,false
+dpdpa,BN.NOTIFY.4,BN.NOTIFY.4-b,Section 8(6),Record in the register the facts and effects of each breach.,false
+dpdpa,BN.NOTIFY.4,BN.NOTIFY.4-c,Section 8(6),Record in the register the remedial actions taken for each breach.,false

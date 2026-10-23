@@ -1,0 +1,16 @@
+{
+  "library_version": "1.0.0",
+  "exported_at": "2026-10-18",
+  "source": "Not a page export. On 18 Oct 2026 Saqlain chose to accept the recommended picks in bulk. Claude first re-read the 20 close calls and weak matches and the controls left with no criteria. The rows below are Claude's corrected picks; every other proposed row is accepted as proposed (apply_rekey_decisions.py --accept-remaining).",
+  "criteria": {
+    "NIST.ID.AM.07.TC3": {"status": "change", "unified_control_id": "UC-AST-04", "note": "Claude's corrected pick: the criterion tests the classification scheme and labels, which is AST-04, not the inventory."},
+    "NIST.ID.AM.08.TC3": {"status": "change", "unified_control_id": "UC-AST-12", "note": "Claude's corrected pick: disposal and sanitization records are AST-12's test."},
+    "NIST.ID.IM.03.TC3": {"status": "change", "unified_control_id": "UC-GOV-19", "note": "Claude's corrected pick: updating a policy from a lesson learned is atom b, which maps to GOV-19."},
+    "CH2.SECURITY.1.TC3": {"status": "change", "unified_control_id": "UC-RES-04", "note": "Claude's corrected pick: backups are RES-04; the word match failed because every atom of this record is generic."},
+    "CH3.CORRECT.2.TC3": {"status": "change", "unified_control_id": "UC-PRT-04", "note": "Claude's corrected pick: passing erasure on to processors is part of erasure on request, not the request channel."},
+    "CB.TRANSFER.2.TC2": {"status": "change", "unified_control_id": "UC-PSC-05", "note": "Claude's corrected pick: government transfer orders are tracked under PSC-05, matching CB.TRANSFER.1.TC3."},
+    "CB.TRANSFER.1.TC1": {"status": "change", "unified_control_id": "UC-PSC-06", "note": "Claude's corrected pick: the cross-border flow inventory is PSC-06's own test (atom b maps there as equal and full)."},
+    "CB.TRANSFER.1.TC4": {"status": "change", "unified_control_id": "UC-PSC-06", "note": "Claude's corrected pick: reconciling hosting regions with the inventory is in PSC-06's statement."},
+    "NIST.GV.PO.01.TC5": {"status": "accept", "unified_control_id": "UC-RSK-10", "note": "Tests two controls: violations (RSK-10) and exceptions (RSK-42). Kept on RSK-10 because a criterion attaches to one control."}
+  }
+}
